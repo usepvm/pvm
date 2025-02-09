@@ -132,9 +132,10 @@ function Display-Version-List {
 function Extract-And-Configure {
     param ($path, $fileNamePath)
     
+    Remove-Item -Path $fileNamePath -Recurse -Force
     Extract-Zip -zipPath $path -extractPath $fileNamePath
     Copy-Item -Path "$fileNamePath\php.ini-development" -Destination "$fileNamePath\php.ini"
-
+    Remove-Item -Path $path
 }
 
 function Extract-Zip {

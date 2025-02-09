@@ -18,7 +18,7 @@ function Get-Current-PHP-Version {
 #region list
 function Get-Installed-PHP-Versions {
     $currentVersion = Get-Current-PHP-Version
-    $installedPhp = Get-ChildItem Env: | Where-Object { $_.Name -match "^php.{0,4}$" } | Sort-Object {
+    $installedPhp = Get-ChildItem Env: | Where-Object { $_.Name -match "^php\d+(?:\.\d+){0,2}" } | Sort-Object {
         if ($_.Value -match "php-(\d+\.\d+\.\d+)") { 
             [version] $matches[1] 
         } else {
@@ -91,7 +91,7 @@ function Get-From-Source {
 
 function Get-From-Cache {
     $list = @{}
-    $jsonData = Get-Content "available_versions.json" | ConvertFrom-Json
+    $jsonData = Get-Content "$PSScriptRoot\available_versions.json" | ConvertFrom-Json
     $jsonData.PSObject.Properties.GetEnumerator() | ForEach-Object {
         $key = $_.Name
         $value = $_.Value
@@ -103,16 +103,17 @@ function Get-From-Cache {
 }
 
 function Get-Available-PHP-Versions {
-    param($getFromSource = $null)
+    param ($getFromSource = $null)
     
-    # fetch from the cache
     $fetchedVersionsGrouped = @{}
 
     if (-not $getFromSource) {
+        Write-Host "`nReading from the cache"
         $fetchedVersionsGrouped = Get-From-Cache
     }
     
     if ($fetchedVersionsGrouped.Count -eq 0) {
+        Write-Host "`nCache empty !, Reading from the internet"
         $fetchedVersionsGrouped = Get-From-Source
     }
     
@@ -125,7 +126,6 @@ function Get-Available-PHP-Versions {
         Write-Host "`n$key`n"
         $fetchedVersionsGroupe | ForEach-Object {
             $versionItem = $_ -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
-            # $versionItem = $versionItem -replace '^php-|-Win.*$', ''
             Write-Host "  $versionItem"
         }
     }
@@ -139,10 +139,9 @@ function Get-Available-PHP-Versions {
 
 #region install
 function Install-PHP {
-    param(
-        [string]$version
-    )
+    param ($version)
 
+    Write-Host "`n Loading the matching versions..."
     $matchingVersions = Get-PHP-Versions -version $version
 
     if ($matchingVersions.Count -eq 0) {
@@ -155,70 +154,73 @@ function Install-PHP {
     
 
     # Prompt user to choose the version
-    $selectedVersion = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
+    $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
 
-    if (-not $selectedVersion) {
+    if (-not $selectedVersionInput) {
         Write-Host "`nInstallation cancelled."
         return
     }
 
-    $destination = Download-PHP -version $selectedVersion
+    $matchingVersions.GetEnumerator() | ForEach-Object {
+        $selectedVersionObject = $_.Value | Where-Object { if ($_.version -eq $selectedVersionInput) { return $_ } }
+    }
+    if (-not $selectedVersionObject) {
+        $matchingVersions.GetEnumerator() | ForEach-Object {
+            $selectedVersionObject = $_.Value | Select-Object -Last 1
+        }
+    }
+
+    $destination = Download-PHP -version $selectedVersionObject
     
     Write-Host "`nExtracting the downloaded zip ..."
-    Extract-And-Configure -path "$destination\$selectedVersion.zip" -fileNamePath "$destination\$selectedVersion"
+    $fileName = $selectedVersionObject.fileName
+    $fileNameDirectory = $fileName -replace ".zip",""
+    Extract-And-Configure -path "$destination\$fileName" -fileNamePath "$destination\$fileNameDirectory"
     
     
     Write-Host "`nAdding the PHP to the environment variables ..."
-    if ($version -match "\d+(\.\d+\.\d+)*") {
-        $phpVersionNumber = $version # $matches[0]
-        $phpEnvVarName = "php$phpVersionNumber"
-        # Set-Php-Env -name $phpEnvVarName -value "$destination\$selectedVersion"
-        $phpPath = "$destination\$selectedVersion"
-        pvm set $phpEnvVarName $phpPath
-        Write-Host "`nRun 'pvm use $phpVersionNumber' to use this version"
-    }
-    
+    $phpVersionNumber = $selectedVersionObject.version
+    $phpEnvVarName = "php$phpVersionNumber"
+    # Set-Php-Env -name $phpEnvVarName -value "$destination\$selectedVersion"
+    $phpPath = "$destination\$fileNameDirectory"
+    pvm set $phpEnvVarName $phpPath
+    Write-Host "`nRun 'pvm use $phpVersionNumber' to use this version"
 }
 #endregion
 
 #region use
 function Update-PHP-Version {
-    param( [string]$variableName, [string]$variableValue )
+    param ($variableName, $variableValue)
 
-    try {
-        $variableValueContent = [System.Environment]::GetEnvironmentVariable($variableValue, [System.EnvironmentVariableTarget]::Machine)
-        if (-not $variableValueContent) {
-            $variableValue = $variableValue -replace '\.',''
-            $variableValueContent = [System.Environment]::GetEnvironmentVariable($variableValue, [System.EnvironmentVariableTarget]::Machine)
+    $phpVersion = "php$variableValue"
+    $variableValueContent = [System.Environment]::GetEnvironmentVariable($phpVersion, [System.EnvironmentVariableTarget]::Machine)
+    if (-not $variableValueContent) {
+        $envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
+        $variableValue = $envVars.Keys | Where-Object { $_ -match $variableValue } | Sort-Object | Select-Object -First 1
+        if (-not $variableValue) {
+            Write-Host "The $variableName was not set !"
+            return;
         }
-        if ($variableValueContent) {
-            [System.Environment]::SetEnvironmentVariable($variableName, $variableValueContent, [System.EnvironmentVariableTarget]::Machine)
-        } else {
-            # If not found, try searching for a more specific version
-            $envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
-            # Find any key that starts with "$variableValue." (e.g., "7.2.6")
-            $variableValue = $envVars.Keys | Where-Object { $_ -match "^$variableValue(\.?\d+)*$" } # | Sort-Object -Descending | Select-Object -First 1
-                                
-            if ($variableValue) {
-                $variableValueContent = $envVars[$variableValue]
-            }
-            [System.Environment]::SetEnvironmentVariable($variableName, $variableValueContent, [System.EnvironmentVariableTarget]::Machine)
-        }
-    } catch {
-        Write-Host "`nSomething went wrong, believe me !!"
+        $variableValueContent = $envVars[$variableValue]
     }
-    
+    if (-not $variableValueContent) {
+        Write-Host "The $variableName was not found in the environment variables!"
+        return;
+    }
+    [System.Environment]::SetEnvironmentVariable($variableName, $variableValueContent, [System.EnvironmentVariableTarget]::Machine)
 }
 #endregion
 
 #region set
 function Set-PHP-Env {
-    param(
-        [string]$name,
-        [string]$value
-    )
+    param ($name, $value)
 
-    Add-Env-Variable -newVariableName $name -newVariableValue $value
+    $content = [System.Environment]::GetEnvironmentVariable($value, [System.EnvironmentVariableTarget]::Machine)
+    if ($content) {
+        [System.Environment]::SetEnvironmentVariable($name, $content, [System.EnvironmentVariableTarget]::Machine)
+    } else {
+        [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine)
+    }
 }
 #endregion
 

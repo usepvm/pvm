@@ -45,12 +45,9 @@ $actions = [ordered]@{
             $arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" use `"$argument1`""
             Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden
         } else {
-            Update-PHP-Version -variableName $USER_ENV["PHP_CURRENT_ENV_NAME"] -variableValue "php$argument1"
+            Update-PHP-Version -variableName $USER_ENV["PHP_CURRENT_ENV_NAME"] -variableValue $argument1
         }
-        
-        if (-not $argument1.Contains('.')) {
-            $argument1 = $argument1.Trim().ToCharArray() -join '.'
-        }
+
         Write-Host "`nNow using PHP v$argument1"
     }}
     "set" = [PSCustomObject]@{ description = "pvm set [name] [value]`t:`tset a new evironment variable for a PHP version"; action = {

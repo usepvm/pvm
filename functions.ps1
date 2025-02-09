@@ -10,10 +10,7 @@ function Get-Source-Urls {
 
 
 function Get-PHP-Versions-From-Url {
-    param(
-        [string]$url,
-        [string]$version
-    )
+    param ($url, $version)
     
     try {
         $html = Invoke-WebRequest -Uri $url
@@ -28,35 +25,39 @@ function Get-PHP-Versions-From-Url {
         }
 
         # Return the filtered links (PHP version names)
-        $filteredLinks | ForEach-Object { $_.href }
+        $formattedList = @()
+        $filteredLinks = $filteredLinks | ForEach-Object { 
+            $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
+            $fileName = $_.href -split "/"
+            $fileName = $fileName[$fileName.Count - 1]
+            $formattedList += @{ href = $_.href; version = $version; fileName = $fileName }
+        }
+        
+        return $formattedList
     } catch {
         Write-Error "Failed to fetch versions from $url"
     }
 }
 
 function Get-PHP-Versions {
-    param(
-        [string]$version
-    )
+    param ($version)
     
     $urls = Get-Source-Urls
     $fetchedVersions = @{}
     foreach ($key in $urls.Keys) {
-        # Fetch versions from releases and archives
         $fetched = Get-PHP-Versions-From-Url -url $urls[$key] -version $version
         if ($fetched.Count -gt 0) {
             $sysArch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x64' } else { 'x86' }
-            $fetched = $fetched | Where-Object { $_ -match "$sysArch" }
+            $fetched = $fetched | Where-Object { $_.href -match "$sysArch" }
             $fetchedVersions[$key] = $fetched | Select-Object -Last 5
         }
     }
 
-    # Combine both versions and filter by user-provided version
     return $fetchedVersions
 }
 
 function Make-Directory {
-    param ( [string]$path )
+    param ($path)
 
     if (Test-Path -Path $path -PathType Container) {
         return $false
@@ -66,15 +67,12 @@ function Make-Directory {
 }
 
 function Download-PHP-From-Url {
-    param (
-        [string]$destination,
-        [string]$url,
-        [string]$version
-    )
+    param ($destination, $url, $versionObject)
 
     # Download the selected PHP version
+    $fileName = $versionObject.fileName
     try {
-        Invoke-WebRequest -Uri $url -OutFile "$destination\$version.zip"
+        Invoke-WebRequest -Uri $url -OutFile "$destination\$fileName"
         return $destination
     } catch {
     }
@@ -82,13 +80,12 @@ function Download-PHP-From-Url {
 }
 
 function Download-PHP {
-    param (
-        [string]$version
-    )
+    param ($versionObject)
     
     $urls = Get-Source-Urls
     
-    $fileName = "$version.zip"
+    $fileName = $versionObject.fileName
+    $version = $versionObject.version
 
     $destination = $USER_ENV["PHP_VERSIONS_PATH"]
     
@@ -106,7 +103,7 @@ function Download-PHP {
     foreach ($key in $urls.Keys) {
         $_url = $urls[$key]
         $downloadUrl = "$_url/$fileName"
-        $downloadedFilePath = Download-PHP-From-Url -destination $destination -url $downloadUrl -version $version
+        $downloadedFilePath = Download-PHP-From-Url -destination $destination -url $downloadUrl -version $versionObject
 
         if ($downloadedFilePath) {
             return $downloadedFilePath
@@ -117,18 +114,8 @@ function Download-PHP {
 }
 
 
-function Add-Env-Variable {
-    param( [string]$newVariableName, [string]$newVariableValue )
-   
-    [System.Environment]::SetEnvironmentVariable($newVariableName, $newVariableValue, [System.EnvironmentVariableTarget]::Machine)
-    # $existingVariableName = [System.Environment]::GetEnvironmentVariable($newVariableName, [System.EnvironmentVariableTarget]::Machine)
-    # if ($existingVariableName -eq $null) {
-    #     [System.Environment]::SetEnvironmentVariable($newVariableName, $newVariableValue, [System.EnvironmentVariableTarget]::Machine)
-    # }
-}
-
 function Display-Version-List {
-    param( $matchingVersions )
+    param ($matchingVersions)
     Write-Host "`nMatching PHP versions:"
 
     $matchingVersions.GetEnumerator() | ForEach-Object {
@@ -136,17 +123,14 @@ function Display-Version-List {
         $versionsList = $_.Value
         Write-Host "`n$key versions:`n"
         $versionsList | ForEach-Object {
-            $versionItem = $_ -replace '/downloads/releases/archives/|/downloads/releases/|.zip', ''
-            Write-Host $versionItem
+            $versionItem = $_.version -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
+            Write-Host "  $versionItem"
         }
     }
 }
 
 function Extract-And-Configure {
-    param(
-        [string]$path,
-        [string]$fileNamePath
-    )
+    param ($path, $fileNamePath)
     
     Extract-Zip -zipPath $path -extractPath $fileNamePath
     Copy-Item -Path "$fileNamePath\php.ini-development" -Destination "$fileNamePath\php.ini"
@@ -154,7 +138,7 @@ function Extract-And-Configure {
 }
 
 function Extract-Zip {
-    param ( [string]$zipPath, [string]$extractPath )
+    param ($zipPath, $extractPath)
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
 }
@@ -170,7 +154,7 @@ function Get-Env {
 }
 
 function Set-Env {
-    param($key, $value)
+    param ($key, $value)
     # Read the file into an array of lines
     $envLines = Get-Content $ENV_FILE
 

@@ -4,6 +4,10 @@
 
 Clone the repo and add the directory to you Path variable.
 
+## Preparation
+
+Check the .env file and copy the "PHP_CURRENT_ENV_NAME" value to the end of your PATH variable : ";%php_current%"
+
 ## Usage
 
 ```sh

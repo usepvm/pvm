@@ -15,6 +15,10 @@ $arguments = $args
 $actions = [ordered]@{
     "current" = [PSCustomObject]@{ description = "pvm current`t`t`t:`tDisplay active version"; action = { 
         $version = Get-Current-PHP-Version
+        if (-not $version) {
+            Write-Host "`nSomething went wrong, Check your environment variables !"
+            exit 0
+        }
         Write-Host "`nRunning version: PHP $version"
     }}
     "list" = [PSCustomObject]@{ description = "pvm list [available] [-f]`t:`tList the PHP installations. Type 'available' at the end to see what can be installed. Add '-f' to load from the online source."; action = {

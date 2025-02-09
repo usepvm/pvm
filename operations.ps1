@@ -11,6 +11,9 @@ $Global:USER_ENV = Get-Env
 function Get-Current-PHP-Version {
     $currentPhpVersion = [System.Environment]::GetEnvironmentVariable($USER_ENV["PHP_CURRENT_ENV_NAME"], [System.EnvironmentVariableTarget]::Machine)
     $currentPhpVersion -match "php-(\d+\.\d+\.\d+)-" | Out-Null
+    if (-not $matches -or $matches.Count -eq 0) {
+        return $null
+    } 
     return $matches[1]
 }
 #endregion

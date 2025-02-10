@@ -4,7 +4,7 @@
 
 Clone the repo and add the directory to you Path variable.
 
-Check the .env file and copy the "PHP_CURRENT_ENV_NAME" value to the end of your PATH variable : ";%php_current%"
+Check the .env file and copy the `PHP_CURRENT_ENV_NAME` value to the end of your PATH variable : `;%php_current%`
 
 ## Usage
 
@@ -23,12 +23,12 @@ pvm list [available] [-f]
 ```
 └─> This one lists the PHP installations. Type 'available' at the end to see what can be installed. Add `-f` to load from the online source.
 
-```sh                              
+```sh
 pvm install [version]
 ```
 └─> Install a specific version
 
-```sh     
+```sh
 pvm use [version]
 ```
 └─> Switch to use the specified version

@@ -2,7 +2,7 @@
 
 param( [string]$operation, [string]$argument1 = $null, [string]$argument2 = $null )
 
-. $PSScriptRoot\operations.ps1
+. $PSScriptRoot\options.ps1
 
 
 if (-not $operation -and $args.Count -eq 0) {

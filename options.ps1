@@ -28,6 +28,12 @@ function Get-Installed-PHP-Versions {
             [version] "0.0.0"  # Assign a low version to non-PHP paths so they appear first/last
         }
     }
+    
+    if ($installedPhp.Count -eq 0) {
+        Write-Host "No PHP versions found"
+        exit 0
+    }
+
     Write-Host "`nInstalled Versions"
     Write-Host "--------------"
     $duplicates = @()
@@ -144,7 +150,7 @@ function Get-Available-PHP-Versions {
 function Install-PHP {
     param ($version)
 
-    Write-Host "`n Loading the matching versions..."
+    Write-Host "`nLoading the matching versions..."
     $matchingVersions = Get-PHP-Versions -version $version
 
     if ($matchingVersions.Count -eq 0) {
@@ -164,9 +170,13 @@ function Install-PHP {
         return
     }
 
-    $matchingVersions.GetEnumerator() | ForEach-Object {
-        $selectedVersionObject = $_.Value | Where-Object { if ($_.version -eq $selectedVersionInput) { return $_ } }
+    foreach ($entry in $matchingVersions.GetEnumerator()) {
+        $selectedVersionObject = $entry.Value | Where-Object { $_.version -eq $selectedVersionInput }
+        if ($selectedVersionObject) {
+            break
+        }
     }
+    
     if (-not $selectedVersionObject) {
         $matchingVersions.GetEnumerator() | ForEach-Object {
             $selectedVersionObject = $_.Value | Select-Object -Last 1

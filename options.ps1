@@ -10,11 +10,15 @@ $Global:USER_ENV = Get-Env
 #region current
 function Get-Current-PHP-Version {
     $currentPhpVersion = [System.Environment]::GetEnvironmentVariable($USER_ENV["PHP_CURRENT_ENV_NAME"], [System.EnvironmentVariableTarget]::Machine)
-    $currentPhpVersion -match "php-(\d+\.\d+\.\d+)-" | Out-Null
-    if (-not $matches -or $matches.Count -eq 0) {
-        return $null
-    } 
-    return $matches[1]
+    $currentPhpVersionKey = $null
+    $envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
+    $envVars.Keys | Where-Object { $_ -match "php\d(\.\d+)*" }  | Where-Object {
+        if ($currentPhpVersion -eq $envVars[$_] -and -not($USER_ENV["PHP_CURRNET_ENV_NAME"] -eq $_)) {
+            $currentPhpVersionKey = $_
+        }
+    }
+    $currentPhpVersionKey = $currentPhpVersionKey -replace 'php', ''
+    return $currentPhpVersionKey
 }
 #endregion
 
@@ -34,7 +38,7 @@ function Get-Installed-PHP-Versions {
     $installedPhp | ForEach-Object {
         if ($_.Key -match "php\d(\.\d+)*") {
             # $version = $_.Key
-            $versionNumber = $matches[0] -replace "php-",""
+            $versionNumber = $matches[0] -replace "php",""
             if ($duplicates -notcontains $versionNumber) {
                 $duplicates += $versionNumber
                 $isCurrent = ""

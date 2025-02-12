@@ -21,13 +21,7 @@ function Get-Current-PHP-Version {
 #region list
 function Get-Installed-PHP-Versions {
     $currentVersion = Get-Current-PHP-Version
-    $installedPhp = Get-ChildItem Env: | Where-Object { $_.Name -match "^php\d+(?:\.\d+){0,2}" } | Sort-Object {
-        if ($_.Value -match "php-(\d+\.\d+\.\d+)") { 
-            [version] $matches[1] 
-        } else {
-            [version] "0.0.0"  # Assign a low version to non-PHP paths so they appear first/last
-        }
-    }
+    $installedPhp = Get-ChildItem Env: | Where-Object { $_.Name -match "^php\d+(?:\.\d+){0,2}" }
     
     if ($installedPhp.Count -eq 0) {
         Write-Host "No PHP versions found"
@@ -38,7 +32,7 @@ function Get-Installed-PHP-Versions {
     Write-Host "--------------"
     $duplicates = @()
     $installedPhp | ForEach-Object {
-        if ($_.Value -match "php-\d(\.\d+)*") {
+        if ($_.Key -match "php\d(\.\d+)*") {
             # $version = $_.Key
             $versionNumber = $matches[0] -replace "php-",""
             if ($duplicates -notcontains $versionNumber) {

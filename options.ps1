@@ -23,9 +23,9 @@ function Get-Current-PHP-Version {
 #endregion
 
 #region list
-function Get-Installed-PHP-Versions {
+function Display-Installed-PHP-Versions {
     $currentVersion = Get-Current-PHP-Version
-    $installedPhp = Get-ChildItem Env: | Where-Object { $_.Name -match "^php\d+(?:\.\d+){0,2}" }
+    $installedPhp = Get-Installed-PHP-Versions
     
     if ($installedPhp.Count -eq 0) {
         Write-Host "No PHP versions found"
@@ -36,17 +36,14 @@ function Get-Installed-PHP-Versions {
     Write-Host "--------------"
     $duplicates = @()
     $installedPhp | ForEach-Object {
-        if ($_.Key -match "php\d(\.\d+)*") {
-            # $version = $_.Key
-            $versionNumber = $matches[0] -replace "php",""
-            if ($duplicates -notcontains $versionNumber) {
-                $duplicates += $versionNumber
-                $isCurrent = ""
-                if ($currentVersion -eq $versionNumber) {
-                    $isCurrent = "(Current)"
-                }
-                Write-Host "  $versionNumber $isCurrent"
+        $versionNumber = $_ -replace "php",""
+        if ($duplicates -notcontains $versionNumber) {
+            $duplicates += $versionNumber
+            $isCurrent = ""
+            if ($currentVersion -eq $versionNumber) {
+                $isCurrent = "(Current)"
             }
+            Write-Host "  $versionNumber $isCurrent"
         }
     }
 }
@@ -142,6 +139,24 @@ function Get-Available-PHP-Versions {
     $msg += "`nArchives : https://windows.php.net/downloads/releases/archives"
     Write-Host $msg
 }
+#endregion
+
+#region uninstall
+
+function Uninstall-PHP {
+    param ($version)
+    try {
+        $name = "php$version"
+        $phpPath = [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
+        Remove-Item -Path $phpPath -Recurse -Force
+        [System.Environment]::SetEnvironmentVariable($name, $null, [System.EnvironmentVariableTarget]::Machine);
+        return $true
+    }
+    catch {
+        return $false
+    }
+}
+
 #endregion
 
 #region install

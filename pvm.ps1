@@ -29,7 +29,7 @@ $actions = [ordered]@{
                 Get-Available-PHP-Versions
             }
         } else {
-            Get-Installed-PHP-Versions
+            Display-Installed-PHP-Versions
         }
     }}
     "install" = [PSCustomObject]@{ description = "pvm install <version>`t`t:`tThe version can be a specific version"; action = {
@@ -38,6 +38,23 @@ $actions = [ordered]@{
             exit 1
         }
         Install-PHP -version $argument1
+    }}
+    "uninstall" = [PSCustomObject]@{ description = "pvm uninstall <version>`t`t:`tThe version must be a specific version"; action = {
+        if (-not $argument1) {
+            Write-Host "`nPlease provide a PHP version to uninstall"
+            exit 1
+        }
+        if (-not (Is-Admin)) {
+            # Relaunch as administrator with hidden window
+            $arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" uninstall `"$argument1`""
+            Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden
+        } else {
+            if (Uninstall-PHP -version $argument1) {
+                Write-Host "`nPHP $argument1 has been uninstalled successfully"
+            } else {
+                Write-Host "`nFailed to uninstall PHP $argument1"
+            }
+        }
     }}
     "use" = [PSCustomObject]@{ description = "pvm use [version]`t`t:`tSwitch to use the specified version"; action = {
         if (-not $argument1) {

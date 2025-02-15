@@ -19,7 +19,7 @@ pvm current
 └─> Display active version
 
 ```sh
-pvm list [available] [-f]
+pvm list [available [-f]]
 ```
 └─> This one lists the PHP installations. Type 'available' at the end to see what can be installed. Add `-f` to load from the online source.
 

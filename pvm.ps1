@@ -21,7 +21,7 @@ $actions = [ordered]@{
         }
         Write-Host "`nRunning version: PHP $version"
     }}
-    "list" = [PSCustomObject]@{ description = "pvm list [available] [-f]`t:`tList the PHP installations. Type 'available' at the end to see what can be installed. Add '-f' to load from the online source."; action = {
+    "list" = [PSCustomObject]@{ description = "pvm list [available [-f]]`t:`tList the PHP installations. 'available' at the end to see what can be installed. '-f' to load from the online source."; action = {
         if ($argument1 -eq "available") {
             if ($arguments -contains '-f') {
                 Get-Available-PHP-Versions -getFromSource $true
@@ -39,7 +39,7 @@ $actions = [ordered]@{
         }
         Install-PHP -version $argument1
     }}
-    "uninstall" = [PSCustomObject]@{ description = "pvm uninstall <version>`t`t:`tThe version must be a specific version"; action = {
+    "uninstall" = [PSCustomObject]@{ description = "pvm uninstall <version>`t:`tThe version must be a specific version"; action = {
         if (-not $argument1) {
             Write-Host "`nPlease provide a PHP version to uninstall"
             exit 1

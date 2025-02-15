@@ -29,6 +29,11 @@ pvm install [version]
 └─> Install a specific version
 
 ```sh
+pvm uninstall [version]
+```
+└─> Uninstall a specific version
+
+```sh
 pvm use [version]
 ```
 └─> Switch to use the specified version

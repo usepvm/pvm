@@ -98,7 +98,7 @@ function Download-PHP {
     }
 
 
-    Write-Host "`nDownloading $version..."
+    Write-Host "`nDownloading PHP v$version..."
     
     foreach ($key in $urls.Keys) {
         $_url = $urls[$key]

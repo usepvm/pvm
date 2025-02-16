@@ -170,25 +170,29 @@ function Install-PHP {
         Write-Host "`nNo matching PHP versions found for '$version'."
         return
     }
-
-    # Display matching versions
-    Display-Version-List -matchingVersions $matchingVersions
     
+    $selectedVersionObject = $null
 
-    # Prompt user to choose the version
-    $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
+    if ($matchingVersions.Count -gt 1) {
+        # Display matching versions
+        Display-Version-List -matchingVersions $matchingVersions
 
-    if (-not $selectedVersionInput) {
-        Write-Host "`nInstallation cancelled."
-        return
-    }
+        # Prompt user to choose the version
+        $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
 
-    foreach ($entry in $matchingVersions.GetEnumerator()) {
-        $selectedVersionObject = $entry.Value | Where-Object { $_.version -eq $selectedVersionInput }
-        if ($selectedVersionObject) {
-            break
+        if (-not $selectedVersionInput) {
+            Write-Host "`nInstallation cancelled."
+            return
+        }
+        
+        foreach ($entry in $matchingVersions.GetEnumerator()) {
+            $selectedVersionObject = $entry.Value | Where-Object { $_.version -eq $selectedVersionInput }
+            if ($selectedVersionObject) {
+                break
+            }
         }
     }
+    
     
     if (-not $selectedVersionObject) {
         $matchingVersions.GetEnumerator() | ForEach-Object {

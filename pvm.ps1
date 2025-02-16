@@ -103,3 +103,11 @@ if (-not $actions.Contains($operation)) {
 
 $actions[$operation].action.Invoke()
 Write-Host "`n"
+
+
+# In cas you're not an admin, we wait 1sec for the execution to complete on the admin window, 
+## and then reload the environment variables changes
+Start-Sleep -Seconds 1  
+
+Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1 -Global
+Update-SessionEnvironment

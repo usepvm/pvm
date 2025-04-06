@@ -43,14 +43,18 @@ $actions = [ordered]@{
         if (-not (Is-Admin)) {
             # Relaunch as administrator with hidden window
             $arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" uninstall `"$argument1`""
-            Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden
+            $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru
+            $process.WaitForExit()
+            $exitCode = $process.ExitCode
         } else {
-            if (Uninstall-PHP -version $argument1) {
-                Write-Host "`nPHP $argument1 has been uninstalled successfully"
-            } else {
-                Write-Host "`nFailed to uninstall PHP $argument1"
-            }
+            $exitCode = Uninstall-PHP -version $argument1
         }
+        if ($exitCode -eq $true) {
+            Write-Host "`nPHP $argument1 has been uninstalled successfully"
+        } else {
+            Write-Host "`nFailed to uninstall PHP $argument1"
+        }
+        exit $exitCode
     }}
     "use" = [PSCustomObject]@{ description = "pvm use [version]`t`t:`tSwitch to use the specified version"; action = {
         if (-not $argument1) {
@@ -60,12 +64,19 @@ $actions = [ordered]@{
         if (-not (Is-Admin)) {
             # Relaunch as administrator with hidden window
             $arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" use `"$argument1`""
-            Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden
+            $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru
+            $process.WaitForExit()
+            $exitCode = $process.ExitCode
         } else {
-            Update-PHP-Version -variableName $USER_ENV["PHP_CURRENT_ENV_NAME"] -variableValue $argument1
+            $exitCode = Update-PHP-Version -variableName $USER_ENV["PHP_CURRENT_ENV_NAME"] -variableValue $argument1
         }
 
-        Write-Host "`nNow using PHP v$argument1"
+        if ($exitCode -eq $true) {
+            Write-Host "`nNow using PHP v$argument1"
+        } else {
+            Write-Host "`nSomething went wrong, Check your environment variables !"
+        }
+        exit $exitCode
     }}
     "set" = [PSCustomObject]@{ description = "pvm set [name] [value]`t:`tset a new evironment variable for a PHP version"; action = {
         if (-not $argument1) {
@@ -78,11 +89,18 @@ $actions = [ordered]@{
         }          
         if (-not (Is-Admin)) {
             $arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" set `"$argument1`" `"$argument2`""
-            Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden
+            $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru
+            $process.WaitForExit()
+            $exitCode = $process.ExitCode
         } else {
-            Set-PHP-Env -name $argument1 -value $argument2
+            $exitCode = Set-PHP-Env -name $argument1 -value $argument2
         }
-        Write-Host "`nEnvironment variable '$argument1' set to '$argument2' at the system level."
+        if ($exitCode -eq $true) {
+             Write-Host "`nEnvironment variable '$argument1' set to '$argument2' at the system level."
+        } else {
+            Write-Host "`nSomething went wrong, Check your environment variables !"
+        }
+        exit $exitCode
     }}
 }
 

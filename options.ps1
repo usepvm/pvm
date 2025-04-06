@@ -228,16 +228,17 @@ function Update-PHP-Version {
         $envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
         $variableValue = $envVars.Keys | Where-Object { $_ -match $variableValue } | Sort-Object | Select-Object -First 1
         if (-not $variableValue) {
-            Write-Host "The $variableName was not set !"
-            return;
+            Write-Host "`nThe $variableName was not set !"
+            return $false;
         }
         $variableValueContent = $envVars[$variableValue]
     }
     if (-not $variableValueContent) {
-        Write-Host "The $variableName was not found in the environment variables!"
-        return;
+        Write-Host "`nThe $variableName was not found in the environment variables!"
+        return $false;
     }
     [System.Environment]::SetEnvironmentVariable($variableName, $variableValueContent, [System.EnvironmentVariableTarget]::Machine)
+    return $true;
 }
 #endregion
 
@@ -245,11 +246,17 @@ function Update-PHP-Version {
 function Set-PHP-Env {
     param ($name, $value)
 
-    $content = [System.Environment]::GetEnvironmentVariable($value, [System.EnvironmentVariableTarget]::Machine)
-    if ($content) {
-        [System.Environment]::SetEnvironmentVariable($name, $content, [System.EnvironmentVariableTarget]::Machine)
-    } else {
-        [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine)
+    try {
+        $content = [System.Environment]::GetEnvironmentVariable($value, [System.EnvironmentVariableTarget]::Machine)
+        if ($content) {
+            [System.Environment]::SetEnvironmentVariable($name, $content, [System.EnvironmentVariableTarget]::Machine)
+        } else {
+            [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine)
+        }
+        return $true;
+    }
+    catch {
+        return $false;
     }
 }
 #endregion

@@ -24,9 +24,9 @@ pvm list [available [-f]]
 └─> This one lists the PHP installations. Type 'available' at the end to see what can be installed. Add `-f` to load from the online source.
 
 ```sh
-pvm install [version]
+pvm install [version] [-d]
 ```
-└─> Install a specific version
+└─> Install a specific version. Add `-d` to include xdebug
 
 ```sh
 pvm uninstall [version]

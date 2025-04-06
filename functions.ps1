@@ -8,6 +8,97 @@ function Get-Source-Urls {
     }
 }
 
+function getXdebugConfigV2 {
+    param($XDebugPath)
+
+    return @"
+
+        [xdebug]
+        zend_extension="$XDebugPath"
+        xdebug.remote_enable=1
+        xdebug.remote_host=127.0.0.1
+        xdebug.remote_port=9000
+"@
+}
+
+function getXdebugConfigV3 {
+    param($XDebugPath)
+
+    return @"
+
+        [xdebug]
+        zend_extension="$XDebugPath"
+        xdebug.mode=debug
+        xdebug.client_host=127.0.0.1
+        xdebug.client_port=9003
+"@
+}
+
+function Config-XDebug {
+    param ($version, $phpPath)
+    
+    # Fetch xdebug links
+    $baseUrl = "https://xdebug.org"
+    $url = "$baseUrl/download/historical"
+    $xDebugList = Get-XDebug-FROM-URL -url $url -version $version
+    # Get the latest xdebug version
+    if ($xDebugList.Count -eq 0) {
+        Write-Host "`nNo xdebug version found for $version"
+        return
+    }
+    $xDebugSelectedVersion = $xDebugList[0]
+    # Download the xdebug dll file & place the dll file in the xdebug env path
+    $XDebugDir = "$($USER_ENV["PHP_XDEBUG_PATH"])\$version"
+    $tmp = Make-Directory -path $XDebugDir
+    $fileUrl = "$baseUrl/$($xDebugSelectedVersion.href)"
+    $XDebugPath = "$XDebugDir\$($xDebugSelectedVersion.fileName)"
+    
+    Write-Host "`nDownloading XDEBUG v$($xDebugSelectedVersion.xDebugVersion)..."
+    Invoke-WebRequest -Uri $fileUrl -OutFile $XDebugPath
+    # config xdebug in the php.ini file
+    $xDebugConfig = getXdebugConfigV2 -XDebugPath $XDebugPath
+    if ($xDebugSelectedVersion.xDebugVersion -like "3.*") {
+        $xDebugConfig = getXdebugConfigV3 -XDebugPath $XDebugPath
+    }
+    
+    Write-Host "`nConfigure XDEBUG with PHP..."
+    $xDebugConfig = $xDebugConfig -replace "\ +"
+    Add-Content -Path "$phpPath\php.ini" -Value $xDebugConfig
+}
+
+function Get-XDebug-FROM-URL {
+    param ($url, $version)
+    
+    try {
+        $html = Invoke-WebRequest -Uri $url
+        $links = $html.Links
+        
+         # Filter the links to find versions that match the given version
+         $filteredLinks = $links | Where-Object { 
+            $_.href -match "php_xdebug-[\d\.]+-$version-.*\.dll" -and
+            $_.href -notmatch "nts"
+        }
+        
+        # Return the filtered links (PHP version names)
+        $formattedList = @()
+        $filteredLinks = $filteredLinks | ForEach-Object { 
+            # $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
+            $fileName = $_.href -split "/"
+            $fileName = $fileName[$fileName.Count - 1]
+            $xDebugVersion = "2.0"
+            if ($_.href -match "php_xdebug-([\d\.]+)") {
+                $xDebugVersion = $matches[1]
+            }
+            $formattedList += @{ href = $_.href; version = $version; xDebugVersion = $xDebugVersion; fileName = $fileName }
+        }
+        
+        return $formattedList
+    }
+    catch {
+        Write-Error "Failed to fetch versions from $url"
+    }
+    
+}
 
 function Get-PHP-Versions-From-Url {
     param ($url, $version)
@@ -92,10 +183,10 @@ function Download-PHP {
     $newDstination = Read-Host "`nThe PHP will be installed in this path $destination, type the new destination if you would like to change it"
 
     if ($newDstination) {
-        $directoryMade = Make-Directory -path $newDstination
         Set-Env -key "PHP_VERSIONS_PATH" -value $newDstination
         $destination = $newDstination
     }
+    $tmp = Make-Directory -path $destination
 
 
     Write-Host "`nDownloading PHP v$version..."

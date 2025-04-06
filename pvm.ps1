@@ -23,11 +23,7 @@ $actions = [ordered]@{
     }}
     "list" = [PSCustomObject]@{ description = "pvm list [available [-f]]`t:`tList the PHP installations. 'available' at the end to see what can be installed. '-f' to load from the online source."; action = {
         if ($argument1 -eq "available") {
-            if ($arguments -contains '-f') {
-                Get-Available-PHP-Versions -getFromSource $true
-            } else {
-                Get-Available-PHP-Versions
-            }
+            Get-Available-PHP-Versions -getFromSource ($arguments -contains '-f')
         } else {
             Display-Installed-PHP-Versions
         }

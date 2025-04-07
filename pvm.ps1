@@ -49,12 +49,8 @@ $actions = [ordered]@{
         } else {
             $exitCode = Uninstall-PHP -version $argument1
         }
-        if ($exitCode -eq $true) {
-            Write-Host "`nPHP $argument1 has been uninstalled successfully"
-        } else {
-            Write-Host "`nFailed to uninstall PHP $argument1"
-        }
-        exit $exitCode
+
+        Display-Msg-By-ExitCode -msgSuccess "`nPHP $argument1 has been uninstalled successfully" -msgError "`nFailed to uninstall PHP $argument1" -exitCode $exitCode
     }}
     "use" = [PSCustomObject]@{ description = "pvm use [version]`t`t:`tSwitch to use the specified version"; action = {
         if (-not $argument1) {
@@ -71,12 +67,7 @@ $actions = [ordered]@{
             $exitCode = Update-PHP-Version -variableName $USER_ENV["PHP_CURRENT_ENV_NAME"] -variableValue $argument1
         }
 
-        if ($exitCode -eq $true) {
-            Write-Host "`nNow using PHP v$argument1"
-        } else {
-            Write-Host "`nSomething went wrong, Check your environment variables !"
-        }
-        exit $exitCode
+        Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP v$argument1" -msgError "`nSomething went wrong, Check your environment variables !" -exitCode $exitCode
     }}
     "set" = [PSCustomObject]@{ description = "pvm set [name] [value]`t:`tset a new evironment variable for a PHP version"; action = {
         if (-not $argument1) {
@@ -95,12 +86,8 @@ $actions = [ordered]@{
         } else {
             $exitCode = Set-PHP-Env -name $argument1 -value $argument2
         }
-        if ($exitCode -eq $true) {
-             Write-Host "`nEnvironment variable '$argument1' set to '$argument2' at the system level."
-        } else {
-            Write-Host "`nSomething went wrong, Check your environment variables !"
-        }
-        exit $exitCode
+
+        Display-Msg-By-ExitCode -msgSuccess "`nEnvironment variable '$argument1' set to '$argument2' at the system level." -msgError "`nSomething went wrong, Check your environment variables !" -exitCode $exitCode
     }}
 }
 
@@ -117,11 +104,3 @@ if (-not $actions.Contains($operation)) {
 
 $actions[$operation].action.Invoke()
 Write-Host "`n"
-
-
-# In cas you're not an admin, we wait 1sec for the execution to complete on the admin window, 
-## and then reload the environment variables changes
-Start-Sleep -Seconds 1  
-
-Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1 -Global
-Update-SessionEnvironment

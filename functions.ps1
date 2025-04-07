@@ -264,3 +264,17 @@ function Set-Env {
     # Write the modified lines back to the .env file
     $envLines | Set-Content $ENV_FILE
 }
+
+
+function Display-Msg-By-ExitCode {
+    param($msgSuccess, $msgError, $exitCode)
+    if ($exitCode -eq $true) {
+        Write-Host "`n$msgSuccess"
+    } else {
+        Write-Host "`n$msgError"
+    }
+    Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1 -Global
+    Update-SessionEnvironment
+
+    exit $exitCode
+}

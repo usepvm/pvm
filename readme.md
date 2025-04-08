@@ -4,7 +4,16 @@
 
 Clone the repo and add the directory to you Path variable.
 
-Check the .env file and copy the `PHP_CURRENT_ENV_NAME` value to the end of your PATH variable : `;%php_current%`
+```sh
+git clone https://github.com/drissBoumlik/pvm
+cd pvm
+cp .env.example .env
+```
+
+Copy the `PHP_CURRENT_ENV_NAME` value to the end of your PATH variable : `;%php_current%`
+
+Copy the absolute path of the repository to the end of your PATH variable
+
 
 ## Usage
 

@@ -53,7 +53,7 @@ function Config-XDebug {
     $fileUrl = "$baseUrl/$($xDebugSelectedVersion.href)"
     $XDebugPath = "$XDebugDir\$($xDebugSelectedVersion.fileName)"
     
-    Write-Host "`nDownloading XDEBUG v$($xDebugSelectedVersion.xDebugVersion)..."
+    Write-Host "`nDownloading XDEBUG $($xDebugSelectedVersion.xDebugVersion)..."
     Invoke-WebRequest -Uri $fileUrl -OutFile $XDebugPath
     # config xdebug in the php.ini file
     $xDebugConfig = getXdebugConfigV2 -XDebugPath $XDebugPath
@@ -189,7 +189,7 @@ function Download-PHP {
     $tmp = Make-Directory -path $destination
 
 
-    Write-Host "`nDownloading PHP v$version..."
+    Write-Host "`nDownloading PHP $version..."
     
     foreach ($key in $urls.Keys) {
         $_url = $urls[$key]

@@ -28,7 +28,7 @@ $actions = [ordered]@{
             Display-Installed-PHP-Versions
         }
     }}
-    "install" = [PSCustomObject]@{ description = "pvm install <version> [-d]`t`t:`tThe version should be a specific version. '-d' to include xdebug"; action = {
+    "install" = [PSCustomObject]@{ description = "pvm install <version> [-d]`t:`tThe version should be a specific version. '-d' to include xdebug"; action = {
         if (-not $argument1) {
             Write-Host "`nPlease provide a PHP version to install"
             exit 1
@@ -67,7 +67,7 @@ $actions = [ordered]@{
             $exitCode = Update-PHP-Version -variableName $USER_ENV["PHP_CURRENT_ENV_NAME"] -variableValue $argument1
         }
 
-        Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP v$argument1" -msgError "`nSomething went wrong, Check your environment variables !" -exitCode $exitCode
+        Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $argument1" -msgError "`nSomething went wrong, Check your environment variables !" -exitCode $exitCode
     }}
     "set" = [PSCustomObject]@{ description = "pvm set [name] [value]`t:`tset a new evironment variable for a PHP version"; action = {
         if (-not $argument1) {

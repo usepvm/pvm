@@ -48,7 +48,16 @@ function Config-XDebug {
     }
     $xDebugSelectedVersion = $xDebugList[0]
     # Download the xdebug dll file & place the dll file in the xdebug env path
-    $XDebugDir = "$($USER_ENV["PHP_XDEBUG_PATH"])\$version"
+    $destination = $USER_ENV["PHP_XDEBUG_PATH"]
+    $newDstination = Read-Host "`nThe XDEBUG will be installed in this path $destination, type the new destination if you would like to change it"
+    
+    if ($newDstination) {
+        Set-Env -key "PHP_XDEBUG_PATH" -value $newDstination
+        $destination = $newDstination
+    }
+    $tmp = Make-Directory -path $destination
+
+    $XDebugDir = "$destination\$version"
     $tmp = Make-Directory -path $XDebugDir
     $fileUrl = "$baseUrl/$($xDebugSelectedVersion.href)"
     $XDebugPath = "$XDebugDir\$($xDebugSelectedVersion.fileName)"

@@ -13,7 +13,7 @@ if (-not $operation -and $args.Count -eq 0) {
 $arguments = $args
 
 $actions = [ordered]@{
-    "current" = [PSCustomObject]@{ description = "pvm current`t`t`t:`tDisplay active version"; action = { 
+    "current" = [PSCustomObject]@{ description = "pvm current ........................ Display active version."; action = { 
         $version = Get-Current-PHP-Version
         if (-not $version) {
             Write-Host "`nSomething went wrong, Check your environment variables !"
@@ -21,21 +21,21 @@ $actions = [ordered]@{
         }
         Write-Host "`nRunning version: PHP $version"
     }}
-    "list" = [PSCustomObject]@{ description = "pvm list [available [-f]]`t:`tList the PHP installations. 'available' at the end to see what can be installed. '-f' to load from the online source."; action = {
+    "list" = [PSCustomObject]@{ description = "pvm list [available [-f]] .......... List the PHP installations. 'available' at the end to see what can be installed. '-f' to load from the online source."; action = {
         if ($argument1 -eq "available") {
             Get-Available-PHP-Versions -getFromSource ($arguments -contains '-f')
         } else {
             Display-Installed-PHP-Versions
         }
     }}
-    "install" = [PSCustomObject]@{ description = "pvm install <version> [-d]`t:`tThe version should be a specific version. '-d' to include xdebug"; action = {
+    "install" = [PSCustomObject]@{ description = "pvm install <version> [-d] ......... The version must be a specific version. '-d' to include xdebug."; action = {
         if (-not $argument1) {
             Write-Host "`nPlease provide a PHP version to install"
             exit 1
         }
         Install-PHP -version $argument1 -includeXDebug ($arguments -contains '-d')
     }}
-    "uninstall" = [PSCustomObject]@{ description = "pvm uninstall <version>`t:`tThe version must be a specific version"; action = {
+    "uninstall" = [PSCustomObject]@{ description = "pvm uninstall <version> ............ The version must be a specific version."; action = {
         if (-not $argument1) {
             Write-Host "`nPlease provide a PHP version to uninstall"
             exit 1
@@ -52,7 +52,7 @@ $actions = [ordered]@{
 
         Display-Msg-By-ExitCode -msgSuccess "`nPHP $argument1 has been uninstalled successfully" -msgError "`nFailed to uninstall PHP $argument1" -exitCode $exitCode
     }}
-    "use" = [PSCustomObject]@{ description = "pvm use [version]`t`t:`tSwitch to use the specified version"; action = {
+    "use" = [PSCustomObject]@{ description = "pvm use [version] .................. Switch to use the specified version."; action = {
         if (-not $argument1) {
             Write-Host "`nPlease provide a PHP version to use"
             exit 1
@@ -69,7 +69,7 @@ $actions = [ordered]@{
 
         Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $argument1" -msgError "`nSomething went wrong, Check your environment variables !" -exitCode $exitCode
     }}
-    "set" = [PSCustomObject]@{ description = "pvm set [name] [value]`t:`tset a new evironment variable for a PHP version"; action = {
+    "set" = [PSCustomObject]@{ description = "pvm set [name] [value] ............. Set a new evironment variable for a PHP version."; action = {
         if (-not $argument1) {
             Write-Host "`nPlease provide an environment variable name"
             exit 1

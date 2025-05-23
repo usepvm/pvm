@@ -188,15 +188,7 @@ function Download-PHP {
     $version = $versionObject.version
 
     $destination = $USER_ENV["PHP_VERSIONS_PATH"]
-    
-    $newDstination = Read-Host "`nThe PHP will be installed in this path $destination, type the new destination if you would like to change it"
-
-    if ($newDstination) {
-        Set-Env -key "PHP_VERSIONS_PATH" -value $newDstination
-        $destination = $newDstination
-    }
     $tmp = Make-Directory -path $destination
-
 
     Write-Host "`nDownloading PHP $version..."
     

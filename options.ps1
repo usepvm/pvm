@@ -196,6 +196,10 @@ function Install-PHP {
         $matchingVersions.GetEnumerator() | ForEach-Object {
             $selectedVersionObject = $_.Value | Select-Object -Last 1
         }
+        if (-not $selectedVersionObject) {
+            Write-Host "`nNo matching version found for '$version'."
+            exit 1
+        }
     }
 
     $destination = Download-PHP -version $selectedVersionObject -customDir $dirValue

@@ -1,6 +1,20 @@
 
 $ProgressPreference = 'SilentlyContinue'
 
+
+function Get-Env {
+    $envData = @{}
+    Get-Content $ENV_FILE | Where-Object { $_ -match "(.+)=(.+)" } | ForEach-Object {
+        $key, $value = $_ -split '=', 2
+        $envData[$key.Trim()] = $value.Trim()
+    }
+    return $envData
+}
+
+
+$Global:ENV_FILE = "$PSScriptRoot\.env"
+$Global:USER_ENV = Get-Env
+
 function Get-Source-Urls {
     return [ordered]@{
         "Archives" = "https://windows.php.net/downloads/releases/archives"
@@ -241,15 +255,6 @@ function Extract-Zip {
     [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
 }
 
-
-function Get-Env {
-    $envData = @{}
-    Get-Content $ENV_FILE | Where-Object { $_ -match "(.+)=(.+)" } | ForEach-Object {
-        $key, $value = $_ -split '=', 2
-        $envData[$key.Trim()] = $value.Trim()
-    }
-    return $envData
-}
 
 function Set-Env {
     param ($key, $value)

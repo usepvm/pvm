@@ -3,8 +3,6 @@
 
 $ProgressPreference = 'SilentlyContinue'
 
-$Global:ENV_FILE = "$PSScriptRoot\.env"
-$Global:USER_ENV = Get-Env
 
 
 #region current

@@ -108,5 +108,9 @@ if (-not $actions.Contains($operation)) {
     exit 1
 }
 
-$actions[$operation].action.Invoke()
-Write-Host "`n"
+try {
+    $actions[$operation].action.Invoke()
+} catch {
+    Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
+    exit 1
+}

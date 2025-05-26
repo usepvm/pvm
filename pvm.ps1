@@ -28,12 +28,18 @@ $actions = [ordered]@{
             Display-Installed-PHP-Versions
         }
     }}
-    "install" = [PSCustomObject]@{ description = "pvm install <version> [-d] ......... The version must be a specific version. '-d' to include xdebug."; action = {
+    "install" = [PSCustomObject]@{ description = "pvm install <version> [--xdebug] ......... The version must be a specific version. '--xdebug' to include xdebug."; action = {
+        $dirArg = $arguments | Where-Object { $_ -like '--dir=*' }
+        
+        if ($dirArg) {
+            $dirValue = $dirArg -replace '^--dir=', ''
+        }
+        
         if (-not $argument1) {
             Write-Host "`nPlease provide a PHP version to install"
             exit 1
         }
-        Install-PHP -version $argument1 -includeXDebug ($arguments -contains '-d')
+        Install-PHP -version $argument1 -includeXDebug ($arguments -contains '--xdebug') -customDir $dirValue
     }}
     "uninstall" = [PSCustomObject]@{ description = "pvm uninstall <version> ............ The version must be a specific version."; action = {
         if (-not $argument1) {

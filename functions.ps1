@@ -35,7 +35,7 @@ function getXdebugConfigV3 {
 }
 
 function Config-XDebug {
-    param ($version, $phpPath)
+    param ($version, $phpPath, $customDir = $null)
     
     # Fetch xdebug links
     $baseUrl = "https://xdebug.org"
@@ -49,16 +49,15 @@ function Config-XDebug {
     $xDebugSelectedVersion = $xDebugList[0]
     # Download the xdebug dll file & place the dll file in the xdebug env path
     $destination = $USER_ENV["PHP_XDEBUG_PATH"]
-    $newDstination = Read-Host "`nThe XDEBUG will be installed in this path $destination, type the new destination if you would like to change it"
     
-    if ($newDstination) {
-        Set-Env -key "PHP_XDEBUG_PATH" -value $newDstination
-        $destination = $newDstination
+    if ($customDir) {
+        $destination = "$customDir\xdebug"
     }
-    $tmp = Make-Directory -path $destination
+
+    Make-Directory -path $destination
 
     $XDebugDir = "$destination\$version"
-    $tmp = Make-Directory -path $XDebugDir
+    Make-Directory -path $XDebugDir
     $fileUrl = "$baseUrl/$($xDebugSelectedVersion.href)"
     $XDebugPath = "$XDebugDir\$($xDebugSelectedVersion.fileName)"
     
@@ -157,13 +156,11 @@ function Get-PHP-Versions {
 }
 
 function Make-Directory {
-    param ($path)
+    param ( [string]$path )
 
-    if (Test-Path -Path $path -PathType Container) {
-        return $false
+    if (-not (Test-Path -Path $path -PathType Container)) {
+        mkdir $path | Out-Null
     }
-    mkdir $path | Out-Null
-    return $true
 }
 
 function Download-PHP-From-Url {
@@ -180,7 +177,7 @@ function Download-PHP-From-Url {
 }
 
 function Download-PHP {
-    param ($versionObject)
+    param ($versionObject, $customDir = $null)
     
     $urls = Get-Source-Urls
     
@@ -188,7 +185,10 @@ function Download-PHP {
     $version = $versionObject.version
 
     $destination = $USER_ENV["PHP_VERSIONS_PATH"]
-    $tmp = Make-Directory -path $destination
+    if ($customDir) {
+        $destination = $customDir
+    }
+    Make-Directory -path $destination
 
     Write-Host "`nDownloading PHP $version..."
     

@@ -161,7 +161,7 @@ function Uninstall-PHP {
 
 #region install
 function Install-PHP {
-    param ($version, $includeXDebug = $false)
+    param ($version, $includeXDebug = $false, $customDir = $null)
 
     Write-Host "`nLoading the matching versions..."
     $matchingVersions = Get-PHP-Versions -version $version
@@ -200,7 +200,7 @@ function Install-PHP {
         }
     }
 
-    $destination = Download-PHP -version $selectedVersionObject
+    $destination = Download-PHP -version $selectedVersionObject -customDir $dirValue
     
     Write-Host "`nExtracting the downloaded zip ..."
     $fileName = $selectedVersionObject.fileName
@@ -209,7 +209,7 @@ function Install-PHP {
     
     if ($includeXDebug) {
         $version = ($selectedVersionObject.version -split '\.')[0..1] -join '.'
-        Config-XDebug -version $version -phpPath "$destination\$fileNameDirectory"
+        Config-XDebug -version $version -phpPath "$destination\$fileNameDirectory" -customDir $dirValue
     }
     
     

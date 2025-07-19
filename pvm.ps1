@@ -13,6 +13,25 @@ if (-not $operation -and $args.Count -eq 0) {
 $arguments = $args
 
 $actions = [ordered]@{
+    "setup" = [PSCustomObject]@{ description = "pvm setup / Setup the environment variables and paths for PHP."; action = {
+        # check if running as admin
+        if (-not (Is-Admin)) {
+            # Relaunch as administrator with hidden window
+            $arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`" setup"
+            $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru
+            $process.WaitForExit()
+            $exitCode = $process.ExitCode
+        } else {
+            $exitCode = Setup-PVM
+        }
+
+        if ($exitCode -eq 2) {
+            Write-Host "`nPATH already contains PVM and PHP environment reference."
+            exit $exitCode
+        } else {
+            Display-Msg-By-ExitCode -msgSuccess "`nPVM has been setup successfully" -msgError "`nFailed to setup PVM" -exitCode $exitCode
+        }
+    }}
     "current" = [PSCustomObject]@{ description = "pvm current / Display active version."; action = { 
         $version = Get-Current-PHP-Version
         if (-not $version) {

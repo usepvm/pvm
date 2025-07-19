@@ -21,6 +21,42 @@ function Get-Current-PHP-Version {
 #endregion
 
 #region list
+
+function Setup-PVM {
+
+    try {
+        # Get current PATH
+        $path = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+        $modified = $false
+
+        # Copy the PHP_CURRENT_ENV_NAME value to the end of your PATH variable
+        # Add PHP path if not already present
+        $phpEnvName = $USER_ENV["PHP_CURRENT_ENV_NAME"]
+        if ($path -notlike "*$phpEnvName*") {
+            [Environment]::SetEnvironmentVariable($phpEnvName, "---", [System.EnvironmentVariableTarget]::Machine)
+            $path += ";%$phpEnvName%"
+            $modified = $true
+        }
+
+        # Copy the absolute path of PVM to the end of your PATH variable
+        $pvmPath = $PSScriptRoot
+        if ($path -notlike "*$pvmPath*") {
+            [Environment]::SetEnvironmentVariable("tools", $pvmPath, [System.EnvironmentVariableTarget]::Machine)
+            $path += ";%tools%"
+            $modified = $true
+        }
+        
+        if ($modified) {
+            [Environment]::SetEnvironmentVariable("Path", $path, [System.EnvironmentVariableTarget]::Machine)
+            return $true
+        }
+        return 2
+    }
+    catch {
+        return $false
+    }
+}
+
 function Display-Installed-PHP-Versions {
     $currentVersion = Get-Current-PHP-Version
     $installedPhp = Get-Installed-PHP-Versions

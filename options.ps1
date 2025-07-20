@@ -41,8 +41,8 @@ function Setup-PVM {
         # Copy the absolute path of PVM to the end of your PATH variable
         $pvmPath = $PSScriptRoot
         if ($path -notlike "*$pvmPath*") {
-            [Environment]::SetEnvironmentVariable("tools", $pvmPath, [System.EnvironmentVariableTarget]::Machine)
-            $path += ";%tools%"
+            [Environment]::SetEnvironmentVariable("pvm", $pvmPath, [System.EnvironmentVariableTarget]::Machine)
+            $path += ";%pvm%"
             $modified = $true
         }
         

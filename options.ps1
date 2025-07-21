@@ -15,6 +15,11 @@ function Get-Current-PHP-Version {
             $currentPhpVersionKey = $_
         }
     }
+    if (-not $currentPhpVersionKey) {
+        if ($currentPhpVersion -match 'php-([\d\.]+)') {
+            $currentPhpVersionKey = $matches[1]
+        }
+    }
     $currentPhpVersionKey = $currentPhpVersionKey -replace 'php', ''
     return $currentPhpVersionKey
 }

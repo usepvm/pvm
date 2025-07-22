@@ -274,7 +274,7 @@ function Set-Env {
 
 function Display-Msg-By-ExitCode {
     param($msgSuccess, $msgError, $exitCode)
-    if ($exitCode -eq $true) {
+    if ($exitCode -eq 0) {
         Write-Host "`n$msgSuccess"
     } else {
         Write-Host "`n$msgError"

@@ -186,10 +186,10 @@ function Uninstall-PHP {
         $phpPath = [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
         Remove-Item -Path $phpPath -Recurse -Force
         [System.Environment]::SetEnvironmentVariable($name, $null, [System.EnvironmentVariableTarget]::Machine);
-        return $true
+        return 0
     }
     catch {
-        return $false
+        return -1
     }
 }
 
@@ -274,16 +274,16 @@ function Update-PHP-Version {
         $variableValue = $envVars.Keys | Where-Object { $_ -match $variableValue } | Sort-Object | Select-Object -First 1
         if (-not $variableValue) {
             Write-Host "`nThe $variableName was not set !"
-            return $false;
+            return -1;
         }
         $variableValueContent = $envVars[$variableValue]
     }
     if (-not $variableValueContent) {
         Write-Host "`nThe $variableName was not found in the environment variables!"
-        return $false;
+        return -1;
     }
     [System.Environment]::SetEnvironmentVariable($variableName, $variableValueContent, [System.EnvironmentVariableTarget]::Machine)
-    return $true;
+    return 0;
 }
 #endregion
 
@@ -298,10 +298,10 @@ function Set-PHP-Env {
         } else {
             [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine)
         }
-        return $true;
+        return 0;
     }
     catch {
-        return $false;
+        return -1;
     }
 }
 #endregion

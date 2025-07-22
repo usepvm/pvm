@@ -22,10 +22,14 @@ $actions = [ordered]@{
             $process.WaitForExit()
             $exitCode = $process.ExitCode
         } else {
-            $exitCode = Setup-PVM
+            if (-not (Is-PVM-Setup)) {
+                $exitCode = Setup-PVM
+            } else {
+                $exitCode = 1
+            }
         }
 
-        if ($exitCode -eq 2) {
+        if ($exitCode -eq 1) {
             Write-Host "`nPATH already contains PVM and PHP environment reference."
             exit $exitCode
         } else {

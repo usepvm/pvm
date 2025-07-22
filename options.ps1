@@ -30,35 +30,32 @@ function Get-Current-PHP-Version {
 function Setup-PVM {
 
     try {
-        # Get current PATH
-        $path = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
-        $modified = $false
+        $path = $newPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
 
-        # Copy the PHP_CURRENT_ENV_NAME value to the end of your PATH variable
-        # Add PHP path if not already present
         $phpEnvName = $USER_ENV["PHP_CURRENT_ENV_NAME"]
-        if ($path -notlike "*$phpEnvName*") {
-            [Environment]::SetEnvironmentVariable($phpEnvName, "---", [System.EnvironmentVariableTarget]::Machine)
-            $path += ";%$phpEnvName%"
-            $modified = $true
+        $phpEnvValue = [Environment]::GetEnvironmentVariable($phpEnvName, [System.EnvironmentVariableTarget]::Machine)
+        if ($phpEnvValue -eq $null -or $path -notlike "*$phpEnvValue*") {
+            $newPath += ";%$phpEnvName%"
+            [Environment]::SetEnvironmentVariable($phpEnvName, 'null', [System.EnvironmentVariableTarget]::Machine)
         }
 
-        # Copy the absolute path of PVM to the end of your PATH variable
         $pvmPath = $PSScriptRoot
         if ($path -notlike "*$pvmPath*") {
+            $newPath += ";%pvm%"
+        }
+        $pvmEnvValue = [Environment]::GetEnvironmentVariable("pvm", [System.EnvironmentVariableTarget]::Machine)
+        if ($pvmEnvValue -eq $null) {
             [Environment]::SetEnvironmentVariable("pvm", $pvmPath, [System.EnvironmentVariableTarget]::Machine)
-            $path += ";%pvm%"
-            $modified = $true
         }
         
-        if ($modified) {
-            [Environment]::SetEnvironmentVariable("Path", $path, [System.EnvironmentVariableTarget]::Machine)
-            return $true
+        if ($newPath -ne $path) {
+            [Environment]::SetEnvironmentVariable("Path", $newPath, [System.EnvironmentVariableTarget]::Machine)
+            return 0
         }
-        return 2
+        return 1
     }
     catch {
-        return $false
+        return -1
     }
 }
 

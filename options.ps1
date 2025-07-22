@@ -86,14 +86,11 @@ function Display-Installed-PHP-Versions {
 
 function Cache-Fetched-PHP-Versions {
     param ($listPhpVersions)
-    
-    # $jsonObject = $listPhpVersions.GetEnumerator() | ForEach-Object {
-    #     $key = $_.Key
-    #     $value = $_.Value
-    #     [PSCustomObject]@{ $key = $value }
-    # }
+
     $jsonString = $listPhpVersions | ConvertTo-Json -Depth 3
-    Set-Content -Path "$PSScriptRoot\available_versions.json" -Value $jsonString
+    $versionsDataPath = "$PSScriptRoot\storage\available_versions.json"
+    Make-Directory -path (Split-Path $versionsDataPath)
+    Set-Content -Path $versionsDataPath -Value $jsonString
 }
 
 function Get-From-Source {
@@ -131,7 +128,7 @@ function Get-From-Source {
 
 function Get-From-Cache {
     $list = @{}
-    $jsonData = Get-Content "$PSScriptRoot\available_versions.json" | ConvertFrom-Json
+    $jsonData = Get-Content "$PSScriptRoot\storage\available_versions.json" | ConvertFrom-Json
     $jsonData.PSObject.Properties.GetEnumerator() | ForEach-Object {
         $key = $_.Name
         $value = $_.Value

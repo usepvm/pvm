@@ -155,6 +155,9 @@ try {
     }
 
     $actions[$operation].action.Invoke()
+    
+    Optimize-SystemPath
+    
 } catch {
     Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
     exit 1

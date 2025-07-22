@@ -306,3 +306,41 @@ function Is-PVM-Setup {
     
     return $true;
 }
+
+
+function Optimize-SystemPath {
+    $path = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+    $envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
+
+    $pathBak = [Environment]::GetEnvironmentVariable("Path.bak", [System.EnvironmentVariableTarget]::Machine)
+    if ($pathBak -ne $null) {
+        $response = Read-Host "`nA backup of the PATH variable already exists. Would you like to overwrite it? (y/n)"
+    }
+    if ($pathBak -eq $null -or ($response -eq 'y' -or $response -eq 'Y')) {
+        [Environment]::SetEnvironmentVariable("Path.bak", $path, [System.EnvironmentVariableTarget]::Machine)
+        Write-Host "`nBackup of the PATH variable created successfully."
+    }
+    
+    # Saving to log anyway
+    $logPath = "$PSScriptRoot\storage\pvm.log"
+    Make-Directory -path (Split-Path $logPath)
+    Add-Content -Path $logPath -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Original PATH:`n$path`n"
+    Write-Host "`nOriginal PATH variable saved to $logPath"
+
+    $envVars.Keys | ForEach-Object {
+        $envName = $_
+        $envValue = $envVars[$envName]
+        
+        if (
+            ($null -ne $envValue) -and
+            ($path -like "*$envValue*") -and
+            ($envValue -notlike "*\Windows*") -and
+            ($envValue -notlike "*\System32*")
+        ) {
+            $envValue = $envValue.TrimEnd(';')
+            $envValue = [regex]::Escape($envValue)
+            $path = $path -replace ";$envValue;", ";%$envName%;"
+            [Environment]::SetEnvironmentVariable("Path", $path, [System.EnvironmentVariableTarget]::Machine)
+        }
+    }
+}

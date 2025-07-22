@@ -284,3 +284,25 @@ function Display-Msg-By-ExitCode {
 
     exit $exitCode
 }
+
+
+function Is-PVM-Setup {
+
+    $phpEnvName = $USER_ENV["PHP_CURRENT_ENV_NAME"]
+    $path = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+    $phpEnvValue = [Environment]::GetEnvironmentVariable($phpEnvName, [System.EnvironmentVariableTarget]::Machine)
+    $pvmPath = [Environment]::GetEnvironmentVariable("pvm", [System.EnvironmentVariableTarget]::Machine)
+    
+    if (
+        (($pvmPath -eq $null) -or 
+            (($path -notlike "*$pvmPath*") -and
+            ($path -notlike "*pvm*"))) -or 
+        (($phpEnvValue -eq $null) -or
+            (($path -notlike "*$phpEnvValue*") -and
+            ($path -notlike "*$phpEnvName*")))
+    ) {
+        return $false
+    }
+    
+    return $true;
+}

@@ -149,6 +149,11 @@ if (-not $actions.Contains($operation)) {
 }
 
 try {
+    if ($operation -ne "setup" -and (-not (Is-PVM-Setup))) {
+        Write-Host "`nPVM is not setup. Please run 'pvm setup' first."
+        exit 1
+    }
+
     $actions[$operation].action.Invoke()
 } catch {
     Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow

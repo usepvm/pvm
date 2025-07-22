@@ -196,67 +196,74 @@ function Uninstall-PHP {
 function Install-PHP {
     param ($version, $includeXDebug = $false, $customDir = $null)
 
-    Write-Host "`nLoading the matching versions..."
-    $matchingVersions = Get-PHP-Versions -version $version
+    try {
+        Write-Host "`nLoading the matching versions..."
+        $matchingVersions = Get-PHP-Versions -version $version
 
-    if ($matchingVersions.Count -eq 0) {
-        Write-Host "`nNo matching PHP versions found for '$version'."
-        return
-    }
-    
-    $selectedVersionObject = $null
-
-    if ($matchingVersions.Count -gt 1) {
-        # Display matching versions
-        Display-Version-List -matchingVersions $matchingVersions
-
-        # Prompt user to choose the version
-        $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
-
-        if (-not $selectedVersionInput) {
-            Write-Host "`nInstallation cancelled."
-            return
+        if ($matchingVersions.Count -eq 0) {
+            Write-Host "`nNo matching PHP versions found for '$version'."
+            exit -1
         }
         
-        foreach ($entry in $matchingVersions.GetEnumerator()) {
-            $selectedVersionObject = $entry.Value | Where-Object { $_.version -eq $selectedVersionInput }
-            if ($selectedVersionObject) {
-                break
+        $selectedVersionObject = $null
+
+        if ($matchingVersions.Count -gt 1) {
+            # Display matching versions
+            Display-Version-List -matchingVersions $matchingVersions
+
+            # Prompt user to choose the version
+            $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
+
+            if (-not $selectedVersionInput) {
+                Write-Host "`nInstallation cancelled."
+                exit -1
+            }
+            
+            foreach ($entry in $matchingVersions.GetEnumerator()) {
+                $selectedVersionObject = $entry.Value | Where-Object { $_.version -eq $selectedVersionInput }
+                if ($selectedVersionObject) {
+                    break
+                }
             }
         }
-    }
-    
-    
-    if (-not $selectedVersionObject) {
-        $matchingVersions.GetEnumerator() | ForEach-Object {
-            $selectedVersionObject = $_.Value | Select-Object -Last 1
-        }
+        
+        
         if (-not $selectedVersionObject) {
-            Write-Host "`nNo matching version found for '$version'."
-            exit 1
+            $matchingVersions.GetEnumerator() | ForEach-Object {
+                $selectedVersionObject = $_.Value | Select-Object -Last 1
+            }
+            if (-not $selectedVersionObject) {
+                Write-Host "`nNo matching version found for '$version'."
+                exit -1
+            }
         }
-    }
 
-    $destination = Download-PHP -version $selectedVersionObject -customDir $dirValue
-    
-    Write-Host "`nExtracting the downloaded zip ..."
-    $fileName = $selectedVersionObject.fileName
-    $fileNameDirectory = $fileName -replace ".zip",""
-    Extract-And-Configure -path "$destination\$fileName" -fileNamePath "$destination\$fileNameDirectory"
-    
-    if ($includeXDebug) {
-        $version = ($selectedVersionObject.version -split '\.')[0..1] -join '.'
-        Config-XDebug -version $version -phpPath "$destination\$fileNameDirectory" -customDir $dirValue
+        $destination = Download-PHP -version $selectedVersionObject -customDir $dirValue
+        
+        Write-Host "`nExtracting the downloaded zip ..."
+        $fileName = $selectedVersionObject.fileName
+        $fileNameDirectory = $fileName -replace ".zip",""
+        Extract-And-Configure -path "$destination\$fileName" -fileNamePath "$destination\$fileNameDirectory"
+        
+        if ($includeXDebug) {
+            $version = ($selectedVersionObject.version -split '\.')[0..1] -join '.'
+            Config-XDebug -version $version -phpPath "$destination\$fileNameDirectory" -customDir $dirValue
+        }
+        
+        
+        Write-Host "`nAdding the PHP to the environment variables ..."
+        $phpVersionNumber = $selectedVersionObject.version
+        $phpEnvVarName = "php$phpVersionNumber"
+        # Set-Php-Env -name $phpEnvVarName -value "$destination\$selectedVersion"
+        $phpPath = "$destination\$fileNameDirectory"
+        pvm set $phpEnvVarName $phpPath
+        Write-Host "`nRun 'pvm use $phpVersionNumber' to use this version"
+
+        return 0
     }
-    
-    
-    Write-Host "`nAdding the PHP to the environment variables ..."
-    $phpVersionNumber = $selectedVersionObject.version
-    $phpEnvVarName = "php$phpVersionNumber"
-    # Set-Php-Env -name $phpEnvVarName -value "$destination\$selectedVersion"
-    $phpPath = "$destination\$fileNameDirectory"
-    pvm set $phpEnvVarName $phpPath
-    Write-Host "`nRun 'pvm use $phpVersionNumber' to use this version"
+    catch {
+        return -1
+    }
 }
 #endregion
 
@@ -264,23 +271,28 @@ function Install-PHP {
 function Update-PHP-Version {
     param ($variableName, $variableValue)
 
-    $phpVersion = "php$variableValue"
-    $variableValueContent = [System.Environment]::GetEnvironmentVariable($phpVersion, [System.EnvironmentVariableTarget]::Machine)
-    if (-not $variableValueContent) {
-        $envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
-        $variableValue = $envVars.Keys | Where-Object { $_ -match $variableValue } | Sort-Object | Select-Object -First 1
-        if (-not $variableValue) {
-            Write-Host "`nThe $variableName was not set !"
+    try {
+        $phpVersion = "php$variableValue"
+        $variableValueContent = [System.Environment]::GetEnvironmentVariable($phpVersion, [System.EnvironmentVariableTarget]::Machine)
+        if (-not $variableValueContent) {
+            $envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
+            $variableValue = $envVars.Keys | Where-Object { $_ -match $variableValue } | Sort-Object | Select-Object -First 1
+            if (-not $variableValue) {
+                Write-Host "`nThe $variableName was not set !"
+                return -1;
+            }
+            $variableValueContent = $envVars[$variableValue]
+        }
+        if (-not $variableValueContent) {
+            Write-Host "`nThe $variableName was not found in the environment variables!"
             return -1;
         }
-        $variableValueContent = $envVars[$variableValue]
+        [System.Environment]::SetEnvironmentVariable($variableName, $variableValueContent, [System.EnvironmentVariableTarget]::Machine)
+        return 0;
     }
-    if (-not $variableValueContent) {
-        Write-Host "`nThe $variableName was not found in the environment variables!"
-        return -1;
+    catch {
+        return -1
     }
-    [System.Environment]::SetEnvironmentVariable($variableName, $variableValueContent, [System.EnvironmentVariableTarget]::Machine)
-    return 0;
 }
 #endregion
 

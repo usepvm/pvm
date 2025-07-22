@@ -64,7 +64,7 @@ $actions = [ordered]@{
             $dirValue = $dirArg -replace '^--dir=', ''
         }
 
-        Install-PHP -version $version -includeXDebug ($arguments -contains '--xdebug') -customDir $dirValue
+        $exitCode = Install-PHP -version $version -includeXDebug ($arguments -contains '--xdebug') -customDir $dirValue
     }}
     "uninstall" = [PSCustomObject]@{ description = "pvm uninstall <version> / The version must be a specific version."; action = {
         $version = $arguments[0]

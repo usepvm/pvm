@@ -1,23 +1,20 @@
 # PHP Version Manager for Windows
 
-## Installation
+## Installation & Setup
 
 Clone the repo and add the directory to you Path variable.
 
 ```sh
 git clone https://github.com/drissBoumlik/pvm
-
-cd pvm
-cp .env.example .env
 ```
 
 Check .env and edit with your own values and
 then run this command to setup pvm
 
 ```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force
-
-.\pvm.ps1 setup
+cd pvm
+cp .env.example .env
+pvm setup
 ```
 
 
@@ -47,7 +44,7 @@ pvm list [available [-f]]
 Install a specific version. Add `-d` to include xdebug
 
 ```sh
-pvm install [version] [-d]
+pvm install [version] [--xdebug]
 ```
 
 

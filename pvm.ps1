@@ -39,7 +39,7 @@ $actions = [ordered]@{
     "current" = [PSCustomObject]@{ description = "pvm current / Display active version."; action = { 
         $version = Get-Current-PHP-Version
         if (-not $version) {
-            Write-Host "`nSomething went wrong, Check your environment variables !"
+            Write-Host "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
             exit 0
         }
         Write-Host "`nRunning version: PHP $version"
@@ -102,7 +102,7 @@ $actions = [ordered]@{
             $exitCode = Update-PHP-Version -variableName $USER_ENV["PHP_CURRENT_ENV_NAME"] -variableValue $version
         }
 
-        Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $version" -msgError "`nSomething went wrong, Check your environment variables !" -exitCode $exitCode
+        Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $version" -msgError "`nFailed to switch to PHP $version" -exitCode $exitCode
     }}
     "set" = [PSCustomObject]@{ description = "pvm set [name] [value] / Set a new evironment variable for a PHP version."; action = {
         $varName = $arguments[0]
@@ -125,7 +125,7 @@ $actions = [ordered]@{
             $exitCode = Set-PHP-Env -name $varName -value $varValue
         }
 
-        Display-Msg-By-ExitCode -msgSuccess "`nEnvironment variable '$varName' set to '$varValue' at the system level." -msgError "`nSomething went wrong, Check your environment variables !" -exitCode $exitCode
+        Display-Msg-By-ExitCode -msgSuccess "`nEnvironment variable '$varName' set to '$varValue' at the system level." -msgError "`nFailed to set environment variable '$varName'" -exitCode $exitCode
     }}
 }
 

@@ -249,8 +249,36 @@ function Get-XDebug-FROM-URL {
     
 }
 
+function Enable-Opcache {
+    param ($phpPath)
+    
+    try {
+        Write-Host "`nEnabling Opcache for PHP at $phpPath ..."
+
+        $phpIniPath = "$phpPath\php.ini"
+        if (-not (Test-Path $phpIniPath)) {
+            Write-Error "php.ini not found at: $phpIniPath"
+            return
+        }
+        
+        $phpIniContent = Get-Content $phpIniPath
+        $phpIniContent = $phpIniContent | ForEach-Object {
+            $_ -replace '^\s*;\s*(extension_dir\s*=)', '$1' `
+               -replace '^\s*;\s*(zend_extension\s*=\s*opcache)', '$1' `
+               -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `
+               -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
+        }
+        Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
+        Write-Host "`nOpcache enabled successfully for PHP at $phpPath"
+    }
+    catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Enable-Opcache : Failed to enable opcache for PHP at $phpPath" -data $_.Exception.Message
+        Write-Host "`nFailed to enable opcache for PHP at $phpPath"
+    }
+}
+
 function Install-PHP {
-    param ($version, $includeXDebug = $false, $customDir = $null)
+    param ($version, $customDir = $null, $includeXDebug = $false, $enableOpcache = $false)
 
     try {
         Write-Host "`nLoading the matching versions..."
@@ -297,19 +325,23 @@ function Install-PHP {
         
         Write-Host "`nExtracting the downloaded zip ..."
         $fileName = $selectedVersionObject.fileName
-        $fileNameDirectory = $fileName -replace ".zip",""
-        Extract-And-Configure -path "$destination\$fileName" -fileNamePath "$destination\$fileNameDirectory"
+        $phpDirectoryName = $fileName -replace ".zip",""
+        Extract-And-Configure -path "$destination\$fileName" -fileNamePath "$destination\$phpDirectoryName"
+        
+        if ($enableOpcache) {
+            Enable-Opcache -phpPath "$destination\$phpDirectoryName"
+        }
         
         if ($includeXDebug) {
             $version = ($selectedVersionObject.version -split '\.')[0..1] -join '.'
-            Config-XDebug -version $version -phpPath "$destination\$fileNameDirectory" -customDir $dirValue
+            Config-XDebug -version $version -phpPath "$destination\$phpDirectoryName" -customDir $dirValue
         }
         
         Write-Host "`nAdding the PHP to the environment variables ..."
         $phpVersionNumber = $selectedVersionObject.version
         $phpEnvVarName = "php$phpVersionNumber"
         # Set-Php-Env -name $phpEnvVarName -value "$destination\$selectedVersion"
-        $phpPath = "$destination\$fileNameDirectory"
+        $phpPath = "$destination\$phpDirectoryName"
         & "$PVMRoot\pvm" set $phpEnvVarName $phpPath
         Write-Host "`nRun 'pvm use $phpVersionNumber' to use this version"
 

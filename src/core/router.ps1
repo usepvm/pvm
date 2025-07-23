@@ -71,7 +71,7 @@ function Get-Actions {
                 }
             }
 
-            $exitCode = Install-PHP -version $version -includeXDebug ($arguments -contains '--xdebug') -customDir $dirValue
+            $exitCode = Install-PHP -version $version -customDir $dirValue -includeXDebug ($arguments -contains '--xdebug') -enableOpcache ($arguments -contains '--opcache')
         }}
         "uninstall" = [PSCustomObject]@{ command = "pvm uninstall <version>"; description = "The version must be a specific version."; action = {
             $version = $arguments[0]

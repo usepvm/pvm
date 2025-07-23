@@ -92,3 +92,43 @@ function Log-Data {
         return -1
     }
 }
+
+function Optimize-SystemPath {
+    param($shouldOverwrite = $false)
+    
+    try {
+        $path = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+        $envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
+        $pathBak = [Environment]::GetEnvironmentVariable($PATH_VAR_BACKUP_NAME, [System.EnvironmentVariableTarget]::Machine)
+
+        if (($pathBak -eq $null) -or $shouldOverwrite) {
+            [Environment]::SetEnvironmentVariable($PATH_VAR_BACKUP_NAME, $path, [System.EnvironmentVariableTarget]::Machine)
+            Write-Host "`nBackup of the PATH variable created successfully."
+        }
+        
+        # Saving Path to log
+        $output = Log-Data -logPath $PATH_VAR_BACKUP_PATH -message "Original PATH" -data $path
+
+        $envVars.Keys | ForEach-Object {
+            $envName = $_
+            $envValue = $envVars[$envName]
+            
+            if (
+                ($null -ne $envValue) -and
+                ($path -like "*$envValue*") -and
+                ($envValue -notlike "*\Windows*") -and
+                ($envValue -notlike "*\System32*")
+            ) {
+                $envValue = $envValue.TrimEnd(';')
+                $envValue = [regex]::Escape($envValue)
+                $path = $path -replace ";$envValue;", ";%$envName%;"
+                [Environment]::SetEnvironmentVariable("Path", $path, [System.EnvironmentVariableTarget]::Machine)
+            }
+        }
+        
+        return $output
+    } catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Optimize-SystemPath: Failed to optimize system PATH variable" -data $_.Exception.Message
+        return -1
+    }
+}

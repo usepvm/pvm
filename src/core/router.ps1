@@ -6,10 +6,13 @@ function Get-Actions {
     $script:arguments = $arguments
     
     return [ordered]@{
-        "setup" = [PSCustomObject]@{ command = "pvm setup"; description = "Setup the environment variables and paths for PHP."; action = {
+        "setup" = [PSCustomObject]@{ command = "pvm setup [--overwrite-path-backup]"; description = "Setup the environment variables and paths for PHP. Use '--overwrite-path-backup' to overwrite the existing backup of the PATH variable."; action = {
+
+            $shouldOverwrite = ($arguments -contains '--overwrite-path-backup')
+            $overwritePathBackup = $arguments[0]
 
             if (-not (Is-Admin)) {
-                $arguments = "-ExecutionPolicy Bypass -File `"$PVMEntryPoint`" setup"
+                $arguments = "-ExecutionPolicy Bypass -File `"$PVMEntryPoint`" setup `"$overwritePathBackup`""
                 $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru
                 $process.WaitForExit()
                 $exitCode = $process.ExitCode
@@ -19,6 +22,13 @@ function Get-Actions {
                 } else {
                     $exitCode = 1
                 }
+            }
+            
+            $output = Optimize-SystemPath -shouldOverwrite $shouldOverwrite 
+            if ($output -eq 0) {
+                Write-Host "`nOriginal PATH variable saved to $PATH_VAR_BACKUP_PATH"
+            } else {
+                Write-Host "`nFailed to log the original PATH variable."
             }
             
             if ($exitCode -eq 1) {

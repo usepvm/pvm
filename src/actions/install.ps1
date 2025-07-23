@@ -208,8 +208,10 @@ function Config-XDebug {
         Write-Host "`nConfigure XDEBUG with PHP..."
         $xDebugConfig = $xDebugConfig -replace "\ +"
         Add-Content -Path "$phpPath\php.ini" -Value $xDebugConfig
+        Write-Host "`nXDEBUG configured successfully for PHP version $version"
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Config-XDebug : Failed to configure XDebug for PHP version $version" -data $_.Exception.Message
+        Write-Host "`nFailed to configure XDebug for PHP version $version"
     }
 }
 

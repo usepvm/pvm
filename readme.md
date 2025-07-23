@@ -13,7 +13,7 @@ then run this command to setup pvm
 
 ```powershell
 cd pvm
-copy .env.example .env
+copy .env.example .env # Check .env for custom settings
 pvm setup
 ```
 

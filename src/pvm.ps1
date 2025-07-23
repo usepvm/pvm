@@ -41,7 +41,6 @@ try {
     }
 
     $actions[$operation].action.Invoke()
-    # $output = Optimize-SystemPath
 } catch {
     $logged = Log-Data -logPath $LOG_ERROR_PATH -message "PVM: An error occurred during operation '$operation'" -data $_.Exception.Message
     Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow

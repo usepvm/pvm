@@ -88,7 +88,6 @@ function Log-Data {
         Add-Content -Path $logPath -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $message :`n$data`n"
         return 0
     } catch {
-        # $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Log-Data: Failed to log data to '$logPath'" -data $_.Exception.Message
         return -1
     }
 }
@@ -103,7 +102,6 @@ function Optimize-SystemPath {
 
         if (($pathBak -eq $null) -or $shouldOverwrite) {
             [Environment]::SetEnvironmentVariable($PATH_VAR_BACKUP_NAME, $path, [System.EnvironmentVariableTarget]::Machine)
-            Write-Host "`nBackup of the PATH variable created successfully."
         }
         
         # Saving Path to log
@@ -122,11 +120,11 @@ function Optimize-SystemPath {
                 $envValue = $envValue.TrimEnd(';')
                 $envValue = [regex]::Escape($envValue)
                 $path = $path -replace ";$envValue;", ";%$envName%;"
-                [Environment]::SetEnvironmentVariable("Path", $path, [System.EnvironmentVariableTarget]::Machine)
             }
         }
+        [Environment]::SetEnvironmentVariable("Path", $path, [System.EnvironmentVariableTarget]::Machine)
         
-        return $output
+        return 0
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Optimize-SystemPath: Failed to optimize system PATH variable" -data $_.Exception.Message
         return -1

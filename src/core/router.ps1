@@ -61,14 +61,12 @@ function Get-Actions {
             }
 
             $dirArg = $arguments | Where-Object { $_ -like '--dir=*' }
-            
-            if ($dirArg) {
+            if ($null -ne $dirArg) {
                 $dirValue = $dirArg -replace '^--dir=', ''
-            }
-            
-            if (-not $dirValue) {
-                Write-Host "`nPlease provide a directory to install PHP. Use '--dir=<path>' to specify the directory."
-                exit 1
+                if (-not $dirValue) {
+                    Write-Host "`nPlease provide a directory to install PHP. Use '--dir=<path>' to specify the directory."
+                    exit 1
+                }
             }
 
             $exitCode = Install-PHP -version $version -includeXDebug ($arguments -contains '--xdebug') -customDir $dirValue

@@ -21,7 +21,7 @@ if (-not $operation -and $args.Count -eq 0) {
 $actions = Get-Actions -arguments $args
 
 if (-not $actions.Contains($operation)) {
-    $version = Get-Current-PHP-Version
+    $version = (Get-Current-PHP-Version).version
     Write-Host "`nRunning version : $version"
     Write-Host "`nUsage:`n"
     $maxLineLength = 60

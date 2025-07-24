@@ -41,12 +41,26 @@ function Get-Actions {
             }
         }}
         "current" = [PSCustomObject]@{ command = "pvm current"; description = "Display active version."; action = { 
-            $version = Get-Current-PHP-Version
-            if (-not $version) {
+            $result = Get-Current-PHP-Version
+            if (-not $result.version) {
                 Write-Host "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
                 exit 0
             }
-            Write-Host "`nRunning version: PHP $version"
+            Write-Host "`nRunning version: PHP $($result.version)"
+            
+            if ($result.status.opcache) {
+                Write-Host "- OPcache is enabled" -ForegroundColor DarkGreen
+            } else {
+                Write-Host "- OPcache is disabled" -ForegroundColor DarkYellow
+            }
+
+            if ($result.status.xdebug) {
+                Write-Host "- Xdebug is enabled" -ForegroundColor DarkGreen
+            } else {
+                Write-Host "- Xdebug is disabled" -ForegroundColor DarkYellow
+            }
+            
+            Write-Host $msg
         }}
         "list" = [PSCustomObject]@{ command = "pvm list [available [-f]]"; description = "Type 'available' to list installable items. Add '-f' to force reload from source."; action = {
             if ($arguments -contains "available") {

@@ -270,8 +270,7 @@ function Enable-Opcache {
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
         Write-Host "`nOpcache enabled successfully for PHP at $phpPath"
-    }
-    catch {
+    } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Enable-Opcache : Failed to enable opcache for PHP at $phpPath" -data $_.Exception.Message
         Write-Host "`nFailed to enable opcache for PHP at $phpPath"
     }

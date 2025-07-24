@@ -123,7 +123,7 @@ function Get-Installed-PHP-Versions {
 function Display-Installed-PHP-Versions {
 
     try {
-        $currentVersion = Get-Current-PHP-Version
+        $currentVersion = (Get-Current-PHP-Version).version
         $installedPhp = Get-Installed-PHP-Versions
         
         if ($installedPhp.Count -eq 0) {

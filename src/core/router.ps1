@@ -48,16 +48,12 @@ function Get-Actions {
             }
             Write-Host "`nRunning version: PHP $($result.version)"
             
-            if ($result.status.opcache) {
-                Write-Host "- OPcache is enabled" -ForegroundColor DarkGreen
-            } else {
-                Write-Host "- OPcache is disabled" -ForegroundColor DarkYellow
-            }
-
-            if ($result.status.xdebug) {
-                Write-Host "- Xdebug is enabled" -ForegroundColor DarkGreen
-            } else {
-                Write-Host "- Xdebug is disabled" -ForegroundColor DarkYellow
+            foreach ($ext in $result.status.Keys) {
+                if ($result.status[$ext]) {
+                    Write-Host "- $ext is enabled" -ForegroundColor DarkGreen
+                } else {
+                    Write-Host "- $ext is disabled" -ForegroundColor DarkYellow
+                }
             }
             
             Write-Host $msg

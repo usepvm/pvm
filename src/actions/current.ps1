@@ -46,14 +46,14 @@ function Get-Current-PHP-Version {
                 $currentPhpVersionKey = $matches[1]
             }
         }
-        $currentPhpVersionKey = $currentPhpVersionKey -replace 'php', ''
+        if ($null -ne $currentPhpVersionKey) {
+            $currentPhpVersionKey = $currentPhpVersionKey -replace 'php', ''
+        }
         
-        $result = @{
+        return @{
             version = $currentPhpVersionKey
             status = Get-PHP-Status -phpPath $currentPhpVersionPath
         }
-        
-        return $result
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Current-PHP-Version: Failed to retrieve current PHP version" -data $_.Exception.Message
         return @{

@@ -46,9 +46,14 @@ function Get-Current-PHP-Version {
                 $currentPhpVersionKey = $matches[1]
             }
         }
-        if ($null -ne $currentPhpVersionKey) {
-            $currentPhpVersionKey = $currentPhpVersionKey -replace 'php', ''
+        if ($currentPhpVersionKey -eq $null) {
+            return @{
+                version = $null
+                status = $null
+            }
         }
+        
+        $currentPhpVersionKey = $currentPhpVersionKey -replace 'php', ''
         
         return @{
             version = $currentPhpVersionKey

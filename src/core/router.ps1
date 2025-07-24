@@ -44,9 +44,14 @@ function Get-Actions {
             $result = Get-Current-PHP-Version
             if (-not $result.version) {
                 Write-Host "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
-                exit 0
+                exit 1
             }
             Write-Host "`nRunning version: PHP $($result.version)"
+            
+            if (-not $result.status) {
+                Write-Host "No status information available for the current PHP version." -ForegroundColor Yellow
+                exit 1
+            }
             
             foreach ($ext in $result.status.Keys) {
                 if ($result.status[$ext]) {

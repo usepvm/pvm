@@ -14,7 +14,7 @@ Get-ChildItem "$PSScriptRoot\core\*.ps1" | ForEach-Object { . $_.FullName }
 Get-ChildItem "$PSScriptRoot\actions\*.ps1" | ForEach-Object { . $_.FullName }
 
 if (-not $operation -and $args.Count -eq 0) {
-    Write-Host "pvm --help to get the list of commands"
+    Write-Host "`npvm --help to get the list of commands"
     exit 1
 }
 

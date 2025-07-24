@@ -250,10 +250,10 @@ function Get-XDebug-FROM-URL {
 }
 
 function Enable-Opcache {
-    param ($phpPath)
+    param ($version, $phpPath)
     
     try {
-        Write-Host "`nEnabling Opcache for PHP at $phpPath ..."
+        Write-Host "`nEnabling Opcache for PHP..."
 
         $phpIniPath = "$phpPath\php.ini"
         if (-not (Test-Path $phpIniPath)) {
@@ -269,10 +269,10 @@ function Enable-Opcache {
                -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
-        Write-Host "`nOpcache enabled successfully for PHP at $phpPath"
+        Write-Host "`nOpcache enabled successfully for PHP version $version"
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Enable-Opcache : Failed to enable opcache for PHP at $phpPath" -data $_.Exception.Message
-        Write-Host "`nFailed to enable opcache for PHP at $phpPath"
+        Write-Host "`nFailed to enable opcache for PHP version $version"
     }
 }
 
@@ -328,7 +328,7 @@ function Install-PHP {
         Extract-And-Configure -path "$destination\$fileName" -fileNamePath "$destination\$phpDirectoryName"
         
         if ($enableOpcache) {
-            Enable-Opcache -phpPath "$destination\$phpDirectoryName"
+            Enable-Opcache -version $version -phpPath "$destination\$phpDirectoryName"
         }
         
         if ($includeXDebug) {

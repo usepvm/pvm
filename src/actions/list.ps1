@@ -127,7 +127,7 @@ function Display-Installed-PHP-Versions {
         $installedPhp = Get-Installed-PHP-Versions
         
         if ($installedPhp.Count -eq 0) {
-            Write-Host "No PHP versions found"
+            Write-Host "`nNo PHP versions found"
             exit 0
         }
 

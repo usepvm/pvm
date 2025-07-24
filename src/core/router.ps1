@@ -124,6 +124,22 @@ function Get-Actions {
 
             Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $version" -msgError "`nFailed to switch to PHP $version" -exitCode $exitCode
         }}
+        "toggle" = [PSCustomObject]@{ command = "pvm toggle [xdebug / opcach]"; description = "Toggle the specified extension on or off."; action = {
+            
+            $extension = $arguments[0]
+            if (-not $extension) {
+                Write-Host "`nPlease specify an extension to toggle (xdebug or opcache)"
+                exit 1
+            }
+            if ($extension -notin @('xdebug', 'opcache')) {
+                Write-Host "`nInvalid extension specified. Use 'xdebug' or 'opcache'."
+                exit 1
+            }
+
+            $exitCode = Toggle-PHP-Extension -extensionName $extension
+            
+            Display-Msg-By-ExitCode -msgSuccess "`nExtension '$extension' has been toggled successfully." -msgError "`nFailed to toggle extension '$extension'" -exitCode $exitCode
+        }} 
         "set" = [PSCustomObject]@{ command = "pvm set <name> <value>"; description = "Set a new evironment variable for a PHP version."; action = {
             $varName = $arguments[0]
             $varValue = $arguments[1]

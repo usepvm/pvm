@@ -3,7 +3,7 @@ function Toggle-PHP-Extension {
     param($extensionsNames)
     
     try {
-        $currentPhpVersionPath = [System.Environment]::GetEnvironmentVariable($USER_ENV["PHP_CURRENT_ENV_NAME"], [System.EnvironmentVariableTarget]::Machine)
+        $currentPhpVersionPath = [System.Environment]::GetEnvironmentVariable($PHP_CURRENT_ENV_NAME, [System.EnvironmentVariableTarget]::Machine)
         if (-not $currentPhpVersionPath) {
             Write-Host "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
             return 1

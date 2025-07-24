@@ -4,6 +4,8 @@ param( [string]$operation )
 
 $ProgressPreference = 'SilentlyContinue'
 
+# Load helper functions
+. $PSScriptRoot\helpers\helpers.ps1
 
 # Load configuration
 Get-ChildItem "$PSScriptRoot\core\*.ps1" | ForEach-Object { . $_.FullName }

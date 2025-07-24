@@ -6,7 +6,7 @@ function Setup-PVM {
     try {
         $path = $newPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
 
-        $phpEnvName = $USER_ENV["PHP_CURRENT_ENV_NAME"]
+        $phpEnvName = $PHP_CURRENT_ENV_NAME
         $phpEnvValue = [Environment]::GetEnvironmentVariable($phpEnvName, [System.EnvironmentVariableTarget]::Machine)
         if ($phpEnvValue -eq $null -or $path -notlike "*$phpEnvValue*") {
             $newPath += ";%$phpEnvName%"

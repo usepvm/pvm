@@ -122,7 +122,7 @@ function Get-Actions {
                 $process.WaitForExit()
                 $exitCode = $process.ExitCode
             } else {
-                $exitCode = Update-PHP-Version -variableName $USER_ENV["PHP_CURRENT_ENV_NAME"] -variableValue $version
+                $exitCode = Update-PHP-Version -variableName $PHP_CURRENT_ENV_NAME -variableValue $version
             }
 
             Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $version" -msgError "`nFailed to switch to PHP $version" -exitCode $exitCode

@@ -95,7 +95,7 @@ function Download-PHP {
         $fileName = $versionObject.fileName
         $version = $versionObject.version
 
-        $destination = $USER_ENV["PHP_VERSIONS_PATH"]
+        $destination = $PHP_VERSIONS_PATH
         if ($customDir) {
             $destination = $customDir
         }
@@ -184,7 +184,7 @@ function Config-XDebug {
         }
         $xDebugSelectedVersion = $xDebugList[0]
         # Download the xdebug dll file & place the dll file in the xdebug env path
-        $destination = $USER_ENV["PHP_XDEBUG_PATH"]
+        $destination = $PHP_XDEBUG_PATH
         
         if ($customDir) {
             $destination = "$customDir\xdebug"

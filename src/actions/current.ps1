@@ -33,11 +33,11 @@ function Get-PHP-Status {
 function Get-Current-PHP-Version {
 
     try {
-        $currentPhpVersionPath = [System.Environment]::GetEnvironmentVariable($USER_ENV["PHP_CURRENT_ENV_NAME"], [System.EnvironmentVariableTarget]::Machine)
+        $currentPhpVersionPath = [System.Environment]::GetEnvironmentVariable($PHP_CURRENT_ENV_NAME, [System.EnvironmentVariableTarget]::Machine)
         $currentPhpVersionKey = $null
         $envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
         $envVars.Keys | Where-Object { $_ -match "php\d(\.\d+)*" }  | Where-Object {
-            if ($currentPhpVersionPath -eq $envVars[$_] -and -not($USER_ENV["PHP_CURRNET_ENV_NAME"] -eq $_)) {
+            if ($currentPhpVersionPath -eq $envVars[$_] -and -not($PHP_CURRENT_ENV_NAME -eq $_)) {
                 $currentPhpVersionKey = $_
             }
         }

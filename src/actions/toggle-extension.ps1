@@ -18,7 +18,10 @@ function Toggle-PHP-Extension {
         $iniContent = Get-Content $phpIniPath
         $newContent = @()
         $foundAny = $false
-        $status = @{ opcache = $false; xdebug = $false }
+        $status = @{}
+        foreach ($extensionName in $extensionsNames) {
+            $status[$extensionName] = $false
+        }
 
         foreach ($line in $iniContent) {
             $trimmed = $line.Trim()

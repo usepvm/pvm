@@ -82,7 +82,7 @@ function Get-Available-PHP-Versions {
         }
         
         if ($fetchedVersionsGrouped.Count -eq 0) {
-            Write-Host "`nCache empty!, Reading from the internet"
+            Write-Host "`nCache empty!, Reading from the internet..."
             $fetchedVersionsGrouped = Get-From-Source
         }
         

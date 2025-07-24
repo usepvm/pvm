@@ -22,7 +22,9 @@ $actions = Get-Actions -arguments $args
 
 if (-not $actions.Contains($operation)) {
     $version = (Get-Current-PHP-Version).version
-    Write-Host "`nRunning version : $version"
+    if ($version) {
+        Write-Host "`nRunning version : $version"
+    }
     Write-Host "`nUsage:`n"
     $maxLineLength = 60
     $actions.GetEnumerator() | ForEach-Object {

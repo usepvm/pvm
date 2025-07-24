@@ -1,6 +1,4 @@
 
-# TODO: Works only in Admin mode 
-
 param( [string]$operation )
 
 

@@ -70,7 +70,7 @@ function Get-Actions {
                 Display-Installed-PHP-Versions
             }
         }}
-        "install" = [PSCustomObject]@{ command = "pvm install <version> [--xdebug] [--dir=/absolute/path/]"; description = "The version must be a specific version. '--xdebug' to include xdebug. '--dir' to specify the installation directory."; action = {
+        "install" = [PSCustomObject]@{ command = "pvm install <version> [--xdebug] [--opcache] [--dir=/absolute/path/]"; description = "The version must be a specific version. '--xdebug' to include xdebug. '--dir' to specify the installation directory."; action = {
             $version = $arguments[0]        
             if (-not $version) {
                 Write-Host "`nPlease provide a PHP version to install"
@@ -86,7 +86,9 @@ function Get-Actions {
                 }
             }
 
-            $exitCode = Install-PHP -version $version -customDir $dirValue -includeXDebug ($arguments -contains '--xdebug') -enableOpcache ($arguments -contains '--opcache')
+            $includeXDebug = ($arguments -contains '--xdebug')
+            $enableOpcache = ($arguments -contains '--opcache')
+            $exitCode = Install-PHP -version $version -customDir $dirValue -includeXDebug $includeXDebug -enableOpcache $enableOpcache
         }}
         "uninstall" = [PSCustomObject]@{ command = "pvm uninstall <version>"; description = "The version must be a specific version."; action = {
             $version = $arguments[0]

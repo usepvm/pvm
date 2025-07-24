@@ -43,42 +43,6 @@ function Display-Msg-By-ExitCode {
 }
 
 
-function Get-Env {
-    
-    try {
-        $envData = @{}
-        Get-Content $ENV_FILE | Where-Object { $_ -match "(.+)=(.+)" } | ForEach-Object {
-            $key, $value = $_ -split '=', 2
-            $envData[$key.Trim()] = $value.Trim()
-        }
-        return $envData
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Env: Failed to retrieve environment variables" -data $_.Exception.Message
-        return @{}
-    }
-}
-
-
-function Set-Env {
-    param ($key, $value)
-
-    try {
-        # Read the file into an array of lines
-        $envLines = Get-Content $ENV_FILE
-
-        # Modify the line with the key
-        $envLines = $envLines | ForEach-Object {
-            if ($_ -match "^$key=") { "$key=$value" }
-            else { $_ }
-        }
-
-        # Write the modified lines back to the .env file
-        $envLines | Set-Content $ENV_FILE
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Set-Env: Failed to set environment variable '$key'" -data $_.Exception.Message
-    }
-
-}
 
 function Log-Data {
     param ($logPath, $message, $data)

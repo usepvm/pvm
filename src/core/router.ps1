@@ -97,6 +97,12 @@ function Get-Actions {
                 Write-Host "`nPlease provide a PHP version to uninstall"
                 exit 1
             }
+
+            $currentVersion = (Get-Current-PHP-Version).version
+            if ($currentVersion -and ($version -eq $currentVersion)) {
+                Read-Host "`nYou are trying to uninstall the currently active PHP version ($version). Press Enter to continue or Ctrl+C to cancel."
+            }
+
             if (-not (Is-Admin)) {
                 $arguments = "-ExecutionPolicy Bypass -File `"$PVMEntryPoint`" uninstall `"$version`""
                 $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru

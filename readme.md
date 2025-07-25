@@ -5,16 +5,15 @@
 Clone the repo and add the directory to you Path variable.
 
 ```sh
-git clone https://github.com/drissBoumlik/pvm
+git clone https://github.com/drissboumlik/pvm
+
+cd pvm
 ```
 
-Check .env and edit with your own values and
-then run this command to setup pvm
-
-```powershell
-cd pvm
-copy .env.example .env # Check .env for custom settings
-pvm setup
+Run this command to setup pvm
+- Use '--overwrite-path-backup' option to overwrite the backup of the PATH variable (if it exists).
+```sh
+pvm setup [--overwrite-path-backup]
 ```
 
 
@@ -27,39 +26,49 @@ pvm help
 ```
 
 
-Display active version
+Display active PHP version
 
 ```sh
 pvm current
 ```
 
 
-This one lists the PHP installations. Type 'available' at the end to see what can be installed. Add `-f` to load from the online source.
+This one lists the PHP installations. Type 'available' at the end to see what can be installed. Add `-f` or `--force` to load from the online source.
 
 ```sh
-pvm list [available [-f]]
+pvm list [available [-f]] # or --force
 ```
 
 
-Install a specific version. Add `-d` to include xdebug
+Install a specific version. 
+- Add `--xdebug` to enable xdebug
+- Add `--opcache` to enable opcache
+- Add `--dir=/absolute/path/` to specify a custom installation directory
 
 ```sh
-pvm install [version] [--xdebug]
+pvm install <version> [--xdebug] [--opcache] [--dir=/absolute/path/]
 ```
 
 
 Uninstall a specific version
 
 ```sh
-pvm uninstall [version]
+pvm uninstall <version>
 ```
 
 
 Switch to use the specified version
 
 ```sh
-pvm use [version]
+pvm use <version>
+```
+
+
+Toggle the specified extension on or off
+
+```sh
+pvm toggle [xdebug] [opcach]
 ```
 
 > [!NOTE]  
-> Most of the commands edits or adds to the  system environment variables, to reload the updates without restarting your terminal, you need to install chocolatey, and run `refreshenv` command
+> Most of the commands edits or adds to the system environment variables, to reload the updates without restarting your terminal, you need to install chocolatey, and run `refreshenv` command

@@ -1,4 +1,38 @@
 
+function Get-All-EnvVars {
+
+    try {
+        return [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
+    } catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-All-EnvVars: Failed to get all environment variables" -data $_.Exception.Message
+        return $null
+    }
+}
+
+function Get-EnvVar-ByName {
+    param ( [string]$name )
+
+    try {
+        return [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
+    }
+    catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Env-ByName: Failed to get environment variable '$name'" -data $_.Exception.Message
+        return $null
+    }
+}
+
+function Set-EnvVar {
+    param ( [string]$name, [string]$value )
+
+    try {
+        [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine);
+    }
+    catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Set-EnvVar: Failed to set environment variable '$name'" -data $_.Exception.Message
+        return -1
+    }
+}
+
 
 function Make-Directory {
     param ( [string]$path )
@@ -60,12 +94,12 @@ function Optimize-SystemPath {
     param($shouldOverwrite = $false)
     
     try {
-        $path = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
-        $envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
-        $pathBak = [Environment]::GetEnvironmentVariable($PATH_VAR_BACKUP_NAME, [System.EnvironmentVariableTarget]::Machine)
+        $path = Get-EnvVar-ByName -name "Path"
+        $envVars = Get-All-EnvVars
+        $pathBak = Get-EnvVar-ByName -name $PATH_VAR_BACKUP_NAME
 
         if (($pathBak -eq $null) -or $shouldOverwrite) {
-            [Environment]::SetEnvironmentVariable($PATH_VAR_BACKUP_NAME, $path, [System.EnvironmentVariableTarget]::Machine)
+            Set-EnvVar -name $PATH_VAR_BACKUP_NAME -value $path
         }
         
         # Saving Path to log
@@ -86,7 +120,7 @@ function Optimize-SystemPath {
                 $path = $path -replace ";$envValue;", ";%$envName%;"
             }
         }
-        [Environment]::SetEnvironmentVariable("Path", $path, [System.EnvironmentVariableTarget]::Machine)
+        Set-EnvVar -name "Path" -value $path
         
         return 0
     } catch {

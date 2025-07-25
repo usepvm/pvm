@@ -13,9 +13,9 @@ function Is-PVM-Setup {
 
     try {
         $phpEnvName = $PHP_CURRENT_ENV_NAME
-        $path = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
-        $phpEnvValue = [Environment]::GetEnvironmentVariable($phpEnvName, [System.EnvironmentVariableTarget]::Machine)
-        $pvmPath = [Environment]::GetEnvironmentVariable("pvm", [System.EnvironmentVariableTarget]::Machine)
+        $path = Get-EnvVar-ByName -name "Path"
+        $phpEnvValue = Get-EnvVar-ByName -name $phpEnvName
+        $pvmPath = Get-EnvVar-ByName -name "pvm"
         
         if (
             (($pvmPath -eq $null) -or 

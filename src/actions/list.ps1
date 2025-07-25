@@ -122,7 +122,7 @@ function Get-Available-PHP-Versions {
 function Get-Installed-PHP-Versions {
     
     try {
-        $envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
+        $envVars = Get-All-EnvVars
         return $envVars.Keys | Where-Object { $_ -match "php\d(\.\d+)*" } | Sort-Object { [version]($_ -replace 'php', '') }
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Installed-PHP-Versions: Failed to retrieve installed PHP versions" -data $_.Exception.Message

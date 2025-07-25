@@ -4,9 +4,9 @@ function Update-PHP-Version {
 
     try {
         $phpVersion = "php$variableValue"
-        $variableValueContent = [System.Environment]::GetEnvironmentVariable($phpVersion, [System.EnvironmentVariableTarget]::Machine)
+        $variableValueContent = Get-EnvVar-ByName -name $phpVersion
         if (-not $variableValueContent) {
-            $envVars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
+            $envVars = Get-All-EnvVars
             $variableValue = $envVars.Keys | Where-Object { $_ -match $variableValue } | Sort-Object | Select-Object -First 1
             if (-not $variableValue) {
                 Write-Host "`nThe $variableName was not set !"
@@ -18,7 +18,7 @@ function Update-PHP-Version {
             Write-Host "`nThe $variableName was not found in the environment variables!"
             return -1;
         }
-        [System.Environment]::SetEnvironmentVariable($variableName, $variableValueContent, [System.EnvironmentVariableTarget]::Machine)
+        Set-EnvVar -name $variableName -value $variableValueContent
         return 0;
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Update-PHP-Version: Failed to update PHP version for '$variableName'" -data $_.Exception.Message

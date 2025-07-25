@@ -5,14 +5,14 @@ function Uninstall-PHP {
 
     try {
         $name = "php$version"
-        $phpPath = [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
+        $phpPath = Get-EnvVar-ByName -name $name
 
         if (-not $phpPath) {
             return -2
         }
 
         Remove-Item -Path $phpPath -Recurse -Force
-        [System.Environment]::SetEnvironmentVariable($name, $null, [System.EnvironmentVariableTarget]::Machine);
+        Set-EnvVar -name $name -value $null
         return 0
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Uninstall-PHP: Failed to uninstall PHP version '$version'" -data $_.Exception.Message

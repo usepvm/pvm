@@ -4,26 +4,25 @@
 function Setup-PVM {
 
     try {
-        $path = $newPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+        $path = $newPath = Get-EnvVar-ByName -name "Path"
 
-        $phpEnvName = $PHP_CURRENT_ENV_NAME
-        $phpEnvValue = [Environment]::GetEnvironmentVariable($phpEnvName, [System.EnvironmentVariableTarget]::Machine)
+        $phpEnvValue = Get-EnvVar-ByName -name $PHP_CURRENT_ENV_NAME
         if ($phpEnvValue -eq $null -or $path -notlike "*$phpEnvValue*") {
-            $newPath += ";%$phpEnvName%"
-            [Environment]::SetEnvironmentVariable($phpEnvName, 'null', [System.EnvironmentVariableTarget]::Machine)
+            $newPath += ";%$PHP_CURRENT_ENV_NAME%"
+            Set-EnvVar -name $PHP_CURRENT_ENV_NAME -value 'null'
         }
 
         $pvmPath = $PVMRoot
         if ($path -notlike "*$pvmPath*") {
             $newPath += ";%pvm%"
         }
-        $pvmEnvValue = [Environment]::GetEnvironmentVariable("pvm", [System.EnvironmentVariableTarget]::Machine)
+        $pvmEnvValue = Get-EnvVar-ByName -name "pvm"
         if ($pvmEnvValue -eq $null) {
-            [Environment]::SetEnvironmentVariable("pvm", $pvmPath, [System.EnvironmentVariableTarget]::Machine)
+            Set-EnvVar -name "pvm" -value $pvmPath
         }
         
         if ($newPath -ne $path) {
-            [Environment]::SetEnvironmentVariable("Path", $newPath, [System.EnvironmentVariableTarget]::Machine)
+            Set-EnvVar -name "Path" -value $newPath
             return 0
         }
         return 1

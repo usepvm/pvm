@@ -3,11 +3,11 @@ function Set-PHP-Env {
     param ($name, $value)
 
     try {
-        $content = [System.Environment]::GetEnvironmentVariable($value, [System.EnvironmentVariableTarget]::Machine)
+        $content = Get-EnvVar-ByName -name $value
         if ($content) {
-            [System.Environment]::SetEnvironmentVariable($name, $content, [System.EnvironmentVariableTarget]::Machine)
+            Set-EnvVar -name $name -value $content
         } else {
-            [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine)
+            Set-EnvVar -name $name -value $value
         }
         return 0;
     } catch {

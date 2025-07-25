@@ -95,7 +95,7 @@ function Download-PHP {
         $fileName = $versionObject.fileName
         $version = $versionObject.version
 
-        $destination = $PHP_VERSIONS_PATH
+        $destination = "$STORAGE_PATH\php\versions"
         if ($customDir) {
             $destination = $customDir
         }
@@ -170,7 +170,7 @@ function getXdebugConfigV3 {
 }
 
 function Config-XDebug {
-    param ($version, $phpPath, $customDir = $null)
+    param ($version, $phpPath)
     
     try {
         # Fetch xdebug links
@@ -183,26 +183,15 @@ function Config-XDebug {
             return
         }
         $xDebugSelectedVersion = $xDebugList[0]
-        # Download the xdebug dll file & place the dll file in the xdebug env path
-        $destination = $PHP_XDEBUG_PATH
-        
-        if ($customDir) {
-            $destination = "$customDir\xdebug"
-        }
 
-        Make-Directory -path $destination
-
-        $XDebugDir = "$destination\$version"
-        Make-Directory -path $XDebugDir
-        $fileUrl = "$baseUrl/$($xDebugSelectedVersion.href)"
-        $XDebugPath = "$XDebugDir\$($xDebugSelectedVersion.fileName)"
+        Make-Directory -path "$phpPath\ext"
         
         Write-Host "`nDownloading XDEBUG $($xDebugSelectedVersion.xDebugVersion)..."
-        Invoke-WebRequest -Uri $fileUrl -OutFile $XDebugPath
+        Invoke-WebRequest -Uri "$baseUrl/$($xDebugSelectedVersion.href)" -OutFile "$phpPath\ext\$($xDebugSelectedVersion.fileName)"
         # config xdebug in the php.ini file
-        $xDebugConfig = getXdebugConfigV2 -XDebugPath $XDebugPath
+        $xDebugConfig = getXdebugConfigV2 -XDebugPath $($xDebugSelectedVersion.fileName)
         if ($xDebugSelectedVersion.xDebugVersion -like "3.*") {
-            $xDebugConfig = getXdebugConfigV3 -XDebugPath $XDebugPath
+            $xDebugConfig = getXdebugConfigV3 -XDebugPath $($xDebugSelectedVersion.fileName)
         }
         
         Write-Host "`nConfigure XDEBUG with PHP..."
@@ -324,7 +313,12 @@ function Install-PHP {
             }
         }
 
-        $destination = Download-PHP -version $selectedVersionObject -customDir $dirValue
+        $destination = Download-PHP -version $selectedVersionObject -customDir $customDir
+        
+        if (-not $destination) {
+            Write-Host "`nFailed to download PHP version $version."
+            exit -1
+        }
         
         Write-Host "`nExtracting the downloaded zip ..."
         $fileName = $selectedVersionObject.fileName
@@ -337,7 +331,7 @@ function Install-PHP {
         
         if ($includeXDebug) {
             $version = ($selectedVersionObject.version -split '\.')[0..1] -join '.'
-            Config-XDebug -version $version -phpPath "$destination\$phpDirectoryName" -customDir $dirValue
+            Config-XDebug -version $version -phpPath "$destination\$phpDirectoryName"
         }
         
         Write-Host "`nAdding the PHP to the environment variables ..."

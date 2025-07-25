@@ -63,14 +63,14 @@ function Get-Actions {
             
             Write-Host $msg
         }}
-        "list" = [PSCustomObject]@{ command = "pvm list [available [-f]]"; description = "Type 'available' to list installable items. Add '-f' to force reload from source."; action = {
+        "list" = [PSCustomObject]@{ command = "pvm list [available [-f or --force]]"; description = "Type 'available' to list installable items. Add '-f' or '--force' to force reload from source."; action = {
             if ($arguments -contains "available") {
                 Get-Available-PHP-Versions -getFromSource ($arguments -contains '-f' -or $arguments -contains '--force')
             } else {
                 Display-Installed-PHP-Versions
             }
         }}
-        "install" = [PSCustomObject]@{ command = "pvm install <version> [--xdebug] [--opcache] [--dir=/abs/path/]"; description = "The version must be a specific version. '--xdebug/--opcach' to enable xdebug/opcache. '--dir' to specify the installation directory."; action = {
+        "install" = [PSCustomObject]@{ command = "pvm install <version> [--xdebug] [--opcache] [--dir=/abs/path/]"; description = "The version must be a specific version. '--xdebug/--opcach' to enable xdebug/opcache. '--dir' to specify a custom installation directory."; action = {
             $version = $arguments[0]        
             if (-not $version) {
                 Write-Host "`nPlease provide a PHP version to install"

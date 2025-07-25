@@ -39,7 +39,7 @@ function Is-PVM-Setup {
 function Is-PHP-Installed {
     param ($version)
 
-    Get-ChildItem -Path "$STORAGE_PATH\php\versions" -Directory | ForEach-Object {
+    Get-ChildItem -Path $PHP_VERSIONS_PATH -Directory | ForEach-Object {
         $split = $_.ToString().split("-")
 
         if ($split.Count -gt 1 -and $version -eq $split[1]) {

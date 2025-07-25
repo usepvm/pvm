@@ -99,12 +99,13 @@ function Get-Actions {
             }
 
             $currentVersion = (Get-Current-PHP-Version).version
-            if ($currentVersion -and ($version -eq $currentVersion)) {
+            $shouldRemoveCurrent = ($arguments -contains '--skip-confirmation')
+            if ((-not $shouldRemoveCurrent) -and ($currentVersion -and ($version -eq $currentVersion))) {
                 Read-Host "`nYou are trying to uninstall the currently active PHP version ($version). Press Enter to continue or Ctrl+C to cancel."
             }
 
             if (-not (Is-Admin)) {
-                $arguments = "-ExecutionPolicy Bypass -File `"$PVMEntryPoint`" uninstall `"$version`""
+                $arguments = "-ExecutionPolicy Bypass -File `"$PVMEntryPoint`" uninstall `"$version`" --skip-confirmation"
                 $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru
                 $process.WaitForExit()
                 $exitCode = $process.ExitCode

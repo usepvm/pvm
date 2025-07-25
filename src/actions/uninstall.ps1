@@ -11,6 +11,11 @@ function Uninstall-PHP {
             return -2
         }
 
+        $currentVersion = (Get-Current-PHP-Version).version
+        if ($currentVersion -and ($version -eq $currentVersion)) {
+            Set-EnvVar -name $PHP_CURRENT_ENV_NAME -value 'null'
+        }
+
         Remove-Item -Path $phpPath -Recurse -Force
         Set-EnvVar -name $name -value $null
         return 0

@@ -106,6 +106,11 @@ function Get-Actions {
                 $exitCode = Uninstall-PHP -version $version
             }
 
+            if ($exitCode -eq -2) {
+                Write-Host "`nPHP version $version is not installed."
+                exit $exitCode
+            }
+
             Display-Msg-By-ExitCode -msgSuccess "`nPHP $version has been uninstalled successfully" -msgError "`nFailed to uninstall PHP $version" -exitCode $exitCode
         }}
         "use" = [PSCustomObject]@{ command = "pvm use <version>"; description = "Switch to use the specified version."; action = {

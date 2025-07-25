@@ -6,6 +6,10 @@ function Uninstall-PHP {
     try {
         $name = "php$version"
         $phpPath = [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
+
+        if (-not $phpPath) {
+            return -2
+        }
         Remove-Item -Path $phpPath -Recurse -Force
         [System.Environment]::SetEnvironmentVariable($name, $null, [System.EnvironmentVariableTarget]::Machine);
         return 0

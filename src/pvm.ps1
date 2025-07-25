@@ -13,9 +13,10 @@ Get-ChildItem "$PSScriptRoot\core\*.ps1" | ForEach-Object { . $_.FullName }
 # Load actions scripts
 Get-ChildItem "$PSScriptRoot\actions\*.ps1" | ForEach-Object { . $_.FullName }
 
-if (-not $operation -and $args.Count -eq 0) {
-    Write-Host "`npvm --help to get the list of commands"
-    exit 1
+
+if ($args -contains '--version' -or $args -contains '-v' -or $operation -eq 'version') {
+    Write-Host "`nPVM version $PVM_VERSION"
+    exit 0
 }
 
 $actions = Get-Actions -arguments $args

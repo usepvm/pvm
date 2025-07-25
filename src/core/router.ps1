@@ -20,13 +20,13 @@ function Invoke-PVMSetup {
             }
         }
     }
-    
+
     if ($output -eq 0) {
         Write-Host "`nOriginal PATH variable saved to $PATH_VAR_BACKUP_PATH"
     } else {
         Write-Host "`nFailed to log the original PATH variable."
     }
-    
+
     if ($exitCode -eq 1) {
         Write-Host "`nPATH already contains PVM and PHP environment reference."
         exit $exitCode
@@ -44,12 +44,12 @@ function Invoke-PVMCurrent {
         exit 1
     }
     Write-Host "`nRunning version: PHP $($result.version)"
-    
+
     if (-not $result.status) {
         Write-Host "No status information available for the current PHP version." -ForegroundColor Yellow
         exit 1
     }
-    
+
     foreach ($ext in $result.status.Keys) {
         if ($result.status[$ext]) {
             Write-Host "- $ext is enabled" -ForegroundColor DarkGreen
@@ -57,13 +57,13 @@ function Invoke-PVMCurrent {
             Write-Host "- $ext is disabled" -ForegroundColor DarkYellow
         }
     }
-    
+
     Write-Host "`nPath: $($result.path)" -ForegroundColor DarkCyan
 }
 
 function Invoke-PVMList{
     param($arguments)
-    
+
     if ($arguments -contains "available") {
         Get-Available-PHP-Versions -getFromSource ($arguments -contains '-f' -or $arguments -contains '--force')
     } else {
@@ -73,8 +73,8 @@ function Invoke-PVMList{
 
 function Invoke-PVMInstall {
     param($arguments)
-    
-    $version = $arguments[0]        
+
+    $version = $arguments[0]
     if (-not $version) {
         Write-Host "`nPlease provide a PHP version to install"
         exit 1
@@ -96,7 +96,7 @@ function Invoke-PVMInstall {
 
 function Invoke-PVMUninstall {
     param($arguments)
-    
+
     $version = $arguments[0]
 
     if (-not $version) {
@@ -129,13 +129,18 @@ function Invoke-PVMUninstall {
 
 function Invoke-PVMUse {
     param($arguments)
-    
+
     $version = $arguments[0]
 
     if (-not $version) {
         Write-Host "`nPlease provide a PHP version to use"
         exit 1
     }
+
+    if (-not (Is-PHP-Installed -version $version)) {
+        Install-PHP -version $version
+    }
+
     if (-not (Is-Admin)) {
         # Relaunch as administrator with hidden window
         $arguments = "-ExecutionPolicy Bypass -File `"$PVMEntryPoint`" use `"$version`""
@@ -151,13 +156,13 @@ function Invoke-PVMUse {
 
 function Invoke-PVMIni {
     param($arguments)
-    
+
     $action = $arguments[0]
     if (-not $action) {
         Write-Host "`nPlease specify an action for 'pvm ini'. Use 'set', 'get', 'enable', 'disable' or 'restore'."
         exit 1
     }
-    
+
     $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
 
     $exitCode = Invoke-PVMIniAction -action $action -params $remainingArgs
@@ -165,10 +170,10 @@ function Invoke-PVMIni {
 
 function Invoke-PVMSet {
     param($arguments)
-    
+
     $varName = $arguments[0]
     $varValue = $arguments[1]
-    
+
     if (-not $varName) {
         Write-Host "`nPlease provide an environment variable name"
         exit 1
@@ -176,7 +181,7 @@ function Invoke-PVMSet {
     if (-not $varValue) {
         Write-Host "`nPlease provide an environment variable value"
         exit 1
-    }          
+    }
     if (-not (Is-Admin)) {
         $arguments = "-ExecutionPolicy Bypass -File `"$PVMEntryPoint`" set `"$varName`" `"$varValue`""
         $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru
@@ -194,7 +199,7 @@ function Get-Actions {
     param( $arguments )
 
     $script:arguments = $arguments
-    
+
     return [ordered]@{
         "setup" = [PSCustomObject]@{
             command = "pvm setup [--overwrite-path-backup]";
@@ -206,7 +211,7 @@ function Get-Actions {
             action = { Invoke-PVMCurrent -arguments $script:arguments }}
         "list" = [PSCustomObject]@{
             command = "pvm list [available [-f or --force]]";
-            description = "Type 'available' to list installable items. Add '-f' or '--force' to force reload from source."; 
+            description = "Type 'available' to list installable items. Add '-f' or '--force' to force reload from source.";
             action = { Invoke-PVMList -arguments $script:arguments }}
         "install" = [PSCustomObject]@{
             command = "pvm install <version> [--xdebug] [--opcache] [--dir=/abs/path/]";
@@ -214,7 +219,7 @@ function Get-Actions {
             action = { Invoke-PVMInstall -arguments $script:arguments }}
         "uninstall" = [PSCustomObject]@{
             command = "pvm uninstall <version>";
-            description = "The version must be a specific version."; 
+            description = "The version must be a specific version.";
             action = { Invoke-PVMUninstall -arguments $script:arguments }}
         "use" = [PSCustomObject]@{
             command = "pvm use <version>";
@@ -222,11 +227,11 @@ function Get-Actions {
             action = { Invoke-PVMUse -arguments $script:arguments }}
         "ini" = [PSCustomObject]@{
             command = "pvm ini <action> [<args>]";
-            description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'enable' or 'disable' for an extension, or 'restore' the original ini file from backup."; 
+            description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'enable' or 'disable' for an extension, or 'restore' the original ini file from backup.";
             action = { Invoke-PVMIni -arguments $script:arguments }}
         "set" = [PSCustomObject]@{
             command = "pvm set <name> <value>";
-            description = "Set a new evironment variable for a PHP version."; 
+            description = "Set a new evironment variable for a PHP version.";
             action = { Invoke-PVMSet -arguments $script:arguments }}
     }
 }

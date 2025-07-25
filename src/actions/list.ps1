@@ -42,6 +42,11 @@ function Get-From-Source {
             'Releases' = $fetchedVersions | Where-Object { $_ -notmatch "archives" }
         }
         
+        if ($fetchedVersionsGrouped['Archives'].Count -eq 0 -and $fetchedVersionsGrouped['Releases'].Count -eq 0) {
+            Write-Host "`nNo PHP versions found in the source."
+            exit 1
+        }
+        
         Cache-Fetched-PHP-Versions $fetchedVersionsGrouped
         
         return $fetchedVersionsGrouped
@@ -84,6 +89,11 @@ function Get-Available-PHP-Versions {
         if ($fetchedVersionsGrouped.Count -eq 0) {
             Write-Host "`nCache empty!, Reading from the internet..."
             $fetchedVersionsGrouped = Get-From-Source
+        }
+
+        if ($fetchedVersionsGrouped.Count -eq 0) {
+            Write-Host "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
+            exit 1
         }
         
         Write-Host "`nAvailable Versions"

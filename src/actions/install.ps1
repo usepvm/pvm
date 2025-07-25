@@ -284,7 +284,11 @@ function Install-PHP {
         $matchingVersions = Get-PHP-Versions -version $version
 
         if ($matchingVersions.Count -eq 0) {
-            Write-Host "`nNo matching PHP versions found for '$version'."
+            $msg = "`nNo matching PHP versions found for '$version', Check one of the following:"
+            $msg += "`n- Ensure the version is correct."
+            $msg += "`n- Check your internet connection or the source URL."
+            $msg += "`n- Use 'pvm list available' to see available versions."
+            Write-Host $msg
             exit -1
         }
         

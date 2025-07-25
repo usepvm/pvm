@@ -70,7 +70,7 @@ function Get-Actions {
                 Display-Installed-PHP-Versions
             }
         }}
-        "install" = [PSCustomObject]@{ command = "pvm install <version> [--xdebug] [--opcache] [--dir=/absolute/path/]"; description = "The version must be a specific version. '--xdebug' to include xdebug. '--dir' to specify the installation directory."; action = {
+        "install" = [PSCustomObject]@{ command = "pvm install <version> [--xdebug] [--opcache] [--dir=/abs/path/]"; description = "The version must be a specific version. '--xdebug/--opcach' to enable xdebug/opcache. '--dir' to specify the installation directory."; action = {
             $version = $arguments[0]        
             if (-not $version) {
                 Write-Host "`nPlease provide a PHP version to install"
@@ -177,5 +177,20 @@ function Get-Actions {
 
             Display-Msg-By-ExitCode -msgSuccess "`nEnvironment variable '$varName' set to '$varValue' at the system level." -msgError "`nFailed to set environment variable '$varName'" -exitCode $exitCode
         }}
+    }
+}
+
+function Show-Usage {
+    $version = (Get-Current-PHP-Version).version
+    if ($version) {
+        Write-Host "`nRunning version : $version"
+    }
+    Write-Host "`nUsage:`n"
+    $maxLineLength = 70
+    $actions.GetEnumerator() | ForEach-Object {
+        $dotsCount = $maxLineLength - $_.Value.command.Length
+        if ($dotsCount -lt 0) { $dotsCount = 0 }
+        $dots = '.' * $dotsCount
+        Write-Host "$($_.Value.command) $dots $($_.Value.description)"
     }
 }

@@ -21,18 +21,7 @@ if (-not $operation -and $args.Count -eq 0) {
 $actions = Get-Actions -arguments $args
 
 if (-not $actions.Contains($operation)) {
-    $version = (Get-Current-PHP-Version).version
-    if ($version) {
-        Write-Host "`nRunning version : $version"
-    }
-    Write-Host "`nUsage:`n"
-    $maxLineLength = 60
-    $actions.GetEnumerator() | ForEach-Object {
-        $dotsCount = $maxLineLength - $_.Value.command.Length
-        if ($dotsCount -lt 0) { $dotsCount = 0 }
-        $dots = '.' * $dotsCount
-        Write-Host "$($_.Value.command) $dots $($_.Value.description)"
-    }
+    Show-Usage
     exit 0
 }
 

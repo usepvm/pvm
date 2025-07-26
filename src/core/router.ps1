@@ -139,33 +139,15 @@ function Get-Actions {
 
             Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $version" -msgError "`nFailed to switch to PHP $version" -exitCode $exitCode
         }}
-        "toggle" = [PSCustomObject]@{ command = "pvm toggle [xdebug / opcach]"; description = "Toggle the specified extension on or off."; action = {
-            
-            $extensionsNames = $arguments
-            if (-not $extensionsNames -or $extensionsNames.Count -eq 0) {
-                Write-Host "`nPlease specify at least one extension to toggle (xdebug or opcache)."
-                exit 1
-            }
-            $validExtensions = @('xdebug', 'opcache')
-            $invalid = $extensionsNames | Where-Object { $_ -notin $validExtensions }
-            if ($invalid.Count -gt 0) {
-                Write-Host "`nInvalid extension(s) specified: $($invalid -join ', '). Use only 'xdebug' or 'opcache'."
+        "ini" = [PSCustomObject]@{ command = "pvm ini <action> [<args>]"; description = "Manage PHP ini settings. You can 'set' a value, 'enable' or 'disable' an extension, or 'restore' the original ini file from backup."; action = {
+            $action = $arguments[0]
+            if (-not $action) {
+                Write-Host "`nPlease specify an action for 'pvm ini'. Use 'set', 'enable', or 'disable'."
                 exit 1
             }
 
-            $result = Toggle-PHP-Extension -extensionsNames $extensionsNames
-            
-            Write-Host "`nToggled extensions:"
-            foreach ($ext in $result.status.Keys) {
-                if ($result.status[$ext]) {
-                    Write-Host "- $ext is enabled" -ForegroundColor DarkGreen
-                } else {
-                    Write-Host "- $ext is disabled" -ForegroundColor DarkYellow
-                }
-            }
-            
-            Display-Msg-By-ExitCode -msgSuccess "`nExtensions toggled successfully." -msgError "`nFailed to toggle extensions" -exitCode $result.exitCode
-        }} 
+            $exitCode = Invoke-PVMIni @arguments
+        }}
         "set" = [PSCustomObject]@{ command = "pvm set <name> <value>"; description = "Set a new evironment variable for a PHP version."; action = {
             $varName = $arguments[0]
             $varValue = $arguments[1]

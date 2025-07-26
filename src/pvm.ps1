@@ -1,4 +1,6 @@
 
+# PHP Version Manager (PVM) - A PowerShell script to manage multiple PHP versions on Windows.
+
 param( [string]$operation )
 
 

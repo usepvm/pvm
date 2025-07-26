@@ -14,8 +14,7 @@ function Get-EnvVar-ByName {
 
     try {
         return [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
-    }
-    catch {
+    } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Env-ByName: Failed to get environment variable '$name'" -data $_.Exception.Message
         return $null
     }
@@ -26,8 +25,7 @@ function Set-EnvVar {
 
     try {
         [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine);
-    }
-    catch {
+    } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Set-EnvVar: Failed to set environment variable '$name'" -data $_.Exception.Message
         return -1
     }

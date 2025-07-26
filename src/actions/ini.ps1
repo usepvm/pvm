@@ -184,6 +184,39 @@ function Disable-IniExtension {
     }
 }
 
+function Get-IniExtensionStatus {
+    param ($iniPath, $extName)
+
+    try {
+        if (-not $extName) {
+            Write-Host "`nPlease provide an extension name to check status"
+            exit 1
+        }
+
+        $lines = Get-Content $iniPath
+        $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?[^\s`"';]*$extName[^\s`"';]*([`"']?)\s*(;.*)?$"
+        $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?[^\s`"';]*$extName[^\s`"';]*([`"']?)\s*(;.*)?$"
+
+        foreach ($line in $lines) {
+            if ($line -match $enabledPattern) {
+                Write-Host "`n$extName`: enabled" -ForegroundColor DarkGreen
+                return 0
+            }
+            if ($line -match $disabledPattern) {
+                Write-Host "`n$extName`: disabled" -ForegroundColor DarkYellow
+                return 0
+            }
+        }
+
+        Write-Host "`n$extName`: not found in `"$iniPath`""
+        return -1
+    } catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-IniExtensionStatus: Failed to check status for '$extName'" -data $_.Exception.Message
+        return -1
+    }
+}
+
+
 function Invoke-PVMIni {
     param ( $action, $arguments )
 
@@ -210,6 +243,9 @@ function Invoke-PVMIni {
             }
             "disable" {
                 $exitCode = Disable-IniExtension -iniPath $iniPath -extName $arguments
+            }
+            "status" {
+                $exitCode = Get-IniExtensionStatus -iniPath $iniPath -extName $arguments
             }
             "restore" {
                 $exitCode = Restore-IniBackup -iniPath $iniPath

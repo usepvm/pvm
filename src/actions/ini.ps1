@@ -121,8 +121,8 @@ function Enable-IniExtension {
         $modified = $false
         $newLines = $lines | ForEach-Object {
             if ($_ -match $pattern) {
-                return $_ -replace "^[#;]\s*", ""
                 $modified = $true
+                return $_ -replace "^[#;]\s*", ""
             }
             return $_
         }
@@ -159,13 +159,12 @@ function Disable-IniExtension {
         $updatedLines = @()
 
         $modified = $false
-        foreach ($line in $lines) {
-            if ($line -match $pattern -and ($line -notmatch '^\s*;')) {
-                $updatedLines += ";$line"
+        $updatedLines = $lines | ForEach-Object {
+            if (($_ -match $pattern) -and ($_ -notmatch '^\s*;')) {
                 $modified = $true
-            } else {
-                $updatedLines += $line
+                return ";$_"
             }
+            return $_
         }
 
         if ($modified) {

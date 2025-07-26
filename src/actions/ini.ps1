@@ -50,12 +50,12 @@ function Get-IniSetting {
         foreach ($line in $lines) {
             if ($line -match $pattern) {
                 $value = $matches[1].Trim()
-                Write-Host "`n$key = $value"
+                Write-Host "- $key = $value"
                 return 0
             }
         }
 
-        Write-Host "`n$key not found in `"$iniPath`""
+        Write-Host "- $key not found in `"$iniPath`"" -ForegroundColor DarkGray
         return -1
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-IniSetting: Failed to get ini setting '$key'" -data $_.Exception.Message
@@ -93,10 +93,15 @@ function Set-IniSetting {
             $newLines += $line
         }
 
+        
+        if (-not $matched) {
+            Write-Host "- '$extName' not found" -ForegroundColor DarkYellow
+            return -1
+        }
+        
         Backup-IniFile $iniPath
         Set-Content $iniPath $newLines -Encoding UTF8
-
-        Write-Host "`n$key set to '$value' successfully in `"$iniPath`""
+        Write-Host "- $key set to '$value' successfully" -ForegroundColor DarkGreen
 
         return 0
     } catch {
@@ -127,14 +132,14 @@ function Enable-IniExtension {
             return $_
         }
 
-        if ($modified) {
-            Backup-IniFile $iniPath
-            Set-Content $iniPath $newLines -Encoding UTF8
-            Write-Host "`nExtension '$extName' enabled successfully."
-        } else {
-            Write-Host "`nExtension '$extName' is already enabled or not found in `"$iniPath`""
+        if (-not $modified) {
+            Write-Host "- '$extName' is already enabled or not found in `"$iniPath`"" -ForegroundColor DarkGray
             return -1
         }
+
+        Backup-IniFile $iniPath
+        Set-Content $iniPath $newLines -Encoding UTF8
+        Write-Host "- '$extName' enabled successfully." -ForegroundColor DarkGreen
 
         return 0
     } catch {
@@ -167,15 +172,14 @@ function Disable-IniExtension {
             return $_
         }
 
-        if ($modified) {
-            Backup-IniFile $iniPath
-            Set-Content $iniPath $updatedLines -Encoding UTF8
-            Write-Host "`nExtension '$extName' disabled successfully."
-        } else {
-            Write-Host "`nExtension '$extName' is already disabled or not found in `"$iniPath`""
+        if (-not $modified) {
+            Write-Host "- '$extName' is already disabled or not found in `"$iniPath`"" -ForegroundColor DarkGray
             return -1
         }
-
+        
+        Backup-IniFile $iniPath
+        Set-Content $iniPath $updatedLines -Encoding UTF8
+        Write-Host "- '$extName' disabled successfully." -ForegroundColor DarkGreen
         
         return 0
     } catch {
@@ -199,16 +203,16 @@ function Get-IniExtensionStatus {
 
         foreach ($line in $lines) {
             if ($line -match $enabledPattern) {
-                Write-Host "`n$extName`: enabled" -ForegroundColor DarkGreen
+                Write-Host "- $extName`: enabled" -ForegroundColor DarkGreen
                 return 0
             }
             if ($line -match $disabledPattern) {
-                Write-Host "`n$extName`: disabled" -ForegroundColor DarkYellow
+                Write-Host "- $extName`: disabled" -ForegroundColor DarkYellow
                 return 0
             }
         }
 
-        Write-Host "`n$extName`: not found in `"$iniPath`""
+        Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
         return -1
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-IniExtensionStatus: Failed to check status for '$extName'" -data $_.Exception.Message
@@ -218,7 +222,7 @@ function Get-IniExtensionStatus {
 
 
 function Invoke-PVMIni {
-    param ( $action, $arguments )
+    param ( $action, $params )
 
     try {
         $exitCode = 1
@@ -233,19 +237,62 @@ function Invoke-PVMIni {
 
         switch ($action) {
             "get" {
-                $exitCode = Get-IniSetting -iniPath $iniPath -key $arguments
+                if ($params.Count -lt 1) {
+                    Write-Host "`nPlease specify at least one setting name."
+                    exit 1
+                }
+                
+                Write-Host "`nRetrieving ini setting..."
+                foreach ($extName in $params) {
+                    $exitCode = Get-IniSetting -iniPath $iniPath -key $extName
+                }
             }
             "set" {
-                $exitCode = Set-IniSetting -iniPath $iniPath -keyValue $arguments
+                if ($params.Count -lt 1) {
+                    Write-Host "`nPlease specify at least one 'key=value'."
+                    exit 1
+                }
+
+                Write-Host "`nSetting ini value..."
+                foreach ($keyValue in $params) {
+                    $exitCode = Set-IniSetting -iniPath $iniPath -keyValue $keyValue
+                }
             }
             "enable" {
-                $exitCode = Enable-IniExtension -iniPath $iniPath -extName $arguments
+                if ($params.Count -lt 1) {
+                    Write-Host "`nPlease specify at least one extension."
+                    exit 1
+                }
+                
+                Write-Host "`nEnabling extension(s): $($remainingArgs -join ', ')"
+                foreach ($extName in $params) {
+                    Enable-IniExtension -iniPath $iniPath -extName $extName
+                }
+                $exitCode = 0
             }
             "disable" {
-                $exitCode = Disable-IniExtension -iniPath $iniPath -extName $arguments
+                if ($params.Count -lt 1) {
+                    Write-Host "`nPlease specify at least one extension."
+                    exit 1
+                }
+                
+                Write-Host "`nDisabling extension(s): $($remainingArgs -join ', ')"
+                foreach ($extName in $params) {
+                    Disable-IniExtension -iniPath $iniPath -extName $extName
+                }
+                $exitCode = 0
             }
             "status" {
-                $exitCode = Get-IniExtensionStatus -iniPath $iniPath -extName $arguments
+                if ($params.Count -lt 1) {
+                    Write-Host "`nPlease specify at least one extension."
+                    exit 1
+                }
+                
+                Write-Host "`nChecking status of extension(s): $($remainingArgs -join ', ')"
+                foreach ($extName in $params) {
+                    Get-IniExtensionStatus -iniPath $iniPath -extName $extName
+                }
+                $exitCode = 0
             }
             "restore" {
                 $exitCode = Restore-IniBackup -iniPath $iniPath

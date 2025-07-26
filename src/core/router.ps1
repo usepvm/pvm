@@ -145,8 +145,10 @@ function Get-Actions {
                 Write-Host "`nPlease specify an action for 'pvm ini'. Use 'set', 'enable', or 'disable'."
                 exit 1
             }
+            
+            $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
 
-            $exitCode = Invoke-PVMIni @arguments
+            $exitCode = Invoke-PVMIni -action $action -params $remainingArgs
         }}
         "set" = [PSCustomObject]@{ command = "pvm set <name> <value>"; description = "Set a new evironment variable for a PHP version."; action = {
             $varName = $arguments[0]

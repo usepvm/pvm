@@ -91,11 +91,7 @@ function Set-IniSetting {
 
         if (-not $matched) {
             $newLines += $line
-        }
-
-        
-        if (-not $matched) {
-            Write-Host "- '$extName' not found" -ForegroundColor DarkYellow
+            Write-Host "- The setting key '$key' is not found" -ForegroundColor DarkYellow
             return -1
         }
         
@@ -133,7 +129,7 @@ function Enable-IniExtension {
         }
 
         if (-not $modified) {
-            Write-Host "- '$extName' is already enabled or not found in `"$iniPath`"" -ForegroundColor DarkGray
+            Write-Host "- '$extName' is already enabled or not found. check with 'pvm ini status $extName'" -ForegroundColor DarkGray
             return -1
         }
 
@@ -173,7 +169,7 @@ function Disable-IniExtension {
         }
 
         if (-not $modified) {
-            Write-Host "- '$extName' is already disabled or not found in `"$iniPath`"" -ForegroundColor DarkGray
+            Write-Host "- '$extName' is already disabled or not found. check with 'pvm ini status $extName'" -ForegroundColor DarkGray
             return -1
         }
         
@@ -231,7 +227,7 @@ function Invoke-PVMIni {
         $iniPath = "$currentPhpVersionPath\php.ini"
         
         if (-not (Test-Path $iniPath)) {
-            Write-Host "php.ini not found at: $iniPath"
+            Write-Host "php.ini not found at: $currentPhpVersionPath"
             exit 1
         }
 

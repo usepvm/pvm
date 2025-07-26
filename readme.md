@@ -64,10 +64,32 @@ pvm use <version>
 ```
 
 
-Toggle the specified extension on or off
+### Manage php.ini settings and extensions directly from the CLI.
+
+Enable or disable PHP extensions
 
 ```sh
-pvm toggle [xdebug] [opcach]
+pvm ini enable xdebug
+
+pvm ini disable xdebug
+```
+
+Set a setting
+
+```sh
+pvm ini set memory_limit=512M
+```
+
+Get a setting
+
+```sh
+pvm ini get memory_limit
+```
+
+Restore backup
+
+```sh
+pvm ini restore
 ```
 
 > [!NOTE]  

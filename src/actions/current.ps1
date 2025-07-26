@@ -6,7 +6,7 @@ function Get-PHP-Status {
     try {
         $phpIniPath = "$phpPath\php.ini"
         if (-not (Test-Path $phpIniPath)) {
-            Write-Error "php.ini not found at: $phpIniPath"
+            Write-Host "php.ini not found at: $phpIniPath"
             return -1
         }
 
@@ -24,7 +24,7 @@ function Get-PHP-Status {
         }    
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-PHP-Status: Failed to retrieve PHP status" -data $_.Exception.Message
-        Write-Error "An error occurred while checking PHP status: $_"
+        Write-Host "An error occurred while checking PHP status: $_"
     }
     
     return $status

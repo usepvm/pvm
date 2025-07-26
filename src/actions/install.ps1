@@ -246,7 +246,7 @@ function Enable-Opcache {
 
         $phpIniPath = "$phpPath\php.ini"
         if (-not (Test-Path $phpIniPath)) {
-            Write-Error "php.ini not found at: $phpIniPath"
+            Write-Host "php.ini not found at: $phpIniPath"
             return
         }
         

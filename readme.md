@@ -66,24 +66,20 @@ pvm use <version>
 
 ### Manage php.ini settings and extensions directly from the CLI.
 
-Enable or disable PHP extensions
+Enable or disable PHP multiple extensions
 
 ```sh
-pvm ini enable xdebug
+pvm ini enable xdebug opcache
 
-pvm ini disable xdebug
+pvm ini disable xdebug opcache
 ```
 
-Set a setting
+Set or Get multiple settings values
 
 ```sh
-pvm ini set memory_limit=512M
-```
+pvm ini set memory_limit=512M max_file_uploads=20
 
-Get a setting
-
-```sh
-pvm ini get memory_limit
+pvm ini get memory_limit max_file_uploads
 ```
 
 Restore backup

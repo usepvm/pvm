@@ -173,6 +173,19 @@ function Config-XDebug {
     param ($version, $phpPath)
     
     try {
+
+        $phpIniPath = "$phpPath\php.ini"
+        if (-not (Test-Path $phpIniPath)) {
+            Write-Host "php.ini not found at: $phpIniPath"
+            return
+        }
+        
+        $phpIniContent = Get-Content $phpIniPath
+        $phpIniContent = $phpIniContent | ForEach-Object {
+            $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1'
+        }
+        Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
+        
         # Fetch xdebug links
         $baseUrl = "https://xdebug.org"
         $url = "$baseUrl/download/historical"
@@ -196,7 +209,7 @@ function Config-XDebug {
         
         Write-Host "`nConfigure XDEBUG with PHP..."
         $xDebugConfig = $xDebugConfig -replace "\ +"
-        Add-Content -Path "$phpPath\php.ini" -Value $xDebugConfig
+        Add-Content -Path $phpIniPath -Value $xDebugConfig
         Write-Host "`nXDEBUG configured successfully for PHP version $version"
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Config-XDebug : Failed to configure XDebug for PHP version $version" -data $_.Exception.Message
@@ -252,7 +265,7 @@ function Enable-Opcache {
         
         $phpIniContent = Get-Content $phpIniPath
         $phpIniContent = $phpIniContent | ForEach-Object {
-            $_ -replace '^\s*;\s*(extension_dir\s*=)', '$1' `
+            $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1' `
                -replace '^\s*;\s*(zend_extension\s*=\s*opcache)', '$1' `
                -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `
                -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'

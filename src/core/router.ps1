@@ -61,7 +61,7 @@ function Get-Actions {
                 }
             }
             
-            Write-Host $msg
+            Write-Host "`nPath: $($result.path)" -ForegroundColor DarkCyan
         }}
         "list" = [PSCustomObject]@{ command = "pvm list [available [-f or --force]]"; description = "Type 'available' to list installable items. Add '-f' or '--force' to force reload from source."; action = {
             if ($arguments -contains "available") {

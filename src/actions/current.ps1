@@ -57,6 +57,7 @@ function Get-Current-PHP-Version {
         
         return @{
             version = $currentPhpVersionKey
+            path = $currentPhpVersionPath
             status = Get-PHP-Status -phpPath $currentPhpVersionPath
         }
     } catch {

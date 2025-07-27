@@ -234,7 +234,7 @@ function Invoke-PVMIni {
         switch ($action) {
             "get" {
                 if ($params.Count -lt 1) {
-                    Write-Host "`nPlease specify at least one setting name."
+                    Write-Host "`nPlease specify at least one setting name ('pvm ini get memory_limit)."
                     exit 1
                 }
                 
@@ -245,7 +245,7 @@ function Invoke-PVMIni {
             }
             "set" {
                 if ($params.Count -lt 1) {
-                    Write-Host "`nPlease specify at least one 'key=value'."
+                    Write-Host "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
                     exit 1
                 }
 
@@ -256,7 +256,7 @@ function Invoke-PVMIni {
             }
             "enable" {
                 if ($params.Count -lt 1) {
-                    Write-Host "`nPlease specify at least one extension."
+                    Write-Host "`nPlease specify at least one extension (pvm ini enable curl)."
                     exit 1
                 }
                 
@@ -268,7 +268,7 @@ function Invoke-PVMIni {
             }
             "disable" {
                 if ($params.Count -lt 1) {
-                    Write-Host "`nPlease specify at least one extension."
+                    Write-Host "`nPlease specify at least one extension (pvm ini disable xdebug)."
                     exit 1
                 }
                 
@@ -280,7 +280,7 @@ function Invoke-PVMIni {
             }
             "status" {
                 if ($params.Count -lt 1) {
-                    Write-Host "`nPlease specify at least one extension."
+                    Write-Host "`nPlease specify at least one extension (pvm ini status opcache)."
                     exit 1
                 }
                 

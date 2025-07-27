@@ -139,10 +139,10 @@ function Get-Actions {
 
             Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $version" -msgError "`nFailed to switch to PHP $version" -exitCode $exitCode
         }}
-        "ini" = [PSCustomObject]@{ command = "pvm ini <action> [<args>]"; description = "Manage PHP ini settings. You can 'set' a value, 'enable' or 'disable' an extension, or 'restore' the original ini file from backup."; action = {
+        "ini" = [PSCustomObject]@{ command = "pvm ini <action> [<args>]"; description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'enable' or 'disable' for an extension, or 'restore' the original ini file from backup."; action = {
             $action = $arguments[0]
             if (-not $action) {
-                Write-Host "`nPlease specify an action for 'pvm ini'. Use 'set', 'enable', or 'disable'."
+                Write-Host "`nPlease specify an action for 'pvm ini'. Use 'set', 'get', 'enable', 'disable' or 'restore'."
                 exit 1
             }
             

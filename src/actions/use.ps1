@@ -9,14 +9,12 @@ function Update-PHP-Version {
             $envVars = Get-All-EnvVars
             $variableValue = $envVars.Keys | Where-Object { $_ -match $variableValue } | Sort-Object | Select-Object -First 1
             if (-not $variableValue) {
-                Write-Host "`nThe $variableName was not set !"
-                return -1;
+                throw "The $variableName was not set !"
             }
             $variableValueContent = $envVars[$variableValue]
         }
         if (-not $variableValueContent) {
-            Write-Host "`nThe $variableName was not found in the environment variables!"
-            return -1;
+            throw "The $variableName was not found in the environment variables!"
         }
         Set-EnvVar -name $variableName -value $variableValueContent
         return 0;

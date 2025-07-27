@@ -55,7 +55,7 @@ function Get-IniSetting {
             }
         }
 
-        Write-Host "- $key not found in `"$iniPath`"" -ForegroundColor DarkGray
+        Write-Host "- The setting key '$key' is not found." -ForegroundColor DarkGray
         return -1
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-IniSetting: Failed to get ini setting '$key'" -data $_.Exception.Message
@@ -90,8 +90,7 @@ function Set-IniSetting {
         }
 
         if (-not $matched) {
-            $newLines += $line
-            Write-Host "- The setting key '$key' is not found" -ForegroundColor DarkYellow
+            Write-Host "- The setting key '$key' is not found" -ForegroundColor DarkGray
             return -1
         }
         

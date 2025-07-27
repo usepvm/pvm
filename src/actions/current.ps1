@@ -6,7 +6,7 @@ function Get-PHP-Status {
     try {
         $phpIniPath = "$phpPath\php.ini"
         if (-not (Test-Path $phpIniPath)) {
-            Write-Host "php.ini not found at: $phpIniPath"
+            Write-Host "`nphp.ini not found at: $phpIniPath"
             return -1
         }
 

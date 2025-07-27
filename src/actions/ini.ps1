@@ -217,7 +217,7 @@ function Get-IniExtensionStatus {
 }
 
 
-function Invoke-PVMIni {
+function Invoke-PVMIniAction {
     param ( $action, $params )
 
     try {
@@ -300,7 +300,7 @@ function Invoke-PVMIni {
         
         return $exitCode
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Invoke-PVMIni: Failed to invoke ini action '$action'" -data $_.Exception.Message
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Invoke-PVMIniAction: Failed to invoke ini action '$action'" -data $_.Exception.Message
         Write-Host "`nFailed to perform action '$action' on ini settings." -ForegroundColor Red
         return -1
     }

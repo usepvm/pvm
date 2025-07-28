@@ -12,7 +12,7 @@ $Global:STORAGE_PATH = "$PVMRoot\storage"
 $Global:DATA_PATH = "$STORAGE_PATH\data"
 
 # PHP path
-$Global:PHP_VERSIONS_PATH = "$STORAGE_PATH\php\versions"
+$Global:PHP_VERSIONS_PATH = "$STORAGE_PATH\php"
 
 # Log paths
 $Global:LOG_ERROR_PATH = "$STORAGE_PATH\logs\error.log"

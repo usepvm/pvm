@@ -1,13 +1,13 @@
 
 function Get-PHP-Versions-From-Url {
     param ($url, $version)
-    
+
     try {
         $html = Invoke-WebRequest -Uri $url
         $links = $html.Links
 
         # Filter the links to find versions that match the given version
-        $filteredLinks = $links | Where-Object { 
+        $filteredLinks = $links | Where-Object {
             $_.href -match "php-$version(\.\d+)*-win" -and
             $_.href -notmatch "php-debug" -and
             $_.href -notmatch "php-devel" -and
@@ -16,13 +16,13 @@ function Get-PHP-Versions-From-Url {
 
         # Return the filtered links (PHP version names)
         $formattedList = @()
-        $filteredLinks = $filteredLinks | ForEach-Object { 
+        $filteredLinks = $filteredLinks | ForEach-Object {
             $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
             $fileName = $_.href -split "/"
             $fileName = $fileName[$fileName.Count - 1]
             $formattedList += @{ href = $_.href; version = $version; fileName = $fileName }
         }
-        
+
         return $formattedList
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-PHP-Versions-From-Url : Failed to fetch versions from $url" -data $_.Exception.Message
@@ -32,7 +32,7 @@ function Get-PHP-Versions-From-Url {
 
 function Get-PHP-Versions {
     param ($version)
-    
+
     try {
         $urls = Get-Source-Urls
         $fetchedVersions = @{}
@@ -54,7 +54,7 @@ function Get-PHP-Versions {
 
 function Display-Version-List {
     param ($matchingVersions)
-    
+
     Write-Host "`nMatching PHP versions:"
     try {
         $matchingVersions.GetEnumerator() | ForEach-Object {
@@ -88,21 +88,21 @@ function Download-PHP-From-Url {
 
 function Download-PHP {
     param ($versionObject, $customDir = $null)
-    
+
     try {
         $urls = Get-Source-Urls
-    
+
         $fileName = $versionObject.fileName
         $version = $versionObject.version
 
-        $destination = "$STORAGE_PATH\php"
+        $destination = $PHP_VERSIONS_PATH
         if ($customDir) {
             $destination = $customDir
         }
         Make-Directory -path $destination
 
         Write-Host "`nDownloading PHP $version..."
-        
+
         foreach ($key in $urls.Keys) {
             $_url = $urls[$key]
             $downloadUrl = "$_url/$fileName"
@@ -120,7 +120,7 @@ function Download-PHP {
 
 function Extract-Zip {
     param ($zipPath, $extractPath)
-    
+
     try {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
@@ -131,7 +131,7 @@ function Extract-Zip {
 
 function Extract-And-Configure {
     param ($path, $fileNamePath)
-    
+
     try {
         Remove-Item -Path $fileNamePath -Recurse -Force
         Extract-Zip -zipPath $path -extractPath $fileNamePath
@@ -171,7 +171,7 @@ function getXdebugConfigV3 {
 
 function Config-XDebug {
     param ($version, $phpPath)
-    
+
     try {
 
         $phpIniPath = "$phpPath\php.ini"
@@ -179,13 +179,13 @@ function Config-XDebug {
             Write-Host "php.ini not found at: $phpIniPath"
             return
         }
-        
+
         $phpIniContent = Get-Content $phpIniPath
         $phpIniContent = $phpIniContent | ForEach-Object {
             $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1'
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
-        
+
         # Fetch xdebug links
         $baseUrl = "https://xdebug.org"
         $url = "$baseUrl/download/historical"
@@ -198,7 +198,7 @@ function Config-XDebug {
         $xDebugSelectedVersion = $xDebugList[0]
 
         Make-Directory -path "$phpPath\ext"
-        
+
         Write-Host "`nDownloading XDEBUG $($xDebugSelectedVersion.xDebugVersion)..."
         Invoke-WebRequest -Uri "$baseUrl/$($xDebugSelectedVersion.href)" -OutFile "$phpPath\ext\$($xDebugSelectedVersion.fileName)"
         # config xdebug in the php.ini file
@@ -206,7 +206,7 @@ function Config-XDebug {
         if ($xDebugSelectedVersion.xDebugVersion -like "3.*") {
             $xDebugConfig = getXdebugConfigV3 -XDebugPath $($xDebugSelectedVersion.fileName)
         }
-        
+
         Write-Host "`nConfigure XDEBUG with PHP..."
         $xDebugConfig = $xDebugConfig -replace "\ +"
         Add-Content -Path $phpIniPath -Value $xDebugConfig
@@ -219,20 +219,20 @@ function Config-XDebug {
 
 function Get-XDebug-FROM-URL {
     param ($url, $version)
-    
+
     try {
         $html = Invoke-WebRequest -Uri $url
         $links = $html.Links
-        
+
          # Filter the links to find versions that match the given version
-         $filteredLinks = $links | Where-Object { 
+         $filteredLinks = $links | Where-Object {
             $_.href -match "php_xdebug-[\d\.]+-$version-.*\.dll" -and
             $_.href -notmatch "nts"
         }
-        
+
         # Return the filtered links (PHP version names)
         $formattedList = @()
-        $filteredLinks = $filteredLinks | ForEach-Object { 
+        $filteredLinks = $filteredLinks | ForEach-Object {
             # $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
             $fileName = $_.href -split "/"
             $fileName = $fileName[$fileName.Count - 1]
@@ -242,18 +242,18 @@ function Get-XDebug-FROM-URL {
             }
             $formattedList += @{ href = $_.href; version = $version; xDebugVersion = $xDebugVersion; fileName = $fileName }
         }
-        
+
         return $formattedList
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-XDebug-FROM-URL : Failed to fetch xdebug versions from $url" -data $_.Exception.Message
         return @()
     }
-    
+
 }
 
 function Enable-Opcache {
     param ($version, $phpPath)
-    
+
     try {
         Write-Host "`nEnabling Opcache for PHP..."
 
@@ -262,7 +262,7 @@ function Enable-Opcache {
             Write-Host "php.ini not found at: $phpIniPath"
             return
         }
-        
+
         $phpIniContent = Get-Content $phpIniPath
         $phpIniContent = $phpIniContent | ForEach-Object {
             $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1' `
@@ -293,7 +293,7 @@ function Install-PHP {
             Write-Host $msg
             exit -1
         }
-        
+
         $selectedVersionObject = $null
 
         if ($matchingVersions.Count -gt 1) {
@@ -307,7 +307,7 @@ function Install-PHP {
                 Write-Host "`nInstallation cancelled."
                 exit -1
             }
-            
+
             foreach ($entry in $matchingVersions.GetEnumerator()) {
                 $selectedVersionObject = $entry.Value | Where-Object { $_.version -eq $selectedVersionInput }
                 if ($selectedVersionObject) {
@@ -315,7 +315,7 @@ function Install-PHP {
                 }
             }
         }
-        
+
         if (-not $selectedVersionObject) {
             $matchingVersions.GetEnumerator() | ForEach-Object {
                 $selectedVersionObject = $_.Value | Select-Object -Last 1
@@ -327,26 +327,26 @@ function Install-PHP {
         }
 
         $destination = Download-PHP -version $selectedVersionObject -customDir $customDir
-        
+
         if (-not $destination) {
             Write-Host "`nFailed to download PHP version $version."
             exit -1
         }
-        
+
         Write-Host "`nExtracting the downloaded zip ..."
         $fileName = $selectedVersionObject.fileName
         $phpDirectoryName = $fileName -replace ".zip",""
         Extract-And-Configure -path "$destination\$fileName" -fileNamePath "$destination\$phpDirectoryName"
-        
+
         if ($enableOpcache) {
             Enable-Opcache -version $version -phpPath "$destination\$phpDirectoryName"
         }
-        
+
         if ($includeXDebug) {
             $version = ($selectedVersionObject.version -split '\.')[0..1] -join '.'
             Config-XDebug -version $version -phpPath "$destination\$phpDirectoryName"
         }
-        
+
         Write-Host "`nAdding the PHP to the environment variables ..."
         $phpVersionNumber = $selectedVersionObject.version
         $phpEnvVarName = "php$phpVersionNumber"

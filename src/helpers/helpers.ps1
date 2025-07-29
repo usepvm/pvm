@@ -62,9 +62,9 @@ function Display-Msg-By-ExitCode {
     
     try {
         if ($exitCode -eq 0) {
-            Write-Host "`n$msgSuccess"
+            Write-Host $msgSuccess
         } else {
-            Write-Host "`n$msgError"
+            Write-Host $msgError
         }
         Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1 -Global
         Update-SessionEnvironment

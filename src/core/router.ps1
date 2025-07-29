@@ -138,7 +138,21 @@ function Invoke-PVMUse {
     }
 
     if (-not (Is-PHP-Installed -version $version)) {
-        Install-PHP -version $version
+        Write-Host "`nPHP version $version is not installed, it will be installed for you."
+
+        $enableXDebug = Read-Host -Prompt "Enable xdebug? [Y/n]"
+        $enableOpcache = Read-Host -Prompt "Enable opcache? [Y/n]"
+
+        $installPhpArgs = @{}
+        if ($enableXDebug.ToLower() -eq 'y') {
+            $installPhpArgs["includeXDebug"] = $true
+        }
+
+        if ($enableOpcache.ToLower() -eq 'y') {
+            $installPhpArgs["enableOpcache"] = $true
+        }
+
+        Install-PHP -version $version @installPhpArgs
     }
 
     if (-not (Is-Admin)) {

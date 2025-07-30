@@ -35,7 +35,7 @@ function Get-PHP-Versions {
 
     try {
         $urls = Get-Source-Urls
-        $fetchedVersions = @()
+        $fetchedVersions = @{}
         $found = @()
         foreach ($key in $urls.Keys) {
             $fetched = Get-PHP-Versions-From-Url -url $urls[$key] -version $version
@@ -44,8 +44,8 @@ function Get-PHP-Versions {
                 $fetched = $fetched | Where-Object { $_.href -match "$sysArch" }
 
                 if ($found -notcontains $fetched.fileName) {
-                    $fetchedVersions += $fetched | Select-Object -Last 5
-                    $found += $fetchedVersions |ForEach-Object { $_.fileName }
+                    $fetchedVersions[$key] = $fetched | Select-Object -Last 5
+                    $found += $fetchedVersions[$key] | ForEach-Object { $_.fileName }
                 }
             }
         }
@@ -62,9 +62,15 @@ function Display-Version-List {
 
     Write-Host "`nMatching PHP versions:"
     try {
-        $matchingVersions | ForEach-Object {
-            $versionItem = $_.version -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
-            Write-Host "  $versionItem"
+        $matchingVersions.GetEnumerator() | ForEach-Object {
+            $key = $_.Key
+
+            $versionsList = $_.Value
+            Write-Host "`n$key versions:`n"
+            $versionsList | ForEach-Object {
+                $versionItem = $_.version -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
+                Write-Host "  $versionItem"
+            }
         }
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Display-Version-List : Failed to display version list" -data $_.Exception.Message
@@ -285,7 +291,7 @@ function Install-PHP {
         Write-Host "`nLoading the matching versions..."
         $matchingVersions = Get-PHP-Versions -version $version
 
-        if ($matchingVersions.Length -eq 0) {
+        if ($matchingVersions.Count -eq 0) {
             $msg = "`nNo matching PHP versions found for '$version', Check one of the following:"
             $msg += "`n- Ensure the version is correct."
             $msg += "`n- Check your internet connection or the source URL."
@@ -296,7 +302,7 @@ function Install-PHP {
 
         $selectedVersionObject = $null
 
-        if ($matchingVersions.Length -gt 1) {
+        if ($matchingVersions.Count -gt 1) {
             # Display matching versions
             Display-Version-List -matchingVersions $matchingVersions
 
@@ -317,7 +323,9 @@ function Install-PHP {
         }
 
         if (-not $selectedVersionObject) {
-            $selectedVersionObject = $matchingVersions | Select-Object -Last 1
+            $matchingVersions.GetEnumerator() | ForEach-Object {
+                $selectedVersionObject = $_.Value | Select-Object -Last 1
+            }
 
             if (-not $selectedVersionObject) {
                 Write-Host "`nNo matching version found for '$version'."

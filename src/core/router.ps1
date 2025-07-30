@@ -136,6 +136,23 @@ function Invoke-PVMUse {
         Write-Host "`nPlease provide a PHP version to use"
         exit 1
     }
+
+    if ($version -eq 'auto') {
+        $version = Detect-PHP-VersionFromProject
+        
+        if (-not $version) {
+            Write-Host "`nCould not detect PHP version from .php-version or composer.json"
+            exit 1
+        }
+        
+        if (-not (Is-PHP-Version-Installed $version)) {
+            Write-Host "`nDetected PHP version '$version' from project, but it is not installed."
+            Write-Host "Run: pvm install $version"
+            exit 1
+        }
+        Write-Host "`nDetected PHP version from project: $version"
+    }
+    
     if (-not (Is-Admin)) {
         # Relaunch as administrator with hidden window
         $arguments = "-ExecutionPolicy Bypass -File `"$PVMEntryPoint`" use `"$version`""
@@ -148,6 +165,53 @@ function Invoke-PVMUse {
 
     Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $version" -msgError "`nNo matching PHP versions found for '$version', Use 'pvm list' to see installed versions." -exitCode $exitCode
 }
+
+function Is-PHP-Version-Installed {
+    param ($version)
+    
+    $installedVersions = Get-Installed-PHP-Versions  # You should have this function
+    
+    foreach ($v in $installedVersions) {
+        if ($v -like "php$version.*") {
+            return $true
+        }
+    }
+    return $false
+}
+
+function Detect-PHP-VersionFromProject {
+    
+    try {
+        # 1. Check .php-version
+        if (Test-Path ".php-version") {
+            $version = Get-Content ".php-version" | Select-Object -First 1
+            return $version.Trim()
+        }
+
+        # 2. Check composer.json
+        if (Test-Path "composer.json") {
+            try {
+                $json = Get-Content "composer.json" -Raw | ConvertFrom-Json
+                if ($json.require.php) {
+                    $constraint = $json.require.php.Trim()
+                    # Extract first PHP version number in the string (e.g. from "^8.3" or ">=8.1 <8.3")
+                    if ($constraint -match "(\d+\.\d+(\.\d+)?)") {
+                        return $matches[1]
+                    }
+                }
+            } catch {
+                Write-Host "`nFailed to parse composer.json: $_"
+            }
+        }
+    }
+    catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Detect-PHP-VersionFromProject: Failed to detect PHP version from project" -data $_.Exception.Message
+    }
+
+    return $null
+}
+
+
 
 function Invoke-PVMIni {
     param($arguments)

@@ -43,9 +43,9 @@ function Get-PHP-Versions {
                 $sysArch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x64' } else { 'x86' }
                 $fetched = $fetched | Where-Object { $_.href -match "$sysArch" }
 
-                if ($found -notcontains $fetched.version) {
+                if ($found -notcontains $fetched.fileName) {
                     $fetchedVersions += $fetched | Select-Object -Last 5
-                    $found += $fetchedVersions |ForEach-Object { $_.version }
+                    $found += $fetchedVersions |ForEach-Object { $_.fileName }
                 }
             }
         }

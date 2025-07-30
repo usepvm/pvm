@@ -101,7 +101,7 @@ function Download-PHP {
         $fileName = $versionObject.fileName
         $version = $versionObject.version
 
-        $destination = "$STORAGE_PATH\php"
+        $destination = $PHP_VERSIONS_PATH
         if ($customDir) {
             $destination = $customDir
         }
@@ -286,6 +286,11 @@ function Enable-Opcache {
 
 function Install-PHP {
     param ($version, $customDir = $null, $includeXDebug = $false, $enableOpcache = $false)
+
+    if (Is-PHP-Installed -version $version) {
+        Write-Host "`nphp $version is already installed, run 'pvm use $version' to use it."
+        exit(1)
+    }
 
     try {
         Write-Host "`nLoading the matching versions..."

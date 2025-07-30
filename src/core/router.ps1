@@ -166,19 +166,6 @@ function Invoke-PVMUse {
     Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $version" -msgError "`nNo matching PHP versions found for '$version', Use 'pvm list' to see installed versions." -exitCode $exitCode
 }
 
-function Is-PHP-Version-Installed {
-    param ($version)
-    
-    $installedVersions = Get-Installed-PHP-Versions  # You should have this function
-    
-    foreach ($v in $installedVersions) {
-        if ($v -like "php$version.*") {
-            return $true
-        }
-    }
-    return $false
-}
-
 function Detect-PHP-VersionFromProject {
     
     try {

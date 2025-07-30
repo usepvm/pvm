@@ -34,3 +34,17 @@ function Is-PVM-Setup {
         return $false
     }
 }
+
+
+function Is-PHP-Version-Installed {
+    param ($version)
+    
+    $installedVersions = Get-Installed-PHP-Versions  # You should have this function
+    
+    foreach ($v in $installedVersions) {
+        if ($v -like "php$version") {
+            return $true
+        }
+    }
+    return $false
+}

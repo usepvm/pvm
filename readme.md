@@ -65,7 +65,7 @@ pvm use <version>
 
 Switch to use the detected PHP version from .php-version or composer.json in your current project/directory
 
-````sh
+```sh
 pvm use auto
 ```
 

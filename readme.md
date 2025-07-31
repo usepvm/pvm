@@ -63,6 +63,12 @@ Switch to use the specified version
 pvm use <version>
 ```
 
+Switch to use the detected PHP version from .php-version or composer.json in your current project/directory
+
+````sh
+pvm use auto
+```
+
 
 ### Manage php.ini settings and extensions directly from the CLI.
 

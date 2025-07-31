@@ -289,8 +289,9 @@ function Install-PHP {
 
     try {
         if (Is-PHP-Version-Installed -version $version) {
-            Write-Host "`nphp $version is already installed, run 'pvm use $version' to use it."
-            exit(1)
+            Write-Host "`nPHP $version is already installed."
+            Write-Host "Run: pvm use $version"
+            exit 1
         }
 
         Write-Host "`nLoading the matching versions..."

@@ -145,7 +145,7 @@ function Invoke-PVMUse {
             exit 1
         }
         
-        if (-not (Is-PHP-Version-Installed $version)) {
+        if (-not (Is-PHP-Version-Installed -version $version)) {
             Write-Host "`nDetected PHP version '$version' from project, but it is not installed."
             Write-Host "Run: pvm install $version"
             exit 1

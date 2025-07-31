@@ -43,7 +43,7 @@ function Is-PHP-Version-Installed {
         $installedVersions = Get-Installed-PHP-Versions  # You should have this function
 
         foreach ($v in $installedVersions) {
-            if ($v -like "php$version") {
+            if ($v -like "php$version*") {
                 return $true
             }
         }

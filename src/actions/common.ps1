@@ -48,7 +48,7 @@ function Get-Matching-PHP-Versions {
                 $matchingVersions += ($v -replace 'php', '')
             }
         }
-        
+
         return $matchingVersions
     }
     catch {
@@ -63,7 +63,7 @@ function Is-PHP-Version-Installed {
 
     try {
         $installedVersions = Get-Matching-PHP-Versions -version $version
-        return ($installedVersions -and $installedVersions.Count -gt 0)
+        return ($installedVersions -contains $version)
     }
     catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Is-PHP-Version-Installed: Failed to check if PHP version $version is installed" -data $_.Exception.Message

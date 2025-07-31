@@ -287,7 +287,7 @@ function Enable-Opcache {
 function Install-PHP {
     param ($version, $customDir = $null, $includeXDebug = $false, $enableOpcache = $false)
 
-    if (Is-PHP-Installed -version $version) {
+    if (Is-PHP-Version-Installed -version $version) {
         Write-Host "`nphp $version is already installed, run 'pvm use $version' to use it."
         exit(1)
     }

@@ -36,17 +36,34 @@ function Is-PVM-Setup {
 }
 
 
-function Is-PHP-Version-Installed {
+function Get-Matching-PHP-Versions {
     param ($version)
 
     try {
         $installedVersions = Get-Installed-PHP-Versions  # You should have this function
 
+        $matchingVersions = @()
         foreach ($v in $installedVersions) {
             if ($v -like "php$version*") {
-                return $true
+                $matchingVersions += ($v -replace 'php', '')
             }
         }
+        
+        return $matchingVersions
+    }
+    catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Matching-PHP-Versions: Failed to check if PHP version $version is installed" -data $_.Exception.Message
+    }
+
+    return $null
+}
+
+function Is-PHP-Version-Installed {
+    param ($version)
+
+    try {
+        $installedVersions = Get-Matching-PHP-Versions -version $version
+        return ($installedVersions -and $installedVersions.Count -gt 0)
     }
     catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Is-PHP-Version-Installed: Failed to check if PHP version $version is installed" -data $_.Exception.Message

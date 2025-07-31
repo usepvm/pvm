@@ -284,14 +284,59 @@ function Enable-Opcache {
     }
 }
 
+function Select-Version {
+    param ($matchingVersions)
+    
+    if ($matchingVersions.Count -gt 1) {
+        Display-Version-List -matchingVersions $matchingVersions
+
+        $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
+
+        if (-not $selectedVersionInput) {
+            Write-Host "`nInstallation cancelled."
+            exit -1
+        }
+
+        foreach ($entry in $matchingVersions.GetEnumerator()) {
+            $selectedVersionObject = $entry.Value | Where-Object { 
+                $_.version -eq $selectedVersionInput 
+            }
+            if ($selectedVersionObject) {
+                break
+            }
+        }
+    } else {
+        $matchingVersions.GetEnumerator() | ForEach-Object {
+            $selectedVersionObject = $_.Value | Select-Object -Last 1
+        }
+    }
+    
+    if (-not $selectedVersionObject) {
+        $inputDisplay = if ($selectedVersionInput) { $selectedVersionInput } else { $version }
+        Write-Host "`nNo matching version found for '$inputDisplay'."
+        exit -1
+    }
+    
+    return $selectedVersionObject
+}
+
 function Install-PHP {
     param ($version, $customDir = $null, $includeXDebug = $false, $enableOpcache = $false)
 
     try {
-        if (Is-PHP-Version-Installed -version $version) {
-            Write-Host "`nPHP $version is already installed."
-            Write-Host "Run: pvm use $version"
-            exit 1
+        $foundInstalledVersions = Get-Matching-PHP-Versions -version $version
+        
+        if ($foundInstalledVersions) {
+            if ($version -match '^\d+\.\d+') {
+                $familyVersion = $matches[0]
+                Write-Host "`nOther versions from the $familyVersion.x family are available:"
+                $foundInstalledVersions | ForEach-Object { Write-Host " - $_" }
+                $response = Read-Host "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
+                if ($response -ne "y" -and $response -ne "Y") {
+                    Write-Host "`nRun: pvm use <version>"
+                    exit 1
+                }
+            }
         }
 
         Write-Host "`nLoading the matching versions..."
@@ -306,37 +351,14 @@ function Install-PHP {
             exit -1
         }
 
-        $selectedVersionObject = $null
-
-        if ($matchingVersions.Count -gt 1) {
-            # Display matching versions
-            Display-Version-List -matchingVersions $matchingVersions
-
-            # Prompt user to choose the version
-            $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
-
-            if (-not $selectedVersionInput) {
-                Write-Host "`nInstallation cancelled."
-                exit -1
-            }
-
-            foreach ($entry in $matchingVersions.GetEnumerator()) {
-                $selectedVersionObject = $entry.Value | Where-Object { $_.version -eq $selectedVersionInput }
-                if ($selectedVersionObject) {
-                    break
-                }
-            }
+        $selectedVersionObject = Select-Version -matchingVersions $matchingVersions
+        if ($selectedVersionObject) {
+            Write-Host "`nSelected version: '$($selectedVersionObject.version)'"
         }
-
-        if (-not $selectedVersionObject) {
-            $matchingVersions.GetEnumerator() | ForEach-Object {
-                $selectedVersionObject = $_.Value | Select-Object -Last 1
-            }
-
-            if (-not $selectedVersionObject) {
-                Write-Host "`nNo matching version found for '$version'."
-                exit -1
-            }
+        
+        if (Is-PHP-Version-Installed -version $selectedVersionObject.version) {
+            Write-Host "`nVersion '$($selectedVersionObject.version)' already installed."
+            exit 0
         }
 
         $destination = Download-PHP -version $selectedVersionObject -customDir $customDir

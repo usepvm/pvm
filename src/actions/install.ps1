@@ -286,7 +286,7 @@ function Enable-Opcache {
 
 function Select-Version {
     param ($matchingVersions)
-    
+
     if ($matchingVersions.Count -gt 1) {
         Display-Version-List -matchingVersions $matchingVersions
 
@@ -298,8 +298,8 @@ function Select-Version {
         }
 
         foreach ($entry in $matchingVersions.GetEnumerator()) {
-            $selectedVersionObject = $entry.Value | Where-Object { 
-                $_.version -eq $selectedVersionInput 
+            $selectedVersionObject = $entry.Value | Where-Object {
+                $_.version -eq $selectedVersionInput
             }
             if ($selectedVersionObject) {
                 break
@@ -310,13 +310,13 @@ function Select-Version {
             $selectedVersionObject = $_.Value | Select-Object -Last 1
         }
     }
-    
+
     if (-not $selectedVersionObject) {
         $inputDisplay = if ($selectedVersionInput) { $selectedVersionInput } else { $version }
         Write-Host "`nNo matching version found for '$inputDisplay'."
         exit -1
     }
-    
+
     return $selectedVersionObject
 }
 
@@ -324,9 +324,15 @@ function Install-PHP {
     param ($version, $customDir = $null, $includeXDebug = $false, $enableOpcache = $false)
 
     try {
-        $foundInstalledVersions = Get-Matching-PHP-Versions -version $version
-        
-        if ($foundInstalledVersions) {
+        if (Is-PHP-Version-Installed -version $version) {
+            Write-Host "`nVersion '$($version)' already installed."
+
+            $foundInstalledVersions = Get-Matching-PHP-Versions -version $version | Where-Object { $_ -ne $version }
+
+            if ($foundInstalledVersions.Count -eq 0) {
+                exit 0
+            }
+
             if ($version -match '^\d+\.\d+') {
                 $familyVersion = $matches[0]
                 Write-Host "`nOther versions from the $familyVersion.x family are available:"
@@ -356,7 +362,7 @@ function Install-PHP {
         if ($selectedVersionObject) {
             Write-Host "`nSelected version: '$($selectedVersionObject.version)'"
         }
-        
+
         if (Is-PHP-Version-Installed -version $selectedVersionObject.version) {
             Write-Host "`nVersion '$($selectedVersionObject.version)' already installed."
             exit 0

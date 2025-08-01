@@ -14,7 +14,7 @@ function Restore-IniBackup {
         Write-Host "`nRestored php.ini from backup: $backupPath"
         return 0
     } catch {
-        $logger = Log-Data -logPath $LOG_ERROR_PATH -message "Restore-IniBackup: Failed to restore ini backup" -data $_.Exception.Message
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Restore-IniBackup: Failed to restore ini backup" -data $_.Exception.Message
         Write-Host "`nFailed to restore backup: $_"
         return -1
     }

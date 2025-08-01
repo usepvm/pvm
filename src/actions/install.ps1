@@ -326,13 +326,12 @@ function Install-PHP {
     try {
         if (Is-PHP-Version-Installed -version $version) {
             Write-Host "`nVersion '$($version)' already installed."
+            exit 1
+        }
 
-            $foundInstalledVersions = Get-Matching-PHP-Versions -version $version | Where-Object { $_ -ne $version }
+        $foundInstalledVersions = Get-Matching-PHP-Versions -version $version
 
-            if ($foundInstalledVersions.Count -eq 0) {
-                exit 0
-            }
-
+        if ($foundInstalledVersions) {
             if ($version -match '^\d+\.\d+') {
                 $familyVersion = $matches[0]
                 Write-Host "`nOther versions from the $familyVersion.x family are available:"

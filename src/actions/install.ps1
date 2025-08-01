@@ -336,6 +336,7 @@ function Install-PHP {
                     Write-Host "`nRun: pvm use <version>"
                     exit 1
                 }
+                $version = $familyVersion
             }
         }
 

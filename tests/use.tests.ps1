@@ -18,7 +18,12 @@ Describe "Update-PHP-Version Tests" {
         It "Should successfully update when exact PHP version environment variable exists" {
             # Arrange
             Mock Get-EnvVar-ByName { return "C:\php8.2\php.exe" } -ParameterFilter { $name -eq "php8.2" }
-            Mock Set-EnvVar { } -ParameterFilter { $name -eq "PHP_PATH" -and $value -eq "C:\php8.2\php.exe" }
+            Mock Set-EnvVar {
+                param($name, $value)
+                
+                if ($name -eq "PHP_PATH" -and $value -eq "C:\php8.2\php.exe") {return 0}
+                return -1    
+            }
             
             # Act
             $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "8.2"
@@ -41,7 +46,12 @@ Describe "Update-PHP-Version Tests" {
                     "other_var" = "some_value"
                 }
             }
-            Mock Set-EnvVar { } -ParameterFilter { $name -eq "PHP_PATH" -and $value -eq "C:\php8.2.1\php.exe" }
+            Mock Set-EnvVar {
+                param($name, $value)
+                
+                if ($name -eq "PHP_PATH" -and $value -eq "C:\php8.2.1\php.exe") { return 0 }
+                return -1
+            }
             
             # Act
             $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "8.2"
@@ -57,7 +67,12 @@ Describe "Update-PHP-Version Tests" {
         It "Should handle different PHP version formats" {
             # Arrange
             Mock Get-EnvVar-ByName { return "C:\php7.4\php.exe" } -ParameterFilter { $name -eq "php7.4" }
-            Mock Set-EnvVar { } -ParameterFilter { $name -eq "PHP_PATH" -and $value -eq "C:\php7.4\php.exe" }
+            Mock Set-EnvVar {
+                param($name, $value)
+                
+                if ($name -eq "PHP_PATH" -and $value -eq "C:\php7.4\php.exe") { return 0 }
+                return -1
+            }
             
             # Act
             $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "7.4"
@@ -169,7 +184,7 @@ Describe "Update-PHP-Version Tests" {
         It "Should handle special characters in version numbers" {
             # Arrange
             Mock Get-EnvVar-ByName { return "C:\php8.2-dev\php.exe" } -ParameterFilter { $name -eq "php8.2-dev" }
-            Mock Set-EnvVar { }
+            Mock Set-EnvVar { return 0}
             
             # Act
             $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "8.2-dev"
@@ -189,7 +204,10 @@ Describe "Update-PHP-Version Tests" {
                     "php8.2" = "C:\php8.2\php.exe"
                 }
             }
-            Mock Set-EnvVar { } -ParameterFilter { $value -eq "C:\php8.1\php.exe" }
+            Mock Set-EnvVar {
+                if ($value -eq "C:\php8.1\php.exe") { return 0 }
+                return -1
+            }
             
             # Act
             $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "8"
@@ -216,7 +234,7 @@ Describe "Update-PHP-Version Tests" {
                     "php8.2.5" = "C:\php\8.2.5\php.exe"
                 }
             }
-            Mock Set-EnvVar { }
+            Mock Set-EnvVar { return 0 }
             
             # Act
             $result = Update-PHP-Version -variableName "CURRENT_PHP" -variableValue "8.2"

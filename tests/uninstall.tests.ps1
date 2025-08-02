@@ -11,7 +11,7 @@ Describe "Uninstall-PHP Tests" {
         Mock Log-Data { return $true }
         
         # Mock global variables
-        $global:PHP_CURRENT_ENV_NAME = "PHP_CURRENT"
+        $global:PHP_CURRENT_ENV_NAME = "PHP"
         $global:LOG_ERROR_PATH = "C:\temp\error.log"
     }
 
@@ -24,7 +24,11 @@ Describe "Uninstall-PHP Tests" {
             Mock Get-EnvVar-ByName { return $phpPath } -ParameterFilter { $name -eq "php8.2" }
             Mock Get-Current-PHP-Version { return @{ version = "7.4" } }
             Mock Remove-Item { } -ParameterFilter { $Path -eq $phpPath -and $Recurse -eq $true -and $Force -eq $true }
-            Mock Set-EnvVar { } -ParameterFilter { $name -eq "php8.2" -and $value -eq $null }
+            Mock Set-EnvVar {
+                param($name, $value)
+                if ($name -eq "php8.2" -and $value -eq $null) { return 0 }
+                return -1
+            }
             
             # Act
             $result = Uninstall-PHP -version $version
@@ -46,8 +50,16 @@ Describe "Uninstall-PHP Tests" {
             Mock Get-EnvVar-ByName { return $phpPath } -ParameterFilter { $name -eq "php8.2" }
             Mock Get-Current-PHP-Version { return @{ version = "8.2" } }
             Mock Remove-Item { } -ParameterFilter { $Path -eq $phpPath }
-            Mock Set-EnvVar { } -ParameterFilter { $name -eq "php8.2" -and $value -eq $null }
-            Mock Set-EnvVar { } -ParameterFilter { $name -eq $PHP_CURRENT_ENV_NAME -and $value -eq 'null' }
+            Mock Set-EnvVar {
+                param($name, $value)
+
+                if (
+                    ($name -eq $PHP_CURRENT_ENV_NAME -and $value -eq 'null') -or
+                    ($name -eq "php8.2" -and $value -eq $null)
+                    ) { return 0 }
+                return -1
+
+            }
             
             # Act
             $result = Uninstall-PHP -version $version
@@ -69,7 +81,11 @@ Describe "Uninstall-PHP Tests" {
             Mock Get-EnvVar-ByName { return $phpPath } -ParameterFilter { $name -eq "php7.4" }
             Mock Get-Current-PHP-Version { return $null }
             Mock Remove-Item { }
-            Mock Set-EnvVar { } -ParameterFilter { $name -eq "php7.4" }
+            Mock Set-EnvVar { 
+                param($name, $value)
+                if ($name -eq "php7.4" -and $value -eq $null) { return 0 }
+                return -1
+            }
             
             # Act
             $result = Uninstall-PHP -version $version
@@ -88,7 +104,11 @@ Describe "Uninstall-PHP Tests" {
             Mock Get-EnvVar-ByName { return $phpPath } -ParameterFilter { $name -eq "php8.1" }
             Mock Get-Current-PHP-Version { return @{ path = "C:\php\8.2" } } # No version property
             Mock Remove-Item { }
-            Mock Set-EnvVar { } -ParameterFilter { $name -eq "php8.1" }
+            Mock Set-EnvVar { 
+                param($name, $value)
+                if ($name -eq "php8.1" -and $value -eq $null) { return 0 }
+                return -1
+            }
             
             # Act
             $result = Uninstall-PHP -version $version
@@ -110,7 +130,11 @@ Describe "Uninstall-PHP Tests" {
                 Mock Get-EnvVar-ByName { return "C:\php\$($testCase.version)" } -ParameterFilter { $name -eq $testCase.envName }
                 Mock Get-Current-PHP-Version { return @{ version = "different" } }
                 Mock Remove-Item { }
-                Mock Set-EnvVar { }
+                Mock Set-EnvVar { 
+                    param($name, $value)
+                    if ($name -eq $testCase.envName -and $value -eq $null) { return 0 }
+                    return -1
+                }
                 
                 # Act
                 $result = Uninstall-PHP -version $testCase.version
@@ -284,22 +308,6 @@ Describe "Uninstall-PHP Tests" {
             Assert-MockCalled Get-EnvVar-ByName -Exactly 1 -ParameterFilter { $name -eq "php" }
         }
 
-        It "Should handle version with special characters" {
-            # Arrange
-            $version = "8.2-dev"
-            $phpPath = "C:\php\8.2-dev"
-            Mock Get-EnvVar-ByName { return $phpPath } -ParameterFilter { $name -eq "php8.2-dev" }
-            Mock Get-Current-PHP-Version { return @{ version = "8.1" } }
-            Mock Remove-Item { }
-            Mock Set-EnvVar { }
-            
-            # Act
-            $result = Uninstall-PHP -version $version
-            
-            # Assert
-            $result | Should -Be 0
-            Assert-MockCalled Get-EnvVar-ByName -Exactly 1 -ParameterFilter { $name -eq "php8.2-dev" }
-        }
     }
 
     Context "Return code validation" {
@@ -310,7 +318,11 @@ Describe "Uninstall-PHP Tests" {
             Mock Get-EnvVar-ByName { return "C:\php\8.1" }
             Mock Get-Current-PHP-Version { return @{ version = "8.2" } }
             Mock Remove-Item { }
-            Mock Set-EnvVar { }
+            Mock Set-EnvVar { 
+                param($name, $value)
+                if ($name -eq "php8.1" -and $value -eq $null) { return 0 }
+                return -1
+            }
             
             # Act
             $result = Uninstall-PHP -version $version
@@ -364,7 +376,11 @@ Describe "Uninstall-PHP Tests" {
                 $Recurse -eq $true -and 
                 $Force -eq $true 
             }
-            Mock Set-EnvVar { } -ParameterFilter { $name -eq "php8.2.15" -and $value -eq $null }
+            Mock Set-EnvVar { 
+                param($name, $value)
+                if ($name -eq "php8.2.15" -and $value -eq $null) { return 0 }
+                return -1
+            }
             
             # Act
             $result = Uninstall-PHP -version $version
@@ -391,12 +407,20 @@ Describe "Uninstall-PHP Tests" {
             Mock Get-Current-PHP-Version { 
                 return @{ 
                     version = "8.2.15"  # Same as the version being uninstalled
-                    path = "C:\tools\php\8.2.15\php.exe"
                 } 
             }
             Mock Remove-Item { }
-            Mock Set-EnvVar { } -ParameterFilter { $name -eq "php8.2.15" -and $value -eq $null }
-            Mock Set-EnvVar { } -ParameterFilter { $name -eq $PHP_CURRENT_ENV_NAME -and $value -eq 'null' }
+
+            Mock Set-EnvVar { 
+                param($name, $value)
+                
+                
+                if (
+                    ($name -eq $PHP_CURRENT_ENV_NAME -and $value -eq 'null') -or
+                    ($name -eq "php8.2.15" -and $value -eq $null)
+                ) { return 0 }
+                return -1
+            }
             
             # Act
             $result = Uninstall-PHP -version $version

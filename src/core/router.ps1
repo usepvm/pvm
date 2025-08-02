@@ -190,8 +190,7 @@ function Detect-PHP-VersionFromProject {
                 Write-Host "`nFailed to parse composer.json: $_"
             }
         }
-    }
-    catch {
+    } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Detect-PHP-VersionFromProject: Failed to detect PHP version from project" -data $_.Exception.Message
     }
 

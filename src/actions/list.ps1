@@ -44,7 +44,7 @@ function Get-From-Source {
         
         if ($fetchedVersionsGrouped['Archives'].Count -eq 0 -and $fetchedVersionsGrouped['Releases'].Count -eq 0) {
             Write-Host "`nNo PHP versions found in the source."
-            exit 1
+            return @{}
         }
         
         Cache-Fetched-PHP-Versions $fetchedVersionsGrouped
@@ -93,7 +93,7 @@ function Get-Available-PHP-Versions {
 
         if ($fetchedVersionsGrouped.Count -eq 0) {
             Write-Host "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
-            exit 1
+            return 1
         }
         
         Write-Host "`nAvailable Versions"
@@ -113,9 +113,10 @@ function Get-Available-PHP-Versions {
         $msg += "`nReleases : https://windows.php.net/downloads/releases"
         $msg += "`nArchives : https://windows.php.net/downloads/releases/archives"
         Write-Host $msg
+        return 0
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Available-PHP-Versions: Failed to get available PHP versions" -data $_.Exception.Message
-        return @{}
+        return 1
     }
 }
 
@@ -127,7 +128,7 @@ function Display-Installed-PHP-Versions {
         
         if ($installedPhp.Count -eq 0) {
             Write-Host "`nNo PHP versions found"
-            exit 0
+            return 1
         }
 
         Write-Host "`nInstalled Versions"
@@ -144,8 +145,10 @@ function Display-Installed-PHP-Versions {
                 Write-Host "  $versionNumber $isCurrent"
             }
         }
+        return 0
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Display-Installed-PHP-Versions: Failed to display installed PHP versions" -data $_.Exception.Message
+        return 1
     }
     
 }

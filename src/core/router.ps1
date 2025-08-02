@@ -65,9 +65,9 @@ function Invoke-PVMList{
     param($arguments)
     
     if ($arguments -contains "available") {
-        Get-Available-PHP-Versions -getFromSource ($arguments -contains '-f' -or $arguments -contains '--force')
+        $result = Get-Available-PHP-Versions -getFromSource ($arguments -contains '-f' -or $arguments -contains '--force')
     } else {
-        Display-Installed-PHP-Versions
+        $result = Display-Installed-PHP-Versions
     }
 }
 

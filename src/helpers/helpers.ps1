@@ -70,7 +70,6 @@ function Display-Msg-By-ExitCode {
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Display-Msg-By-ExitCode: Failed to display message by exit code" -data $_.Exception.Message
     }
-    exit $exitCode
 }
 
 

@@ -32,6 +32,7 @@ function Invoke-PVMSetup {
         exit $exitCode
     } else {
         Display-Msg-By-ExitCode -msgSuccess "`nPVM has been setup successfully" -msgError "`nFailed to setup PVM" -exitCode $exitCode
+        exit $exitCode
     }
 }
 
@@ -125,6 +126,7 @@ function Invoke-PVMUninstall {
     }
 
     Display-Msg-By-ExitCode -msgSuccess "`nPHP $version has been uninstalled successfully" -msgError "`nFailed to uninstall PHP $version" -exitCode $exitCode
+    exit $exitCode
 }
 
 function Invoke-PVMUse {
@@ -164,6 +166,7 @@ function Invoke-PVMUse {
     }
 
     Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $version" -msgError "`nNo matching PHP versions found for '$version', Use 'pvm list' to see installed versions." -exitCode $exitCode
+    exit $exitCode
 }
 
 function Detect-PHP-VersionFromProject {
@@ -237,6 +240,7 @@ function Invoke-PVMSet {
     }
 
     Display-Msg-By-ExitCode -msgSuccess "`nEnvironment variable '$varName' set to '$varValue' at the system level." -msgError "`nFailed to set environment variable '$varName'" -exitCode $exitCode
+    exit $exitCode
 }
 
 

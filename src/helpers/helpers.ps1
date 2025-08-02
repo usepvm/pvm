@@ -10,9 +10,12 @@ function Get-All-EnvVars {
 }
 
 function Get-EnvVar-ByName {
-    param ( [string]$name )
+    param ($name)
 
     try {
+        if ([string]::IsNullOrEmpty($name)) {
+            return $null
+        }
         return [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Env-ByName: Failed to get environment variable '$name'" -data $_.Exception.Message
@@ -21,9 +24,12 @@ function Get-EnvVar-ByName {
 }
 
 function Set-EnvVar {
-    param ( [string]$name, [string]$value )
+    param ($name, $value)
 
     try {
+        if ([string]::IsNullOrEmpty($name)) {
+            return -1
+        }
         [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine);
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Set-EnvVar: Failed to set environment variable '$name'" -data $_.Exception.Message

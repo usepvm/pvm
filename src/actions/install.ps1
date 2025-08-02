@@ -286,7 +286,7 @@ function Enable-Opcache {
 
 function Select-Version {
     param ($matchingVersions)
-    
+
     if ($matchingVersions.Count -gt 1) {
         Display-Version-List -matchingVersions $matchingVersions
 
@@ -298,8 +298,8 @@ function Select-Version {
         }
 
         foreach ($entry in $matchingVersions.GetEnumerator()) {
-            $selectedVersionObject = $entry.Value | Where-Object { 
-                $_.version -eq $selectedVersionInput 
+            $selectedVersionObject = $entry.Value | Where-Object {
+                $_.version -eq $selectedVersionInput
             }
             if ($selectedVersionObject) {
                 break
@@ -310,13 +310,13 @@ function Select-Version {
             $selectedVersionObject = $_.Value | Select-Object -Last 1
         }
     }
-    
+
     if (-not $selectedVersionObject) {
         $inputDisplay = if ($selectedVersionInput) { $selectedVersionInput } else { $version }
         Write-Host "`nNo matching version found for '$inputDisplay'."
         exit -1
     }
-    
+
     return $selectedVersionObject
 }
 
@@ -324,8 +324,13 @@ function Install-PHP {
     param ($version, $customDir = $null, $includeXDebug = $false, $enableOpcache = $false)
 
     try {
+        if (Is-PHP-Version-Installed -version $version) {
+            Write-Host "`nVersion '$($version)' already installed."
+            exit 1
+        }
+
         $foundInstalledVersions = Get-Matching-PHP-Versions -version $version
-        
+
         if ($foundInstalledVersions) {
             if ($version -match '^\d+\.\d+') {
                 $familyVersion = $matches[0]
@@ -356,7 +361,7 @@ function Install-PHP {
         if ($selectedVersionObject) {
             Write-Host "`nSelected version: '$($selectedVersionObject.version)'"
         }
-        
+
         if (Is-PHP-Version-Installed -version $selectedVersionObject.version) {
             Write-Host "`nVersion '$($selectedVersionObject.version)' already installed."
             exit 0

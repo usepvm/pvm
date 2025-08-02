@@ -326,6 +326,7 @@ function Install-PHP {
     try {
         if (Is-PHP-Version-Installed -version $version) {
             Write-Host "`nVersion '$($version)' already installed."
+            Write-Host "`nRun: pvm use $version"
             exit 1
         }
 

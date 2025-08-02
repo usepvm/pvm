@@ -46,13 +46,6 @@ function Make-Directory {
     }
 }
 
-function Make-File {
-    param ( [string]$filePath )
-
-    if (-not (Test-Path -Path $filePath -PathType Leaf)) {
-        New-Item -Path $filePath -ItemType File | Out-Null
-    }
-}
 
 function Is-Admin {
 

@@ -282,6 +282,22 @@ function Get-Actions {
             command = "pvm set <name> <value>";
             description = "Set a new evironment variable for a PHP version."; 
             action = { Invoke-PVMSet -arguments $script:arguments }}
+        "test" = [PSCustomObject]@{
+            command = "pvm test";
+            description = "Run tests."; 
+            action = {
+                $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
+                $verbosity = $arguments[0]
+                
+                if ($verbosity -eq $null) {
+                    $verbosity = 'Normal'
+                } elseif ($verbosityOptions -notcontains $verbosity) {
+                    Write-Host "`nPlease specify a verbosity level for 'pvm test'. Use 'None', 'Normal', 'Detailed' or 'Diagnostic'."
+                    exit 1
+                } 
+                
+                Run-Tests -verbosity $verbosity
+            }}
     }
 }
 

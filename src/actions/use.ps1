@@ -16,8 +16,8 @@ function Update-PHP-Version {
         if (-not $variableValueContent) {
             throw "The $variableName was not found in the environment variables!"
         }
-        Set-EnvVar -name $variableName -value $variableValueContent
-        return 0;
+        $output = Set-EnvVar -name $variableName -value $variableValueContent
+        return $output
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Update-PHP-Version: Failed to update PHP version for '$variableName'" -data $_.Exception.Message
         return -1

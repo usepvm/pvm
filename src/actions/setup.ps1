@@ -9,7 +9,7 @@ function Setup-PVM {
         $phpEnvValue = Get-EnvVar-ByName -name $PHP_CURRENT_ENV_NAME
         if ($phpEnvValue -eq $null -or $path -notlike "*$phpEnvValue*") {
             $newPath += ";%$PHP_CURRENT_ENV_NAME%"
-            Set-EnvVar -name $PHP_CURRENT_ENV_NAME -value 'null'
+            $output = Set-EnvVar -name $PHP_CURRENT_ENV_NAME -value 'null'
         }
 
         $pvmPath = $PVMRoot
@@ -18,12 +18,12 @@ function Setup-PVM {
         }
         $pvmEnvValue = Get-EnvVar-ByName -name "pvm"
         if ($pvmEnvValue -eq $null) {
-            Set-EnvVar -name "pvm" -value $pvmPath
+            $output = Set-EnvVar -name "pvm" -value $pvmPath
         }
         
         if ($newPath -ne $path) {
-            Set-EnvVar -name "Path" -value $newPath
-            return 0
+            $output = Set-EnvVar -name "Path" -value $newPath
+            return $output
         }
         return 1
     } catch {

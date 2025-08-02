@@ -13,12 +13,13 @@ function Get-EnvVar-ByName {
     param ($name)
 
     try {
-        if ([string]::IsNullOrEmpty($name)) {
+        if ([string]::IsNullOrWhiteSpace($name)) {
             return $null
         }
+        $name = $name.Trim()
         return [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Env-ByName: Failed to get environment variable '$name'" -data $_.Exception.Message
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-EnvVar-ByName: Failed to get environment variable '$name'" -data $_.Exception.Message
         return $null
     }
 }
@@ -27,10 +28,12 @@ function Set-EnvVar {
     param ($name, $value)
 
     try {
-        if ([string]::IsNullOrEmpty($name)) {
+        if ([string]::IsNullOrWhiteSpace($name)) {
             return -1
         }
+        $name = $name.Trim()
         [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine);
+        return 0
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Set-EnvVar: Failed to set environment variable '$name'" -data $_.Exception.Message
         return -1
@@ -41,9 +44,19 @@ function Set-EnvVar {
 function Make-Directory {
     param ( [string]$path )
 
-    if (-not (Test-Path -Path $path -PathType Container)) {
-        mkdir $path | Out-Null
+    try {
+        if ([string]::IsNullOrWhiteSpace($path.Trim())) {
+            return 1
+        }
+
+        if (-not (Test-Path -Path $path -PathType Container)) {
+            mkdir $path | Out-Null
+        }
+    } catch {
+        return 1
     }
+    
+    return 0
 }
 
 
@@ -78,7 +91,11 @@ function Log-Data {
     param ($logPath, $message, $data)
     
     try {
-        Make-Directory -path (Split-Path $logPath)
+        $created = Make-Directory -path (Split-Path $logPath)
+        if ($created -ne 0) {
+            Write-Host "Failed to create directory $(Split-Path $logPath)"
+            return -1
+        }
         Add-Content -Path $logPath -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $message :`n$data`n"
         return 0
     } catch {
@@ -95,11 +112,11 @@ function Optimize-SystemPath {
         $pathBak = Get-EnvVar-ByName -name $PATH_VAR_BACKUP_NAME
 
         if (($pathBak -eq $null) -or $shouldOverwrite) {
-            Set-EnvVar -name $PATH_VAR_BACKUP_NAME -value $path
+            $output = Set-EnvVar -name $PATH_VAR_BACKUP_NAME -value $path
         }
         
         # Saving Path to log
-        $output = Log-Data -logPath $PATH_VAR_BACKUP_PATH -message "Original PATH" -data $path
+        $outputLog = Log-Data -logPath $PATH_VAR_BACKUP_PATH -message "Original PATH" -data $path
 
         $envVars.Keys | ForEach-Object {
             $envName = $_
@@ -111,14 +128,14 @@ function Optimize-SystemPath {
                 ($envValue -notlike "*\Windows*") -and
                 ($envValue -notlike "*\System32*")
             ) {
-                $envValue = $envValue.TrimEnd(';')
-                $envValue = [regex]::Escape($envValue)
-                $path = $path -replace ";$envValue;", ";%$envName%;"
+                $envValue = [regex]::Escape($envValue.TrimEnd(';'))
+                $pattern = "(?<=^|;){0}(?=;|$)" -f $envValue
+                $path = [regex]::Replace($path, $pattern, "%$envName%")
             }
         }
-        Set-EnvVar -name "Path" -value $path
+        $output = Set-EnvVar -name "Path" -value $path
         
-        return 0
+        return $output
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Optimize-SystemPath: Failed to optimize system PATH variable" -data $_.Exception.Message
         return -1

@@ -13,12 +13,11 @@ function Uninstall-PHP {
 
         $currentVersion = (Get-Current-PHP-Version).version
         if ($currentVersion -and ($version -eq $currentVersion)) {
-            Set-EnvVar -name $PHP_CURRENT_ENV_NAME -value 'null'
+            $output = Set-EnvVar -name $PHP_CURRENT_ENV_NAME -value 'null'
         }
 
         Remove-Item -Path $phpPath -Recurse -Force
-        Set-EnvVar -name $name -value $null
-        return 0
+        return Set-EnvVar -name $name -value $null
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Uninstall-PHP: Failed to uninstall PHP version '$version'" -data $_.Exception.Message
         return -1

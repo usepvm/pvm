@@ -105,7 +105,11 @@ function Download-PHP {
         if ($customDir) {
             $destination = $customDir
         }
-        Make-Directory -path $destination
+        $created = Make-Directory -path $destination
+        if ($created -ne 0) {
+            Write-Host "Failed to create directory $destination"
+            return $null
+        }
 
         Write-Host "`nDownloading PHP $version..."
 
@@ -203,7 +207,11 @@ function Config-XDebug {
         }
         $xDebugSelectedVersion = $xDebugList[0]
 
-        Make-Directory -path "$phpPath\ext"
+        $created = Make-Directory -path "$phpPath\ext"
+        if ($created -ne 0) {
+            Write-Host "Failed to create directory '$phpPath\ext'"
+            return
+        }
 
         Write-Host "`nDownloading XDEBUG $($xDebugSelectedVersion.xDebugVersion)..."
         Invoke-WebRequest -Uri "$baseUrl/$($xDebugSelectedVersion.href)" -OutFile "$phpPath\ext\$($xDebugSelectedVersion.fileName)"

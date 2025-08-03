@@ -302,7 +302,7 @@ function Select-Version {
 
         if (-not $selectedVersionInput) {
             Write-Host "`nInstallation cancelled."
-            exit -1
+            return -1
         }
 
         foreach ($entry in $matchingVersions.GetEnumerator()) {
@@ -322,7 +322,7 @@ function Select-Version {
     if (-not $selectedVersionObject) {
         $inputDisplay = if ($selectedVersionInput) { $selectedVersionInput } else { $version }
         Write-Host "`nNo matching version found for '$inputDisplay'."
-        exit -1
+        return -1
     }
 
     return $selectedVersionObject
@@ -335,7 +335,7 @@ function Install-PHP {
         if (Is-PHP-Version-Installed -version $version) {
             Write-Host "`nVersion '$($version)' already installed."
             Write-Host "`nRun: pvm use $version"
-            exit 1
+            return -1
         }
 
         $foundInstalledVersions = Get-Matching-PHP-Versions -version $version
@@ -348,7 +348,7 @@ function Install-PHP {
                 $response = Read-Host "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 if ($response -ne "y" -and $response -ne "Y") {
                     Write-Host "`nRun: pvm use <version>"
-                    exit 1
+                    return -1
                 }
                 $version = $familyVersion
             }
@@ -363,24 +363,24 @@ function Install-PHP {
             $msg += "`n- Check your internet connection or the source URL."
             $msg += "`n- Use 'pvm list available' to see available versions."
             Write-Host $msg
-            exit -1
+            return -1
         }
 
         $selectedVersionObject = Select-Version -matchingVersions $matchingVersions
-        if ($selectedVersionObject) {
-            Write-Host "`nSelected version: '$($selectedVersionObject.version)'"
+        if ($selectedVersionObject -eq -1) {
+            return -1
         }
 
         if (Is-PHP-Version-Installed -version $selectedVersionObject.version) {
             Write-Host "`nVersion '$($selectedVersionObject.version)' already installed."
-            exit 0
+            return -1
         }
 
         $destination = Download-PHP -version $selectedVersionObject -customDir $customDir
 
         if (-not $destination) {
             Write-Host "`nFailed to download PHP version $version."
-            exit -1
+            return -1
         }
 
         Write-Host "`nExtracting the downloaded zip ..."

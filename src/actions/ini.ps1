@@ -7,7 +7,7 @@ function Restore-IniBackup {
 
         if (-not (Test-Path $backupPath)) {
             Write-Host "`nBackup file not found: $backupPath"
-            exit 1
+            return -1
         }
 
         Copy-Item -Path $backupPath -Destination $iniPath -Force
@@ -15,7 +15,7 @@ function Restore-IniBackup {
         return 0
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Restore-IniBackup: Failed to restore ini backup" -data $_.Exception.Message
-        Write-Host "`nFailed to restore backup: $_"
+        Write-Host "`nFailed to restore backup: $($_.Exception.Message)"
         return -1
     }
 }
@@ -41,7 +41,7 @@ function Get-IniSetting {
     try {
         if (-not $key) {
             Write-Host "`nKey is required. Usage: pvm ini get <key>"
-            exit 1
+            return -1
         }
         
         $pattern = "^[#;]?\s*{0}\s*=\s*(.+)" -f [regex]::Escape($key)
@@ -70,7 +70,7 @@ function Set-IniSetting {
     try {
         if (-not ($keyValue -match '^(?<key>[^=]+)=(?<value>.+)$')) {
             Write-Host "`nInvalid format. Use key=value (e.g., memory_limit=512M)"
-            exit 1
+            return -1
         }
 
         $key = $matches['key'].Trim()
@@ -112,7 +112,7 @@ function Enable-IniExtension {
         
         if (-not $extName) {
             Write-Host "`nPlease provide an extension name to enable"
-            exit 1
+            return -1
         }
         
         $lines = Get-Content $iniPath
@@ -150,7 +150,7 @@ function Disable-IniExtension {
         
         if (-not $extName) {
             Write-Host "`nPlease provide an extension name to disable"
-            exit 1
+            return -1
         }
         
         $lines = Get-Content $iniPath
@@ -189,7 +189,7 @@ function Get-IniExtensionStatus {
     try {
         if (-not $extName) {
             Write-Host "`nPlease provide an extension name to check status"
-            exit 1
+            return -1
         }
 
         $lines = Get-Content $iniPath
@@ -227,14 +227,14 @@ function Invoke-PVMIniAction {
         
         if (-not (Test-Path $iniPath)) {
             Write-Host "php.ini not found at: $currentPhpVersionPath"
-            exit 1
+            return -1
         }
 
         switch ($action) {
             "get" {
                 if ($params.Count -lt 1) {
                     Write-Host "`nPlease specify at least one setting name ('pvm ini get memory_limit)."
-                    exit 1
+                    return -1
                 }
                 
                 Write-Host "`nRetrieving ini setting..."
@@ -245,7 +245,7 @@ function Invoke-PVMIniAction {
             "set" {
                 if ($params.Count -lt 1) {
                     Write-Host "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
-                    exit 1
+                    return -1
                 }
 
                 Write-Host "`nSetting ini value..."
@@ -256,38 +256,35 @@ function Invoke-PVMIniAction {
             "enable" {
                 if ($params.Count -lt 1) {
                     Write-Host "`nPlease specify at least one extension (pvm ini enable curl)."
-                    exit 1
+                    return -1
                 }
                 
                 Write-Host "`nEnabling extension(s): $($remainingArgs -join ', ')"
                 foreach ($extName in $params) {
-                    Enable-IniExtension -iniPath $iniPath -extName $extName
+                    $exitCode = Enable-IniExtension -iniPath $iniPath -extName $extName
                 }
-                $exitCode = 0
             }
             "disable" {
-                if ($params.Count -lt 1) {
+                if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one extension (pvm ini disable xdebug)."
-                    exit 1
+                    return -1
                 }
                 
                 Write-Host "`nDisabling extension(s): $($remainingArgs -join ', ')"
                 foreach ($extName in $params) {
-                    Disable-IniExtension -iniPath $iniPath -extName $extName
+                    $exitCode = Disable-IniExtension -iniPath $iniPath -extName $extName
                 }
-                $exitCode = 0
             }
             "status" {
-                if ($params.Count -lt 1) {
+                if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one extension (pvm ini status opcache)."
-                    exit 1
+                    return -1
                 }
                 
                 Write-Host "`nChecking status of extension(s): $($remainingArgs -join ', ')"
                 foreach ($extName in $params) {
-                    Get-IniExtensionStatus -iniPath $iniPath -extName $extName
+                    $exitCode = Get-IniExtensionStatus -iniPath $iniPath -extName $extName
                 }
-                $exitCode = 0
             }
             "restore" {
                 $exitCode = Restore-IniBackup -iniPath $iniPath

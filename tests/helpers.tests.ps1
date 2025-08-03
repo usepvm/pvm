@@ -459,7 +459,7 @@ Describe "Set-EnvVar Tests" {
 Describe "Make-Directory Tests" {
     Context "Directory creation" {
         It "Should create directory when it doesn't exist" {
-            $testPath = "C:\test\newdir"
+            $testPath = "TestDrive:\test\newdir"
             
             Make-Directory -path $testPath
             
@@ -467,7 +467,7 @@ Describe "Make-Directory Tests" {
         }
         
         It "Should not create directory when it already exists" {
-            $testPath = "C:\test\existingdir"
+            $testPath = "TestDrive:\test\existingdir"
             $global:MockFileSystem.Directories += $testPath
             
             $initialCount = $global:MockFileSystem.Directories.Count
@@ -483,7 +483,7 @@ Describe "Make-Directory Tests" {
             $global:MockFileSystemThrowException = $true
             $global:MockFileSystemException = "Access denied"
             
-            { Make-Directory -path "C:\test\faildir" } | Should -Throw
+            { Make-Directory -path "TestDrive:\test\faildir" } | Should -Throw
         }
     }
     
@@ -628,17 +628,17 @@ Describe "Log-Data Tests" {
             $global:MockFileSystemThrowException = $true
             $global:MockFileSystemException = "Access denied to create directory"
             
-            $result = Log-Data -logPath "C:\temp\test.log" -message "Test message" -data "Test data"
+            $result = Log-Data -logPath "TestDrive:\temp\test.log" -message "Test message" -data "Test data"
             $result | Should -Be -1
         }
         
         It "Should return -1 when file write fails" {
             # Create directory first, then make Add-Content fail
-            $global:MockFileSystem.Directories += "C:\temp"
+            $global:MockFileSystem.Directories += "TestDrive:\temp"
             $global:MockFileSystemThrowException = $true
             $global:MockFileSystemException = "File is locked"
             
-            $result = Log-Data -logPath "C:\temp\test.log" -message "Test message" -data "Test data"
+            $result = Log-Data -logPath "TestDrive:\temp\test.log" -message "Test message" -data "Test data"
             $result | Should -Be -1
         }
     }
@@ -968,7 +968,7 @@ Describe "Error Injection Tests" -Tag "ErrorInjection" {
         
         It "Should handle file system errors during logging" {
             $global:MockFileSystemThrowException = $true
-            $result = Log-Data -logPath "C:\test.log" -message "Test" -data "Data"
+            $result = Log-Data -logPath "TestDrive:\test.log" -message "Test" -data "Data"
             $result | Should -Be -1
         }
         

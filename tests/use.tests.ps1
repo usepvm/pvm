@@ -10,7 +10,7 @@ Describe "Update-PHP-Version Tests" {
         Mock Log-Data { return $true }
         
         # Mock global variable
-        $global:LOG_ERROR_PATH = "C:\temp\error.log"
+        $global:LOG_ERROR_PATH = "$PSScriptRoot\storage\logs\error.log"
     }
 
     Context "Successful PHP version update" {

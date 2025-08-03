@@ -3,7 +3,7 @@
 BeforeAll {
     # Mock global variables that would be defined in the main script
     $global:DATA_PATH = "$PSScriptRoot\storage\data"
-    $global:LOG_ERROR_PATH = "PSScriptRoot\storage\logs\error.log"
+    $global:LOG_ERROR_PATH = "$PSScriptRoot\storage\logs\error.log"
     
     # Mock external functions that aren't defined in the provided code
     Mock Make-Directory { param($path) 

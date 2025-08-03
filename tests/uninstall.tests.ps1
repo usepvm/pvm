@@ -12,7 +12,7 @@ Describe "Uninstall-PHP Tests" {
         
         # Mock global variables
         $global:PHP_CURRENT_ENV_NAME = "PHP"
-        $global:LOG_ERROR_PATH = "C:\temp\error.log"
+        $global:LOG_ERROR_PATH = "$PSScriptRoot\storage\logs\error.log"
     }
 
     Context "Successful PHP uninstallation" {

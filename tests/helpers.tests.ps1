@@ -1,11 +1,10 @@
 # PowerShell Function Tests using Pester with Mock Registry
-# Install Pester if not available: Install-Module -Name Pester -Force -SkipPublisherCheck
 
 BeforeAll {
     # Mock global variables that would be defined in the main script
-    $global:LOG_ERROR_PATH = "C:\temp\test_error.log"
+    $global:LOG_ERROR_PATH = "TestDrive:\storage\logs\error.log"
     $global:PATH_VAR_BACKUP_NAME = "PATH_BACKUP"
-    $global:PATH_VAR_BACKUP_PATH = "C:\temp\test_path_backup.log"
+    $global:PATH_VAR_BACKUP_PATH = "TestDrive:\storage\logs\test_path_backup.log"
     
     # Create a mock registry to simulate environment variables
     $global:MockRegistry = @{

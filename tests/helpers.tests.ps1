@@ -198,14 +198,14 @@ BeforeAll {
         param ( [string]$path )
         
         if ([string]::IsNullOrWhiteSpace($path.Trim())) {
-            return $false
+            return 1
         }
         
         if (-not (Test-Path -Path $path -PathType Container)) {
             mkdir $path | Out-Null
         }
         
-        return $true
+        return 0
     }
 
     function Is-Admin {
@@ -218,8 +218,11 @@ BeforeAll {
     function Log-Data {
         param ($logPath, $message, $data)
         try {
-            Make-Directory -path (Split-Path $logPath)
-            Add-Content -Path $logPath -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $message :n$datan"
+            $created = Make-Directory -path (Split-Path $logPath)
+            if ($created -ne 0) {
+                return -1
+            }
+            Add-Content -Path $logPath -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $message :n$data"
             return 0
         } catch {
             return -1
@@ -583,38 +586,41 @@ Describe "Display-Msg-By-ExitCode Tests" {
 
 Describe "Log-Data Tests" {
     Context "Success scenarios" {
-        # It "Should successfully log data and return 0" {
-        #     $logPath = "C:\temp\test.log"
-        #     $message = "Test message"
-        #     $data = "Test data"
+        It "Should successfully log data and return 0" {
             
-        #     $result = Log-Data -logPath $logPath -message $message -data $data
+            $global:MockFileSystemThrowException = $false
             
-        #     $result | Should -Be 0
-        #     $global:MockFileSystem.Directories | Should -Contain "C:\temp"
-        #     $global:MockFileSystem.Files[$logPath] | Should -Match $message
-        #     $global:MockFileSystem.Files[$logPath] | Should -Match $data
-        # }
+            $logPath = "TestDrive:\temp\test.log"
+            $message = "Test message"
+            $data = "Test data"
+            
+            $result = Log-Data -logPath $logPath -message $message -data $data
+            
+            $result | Should -Be 0
+            $global:MockFileSystem.Directories | Should -Contain "TestDrive:\temp"
+            $global:MockFileSystem.Files[$logPath] | Should -Match $message
+            $global:MockFileSystem.Files[$logPath] | Should -Match $data
+        }
         
-        # It "Should handle null data parameter" {
-        #     $result = Log-Data -logPath "C:\temp\test.log" -message "Test message" -data $null
+        It "Should handle null data parameter" {
+            $result = Log-Data -logPath "TestDrive:\temp\test.log" -message "Test message" -data $null
             
-        #     $result | Should -Be 0
-        #     $global:MockFileSystem.Files["C:\temp\test.log"] | Should -Match "Test message"
-        # }
+            $result | Should -Be 0
+            $global:MockFileSystem.Files["TestDrive:\temp\test.log"] | Should -Match "Test message"
+        }
         
-        # It "Should handle empty message and data" {
-        #     $result = Log-Data -logPath "C:\temp\test.log" -message "" -data ""
+        It "Should handle empty message and data" {
+            $result = Log-Data -logPath "TestDrive:\temp\test.log" -message "" -data ""
             
-        #     $result | Should -Be 0
-        #     $global:MockFileSystem.Files.ContainsKey("C:\temp\test.log") | Should -Be $true
-        # }
+            $result | Should -Be 0
+            $global:MockFileSystem.Files.ContainsKey("TestDrive:\temp\test.log") | Should -Be $true
+        }
         
-        # It "Should include timestamp in log entry" {
-        #     $result = Log-Data -logPath "C:\temp\test.log" -message "Test" -data "Data"
+        It "Should include timestamp in log entry" {
+            $result = Log-Data -logPath "TestDrive:\temp\test.log" -message "Test" -data "Data"
             
-        #     $global:MockFileSystem.Files["C:\temp\test.log"] | Should -Match "\[2024-01-01 12:00:00\]"
-        # }
+            $global:MockFileSystem.Files["TestDrive:\temp\test.log"] | Should -Match "\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]"
+        }
     }
     
     Context "Error scenarios" {

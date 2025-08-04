@@ -287,16 +287,20 @@ function Get-Actions {
             description = "Run tests."; 
             action = {
                 $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
-                $verbosity = $arguments[0]
                 
-                if ($verbosity -eq $null) {
-                    $verbosity = 'Normal'
-                } elseif ($verbosityOptions -notcontains $verbosity) {
-                    Write-Host "`nPlease specify a verbosity level for 'pvm test'. Use 'None', 'Normal', 'Detailed' or 'Diagnostic'."
-                    exit 1
-                } 
+                $files = $null
+                $verbosity = 'Normal'
+                if ($arguments.Count -gt 0 -and $verbosityOptions -contains $arguments[-1]) {
+                    $verbosity = $arguments[-1]
+                    
+                    if ($arguments.Count -gt 1) {
+                        $files = $arguments[0..($arguments.Count - 2)]
+                    }
+                } else {
+                    $files = $arguments
+                }
                 
-                Run-Tests -verbosity $verbosity
+                Run-Tests -verbosity $verbosity -tests $files
             }}
     }
 }

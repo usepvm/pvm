@@ -1,24 +1,39 @@
 
 
 function Run-Tests {
-    param ($verbosity = "Normal")
+    param ($verbosity = "Normal", $tests = $null)
     
     try {
         $config = New-PesterConfiguration
         $config.Output.Verbosity = $verbosity
-
-        $tests = Get-ChildItem "$PVMRoot\tests\*.tests.ps1"
+        
+        if ($tests) {
+            $tests = $tests | ForEach-Object {
+                return @{
+                    Name = "$_.tests.ps1"
+                    FullName = "$PVMRoot\tests\$_.tests.ps1"
+                }
+            }
+        } else {
+            $tests = Get-ChildItem "$PVMRoot\tests\*.tests.ps1"
+        }
+        
         $tests | ForEach-Object { 
             try {
                 Write-Host "`n----------------------------------------------------------------"
                 Write-Host "- Running test: $($_.Name)"
                 Write-Host "----------------------------------------------------------------"
                 $fileName = $_.FullName
+                if (-not (Test-Path $fileName)) {
+                    $msg = "- $fileName does not exist."
+                    Write-Host "`n$msg" -ForegroundColor DarkYellow
+                    throw $msg
+                }
                 $config.Run.Path = $fileName
                 Invoke-Pester -Configuration $config
             } catch {
                 $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Run-Tests: Failed to run test: $fileName" -data $_.Exception.Message
-                Write-Host "`n- Failed to run test: $fileName"
+                Write-Host "`n- Failed to run test: $fileName" -ForegroundColor DarkYellow
             }
             Write-Host "`n"
         }

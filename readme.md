@@ -96,3 +96,19 @@ pvm ini restore
 
 > [!NOTE]  
 > Most of the commands edits or adds to the system environment variables, to reload the updates without restarting your terminal, you need to install chocolatey, and run `refreshenv` command
+
+
+### Running Tests
+Run tests against the PowerShell scripts in the repo — especially useful for contributors verifying changes before submitting a pull request:
+
+```sh
+pvm test # Runs all tests with Normal verbosity.
+
+pvm test use install # Runs only use.tests.ps1 and install.tests.ps1 with Normal verbosity.
+
+pvm test Detailed # Runs all tests with Detailed verbosity.
+
+pvm test helpers list Diagnostic # Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity.
+
+pvm test [None|Normal|Detailed|Diagnostic] # Runs all tests with the specified verbosity level.
+```

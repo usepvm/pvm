@@ -295,7 +295,12 @@ function Enable-Opcache {
 function Select-Version {
     param ($matchingVersions)
 
-    if ($matchingVersions.Count -gt 1) {
+    $matchingKeys = $matchingVersions.Values | Where-Object { $_.Count -gt 0 }
+    
+    if ($matchingKeys.Length -eq 1) {
+        # There is exactly one key with one item
+        $selectedVersionObject = $matchingKeys
+    } else {
         Display-Version-List -matchingVersions $matchingVersions
 
         $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
@@ -305,18 +310,11 @@ function Select-Version {
             return -1
         }
 
-        foreach ($entry in $matchingVersions.GetEnumerator()) {
-            $selectedVersionObject = $entry.Value | Where-Object {
-                $_.version -eq $selectedVersionInput
-            }
-            if ($selectedVersionObject) {
-                break
-            }
-        }
-    } else {
-        $matchingVersions.GetEnumerator() | ForEach-Object {
-            $selectedVersionObject = $_.Value | Select-Object -Last 1
-        }
+        $selectedVersionObject = $matchingVersions.Values | ForEach-Object {
+            $_ | Where-Object {
+                $_.version -eq $selectedVersionInput 
+            } 
+        } | Where-Object { $_ } | Select-Object -First 1
     }
 
     if (-not $selectedVersionObject) {

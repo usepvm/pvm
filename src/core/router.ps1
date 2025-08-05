@@ -118,10 +118,10 @@ function Invoke-PVMUse {
         Write-Host "`nDetected PHP version from project: $version"
     }
     
-    $exitCode = Update-PHP-Version -variableName $PHP_CURRENT_ENV_NAME -variableValue $version
+    $result = Update-PHP-Version -variableName $PHP_CURRENT_ENV_NAME -variableValue $version
 
-    Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $version" -msgError "`nNo matching PHP versions found for '$version', Use 'pvm list' to see installed versions." -exitCode $exitCode
-    exit $exitCode
+    Display-Msg-By-ExitCode -result $result
+    exit 0
 }
 
 function Detect-PHP-VersionFromProject {

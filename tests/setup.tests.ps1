@@ -3,6 +3,7 @@
 
 Describe "Setup-PVM" {
     BeforeAll {
+        Mock Write-Host {}
         # Mock global variables that the function depends on
         $global:PHP_CURRENT_ENV_NAME = "PHP"
         $global:PVMRoot = "C:\PVM"
@@ -128,7 +129,7 @@ Describe "Setup-PVM" {
             # Assert
             $global:MockRegistry.Machine["PHP"] | Should -Be 'null'
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\Windows\System32;%pvm%;%PHP%"
-            $result | Should -Be 0
+            $result.code | Should -Be 0
         }
 
         It "Should add PVM path to PATH when it doesn't exist" {
@@ -144,7 +145,7 @@ Describe "Setup-PVM" {
             # Assert
             $global:MockRegistry.Machine["pvm"] | Should -Be "C:\PVM"
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\Windows\System32;%PHP%;%pvm%"
-            $result | Should -Be 0
+            $result.code | Should -Be 0
         }
 
         It "Should set up both PHP and pvm when neither exists" {
@@ -160,7 +161,7 @@ Describe "Setup-PVM" {
             $global:MockRegistry.Machine["PHP"] | Should -Be 'null'
             $global:MockRegistry.Machine["pvm"] | Should -Be "C:\PVM"
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\Windows\System32;%PHP%;%pvm%"
-            $result | Should -Be 0
+            $result.code | Should -Be 0
         }
 
         It "Should add both variables to PATH when PATH doesn't contain them" {
@@ -174,7 +175,7 @@ Describe "Setup-PVM" {
 
             # Assert
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\Windows\System32;C:\SomeOtherPath;%PHP%;%pvm%"
-            $result | Should -Be 0
+            $result.code | Should -Be 0
         }
     }
 
@@ -190,7 +191,7 @@ Describe "Setup-PVM" {
 
             # Assert
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\Windows\System32;C:\PHP\8.1;C:\PVM"
-            $result | Should -Be 1
+            $result.code | Should -Be 1
         }
 
         It "Should return 1 when PATH contains environment variable references" {
@@ -204,7 +205,7 @@ Describe "Setup-PVM" {
 
             # Assert
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\Windows\System32;%PHP%;%pvm%"
-            $result | Should -Be 1
+            $result.code | Should -Be 1
         }
 
         It "Should return 1 when PATH already contains pvm reference but PHP is null" {
@@ -218,7 +219,7 @@ Describe "Setup-PVM" {
 
             # Assert
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\Windows\System32;%PHP%;%pvm%"
-            $result | Should -Be 1
+            $result.code | Should -Be 1
         }
     }
 
@@ -235,7 +236,7 @@ Describe "Setup-PVM" {
             # Assert
             $global:MockRegistry.Machine["PHP"] | Should -Be "C:\PHP\8.1"
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\Windows\System32;%pvm%;%PHP%"
-            $result | Should -Be 0
+            $result.code | Should -Be 0
         }
     }
 
@@ -252,7 +253,7 @@ Describe "Setup-PVM" {
             # Assert
             $global:MockRegistry.Machine["pvm"] | Should -Be "C:\PVM"
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\Windows\System32;C:\PHP\8.1;%pvm%"
-            $result | Should -Be 0
+            $result.code | Should -Be 0
         }
     }
 
@@ -270,7 +271,7 @@ Describe "Setup-PVM" {
                 $logPath -eq "TestDrive:\logs\error.log" -and 
                 $message -eq "Setup-PVM: Failed to set up PVM environment"
             }
-            $result | Should -Be -1
+            $result.code | Should -Be -1
         }
 
         It "Should return -1 and log error when Set-EnvVar fails" {
@@ -291,7 +292,7 @@ Describe "Setup-PVM" {
                 $logPath -eq "TestDrive:\logs\error.log" -and 
                 $message -eq "Setup-PVM: Failed to set up PVM environment"
             }
-            $result | Should -Be -1
+            $result.code | Should -Be -1
         }
     }
 
@@ -307,7 +308,7 @@ Describe "Setup-PVM" {
 
             # Assert
             $global:MockRegistry.Machine["Path"] | Should -Be ";%PHP%;%pvm%"
-            $result | Should -Be 0
+            $result.code | Should -Be 0
         }
 
         It "Should handle null PATH variable" {
@@ -321,7 +322,7 @@ Describe "Setup-PVM" {
             
             # Assert
             $global:MockRegistry.Machine["Path"] | Should -Be ";%PHP%;%pvm%"
-            $result | Should -Be 0
+            $result.code | Should -Be 0
         }
 
         It "Should be case-insensitive when checking PATH contents" {
@@ -335,7 +336,7 @@ Describe "Setup-PVM" {
 
             # Assert - Should recognize that c:\pvm matches C:\PVM
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\windows\system32;c:\pvm;%PHP%"
-            $result | Should -Be 1
+            $result.code | Should -Be 1
         }
 
         It "Should handle whitespace in environment variable names" {
@@ -351,7 +352,7 @@ Describe "Setup-PVM" {
             $global:MockRegistry.Machine["PHP"] | Should -Be 'null'
             $global:MockRegistry.Machine["pvm"] | Should -Be "C:\PVM"
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\windows\system32;%PHP%;%pvm%"
-            $result | Should -Be 0
+            $result.code | Should -Be 0
         }
     }
 
@@ -368,7 +369,7 @@ Describe "Setup-PVM" {
             # Assert
             $global:MockRegistry.Machine["pvm"] | Should -Be "C:\PVM"
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\Windows\System32;C:\PHP\8.1;%pvm%"
-            $result | Should -Be 0
+            $result.code | Should -Be 0
         }
 
         It "Should handle mixed PATH styles (environment variables and actual paths)" {
@@ -383,7 +384,7 @@ Describe "Setup-PVM" {
             # Assert
             $global:MockRegistry.Machine["pvm"] | Should -Be "C:\PVM"
             $global:MockRegistry.Machine["Path"] | Should -Be "C:\Windows\System32;%PHP%;C:\SomeOtherPath;%pvm%"
-            $result | Should -Be 0
+            $result.code | Should -Be 0
         }
     }
 

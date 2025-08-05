@@ -34,7 +34,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be 0
+            $result.code | Should -Be 0
             Assert-MockCalled Get-EnvVar-ByName -Exactly 1 -ParameterFilter { $name -eq "php8.2" }
             Assert-MockCalled Get-Current-PHP-Version -Exactly 1
             Assert-MockCalled Remove-Item -Exactly 1 -ParameterFilter { $Path -eq $phpPath -and $Recurse -eq $true -and $Force -eq $true }
@@ -65,7 +65,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be 0
+            $result.code | Should -Be 0
             Assert-MockCalled Get-EnvVar-ByName -Exactly 1 -ParameterFilter { $name -eq "php8.2" }
             Assert-MockCalled Get-Current-PHP-Version -Exactly 1
             Assert-MockCalled Remove-Item -Exactly 1 -ParameterFilter { $Path -eq $phpPath }
@@ -91,7 +91,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be 0
+            $result.code | Should -Be 0
             Assert-MockCalled Set-EnvVar -Exactly 0 -ParameterFilter { $name -eq $PHP_CURRENT_ENV_NAME }
             Assert-MockCalled Remove-Item -Exactly 1
             Assert-MockCalled Set-EnvVar -Exactly 1 -ParameterFilter { $name -eq "php7.4" -and $value -eq $null }
@@ -114,7 +114,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be 0
+            $result.code | Should -Be 0
             Assert-MockCalled Set-EnvVar -Exactly 0 -ParameterFilter { $name -eq $PHP_CURRENT_ENV_NAME }
         }
 
@@ -140,7 +140,7 @@ Describe "Uninstall-PHP Tests" {
                 $result = Uninstall-PHP -version $testCase.version
                 
                 # Assert
-                $result | Should -Be 0
+                $result.code | Should -Be 0
                 Assert-MockCalled Get-EnvVar-ByName -ParameterFilter { $name -eq $testCase.envName }
                 Assert-MockCalled Set-EnvVar -ParameterFilter { $name -eq $testCase.envName -and $value -eq $null }
             }
@@ -149,7 +149,7 @@ Describe "Uninstall-PHP Tests" {
 
     Context "PHP version not found scenario" {
         
-        It "Should return -2 when PHP version environment variable does not exist" {
+        It "Should return -1 when PHP version environment variable does not exist" {
             # Arrange
             $version = "9.0"
             Mock Get-EnvVar-ByName { return $null } -ParameterFilter { $name -eq "php9.0" }
@@ -158,7 +158,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be -2
+            $result.code | Should -Be -1
             Assert-MockCalled Get-EnvVar-ByName -Exactly 1 -ParameterFilter { $name -eq "php9.0" }
             Assert-MockCalled Get-Current-PHP-Version -Exactly 0
             Assert-MockCalled Remove-Item -Exactly 0
@@ -166,7 +166,7 @@ Describe "Uninstall-PHP Tests" {
             Assert-MockCalled Log-Data -Exactly 0
         }
 
-        It "Should return -2 when PHP version environment variable is empty string" {
+        It "Should return -1 when PHP version environment variable is empty string" {
             # Arrange
             $version = "8.3"
             Mock Get-EnvVar-ByName { return "" } -ParameterFilter { $name -eq "php8.3" }
@@ -175,7 +175,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be -2
+            $result.code | Should -Be -1
             Assert-MockCalled Get-EnvVar-ByName -Exactly 1
             Assert-MockCalled Remove-Item -Exactly 0
             Assert-MockCalled Set-EnvVar -Exactly 0
@@ -194,7 +194,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be -1
+            $result.code | Should -Be -1
             Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter { 
                 $logPath -eq $LOG_ERROR_PATH -and 
                 $message -eq "Uninstall-PHP: Failed to uninstall PHP version '8.2'" -and
@@ -214,7 +214,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be -1
+            $result.code | Should -Be -1
             Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter { 
                 $message -eq "Uninstall-PHP: Failed to uninstall PHP version '8.2'" -and
                 $data -eq "Unable to determine current PHP version"
@@ -234,7 +234,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be -1
+            $result.code | Should -Be -1
             Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter { 
                 $data -eq "Access denied to path C:\php\8.2"
             }
@@ -254,7 +254,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be -1
+            $result.code | Should -Be -1
             Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter { 
                 $data -eq "Permission denied"
             }
@@ -275,7 +275,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be -1
+            $result.code | Should -Be -1
             Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter { 
                 $data -eq "Cannot set current PHP environment variable"
             }
@@ -292,7 +292,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $null
             
             # Assert
-            $result | Should -Be -2
+            $result.code | Should -Be -1
             Assert-MockCalled Get-EnvVar-ByName -Exactly 1 -ParameterFilter { $name -eq "php" }
         }
 
@@ -304,7 +304,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version ""
             
             # Assert
-            $result | Should -Be -2
+            $result.code | Should -Be -1
             Assert-MockCalled Get-EnvVar-ByName -Exactly 1 -ParameterFilter { $name -eq "php" }
         }
 
@@ -328,11 +328,11 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -BeExactly 0
-            $result.GetType() | Should -Be ([int])
+            $result.code | Should -BeExactly 0
+            $result.code.GetType() | Should -Be ([int])
         }
 
-        It "Should return exactly -2 when PHP version not found" {
+        It "Should return exactly -1 when PHP version not found" {
             # Arrange
             Mock Get-EnvVar-ByName { return $null }
             
@@ -340,8 +340,8 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version "nonexistent"
             
             # Assert
-            $result | Should -BeExactly -2
-            $result.GetType() | Should -Be ([int])
+            $result.code | Should -BeExactly -1
+            $result.code.GetType() | Should -Be ([int])
         }
 
         It "Should return exactly -1 for any exception" {
@@ -353,8 +353,8 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version "8.2"
             
             # Assert
-            $result | Should -BeExactly -1
-            $result.GetType() | Should -Be ([int])
+            $result.code | Should -BeExactly -1
+            $result.code.GetType() | Should -Be ([int])
         }
     }
 
@@ -386,7 +386,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be 0
+            $result.code | Should -Be 0
             Assert-MockCalled Remove-Item -Exactly 1 -ParameterFilter { 
                 $Path -eq $phpPath -and $Recurse -eq $true -and $Force -eq $true 
             }
@@ -426,7 +426,7 @@ Describe "Uninstall-PHP Tests" {
             $result = Uninstall-PHP -version $version
             
             # Assert
-            $result | Should -Be 0
+            $result.code | Should -Be 0
             Assert-MockCalled Set-EnvVar -Exactly 1 -ParameterFilter { 
                 $name -eq "php8.2.15" -and $value -eq $null 
             }

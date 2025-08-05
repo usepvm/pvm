@@ -532,22 +532,43 @@ Describe "Display-Msg-By-ExitCode Tests" {
     }
     
     Context "Success scenarios" {
-        It "Should display success message when exit code is 0" {
-            Display-Msg-By-ExitCode -msgSuccess "Success!" -msgError "Failed!" -exitCode 0
+        It "Should display message from result object" {
+             # Arrange
+            $testResult = @{ message = "Success!"; color = "Green" }
             
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { $Object -eq "Success!" }
+            # Act
+            Display-Msg-By-ExitCode -result $testResult
+            
+            # Assert
+            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+                $Object -eq "`nSuccess!" -and $ForegroundColor -eq "Green" 
+            }
         }
         
-        It "Should display error message when exit code is non-zero" {
-            Display-Msg-By-ExitCode -msgSuccess "Success!" -msgError "Failed!" -exitCode 1
+        It "Should use provided message parameter over result.message" {
+            # Arrange
+            $testResult = @{ message = "Original message"; color = "Red" }
             
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { $Object -eq "Failed!" }
+            # Act
+            Display-Msg-By-ExitCode -result $testResult -message "Override message"
+            
+            # Assert
+            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+                $Object -eq "`nOverride message" -and $ForegroundColor -eq "Red" 
+            }
         }
         
-        It "Should display error message when exit code is negative" {
-            Display-Msg-By-ExitCode -msgSuccess "Success!" -msgError "Failed!" -exitCode -1
+        It "Should default to Gray color when no color specified" {
+            # Arrange
+            $testResult = @{ message = "Test message" }
             
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { $Object -eq "Failed!" }
+            # Act
+            Display-Msg-By-ExitCode -result $testResult
+            
+            # Assert
+            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+                $Object -eq "`nTest message" -and $ForegroundColor -eq "Gray" 
+            }
         }
     }
     
@@ -564,22 +585,28 @@ Describe "Display-Msg-By-ExitCode Tests" {
             Mock Get-Command { return @{ Name = "Update-SessionEnvironment" } }
             Mock Update-SessionEnvironment { }
             
-            Display-Msg-By-ExitCode -msgSuccess "Success!" -msgError "Failed!" -exitCode 0
+            Display-Msg-By-ExitCode -result @{ message = "Success!" }
             
             # Function should complete without error
-            Assert-MockCalled Write-Host -Times 1
+            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+                $Object -eq "`nSuccess!" -and $ForegroundColor -eq "Gray" 
+            }
         }
     }
     
     Context "Edge cases" {
         It "Should handle null messages" {
-            Display-Msg-By-ExitCode -msgSuccess $null -msgError $null -exitCode 0
-            Assert-MockCalled Write-Host -Times 1
+            Display-Msg-By-ExitCode -result @{ message = $null } -message "Custom message"
+            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+                $Object -eq "`nCustom message" -and $ForegroundColor -eq "Gray" 
+            }
         }
         
         It "Should handle empty string messages" {
-            Display-Msg-By-ExitCode -msgSuccess "" -msgError "" -exitCode 1
-            Assert-MockCalled Write-Host -Times 1
+            Display-Msg-By-ExitCode -result @{ message = "" } -message "Custom message"
+            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+                $Object -eq "`nCustom message" -and $ForegroundColor -eq "Gray" 
+            }
         }
     }
 }

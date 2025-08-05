@@ -103,19 +103,12 @@ function Invoke-PVMUse {
     }
 
     if ($version -eq 'auto') {
-        $version = Detect-PHP-VersionFromProject
-        
-        if (-not $version) {
-            Write-Host "`nCould not detect PHP version from .php-version or composer.json"
+        $result = Auto-Select-PHP-Version -version $version
+        if ($result.code -ne 0) {
+            Display-Msg-By-ExitCode -result $result
             exit 1
         }
-        
-        if (-not (Is-PHP-Version-Installed -version $version)) {
-            Write-Host "`nDetected PHP version '$version' from project, but it is not installed."
-            Write-Host "Run: pvm install $version"
-            exit 1
-        }
-        Write-Host "`nDetected PHP version from project: $version"
+        $version = $result.version
     }
     
     $result = Update-PHP-Version -variableName $PHP_CURRENT_ENV_NAME -variableValue $version

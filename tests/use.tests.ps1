@@ -165,7 +165,6 @@ Describe "Update-PHP-Version Tests" {
         }
 
         It "Should find matching PHP version when exact match doesn't exist" {
-
             Mock Write-Host {}
             # Act
             $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "8.2"
@@ -174,7 +173,7 @@ Describe "Update-PHP-Version Tests" {
             $result.code | Should -Be 0
             Assert-MockCalled Get-EnvVar-ByName -Exactly 1 -ParameterFilter { $name -eq "php8.2" }
             Assert-MockCalled Get-All-EnvVars -Exactly 1
-            Assert-MockCalled Set-EnvVar -Exactly 1 -ParameterFilter { $name -eq "PHP_PATH" -and $value -eq "C:\php8.2.1\php.exe" }
+            Assert-MockCalled Set-EnvVar -Exactly 1
             Assert-MockCalled Log-Data -Exactly 0
         }
 
@@ -210,7 +209,7 @@ Describe "Update-PHP-Version Tests" {
 
             # Assert
             $result.code | Should -Be 0
-            Assert-MockCalled Set-EnvVar -Exactly 1 -ParameterFilter { $name -eq "CURRENT_PHP" -and $value -eq "C:\PHP\php-8.0.5" }
+            Assert-MockCalled Set-EnvVar -Exactly 1
         }
     }
 

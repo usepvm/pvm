@@ -32,6 +32,15 @@ function Set-EnvVar {
             return -1
         }
         $name = $name.Trim()
+
+        if (-not (Is-Admin)) {
+            # Escape values properly for command line
+            $command = "[System.Environment]::SetEnvironmentVariable('$name', '$value', [System.EnvironmentVariableTarget]::Machine)"
+            $process = Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -Command `"$command`"" -Verb RunAs -WindowStyle Hidden -PassThru -Wait
+            return $process.ExitCode
+        }
+
+        # We already have admin rights, proceed normally
         [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine);
         return 0
     } catch {

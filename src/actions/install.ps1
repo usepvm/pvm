@@ -398,10 +398,9 @@ function Install-PHP {
         Write-Host "`nAdding the PHP to the environment variables ..."
         $phpVersionNumber = $selectedVersionObject.version
         $phpEnvVarName = "php$phpVersionNumber"
-        # Set-Php-Env -name $phpEnvVarName -value "$destination\$selectedVersion"
         $phpPath = "$destination\$phpDirectoryName"
-        # & "$PVMRoot\pvm" set $phpEnvVarName $phpPath
-        Invoke-PVMSet -arguments @($phpEnvVarName, $phpPath)
+        $result = Set-PHP-Env -name $phpEnvVarName -value $phpPath
+
         Write-Host "`nRun 'pvm use $phpVersionNumber' to use this version"
 
         return 0

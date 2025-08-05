@@ -2,31 +2,13 @@
 function Invoke-PVMSetup {
     param($arguments)
 
-    $shouldOverwrite = ($arguments -contains '--overwrite-path-backup')
-    $overwritePathBackup = $arguments[0]
-
-    $output = 0
-    $exitCode = 1
+    $result = @{ code = 0; message = "PVM is already setup" }
     if (-not (Is-PVM-Setup)) {
-        $exitCode = Setup-PVM
-        if ($exitCode -eq 0) {
-            $output = Optimize-SystemPath -shouldOverwrite $shouldOverwrite
-        }
+        $result = Setup-PVM
     }
     
-    if ($output -eq 0) {
-        Write-Host "`nOriginal PATH variable saved to $PATH_VAR_BACKUP_PATH"
-    } else {
-        Write-Host "`nFailed to log the original PATH variable."
-    }
-    
-    if ($exitCode -eq 1) {
-        Write-Host "`nPATH already contains PVM and PHP environment reference."
-        exit $exitCode
-    } else {
-        Display-Msg-By-ExitCode -msgSuccess "`nPVM has been setup successfully" -msgError "`nFailed to setup PVM" -exitCode $exitCode
-        exit $exitCode
-    }
+    Display-Msg-By-ExitCode -result $result
+    exit 0
 }
 
 function Invoke-PVMCurrent {
@@ -52,7 +34,7 @@ function Invoke-PVMCurrent {
         }
     }
     
-    Write-Host "`nPath: $($result.path)" -ForegroundColor DarkCyan
+    Write-Host "`nPath: $($result.path)" -ForegroundColor Gray
 }
 
 function Invoke-PVMList{
@@ -104,15 +86,10 @@ function Invoke-PVMUninstall {
         Read-Host "`nYou are trying to uninstall the currently active PHP version ($version). Press Enter to continue or Ctrl+C to cancel."
     }
 
-    $exitCode = Uninstall-PHP -version $version
+    $result = Uninstall-PHP -version $version
 
-    if ($exitCode -eq -2) {
-        Write-Host "`nPHP version $version is not installed."
-        exit $exitCode
-    }
-
-    Display-Msg-By-ExitCode -msgSuccess "`nPHP $version has been uninstalled successfully" -msgError "`nFailed to uninstall PHP $version" -exitCode $exitCode
-    exit $exitCode
+    Display-Msg-By-ExitCode -result $result
+    exit 0
 }
 
 function Invoke-PVMUse {
@@ -209,10 +186,10 @@ function Invoke-PVMSet {
         exit 1
     }          
 
-    $exitCode = Set-PHP-Env -name $varName -value $varValue
+    $result = Set-PHP-Env -name $varName -value $varValue
 
-    Display-Msg-By-ExitCode -msgSuccess "`nEnvironment variable '$varName' set to '$varValue' at the system level." -msgError "`nFailed to set environment variable '$varName'" -exitCode $exitCode
-    exit $exitCode
+    Display-Msg-By-ExitCode -result $result
+    exit 0
 }
 
 

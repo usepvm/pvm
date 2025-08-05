@@ -32,11 +32,13 @@ function Setup-PVM {
         
         if ($newPath -ne $path) {
             $output = Set-EnvVar -name "Path" -value $newPath
-            return $output
+            $optimized = Optimize-SystemPath
+
+            return @{ code = $output; message = "PVM environment has been set up."; color = "DarkGreen"}
         }
-        return 1
+        return @{ code = 1; message = "PVM environment is already set up."; color = "DarkGreen"}
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Setup-PVM: Failed to set up PVM environment" -data $_.Exception.Message
-        return -1
+        return @{ code = -1; message = "Failed to set up PVM environment."; color = "DarkYellow"}
     }
 }

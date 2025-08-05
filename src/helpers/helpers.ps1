@@ -79,14 +79,18 @@ function Is-Admin {
 }
 
 function Display-Msg-By-ExitCode {
-    param($msgSuccess, $msgError, $exitCode)
+    param($result, $message = $null)
     
     try {
-        if ($exitCode -eq 0) {
-            Write-Host $msgSuccess
-        } else {
-            Write-Host $msgError
+        if ($message) {
+            $result.message = $message
         }
+        if (-not $result.color) {
+            $result.color = "Gray"
+        }
+        
+        Write-Host "`n$($result.message)" -ForegroundColor $result.color
+        
         Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1 -Global
         Update-SessionEnvironment
     } catch {
@@ -118,15 +122,13 @@ function Optimize-SystemPath {
     try {
         $path = Get-EnvVar-ByName -name "Path"
         $envVars = Get-All-EnvVars
-        $pathBak = Get-EnvVar-ByName -name $PATH_VAR_BACKUP_NAME
 
-        if (($pathBak -eq $null) -or $shouldOverwrite) {
-            $output = Set-EnvVar -name $PATH_VAR_BACKUP_NAME -value $path
-        }
-        
         # Saving Path to log
         $outputLog = Log-Data -logPath $PATH_VAR_BACKUP_PATH -message "Original PATH" -data $path
-
+        if ($outputLog -eq 0) {
+            Write-Host "`nOriginal Path saved to '$PATH_VAR_BACKUP_PATH'"
+        }
+        
         $envVars.Keys | ForEach-Object {
             $envName = $_
             $envValue = $envVars[$envName]
@@ -143,6 +145,9 @@ function Optimize-SystemPath {
             }
         }
         $output = Set-EnvVar -name "Path" -value $path
+        if ($output -eq 0) {
+            Write-Host "`nPath optimized successfully"
+        }
         
         return $output
     } catch {

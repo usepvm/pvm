@@ -6,18 +6,11 @@ function Invoke-PVMSetup {
     $overwritePathBackup = $arguments[0]
 
     $output = 0
-    if (-not (Is-Admin)) {
-        $arguments = "-ExecutionPolicy Bypass -File `"$PVMEntryPoint`" setup `"$overwritePathBackup`""
-        $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru
-        $process.WaitForExit()
-        $exitCode = $process.ExitCode
-    } else {
-        $exitCode = 1
-        if (-not (Is-PVM-Setup)) {
-            $exitCode = Setup-PVM
-            if ($exitCode -eq 0) {
-                $output = Optimize-SystemPath -shouldOverwrite $shouldOverwrite
-            }
+    $exitCode = 1
+    if (-not (Is-PVM-Setup)) {
+        $exitCode = Setup-PVM
+        if ($exitCode -eq 0) {
+            $output = Optimize-SystemPath -shouldOverwrite $shouldOverwrite
         }
     }
     
@@ -111,14 +104,7 @@ function Invoke-PVMUninstall {
         Read-Host "`nYou are trying to uninstall the currently active PHP version ($version). Press Enter to continue or Ctrl+C to cancel."
     }
 
-    if (-not (Is-Admin)) {
-        $arguments = "-ExecutionPolicy Bypass -File `"$PVMEntryPoint`" uninstall `"$version`" --skip-confirmation"
-        $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru
-        $process.WaitForExit()
-        $exitCode = $process.ExitCode
-    } else {
-        $exitCode = Uninstall-PHP -version $version
-    }
+    $exitCode = Uninstall-PHP -version $version
 
     if ($exitCode -eq -2) {
         Write-Host "`nPHP version $version is not installed."
@@ -155,15 +141,7 @@ function Invoke-PVMUse {
         Write-Host "`nDetected PHP version from project: $version"
     }
     
-    if (-not (Is-Admin)) {
-        # Relaunch as administrator with hidden window
-        $arguments = "-ExecutionPolicy Bypass -File `"$PVMEntryPoint`" use `"$version`""
-        $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru
-        $process.WaitForExit()
-        $exitCode = $process.ExitCode
-    } else {
-        $exitCode = Update-PHP-Version -variableName $PHP_CURRENT_ENV_NAME -variableValue $version
-    }
+    $exitCode = Update-PHP-Version -variableName $PHP_CURRENT_ENV_NAME -variableValue $version
 
     Display-Msg-By-ExitCode -msgSuccess "`nNow using PHP $version" -msgError "`nNo matching PHP versions found for '$version', Use 'pvm list' to see installed versions." -exitCode $exitCode
     exit $exitCode
@@ -230,14 +208,8 @@ function Invoke-PVMSet {
         Write-Host "`nPlease provide an environment variable value"
         exit 1
     }          
-    if (-not (Is-Admin)) {
-        $arguments = "-ExecutionPolicy Bypass -File `"$PVMEntryPoint`" set `"$varName`" `"$varValue`""
-        $process = Start-Process powershell -ArgumentList $arguments -Verb RunAs -WindowStyle Hidden -PassThru
-        $process.WaitForExit()
-        $exitCode = $process.ExitCode
-    } else {
-        $exitCode = Set-PHP-Env -name $varName -value $varValue
-    }
+
+    $exitCode = Set-PHP-Env -name $varName -value $varValue
 
     Display-Msg-By-ExitCode -msgSuccess "`nEnvironment variable '$varName' set to '$varValue' at the system level." -msgError "`nFailed to set environment variable '$varName'" -exitCode $exitCode
     exit $exitCode

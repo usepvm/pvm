@@ -113,7 +113,7 @@ Install-Module -Name Pester -Force -SkipPublisherCheck
 > 💡 If prompted to trust the repository, type Y and press Enter.
 
 You can verify the installation with:
-```sh
+```powershell
 Get-Module -ListAvailable Pester
 ```
 

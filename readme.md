@@ -98,17 +98,33 @@ pvm ini restore
 > Most of the commands edits or adds to the system environment variables, to reload the updates without restarting your terminal, you need to install chocolatey, and run `refreshenv` command
 
 
-### Running Tests
+## Running Tests
 Run tests against the PowerShell scripts in the repo — especially useful for contributors verifying changes before submitting a pull request:
 
+### Requirements
+
+To run tests with, you need to have the Pester testing framework installed. Pester is a testing framework for PowerShell.
+
+Open PowerShell as Administrator and run:
+
+```powershell
+Install-Module -Name Pester -Force -SkipPublisherCheck
+```
+> 💡 If prompted to trust the repository, type Y and press Enter.
+
+You can verify the installation with:
 ```sh
+Get-Module -ListAvailable Pester
+```
+
+### Run the tests
+
+```sh
+pvm test [files = (files inside the tests/ directory)] [verbosity = (None|Normal|Detailed|Diagnostic)]
+
+# Examples:
 pvm test # Runs all tests with Normal verbosity.
-
 pvm test use install # Runs only use.tests.ps1 and install.tests.ps1 with Normal verbosity.
-
 pvm test Detailed # Runs all tests with Detailed verbosity.
-
 pvm test helpers list Diagnostic # Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity.
-
-pvm test [None|Normal|Detailed|Diagnostic] # Runs all tests with the specified verbosity level.
 ```

@@ -1,5 +1,4 @@
 # INI Management Functions Tests
-# Requires Pester testing framework
 
 BeforeAll {
     # Mock global variables and functions that would be defined elsewhere

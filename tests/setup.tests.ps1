@@ -1,5 +1,4 @@
 # Tests for Setup-PVM function
-# Requires Pester testing framework
 
 Describe "Setup-PVM" {
     BeforeAll {

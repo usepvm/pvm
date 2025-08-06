@@ -193,8 +193,8 @@ function Get-Actions {
     
     return [ordered]@{
         "setup" = [PSCustomObject]@{
-            command = "pvm setup [--overwrite-path-backup]";
-            description = "Setup the environment variables and paths for PHP. Use '--overwrite-path-backup' to overwrite the existing backup of the PATH variable.";
+            command = "pvm setup";
+            description = "Setup the environment variables and paths for PHP.";
             action = { Invoke-PVMSetup -arguments $script:arguments }}
         "current" = [PSCustomObject]@{
             command = "pvm current";

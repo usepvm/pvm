@@ -11,9 +11,9 @@ cd pvm
 ```
 
 Run this command to setup pvm
-- Use '--overwrite-path-backup' option to overwrite the backup of the PATH variable (if it exists).
+
 ```sh
-pvm setup [--overwrite-path-backup]
+pvm setup
 ```
 
 

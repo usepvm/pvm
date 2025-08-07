@@ -228,6 +228,13 @@ function Get-Actions {
             description = "Run tests."; 
             action = {
                 $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
+                $arguments = $arguments | Where-Object {
+                    if ($_ -match '^--tag=(.+)$') {
+                        $tag = $Matches[1]
+                        return $false
+                    }
+                    return $true
+                }
                 
                 $files = $null
                 $verbosity = 'Normal'
@@ -241,7 +248,7 @@ function Get-Actions {
                     $files = $arguments
                 }
                 
-                Run-Tests -verbosity $verbosity -tests $files
+                Run-Tests -verbosity $verbosity -tests $files -tag $tag
             }}
     }
 }

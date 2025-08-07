@@ -1,7 +1,7 @@
 
 
 function Run-Tests {
-    param ($verbosity = "Normal", $tests = $null)
+    param ($verbosity = "Normal", $tests = $null, $tag = $null)
     
     try {
         $config = New-PesterConfiguration
@@ -16,6 +16,10 @@ function Run-Tests {
             }
         } else {
             $tests = Get-ChildItem "$PVMRoot\tests\*.tests.ps1"
+        }
+        
+        if (($tests.Length -eq 1) -and ($null -ne $tag)) {
+            $config.Filter.Tag = $tag
         }
         
         $tests | ForEach-Object { 

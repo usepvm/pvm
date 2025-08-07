@@ -382,26 +382,19 @@ function Install-PHP {
         }
 
         Write-Host "`nExtracting the downloaded zip ..."
-        $fileName = $selectedVersionObject.fileName
-        $phpDirectoryName = $fileName -replace ".zip",""
-        Extract-And-Configure -path "$destination\$fileName" -fileNamePath "$destination\$phpDirectoryName"
+        Extract-And-Configure -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$($selectedVersionObject.version)"
 
         if ($enableOpcache) {
-            Enable-Opcache -version $version -phpPath "$destination\$phpDirectoryName"
+            Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
         }
 
         if ($includeXDebug) {
             $version = ($selectedVersionObject.version -split '\.')[0..1] -join '.'
-            Config-XDebug -version $version -phpPath "$destination\$phpDirectoryName"
+            Config-XDebug -version $version -phpPath "$destination\$($selectedVersionObject.version)"
         }
 
-        Write-Host "`nAdding the PHP to the environment variables ..."
-        $phpVersionNumber = $selectedVersionObject.version
-        $phpEnvVarName = "php$phpVersionNumber"
-        $phpPath = "$destination\$phpDirectoryName"
-        $result = Set-PHP-Env -name $phpEnvVarName -value $phpPath
-
-        Write-Host "`nRun 'pvm use $phpVersionNumber' to use this version"
+        Write-Host "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$($selectedVersionObject.version)'"
+        Write-Host "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"
 
         return 0
     } catch {

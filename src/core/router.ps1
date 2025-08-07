@@ -81,8 +81,7 @@ function Invoke-PVMUninstall {
     }
 
     $currentVersion = (Get-Current-PHP-Version).version
-    $shouldRemoveCurrent = ($arguments -contains '--skip-confirmation')
-    if ((-not $shouldRemoveCurrent) -and ($currentVersion -and ($version -eq $currentVersion))) {
+    if ($currentVersion -and ($version -eq $currentVersion)) {
         Read-Host "`nYou are trying to uninstall the currently active PHP version ($version). Press Enter to continue or Ctrl+C to cancel."
     }
 

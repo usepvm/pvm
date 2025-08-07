@@ -4,20 +4,29 @@ function Uninstall-PHP {
     param ($version)
 
     try {
-        $name = "php$version"
-        $phpPath = Get-EnvVar-ByName -name $name
+        $phpPath = Get-PHP-Path-By-Version -version $version
 
         if (-not $phpPath) {
-            return @{ code = -1; message = "PHP version '$version' is not installed."; color = "DarkYellow" }
+            $installedVersions = Get-Matching-PHP-Versions -version $version
+            $pathVersionObject = Get-UserSelected-PHP-Version -installedVersions $installedVersions
+        } else {
+            $pathVersionObject = @{ code = 0; version = $variableValue; path = $phpPath }
+        }
+         
+        
+        if (-not $pathVersionObject) {
+            return @{ code = -1; message = "Version $version was not found!"; color = "DarkYellow"}
+        }
+        
+        if ($pathVersionObject.code -ne 0) {
+            return $pathVersionObject
+        }
+        
+        if (-not $pathVersionObject.path) {
+            return @{ code = -1; message = "Version $($pathVersionObject.version) was not found!"; color = "DarkYellow"}
         }
 
-        $currentVersion = (Get-Current-PHP-Version).version
-        if ($currentVersion -and ($version -eq $currentVersion)) {
-            $output = Set-EnvVar -name $PHP_CURRENT_ENV_NAME -value 'null'
-        }
-
-        Remove-Item -Path $phpPath -Recurse -Force
-        $output = Set-EnvVar -name $name -value $null
+        Remove-Item -Path ($pathVersionObject.path) -Recurse -Force
         
         return @{ code = $output; message = "PHP version $version has been uninstalled successfully"; color = "DarkGreen" }
     } catch {

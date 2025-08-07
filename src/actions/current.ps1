@@ -33,30 +33,13 @@ function Get-PHP-Status {
 function Get-Current-PHP-Version {
 
     try {
-        $currentPhpVersionPath = Get-EnvVar-ByName -name $PHP_CURRENT_ENV_NAME
-        $currentPhpVersionKey = $null
-        $envVars = Get-All-EnvVars
-        $envVars.Keys | Where-Object { $_ -match "php\d(\.\d+)*" }  | Where-Object {
-            if ($currentPhpVersionPath -eq $envVars[$_] -and -not($PHP_CURRENT_ENV_NAME -eq $_)) {
-                $currentPhpVersionKey = $_
-            }
+        $currentPhpVersionPath = Get-Item $PHP_CURRENT_VERSION_PATH
+        if ($currentPhpVersionPath) {
+            $currentPhpVersionPath = $currentPhpVersionPath.Target
         }
-        if (-not $currentPhpVersionKey) {
-            if ($currentPhpVersionPath -match 'php-([\d\.]+)') {
-                $currentPhpVersionKey = $matches[1]
-            }
-        }
-        if ($currentPhpVersionKey -eq $null) {
-            return @{
-                version = $null
-                status = $null
-            }
-        }
-        
-        $currentPhpVersionKey = $currentPhpVersionKey -replace 'php', ''
         
         return @{
-            version = $currentPhpVersionKey
+            version = $(Split-Path $currentPhpVersionPath -Leaf)
             path = $currentPhpVersionPath
             status = Get-PHP-Status -phpPath $currentPhpVersionPath
         }
@@ -64,6 +47,7 @@ function Get-Current-PHP-Version {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Current-PHP-Version: Failed to retrieve current PHP version" -data $_.Exception.Message
         return @{
             version = $null
+            path = $null
             status = @{ opcache = $false; xdebug = $false }
         }
     }

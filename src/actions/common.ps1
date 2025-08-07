@@ -12,18 +12,24 @@ function Get-Source-Urls {
 function Is-PVM-Setup {
 
     try {
-        $phpEnvName = $PHP_CURRENT_ENV_NAME
         $path = Get-EnvVar-ByName -name "Path"
-        $phpEnvValue = Get-EnvVar-ByName -name $phpEnvName
+        $phpEnvValue = Get-EnvVar-ByName -name $PHP_CURRENT_ENV_NAME
         $pvmPath = Get-EnvVar-ByName -name "pvm"
 
+        $parent = Split-Path $PHP_CURRENT_VERSION_PATH
+        $pathItems = $path -split ';'
         if (
-            (($pvmPath -eq $null) -or
-                (($path -notlike "*$pvmPath*") -and
-                ($path -notlike "*pvm*"))) -or
-            (($phpEnvValue -eq $null) -or
-                (($path -notlike "*$phpEnvValue*") -and
-                ($path -notlike "*$phpEnvName*")))
+            (
+                ($null -eq $pvmPath) -or
+                (($pathItems -notcontains $pvmPath) -and
+                ($pathItems -notcontains "%pvm%"))
+            ) -or
+            (
+                ($null -eq $phpEnvValue) -or
+                (($pathItems -notcontains $phpEnvValue) -and
+                ($pathItems -notcontains "%$PHP_CURRENT_ENV_NAME%"))
+            ) -or 
+            (-not (Test-Path $parent))
         ) {
             return $false
         }
@@ -38,8 +44,10 @@ function Is-PVM-Setup {
 function Get-Installed-PHP-Versions {
     
     try {
-        $envVars = Get-All-EnvVars
-        return $envVars.Keys | Where-Object { $_ -match "php\d(\.\d+)*" } | Sort-Object { [version](($_ -replace 'php', '') + '.0') }
+        $directories = Get-All-Subdirectories -path "$STORAGE_PATH\php"
+        $names = $directories | ForEach-Object { $_.Name }
+        return ($names | Sort-Object { [version]$_ })        
+        # return (Get-All-Subdirectories -path "$STORAGE_PATH\php" | Select-Object -ExpandProperty Name | Sort-Object { [version]$_ })
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Installed-PHP-Versions: Failed to retrieve installed PHP versions" -data $_.Exception.Message
         return @()
@@ -47,6 +55,25 @@ function Get-Installed-PHP-Versions {
 }
 
 
+function Get-UserSelected-PHP-Version {
+    if (-not $installedVersions) {
+        return $null
+    }
+    if ($installedVersions.Count -eq 1) {
+        $version = $installedVersions
+    } else {
+        Write-Host "`nInstalled versions :"
+        $installedVersions | ForEach-Object { Write-Host " - $_" }
+        $response = Read-Host "`nEnter the exact version to use. (or press Enter to cancel)"
+        if (-not $response) {
+            return @{ code = -1; message = "Operation cancelled."; color = "DarkYellow"}
+        }
+        $version = $response
+    }
+    $phpPath = Get-PHP-Path-By-Version -version $version
+    
+    return @{ code = 0; version = $version; path = $phpPath }
+}
 
 function Get-Matching-PHP-Versions {
     param ($version)
@@ -56,7 +83,7 @@ function Get-Matching-PHP-Versions {
 
         $matchingVersions = @()
         foreach ($v in $installedVersions) {
-            if ($v -like "php$version*") {
+            if ($v -like "$version*") {
                 $matchingVersions += ($v -replace 'php', '')
             }
         }

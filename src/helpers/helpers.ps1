@@ -1,4 +1,14 @@
 
+function Get-All-Subdirectories {
+    param ($path)
+    try {
+        return Get-ChildItem -Path $path -Directory
+    } catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-All-Subdirectories: Failed to get all subdirectories of '$path'" -data $_.Exception.Message
+        return $null
+    }
+}
+
 function Get-All-EnvVars {
 
     try {
@@ -34,9 +44,9 @@ function Set-EnvVar {
         $name = $name.Trim()
 
         if (-not (Is-Admin)) {
-            # Escape values properly for command line
             $command = "[System.Environment]::SetEnvironmentVariable('$name', '$value', [System.EnvironmentVariableTarget]::Machine)"
             $process = Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -Command `"$command`"" -Verb RunAs -WindowStyle Hidden -PassThru -Wait
+            # $process.WaitForExit()
             return $process.ExitCode
         }
 
@@ -49,6 +59,57 @@ function Set-EnvVar {
     }
 }
 
+function Get-PHP-Path-By-Version {
+    param ($version)
+    
+    $phpContainerPath = "$STORAGE_PATH\php"
+
+    if (-not (Is-Directory-Exists -path "$phpContainerPath\$version")) {
+        return $null
+    }
+
+    return "$phpContainerPath\$version"
+}
+
+function Make-Symbolic-Link {
+    param($link, $target)
+    
+    try {
+        # Make sure parent directory exists
+        $parent = Split-Path $link
+        if (-not (Test-Path $parent)) {
+            $created = Make-Directory -path $parent
+        }
+        # Remove old link if it exists
+        if (Test-Path $link) {
+            Remove-Item -Path $link -Recurse -Force
+        }
+        
+        if (-not (Is-Admin)) {
+            $command = "New-Item -ItemType SymbolicLink -Path '$Link' -Target '$Target'"
+            $process = Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -Command `"$command`"" -Verb RunAs -WindowStyle Hidden -PassThru -Wait
+            # $process.WaitForExit()
+            return $process.ExitCode
+        }
+
+        New-Item -ItemType SymbolicLink -Path $Link -Target $Target | Out-Null
+        return 0
+    } catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Make-Symbolic-Link: Failed to make symbolic link" -data $_.Exception.Message
+        return -1
+    }
+}
+
+
+function Is-Directory-Exists {
+    param ($path)
+    
+    try {
+        return [System.IO.Directory]::Exists($path)
+    } catch {
+        return $false
+    }
+}
 
 function Make-Directory {
     param ( [string]$path )
@@ -136,8 +197,8 @@ function Optimize-SystemPath {
             if (
                 ($null -ne $envValue) -and
                 ($path -like "*$envValue*") -and
-                ($envValue -notlike "*\Windows*") -and
-                ($envValue -notlike "*\System32*")
+                -not($envValue -like "*\Windows*") -and
+                -not($envValue -like "*\System32*")
             ) {
                 $envValue = [regex]::Escape($envValue.TrimEnd(';'))
                 $pattern = "(?<=^|;){0}(?=;|$)" -f $envValue

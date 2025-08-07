@@ -1,38 +1,30 @@
 
-function Get-UserSelected-PHP-Version {
-    if (-not $installedVersions) {
-        return $null
-    }
-    if ($installedVersions.Count -eq 1) {
-        $variableValue = $installedVersions
-    } else {
-        Write-Host "`nInstalled versions :"
-        $installedVersions | ForEach-Object { Write-Host " - $_" }
-        $response = Read-Host "`nEnter the exact version to use. (or press Enter to cancel)"
-        if (-not $response) {
-            return @{ code = -1; message = "Operation cancelled."; color = "DarkYellow"}
-        }
-        $variableValue = $response
-    }
-    $variableValueContent = Get-EnvVar-ByName -name "php$variableValue"
-    
-    return @{ name = $variableValue; value = $variableValueContent }
-}
 
 function Update-PHP-Version {
     param ($variableName, $variableValue)
 
     try {
-        $variableValueContent = Get-EnvVar-ByName -name "php$variableValue"
-        if (-not $variableValueContent) {
+        $phpPath = Get-PHP-Path-By-Version -version $variableValue
+        if (-not $phpPath) {
             $installedVersions = Get-Matching-PHP-Versions -version $variableValue
-            $variableValueContent = Get-UserSelected-PHP-Version -installedVersions $installedVersions
+            $pathVersionObject = Get-UserSelected-PHP-Version -installedVersions $installedVersions
+        } else {
+            $pathVersionObject = @{ code = 0; version = $variableValue; path = $phpPath }
         }
-        if (-not $variableValueContent) {
+        
+        if (-not $pathVersionObject) {
             return @{ code = -1; message = "Version $variableValue was not found!"; color = "DarkYellow"}
         }
-        $output = Set-EnvVar -name $variableName -value $variableValueContent
-        return @{ code = $output; message = "Now using PHP $variableValue"; color = "DarkGreen"}
+        
+        if ($pathVersionObject.code -ne 0) {
+            return $pathVersionObject
+        }
+        
+        if (-not $pathVersionObject.path) {
+            return @{ code = -1; message = "Version $($pathVersionObject.version) was not found!"; color = "DarkYellow"}
+        }
+        Make-Symbolic-Link -link $PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
+        return @{ code = $output; message = "Now using PHP $($pathVersionObject.version)"; color = "DarkGreen"}
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Update-PHP-Version: Failed to update PHP version for '$variableName'" -data $_.Exception.Message
         return @{ code = -1; message = "No matching PHP versions found for '$version', Use 'pvm list' to see installed versions."; color = "DarkYellow"}
@@ -59,9 +51,9 @@ function Auto-Select-PHP-Version {
     
     $selectedVersion = Get-UserSelected-PHP-Version -installedVersions $installedVersions
     
-    if (-not $selectedVersion.value) {
+    if ($selectedVersion.code -ne 0) {
         return @{ code = -1; message = "Version $($selectedVersion.name) was not found!"; color = "DarkYellow" }
-    }
+    }    
 
-    return @{ code = 0; version = $selectedVersion.name}
+    return $selectedVersion
 }

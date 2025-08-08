@@ -23,8 +23,8 @@ function Update-PHP-Version {
         if (-not $pathVersionObject.path) {
             return @{ code = -1; message = "Version $($pathVersionObject.version) was not found!"; color = "DarkYellow"}
         }
-        Make-Symbolic-Link -link $PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
-        return @{ code = $output; message = "Now using PHP $($pathVersionObject.version)"; color = "DarkGreen"}
+        $linkCreated = Make-Symbolic-Link -link $PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
+        return @{ code = 0; message = "Now using PHP $($pathVersionObject.version)"; color = "DarkGreen"}
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Update-PHP-Version: Failed to update PHP version for '$variableName'" -data $_.Exception.Message
         return @{ code = -1; message = "No matching PHP versions found for '$version', Use 'pvm list' to see installed versions."; color = "DarkYellow"}

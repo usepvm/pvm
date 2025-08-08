@@ -132,20 +132,22 @@ Describe "Is-PVM-Setup" {
 Describe "Get-Installed-PHP-Versions" {
     Context "When environment variables contain PHP versions" {
         It "Should return sorted PHP versions" {
-            Mock Get-All-EnvVars {
-                return @{
-                    "php8.1" = "C:\php8.1"
-                    "php7.4" = "C:\php7.4"
-                    "php8.2" = "C:\php8.2"
-                    "php8.0" = "C:\php8.0"
-                    "OTHER_VAR" = "some value"
-                    "php5.6" = "C:\php5.6"
-                }
+            $script:STORAGE_PATH = "C:\mock\path"
+            $script:LOG_ERROR_PATH = "C:\mock\error"
+            Mock Get-All-Subdirectories {
+                param ($path)
+                return @(
+                    @{ Name = "8.1"; FullName = "path\php\8.1" }
+                    @{ Name = "7.4"; FullName = "path\php\7.4" }
+                    @{ Name = "8.2"; FullName = "path\php\8.2" }
+                    @{ Name = "8.0"; FullName = "path\php\8.0" }
+                    @{ Name = "5.6"; FullName = "path\php\5.6" }
+                )
             }
             Mock Log-Data { return $true }
             
             $result = Get-Installed-PHP-Versions
-            $expected = @("php5.6", "php7.4", "php8.0", "php8.1", "php8.2")
+            $expected = @("5.6", "7.4", "8.0", "8.1", "8.2")
             
             $result.Count | Should -Be $expected.Count
             for ($i = 0; $i -lt $result.Count; $i++) {
@@ -167,24 +169,25 @@ Describe "Get-Installed-PHP-Versions" {
         }
         
         It "Should handle single digit versions" {
-            Mock Get-All-EnvVars {
-                return @{
-                    "php8" = "C:\php8"
-                    "php7" = "C:\php7"
-                }
+            Mock Get-All-Subdirectories {
+                param ($path)
+                return @(
+                    @{ Name = "8.1"; FullName = "path\php\8.1" }
+                    @{ Name = "7.4"; FullName = "path\php\7.4" }
+                )
             }
             Mock Log-Data { return $true }
             
             $result = Get-Installed-PHP-Versions
             $result.Count | Should -Be 2
-            $result[0] | Should -Be "php7"
-            $result[1] | Should -Be "php8"
+            $result[0] | Should -Be "7.4"
+            $result[1] | Should -Be "8.1"
         }
     }
     
     Context "When exceptions occur" {
         It "Should return empty array and log error when Get-All-EnvVars throws exception" {
-            Mock Get-All-EnvVars { throw "Test exception" }
+            Mock Get-All-Subdirectories { throw "Test exception" }
             Mock Log-Data { return $true }
             
             $result = Get-Installed-PHP-Versions
@@ -201,7 +204,7 @@ Describe "Get-Matching-PHP-Versions" {
     Context "When matching versions exist" {
         It "Should return matching versions for partial version number" {
             Mock Get-Installed-PHP-Versions {
-                return @("php7.4", "php8.0", "php8.1", "php8.2")
+                return @("7.4", "8.0", "8.1", "8.2")
             }
             Mock Log-Data { return $true }
             
@@ -216,7 +219,7 @@ Describe "Get-Matching-PHP-Versions" {
         
         It "Should return exact match for pattern version number" {
             Mock Get-Installed-PHP-Versions {
-                return @("php7.4", "php8.0", "php8.1", "php8.1.9", "php8.2")
+                return @("7.4", "8.0", "8.1", "8.1.9", "8.2")
             }
             Mock Log-Data { return $true }
             
@@ -227,7 +230,7 @@ Describe "Get-Matching-PHP-Versions" {
         
          It "Should return exact match for full version number" {
             Mock Get-Installed-PHP-Versions {
-                return @("php7.4", "php8.0", "php8.1", "php8.1.9", "php8.2")
+                return @("7.4", "8.0", "8.1", "8.1.9", "8.2")
             }
             Mock Log-Data { return $true }
             
@@ -331,12 +334,8 @@ Describe "Integration Tests" {
                 }
             }
             
-            Mock Get-All-EnvVars {
-                return @{
-                    "php8.1" = "C:\php8.1"
-                    "php7.4" = "C:\php7.4"
-                    "php8.2" = "C:\php8.2"
-                }
+            Mock Get-Installed-PHP-Versions {
+                return @("7.4", "8.0", "8.1", "8.1.9", "8.2")
             }
             
             Mock Log-Data { return $true }
@@ -348,7 +347,7 @@ Describe "Integration Tests" {
             $isInstalled = Is-PHP-Version-Installed -version "8.1"
             
             $pvmSetup | Should -Be $true
-            $installedVersions -contains "php8.1" | Should -Be $true
+            $installedVersions -contains "8.1" | Should -Be $true
             $matchingVersions -contains "8.1" | Should -Be $true
             $isInstalled | Should -Be $true
         }

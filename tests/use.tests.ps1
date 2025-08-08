@@ -1,358 +1,168 @@
-# Tests for Update-PHP-Version function
 
-Describe "Update-PHP-Version Tests" {
+BeforeAll {
     
-    BeforeAll {
-        Mock Read-Host {
-            param ($prompt)
-            return '8.2.1'
-        }
-        # Mock the external functions that Update-PHP-Version depends on
-        Mock Log-Data { return $true }
-        
-        # Mock global variable
-        $global:LOG_ERROR_PATH = "TestDrive:\storage\logs\error.log"
-        $global:MockRegistry = @{
-            Machine = @{
-                "Path" = "C:\Windows\System32;C:\Program Files\Git\bin"
-                "php7.4.30" = "C:\PHP\php-7.4.30"
-                "php8.0.5" = "C:\PHP\php-8.0.5"
-                "php8.1.0" = "C:\PHP\php-8.1.0"
-                "php8.2.1" = "C:\php8.2.1\php.exe"
-                "php8.2.5" = "C:\php8.2.5\php.exe"
-                "php8.3" = ""
-                "other_var" = "some_value"
-            }
-            Process = @{}
-            User = @{}
-        }
-        
-        # Environment variable wrapper functions
-        function Get-EnvironmentVariablesWrapper {
-            param($target)
-            
-            if ($global:MockRegistryThrowException) {
-                throw $global:MockRegistryException
-            }
-            
-            switch ($target) {
-                ([System.EnvironmentVariableTarget]::Machine) { 
-                    $result = @{}
-                    $global:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
-                    return $result
-                }
-                ([System.EnvironmentVariableTarget]::Process) { 
-                    $result = @{}
-                    $global:MockRegistry.Process.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
-                    return $result
-                }
-                ([System.EnvironmentVariableTarget]::User) { 
-                    $result = @{}
-                    $global:MockRegistry.User.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
-                    return $result
-                }
-                default { return @{} }
-            }
-        }
+    # Mock data and helper functions for testing
+    $PHP_CURRENT_VERSION_PATH = "C:\pvm\php"
+    $LOG_ERROR_PATH = "C:\logs\error.log"
 
-        function Get-EnvironmentVariableWrapper {
-            param($name, $target)
-            
-            if ($global:MockRegistryThrowException) {
-                throw $global:MockRegistryException
-            }
-            
-            switch ($target) {
-                ([System.EnvironmentVariableTarget]::Machine) { return $global:MockRegistry.Machine[$name] }
-                ([System.EnvironmentVariableTarget]::Process) { return $global:MockRegistry.Process[$name] }
-                ([System.EnvironmentVariableTarget]::User) { return $global:MockRegistry.User[$name] }
-                default { return $null }
-            }
-        }
-
-        function Set-EnvironmentVariableWrapper {
-            param($name, $value, $target)
-            
-            if ($global:MockRegistryThrowException) {
-                throw $global:MockRegistryException
-            }
-            
-            switch ($target) {
-                ([System.EnvironmentVariableTarget]::Machine) { 
-                    if ($value -eq $null) {
-                        $global:MockRegistry.Machine.Remove($name)
-                    } else {
-                        $global:MockRegistry.Machine[$name] = $value
-                    }
-                }
-                ([System.EnvironmentVariableTarget]::Process) { 
-                    if ($value -eq $null) {
-                        $global:MockRegistry.Process.Remove($name)
-                    } else {
-                        $global:MockRegistry.Process[$name] = $value
-                    }
-                }
-                ([System.EnvironmentVariableTarget]::User) { 
-                    if ($value -eq $null) {
-                        $global:MockRegistry.User.Remove($name)
-                    } else {
-                        $global:MockRegistry.User[$name] = $value
-                    }
-                }
-            }
-        }
-        
-        # Override the original environment functions to use wrappers
-        Mock Get-All-EnvVars {
-            try {
-                return Get-EnvironmentVariablesWrapper -target ([System.EnvironmentVariableTarget]::Machine)
-            } catch {
-                $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-All-EnvVars: Failed to get all environment variables" -data $_.Exception.Message
-                return $null
-            }
-        }
-
-        Mock Get-EnvVar-ByName {
-            param ($name)
-            try {
-                if ([string]::IsNullOrWhiteSpace($name)) {
-                    return $null
-                }
-                $name = $name.Trim()
-                return Get-EnvironmentVariableWrapper -name $name -target ([System.EnvironmentVariableTarget]::Machine)
-            } catch {
-                $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-EnvVar-ByName: Failed to get environment variable '$name'" -data $_.Exception.Message
-                return $null
-            }
-        }
-
-        Mock Set-EnvVar {
-            param ($name, $value)
-            try {
-                if ([string]::IsNullOrWhiteSpace($name)) {
-                    return -1
-                }
-                $name = $name.Trim()
-                Set-EnvironmentVariableWrapper -name $name -value $value -target ([System.EnvironmentVariableTarget]::Machine)
-                return 0
-            } catch {
-                $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Set-EnvVar: Failed to set environment variable '$name'" -data $_.Exception.Message
-                return -1
-            }
-        }
+    Mock Write-Host {}
+    function Get-PHP-Path-By-Version {
+        param($version)
+        # Mock implementation
+        if ($version -eq "8.1") { return "C:\php\8.1" }
+        if ($version -eq "8.2") { return "C:\php\8.2" }
+        return $null
     }
 
-    Context "Successful PHP version update" {
-        
-        It "Should successfully update when exact PHP version environment variable exists" {
-            # Arrange
-            Mock Get-EnvVar-ByName { return "C:\php8.2\php.exe" } -ParameterFilter { $name -eq "php8.2" }
-            Mock Set-EnvVar {
-                param($name, $value)
-                
-                if ($name -eq "PHP_PATH" -and $value -eq "C:\php8.2\php.exe") {return 0}
-                return -1    
-            }
-            
-            # Act
-            $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "8.2"
-            
-            # Assert
-            $result.code | Should -Be 0
-            Assert-MockCalled Get-EnvVar-ByName -Exactly 1 -ParameterFilter { $name -eq "php8.2" }
-            Assert-MockCalled Set-EnvVar -Exactly 1 -ParameterFilter { $name -eq "PHP_PATH" -and $value -eq "C:\php8.2\php.exe" }
-            Assert-MockCalled Log-Data -Exactly 0
+    function Get-Matching-PHP-Versions {
+        param($version)
+        # Mock implementation
+        if ($version -like "8.*") {
+            return @(
+                @{version="8.1"; path="C:\php\8.1"},
+                @{version="8.2"; path="C:\php\8.2"}
+            )
         }
-
-        It "Should find matching PHP version when exact match doesn't exist" {
-            Mock Write-Host {}
-            # Act
-            $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "8.2"
-            
-            # Assert
-            $result.code | Should -Be 0
-            Assert-MockCalled Get-EnvVar-ByName -Exactly 1 -ParameterFilter { $name -eq "php8.2" }
-            Assert-MockCalled Get-All-EnvVars -Exactly 1
-            Assert-MockCalled Set-EnvVar -Exactly 1
-            Assert-MockCalled Log-Data -Exactly 0
-        }
-
-        It "Should handle different PHP version formats" {
-            # Arrange
-            Mock Get-EnvVar-ByName { return "C:\php7.4\php.exe" } -ParameterFilter { $name -eq "php7.4" }
-            Mock Set-EnvVar {
-                param($name, $value)
-                
-                if ($name -eq "PHP_PATH" -and $value -eq "C:\php7.4\php.exe") { return 0 }
-                return -1
-            }
-            
-            # Act
-            $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "7.4"
-            
-            # Assert
-            $result.code | Should -Be 0
-            Assert-MockCalled Set-EnvVar -Exactly 1 -ParameterFilter { $name -eq "PHP_PATH" -and $value -eq "C:\php7.4\php.exe" }
-        }
-        
-        It "Should automatically choose if only one version is available" {
-            $global:MockRegistry.Machine = @{
-                "Path" = "C:\Windows\System32;C:\Program Files\Git\bin"
-                "php7.4.30" = "C:\PHP\php-7.4.30"
-                "php8.0.5" = "C:\PHP\php-8.0.5"
-                "php8.1.0" = "C:\PHP\php-8.1.0"
-                "php8.2.1" = "C:\php8.2.1\php.exe"
-            }
-            
-            # Act
-            $result = Update-PHP-Version -variableName "CURRENT_PHP" -variableValue "8.0"
-
-            # Assert
-            $result.code | Should -Be 0
-            Assert-MockCalled Set-EnvVar -Exactly 1
-        }
+        return @()
     }
 
-    Context "Error handling scenarios" {
+    function Get-UserSelected-PHP-Version {
+        param($installedVersions)
+        # If we're in the Auto-Select test and a specific version was detected
+        if ($global:TestScenario -eq "composer" -and $installedVersions) {
+            # Find the version that matches what we detected (8.2)
+            $selected = $installedVersions | Where-Object { $_.version -eq "8.2" }
+            if ($selected) {
+                return @{code=0; version=$selected.version; path=$selected.path}
+            }
+        }
         
-        It "Should return -1 when no matching PHP version is found" {
-            # Arrange
-            Mock Get-EnvVar-ByName { return $null } -ParameterFilter { $name -eq "php9.0" }
-            Mock Get-All-EnvVars { 
-                return @{
-                    "php8.2" = "C:\php8.2\php.exe"
-                    "php7.4" = "C:\php7.4\php.exe"
-                    "other_var" = "some_value"
-                }
-            }
-            Mock Log-Data { return $true } -ParameterFilter { $message -like "*Failed to update PHP version*" }
-            
-            # Act
-            $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "9.0"
-            
-            # Assert
-            $result.code | Should -Be -1
-            Assert-MockCalled Get-EnvVar-ByName -Exactly 1
-            Assert-MockCalled Get-All-EnvVars -Exactly 1
-            Assert-MockCalled Set-EnvVar -Exactly 0
+        # Default behavior - select first version
+        if ($installedVersions -and $installedVersions.Count -gt 0) {
+            return @{code=0; version=$installedVersions[0].version; path=$installedVersions[0].path}
         }
-
-        It "Should return -1 and log error when matched variable has no content" {
-            # Arrange
-            Mock Log-Data { return $true }
-            
-            # Act
-            $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "8.3"
-            
-            # Assert
-            $result.code | Should -Be -1
-            Assert-MockCalled Set-EnvVar -Exactly 0
-        }
-
-        It "Should return -1 and log error when Get-EnvVar-ByName throws exception" {
-            # Arrange
-            Mock Get-EnvVar-ByName { throw "Access denied" } -ParameterFilter { $name -eq "php8.2" }
-            Mock Log-Data { return $true }
-            
-            # Act
-            $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "8.2"
-            
-            # Assert
-            $result.code | Should -Be -1
-            Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter { 
-                $message -eq "Update-PHP-Version: Failed to update PHP version for 'PHP_PATH'" -and
-                $data -eq "Access denied"
-            }
-        }
-
-        It "Should return -1 and log error when Set-EnvVar throws exception" {
-            # Arrange
-            Mock Get-EnvVar-ByName { return "C:\php8.2\php.exe" } -ParameterFilter { $name -eq "php8.2" }
-            Mock Set-EnvVar { throw "Permission denied" } -ParameterFilter { $name -eq "PHP_PATH" }
-            Mock Log-Data { return $true }
-            
-            # Act
-            $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "8.2"
-            
-            # Assert
-            $result.code | Should -Be -1
-            Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter { 
-                $data -eq "Permission denied"
-            }
-        }
+        return $null
     }
 
-    Context "Edge cases and parameter validation" {
-        
-        It "Should handle special characters in version numbers" {
-            # Arrange
-            Mock Get-EnvVar-ByName { return "C:\php8.2-dev\php.exe" } -ParameterFilter { $name -eq "php8.2-dev" }
-            Mock Set-EnvVar { return 0}
-            
-            # Act
-            $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "8.2-dev"
-            
-            # Assert
-            $result.code | Should -Be 0
-            Assert-MockCalled Set-EnvVar -Exactly 1
-        }
-
-        It "Should sort and select first match when multiple versions match pattern" {
-            Mock Write-Host {}
-            # Arrange
-            $global:MockRegistry.Machine = @{
-                "Path" = "C:\Windows\System32;C:\Program Files\Git\bin"
-                "php7.4.30" = "C:\PHP\php-7.4.30"
-                "php8.0.5" = "C:\PHP\php-8.0.5"
-                "php8.1.0" = "C:\PHP\php-8.1.0"
-                "php8.2.1" = "C:\php8.2.1\php.exe"
-            }
-            
-            # Act
-            $result = Update-PHP-Version -variableName "PHP_PATH" -variableValue "8"
-            
-            # Assert
-            $result.code | Should -Be 0
-            # Should select php8.1 as it comes first alphabetically after sorting
-            Assert-MockCalled Set-EnvVar -Exactly 1
-        }
+    function Make-Symbolic-Link {
+        param($link, $target)
+        # Mock implementation
+        return 0
     }
 
-    Context "Integration-like scenarios" {
-        
-        It "Should handle realistic environment variable scenarios" {
-            # Arrange - Simulate a realistic environment
-            
-            # Act
-            $result = Update-PHP-Version -variableName "CURRENT_PHP" -variableValue "8.2"
-            
-            # Assert
-            $result.code | Should -Be 0
-            # Should select php8.2.10 (first after sorting: php8.2.10, php8.2.5)
-            Assert-MockCalled Set-EnvVar -Exactly 1
-        }
+    function Log-Data {
+        param($logPath, $message, $data)
+        # Mock implementation
+        return $true
+    }
+
+    function Detect-PHP-VersionFromProject {
+        # Mock implementation
+        if ($global:TestScenario -eq "phpversion") { return "8.1" }
+        if ($global:TestScenario -eq "composer") { return "8.2" }
+        return $null
     }
 }
 
-# # Additional helper tests for understanding the function behavior
-Describe "Update-PHP-Version Behavior Analysis" {
-    
-    It "Should demonstrate the regex matching behavior" {
-        # This test helps understand how the Where-Object with -match works
-        $testKeys = @("php8.2.1", "php8.2.5", "php7.4", "php8.1", "other_var")
-        $pattern = "8.2"
-        $matches = $testKeys | Where-Object { $_ -match $pattern } | Sort-Object
-        
-        $matches | Should -HaveCount 2
-        $matches[0] | Should -Be "php8.2.1"
-        $matches[1] | Should -Be "php8.2.5"
+# Test Cases for Update-PHP-Version
+Describe "Update-PHP-Version" {
+    BeforeEach {
+        $global:TestScenario = $null
     }
-    
-    It "Should demonstrate sorting behavior" {
-        $testKeys = @("php8.2.15", "php8.2.5", "php8.2.10")
-        $sorted = $testKeys | Sort-Object | Select-Object -First 1
-        
-        # Note: String sorting, not numeric - "php8.2.10" comes before "php8.2.15"
-        $sorted | Should -Be "php8.2.10"
+
+    It "Should successfully update to an exact version match" {
+        $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "8.1"
+        Write-Host ($result | ConvertTo-Json)
+        $result.code | Should -Be 0
+        $result.message | Should -Be "Now using PHP 8.1"
+    }
+
+    It "Should handle version not found when exact path doesn't exist" {
+        $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "7.4"
+        $result.code | Should -Be -1
+        $result.message | Should -Be "Version 7.4 was not found!"
+    }
+
+    It "Should handle when Get-PHP-Path-By-Version returns null but matching versions exist" {
+        $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "8.x"
+        $result.code | Should -Be 0
+        $result.message | Should -Be "Now using PHP 8.1"  # Assuming it selects the first match
+    }
+
+    It "Should handle when no matching versions are found" {
+        $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "5.6"
+        $result.code | Should -Be -1
+        $result.message | Should -Match "Version 5.6 was not found"
+    }
+
+    It "Should handle exceptions gracefully" {
+        # Force an exception by mocking Get-PHP-Path-By-Version to throw
+        Mock Get-PHP-Path-By-Version { throw "Test exception" }
+        $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "8.1"
+        $result.code | Should -Be -1
+        $result.message | Should -Match "No matching PHP versions found"
+    }
+
+    It "Should return error when pathVersionObject is null" {
+        Mock Get-UserSelected-PHP-Version { return $null }
+        $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "8.x"
+        $result.code | Should -Be -1
+        $result.message | Should -Match "was not found"
+    }
+
+    It "Should return error when pathVersionObject has non-zero code" {
+        Mock Get-UserSelected-PHP-Version { return @{code=-1; message="Test error"} }
+        $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "8.x"
+        $result.code | Should -Be -1
+    }
+
+    It "Should return error when path is missing in pathVersionObject" {
+        Mock Get-UserSelected-PHP-Version { return @{code=0; version="8.1"; path=$null} }
+        $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "8.x"
+        $result.code | Should -Be -1
+        $result.message | Should -Match "was not found"
+    }
+}
+
+# Test Cases for Auto-Select-PHP-Version
+Describe "Auto-Select-PHP-Version" {
+    BeforeEach {
+        $global:TestScenario = $null
+    }
+
+    It "Should detect version from .php-version file" {
+        $global:TestScenario = "phpversion"
+        $result = Auto-Select-PHP-Version -version $null
+        $result.code | Should -Be 0
+        $result.version | Should -Be "8.1"
+    }
+
+    It "Should detect version from composer.json" {
+        $global:TestScenario = "composer"
+        $result = Auto-Select-PHP-Version -version $null
+        $result.code | Should -Be 0
+        $result.version | Should -Be "8.2"
+    }
+
+    It "Should return error when no version can be detected" {
+        $result = Auto-Select-PHP-Version -version $null
+        $result.code | Should -Be -1
+        $result.message | Should -Match "Could not detect PHP version"
+    }
+
+    It "Should return error when detected version is not installed" {
+        $global:TestScenario = "phpversion"
+        Mock Get-Matching-PHP-Versions { return @() }
+        $result = Auto-Select-PHP-Version -version $null
+        $result.code | Should -Be -1
+        $result.message | Should -Match "but it is not installed"
+    }
+
+    It "Should handle when user selection fails" {
+        $global:TestScenario = "phpversion"
+        Mock Get-UserSelected-PHP-Version { return @{code=-1; message="Test error"} }
+        $result = Auto-Select-PHP-Version -version $null
+        $result.code | Should -Be -1
+        $result.message | Should -Match "was not found"
     }
 }

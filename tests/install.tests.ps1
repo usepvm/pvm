@@ -885,16 +885,20 @@ Describe "Environment Variable Tests" {
     }
     
     It "Get-Installed-PHP-Versions should return sorted versions" {
-        $global:MockRegistry.Machine = @{
-            "php8.1.0" = "path1"
-            "php7.4.30" = "path2"
-            "php8.2.0" = "path3"
-            "OTHER_VAR" = "other"
+        Mock Get-All-Subdirectories {
+            param ($path)
+            return @(
+                @{ Name = "8.1"; FullName = "path\php\8.1" }
+                @{ Name = "7.4"; FullName = "path\php\7.4" }
+                @{ Name = "8.2"; FullName = "path\php\8.2" }
+                @{ Name = "8.0"; FullName = "path\php\8.0" }
+                @{ Name = "5.6"; FullName = "path\php\5.6" }
+            )
         }
         
         $result = Get-Installed-PHP-Versions
         
-        $result | Should -Be @("php7.4.30", "php8.1.0", "php8.2.0")
+        $result | Should -Be @("5.6", "7.4", "8.0", "8.1", "8.2")
     }
     
     It "Get-Installed-PHP-Versions should handle registry errors" {
@@ -906,10 +910,13 @@ Describe "Environment Variable Tests" {
     }
     
     It "Get-Matching-PHP-Versions should find matching versions" {
-        $global:MockRegistry.Machine = @{
-            "php8.1.0" = "path1"
-            "php8.1.5" = "path2"
-            "php8.2.0" = "path3"
+        Mock Get-All-Subdirectories {
+            param ($path)
+            return @(
+                @{ Name = "8.1.0"; FullName = "path\php\8.1.0" }
+                @{ Name = "8.2.0"; FullName = "path\php\8.2.0" }
+                @{ Name = "8.1.5"; FullName = "path\php\8.1.5" }
+            )
         }
         
         $result = Get-Matching-PHP-Versions -version "8.1"

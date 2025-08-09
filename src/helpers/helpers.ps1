@@ -139,7 +139,7 @@ function Make-Directory {
         }
 
         $path = $path.Trim()
-        if (-not ([System.IO.Directory]::Exists($path))) {
+        if (-not (Is-Directory-Exists -path $path)) {
             New-Item -ItemType Directory -Path $path -Force | Out-Null
         }
 

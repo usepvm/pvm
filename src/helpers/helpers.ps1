@@ -2,6 +2,10 @@
 function Get-All-Subdirectories {
     param ($path)
     try {
+        if ([string]::IsNullOrWhiteSpace($path)) {
+            return $null
+        }
+        $path = $path.Trim()
         return Get-ChildItem -Path $path -Directory
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-All-Subdirectories: Failed to get all subdirectories of '$path'" -data $_.Exception.Message
@@ -62,9 +66,14 @@ function Set-EnvVar {
 function Get-PHP-Path-By-Version {
     param ($version)
     
+    if ([string]::IsNullOrWhiteSpace($version)) {
+        return $null
+    }
+    
     $phpContainerPath = "$STORAGE_PATH\php"
+    $version = $version.Trim()
 
-    if (-not (Is-Directory-Exists -path "$phpContainerPath\$version")) {
+    if (-not(Is-Directory-Exists -path $phpContainerPath) -or -not(Is-Directory-Exists -path "$phpContainerPath\$version")) {
         return $null
     }
 
@@ -75,6 +84,12 @@ function Make-Symbolic-Link {
     param($link, $target)
     
     try {
+        if ([string]::IsNullOrWhiteSpace($link) -or [string]::IsNullOrWhiteSpace($target)) {
+            return -1
+        }
+        
+        $link = $link.Trim()
+        $target = $target.Trim()        
         # Make sure parent directory exists
         $parent = Split-Path $link
         if (-not (Test-Path $parent)) {
@@ -105,6 +120,10 @@ function Is-Directory-Exists {
     param ($path)
     
     try {
+        if ([string]::IsNullOrWhiteSpace($path)) {
+            return $false
+        }
+        $path = $path.Trim()
         return [System.IO.Directory]::Exists($path)
     } catch {
         return $false
@@ -115,15 +134,16 @@ function Make-Directory {
     param ( [string]$path )
 
     try {
-        if ([string]::IsNullOrWhiteSpace($path.Trim())) {
-            return 1
+        if ([string]::IsNullOrWhiteSpace($path)) {
+            return -1
         }
 
-        if (-not (Test-Path -Path $path -PathType Container)) {
-            mkdir $path | Out-Null
+        $path = $path.Trim()
+        if (-not ([System.IO.Directory]::Exists($path))) {
+            New-Item -ItemType Directory -Path $path -Force | Out-Null
         }
     } catch {
-        return 1
+        return -1
     }
     
     return 0

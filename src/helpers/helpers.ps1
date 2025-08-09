@@ -103,7 +103,7 @@ function Make-Symbolic-Link {
         if (-not (Is-Admin)) {
             $command = "New-Item -ItemType SymbolicLink -Path '$Link' -Target '$Target'"
             $process = Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -Command `"$command`"" -Verb RunAs -WindowStyle Hidden -PassThru -Wait
-            # $process.WaitForExit()
+            $process.WaitForExit()
             return $process.ExitCode
         }
 
@@ -142,11 +142,11 @@ function Make-Directory {
         if (-not ([System.IO.Directory]::Exists($path))) {
             New-Item -ItemType Directory -Path $path -Force | Out-Null
         }
+
+        return 0
     } catch {
         return -1
     }
-    
-    return 0
 }
 
 
@@ -171,9 +171,6 @@ function Display-Msg-By-ExitCode {
         }
         
         Write-Host "`n$($result.message)" -ForegroundColor $result.color
-        
-        Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1 -Global
-        Update-SessionEnvironment
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Display-Msg-By-ExitCode: Failed to display message by exit code" -data $_.Exception.Message
     }

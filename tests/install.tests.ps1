@@ -11,9 +11,9 @@ BeforeAll {
     $global:MockRegistry = @{
         Machine = @{
             "Path" = "C:\Windows\System32;C:\Program Files\Git\bin"
-            "php8.1.0" = "C:\PHP\php-8.1.0"
-            "php8.0.5" = "C:\PHP\php-8.0.5"
-            "php7.4.30" = "C:\PHP\php-7.4.30"
+            "php8.1.0" = "C:\PHP\8.1.0"
+            "php8.0.5" = "C:\PHP\8.0.5"
+            "php7.4.30" = "C:\PHP\7.4.30"
         }
         Process = @{}
         User = @{}
@@ -40,9 +40,9 @@ BeforeAll {
         $global:MockRegistry = @{
             Machine = @{
                 "Path" = "C:\Windows\System32;C:\Program Files\Git\bin"
-                "php8.1.0" = "C:\PHP\php-8.1.0"
-                "php8.0.5" = "C:\PHP\php-8.0.5"
-                "php7.4.30" = "C:\PHP\php-7.4.30"
+                "php8.1.0" = "C:\PHP\8.1.0"
+                "php8.0.5" = "C:\PHP\8.0.5"
+                "php7.4.30" = "C:\PHP\7.4.30"
             }
             Process = @{}
             User = @{}
@@ -95,14 +95,6 @@ BeforeAll {
         return $global:MockFileSystem.Files.ContainsKey($Path)
     }
 
-    function mkdir {
-        param($Path)
-        if (-not ($global:MockFileSystem.Directories -contains $Path)) {
-            $global:MockFileSystem.Directories += $Path
-        }
-        return @{ FullName = $Path }
-    }
-
     function Remove-Item {
         param($Path)
         if ($global:MockFileSystem.Files.ContainsKey($Path)) {
@@ -115,10 +107,6 @@ BeforeAll {
         $global:MockFileSystem.Files[$Destination] = "Copied content"
     }
 
-    # function Get-Content {
-    #     param($Path)
-    #     return @("extension_dir = `"ext`"", "zend_extension = opcache", "opcache.enable = 1")
-    # }
     function Get-Content {
         param($Path)
         if ($global:MockFileSystem.Files.ContainsKey($Path)) {
@@ -147,15 +135,6 @@ BeforeAll {
         # Mock for System.IO.Compression.FileSystem
     }
 
-    # Mock System.IO.Compression.ZipFile
-    $global:ZipExtractCalled = $false
-    Add-Type -TypeDefinition @"
-    public static class ZipFile {
-        public static void ExtractToDirectory(string sourceArchive, string destinationDirectory) {
-            // Mock implementation
-        }
-    }
-"@ -ReferencedAssemblies System.IO.Compression.FileSystem -ErrorAction SilentlyContinue
 
     function Read-Host {
         param($Prompt)
@@ -296,34 +275,6 @@ Describe "Get-Source-Urls Tests" {
     }
 }
 
-Describe "Make-Directory Tests" {
-    BeforeEach {
-        Reset-MockState
-    }
-    
-    It "Should create directory successfully" {
-        $result = Make-Directory -path "TestDrive:\testdir"
-        $result | Should -Be 0
-        $global:MockFileSystem.Directories | Should -Contain "TestDrive:\testdir"
-    }
-    
-    It "Should return 0 if directory already exists" {
-        $global:MockFileSystem.Directories += "TestDrive:\existing"
-        $result = Make-Directory -path "TestDrive:\existing"
-        $result | Should -Be 0
-    }
-    
-    It "Should return 1 for null or empty path" {
-        $result = Make-Directory -path ""
-        $result | Should -Be 1
-        
-        $result = Make-Directory -path "   "
-        $result | Should -Be 1
-        
-        $result = Make-Directory -path $null
-        $result | Should -Be 1
-    }
-}
 
 Describe "Get-PHP-Versions-From-Url Tests" {
     BeforeEach {

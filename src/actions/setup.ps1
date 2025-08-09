@@ -30,7 +30,6 @@ function Setup-PVM {
         
         if ($newPath -ne $path) {
             $output = Set-EnvVar -name "Path" -value $newPath
-            $optimized = Optimize-SystemPath
 
             return @{ code = $output; message = "PVM environment has been set up."; color = "DarkGreen"}
         }

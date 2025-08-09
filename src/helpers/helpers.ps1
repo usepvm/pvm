@@ -223,7 +223,7 @@ function Optimize-SystemPath {
         }
         $output = Set-EnvVar -name "Path" -value $path
         if ($output -eq 0) {
-            Write-Host "`nPath optimized successfully"
+            Write-Host "`nPath optimized successfully" -ForegroundColor DarkGreen
         }
         
         return $output

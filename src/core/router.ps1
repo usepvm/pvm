@@ -6,6 +6,10 @@ function Invoke-PVMSetup {
     if (-not (Is-PVM-Setup)) {
         $result = Setup-PVM
     }
+    $optimized = Optimize-SystemPath
+    if ($optimized -ne 0) {
+        Write-Host "`nFailed to optimize system path." -ForegroundColor DarkYellow
+    }
     
     Display-Msg-By-ExitCode -result $result
     exit 0

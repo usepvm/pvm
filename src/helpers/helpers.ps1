@@ -124,7 +124,7 @@ function Is-Directory-Exists {
             return $false
         }
         $path = $path.Trim()
-        return [System.IO.Directory]::Exists($path)
+        return (Test-Path -Path $path -PathType Container)
     } catch {
         return $false
     }
@@ -195,7 +195,6 @@ function Log-Data {
 }
 
 function Optimize-SystemPath {
-    param($shouldOverwrite = $false)
     
     try {
         $path = Get-EnvVar-ByName -name "Path"

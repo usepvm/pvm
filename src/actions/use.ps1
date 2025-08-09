@@ -1,4 +1,33 @@
+function Detect-PHP-VersionFromProject {
+    
+    try {
+        # 1. Check .php-version
+        if (Test-Path ".php-version") {
+            $version = Get-Content ".php-version" | Select-Object -First 1
+            return $version.Trim()
+        }
 
+        # 2. Check composer.json
+        if (Test-Path "composer.json") {
+            try {
+                $json = Get-Content "composer.json" -Raw | ConvertFrom-Json
+                if ($json.require.php) {
+                    $constraint = $json.require.php.Trim()
+                    # Extract first PHP version number in the string (e.g. from "^8.3" or ">=8.1 <8.3")
+                    if ($constraint -match "(\d+\.\d+(\.\d+)?)") {
+                        return $matches[1]
+                    }
+                }
+            } catch {
+                Write-Host "`nFailed to parse composer.json: $_"
+            }
+        }
+    } catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Detect-PHP-VersionFromProject: Failed to detect PHP version from project" -data $_.Exception.Message
+    }
+
+    return $null
+}
 
 function Update-PHP-Version {
     param ($variableName, $variableValue)

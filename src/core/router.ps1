@@ -1,6 +1,5 @@
 
 function Invoke-PVMSetup {
-    param($arguments)
 
     $result = @{ code = 0; message = "PVM is already setup" }
     if (-not (Is-PVM-Setup)) {
@@ -16,7 +15,6 @@ function Invoke-PVMSetup {
 }
 
 function Invoke-PVMCurrent {
-    param($arguments)
 
     $result = Get-Current-PHP-Version
     if (-not $result.version) {
@@ -120,39 +118,6 @@ function Invoke-PVMUse {
     exit 0
 }
 
-function Detect-PHP-VersionFromProject {
-    
-    try {
-        # 1. Check .php-version
-        if (Test-Path ".php-version") {
-            $version = Get-Content ".php-version" | Select-Object -First 1
-            return $version.Trim()
-        }
-
-        # 2. Check composer.json
-        if (Test-Path "composer.json") {
-            try {
-                $json = Get-Content "composer.json" -Raw | ConvertFrom-Json
-                if ($json.require.php) {
-                    $constraint = $json.require.php.Trim()
-                    # Extract first PHP version number in the string (e.g. from "^8.3" or ">=8.1 <8.3")
-                    if ($constraint -match "(\d+\.\d+(\.\d+)?)") {
-                        return $matches[1]
-                    }
-                }
-            } catch {
-                Write-Host "`nFailed to parse composer.json: $_"
-            }
-        }
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Detect-PHP-VersionFromProject: Failed to detect PHP version from project" -data $_.Exception.Message
-    }
-
-    return $null
-}
-
-
-
 function Invoke-PVMIni {
     param($arguments)
     
@@ -198,11 +163,11 @@ function Get-Actions {
         "setup" = [PSCustomObject]@{
             command = "pvm setup";
             description = "Setup the environment variables and paths for PHP.";
-            action = { Invoke-PVMSetup -arguments $script:arguments }}
+            action = { Invoke-PVMSetup }}
         "current" = [PSCustomObject]@{
             command = "pvm current";
             description = "Display active version.";
-            action = { Invoke-PVMCurrent -arguments $script:arguments }}
+            action = { Invoke-PVMCurrent }}
         "list" = [PSCustomObject]@{
             command = "pvm list [available [-f or --force]]";
             description = "Type 'available' to list installable items. Add '-f' or '--force' to force reload from source."; 

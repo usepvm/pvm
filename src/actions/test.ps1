@@ -22,6 +22,7 @@ function Run-Tests {
             $config.Filter.Tag = $tag
         }
         
+        Write-Host "`nRunning tests with verbosity: $verbosity" -ForegroundColor Cyan
         $tests | ForEach-Object { 
             try {
                 Write-Host "`n----------------------------------------------------------------"

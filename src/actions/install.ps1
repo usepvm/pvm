@@ -333,7 +333,7 @@ function Install-PHP {
         $foundInstalledVersions = Get-Matching-PHP-Versions -version $version
 
         if ($foundInstalledVersions) {
-            if ($version -match '^\d+\.\d+') {
+            if ($version -match '^(\d+)(?:\.(\d+))?') {
                 $familyVersion = $matches[0]
                 Write-Host "`nOther versions from the $familyVersion.x family are available:"
                 $foundInstalledVersions | ForEach-Object { Write-Host " - $_" }

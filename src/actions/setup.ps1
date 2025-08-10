@@ -5,34 +5,31 @@ function Setup-PVM {
 
     try {
         $path = Get-EnvVar-ByName -name "Path"
-        if ($path -eq $null) {
+        if ($null -eq $path) {
             $path = ''
         }
-        $path = $newPath = $path.ToLower()
+        $newPath = $path
+        $pathItems = $path.ToLower() -split ';'
 
-        $phpEnvValue = Get-EnvVar-ByName -name $PHP_CURRENT_ENV_NAME
-        if ($phpEnvValue -eq $null) {
-            $output = Set-EnvVar -name $PHP_CURRENT_ENV_NAME -value 'null'
-            $phpEnvValue = 'null'
+        $output = Set-EnvVar -name $PHP_CURRENT_ENV_NAME -value $PHP_CURRENT_VERSION_PATH
+        $parent = Split-Path $PHP_CURRENT_VERSION_PATH
+        if (-not (Is-Directory-Exists -path $parent)) {
+            $created = Make-Directory -path $parent
         }
-        $phpEnvValue = $phpEnvValue.ToLower()
-        $phpActiveEnvName = $PHP_CURRENT_ENV_NAME.ToLower()
-        if (($phpEnvValue -and ($path -notlike "*$phpEnvValue*")) -and $path -notlike "*%$phpActiveEnvName%*") {
+        
+        if (($pathItems -notcontains $PHP_CURRENT_VERSION_PATH.ToLower()) -and ($pathItems -notcontains "%$($PHP_CURRENT_ENV_NAME.ToLower())%")) {
             $newPath += ";%$PHP_CURRENT_ENV_NAME%"
         } 
 
-        $pvmPath = $PVMRoot.ToLower()
-        if ($path -notlike "*$pvmPath*" -and $path -notlike "*%pvm%*") {
+        if (($pathItems -notcontains $PVMRoot.ToLower()) -and ($pathItems -notcontains "%pvm%")) {
             $newPath += ";%pvm%"
         }
-        $pvmEnvValue = Get-EnvVar-ByName -name "pvm"
-        if ($pvmEnvValue -eq $null) {
+        if ($null -eq (Get-EnvVar-ByName -name "pvm")) {
             $output = Set-EnvVar -name "pvm" -value $PVMRoot
         }
         
         if ($newPath -ne $path) {
             $output = Set-EnvVar -name "Path" -value $newPath
-            $optimized = Optimize-SystemPath
 
             return @{ code = $output; message = "PVM environment has been set up."; color = "DarkGreen"}
         }

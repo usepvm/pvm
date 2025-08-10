@@ -139,7 +139,7 @@ function Display-Installed-PHP-Versions {
         Write-Host "--------------"
         $duplicates = @()
         $installedPhp | ForEach-Object {
-            $versionNumber = $_ -replace "php",""
+            $versionNumber = $_
             if ($duplicates -notcontains $versionNumber) {
                 $duplicates += $versionNumber
                 $isCurrent = ""

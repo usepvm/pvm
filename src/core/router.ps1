@@ -1,29 +1,31 @@
 
 function Invoke-PVMSetup {
-    param($arguments)
 
     $result = @{ code = 0; message = "PVM is already setup" }
     if (-not (Is-PVM-Setup)) {
         $result = Setup-PVM
     }
+    $optimized = Optimize-SystemPath
+    if ($optimized -ne 0) {
+        Write-Host "`nFailed to optimize system path." -ForegroundColor DarkYellow
+    }
     
     Display-Msg-By-ExitCode -result $result
-    exit 0
+    return 0
 }
 
 function Invoke-PVMCurrent {
-    param($arguments)
 
     $result = Get-Current-PHP-Version
     if (-not $result.version) {
         Write-Host "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
-        exit 1
+        return 1
     }
     Write-Host "`nRunning version: PHP $($result.version)"
     
     if (-not $result.status) {
         Write-Host "No status information available for the current PHP version." -ForegroundColor Yellow
-        exit 1
+        return 1
     }
     
     foreach ($ext in $result.status.Keys) {
@@ -35,6 +37,7 @@ function Invoke-PVMCurrent {
     }
     
     Write-Host "`nPath: $($result.path)" -ForegroundColor Gray
+    return 0
 }
 
 function Invoke-PVMList{
@@ -45,6 +48,8 @@ function Invoke-PVMList{
     } else {
         $result = Display-Installed-PHP-Versions
     }
+    
+    return $result
 }
 
 function Invoke-PVMInstall {
@@ -53,7 +58,7 @@ function Invoke-PVMInstall {
     $version = $arguments[0]        
     if (-not $version) {
         Write-Host "`nPlease provide a PHP version to install"
-        exit 1
+        return 1
     }
 
     $dirArg = $arguments | Where-Object { $_ -like '--dir=*' }
@@ -61,13 +66,14 @@ function Invoke-PVMInstall {
         $dirValue = $dirArg -replace '^--dir=', ''
         if (-not $dirValue) {
             Write-Host "`nPlease provide a directory to install PHP. Use '--dir=<path>' to specify the directory."
-            exit 1
+            return 1
         }
     }
 
     $includeXDebug = ($arguments -contains '--xdebug')
     $enableOpcache = ($arguments -contains '--opcache')
     $exitCode = Install-PHP -version $version -customDir $dirValue -includeXDebug $includeXDebug -enableOpcache $enableOpcache
+    return $exitCode
 }
 
 function Invoke-PVMUninstall {
@@ -77,19 +83,18 @@ function Invoke-PVMUninstall {
 
     if (-not $version) {
         Write-Host "`nPlease provide a PHP version to uninstall"
-        exit 1
+        return 1
     }
 
     $currentVersion = (Get-Current-PHP-Version).version
-    $shouldRemoveCurrent = ($arguments -contains '--skip-confirmation')
-    if ((-not $shouldRemoveCurrent) -and ($currentVersion -and ($version -eq $currentVersion))) {
+    if ($currentVersion -and ($version -eq $currentVersion)) {
         Read-Host "`nYou are trying to uninstall the currently active PHP version ($version). Press Enter to continue or Ctrl+C to cancel."
     }
 
     $result = Uninstall-PHP -version $version
 
     Display-Msg-By-ExitCode -result $result
-    exit 0
+    return 0
 }
 
 function Invoke-PVMUse {
@@ -99,14 +104,14 @@ function Invoke-PVMUse {
 
     if (-not $version) {
         Write-Host "`nPlease provide a PHP version to use"
-        exit 1
+        return 1
     }
 
     if ($version -eq 'auto') {
-        $result = Auto-Select-PHP-Version -version $version
+        $result = Auto-Select-PHP-Version
         if ($result.code -ne 0) {
             Display-Msg-By-ExitCode -result $result
-            exit 1
+            return 1
         }
         $version = $result.version
     }
@@ -114,41 +119,8 @@ function Invoke-PVMUse {
     $result = Update-PHP-Version -variableName $PHP_CURRENT_ENV_NAME -variableValue $version
 
     Display-Msg-By-ExitCode -result $result
-    exit 0
+    return 0
 }
-
-function Detect-PHP-VersionFromProject {
-    
-    try {
-        # 1. Check .php-version
-        if (Test-Path ".php-version") {
-            $version = Get-Content ".php-version" | Select-Object -First 1
-            return $version.Trim()
-        }
-
-        # 2. Check composer.json
-        if (Test-Path "composer.json") {
-            try {
-                $json = Get-Content "composer.json" -Raw | ConvertFrom-Json
-                if ($json.require.php) {
-                    $constraint = $json.require.php.Trim()
-                    # Extract first PHP version number in the string (e.g. from "^8.3" or ">=8.1 <8.3")
-                    if ($constraint -match "(\d+\.\d+(\.\d+)?)") {
-                        return $matches[1]
-                    }
-                }
-            } catch {
-                Write-Host "`nFailed to parse composer.json: $_"
-            }
-        }
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Detect-PHP-VersionFromProject: Failed to detect PHP version from project" -data $_.Exception.Message
-    }
-
-    return $null
-}
-
-
 
 function Invoke-PVMIni {
     param($arguments)
@@ -156,12 +128,13 @@ function Invoke-PVMIni {
     $action = $arguments[0]
     if (-not $action) {
         Write-Host "`nPlease specify an action for 'pvm ini'. Use 'set', 'get', 'enable', 'disable' or 'restore'."
-        exit 1
+        return 1
     }
     
     $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
 
     $exitCode = Invoke-PVMIniAction -action $action -params $remainingArgs
+    return $exitCode
 }
 
 function Invoke-PVMSet {
@@ -172,19 +145,48 @@ function Invoke-PVMSet {
     
     if (-not $varName) {
         Write-Host "`nPlease provide an environment variable name"
-        exit 1
+        return 1
     }
     if (-not $varValue) {
         Write-Host "`nPlease provide an environment variable value"
-        exit 1
+        return 1
     }          
 
     $result = Set-PHP-Env -name $varName -value $varValue
 
     Display-Msg-By-ExitCode -result $result
-    exit 0
+    return 0
 }
 
+function Invoke-PVMTest {
+    param($arguments)
+
+    $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
+    $arguments = $arguments | Where-Object {
+        if ($_ -match '^--tag=(.+)$') {
+            $tag = $Matches[1]
+            return $false
+        }
+        return $true
+    }
+    
+    $files = $null
+    $verbosity = 'Normal'
+    if ($arguments.Count -gt 0 -and $verbosityOptions -contains $arguments[-1]) {
+        $verbosity = $arguments[-1]
+        
+        if ($arguments.Count -gt 1) {
+            $files = $arguments[0..($arguments.Count - 2)]
+        }
+    } elseif ($arguments.Count -eq 1 -and $verbosityOptions -contains $arguments) {
+        $verbosity = $arguments
+    } else {
+        $files = $arguments
+    }
+    
+    $exitCode = Run-Tests -verbosity $verbosity -tests $files -tag $tag
+    return $exitCode
+}
 
 function Get-Actions {
     param( $arguments )
@@ -195,55 +197,39 @@ function Get-Actions {
         "setup" = [PSCustomObject]@{
             command = "pvm setup";
             description = "Setup the environment variables and paths for PHP.";
-            action = { Invoke-PVMSetup -arguments $script:arguments }}
+            action = { return Invoke-PVMSetup }}
         "current" = [PSCustomObject]@{
             command = "pvm current";
             description = "Display active version.";
-            action = { Invoke-PVMCurrent -arguments $script:arguments }}
+            action = { return Invoke-PVMCurrent }}
         "list" = [PSCustomObject]@{
             command = "pvm list [available [-f or --force]]";
             description = "Type 'available' to list installable items. Add '-f' or '--force' to force reload from source."; 
-            action = { Invoke-PVMList -arguments $script:arguments }}
+            action = { return Invoke-PVMList -arguments $script:arguments }}
         "install" = [PSCustomObject]@{
             command = "pvm install <version> [--xdebug] [--opcache] [--dir=/abs/path/]";
             description = "The version must be a specific version. '--xdebug/--opcach' to enable xdebug/opcache. '--dir' to specify a custom installation directory.";
-            action = { Invoke-PVMInstall -arguments $script:arguments }}
+            action = { return Invoke-PVMInstall -arguments $script:arguments }}
         "uninstall" = [PSCustomObject]@{
             command = "pvm uninstall <version>";
             description = "The version must be a specific version."; 
-            action = { Invoke-PVMUninstall -arguments $script:arguments }}
+            action = { return Invoke-PVMUninstall -arguments $script:arguments }}
         "use" = [PSCustomObject]@{
             command = "pvm use <version>|[auto]";
-            description = "Switch to use the specified version. use 'auto' to switch to the version specified in the current directory’s composer.json or .php-version file.";
-            action = { Invoke-PVMUse -arguments $script:arguments }}
+            description = "Switch to use the specified version. use 'auto' to switch to the version specified in the current directory's composer.json or .php-version file.";
+            action = { return Invoke-PVMUse -arguments $script:arguments }}
         "ini" = [PSCustomObject]@{
             command = "pvm ini <action> [<args>]";
             description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'enable' or 'disable' for an extension, or 'restore' the original ini file from backup."; 
-            action = { Invoke-PVMIni -arguments $script:arguments }}
+            action = { return Invoke-PVMIni -arguments $script:arguments }}
         "set" = [PSCustomObject]@{
             command = "pvm set <name> <value>";
             description = "Set a new evironment variable for a PHP version."; 
-            action = { Invoke-PVMSet -arguments $script:arguments }}
+            action = { return Invoke-PVMSet -arguments $script:arguments }}
         "test" = [PSCustomObject]@{
             command = "pvm test";
             description = "Run tests."; 
-            action = {
-                $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
-                
-                $files = $null
-                $verbosity = 'Normal'
-                if ($arguments.Count -gt 0 -and $verbosityOptions -contains $arguments[-1]) {
-                    $verbosity = $arguments[-1]
-                    
-                    if ($arguments.Count -gt 1) {
-                        $files = $arguments[0..($arguments.Count - 2)]
-                    }
-                } else {
-                    $files = $arguments
-                }
-                
-                Run-Tests -verbosity $verbosity -tests $files
-            }}
+            action = { return Invoke-PVMTest -arguments $script:arguments }}
     }
 }
 

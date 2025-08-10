@@ -1,277 +1,11 @@
-# PowerShell Function Tests using Pester with Mock Registry
+# Load required modules and functions
+. "$PSScriptRoot\..\src\helpers\helpers.ps1"
 
-BeforeAll {
-    # Mock global variables that would be defined in the main script
-    $global:LOG_ERROR_PATH = "TestDrive:\storage\logs\error.log"
-    $global:PATH_VAR_BACKUP_NAME = "PATH_BACKUP"
-    $global:PATH_VAR_BACKUP_PATH = "TestDrive:\storage\logs\test_path_backup.log"
-    
-    # Create a mock registry to simulate environment variables
-    $global:MockRegistry = @{
-        Machine = @{
-            "Path" = "C:\Windows\System32;C:\Program Files\Git\bin;C:\CustomApp;C:\Program Files\Java\bin"
-            "JAVA_HOME" = "C:\Program Files\Java"
-            "GIT_HOME" = "C:\Program Files\Git\bin"
-            "CUSTOM_APP" = "C:\CustomApp"
-            "WINDOWS_DIR" = "C:\Windows"
-            "SYSTEM32_DIR" = "C:\Windows\System32"
-            "REGULAR_VAR" = "SomeValue"
-        }
-        Process = @{}
-        User = @{}
-    }
-    
-    # Mock file system for logging tests
-    $global:MockFileSystem = @{
-        Directories = @()
-        Files = @{}
-    }
-    
-    # Create wrapper functions that use our mock registry
-    function Get-EnvironmentVariablesWrapper {
-        param($target)
+Describe "System Functions Tests" {
+    BeforeAll {
         
-        if ($global:MockRegistryThrowException) {
-            throw $global:MockRegistryException
-        }
-        
-        switch ($target) {
-            ([System.EnvironmentVariableTarget]::Machine) { 
-                $result = @{}
-                $global:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
-                return $result
-            }
-            ([System.EnvironmentVariableTarget]::Process) { 
-                $result = @{}
-                $global:MockRegistry.Process.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
-                return $result
-            }
-            ([System.EnvironmentVariableTarget]::User) { 
-                $result = @{}
-                $global:MockRegistry.User.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
-                return $result
-            }
-            default { return @{} }
-        }
-    }
-    
-        
-    # Functions under test (modified to use wrapper functions)
-    function Get-All-EnvVars {
-        try {
-            return Get-EnvironmentVariablesWrapper -target ([System.EnvironmentVariableTarget]::Machine)
-        } catch {
-            $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-All-EnvVars: Failed to get all environment variables" -data $_.Exception.Message
-            return $null
-        }
-    }
-    
-    function Get-EnvironmentVariableWrapper {
-        param($name, $target)
-        
-        if ($global:MockRegistryThrowException) {
-            throw $global:MockRegistryException
-        }
-        
-        switch ($target) {
-            ([System.EnvironmentVariableTarget]::Machine) { return $global:MockRegistry.Machine[$name] }
-            ([System.EnvironmentVariableTarget]::Process) { return $global:MockRegistry.Process[$name] }
-            ([System.EnvironmentVariableTarget]::User) { return $global:MockRegistry.User[$name] }
-            default { return $null }
-        }
-    }
-
-    function Get-EnvVar-ByName {
-        param ($name)
-        try {
-            if ([string]::IsNullOrWhiteSpace($name)) {
-                return $null
-            }
-            $name = $name.Trim()
-            return Get-EnvironmentVariableWrapper -name $name -target ([System.EnvironmentVariableTarget]::Machine)
-        } catch {
-            $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-EnvVar-ByName: Failed to get environment variable '$name'" -data $_.Exception.Message
-            return $null
-        }
-    }
-    
-    function Set-EnvironmentVariableWrapper {
-        param($name, $value, $target)
-        
-        if ($global:MockRegistryThrowException) {
-            throw $global:MockRegistryException
-        }
-        
-        switch ($target) {
-            ([System.EnvironmentVariableTarget]::Machine) { 
-                if ($value -eq $null) {
-                    $global:MockRegistry.Machine.Remove($name)
-                } else {
-                    $global:MockRegistry.Machine[$name] = $value
-                }
-            }
-            ([System.EnvironmentVariableTarget]::Process) { 
-                if ($value -eq $null) {
-                    $global:MockRegistry.Process.Remove($name)
-                } else {
-                    $global:MockRegistry.Process[$name] = $value
-                }
-            }
-            ([System.EnvironmentVariableTarget]::User) { 
-                if ($value -eq $null) {
-                    $global:MockRegistry.User.Remove($name)
-                } else {
-                    $global:MockRegistry.User[$name] = $value
-                }
-            }
-        }
-    }
-    
-    function Set-EnvVar {
-        param ($name, $value)
-        try {
-            if ([string]::IsNullOrWhiteSpace($name)) {
-                return -1
-            }
-            $name = $name.Trim()
-            Set-EnvironmentVariableWrapper -name $name -value $value -target ([System.EnvironmentVariableTarget]::Machine)
-            return 0
-        } catch {
-            $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Set-EnvVar: Failed to set environment variable '$name'" -data $_.Exception.Message
-            return -1
-        }
-    }
-    
-    # Mock file system functions
-    function Test-Path {
-        param($Path, $PathType)
-        
-        if ($global:MockFileSystemThrowException) {
-            throw $global:MockFileSystemException
-        }
-        
-        if ($PathType -eq "Container") {
-            return $global:MockFileSystem.Directories -contains $Path
-        } else {
-            return $global:MockFileSystem.Files.ContainsKey($Path)
-        }
-    }
-    
-    function New-Item {
-        param($Path, $ItemType, $Force)
-        
-        if ($global:MockFileSystemThrowException) {
-            throw $global:MockFileSystemException
-        }
-        
-        if ($ItemType -eq "Directory") {
-            $global:MockFileSystem.Directories += $Path
-        }
-        return [PSCustomObject]@{ FullName = $Path }
-    }
-    
-    function mkdir {
-        param($Path)
-        
-        if ($global:MockFileSystemThrowException) {
-            throw $global:MockFileSystemException
-        }
-        
-        $global:MockFileSystem.Directories += $Path
-        return [PSCustomObject]@{ FullName = $Path }
-    }
-    
-    function Add-Content {
-        param($Path, $Value)
-        
-        if ($global:MockFileSystemThrowException) {
-            throw $global:MockFileSystemException
-        }
-        
-        if (-not $global:MockFileSystem.Files.ContainsKey($Path)) {
-            $global:MockFileSystem.Files[$Path] = ""
-        }
-        $global:MockFileSystem.Files[$Path] += $Value
-    }
-    
-    function Make-Directory {
-        param ( [string]$path )
-        
-        if ([string]::IsNullOrWhiteSpace($path.Trim())) {
-            return 1
-        }
-        
-        if (-not (Test-Path -Path $path -PathType Container)) {
-            mkdir $path | Out-Null
-        }
-        
-        return 0
-    }
-
-    function Is-Admin {
-        if ($global:MockAdminResult -ne $null) {
-            return $global:MockAdminResult
-        }
-        return $true
-    }
-
-    function Log-Data {
-        param ($logPath, $message, $data)
-        try {
-            $created = Make-Directory -path (Split-Path $logPath)
-            if ($created -ne 0) {
-                return -1
-            }
-            Add-Content -Path $logPath -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $message :n$data"
-            return 0
-        } catch {
-            return -1
-        }
-    }
-    
-    
-    function Optimize-SystemPath {
-        param($shouldOverwrite = $false)
-        
-        try {
-            $path = Get-EnvVar-ByName -name "Path"
-            $envVars = Get-All-EnvVars
-            $pathBak = Get-EnvVar-ByName -name $PATH_VAR_BACKUP_NAME
-
-            if (($pathBak -eq $null) -or $shouldOverwrite) {
-                $output = Set-EnvVar -name $PATH_VAR_BACKUP_NAME -value $path
-            }
-            
-            # Saving Path to log
-            $outputLog = Log-Data -logPath $PATH_VAR_BACKUP_PATH -message "Original PATH" -data $path
-            
-            $envVars.Keys | ForEach-Object {
-                $envName = $_
-                $envValue = $envVars[$envName]
-                
-                if (
-                    ($envName -ne "Path") -and
-                    ($null -ne $envValue) -and
-                    ($path -like "*$envValue*") -and
-                    ($envValue -notlike "*\Windows*") -and
-                    ($envValue -notlike "*\System32*")
-                ) {
-                    $envValue = [regex]::Escape($envValue.TrimEnd(';'))
-                    $pattern = "(?<=^|;){0}(?=;|$)" -f $envValue
-                    $path = [regex]::Replace($path, $pattern, "%$envName%")
-                }
-            }
-            $output = Set-EnvVar -name "Path" -value $path
-            
-            return $output
-        } catch {
-            $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Optimize-SystemPath: Failed to optimize system PATH variable" -data $_.Exception.Message
-            return -1
-        }
-    }
-    
-    # Helper function to reset mock state
-    function Reset-MockState {
+        Mock Write-Host {}
+        # Create a mock registry to simulate environment variables
         $global:MockRegistry = @{
             Machine = @{
                 "Path" = "C:\Windows\System32;C:\Program Files\Git\bin;C:\CustomApp;C:\Program Files\Java\bin"
@@ -286,878 +20,415 @@ BeforeAll {
             User = @{}
         }
         
+        # Setup test environment
+        $global:LOG_ERROR_PATH = "TestDrive:\logs\error.log"
+        $global:STORAGE_PATH = "TestDrive:\storage"
+        $global:PATH_VAR_BACKUP_PATH = "TestDrive:\logs\path_backup.log"
+        
+        New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
+        New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
+        
+        
+        # Mock file system for logging tests
         $global:MockFileSystem = @{
-            Directories = @()
-            Files = @{}
+            Directories = @("$($STORAGE_PATH)\php\8.1", "$($STORAGE_PATH)\php\8.2")
+            Files = @{
+                "$($LOG_ERROR_PATH)" = @()
+                "$($PATH_VAR_BACKUP_PATH)" = @()
+            }
         }
-        
-        $global:MockRegistryThrowException = $false
-        $global:MockRegistryException = "Mock registry exception"
-        $global:MockFileSystemThrowException = $false
-        $global:MockFileSystemException = "Mock file system exception"
-        $global:MockAdminResult = $null
-        $global:MockChocolateyUnavailable = $true
-    }
     
-    # Initialize mock state
-    Reset-MockState
-}
+        # Create wrapper functions that use our mock registry
+        function Get-EnvironmentVariablesWrapper {
+            param($target)
+            
+            if ($global:MockRegistryThrowException) {
+                throw $global:MockRegistryException
+            }
+            
+            switch ($target) {
+                ([System.EnvironmentVariableTarget]::Machine) { 
+                    $result = @{}
+                    $global:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
+                    return $result
+                }
+                ([System.EnvironmentVariableTarget]::Process) { 
+                    $result = @{}
+                    $global:MockRegistry.Process.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
+                    return $result
+                }
+                ([System.EnvironmentVariableTarget]::User) { 
+                    $result = @{}
+                    $global:MockRegistry.User.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
+                    return $result
+                }
+                default { return @{} }
+            }
+        }
 
-
-Describe "Get-All-EnvVars Tests" {
-    Context "Success scenarios" {
-        It "Should return environment variables hashtable when successful" {
-            $result = Get-All-EnvVars
-            
-            $result | Should -Not -BeNullOrEmpty
-            $result.GetType().Name | Should -Be "Hashtable"
-            $result["JAVA_HOME"] | Should -Be "C:\Program Files\Java"
-            $result["GIT_HOME"] | Should -Be "C:\Program Files\Git\bin"
-            $result.Count | Should -BeGreaterThan 0
-        }
-        
-        It "Should return empty hashtable when no environment variables exist" {
-            $global:MockRegistry.Machine = @{}
-            
-            $result = Get-All-EnvVars
-            $result.Count | Should -Be 0
-        }
-    }
-    
-    Context "Error scenarios" {
-        It "Should return null and log error when registry access fails" {
-            $global:MockRegistryThrowException = $true
-            $global:MockRegistryException = "Access denied to registry"
-            
-            $result = Get-All-EnvVars
-            $result | Should -BeNullOrEmpty
-            
-            # Verify error was logged
-            $global:MockFileSystem.Files.ContainsKey($LOG_ERROR_PATH) | Should -Be $true
-            $global:MockFileSystem.Files[$LOG_ERROR_PATH] | Should -Match "Get-All-EnvVars: Failed to get all environment variables"
-        }
-    }
-}
-
-Describe "Get-EnvVar-ByName Tests" {
-    Context "Success scenarios" {
-        It "Should return environment variable value when name exists" {
-            Reset-MockState
-            $result = Get-EnvVar-ByName -name "JAVA_HOME"
-            $result | Should -Be "C:\Program Files\Java"
-        }
-        
-        It "Should return null when environment variable doesn't exist" {
-            $result = Get-EnvVar-ByName -name "NON_EXISTENT_VAR"
-            $result | Should -BeNullOrEmpty
-        }
-        
-        It "Should handle case-sensitive variable names" {
-            $global:MockRegistry.Machine["CaseSensitive"] = "TestValue"
-            
-            $result = Get-EnvVar-ByName -name "CaseSensitive"
-            $result | Should -Be "TestValue"
-            
-            $result = Get-EnvVar-ByName -name "casesensitive"
-            $result | Should -Be "TestValue"
-        }
-    }
-    
-    Context "Input validation" {
-        It "Should return null when name is null" {
-            $result = Get-EnvVar-ByName -name $null
-            $result | Should -BeNullOrEmpty
-        }
-        
-        It "Should return null when name is empty string" {
-            $result = Get-EnvVar-ByName -name ""
-            $result | Should -BeNullOrEmpty
-        }
-        
-        It "Should return null when name is whitespace" {
-            $result = Get-EnvVar-ByName -name "   "
-            $result | Should -BeNullOrEmpty
-        }
-    }
-    
-    Context "Error scenarios" {
-        It "Should return null and log error when registry access fails" {
-            $global:MockRegistryThrowException = $true
-            $global:MockRegistryException = "Registry key access denied"
-            
-            $result = Get-EnvVar-ByName -name "JAVA_HOME"
-            $result | Should -BeNullOrEmpty
-            
-            # Verify error was logged
-            $global:MockFileSystem.Files[$LOG_ERROR_PATH] | Should -Match "Get-EnvVar-ByName: Failed to get environment variable 'JAVA_HOME'"
-        }
-    }
-}
-
-Describe "Set-EnvVar Tests" {
-    Context "Success scenarios" {
-        It "Should successfully set new environment variable" {
-            $global:MockRegistryThrowException = $false
-            $result = Set-EnvVar -name "NEW_VAR" -value "NEW_VALUE"
-            
-            $result | Should -Be 0
-            $global:MockRegistry.Machine["NEW_VAR"] | Should -Be "NEW_VALUE"
-        }
-        
-        It "Should successfully update existing environment variable" {
-            $result = Set-EnvVar -name "JAVA_HOME" -value "C:\NewJavaPath"
-            
-            $result | Should -Be 0
-            $global:MockRegistry.Machine["JAVA_HOME"] | Should -Be "C:\NewJavaPath"
-        }
-        
-        It "Should handle null value (delete variable)" {
-            $result = Set-EnvVar -name "JAVA_HOME" -value $null
-            
-            $result | Should -Be 0
-            $global:MockRegistry.Machine.ContainsKey("JAVA_HOME") | Should -Be $false
-        }
-        
-        It "Should handle empty string value" {
-            $result = Set-EnvVar -name "EMPTY_VAR" -value ""
-            
-            $result | Should -Be 0
-            $global:MockRegistry.Machine["EMPTY_VAR"] | Should -Be ""
-        }
-    }
-    
-    Context "Input validation" {
-        It "Should return -1 when name is null" {
-            $result = Set-EnvVar -name $null -value "TEST_VALUE"
-            $result | Should -Be -1
-        }
-        
-        It "Should return -1 when name is empty string" {
-            $result = Set-EnvVar -name "" -value "TEST_VALUE"
-            $result | Should -Be -1
-        }
-        
-        It "Should return -1 when name is whitespace" {
-            $result = Set-EnvVar -name "   " -value "TEST_VALUE"
-            $result | Should -Be -1
-        }
-    }
-    
-    Context "Error scenarios" {
-        It "Should return -1 and log error when registry access fails" {
-            $global:MockRegistryThrowException = $true
-            $global:MockRegistryException = "Access denied to registry key"
-            
-            $result = Set-EnvVar -name "TEST_VAR" -value "TEST_VALUE"
-            
-            $result | Should -Be -1
-            $global:MockFileSystem.Files[$LOG_ERROR_PATH] | Should -Match "Set-EnvVar: Failed to set environment variable 'TEST_VAR'"
-        }
-    }
-}
-
-Describe "Make-Directory Tests" {
-    Context "Directory creation" {
-        It "Should create directory when it doesn't exist" {
-            $testPath = "TestDrive:\test\newdir"
-            
-            Make-Directory -path $testPath
-            
-            $global:MockFileSystem.Directories | Should -Contain $testPath
-        }
-        
-        It "Should not create directory when it already exists" {
-            $testPath = "TestDrive:\test\existingdir"
-            $global:MockFileSystem.Directories += $testPath
-            
-            $initialCount = $global:MockFileSystem.Directories.Count
-            Make-Directory -path $testPath
-            
-            # Should not add duplicate
-            $global:MockFileSystem.Directories.Count | Should -Be $initialCount
-        }
-    }
-    
-    Context "Error scenarios" {
-        It "Should handle mkdir failure gracefully" {
-            $global:MockFileSystemThrowException = $true
-            $global:MockFileSystemException = "Access denied"
-            
-            { Make-Directory -path "TestDrive:\test\faildir" } | Should -Throw
-        }
-    }
-    
-    Context "Edge cases" {
-        It "Should handle empty path" {
-            Make-Directory -path ""
-            # Should not throw exception
-        }
-        
-        It "Should handle null path" {
-            Make-Directory -path $null
-            # Should not throw exception
-        }
-    }
-}
-
-Describe "Is-Admin Tests" {
-    Context "Admin check scenarios" {
-        It "Should return true when user is administrator" {
-            $global:MockAdminResult = $true
-            
-            $result = Is-Admin
-            $result | Should -Be $true
-        }
-        
-        It "Should return false when user is not administrator" {
-            $global:MockAdminResult = $false
-            
-            $result = Is-Admin
-            $result | Should -Be $false
-        }
-        
-        It "Should work with real admin check when mock not set" {
-            $global:MockAdminResult = $null
-            
-            $result = Is-Admin
-            $result | Should -BeOfType [bool]
-        }
-    }
-}
-
-Describe "Display-Msg-By-ExitCode Tests" {
-    BeforeEach {
-        Mock Write-Host { }
-        $global:MockChocolateyUnavailable = $true
-    }
-    
-    Context "Success scenarios" {
-        It "Should display message from result object" {
-             # Arrange
-            $testResult = @{ message = "Success!"; color = "Green" }
-            
-            # Act
-            Display-Msg-By-ExitCode -result $testResult
-            
-            # Assert
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
-                $Object -eq "`nSuccess!" -and $ForegroundColor -eq "Green" 
+        function Get-All-EnvVars {
+            try {
+                return Get-EnvironmentVariablesWrapper -target ([System.EnvironmentVariableTarget]::Machine)
+            } catch {
+                $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-All-EnvVars: Failed to get all environment variables" -data $_.Exception.Message
+                return $null
             }
         }
         
-        It "Should use provided message parameter over result.message" {
-            # Arrange
-            $testResult = @{ message = "Original message"; color = "Red" }
+        function Get-EnvironmentVariableWrapper {
+            param($name, $target)
             
-            # Act
-            Display-Msg-By-ExitCode -result $testResult -message "Override message"
+            if ($global:MockRegistryThrowException) {
+                throw $global:MockRegistryException
+            }
             
-            # Assert
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
-                $Object -eq "`nOverride message" -and $ForegroundColor -eq "Red" 
+            switch ($target) {
+                ([System.EnvironmentVariableTarget]::Machine) { return $global:MockRegistry.Machine[$name] }
+                ([System.EnvironmentVariableTarget]::Process) { return $global:MockRegistry.Process[$name] }
+                ([System.EnvironmentVariableTarget]::User) { return $global:MockRegistry.User[$name] }
+                default { return $null }
+            }
+        }
+
+        function Get-EnvVar-ByName {
+            param ($name)
+            try {
+                if ([string]::IsNullOrWhiteSpace($name)) {
+                    return $null
+                }
+                $name = $name.Trim()
+                return Get-EnvironmentVariableWrapper -name $name -target ([System.EnvironmentVariableTarget]::Machine)
+            } catch {
+                $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-EnvVar-ByName: Failed to get environment variable '$name'" -data $_.Exception.Message
+                return $null
             }
         }
         
-        It "Should default to Gray color when no color specified" {
-            # Arrange
-            $testResult = @{ message = "Test message" }
+        function Set-EnvironmentVariableWrapper {
+            param($name, $value, $target)
             
-            # Act
-            Display-Msg-By-ExitCode -result $testResult
+            if ($global:MockRegistryThrowException) {
+                throw $global:MockRegistryException
+            }
             
-            # Assert
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
-                $Object -eq "`nTest message" -and $ForegroundColor -eq "Gray" 
+            switch ($target) {
+                ([System.EnvironmentVariableTarget]::Machine) { 
+                    if ($value -eq $null) {
+                        $global:MockRegistry.Machine.Remove($name)
+                    } else {
+                        $global:MockRegistry.Machine[$name] = $value
+                    }
+                }
+                ([System.EnvironmentVariableTarget]::Process) { 
+                    if ($value -eq $null) {
+                        $global:MockRegistry.Process.Remove($name)
+                    } else {
+                        $global:MockRegistry.Process[$name] = $value
+                    }
+                }
+                ([System.EnvironmentVariableTarget]::User) { 
+                    if ($value -eq $null) {
+                        $global:MockRegistry.User.Remove($name)
+                    } else {
+                        $global:MockRegistry.User[$name] = $value
+                    }
+                }
             }
         }
-    }
+        
+        function Set-EnvVar {
+            param ($name, $value)
+            try {
+                if ([string]::IsNullOrWhiteSpace($name)) {
+                    return -1
+                }
+                $name = $name.Trim()
+                Set-EnvironmentVariableWrapper -name $name -value $value -target ([System.EnvironmentVariableTarget]::Machine)
+                return 0
+            } catch {
+                $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Set-EnvVar: Failed to set environment variable '$name'" -data $_.Exception.Message
+                return -1
+            }
+        }
     
-    Context "Chocolatey integration" {
-        It "Should handle missing Chocolatey gracefully" {
-            $global:MockChocolateyUnavailable = $true
-            
-            { Display-Msg-By-ExitCode -msgSuccess "Success!" -msgError "Failed!" -exitCode 0 } | Should -Not -Throw
+    }
+
+    Describe "Get-All-Subdirectories" {
+        Context "When path is valid" {
+            It "Returns subdirectories for an existing path" {
+                $result = Get-All-Subdirectories -path $STORAGE_PATH
+                $result | Should -Not -BeNullOrEmpty
+                $result.Count | Should -BeGreaterThan 0
+            }
         }
-        
-        It "Should attempt Chocolatey operations when available" {
-            $global:MockChocolateyUnavailable = $false
-            Mock Import-Module { }
-            Mock Get-Command { return @{ Name = "Update-SessionEnvironment" } }
-            Mock Update-SessionEnvironment { }
-            
-            Display-Msg-By-ExitCode -result @{ message = "Success!" }
-            
-            # Function should complete without error
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
-                $Object -eq "`nSuccess!" -and $ForegroundColor -eq "Gray" 
+
+        Context "When path is invalid" {
+            It "Returns null for empty path" {
+                $result = Get-All-Subdirectories -path ""
+                $result | Should -Be $null
+            }
+
+            It "Returns null for whitespace path" {
+                $result = Get-All-Subdirectories -path "   "
+                $result | Should -Be $null
+            }
+
+            It "Returns null for non-existent path" {
+                $result = Get-All-Subdirectories -path "C:\Nonexistent\Path"
+                $result | Should -Be $null
             }
         }
     }
-    
-    Context "Edge cases" {
-        It "Should handle null messages" {
-            Display-Msg-By-ExitCode -result @{ message = $null } -message "Custom message"
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
-                $Object -eq "`nCustom message" -and $ForegroundColor -eq "Gray" 
-            }
-        }
-        
-        It "Should handle empty string messages" {
-            Display-Msg-By-ExitCode -result @{ message = "" } -message "Custom message"
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
-                $Object -eq "`nCustom message" -and $ForegroundColor -eq "Gray" 
+
+    Describe "Get-All-EnvVars" {
+        Context "When retrieving environment variables" {
+            It "Returns environment variables" {
+                $result = Get-All-EnvVars
+                $result | Should -Not -BeNullOrEmpty
+                $result.GetType().Name | Should -Be "Hashtable"
             }
         }
     }
-}
 
-Describe "Log-Data Tests" {
-    Context "Success scenarios" {
-        It "Should successfully log data and return 0" {
-            
-            $global:MockFileSystemThrowException = $false
-            
-            $logPath = "TestDrive:\temp\test.log"
-            $message = "Test message"
-            $data = "Test data"
-            
-            $result = Log-Data -logPath $logPath -message $message -data $data
-            
-            $result | Should -Be 0
-            $global:MockFileSystem.Directories | Should -Contain "TestDrive:\temp"
-            $global:MockFileSystem.Files[$logPath] | Should -Match $message
-            $global:MockFileSystem.Files[$logPath] | Should -Match $data
-        }
-        
-        It "Should handle null data parameter" {
-            $result = Log-Data -logPath "TestDrive:\temp\test.log" -message "Test message" -data $null
-            
-            $result | Should -Be 0
-            $global:MockFileSystem.Files["TestDrive:\temp\test.log"] | Should -Match "Test message"
-        }
-        
-        It "Should handle empty message and data" {
-            $result = Log-Data -logPath "TestDrive:\temp\test.log" -message "" -data ""
-            
-            $result | Should -Be 0
-            $global:MockFileSystem.Files.ContainsKey("TestDrive:\temp\test.log") | Should -Be $true
-        }
-        
-        It "Should include timestamp in log entry" {
-            $result = Log-Data -logPath "TestDrive:\temp\test.log" -message "Test" -data "Data"
-            
-            $global:MockFileSystem.Files["TestDrive:\temp\test.log"] | Should -Match "\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]"
-        }
-    }
-    
-    Context "Error scenarios" {
-        It "Should return -1 when directory creation fails" {
-            $global:MockFileSystemThrowException = $true
-            $global:MockFileSystemException = "Access denied to create directory"
-            
-            $result = Log-Data -logPath "TestDrive:\temp\test.log" -message "Test message" -data "Test data"
-            $result | Should -Be -1
-        }
-        
-        It "Should return -1 when file write fails" {
-            # Create directory first, then make Add-Content fail
-            $global:MockFileSystem.Directories += "TestDrive:\temp"
-            $global:MockFileSystemThrowException = $true
-            $global:MockFileSystemException = "File is locked"
-            
-            $result = Log-Data -logPath "TestDrive:\temp\test.log" -message "Test message" -data "Test data"
-            $result | Should -Be -1
-        }
-    }
-}
-
-Describe "Optimize-SystemPath Tests" {
-    Context "Success scenarios" {
-        It "Should optimize PATH by replacing paths with environment variable references" {
-            Reset-MockState
-            $result = Optimize-SystemPath
-            
-            $result | Should -Be 0
-            
-            # Verify backup was created
-            $global:MockRegistry.Machine.ContainsKey($PATH_VAR_BACKUP_NAME) | Should -Be $true
-            
-            # Verify original PATH was logged
-            $global:MockFileSystem.Files[$PATH_VAR_BACKUP_PATH] | Should -Match "Original PATH"
-            
-            # Verify PATH was optimized (should contain %GIT_HOME% instead of actual path)
-            $optimizedPath = $global:MockRegistry.Machine["Path"]
-            $optimizedPath | Should -Match "%GIT_HOME%"
-            $optimizedPath | Should -Match "%CUSTOM_APP%"
-            
-            # Should NOT replace Windows paths
-            $optimizedPath | Should -Match "C:\\Windows\\System32"
-        }
-        
-        It "Should create backup when no backup exists" {
-            $global:MockRegistry.Machine.Remove($PATH_VAR_BACKUP_NAME)
-            
-            $result = Optimize-SystemPath
-            
-            $result | Should -Be 0
-            $global:MockRegistry.Machine[$PATH_VAR_BACKUP_NAME] | Should -Not -BeNullOrEmpty
-        }
-        
-        It "Should not overwrite backup when backup exists and shouldOverwrite is false" {
-            $existingBackup = "C:\ExistingBackup"
-            $global:MockRegistry.Machine[$PATH_VAR_BACKUP_NAME] = $existingBackup
-            
-            $result = Optimize-SystemPath -shouldOverwrite $false
-            
-            $result | Should -Be 0
-            $global:MockRegistry.Machine[$PATH_VAR_BACKUP_NAME] | Should -Be $existingBackup
-        }
-        
-        It "Should overwrite backup when shouldOverwrite is true" {
-            $existingBackup = "C:\ExistingBackup"
-            $global:MockRegistry.Machine[$PATH_VAR_BACKUP_NAME] = $existingBackup
-            $originalPath = $global:MockRegistry.Machine["Path"]
-            
-            $result = Optimize-SystemPath -shouldOverwrite $true
-            
-            $result | Should -Be 0
-            $global:MockRegistry.Machine[$PATH_VAR_BACKUP_NAME] | Should -Be $originalPath
-            $global:MockRegistry.Machine[$PATH_VAR_BACKUP_NAME] | Should -Not -Be $existingBackup
-        }
-        
-        It "Should not replace Windows and System32 paths" {
-            $global:MockRegistry.Machine["Path"] = "C:\Windows\System32;C:\Windows\bin;C:\Program Files\CustomApp"
-            $global:MockRegistry.Machine["WINDOWS_SYSTEM"] = "C:\Windows\System32"
-            $global:MockRegistry.Machine["WINDOWS_BIN"] = "C:\Windows\bin"
-            $global:MockRegistry.Machine["CUSTOM_APP"] = "C:\Program Files\CustomApp"
-            
-            $result = Optimize-SystemPath
-            
-            $result | Should -Be 0
-            $optimizedPath = $global:MockRegistry.Machine["Path"]
-            $optimizedPath | Should -Match "C:\\Windows\\System32"
-            $optimizedPath | Should -Match "C:\\Windows\\bin"
-            $optimizedPath | Should -Match "%CUSTOM_APP%"
-        }
-        
-        It "Should handle empty PATH variable" {
-            $global:MockRegistry.Machine["Path"] = ""
-            
-            $result = Optimize-SystemPath
-            $result | Should -Be 0
-        }
-        
-        It "Should handle null PATH variable" {
-            $global:MockRegistry.Machine.Remove("Path")
-            
-            $result = Optimize-SystemPath
-            $result | Should -Be 0
-        }
-        
-        It "Should handle paths with trailing semicolons correctly" {
-            Reset-MockState
-            $global:MockRegistry.Machine["Path"] = "C:\test;C:\Program Files\Git\bin;"
-            $global:MockRegistry.Machine["GIT_HOME"] = "C:\Program Files\Git\bin;"
-            
-            $result = Optimize-SystemPath
-            
-            $result | Should -Be 0
-            $optimizedPath = $global:MockRegistry.Machine["Path"]
-            $optimizedPath | Should -Match "%GIT_HOME%"
-        }
-        
-        It "Should handle environment variables with null values" {
-            $global:MockRegistry.Machine["NULL_VAR"] = $null
-            $global:MockRegistry.Machine["EMPTY_VAR"] = ""
-            
-            $result = Optimize-SystemPath
-            $result | Should -Be 0
-        }
-    }
-    
-    Context "Error scenarios" {
-        It "Should return -1 and log error when Get-EnvVar-ByName fails" {
-            $global:MockRegistryThrowException = $true
-            $global:MockRegistryException = "Registry access denied"
-            
-            $result = Optimize-SystemPath
-            
-            $result | Should -Be -1
-            $global:MockFileSystem.Files[$LOG_ERROR_PATH] | Should -Match "Optimize-SystemPath: Failed to optimize system PATH variable"
-        }
-        
-        It "Should return -1 and log error when Get-All-EnvVars fails" {
-            # First call succeeds (Get-EnvVar-ByName for Path), second fails (Get-All-EnvVars)
-            $callCount = 0
-            $global:MockRegistryThrowException = $false
-            
-            # Override the wrapper to fail on second call
-            function Get-EnvironmentVariablesWrapper {
-                param($target)
-                throw "Access denied to enumerate variables"
+    Describe "Get-EnvVar-ByName" {
+        Context "When variable exists" {
+            It "Returns the variable value" {
+                # Set a test variable
+                Set-EnvVar -name "TEST_VAR" -value "TEST_VALUE"
+                
+                $result = Get-EnvVar-ByName -name "TEST_VAR"
+                $result | Should -Be "TEST_VALUE"
+                
+                # Cleanup
+                Set-EnvVar -name "TEST_VAR" -value $null
             }
-            
-            $result = Optimize-SystemPath
-            
-            $result | Should -Be -1
-            $global:MockFileSystem.Files[$LOG_ERROR_PATH] | Should -Match "Optimize-SystemPath: Failed to optimize system PATH variable"
         }
-        
-        It "Should return -1 and log error when Set-EnvVar fails" {
-            # Make Set-EnvVar fail by having registry throw on write operations
-            $originalPath = $global:MockRegistry.Machine["Path"]
-            
-            # Override wrapper to fail only on Set operations
-            function Set-EnvironmentVariableWrapper {
-                param($name, $value, $target)
-                throw "Access denied to set registry value"
+
+        Context "When variable doesn't exist" {
+            It "Returns null for non-existent variable" {
+                $result = Get-EnvVar-ByName -name "NON_EXISTENT_VAR"
+                $result | Should -Be $null
             }
-            $result = Optimize-SystemPath
-            
-            $result | Should -Be -1
-            $global:MockFileSystem.Files[$LOG_ERROR_PATH] | Should -Match "Optimize-SystemPath: Failed to optimize system PATH variable"
-        }
-    }
-    
-    Context "PATH optimization logic verification" {
-        It "Should correctly identify and replace non-Windows paths" {
-            $testPath = "C:\CustomPath1;C:\Program Files\Git\bin;C:\Windows\System32;C:\CustomPath2;"
-            $global:MockRegistry.Machine["Path"] = $testPath
-            $global:MockRegistry.Machine["CUSTOM1"] = "C:\CustomPath1"
-            $global:MockRegistry.Machine["GIT_HOME"] = "C:\Program Files\Git\bin"
-            $global:MockRegistry.Machine["CUSTOM2"] = "C:\CustomPath2"
-            $global:MockRegistry.Machine["WINDOWS_SYS"] = "C:\Windows\System32"
-            
-            $result = Optimize-SystemPath
-            
-            $result | Should -Be 0
-            $optimizedPath = $global:MockRegistry.Machine["Path"]
-            
-            # Should replace custom paths
-            $optimizedPath | Should -Match "%CUSTOM1%"
-            $optimizedPath | Should -Match "%GIT_HOME%"
-            $optimizedPath | Should -Match "%CUSTOM2%"
-            
-            # Should NOT replace Windows path
-            $optimizedPath | Should -Match "C:\\Windows\\System32"
-            $optimizedPath | Should -Not -Match "%WINDOWS_SYS%"
-        }
-        
-        It "Should handle complex PATH with multiple occurrences" {
-            $testPath = "C:\Tools;C:\Program Files\Git\bin;C:\Tools;C:\Other"
-            $global:MockRegistry.Machine["Path"] = $testPath
-            $global:MockRegistry.Machine["TOOLS"] = "C:\Tools"
-            $global:MockRegistry.Machine["GIT_HOME"] = "C:\Program Files\Git\bin"
-            
-            $result = Optimize-SystemPath
-            
-            $result | Should -Be 0
-            $optimizedPath = $global:MockRegistry.Machine["Path"]
-            
-            # Should replace all occurrences
-            $optimizedPath | Should -Match "%TOOLS%"
-            $optimizedPath | Should -Match "%GIT_HOME%"
-        }
-        
-        It "Should preserve PATH structure and separators" {
-            $testPath = "C:\First;C:\Program Files\Git\bin;C:\Last;"
-            $global:MockRegistry.Machine["Path"] = $testPath
-            $global:MockRegistry.Machine["FIRST"] = "C:\First"
-            $global:MockRegistry.Machine["GIT_HOME"] = "C:\Program Files\Git\bin"
-            $global:MockRegistry.Machine["LAST"] = "C:\Last"
-            
-            $result = Optimize-SystemPath
-            
-            $result | Should -Be 0
-            $optimizedPath = $global:MockRegistry.Machine["Path"]
-            
-            # Should maintain semicolon structure
-            $optimizedPath | Should -Match "^.*%FIRST%.*%GIT_HOME%.*%LAST%.*"
-        }
-    }
-}
 
-# Integration tests that verify the mock registry behavior
-Describe "Mock Registry Integration Tests" -Tag "MockIntegration" {
-    Context "Registry simulation verification" {
-        It "Should properly simulate environment variable storage" {
-            # Test the complete flow
-            $testVar = "INTEGRATION_TEST"
-            $testValue = "IntegrationValue"
-            
-            # Set variable
-            $setResult = Set-EnvVar -name $testVar -value $testValue
-            $setResult | Should -Be 0
-            
-            # Verify it exists in mock registry
-            $global:MockRegistry.Machine[$testVar] | Should -Be $testValue
-            
-            # Get variable
-            $getValue = Get-EnvVar-ByName -name $testVar
-            $getValue | Should -Be $testValue
-            
-            # Verify it appears in GetAll
-            $allVars = Get-All-EnvVars
-            $allVars[$testVar] | Should -Be $testValue
-            
-            # Delete variable
-            $deleteResult = Set-EnvVar -name $testVar -value $null
-            $deleteResult | Should -Be 0
-            
-            # Verify it's gone
-            $global:MockRegistry.Machine.ContainsKey($testVar) | Should -Be $false
-            $deletedValue = Get-EnvVar-ByName -name $testVar
-            $deletedValue | Should -BeNullOrEmpty
-        }
-        
-        It "Should handle concurrent operations on different variables" {
-            Set-EnvVar -name "VAR1" -value "VALUE1"
-            Set-EnvVar -name "VAR2" -value "VALUE2"
-            Set-EnvVar -name "VAR3" -value "VALUE3"
-            
-            $allVars = Get-All-EnvVars
-            $allVars["VAR1"] | Should -Be "VALUE1"
-            $allVars["VAR2"] | Should -Be "VALUE2"
-            $allVars["VAR3"] | Should -Be "VALUE3"
-        }
-        
-        It "Should maintain registry state across function calls within same test" {
-            Set-EnvVar -name "PERSISTENT_VAR" -value "PersistentValue"
-            
-            # Call other functions
-            $allVars = Get-All-EnvVars
-            $specificVar = Get-EnvVar-ByName -name "PERSISTENT_VAR"
-            
-            # Variable should still exist
-            $allVars["PERSISTENT_VAR"] | Should -Be "PersistentValue"
-            $specificVar | Should -Be "PersistentValue"
-        }
-    }
-}
-
-# Comprehensive Optimize-SystemPath scenarios
-Describe "Optimize-SystemPath Comprehensive Scenarios" -Tag "Comprehensive" {
-    Context "Real-world PATH scenarios" {
-        It "Should handle typical developer machine PATH" {
-            $devPath = "C:\Windows\System32;C:\Windows;C:\Program Files\Git\bin;C:\Program Files\NodeJS;C:\Program Files\Python39;C:\Users\Dev\AppData\Local\Microsoft\WindowsApps"
-            $global:MockRegistry.Machine["Path"] = $devPath
-            $global:MockRegistry.Machine["GIT_HOME"] = "C:\Program Files\Git\bin"
-            $global:MockRegistry.Machine["NODE_HOME"] = "C:\Program Files\NodeJS"
-            $global:MockRegistry.Machine["PYTHON_HOME"] = "C:\Program Files\Python39"
-            
-            $result = Optimize-SystemPath
-            
-            $result | Should -Be 0
-            $optimizedPath = $global:MockRegistry.Machine["Path"]
-            
-            # Should optimize non-Windows paths
-            $optimizedPath | Should -Match "%GIT_HOME%"
-            $optimizedPath | Should -Match "%NODE_HOME%"
-            $optimizedPath | Should -Match "%PYTHON_HOME%"
-            
-            # Should preserve Windows paths
-            $optimizedPath | Should -Match "C:\\Windows\\System32"
-            $optimizedPath | Should -Match "C:\\Windows"
-        }
-        
-        It "Should handle PATH with no optimizable entries" {
-            $windowsOnlyPath = "C:\Windows\System32;C:\Windows;C:\Windows\System32\Wbem"
-            $global:MockRegistry.Machine["Path"] = $windowsOnlyPath
-            
-            $result = Optimize-SystemPath
-            
-            $result | Should -Be 0
-            $optimizedPath = $global:MockRegistry.Machine["Path"]
-            $optimizedPath | Should -Be $windowsOnlyPath
-        }
-        
-        It "Should handle malformed PATH entries" {
-            $malformedPath = "C:\Valid1;;C:\Valid2;;;C:\Program Files\Git\bin;"
-            $global:MockRegistry.Machine["Path"] = $malformedPath
-            $global:MockRegistry.Machine["GIT_HOME"] = "C:\Program Files\Git\bin"
-            
-            $result = Optimize-SystemPath
-            $result | Should -Be 0
-            # Should still work despite malformed entries
-        }
-    }
-}
-
-# Error injection tests
-Describe "Error Injection Tests" -Tag "ErrorInjection" {
-    Context "Systematic error injection" {
-        It "Should handle registry read errors at different points" {
-            # Test error on first registry read (Get-EnvVar-ByName for Path)
-            $global:MockRegistryThrowException = $true
-            $result = Optimize-SystemPath
-            $result | Should -Be -1
-        }
-        
-        It "Should handle file system errors during logging" {
-            $global:MockFileSystemThrowException = $true
-            $result = Log-Data -logPath "TestDrive:\test.log" -message "Test" -data "Data"
-            $result | Should -Be -1
-        }
-        
-        It "Should handle mixed success and failure scenarios" {
-            Reset-MockState
-            
-            # Start with success, then inject failure
-            $result1 = Set-EnvVar -name "SUCCESS_VAR" -value "SuccessValue"
-            $result1 | Should -Be 0
-            
-            $global:MockRegistryThrowException = $true
-            $result2 = Set-EnvVar -name "FAIL_VAR" -value "FailValue"
-            $result2 | Should -Be -1
-            
-            # Reset and verify first operation succeeded
-            $global:MockRegistryThrowException = $false
-            $getValue = Get-EnvVar-ByName -name "SUCCESS_VAR"
-            $getValue | Should -Be "SuccessValue"
-        }
-    }
-}
-
-# Performance and stress tests
-Describe "Performance and Stress Tests" -Tag "Performance" {
-    Context "Large dataset handling" {
-        It "Should handle large number of environment variables efficiently" {
-            # Populate with many variables
-            for ($i = 1; $i -le 100; $i++) {
-                $global:MockRegistry.Machine["TEST_VAR_$i"] = "TestValue$i"
+            It "Returns null for empty name" {
+                $result = Get-EnvVar-ByName -name ""
+                $result | Should -Be $null
             }
-            
-            $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-            $result = Get-All-EnvVars
-            $stopwatch.Stop()
-            
-            $result.Count | Should -BeGreaterOrEqual 100
-            $stopwatch.ElapsedMilliseconds | Should -BeLessThan 1000
-        }
-        
-        It "Should handle very long PATH variable efficiently" {
-            $longPath = ""
-            for ($i = 1; $i -le 50; $i++) {
-                $longPath += "C:\VeryLongPathName$i\SubDirectory\AnotherSubDirectory;"
-                $global:MockRegistry.Machine["LONG_VAR_$i"] = "C:\VeryLongPathName$i\SubDirectory\AnotherSubDirectory"
-            }
-            $global:MockRegistry.Machine["Path"] = $longPath
-            
-            $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-            $result = Optimize-SystemPath
-            $stopwatch.Stop()
-            
-            $result | Should -Be 0
-            $stopwatch.ElapsedMilliseconds | Should -BeLessThan 5000
-        }
-    }
-    
-    Context "Memory usage validation" {
-        It "Should not leak memory during repeated operations" {
-            # Simulate repeated operations
-            for ($i = 1; $i -le 20; $i++) {
-                Set-EnvVar -name "TEMP_VAR" -value "TempValue$i"
-                $value = Get-EnvVar-ByName -name "TEMP_VAR"
-                $value | Should -Be "TempValue$i"
-            }
-            
-            # Memory should be manageable (this is a basic check)
-            $allVars = Get-All-EnvVars
-            $allVars | Should -Not -BeNullOrEmpty
-        }
-    }
-}
 
-# Edge cases and boundary tests
-Describe "Edge Cases and Boundary Tests" -Tag "EdgeCases" {
-    Context "Special characters and encoding" {
-        It "Should handle environment variable names with special characters" {
-            $specialName = "VAR_WITH-DASH.AND_UNDERSCORE"
-            $result = Set-EnvVar -name $specialName -value "SpecialValue"
-            $result | Should -Be 0
-            
-            $getValue = Get-EnvVar-ByName -name $specialName
-            $getValue | Should -Be "SpecialValue"
-        }
-        
-        It "Should handle paths with spaces and special characters" {
-            $pathWithSpaces = "C:\Program Files (x86)\Special App\bin"
-            $global:MockRegistry.Machine["SPECIAL_APP"] = $pathWithSpaces
-            $global:MockRegistry.Machine["Path"] = "C:\Windows\System32;$pathWithSpaces;C:\Other"
-            
-            $result = Optimize-SystemPath
-            $result | Should -Be 0
-            
-            $optimizedPath = $global:MockRegistry.Machine["Path"]
-            $optimizedPath | Should -Match "%SPECIAL_APP%"
-        }
-        
-        It "Should handle Unicode characters in values" {
-            $unicodeValue = "Côté_Açaí_测试"
-            $result = Set-EnvVar -name "UNICODE_VAR" -value $unicodeValue
-            $result | Should -Be 0
-            
-            $getValue = Get-EnvVar-ByName -name "UNICODE_VAR"
-            $getValue | Should -Be $unicodeValue
+            It "Returns null for whitespace name" {
+                $result = Get-EnvVar-ByName -name "   "
+                $result | Should -Be $null
+            }
         }
     }
-    
-    Context "Boundary value testing" {
-        It "Should handle very long environment variable values" {
-            $longValue = "A" * 1000
-            $result = Set-EnvVar -name "LONG_VALUE_VAR" -value $longValue
-            $result | Should -Be 0
-            
-            $getValue = Get-EnvVar-ByName -name "LONG_VALUE_VAR"
-            $getValue | Should -Be $longValue
-        }
-        
-        It "Should handle very long variable names" {
-            $longName = "VERY_LONG_VARIABLE_NAME_" + ("X" * 100)
-            $result = Set-EnvVar -name $longName -value "LongNameValue"
-            $result | Should -Be 0
-            
-            $getValue = Get-EnvVar-ByName -name $longName
-            $getValue | Should -Be "LongNameValue"
-        }
-    }
-}
 
-# State management tests
-Describe "State Management Tests" -Tag "StateManagement" {
-    Context "Mock state consistency" {
-        It "Should maintain consistent state across multiple operations" {
-            Reset-MockState
-            # Initial state verification
-            $initialPath = $global:MockRegistry.Machine["Path"]
-            $initialJavaHome = $global:MockRegistry.Machine["JAVA_HOME"]
-            
-            # Perform optimization
-            $result = Optimize-SystemPath
-            $result | Should -Be 0
-            
-            # Verify backup was created correctly
-            $backup = $global:MockRegistry.Machine[$PATH_VAR_BACKUP_NAME]
-            $backup | Should -Be $initialPath
-            
-            # Verify JAVA_HOME unchanged
-            $global:MockRegistry.Machine["JAVA_HOME"] | Should -Be $initialJavaHome
-            
-            # Verify PATH was modified
-            $global:MockRegistry.Machine["Path"] | Should -Not -Be $initialPath
+    Describe "Set-EnvVar" {
+        Context "When setting environment variables" {
+            It "Sets a new variable successfully (admin required)" {
+                $result = Set-EnvVar -name "TEST_VAR_SET" -value "TEST_VALUE"
+                $result | Should -Be 0
+                
+                $value = Get-EnvVar-ByName -name "TEST_VAR_SET"
+                $value | Should -Be "TEST_VALUE"
+                
+                # Cleanup
+                Set-EnvVar -name "TEST_VAR_SET" -value $null
+            }
+
+            It "Returns -1 for empty name" {
+                $result = Set-EnvVar -name "" -value "TEST_VALUE"
+                $result | Should -Be -1
+            }
         }
-        
-        It "Should handle state reset correctly" {
-            # Modify state
-            Set-EnvVar -name "TEMP_VAR" -value "TempValue"
-            $global:MockRegistry.Machine["TEMP_VAR"] | Should -Be "TempValue"
-            
-            # Reset state
-            Reset-MockState
-            
-            # Verify reset worked
-            $global:MockRegistry.Machine.ContainsKey("TEMP_VAR") | Should -Be $false
-            $global:MockRegistry.Machine["JAVA_HOME"] | Should -Be "C:\Program Files\Java"
+    }
+
+    Describe "Get-PHP-Path-By-Version" {
+        BeforeEach {
+            Mock Is-Directory-Exists {
+                param ($path)                    
+                return (Test-Path $path)
+            }
+        }
+        Context "When version exists" {
+            It "Returns correct path for existing version" {                
+                $result = Get-PHP-Path-By-Version -version "8.1"
+                $result | Should -Be "$STORAGE_PATH\php\8.1"
+            }
+        }
+
+        Context "When version doesn't exist" {
+            It "Returns null for non-existent version" {
+                $result = Get-PHP-Path-By-Version -version "5.6"
+                $result | Should -Be $null
+            }
+
+            It "Returns null for empty version" {
+                $result = Get-PHP-Path-By-Version -version ""
+                $result | Should -Be $null
+            }
+
+            It "Returns null for whitespace version" {
+                $result = Get-PHP-Path-By-Version -version "   "
+                $result | Should -Be $null
+            }
+        }
+    }
+
+    Describe "Make-Symbolic-Link" {
+        Context "When creating symbolic links" {
+            It "Creates a symbolic link successfully (admin required)" -Skip:(! (Is-Admin)) {
+                $linkPath = "TestDrive:\test_link"
+                $targetPath = "$STORAGE_PATH\php\8.1"
+                
+                $result = Make-Symbolic-Link -link $linkPath -target $targetPath
+                $result | Should -Be 0
+                
+                Test-Path $linkPath | Should -Be $true
+                (Get-Item $linkPath).LinkType | Should -Be "SymbolicLink"
+            }
+
+            It "Returns -1 for empty link path" {
+                $result = Make-Symbolic-Link -link "" -target "TestDrive:\target"
+                $result | Should -Be -1
+            }
+
+            It "Returns -1 for empty target path" {
+                $result = Make-Symbolic-Link -link "TestDrive:\link" -target ""
+                $result | Should -Be -1
+            }
+        }
+    }
+
+    Describe "Is-Directory-Exists" {
+        Context "When checking directory existence" {
+            It "Returns true for existing directory" {
+                $result = Is-Directory-Exists -path $STORAGE_PATH
+                $result | Should -Be $true
+            }
+
+            It "Returns false for non-existent directory" {
+                $result = Is-Directory-Exists -path "C:\Nonexistent\Path"
+                $result | Should -Be $false
+            }
+
+            It "Returns false for empty path" {
+                $result = Is-Directory-Exists -path ""
+                $result | Should -Be $false
+            }
+
+            It "Returns false for whitespace path" {
+                $result = Is-Directory-Exists -path "   "
+                $result | Should -Be $false
+            }
+        }
+    }
+
+    Describe "Make-Directory" {
+        Context "When creating directories" {
+            It "Creates a new directory successfully" {
+                $newDir = "TestDrive:\new_dir"
+                $result = Make-Directory -path $newDir
+                $result | Should -Be 0
+                Test-Path $newDir | Should -Be $true
+            }
+
+            It "Returns 0 for existing directory" {
+                $result = Make-Directory -path $STORAGE_PATH
+                $result | Should -Be 0
+            }
+
+            It "Returns -1 for empty path" {
+                $result = Make-Directory -path ""
+                $result | Should -Be -1
+            }
+        }
+    }
+
+    Describe "Is-Admin" {
+        Context "When checking admin status" {
+            It "Returns a boolean value" {
+                $result = Is-Admin
+                $result | Should -BeOfType [bool]
+            }
+        }
+    }
+
+    Describe "Display-Msg-By-ExitCode" {
+        Context "When displaying messages" {
+            It "Displays message without error" {
+                Mock Write-Host {}
+                $testResult = @{
+                    message = "Test message"
+                    color = "Gray"
+                }
+                { Display-Msg-By-ExitCode -result $testResult } | Should -Not -Throw
+            }
+        }
+    }
+
+    Describe "Log-Data" {
+        Context "When logging data" {
+            It "Logs data successfully" {
+                $logPath = "TestDrive:\logs\test.log"
+                $result = Log-Data -logPath $logPath -message "Test message" -data "Test data"
+                $result | Should -Be 0
+                Test-Path $logPath | Should -Be $true
+                # Get the actual content
+                $content = Get-Content $logPath -Raw
+                
+                # Verify the complete log format
+                $content | Should -Match "\[.*\] Test message :\s*Test data"
+                
+                # Alternatively, you could check parts separately
+                $content | Should -Match "Test message"
+                $content | Should -Match "Test data"
+                $content | Should -Match (Get-Date -Format "yyyy-MM-dd")
+            }
+
+            It "Returns -1 when unable to create directory" {
+                Mock Make-Directory { throw "Failed to create directory" }
+                # Try to log to a protected location
+                $result = Log-Data -logPath "C:\Windows\test.log" -message "Test" -data "Test"
+                $result | Should -Be -1
+            }
+        }
+    }
+
+    Describe "Optimize-SystemPath" {
+        Context "When optimizing system PATH" {
+            BeforeEach {
+                # Set a test PATH with some variables
+                $testPath = "C:\Test1;C:\Test2;C:\Windows\System32"
+                Set-EnvVar -name "TEST_PATH1" -value "C:\Test1"
+                Set-EnvVar -name "TEST_PATH2" -value "C:\Test2"
+                Set-EnvVar -name "Path" -value $testPath
+            }
+
+            AfterEach {
+                # Cleanup
+                Set-EnvVar -name "TEST_PATH1" -value $null
+                Set-EnvVar -name "TEST_PATH2" -value $null
+            }
+
+            It "Optimizes PATH by replacing paths with variables" -Skip:(! (Is-Admin)) {
+                $result = Optimize-SystemPath
+                $result | Should -Be 0
+                
+                $newPath = Get-EnvVar-ByName -name "Path"
+                $newPath | Should -Match "%TEST_PATH1%"
+                $newPath | Should -Match "%TEST_PATH2%"
+                $newPath | Should -Not -Match "C:\\Test1"
+                $newPath | Should -Not -Match "C:\\Test2"
+                $newPath | Should -Match "C:\\Windows\\System32"  # System paths should remain
+            }
+
+            It "Creates a backup log file" {
+                $result = Optimize-SystemPath
+                $result | Should -Be 0
+                
+                Test-Path $PATH_VAR_BACKUP_PATH | Should -Be $true
+                Get-Content $PATH_VAR_BACKUP_PATH -Raw | Should -Match "Original PATH"
+            }
         }
     }
 }

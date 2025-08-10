@@ -222,7 +222,12 @@ function Invoke-PVMIniAction {
     try {
         $exitCode = 1
         
-        $currentPhpVersionPath = Get-EnvVar-ByName -name $PHP_CURRENT_ENV_NAME
+        $currentPhpVersionPath = Get-Item $PHP_CURRENT_VERSION_PATH
+        if (-not $currentPhpVersionPath) {
+            Write-Host "Current PHP version not found at: $PHP_CURRENT_VERSION_PATH"
+            return -1
+        }
+        $currentPhpVersionPath = $currentPhpVersionPath.Target
         $iniPath = "$currentPhpVersionPath\php.ini"
         
         if (-not (Test-Path $iniPath)) {

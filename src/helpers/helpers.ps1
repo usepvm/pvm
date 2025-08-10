@@ -1,4 +1,18 @@
 
+function Get-All-Subdirectories {
+    param ($path)
+    try {
+        if ([string]::IsNullOrWhiteSpace($path)) {
+            return $null
+        }
+        $path = $path.Trim()
+        return Get-ChildItem -Path $path -Directory
+    } catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-All-Subdirectories: Failed to get all subdirectories of '$path'" -data $_.Exception.Message
+        return $null
+    }
+}
+
 function Get-All-EnvVars {
 
     try {
@@ -34,10 +48,8 @@ function Set-EnvVar {
         $name = $name.Trim()
 
         if (-not (Is-Admin)) {
-            # Escape values properly for command line
             $command = "[System.Environment]::SetEnvironmentVariable('$name', '$value', [System.EnvironmentVariableTarget]::Machine)"
-            $process = Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -Command `"$command`"" -Verb RunAs -WindowStyle Hidden -PassThru -Wait
-            return $process.ExitCode
+            return (Run-Command -command $command)
         }
 
         # We already have admin rights, proceed normally
@@ -49,23 +61,96 @@ function Set-EnvVar {
     }
 }
 
+function Get-PHP-Path-By-Version {
+    param ($version)
+    
+    if ([string]::IsNullOrWhiteSpace($version)) {
+        return $null
+    }
+    
+    $phpContainerPath = "$STORAGE_PATH\php"
+    $version = $version.Trim()
+
+    if (-not(Is-Directory-Exists -path $phpContainerPath) -or -not(Is-Directory-Exists -path "$phpContainerPath\$version")) {
+        return $null
+    }
+
+    return "$phpContainerPath\$version"
+}
+
+function Make-Symbolic-Link {
+    param($link, $target)
+    
+    try {
+        if ([string]::IsNullOrWhiteSpace($link) -or [string]::IsNullOrWhiteSpace($target)) {
+            return -1
+        }
+        
+        $link = $link.Trim()
+        $target = $target.Trim()        
+        # Make sure parent directory exists
+        $parent = Split-Path $link
+        if (-not (Test-Path $parent)) {
+            $created = Make-Directory -path $parent
+        }
+        # Remove old link if it exists
+        if (Test-Path $link) {
+            Remove-Item -Path $link -Recurse -Force
+        }
+        
+        if (-not (Is-Admin)) {
+            $command = "New-Item -ItemType SymbolicLink -Path '$Link' -Target '$Target'"
+            return (Run-Command -command $command)
+        }
+
+        New-Item -ItemType SymbolicLink -Path $Link -Target $Target | Out-Null
+        return 0
+    } catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Make-Symbolic-Link: Failed to make symbolic link" -data $_.Exception.Message
+        return -1
+    }
+}
+
+function Run-Command {
+    param($command)
+    
+    $process = Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -Command `"$command`"" -Verb RunAs -WindowStyle Hidden -PassThru -Wait
+    $process.WaitForExit()
+    return $process.ExitCode
+}
+
+
+function Is-Directory-Exists {
+    param ($path)
+    
+    try {
+        if ([string]::IsNullOrWhiteSpace($path)) {
+            return $false
+        }
+        $path = $path.Trim()
+        return (Test-Path -Path $path -PathType Container)
+    } catch {
+        return $false
+    }
+}
 
 function Make-Directory {
     param ( [string]$path )
 
     try {
-        if ([string]::IsNullOrWhiteSpace($path.Trim())) {
-            return 1
+        if ([string]::IsNullOrWhiteSpace($path)) {
+            return -1
         }
 
-        if (-not (Test-Path -Path $path -PathType Container)) {
-            mkdir $path | Out-Null
+        $path = $path.Trim()
+        if (-not (Is-Directory-Exists -path $path)) {
+            New-Item -ItemType Directory -Path $path -Force | Out-Null
         }
+
+        return 0
     } catch {
-        return 1
+        return -1
     }
-    
-    return 0
 }
 
 
@@ -90,9 +175,6 @@ function Display-Msg-By-ExitCode {
         }
         
         Write-Host "`n$($result.message)" -ForegroundColor $result.color
-        
-        Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1 -Global
-        Update-SessionEnvironment
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Display-Msg-By-ExitCode: Failed to display message by exit code" -data $_.Exception.Message
     }
@@ -117,7 +199,6 @@ function Log-Data {
 }
 
 function Optimize-SystemPath {
-    param($shouldOverwrite = $false)
     
     try {
         $path = Get-EnvVar-ByName -name "Path"
@@ -136,8 +217,8 @@ function Optimize-SystemPath {
             if (
                 ($null -ne $envValue) -and
                 ($path -like "*$envValue*") -and
-                ($envValue -notlike "*\Windows*") -and
-                ($envValue -notlike "*\System32*")
+                -not($envValue -like "*\Windows*") -and
+                -not($envValue -like "*\System32*")
             ) {
                 $envValue = [regex]::Escape($envValue.TrimEnd(';'))
                 $pattern = "(?<=^|;){0}(?=;|$)" -f $envValue
@@ -146,7 +227,7 @@ function Optimize-SystemPath {
         }
         $output = Set-EnvVar -name "Path" -value $path
         if ($output -eq 0) {
-            Write-Host "`nPath optimized successfully"
+            Write-Host "`nPath optimized successfully" -ForegroundColor DarkGreen
         }
         
         return $output

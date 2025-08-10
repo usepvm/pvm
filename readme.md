@@ -94,10 +94,6 @@ Restore backup
 pvm ini restore
 ```
 
-> [!NOTE]  
-> Most of the commands edits or adds to the system environment variables, to reload the updates without restarting your terminal, you need to install chocolatey, and run `refreshenv` command
-
-
 ## Running Tests
 Run tests against the PowerShell scripts in the repo — especially useful for contributors verifying changes before submitting a pull request:
 

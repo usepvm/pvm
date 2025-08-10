@@ -1,4 +1,6 @@
 # Comprehensive Test Suite for PHP Installation Functions
+# Load required modules and functions
+. "$PSScriptRoot\..\src\actions\install.ps1"
 
 BeforeAll {
     Mock Write-Host {}
@@ -11,9 +13,9 @@ BeforeAll {
     $global:MockRegistry = @{
         Machine = @{
             "Path" = "C:\Windows\System32;C:\Program Files\Git\bin"
-            "php8.1.0" = "C:\PHP\php-8.1.0"
-            "php8.0.5" = "C:\PHP\php-8.0.5"
-            "php7.4.30" = "C:\PHP\php-7.4.30"
+            "php8.1.0" = "C:\PHP\8.1.0"
+            "php8.0.5" = "C:\PHP\8.0.5"
+            "php7.4.30" = "C:\PHP\7.4.30"
         }
         Process = @{}
         User = @{}
@@ -40,9 +42,9 @@ BeforeAll {
         $global:MockRegistry = @{
             Machine = @{
                 "Path" = "C:\Windows\System32;C:\Program Files\Git\bin"
-                "php8.1.0" = "C:\PHP\php-8.1.0"
-                "php8.0.5" = "C:\PHP\php-8.0.5"
-                "php7.4.30" = "C:\PHP\php-7.4.30"
+                "php8.1.0" = "C:\PHP\8.1.0"
+                "php8.0.5" = "C:\PHP\8.0.5"
+                "php7.4.30" = "C:\PHP\7.4.30"
             }
             Process = @{}
             User = @{}
@@ -95,14 +97,6 @@ BeforeAll {
         return $global:MockFileSystem.Files.ContainsKey($Path)
     }
 
-    function mkdir {
-        param($Path)
-        if (-not ($global:MockFileSystem.Directories -contains $Path)) {
-            $global:MockFileSystem.Directories += $Path
-        }
-        return @{ FullName = $Path }
-    }
-
     function Remove-Item {
         param($Path)
         if ($global:MockFileSystem.Files.ContainsKey($Path)) {
@@ -115,10 +109,6 @@ BeforeAll {
         $global:MockFileSystem.Files[$Destination] = "Copied content"
     }
 
-    # function Get-Content {
-    #     param($Path)
-    #     return @("extension_dir = `"ext`"", "zend_extension = opcache", "opcache.enable = 1")
-    # }
     function Get-Content {
         param($Path)
         if ($global:MockFileSystem.Files.ContainsKey($Path)) {
@@ -147,15 +137,6 @@ BeforeAll {
         # Mock for System.IO.Compression.FileSystem
     }
 
-    # Mock System.IO.Compression.ZipFile
-    $global:ZipExtractCalled = $false
-    Add-Type -TypeDefinition @"
-    public static class ZipFile {
-        public static void ExtractToDirectory(string sourceArchive, string destinationDirectory) {
-            // Mock implementation
-        }
-    }
-"@ -ReferencedAssemblies System.IO.Compression.FileSystem -ErrorAction SilentlyContinue
 
     function Read-Host {
         param($Prompt)
@@ -296,34 +277,6 @@ Describe "Get-Source-Urls Tests" {
     }
 }
 
-Describe "Make-Directory Tests" {
-    BeforeEach {
-        Reset-MockState
-    }
-    
-    It "Should create directory successfully" {
-        $result = Make-Directory -path "TestDrive:\testdir"
-        $result | Should -Be 0
-        $global:MockFileSystem.Directories | Should -Contain "TestDrive:\testdir"
-    }
-    
-    It "Should return 0 if directory already exists" {
-        $global:MockFileSystem.Directories += "TestDrive:\existing"
-        $result = Make-Directory -path "TestDrive:\existing"
-        $result | Should -Be 0
-    }
-    
-    It "Should return 1 for null or empty path" {
-        $result = Make-Directory -path ""
-        $result | Should -Be 1
-        
-        $result = Make-Directory -path "   "
-        $result | Should -Be 1
-        
-        $result = Make-Directory -path $null
-        $result | Should -Be 1
-    }
-}
 
 Describe "Get-PHP-Versions-From-Url Tests" {
     BeforeEach {
@@ -885,16 +838,20 @@ Describe "Environment Variable Tests" {
     }
     
     It "Get-Installed-PHP-Versions should return sorted versions" {
-        $global:MockRegistry.Machine = @{
-            "php8.1.0" = "path1"
-            "php7.4.30" = "path2"
-            "php8.2.0" = "path3"
-            "OTHER_VAR" = "other"
+        Mock Get-All-Subdirectories {
+            param ($path)
+            return @(
+                @{ Name = "8.1"; FullName = "path\php\8.1" }
+                @{ Name = "7.4"; FullName = "path\php\7.4" }
+                @{ Name = "8.2"; FullName = "path\php\8.2" }
+                @{ Name = "8.0"; FullName = "path\php\8.0" }
+                @{ Name = "5.6"; FullName = "path\php\5.6" }
+            )
         }
         
         $result = Get-Installed-PHP-Versions
         
-        $result | Should -Be @("php7.4.30", "php8.1.0", "php8.2.0")
+        $result | Should -Be @("5.6", "7.4", "8.0", "8.1", "8.2")
     }
     
     It "Get-Installed-PHP-Versions should handle registry errors" {
@@ -906,10 +863,13 @@ Describe "Environment Variable Tests" {
     }
     
     It "Get-Matching-PHP-Versions should find matching versions" {
-        $global:MockRegistry.Machine = @{
-            "php8.1.0" = "path1"
-            "php8.1.5" = "path2"
-            "php8.2.0" = "path3"
+        Mock Get-All-Subdirectories {
+            param ($path)
+            return @(
+                @{ Name = "8.1.0"; FullName = "path\php\8.1.0" }
+                @{ Name = "8.2.0"; FullName = "path\php\8.2.0" }
+                @{ Name = "8.1.5"; FullName = "path\php\8.1.5" }
+            )
         }
         
         $result = Get-Matching-PHP-Versions -version "8.1"

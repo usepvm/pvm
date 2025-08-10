@@ -1,7 +1,7 @@
 
 
 function Run-Tests {
-    param ($verbosity = "Normal", $tests = $null)
+    param ($verbosity = "Normal", $tests = $null, $tag = $null)
     
     try {
         $config = New-PesterConfiguration
@@ -18,6 +18,11 @@ function Run-Tests {
             $tests = Get-ChildItem "$PVMRoot\tests\*.tests.ps1"
         }
         
+        if (($tests.Length -eq 1) -and ($null -ne $tag)) {
+            $config.Filter.Tag = $tag
+        }
+        
+        Write-Host "`nRunning tests with verbosity: $verbosity" -ForegroundColor Cyan
         $tests | ForEach-Object { 
             try {
                 Write-Host "`n----------------------------------------------------------------"
@@ -37,11 +42,13 @@ function Run-Tests {
             }
             Write-Host "`n"
         }
+        
+        return 0
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Run-Tests: Failed to run tests" -data $_.Exception.Message
         Write-Host "`nFailed to run tests."
+        return 1
     }
-    
 }
 
 

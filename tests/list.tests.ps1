@@ -1,4 +1,6 @@
 # PHP Version Management Tests
+# Load required modules and functions
+. "$PSScriptRoot\..\src\actions\list.ps1"
 
 BeforeAll {
     # Mock global variables that would be defined in the main script
@@ -290,7 +292,7 @@ Describe "Display-Installed-PHP-Versions" {
     
     It "Should display installed versions with current version marked" {
         Mock Get-Current-PHP-Version { return @{ version = "8.2.0" } }
-        Mock Get-Installed-PHP-Versions { return @("php8.2.0", "php8.1.5", "php7.4.33") }
+        Mock Get-Installed-PHP-Versions { return @("8.2.0", "8.1.5", "7.4.33") }
         
         Display-Installed-PHP-Versions
         

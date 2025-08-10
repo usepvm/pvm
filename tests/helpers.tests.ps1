@@ -1,3 +1,6 @@
+# Load required modules and functions
+. "$PSScriptRoot\..\src\helpers\helpers.ps1"
+
 Describe "System Functions Tests" {
     BeforeAll {
         

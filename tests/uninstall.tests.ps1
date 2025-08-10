@@ -1,3 +1,6 @@
+# Load required modules and functions
+. "$PSScriptRoot\..\src\actions\uninstall.ps1"
+
 Describe "Uninstall-PHP" {
     BeforeAll {
         # Mock the external functions

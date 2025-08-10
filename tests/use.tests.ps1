@@ -1,3 +1,5 @@
+# Load required modules and functions
+. "$PSScriptRoot\..\src\actions\use.ps1"
 
 BeforeAll {
     

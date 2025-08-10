@@ -1,3 +1,5 @@
+# Load required modules and functions
+. "$PSScriptRoot\..\src\actions\set.ps1"
 
 BeforeAll {
     # Initialize mock registry

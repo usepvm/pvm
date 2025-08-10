@@ -1,3 +1,6 @@
+# Load required modules and functions
+. "$PSScriptRoot\..\src\actions\ini.ps1"
+
 BeforeAll {
     $testIniPath = "TestDrive:\php.ini"
     $testBackupPath = "$testIniPath.bak"

@@ -1,4 +1,6 @@
 # PHP Version Management Tests
+# Load required modules and functions
+. "$PSScriptRoot\..\src\actions\list.ps1"
 
 BeforeAll {
     # Mock global variables that would be defined in the main script

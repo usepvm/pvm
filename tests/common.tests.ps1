@@ -1,6 +1,4 @@
 # Load required modules and functions
-. "$PSScriptRoot\..\src\helpers\helpers.ps1"
-. "$PSScriptRoot\..\src\core\config.ps1"
 . "$PSScriptRoot\..\src\actions\common.ps1"
 
 

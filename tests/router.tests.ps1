@@ -41,10 +41,11 @@ Describe "Invoke-PVMSetup Tests" {
         Mock Write-Host { }
     }
 
-    It "Should exit 0 when PVM is already setup" {
+    It "Should return 0 when PVM is already setup" {
         Mock Is-PVM-Setup { $true }
         
-        { Invoke-PVMSetup } | Should -Not -Throw
+        $result = Invoke-PVMSetup
+        $result | Should -Be 0
         
         Assert-MockCalled Is-PVM-Setup -Times 1
         Assert-MockCalled Setup-PVM -Times 0
@@ -56,7 +57,8 @@ Describe "Invoke-PVMSetup Tests" {
         Mock Is-PVM-Setup { $false }
         Mock Setup-PVM { @{ code = 0; message = "Setup completed successfully" } }
         
-        { Invoke-PVMSetup } | Should -Not -Throw
+        $result = Invoke-PVMSetup
+        $result | Should -Be 0
         
         Assert-MockCalled Is-PVM-Setup -Times 1
         Assert-MockCalled Setup-PVM -Times 1
@@ -67,7 +69,8 @@ Describe "Invoke-PVMSetup Tests" {
     It "Should display warning when system path optimization fails" {
         Mock Optimize-SystemPath { 1 }
         
-        { Invoke-PVMSetup } | Should -Not -Throw
+        $result = Invoke-PVMSetup
+        $result | Should -Be 0
         
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Failed to optimize system path*" -and $ForegroundColor -eq "DarkYellow" }
     }
@@ -80,7 +83,8 @@ Describe "Invoke-PVMCurrent Tests" {
     }
 
     It "Should display current PHP version and extensions when version is set" {
-        { Invoke-PVMCurrent } | Should -Not -Throw
+        $result = Invoke-PVMCurrent
+        $result | Should -Be 0
         
         Assert-MockCalled Get-Current-PHP-Version -Times 1
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Running version: PHP 8.2.0*" }
@@ -110,14 +114,15 @@ Describe "Invoke-PVMCurrent Tests" {
 
 Describe "Invoke-PVMList Tests" {
     BeforeEach {
-        Mock Get-Available-PHP-Versions { }
-        Mock Display-Installed-PHP-Versions { }
+        Mock Get-Available-PHP-Versions { return 0 }
+        Mock Display-Installed-PHP-Versions { return 0 }
     }
 
     It "Should call Get-Available-PHP-Versions when 'available' argument is provided" {
         $arguments = @("available")
         
-        Invoke-PVMList -arguments $arguments
+        $result = Invoke-PVMList -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Get-Available-PHP-Versions -Times 1 -ParameterFilter { $getFromSource -eq $false }
         Assert-MockCalled Display-Installed-PHP-Versions -Times 0
@@ -126,7 +131,8 @@ Describe "Invoke-PVMList Tests" {
     It "Should call Get-Available-PHP-Versions with force when '-f' flag is provided" {
         $arguments = @("available", "-f")
         
-        Invoke-PVMList -arguments $arguments
+        $result = Invoke-PVMList -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Get-Available-PHP-Versions -Times 1 -ParameterFilter { $getFromSource -eq $true }
     }
@@ -134,7 +140,8 @@ Describe "Invoke-PVMList Tests" {
     It "Should call Get-Available-PHP-Versions with force when '--force' flag is provided" {
         $arguments = @("available", "--force")
         
-        Invoke-PVMList -arguments $arguments
+        $result = Invoke-PVMList -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Get-Available-PHP-Versions -Times 1 -ParameterFilter { $getFromSource -eq $true }
     }
@@ -142,7 +149,8 @@ Describe "Invoke-PVMList Tests" {
     It "Should call Display-Installed-PHP-Versions when no 'available' argument" {
         $arguments = @()
         
-        Invoke-PVMList -arguments $arguments
+        $result = Invoke-PVMList -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Display-Installed-PHP-Versions -Times 1
         Assert-MockCalled Get-Available-PHP-Versions -Times 0
@@ -167,7 +175,8 @@ Describe "Invoke-PVMInstall Tests" {
     It "Should install PHP with basic parameters" {
         $arguments = @("8.2.0")
         
-        Invoke-PVMInstall -arguments $arguments
+        $result = Invoke-PVMInstall -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
             $version -eq "8.2.0" -and 
@@ -180,7 +189,8 @@ Describe "Invoke-PVMInstall Tests" {
     It "Should handle --dir argument correctly" {
         $arguments = @("8.2.0", "--dir=C:\Custom\PHP")
         
-        Invoke-PVMInstall -arguments $arguments
+        $result = Invoke-PVMInstall -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
             $version -eq "8.2.0" -and 
@@ -200,7 +210,8 @@ Describe "Invoke-PVMInstall Tests" {
     It "Should handle --xdebug flag" {
         $arguments = @("8.2.0", "--xdebug")
         
-        Invoke-PVMInstall -arguments $arguments
+        $result = Invoke-PVMInstall -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { $includeXDebug -eq $true }
     }
@@ -208,7 +219,8 @@ Describe "Invoke-PVMInstall Tests" {
     It "Should handle --opcache flag" {
         $arguments = @("8.2.0", "--opcache")
         
-        Invoke-PVMInstall -arguments $arguments
+        $result = Invoke-PVMInstall -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { $enableOpcache -eq $true }
     }
@@ -216,7 +228,8 @@ Describe "Invoke-PVMInstall Tests" {
     It "Should handle multiple flags together" {
         $arguments = @("8.2.0", "--xdebug", "--opcache", "--dir=C:\Custom\PHP")
         
-        Invoke-PVMInstall -arguments $arguments
+        $result = Invoke-PVMInstall -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
             $version -eq "8.2.0" -and 
@@ -248,7 +261,8 @@ Describe "Invoke-PVMUninstall Tests" {
     It "Should uninstall PHP version successfully" {
         $arguments = @("8.2.0")
         
-        { Invoke-PVMUninstall -arguments $arguments } | Should -Not -Throw
+        $result = Invoke-PVMUninstall -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Uninstall-PHP -Times 1 -ParameterFilter { $version -eq "8.2.0" }
         Assert-MockCalled Display-Msg-By-ExitCode -Times 1
@@ -258,7 +272,8 @@ Describe "Invoke-PVMUninstall Tests" {
         Mock Get-Current-PHP-Version { @{ version = "8.2.0" } }
         $arguments = @("8.2.0")
         
-        { Invoke-PVMUninstall -arguments $arguments } | Should -Not -Throw
+        $result = Invoke-PVMUninstall -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Read-Host -ParameterFilter { $Prompt -like "*You are trying to uninstall the currently active PHP version*" }
         Assert-MockCalled Uninstall-PHP -Times 1
@@ -268,7 +283,8 @@ Describe "Invoke-PVMUninstall Tests" {
         Mock Get-Current-PHP-Version { @{ version = "8.1.0" } }
         $arguments = @("8.2.0")
         
-        { Invoke-PVMUninstall -arguments $arguments } | Should -Not -Throw
+        $result = Invoke-PVMUninstall -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Read-Host -Times 0
         Assert-MockCalled Uninstall-PHP -Times 1
@@ -295,7 +311,8 @@ Describe "Invoke-PVMUse Tests" {
     It "Should use specific PHP version" {
         $arguments = @("8.2.0")
         
-        { Invoke-PVMUse -arguments $arguments } | Should -Not -Throw
+        $result = Invoke-PVMUse -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Update-PHP-Version -Times 1 -ParameterFilter { 
             $variableName -eq $PHP_CURRENT_ENV_NAME -and 
@@ -307,7 +324,8 @@ Describe "Invoke-PVMUse Tests" {
     It "Should handle 'auto' version selection successfully" {
         $arguments = @("auto")
         
-        { Invoke-PVMUse -arguments $arguments } | Should -Not -Throw
+        $result = Invoke-PVMUse -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Auto-Select-PHP-Version -Times 1 -ParameterFilter { $version -eq "auto" }
         Assert-MockCalled Update-PHP-Version -Times 1 -ParameterFilter { $variableValue -eq "8.2.0" }
@@ -344,7 +362,8 @@ Describe "Invoke-PVMIni Tests" {
     It "Should call Invoke-PVMIniAction with correct parameters for single action" {
         $arguments = @("set")
         
-        Invoke-PVMIni -arguments $arguments
+        $result = Invoke-PVMIni -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Invoke-PVMIniAction -Times 1 -ParameterFilter { 
             $action -eq "set" -and 
@@ -355,7 +374,8 @@ Describe "Invoke-PVMIni Tests" {
     It "Should call Invoke-PVMIniAction with remaining arguments" {
         $arguments = @("set", "memory_limit", "256M")
         
-        Invoke-PVMIni -arguments $arguments
+        $result = Invoke-PVMIni -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Invoke-PVMIniAction -Times 1 -ParameterFilter { 
             $action -eq "set" -and 
@@ -371,7 +391,8 @@ Describe "Invoke-PVMIni Tests" {
         foreach ($testAction in $testActions) {
             $arguments = @($testAction, "param1", "param2")
             
-            Invoke-PVMIni -arguments $arguments
+            $result = Invoke-PVMIni -arguments $arguments
+            $result | Should -Be 0
             
             Assert-MockCalled Invoke-PVMIniAction -ParameterFilter { $action -eq $testAction }
         }
@@ -406,7 +427,8 @@ Describe "Invoke-PVMSet Tests" {
     It "Should set environment variable successfully" {
         $arguments = @("MY_VAR", "MY_VALUE")
         
-        { Invoke-PVMSet -arguments $arguments } | Should -Not -Throw
+        $result = Invoke-PVMSet -arguments $arguments
+        $result | Should -Be 0
         
         Assert-MockCalled Set-PHP-Env -Times 1 -ParameterFilter { 
             $name -eq "MY_VAR" -and 
@@ -455,14 +477,14 @@ Describe "Get-Actions Tests" {
     Context "Action Execution Tests" {
         It "Should execute setup action correctly" {
             $actions = Get-Actions -arguments @()
-            & $actions["setup"].action
+            $actions["setup"].action.Invoke()
             
             Assert-MockCalled Invoke-PVMSetup -Times 1
         }
 
         It "Should execute current action correctly" {
             $actions = Get-Actions -arguments @()
-            & $actions["current"].action
+            $actions["current"].action.Invoke()
             
             Assert-MockCalled Invoke-PVMCurrent -Times 1
         }
@@ -470,7 +492,7 @@ Describe "Get-Actions Tests" {
         It "Should execute list action with arguments" {
             $testArgs = @("available", "-f")
             $actions = Get-Actions -arguments $testArgs
-            & $actions["list"].action
+            $actions["list"].action.Invoke()
             
             Assert-MockCalled Invoke-PVMList -Times 1
         }
@@ -479,7 +501,7 @@ Describe "Get-Actions Tests" {
             Mock Run-Tests { }
             $testArgs = @("TestFile.ps1")
             $actions = Get-Actions -arguments $testArgs
-            & $actions["test"].action
+            $actions["test"].action.Invoke()
             
             Assert-MockCalled Run-Tests -Times 1 -ParameterFilter { 
                 $verbosity -eq "Normal" -and 
@@ -491,7 +513,7 @@ Describe "Get-Actions Tests" {
             Mock Run-Tests { }
             $testArgs = @("TestFile.ps1", "Detailed")
             $actions = Get-Actions -arguments $testArgs
-            & $actions["test"].action
+            $actions["test"].action.Invoke()
             
             Assert-MockCalled Run-Tests -Times 1 -ParameterFilter { 
                 $verbosity -eq "Detailed" -and 
@@ -503,7 +525,7 @@ Describe "Get-Actions Tests" {
             Mock Run-Tests { }
             $testArgs = @("--tag=unit", "TestFile.ps1")
             $actions = Get-Actions -arguments $testArgs
-            & $actions["test"].action
+            $actions["test"].action.Invoke()
             
             # Note: The tag variable should be set from the regex match
             Assert-MockCalled Run-Tests -Times 1 -ParameterFilter { 

@@ -41,11 +41,13 @@ function Run-Tests {
             }
             Write-Host "`n"
         }
+        
+        return 0
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Run-Tests: Failed to run tests" -data $_.Exception.Message
         Write-Host "`nFailed to run tests."
+        return 1
     }
-    
 }
 
 

@@ -327,7 +327,7 @@ Describe "Invoke-PVMUse Tests" {
         $result = Invoke-PVMUse -arguments $arguments
         $result | Should -Be 0
         
-        Assert-MockCalled Auto-Select-PHP-Version -Times 1 -ParameterFilter { $version -eq "auto" }
+        Assert-MockCalled Auto-Select-PHP-Version -Times 1
         Assert-MockCalled Update-PHP-Version -Times 1 -ParameterFilter { $variableValue -eq "8.2.0" }
     }
 

@@ -208,7 +208,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
             
             # Assert
-            $result | Should -Be -1
+            $result.opcache | Should -Be $false
+            $result.xdebug | Should -Be $false
         }
     }
     
@@ -250,6 +251,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
         
         It "Should return correct version information when symlink is valid" {
             # Act
+            Mock Is-Directory-Exists { return $true }
             $result = Get-Current-PHP-Version
             
             # Assert
@@ -260,6 +262,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
         }
         
         It "Should call Get-PHP-Status with correct path" {
+            Mock Is-Directory-Exists { return $true }
             # Act
             $result = Get-Current-PHP-Version
             
@@ -347,18 +350,19 @@ Describe "Get-Current-PHP-Version Function Tests" {
             
             # Mock Get-PHP-Status to return -1 (error case)
             Mock Get-PHP-Status {
-                return -1
+                return @{ opcache = $false; xdebug = $false }
             }
         }
         
-        It "Should handle Get-PHP-Status error gracefully" {
+        It "Should handle Get-PHP-Status error gracefully" -Tag i {
+            Mock Is-Directory-Exists { return $true }
             # Act
             $result = Get-Current-PHP-Version
             
             # Assert
             $result.version | Should -Be "8.1.0"
             $result.path | Should -Be "C:\php\8.1.0"
-            $result.status | Should -Be -1
+            $result.status | Should -Be -Equal @{ opcache = $false; xdebug = $false }
         }
     }
 }

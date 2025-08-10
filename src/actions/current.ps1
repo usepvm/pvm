@@ -6,8 +6,7 @@ function Get-PHP-Status {
     try {
         $phpIniPath = "$phpPath\php.ini"
         if (-not (Test-Path $phpIniPath)) {
-            Write-Host "`nphp.ini not found at: $phpIniPath"
-            return -1
+            return $status
         }
 
         $iniContent = Get-Content $phpIniPath
@@ -33,9 +32,15 @@ function Get-PHP-Status {
 function Get-Current-PHP-Version {
 
     try {
+        $emptyResult = @{ version = $null; path = $null; status = @{ opcache = $false; xdebug = $false } }
         $currentPhpVersionPath = Get-Item $PHP_CURRENT_VERSION_PATH
-        if ($currentPhpVersionPath) {
-            $currentPhpVersionPath = $currentPhpVersionPath.Target
+        if (-not $currentPhpVersionPath) {
+            return $emptyResult
+        }
+
+        $currentPhpVersionPath = $currentPhpVersionPath.Target
+        if (-not (Is-Directory-Exists -path $currentPhpVersionPath)) {
+            return $emptyResult
         }
         
         return @{
@@ -45,10 +50,6 @@ function Get-Current-PHP-Version {
         }
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Current-PHP-Version: Failed to retrieve current PHP version" -data $_.Exception.Message
-        return @{
-            version = $null
-            path = $null
-            status = @{ opcache = $false; xdebug = $false }
-        }
+        return $emptyResult
     }
 }

@@ -190,12 +190,6 @@ function Config-XDebug {
             return
         }
 
-        $phpIniContent = Get-Content $phpIniPath
-        $phpIniContent = $phpIniContent | ForEach-Object {
-            $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1'
-        }
-        Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
-
         # Fetch xdebug links
         $baseUrl = "https://xdebug.org"
         $url = "$baseUrl/download/historical"
@@ -345,7 +339,6 @@ function Install-PHP {
                 $foundInstalledVersions | ForEach-Object { Write-Host " - $_" }
                 $response = Read-Host "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 if ($response -ne "y" -and $response -ne "Y") {
-                    Write-Host "`nRun: pvm use <version>"
                     return -1
                 }
                 $version = $familyVersion
@@ -384,6 +377,13 @@ function Install-PHP {
         Write-Host "`nExtracting the downloaded zip ..."
         Extract-And-Configure -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$($selectedVersionObject.version)"
 
+        $phpIniPath = "$destination\$($selectedVersionObject.version)\php.ini"
+        $phpIniContent = Get-Content $phpIniPath
+        $phpIniContent = $phpIniContent | ForEach-Object {
+            $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1'
+        }
+        Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
+        
         if ($enableOpcache) {
             Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
         }

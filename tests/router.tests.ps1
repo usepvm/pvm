@@ -268,16 +268,6 @@ Describe "Invoke-PVMUninstall Tests" {
         Assert-MockCalled Display-Msg-By-ExitCode -Times 1
     }
 
-    It "Should prompt user when trying to uninstall current version" {
-        Mock Get-Current-PHP-Version { @{ version = "8.2.0" } }
-        $arguments = @("8.2.0")
-        
-        $result = Invoke-PVMUninstall -arguments $arguments
-        $result | Should -Be 0
-        
-        Assert-MockCalled Read-Host -ParameterFilter { $Prompt -like "*You are trying to uninstall the currently active PHP version*" }
-        Assert-MockCalled Uninstall-PHP -Times 1
-    }
 
     It "Should not prompt when uninstalling different version than current" {
         Mock Get-Current-PHP-Version { @{ version = "8.1.0" } }

@@ -10,6 +10,7 @@ Describe "Uninstall-PHP" {
         function Log-Data { param($logPath, $message, $data) }
         
         # Create a test directory for PHP installations
+        $global:PHP_CURRENT_VERSION_PATH = "C:\php\current"
         $testPhpPath = "TestDrive:\PHP"
         New-Item -Path "$testPhpPath\7.4" -ItemType Directory -Force
         New-Item -Path "$testPhpPath\8.0" -ItemType Directory -Force
@@ -38,6 +39,15 @@ Describe "Uninstall-PHP" {
             Should -Invoke Remove-Item -Exactly 1 -ParameterFilter {
                 $Path -eq "$testPhpPath\7.4" -and $Recurse -eq $true -and $Force -eq $true
             }
+        }
+        
+        It "Should prompt user when trying to uninstall current version" {
+            Mock Get-Current-PHP-Version { @{ version = "7.4" } }
+            Mock Read-Host { }
+            $result = Uninstall-PHP -version "7.4"
+            $result.code | Should -Be 0
+            
+            Assert-MockCalled Read-Host -ParameterFilter { $Prompt -like "*You are trying to uninstall the currently active PHP version*" }
         }
     }
 

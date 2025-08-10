@@ -108,7 +108,7 @@ function Invoke-PVMUse {
     }
 
     if ($version -eq 'auto') {
-        $result = Auto-Select-PHP-Version -version $version
+        $result = Auto-Select-PHP-Version
         if ($result.code -ne 0) {
             Display-Msg-By-ExitCode -result $result
             return 1

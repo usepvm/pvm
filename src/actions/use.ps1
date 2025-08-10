@@ -61,7 +61,6 @@ function Update-PHP-Version {
 }
 
 function Auto-Select-PHP-Version {
-    param ($version)
     
     $version = Detect-PHP-VersionFromProject
     
@@ -73,16 +72,10 @@ function Auto-Select-PHP-Version {
     
     $installedVersions = Get-Matching-PHP-Versions -version $version
     if (-not $installedVersions) {
-        $message = "Detected PHP version '$version' from project, but it is not installed."
+        $message = "PHP '$version' is not installed."
         $message += "`nRun: pvm install $version"
         return @{ code = -1; message = $message; }
     }
     
-    $selectedVersion = Get-UserSelected-PHP-Version -installedVersions $installedVersions
-    
-    if ($selectedVersion.code -ne 0) {
-        return @{ code = -1; message = "Version $($selectedVersion.name) was not found!"; color = "DarkYellow" }
-    }    
-
-    return $selectedVersion
+    return @{ code = 0; version = $version; }
 }

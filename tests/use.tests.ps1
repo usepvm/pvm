@@ -134,20 +134,20 @@ Describe "Auto-Select-PHP-Version" {
 
     It "Should detect version from .php-version file" {
         $global:TestScenario = "phpversion"
-        $result = Auto-Select-PHP-Version -version $null
+        $result = Auto-Select-PHP-Version
         $result.code | Should -Be 0
         $result.version | Should -Be "8.1"
     }
 
     It "Should detect version from composer.json" {
         $global:TestScenario = "composer"
-        $result = Auto-Select-PHP-Version -version $null
+        $result = Auto-Select-PHP-Version
         $result.code | Should -Be 0
         $result.version | Should -Be "8.2"
     }
 
     It "Should return error when no version can be detected" {
-        $result = Auto-Select-PHP-Version -version $null
+        $result = Auto-Select-PHP-Version
         $result.code | Should -Be -1
         $result.message | Should -Match "Could not detect PHP version"
     }
@@ -155,16 +155,8 @@ Describe "Auto-Select-PHP-Version" {
     It "Should return error when detected version is not installed" {
         $global:TestScenario = "phpversion"
         Mock Get-Matching-PHP-Versions { return @() }
-        $result = Auto-Select-PHP-Version -version $null
+        $result = Auto-Select-PHP-Version
         $result.code | Should -Be -1
-        $result.message | Should -Match "but it is not installed"
-    }
-
-    It "Should handle when user selection fails" {
-        $global:TestScenario = "phpversion"
-        Mock Get-UserSelected-PHP-Version { return @{code=-1; message="Test error"} }
-        $result = Auto-Select-PHP-Version -version $null
-        $result.code | Should -Be -1
-        $result.message | Should -Match "was not found"
+        $result.message | Should -Match "PHP '8.1' is not installed"
     }
 }

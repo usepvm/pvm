@@ -216,7 +216,7 @@ function Get-Actions {
             action = { return Invoke-PVMUninstall -arguments $script:arguments }}
         "use" = [PSCustomObject]@{
             command = "pvm use <version>|[auto]";
-            description = "Switch to use the specified version. use 'auto' to switch to the version specified in the current directory’s composer.json or .php-version file.";
+            description = "Switch to use the specified version. use 'auto' to switch to the version specified in the current directory's composer.json or .php-version file.";
             action = { return Invoke-PVMUse -arguments $script:arguments }}
         "ini" = [PSCustomObject]@{
             command = "pvm ini <action> [<args>]";

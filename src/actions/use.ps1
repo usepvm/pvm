@@ -42,7 +42,7 @@ function Update-PHP-Version {
         }
         
         if (-not $pathVersionObject) {
-            return @{ code = -1; message = "Version $variableValue was not found!"; color = "DarkYellow"}
+            return @{ code = -1; message = "PHP version $variableValue was not found!"; color = "DarkYellow"}
         }
         
         if ($pathVersionObject.code -ne 0) {
@@ -50,7 +50,7 @@ function Update-PHP-Version {
         }
         
         if (-not $pathVersionObject.path) {
-            return @{ code = -1; message = "Version $($pathVersionObject.version) was not found!"; color = "DarkYellow"}
+            return @{ code = -1; message = "PHP version $($pathVersionObject.version) was not found!"; color = "DarkYellow"}
         }
         $linkCreated = Make-Symbolic-Link -link $PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
         return @{ code = 0; message = "Now using PHP $($pathVersionObject.version)"; color = "DarkGreen"}

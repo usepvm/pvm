@@ -353,6 +353,7 @@ function Install-PHP {
             $msg += "`n- Ensure the version is correct."
             $msg += "`n- Check your internet connection or the source URL."
             $msg += "`n- Use 'pvm list available' to see available versions."
+            $msg += "`n- If you are trying to install a version that was announced recently, it may not be available for download yet."
             Write-Host $msg
             return -1
         }

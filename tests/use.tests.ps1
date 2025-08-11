@@ -76,25 +76,25 @@ Describe "Update-PHP-Version" {
         $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "8.1"
         Write-Host ($result | ConvertTo-Json)
         $result.code | Should -Be 0
-        $result.message | Should -Be "Now using PHP 8.1"
+        $result.message | Should -BeExactly "Now using PHP 8.1"
     }
 
     It "Should handle version not found when exact path doesn't exist" {
         $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "7.4"
         $result.code | Should -Be -1
-        $result.message | Should -Be "Version 7.4 was not found!"
+        $result.message | Should -BeExactly "PHP version 7.4 was not found!"
     }
 
     It "Should handle when Get-PHP-Path-By-Version returns null but matching versions exist" {
         $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "8.x"
         $result.code | Should -Be 0
-        $result.message | Should -Be "Now using PHP 8.1"  # Assuming it selects the first match
+        $result.message | Should -BeExactly "Now using PHP 8.1"  # Assuming it selects the first match
     }
 
     It "Should handle when no matching versions are found" {
         $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "5.6"
         $result.code | Should -Be -1
-        $result.message | Should -Match "Version 5.6 was not found"
+        $result.message | Should -BeExactly "PHP version 5.6 was not found!"
     }
 
     It "Should handle exceptions gracefully" {

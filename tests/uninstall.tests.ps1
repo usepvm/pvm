@@ -94,7 +94,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version "5.6"
             
             $result.code | Should -Be -1
-            $result.message | Should -Be "Version 5.6 was not found!"
+            $result.message | Should -BeExactly "PHP version 5.6 was not found!"
             $result.color | Should -Be "DarkYellow"
             
             Should -Invoke Get-PHP-Path-By-Version -Exactly 1
@@ -146,7 +146,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version "8.*"
             
             $result.code | Should -Be -1
-            $result.message | Should -Be "Version 8.2 was not found!"
+            $result.message | Should -BeExactly "PHP version 8.2 was not found!"
             $result.color | Should -Be "DarkYellow"
             
             Should -Invoke Get-Matching-PHP-Versions -Exactly 1

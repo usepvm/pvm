@@ -229,16 +229,43 @@ function Get-Actions {
 }
 
 function Show-Usage {
-    $version = (Get-Current-PHP-Version).version
-    if ($version) {
-        Write-Host "`nRunning version : $version"
+    $currentVersion = Get-Current-PHP-Version
+    if ($currentVersion -and $currentVersion.version) {
+        Write-Host "`nRunning version : $($currentVersion.version)"
     }
     Write-Host "`nUsage:`n"
-    $maxLineLength = 70
+
+    $maxLineLength = 70   # Length for command + dots
+    $maxDescLength = 100   # Max length per description line
+
     $actions.GetEnumerator() | ForEach-Object {
-        $dotsCount = $maxLineLength - $_.Value.command.Length
-        if ($dotsCount -lt 0) { $dotsCount = 0 }
+        $command = $_.Value.command
+        $description = $_.Value.description
+
+        # Dots for first line
+        $dotsCount = [Math]::Max($maxLineLength - $command.Length, 0)
         $dots = '.' * $dotsCount
-        Write-Host "$($_.Value.command) $dots $($_.Value.description)"
+
+        # First line available space for description
+        $descLines = @()
+
+        # Wrap description by spaces without breaking words
+        $remaining = $description
+        while ($remaining.Length -gt $maxDescLength) {
+            $breakPos = $remaining.LastIndexOf(' ', $maxDescLength)
+            if ($breakPos -lt 0) { $breakPos = $maxDescLength } # fallback: break mid-word
+            $descLines += $remaining.Substring(0, $breakPos)
+            $remaining = $remaining.Substring($breakPos).Trim()
+        }
+        if ($remaining) { $descLines += $remaining }
+
+        # Print first line (command + dots + first part of description)
+        Write-Host "$command $dots $($descLines[0])"
+
+        # Print remaining description lines aligned with first description start
+        $indent = (' ' * ($maxLineLength + 2))  # +1 for space after dots
+        for ($i = 1; $i -lt $descLines.Count; $i++) {
+            Write-Host "$indent$($descLines[$i])"
+        }
     }
 }

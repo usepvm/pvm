@@ -208,10 +208,6 @@ function Get-Actions {
             command = "pvm ini <action> [<args>]";
             description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'enable' or 'disable' for an extension, or 'restore' the original ini file from backup."; 
             action = { return Invoke-PVMIni -arguments $script:arguments }}
-        "set" = [PSCustomObject]@{
-            command = "pvm set <name> <value>";
-            description = "Set a new evironment variable for a PHP version."; 
-            action = { return Invoke-PVMSet -arguments $script:arguments }}
         "test" = [PSCustomObject]@{
             command = "pvm test";
             description = "Run tests."; 

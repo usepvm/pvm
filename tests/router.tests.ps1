@@ -180,32 +180,11 @@ Describe "Invoke-PVMInstall Tests" {
         
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
             $version -eq "8.2.0" -and 
-            $customDir -eq $null -and 
             $includeXDebug -eq $false -and 
             $enableOpcache -eq $false 
         }
     }
 
-    It "Should handle --dir argument correctly" {
-        $arguments = @("8.2.0", "--dir=C:\Custom\PHP")
-        
-        $result = Invoke-PVMInstall -arguments $arguments
-        $result | Should -Be 0
-        
-        Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
-            $version -eq "8.2.0" -and 
-            $customDir -eq "C:\Custom\PHP" 
-        }
-    }
-
-    It "Should return 1 when --dir argument is empty" {
-        $arguments = @("8.2.0", "--dir=")
-        
-        $result = Invoke-PVMInstall -arguments $arguments
-        $result | Should -Be 1
-        
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Please provide a directory to install PHP*" }
-    }
 
     It "Should handle --xdebug flag" {
         $arguments = @("8.2.0", "--xdebug")
@@ -226,14 +205,13 @@ Describe "Invoke-PVMInstall Tests" {
     }
 
     It "Should handle multiple flags together" {
-        $arguments = @("8.2.0", "--xdebug", "--opcache", "--dir=C:\Custom\PHP")
+        $arguments = @("8.2.0", "--xdebug", "--opcache")
         
         $result = Invoke-PVMInstall -arguments $arguments
         $result | Should -Be 0
         
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
             $version -eq "8.2.0" -and 
-            $customDir -eq "C:\Custom\PHP" -and 
             $includeXDebug -eq $true -and 
             $enableOpcache -eq $true 
         }

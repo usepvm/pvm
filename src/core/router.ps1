@@ -61,18 +61,9 @@ function Invoke-PVMInstall {
         return 1
     }
 
-    $dirArg = $arguments | Where-Object { $_ -like '--dir=*' }
-    if ($null -ne $dirArg) {
-        $dirValue = $dirArg -replace '^--dir=', ''
-        if (-not $dirValue) {
-            Write-Host "`nPlease provide a directory to install PHP. Use '--dir=<path>' to specify the directory."
-            return 1
-        }
-    }
-
     $includeXDebug = ($arguments -contains '--xdebug')
     $enableOpcache = ($arguments -contains '--opcache')
-    $exitCode = Install-PHP -version $version -customDir $dirValue -includeXDebug $includeXDebug -enableOpcache $enableOpcache
+    $exitCode = Install-PHP -version $version -includeXDebug $includeXDebug -enableOpcache $enableOpcache
     return $exitCode
 }
 

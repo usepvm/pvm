@@ -93,7 +93,7 @@ function Download-PHP-From-Url {
 }
 
 function Download-PHP {
-    param ($versionObject, $customDir = $null)
+    param ($versionObject)
 
     try {
         $urls = Get-Source-Urls
@@ -102,9 +102,6 @@ function Download-PHP {
         $version = $versionObject.version
 
         $destination = "$STORAGE_PATH\php"
-        if ($customDir) {
-            $destination = $customDir
-        }
         $created = Make-Directory -path $destination
         if ($created -ne 0) {
             Write-Host "Failed to create directory $destination"
@@ -321,7 +318,7 @@ function Select-Version {
 }
 
 function Install-PHP {
-    param ($version, $customDir = $null, $includeXDebug = $false, $enableOpcache = $false)
+    param ($version, $includeXDebug = $false, $enableOpcache = $false)
 
     try {
         if (Is-PHP-Version-Installed -version $version) {
@@ -368,7 +365,7 @@ function Install-PHP {
             return -1
         }
 
-        $destination = Download-PHP -version $selectedVersionObject -customDir $customDir
+        $destination = Download-PHP -version $selectedVersionObject
 
         if (-not $destination) {
             Write-Host "`nFailed to download PHP version $version."

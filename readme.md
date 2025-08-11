@@ -43,10 +43,9 @@ pvm list [available [-f]] # or --force
 Install a specific version. 
 - Add `--xdebug` to enable xdebug
 - Add `--opcache` to enable opcache
-- Add `--dir=/absolute/path/` to specify a custom installation directory
 
 ```sh
-pvm install <version> [--xdebug] [--opcache] [--dir=/absolute/path/]
+pvm install <version> [--xdebug] [--opcache]
 ```
 
 

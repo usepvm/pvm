@@ -193,8 +193,8 @@ function Get-Actions {
             description = "Type 'available' to list installable items. Add '-f' or '--force' to force reload from source."; 
             action = { return Invoke-PVMList -arguments $script:arguments }}
         "install" = [PSCustomObject]@{
-            command = "pvm install <version> [--xdebug] [--opcache] [--dir=/abs/path/]";
-            description = "The version must be a specific version. '--xdebug/--opcach' to enable xdebug/opcache. '--dir' to specify a custom installation directory.";
+            command = "pvm install <version> [--xdebug] [--opcache]";
+            description = "The version must be a specific version. '--xdebug/--opcach' to enable xdebug/opcache.";
             action = { return Invoke-PVMInstall -arguments $script:arguments }}
         "uninstall" = [PSCustomObject]@{
             command = "pvm uninstall <version>";

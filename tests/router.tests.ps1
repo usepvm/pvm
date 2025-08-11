@@ -367,44 +367,6 @@ Describe "Invoke-PVMIni Tests" {
     }
 }
 
-Describe "Invoke-PVMSet Tests" {
-    BeforeEach {
-        Mock Set-PHP-Env { @{ code = 0; message = "Environment variable set" } }
-        Mock Display-Msg-By-ExitCode { }
-        Mock Write-Host { }
-    }
-
-    It "Should return 1 when no variable name is provided" {
-        $arguments = @()
-        
-        $result = Invoke-PVMSet -arguments $arguments
-        $result | Should -Be 1
-        
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Please provide an environment variable name*" }
-    }
-
-    It "Should return 1 when no variable value is provided" {
-        $arguments = @("MY_VAR")
-        
-        $result = Invoke-PVMSet -arguments $arguments
-        $result | Should -Be 1
-        
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Please provide an environment variable value*" }
-    }
-
-    It "Should set environment variable successfully" {
-        $arguments = @("MY_VAR", "MY_VALUE")
-        
-        $result = Invoke-PVMSet -arguments $arguments
-        $result | Should -Be 0
-        
-        Assert-MockCalled Set-PHP-Env -Times 1 -ParameterFilter { 
-            $name -eq "MY_VAR" -and 
-            $value -eq "MY_VALUE" 
-        }
-        Assert-MockCalled Display-Msg-By-ExitCode -Times 1
-    }
-}
 
 Describe "Get-Actions Tests" {
     BeforeEach {
@@ -415,7 +377,6 @@ Describe "Get-Actions Tests" {
         Mock Invoke-PVMUninstall { }
         Mock Invoke-PVMUse { }
         Mock Invoke-PVMIni { }
-        Mock Invoke-PVMSet { }
         Mock Run-Tests { }
     }
 
@@ -431,7 +392,6 @@ Describe "Get-Actions Tests" {
         $actions.Keys | Should -Contain "uninstall"
         $actions.Keys | Should -Contain "use"
         $actions.Keys | Should -Contain "ini"
-        $actions.Keys | Should -Contain "set"
         $actions.Keys | Should -Contain "test"
     }
 

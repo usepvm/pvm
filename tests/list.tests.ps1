@@ -29,6 +29,10 @@ BeforeAll {
     Mock Get-Installed-PHP-Versions { return @("php8.2.0", "php8.1.5", "php7.4.33") }
 }
 
+AfterAll {
+    Remove-Item -Path "$PSScriptRoot\storage" -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 Describe "Cache-Fetched-PHP-Versions" {
     BeforeEach {
         # Clean test directory

@@ -33,7 +33,7 @@ pvm current
 ```
 
 
-This one lists the PHP installations. Type 'available' at the end to see what can be installed. Add `-f` or `--force` to load from the online source.
+This one lists the PHP installations. Add `available` to see what can be installed. Add `-f` or `--force` to load from the online source.
 
 ```sh
 pvm list [available [-f]] # or --force
@@ -118,7 +118,7 @@ Get-Module -ListAvailable Pester
 pvm test [files = (files inside the tests/ directory)] [verbosity = (None|Normal|Detailed|Diagnostic)]
 
 # Examples:
-pvm test # Runs all tests with Normal verbosity.
+pvm test # Runs all tests with Normal (default) verbosity.
 pvm test use install # Runs only use.tests.ps1 and install.tests.ps1 with Normal verbosity.
 pvm test Detailed # Runs all tests with Detailed verbosity.
 pvm test helpers list Diagnostic # Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity.

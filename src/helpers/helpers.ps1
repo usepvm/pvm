@@ -63,11 +63,11 @@ function Set-EnvVar {
 
 function Get-PHP-Path-By-Version {
     param ($version)
-    
+
     if ([string]::IsNullOrWhiteSpace($version)) {
         return $null
     }
-    
+
     $phpContainerPath = "$STORAGE_PATH\php"
     $version = $version.Trim()
 
@@ -80,24 +80,26 @@ function Get-PHP-Path-By-Version {
 
 function Make-Symbolic-Link {
     param($link, $target)
-    
+
     try {
         if ([string]::IsNullOrWhiteSpace($link) -or [string]::IsNullOrWhiteSpace($target)) {
             return -1
         }
-        
+
         $link = $link.Trim()
-        $target = $target.Trim()        
+        $target = $target.Trim()
+
         # Make sure parent directory exists
         $parent = Split-Path $link
         if (-not (Test-Path $parent)) {
             $created = Make-Directory -path $parent
         }
+
         # Remove old link if it exists
         if (Test-Path $link) {
-            Remove-Item -Path $link -Recurse -Force
+            [System.IO.Directory]::Delete($link)
         }
-        
+
         if (-not (Is-Admin)) {
             $command = "New-Item -ItemType SymbolicLink -Path '$Link' -Target '$Target'"
             return (Run-Command -command $command)
@@ -113,7 +115,7 @@ function Make-Symbolic-Link {
 
 function Run-Command {
     param($command)
-    
+
     $process = Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -Command `"$command`"" -Verb RunAs -WindowStyle Hidden -PassThru -Wait
     $process.WaitForExit()
     return $process.ExitCode
@@ -122,7 +124,7 @@ function Run-Command {
 
 function Is-Directory-Exists {
     param ($path)
-    
+
     try {
         if ([string]::IsNullOrWhiteSpace($path)) {
             return $false
@@ -165,7 +167,7 @@ function Is-Admin {
 
 function Display-Msg-By-ExitCode {
     param($result, $message = $null)
-    
+
     try {
         if ($message) {
             $result.message = $message
@@ -173,7 +175,7 @@ function Display-Msg-By-ExitCode {
         if (-not $result.color) {
             $result.color = "Gray"
         }
-        
+
         Write-Host "`n$($result.message)" -ForegroundColor $result.color
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Display-Msg-By-ExitCode: Failed to display message by exit code" -data $_.Exception.Message
@@ -184,7 +186,7 @@ function Display-Msg-By-ExitCode {
 
 function Log-Data {
     param ($logPath, $message, $data)
-    
+
     try {
         $created = Make-Directory -path (Split-Path $logPath)
         if ($created -ne 0) {
@@ -199,7 +201,7 @@ function Log-Data {
 }
 
 function Optimize-SystemPath {
-    
+
     try {
         $path = Get-EnvVar-ByName -name "Path"
         $envVars = Get-All-EnvVars
@@ -209,11 +211,11 @@ function Optimize-SystemPath {
         if ($outputLog -eq 0) {
             Write-Host "`nOriginal Path saved to '$PATH_VAR_BACKUP_PATH'"
         }
-        
+
         $envVars.Keys | ForEach-Object {
             $envName = $_
             $envValue = $envVars[$envName]
-            
+
             if (
                 ($null -ne $envValue) -and
                 ($path -like "*$envValue*") -and
@@ -229,7 +231,7 @@ function Optimize-SystemPath {
         if ($output -eq 0) {
             Write-Host "`nPath optimized successfully" -ForegroundColor DarkGreen
         }
-        
+
         return $output
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Optimize-SystemPath: Failed to optimize system PATH variable" -data $_.Exception.Message

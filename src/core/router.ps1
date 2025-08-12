@@ -9,7 +9,7 @@ function Invoke-PVMSetup {
     if ($optimized -ne 0) {
         Write-Host "`nFailed to optimize system path." -ForegroundColor DarkYellow
     }
-    
+
     Display-Msg-By-ExitCode -result $result
     return 0
 }
@@ -22,12 +22,12 @@ function Invoke-PVMCurrent {
         return 1
     }
     Write-Host "`nRunning version: PHP $($result.version)"
-    
+
     if (-not $result.status) {
         Write-Host "No status information available for the current PHP version." -ForegroundColor Yellow
         return 1
     }
-    
+
     foreach ($ext in $result.status.Keys) {
         if ($result.status[$ext]) {
             Write-Host "- $ext is enabled" -ForegroundColor DarkGreen
@@ -35,27 +35,27 @@ function Invoke-PVMCurrent {
             Write-Host "- $ext is disabled" -ForegroundColor DarkYellow
         }
     }
-    
+
     Write-Host "`nPath: $($result.path)" -ForegroundColor Gray
     return 0
 }
 
 function Invoke-PVMList{
     param($arguments)
-    
+
     if ($arguments -contains "available") {
         $result = Get-Available-PHP-Versions -getFromSource ($arguments -contains '-f' -or $arguments -contains '--force')
     } else {
         $result = Display-Installed-PHP-Versions
     }
-    
+
     return $result
 }
 
 function Invoke-PVMInstall {
     param($arguments)
-    
-    $version = $arguments[0]        
+
+    $version = $arguments[0]
     if (-not $version) {
         Write-Host "`nPlease provide a PHP version to install"
         return 1
@@ -69,7 +69,7 @@ function Invoke-PVMInstall {
 
 function Invoke-PVMUninstall {
     param($arguments)
-    
+
     $version = $arguments[0]
 
     if (-not $version) {
@@ -85,7 +85,7 @@ function Invoke-PVMUninstall {
 
 function Invoke-PVMUse {
     param($arguments)
-    
+
     $version = $arguments[0]
 
     if (-not $version) {
@@ -101,7 +101,7 @@ function Invoke-PVMUse {
         }
         $version = $result.version
     }
-    
+
     $result = Update-PHP-Version -variableName $PHP_CURRENT_ENV_NAME -variableValue $version
 
     Display-Msg-By-ExitCode -result $result
@@ -110,13 +110,13 @@ function Invoke-PVMUse {
 
 function Invoke-PVMIni {
     param($arguments)
-    
+
     $action = $arguments[0]
     if (-not $action) {
         Write-Host "`nPlease specify an action for 'pvm ini'. Use 'set', 'get', 'enable', 'disable' or 'restore'."
         return 1
     }
-    
+
     $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
 
     $exitCode = Invoke-PVMIniAction -action $action -params $remainingArgs
@@ -125,10 +125,10 @@ function Invoke-PVMIni {
 
 function Invoke-PVMSet {
     param($arguments)
-    
+
     $varName = $arguments[0]
     $varValue = $arguments[1]
-    
+
     if (-not $varName) {
         Write-Host "`nPlease provide an environment variable name"
         return 1
@@ -136,7 +136,7 @@ function Invoke-PVMSet {
     if (-not $varValue) {
         Write-Host "`nPlease provide an environment variable value"
         return 1
-    }          
+    }
 
     $result = Set-PHP-Env -name $varName -value $varValue
 
@@ -155,12 +155,12 @@ function Invoke-PVMTest {
         }
         return $true
     }
-    
+
     $files = $null
     $verbosity = 'Normal'
     if ($arguments.Count -gt 0 -and $verbosityOptions -contains $arguments[-1]) {
         $verbosity = $arguments[-1]
-        
+
         if ($arguments.Count -gt 1) {
             $files = $arguments[0..($arguments.Count - 2)]
         }
@@ -169,7 +169,7 @@ function Invoke-PVMTest {
     } else {
         $files = $arguments
     }
-    
+
     $exitCode = Run-Tests -verbosity $verbosity -tests $files -tag $tag
     return $exitCode
 }
@@ -178,7 +178,7 @@ function Get-Actions {
     param( $arguments )
 
     $script:arguments = $arguments
-    
+
     return [ordered]@{
         "setup" = [PSCustomObject]@{
             command = "pvm setup";
@@ -190,7 +190,7 @@ function Get-Actions {
             action = { return Invoke-PVMCurrent }}
         "list" = [PSCustomObject]@{
             command = "pvm list [available [-f or --force]]";
-            description = "Type 'available' to list installable items. Add '-f' or '--force' to force reload from source."; 
+            description = "Type 'available' to list installable items. Add '-f' or '--force' to force reload from source.";
             action = { return Invoke-PVMList -arguments $script:arguments }}
         "install" = [PSCustomObject]@{
             command = "pvm install <version> [--xdebug] [--opcache]";
@@ -198,7 +198,7 @@ function Get-Actions {
             action = { return Invoke-PVMInstall -arguments $script:arguments }}
         "uninstall" = [PSCustomObject]@{
             command = "pvm uninstall <version>";
-            description = "The version must be a specific version."; 
+            description = "The version must be a specific version.";
             action = { return Invoke-PVMUninstall -arguments $script:arguments }}
         "use" = [PSCustomObject]@{
             command = "pvm use <version>|[auto]";
@@ -206,11 +206,11 @@ function Get-Actions {
             action = { return Invoke-PVMUse -arguments $script:arguments }}
         "ini" = [PSCustomObject]@{
             command = "pvm ini <action> [<args>]";
-            description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'enable' or 'disable' for an extension, or 'restore' the original ini file from backup."; 
+            description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'enable' or 'disable' for an extension, or 'restore' the original ini file from backup.";
             action = { return Invoke-PVMIni -arguments $script:arguments }}
         "test" = [PSCustomObject]@{
             command = "pvm test";
-            description = "Run tests."; 
+            description = "Run tests.";
             action = { return Invoke-PVMTest -arguments $script:arguments }}
     }
 }

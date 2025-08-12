@@ -1,5 +1,7 @@
 # PHP Version Manager for Windows
 
+PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that makes it easy to install, switch, and manage multiple PHP versions.
+
 ## Installation & Setup
 
 Clone the repo and add the directory to you Path variable.

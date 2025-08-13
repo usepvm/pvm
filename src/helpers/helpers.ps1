@@ -105,7 +105,11 @@ function Make-Symbolic-Link {
         
         if (-not (Is-Admin)) {
             $command = "New-Item -ItemType SymbolicLink -Path '$Link' -Target '$Target'"
-            return (Run-Command -command $command)
+            $exitCode = (Run-Command -command $command)
+            if ($exitCode -ne 0) {
+                return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = "DarkYellow" }
+            }
+            return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = "DarkGreen" }
         }
 
         New-Item -ItemType SymbolicLink -Path $Link -Target $Target | Out-Null

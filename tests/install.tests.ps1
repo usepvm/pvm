@@ -671,7 +671,6 @@ Describe "Install-PHP Integration Tests" {
             }
         }
         $global:MockUserInput = "y"
-        Write-Host ($global:MockRegistry | ConvertTo-Json)
         $result = Install-PHP -version "8.1" -includeXDebug $true
         
         
@@ -711,7 +710,6 @@ Describe "Install-PHP Integration Tests" {
 "@
         function Invoke-PVMSet { }
 
-        Write-Host ($global:MockRegistry | ConvertTo-Json)
         $global:MockUserInput = "y"
 
         $result = Install-PHP -version "8.1" -enableOpcache $true

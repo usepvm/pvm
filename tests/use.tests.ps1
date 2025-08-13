@@ -74,7 +74,6 @@ Describe "Update-PHP-Version" {
 
     It "Should successfully update to an exact version match" {
         $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "8.1"
-        Write-Host ($result | ConvertTo-Json)
         $result.code | Should -Be 0
         $result.message | Should -BeExactly "Now using PHP 8.1"
     }

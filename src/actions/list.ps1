@@ -79,21 +79,44 @@ function Get-From-Cache {
     }
 }
 
-function Get-Available-PHP-Versions {
-    param ($getFromSource = $null)
-    
+function Get-PHP-List-To-Install {
     try {
+        $cacheFile = "$DATA_PATH\available_versions.json"
         $fetchedVersionsGrouped = @{}
+        $useCache = $false
 
-        if (-not $getFromSource) {
-            Write-Host "`nReading from the cache"
-            $fetchedVersionsGrouped = Get-From-Cache
+        if (Test-Path $cacheFile) {
+            $fileAgeHours = (New-TimeSpan -Start (Get-Item $cacheFile).LastWriteTime -End (Get-Date)).TotalHours
+            $useCache = ($fileAgeHours -lt $CacheMaxHours)
         }
         
-        if ($fetchedVersionsGrouped.Count -eq 0) {
-            Write-Host "`nCache empty!, Reading from the internet..."
+        if ($useCache) {
+            Write-Host "`nReading from the cache (last updated $([math]::Round($fileAgeHours, 2)) hours ago)"
+            $fetchedVersionsGrouped = Get-From-Cache
+            if (-not $fetchedVersionsGrouped -or $fetchedVersionsGrouped.Count -eq 0) {
+                Write-Host "`nCache is empty, reading from the source..."
+                $fetchedVersionsGrouped = Get-From-Source
+            }
+        } else {
+            if (Test-Path $cacheFile) {
+                Write-Host "`nCache too old ($([math]::Round($fileAgeHours, 2)) hours), reading from the internet..."
+            } else {
+                Write-Host "`nCache missing, reading from the source..."
+            }
             $fetchedVersionsGrouped = Get-From-Source
         }
+        
+        return $fetchedVersionsGrouped
+    } catch {
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-PHP-To-Install: Failed to get fetch PHP versions" -data $_.Exception.Message
+        return @{}
+    }
+}
+
+function Get-Available-PHP-Versions {
+    
+    try {
+        $fetchedVersionsGrouped = Get-PHP-List-To-Install
 
         if ($fetchedVersionsGrouped.Count -eq 0) {
             Write-Host "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."

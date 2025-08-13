@@ -232,6 +232,8 @@ Describe "Get-Available-PHP-Versions" {
     }
     
     It "Should fetch from source when cache is empty" {
+        Mock Test-Path { $true }
+        Mock Get-Item { @{ LastWriteTime = (Get-Date) } }
         Mock Get-From-Cache { return @{} }
         Mock Get-From-Source {
             return @{
@@ -244,10 +246,11 @@ Describe "Get-Available-PHP-Versions" {
         
         Should -Invoke Get-From-Cache -Exactly 1
         Should -Invoke Get-From-Source -Exactly 1
-        Should -Invoke Write-Host -ParameterFilter { $Object -like "*Cache empty!*" }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like "*Cache is empty*" }
     }
     
     It "Should force fetch from source when getFromSource parameter is true" {
+        Mock Test-Path { return $false }
         Mock Get-From-Cache { }  # Remove return value since it won't be called
         Mock Get-From-Source {
             return @{

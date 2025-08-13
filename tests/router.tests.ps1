@@ -124,26 +124,8 @@ Describe "Invoke-PVMList Tests" {
         $result = Invoke-PVMList -arguments $arguments
         $result | Should -Be 0
         
-        Assert-MockCalled Get-Available-PHP-Versions -Times 1 -ParameterFilter { $getFromSource -eq $false }
+        Assert-MockCalled Get-Available-PHP-Versions -Times 1
         Assert-MockCalled Display-Installed-PHP-Versions -Times 0
-    }
-
-    It "Should call Get-Available-PHP-Versions with force when '-f' flag is provided" {
-        $arguments = @("available", "-f")
-        
-        $result = Invoke-PVMList -arguments $arguments
-        $result | Should -Be 0
-        
-        Assert-MockCalled Get-Available-PHP-Versions -Times 1 -ParameterFilter { $getFromSource -eq $true }
-    }
-
-    It "Should call Get-Available-PHP-Versions with force when '--force' flag is provided" {
-        $arguments = @("available", "--force")
-        
-        $result = Invoke-PVMList -arguments $arguments
-        $result | Should -Be 0
-        
-        Assert-MockCalled Get-Available-PHP-Versions -Times 1 -ParameterFilter { $getFromSource -eq $true }
     }
 
     It "Should call Display-Installed-PHP-Versions when no 'available' argument" {

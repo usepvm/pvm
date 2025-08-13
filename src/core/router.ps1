@@ -44,7 +44,7 @@ function Invoke-PVMList{
     param($arguments)
     
     if ($arguments -contains "available") {
-        $result = Get-Available-PHP-Versions -getFromSource ($arguments -contains '-f' -or $arguments -contains '--force')
+        $result = Get-Available-PHP-Versions
     } else {
         $result = Display-Installed-PHP-Versions
     }
@@ -189,8 +189,8 @@ function Get-Actions {
             description = "Display active version.";
             action = { return Invoke-PVMCurrent }}
         "list" = [PSCustomObject]@{
-            command = "pvm list [available [-f or --force]]";
-            description = "Type 'available' to list installable items. Add '-f' or '--force' to force reload from source."; 
+            command = "pvm list [available]";
+            description = "Lists the PHP installations. Type 'available' at the end to see what can be installed."; 
             action = { return Invoke-PVMList -arguments $script:arguments }}
         "install" = [PSCustomObject]@{
             command = "pvm install <version> [--xdebug] [--opcache]";

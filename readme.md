@@ -35,10 +35,10 @@ pvm current
 ```
 
 
-This one lists the PHP installations. Add `available` to see what can be installed. Add `-f` or `--force` to load from the online source.
+This one lists the PHP installations. Add `available` to see what can be installed.
 
 ```sh
-pvm list [available [-f]] # or --force
+pvm list [available]
 ```
 
 

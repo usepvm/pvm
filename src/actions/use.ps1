@@ -53,6 +53,9 @@ function Update-PHP-Version {
             return @{ code = -1; message = "PHP version $($pathVersionObject.version) was not found!"; color = "DarkYellow"}
         }
         $linkCreated = Make-Symbolic-Link -link $PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
+        if ($linkCreated.code -ne 0) {
+            return $linkCreated
+        }
         return @{ code = 0; message = "Now using PHP $($pathVersionObject.version)"; color = "DarkGreen"}
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Update-PHP-Version: Failed to update PHP version for '$variableName'" -data $_.Exception.Message

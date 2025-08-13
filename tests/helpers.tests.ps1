@@ -281,7 +281,7 @@ Describe "System Functions Tests" {
                 $targetPath = "$STORAGE_PATH\php\8.1"
                 
                 $result = Make-Symbolic-Link -link $linkPath -target $targetPath
-                $result | Should -Be 0
+                $result.code | Should -Be 0
                 
                 Test-Path $linkPath | Should -Be $true
                 (Get-Item $linkPath).LinkType | Should -Be "SymbolicLink"
@@ -289,12 +289,12 @@ Describe "System Functions Tests" {
 
             It "Returns -1 for empty link path" {
                 $result = Make-Symbolic-Link -link "" -target "TestDrive:\target"
-                $result | Should -Be -1
+                $result.code | Should -Be -1
             }
 
             It "Returns -1 for empty target path" {
                 $result = Make-Symbolic-Link -link "TestDrive:\link" -target ""
-                $result | Should -Be -1
+                $result.code | Should -Be -1
             }
         }
     }

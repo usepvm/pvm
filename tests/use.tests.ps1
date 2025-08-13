@@ -49,7 +49,7 @@ BeforeAll {
     function Make-Symbolic-Link {
         param($link, $target)
         # Mock implementation
-        return 0
+        return @{ code = 0 }
     }
 
     function Log-Data {

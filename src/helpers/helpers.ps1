@@ -83,11 +83,16 @@ function Make-Symbolic-Link {
     
     try {
         if ([string]::IsNullOrWhiteSpace($link) -or [string]::IsNullOrWhiteSpace($target)) {
-            return -1
+            return @{ code = -1; message = "Link and target cannot be empty!"; color = "DarkYellow" }
         }
         
         $link = $link.Trim()
         $target = $target.Trim()        
+        
+        if (-not (Is-Directory-Exists -path $target)) {
+            return @{ code = -1; message = "Target directory '$target' does not exist!"; color = "DarkYellow" }
+        }
+        
         # Make sure parent directory exists
         $parent = Split-Path $link
         if (-not (Test-Path $parent)) {
@@ -104,10 +109,10 @@ function Make-Symbolic-Link {
         }
 
         New-Item -ItemType SymbolicLink -Path $Link -Target $Target | Out-Null
-        return 0
+        return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = "DarkGreen" }
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Make-Symbolic-Link: Failed to make symbolic link" -data $_.Exception.Message
-        return -1
+        return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = "DarkYellow" }
     }
 }
 

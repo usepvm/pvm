@@ -249,7 +249,7 @@ Describe "Get-Available-PHP-Versions" {
         Should -Invoke Write-Host -ParameterFilter { $Object -like "*Cache is empty*" }
     }
     
-    It "Should force fetch from source when getFromSource parameter is true" {
+    It "Should force fetch from source when cache not exists" {
         Mock Test-Path { return $false }
         Mock Get-From-Cache { }  # Remove return value since it won't be called
         Mock Get-From-Source {
@@ -259,7 +259,7 @@ Describe "Get-Available-PHP-Versions" {
             }
         }
         
-        Get-Available-PHP-Versions -getFromSource $true
+        Get-Available-PHP-Versions
         
         Should -Not -Invoke Get-From-Cache
         Should -Invoke Get-From-Source -Exactly 1

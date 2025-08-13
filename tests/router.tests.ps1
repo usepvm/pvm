@@ -481,19 +481,10 @@ Describe "Show-Usage Tests" {
     }
 
     It "Should display current version when available" {
+        $global:PVM_VERSION = "2.0"
         Show-Usage
         
-        Assert-MockCalled Get-Current-PHP-Version -Times 1
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Running version : 8.2.0*" }
-    }
-
-    It "Should not display version when none is set" {
-        Mock Get-Current-PHP-Version { @{ version = $null } }
-        
-        Show-Usage
-        
-        Assert-MockCalled Get-Current-PHP-Version -Times 1
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Running version*" } -Times 0
+        Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Running version : 2.0*" }
     }
 
     It "Should display usage header" {

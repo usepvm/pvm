@@ -216,10 +216,7 @@ function Get-Actions {
 }
 
 function Show-Usage {
-    $currentVersion = Get-Current-PHP-Version
-    if ($currentVersion -and $currentVersion.version) {
-        Write-Host "`nRunning version : $($currentVersion.version)"
-    }
+    Write-Host "`nRunning version : $PVM_VERSION"
     Write-Host "`nUsage:`n"
 
     $maxLineLength = 70   # Length for command + dots

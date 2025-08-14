@@ -245,10 +245,10 @@ function Show-Usage {
         if ($remaining) { $descLines += $remaining }
 
         # Print first line (command + dots + first part of description)
-        Write-Host "$command $dots $($descLines[0])"
+        Write-Host "  $command $dots $($descLines[0])"
 
         # Print remaining description lines aligned with first description start
-        $indent = (' ' * ($maxLineLength + 2))  # +1 for space after dots
+        $indent = (' ' * ($maxLineLength + 4))  # +1 for space after dots
         for ($i = 1; $i -lt $descLines.Count; $i++) {
             Write-Host "$indent$($descLines[$i])"
         }

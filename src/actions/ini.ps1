@@ -216,6 +216,78 @@ function Get-IniExtensionStatus {
 }
 
 
+function Get-PHP-Info {
+    
+    $currentPHPVersion = Get-Current-PHP-Version
+    $currentPHPVersion.version
+    
+    Write-Host "`n- Running PHP version`t: $($currentPHPVersion.version)"
+    Write-Host "`n- PHP path`t`t: $($currentPHPVersion.path)"
+    $extensions = Get-PHPExtensionsStatus -PhpIniPath "$($currentPHPVersion.path)\php.ini"
+    
+    # Pre-count for summary
+    $enabledCount = ($extensions | Where-Object Enabled).Count
+    $disabledCount = $extensions.Count - $enabledCount
+    
+    # Calculate max length dynamically
+    $maxNameLength = ($extensions.Extension | Measure-Object -Maximum Length).Maximum
+    $maxLineLength = $maxNameLength + 10  # padding
+    
+    Write-Host "`n- Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
+    $extensions |
+    Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true }, `
+                @{Expression = { $_.Extension }; Ascending = $true } |
+    ForEach-Object {
+        $dotsCount = $maxLineLength - $_.Extension.Length
+        if ($dotsCount -lt 0) { $dotsCount = 0 }
+        $dots = '.' * $dotsCount
+
+        if ($_.Enabled) {
+            $status = "Enabled "
+            $color = "DarkGreen"
+        } else {
+            $status = "Disabled"
+            $color = "DarkGray"
+        }
+
+        Write-Host "  $($_.Extension) $dots " -NoNewline
+        Write-Host $status -ForegroundColor $color
+    }
+    
+    return 0
+}
+
+function Get-PHPExtensionsStatus {
+    param($PhpIniPath)
+
+    if (-not (Test-Path $PhpIniPath)) {
+        throw "php.ini file not found at: $PhpIniPath"
+    }
+
+    $iniContent = Get-Content $PhpIniPath
+    
+    $extensions = foreach ($line in $iniContent) {
+        # Match both enabled and commented lines
+        if ($line -match '^\s*(;)?(zend_extension|extension)\s*=\s*("?)([^";]+)\3\s*(?:;.*)?$') {
+            $rawPath = $matches[4]
+             # Extract just the filename
+            $fileName = [System.IO.Path]::GetFileNameWithoutExtension($rawPath)
+            # Remove 'php_' prefix if present
+            $cleanName = $fileName -replace '^php_', ''
+            # Remove suffix like -2.9.8-7.1-vc14-x86_64
+            $cleanName = $cleanName -replace '-\d+\.\d+\.\d+.*$', ''
+            # Store clean name instead of raw
+            [PSCustomObject]@{
+                Extension = $cleanName
+                Type      = $matches[2] # extension or zend_extension
+                Enabled   = -not $matches[1]
+            }
+        }
+    }
+
+    return $extensions
+}
+
 function Invoke-PVMIniAction {
     param ( $action, $params )
 
@@ -236,6 +308,9 @@ function Invoke-PVMIniAction {
         }
 
         switch ($action) {
+            "info" {
+                $exitCode = Get-PHP-Info
+            }
             "get" {
                 if ($params.Count -lt 1) {
                     Write-Host "`nPlease specify at least one setting name ('pvm ini get memory_limit)."

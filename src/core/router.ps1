@@ -113,7 +113,7 @@ function Invoke-PVMIni {
     
     $action = $arguments[0]
     if (-not $action) {
-        Write-Host "`nPlease specify an action for 'pvm ini'. Use 'set', 'get', 'enable', 'disable' or 'restore'."
+        Write-Host "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'enable', 'disable' or 'restore'."
         return 1
     }
     
@@ -204,6 +204,10 @@ function Get-Actions {
             command = "pvm use <version>|[auto]";
             description = "Switch to use the specified version. use 'auto' to switch to the version specified in the current directory's composer.json or .php-version file.";
             action = { return Invoke-PVMUse -arguments $script:arguments }}
+        "info" = [PSCustomObject]@{
+            command = "pvm info";
+            description = "Display information about the environment.";
+            action = { $script:arguments = @('info'); return Invoke-PVMIni -arguments $script:arguments }}
         "ini" = [PSCustomObject]@{
             command = "pvm ini <action> [<args>]";
             description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'enable' or 'disable' for an extension, or 'restore' the original ini file from backup."; 

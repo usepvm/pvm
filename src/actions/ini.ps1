@@ -198,11 +198,11 @@ function Get-IniExtensionStatus {
 
         foreach ($line in $lines) {
             if ($line -match $enabledPattern) {
-                Write-Host "- $extName`: enabled" -ForegroundColor DarkGreen
+                Write-Host "- $extName`: Enabled" -ForegroundColor DarkGreen
                 return 0
             }
             if ($line -match $disabledPattern) {
-                Write-Host "- $extName`: disabled" -ForegroundColor DarkYellow
+                Write-Host "- $extName`: Disabled" -ForegroundColor DarkYellow
                 return 0
             }
         }

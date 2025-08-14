@@ -677,46 +677,6 @@ Describe "Install-PHP Integration Tests" {
         $result | Should -Be 0
     }
     
-    It "Should install with Opcache when requested" {
-        Reset-MockState
-        Mock Get-PHP-Versions {
-            return @{
-                Releases = @{
-                     filename = "php-8.1.33-Win32-vs16-x64.zip"
-                     href = "/downloads/releases/php-8.1.33-Win32-vs16-x64.zip"
-                     version = "8.1.33"
-                 }
-            }
-        }
-        # Setup mock web responses
-        $global:MockFileSystem.WebResponses = @{
-            "https://windows.php.net/downloads/releases/archives/php-8.1.33-Win32-vs16-x64.zip" = @{
-                Content = "Mocked PHP 8.1.33 zip content"
-            }
-            "https://windows.php.net/downloads/releases/archives" = @{
-                Content = '[{"version":"8.1.15","fileName":"php-8.1.15-Win32-vs16-x64.zip","url":"https://windows.php.net/downloads/releases/php-8.1.15-Win32-vs16-x64.zip"}]'
-                Links = @()
-            }
-            "https://windows.php.net/downloads/releases" = @{
-                Content = '[{"version":"8.2.0","fileName":"php-8.2.0-Win32-vs16-x64.zip","url":"https://windows.php.net/downloads/releases/php-8.2.0-Win32-vs16-x64.zip"}]'
-                Links = @()
-            }
-        }
-        
-        $global:MockFileSystem.Files["TestDrive:\storage\php\php-8.1.15-Win32-vs16-x64\php.ini"] = @"
-;extension_dir = "ext"
-;zend_extension = opcache
-;opcache.enable = 1
-"@
-        function Invoke-PVMSet { }
-
-        $global:MockUserInput = "y"
-
-        $result = Install-PHP -version "8.1" -enableOpcache $true
-        
-        $result | Should -Be 0
-    }
-    
     It "Should handle no matching versions found" {
         Set-MockWebResponse -url "https://windows.php.net/downloads/releases/archives" -links @()
         Set-MockWebResponse -url "https://windows.php.net/downloads/releases" -links @()

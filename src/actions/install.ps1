@@ -318,7 +318,7 @@ function Select-Version {
 }
 
 function Install-PHP {
-    param ($version, $includeXDebug = $false, $enableOpcache = $false)
+    param ($version, $includeXDebug = $false)
 
     try {
         if (Is-PHP-Version-Installed -version $version) {
@@ -382,9 +382,7 @@ function Install-PHP {
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
         
-        if ($enableOpcache) {
-            Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
-        }
+        Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
 
         if ($includeXDebug) {
             $version = ($selectedVersionObject.version -split '\.')[0..1] -join '.'

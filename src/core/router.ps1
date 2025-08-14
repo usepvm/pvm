@@ -62,8 +62,7 @@ function Invoke-PVMInstall {
     }
 
     $includeXDebug = ($arguments -contains '--xdebug')
-    $enableOpcache = ($arguments -contains '--opcache')
-    $exitCode = Install-PHP -version $version -includeXDebug $includeXDebug -enableOpcache $enableOpcache
+    $exitCode = Install-PHP -version $version -includeXDebug $includeXDebug
     return $exitCode
 }
 
@@ -193,8 +192,8 @@ function Get-Actions {
             description = "Lists the PHP installations. Type 'available' at the end to see what can be installed."; 
             action = { return Invoke-PVMList -arguments $script:arguments }}
         "install" = [PSCustomObject]@{
-            command = "pvm install <version> [--xdebug] [--opcache]";
-            description = "The version must be a specific version. '--xdebug/--opcach' to enable xdebug/opcache.";
+            command = "pvm install <version> [--xdebug]";
+            description = "The version must be a specific version. '--xdebug' to install and enable xdebug";
             action = { return Invoke-PVMInstall -arguments $script:arguments }}
         "uninstall" = [PSCustomObject]@{
             command = "pvm uninstall <version>";

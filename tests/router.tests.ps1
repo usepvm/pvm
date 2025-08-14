@@ -161,9 +161,8 @@ Describe "Invoke-PVMInstall Tests" {
         $result | Should -Be 0
         
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
-            $version -eq "8.2.0" -and 
-            $includeXDebug -eq $false -and 
-            $enableOpcache -eq $false 
+            $version -eq "8.2.0" -and
+            $includeXDebug -eq $false
         }
     }
 
@@ -175,28 +174,6 @@ Describe "Invoke-PVMInstall Tests" {
         $result | Should -Be 0
         
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { $includeXDebug -eq $true }
-    }
-
-    It "Should handle --opcache flag" {
-        $arguments = @("8.2.0", "--opcache")
-        
-        $result = Invoke-PVMInstall -arguments $arguments
-        $result | Should -Be 0
-        
-        Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { $enableOpcache -eq $true }
-    }
-
-    It "Should handle multiple flags together" {
-        $arguments = @("8.2.0", "--xdebug", "--opcache")
-        
-        $result = Invoke-PVMInstall -arguments $arguments
-        $result | Should -Be 0
-        
-        Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
-            $version -eq "8.2.0" -and 
-            $includeXDebug -eq $true -and 
-            $enableOpcache -eq $true 
-        }
     }
 }
 

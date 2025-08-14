@@ -208,6 +208,20 @@ function Get-IniExtensionStatus {
         }
 
         Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
+
+        $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
+        if ($response -eq "y" -or $response -eq "Y") {4
+            if ($extName -eq "xdebug" -or $extName -eq "opcache") {
+                $lines += "`nzend_extension=$extName"
+            } else {
+                $lines += "`nextension=$extName"
+            }
+            Set-Content $iniPath $lines -Encoding UTF8
+            Backup-IniFile $iniPath
+            Write-Host "- '$extName' added and enabled successfully." -ForegroundColor DarkGreen
+            return 0
+        }
+
         return -1
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-IniExtensionStatus: Failed to check status for '$extName'" -data $_.Exception.Message

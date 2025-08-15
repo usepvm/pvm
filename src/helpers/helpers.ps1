@@ -100,7 +100,12 @@ function Make-Symbolic-Link {
         }
         # Remove old link if it exists
         if (Test-Path $link) {
-            Remove-Item -Path $link -Recurse -Force
+            $item = Get-Item -LiteralPath $Link -Force
+            if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                Remove-Item -Path $link -Recurse -Force
+            } else {
+                return @{ code = -1; message = "Link '$link' is not a symbolic link!"; color = "DarkYellow" }
+            }
         }
         
         if (-not (Is-Admin)) {

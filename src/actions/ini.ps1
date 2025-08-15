@@ -268,17 +268,11 @@ function Get-PHPExtensionsStatus {
     
     $extensions = foreach ($line in $iniContent) {
         # Match both enabled and commented lines
-        if ($line -match '^\s*(;)?(zend_extension|extension)\s*=\s*("?)([^";]+)\3\s*(?:;.*)?$') {
-            $rawPath = $matches[4]
-             # Extract just the filename
-            $fileName = [System.IO.Path]::GetFileNameWithoutExtension($rawPath)
-            # Remove 'php_' prefix if present
-            $cleanName = $fileName -replace '^php_', ''
-            # Remove suffix like -2.9.8-7.1-vc14-x86_64
-            $cleanName = $cleanName -replace '-\d+\.\d+\.\d+.*$', ''
-            # Store clean name instead of raw
+        if ($line -match '^\s*(;)?(zend_extension|extension)\s*=\s*"?([^";]+?)"?\s*(?:;.*)?$') {
+            $rawPath = $matches[3]
+            $extensionName = [System.IO.Path]::GetFileName($rawPath)
             [PSCustomObject]@{
-                Extension = $cleanName
+                Extension = $extensionName
                 Type      = $matches[2] # extension or zend_extension
                 Enabled   = -not $matches[1]
             }

@@ -310,7 +310,7 @@ function Select-Version {
 
         if (-not $selectedVersionInput) {
             Write-Host "`nInstallation cancelled."
-            return -1
+            return $null
         }
 
         $selectedVersionObject = $matchingVersions.Values | ForEach-Object {
@@ -321,9 +321,8 @@ function Select-Version {
     }
 
     if (-not $selectedVersionObject) {
-        $inputDisplay = if ($selectedVersionInput) { $selectedVersionInput } else { $version }
-        Write-Host "`nNo matching version found for '$inputDisplay'."
-        return -1
+        Write-Host "`nNo matching version found for '$selectedVersionInput'."
+        return $null
     }
 
     return $selectedVersionObject
@@ -368,7 +367,7 @@ function Install-PHP {
         }
 
         $selectedVersionObject = Select-Version -matchingVersions $matchingVersions
-        if ($selectedVersionObject -eq -1) {
+        if (-not $selectedVersionObject) {
             return -1
         }
 

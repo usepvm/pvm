@@ -216,8 +216,8 @@ function Get-IniExtensionStatus {
             } else {
                 $lines += "`nextension=$extName"
             }
-            Set-Content $iniPath $lines -Encoding UTF8
             Backup-IniFile $iniPath
+            Set-Content $iniPath $lines -Encoding UTF8
             Write-Host "- '$extName' added and enabled successfully." -ForegroundColor DarkGreen
             return 0
         }

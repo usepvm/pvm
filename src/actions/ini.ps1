@@ -208,6 +208,21 @@ function Get-IniExtensionStatus {
         }
 
         Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
+        
+        if ($extName -eq "xdebug") {
+            $response = Read-Host "`nWould you like to install xdebug? (y/n)"
+            if ($response -eq "y" -or $response -eq "Y") {
+                $phpCurrentVersion = Get-Current-PHP-Version
+                $phpPath = $phpCurrentVersion.path
+                $phpVersion = $phpCurrentVersion.version
+                if (-not $phpVersion) {
+                    Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
+                    return -1
+                }
+                Config-XDebug -version $phpVersion -phpPath $phpPath
+            }
+        }
+        
         return -1
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-IniExtensionStatus: Failed to check status for '$extName'" -data $_.Exception.Message

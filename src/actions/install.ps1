@@ -181,11 +181,23 @@ function Config-XDebug {
 
     try {
 
+        if ([string]::IsNullOrWhiteSpace($version) -or [string]::IsNullOrWhiteSpace($phpPath)) {
+            Write-Host "`nVersion and PHP path cannot be empty!"
+            return
+        }
+        
+        if (-not (Test-Path $phpPath)) {
+            Write-Host "$phpPath is not a valid path"
+            return
+        }
+
         $phpIniPath = "$phpPath\php.ini"
         if (-not (Test-Path $phpIniPath)) {
             Write-Host "php.ini not found at: $phpIniPath"
             return
         }
+
+        $version = ($version -split '\.')[0..1] -join '.'
 
         # Fetch xdebug links
         $baseUrl = "https://xdebug.org"
@@ -298,7 +310,7 @@ function Select-Version {
 
         if (-not $selectedVersionInput) {
             Write-Host "`nInstallation cancelled."
-            return -1
+            return $null
         }
 
         $selectedVersionObject = $matchingVersions.Values | ForEach-Object {
@@ -309,9 +321,8 @@ function Select-Version {
     }
 
     if (-not $selectedVersionObject) {
-        $inputDisplay = if ($selectedVersionInput) { $selectedVersionInput } else { $version }
-        Write-Host "`nNo matching version found for '$inputDisplay'."
-        return -1
+        Write-Host "`nNo matching version found for '$selectedVersionInput'."
+        return $null
     }
 
     return $selectedVersionObject
@@ -356,7 +367,7 @@ function Install-PHP {
         }
 
         $selectedVersionObject = Select-Version -matchingVersions $matchingVersions
-        if ($selectedVersionObject -eq -1) {
+        if (-not $selectedVersionObject) {
             return -1
         }
 
@@ -385,8 +396,7 @@ function Install-PHP {
         Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
 
         if ($includeXDebug) {
-            $version = ($selectedVersionObject.version -split '\.')[0..1] -join '.'
-            Config-XDebug -version $version -phpPath "$destination\$($selectedVersionObject.version)"
+            Config-XDebug -version $selectedVersionObject.version -phpPath "$destination\$($selectedVersionObject.version)"
         }
 
         Write-Host "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$($selectedVersionObject.version)'"

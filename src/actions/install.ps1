@@ -181,11 +181,23 @@ function Config-XDebug {
 
     try {
 
+        if ([string]::IsNullOrWhiteSpace($version) -or [string]::IsNullOrWhiteSpace($phpPath)) {
+            Write-Host "`nVersion and PHP path cannot be empty!"
+            return
+        }
+        
+        if (-not (Test-Path $phpPath)) {
+            Write-Host "$phpPath is not a valid path"
+            return
+        }
+
         $phpIniPath = "$phpPath\php.ini"
         if (-not (Test-Path $phpIniPath)) {
             Write-Host "php.ini not found at: $phpIniPath"
             return
         }
+
+        $version = ($version -split '\.')[0..1] -join '.'
 
         # Fetch xdebug links
         $baseUrl = "https://xdebug.org"
@@ -385,8 +397,7 @@ function Install-PHP {
         Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
 
         if ($includeXDebug) {
-            $version = ($selectedVersionObject.version -split '\.')[0..1] -join '.'
-            Config-XDebug -version $version -phpPath "$destination\$($selectedVersionObject.version)"
+            Config-XDebug -version $selectedVersionObject.version -phpPath "$destination\$($selectedVersionObject.version)"
         }
 
         Write-Host "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$($selectedVersionObject.version)'"

@@ -23,7 +23,7 @@ function Run-Tests {
         }
         
         $result = @{ code = 0; message = "Tests completed successfully."; color = "DarkGreen" }
-        
+        $testFailedCount = 0
         Write-Host "`nRunning tests with verbosity: $verbosity" -ForegroundColor Cyan
         $tests | ForEach-Object { 
             try {
@@ -39,7 +39,7 @@ function Run-Tests {
                 $config.Run.Path = $fileName
                 Invoke-Pester -Configuration $config
                 if ($LASTEXITCODE -ne 0) {
-                    $result = @{ code = 1; message = "Some tests failed to run!"; color = "DarkYellow" }
+                    $testFailedCount++
                 }
             } catch {
                 $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Run-Tests: Failed to run test: $fileName" -data $_.Exception.Message
@@ -47,6 +47,10 @@ function Run-Tests {
                 $result = @{ code = 1; message = "Some tests failed to run!"; color = "DarkYellow" }
             }
             Write-Host "`n"
+        }
+        
+        if ($testFailedCount -gt 0) {
+            $result = @{ code = 1; message = " $testFailedCount test(s) failed to run!"; color = "DarkYellow" }
         }
         
         return $result

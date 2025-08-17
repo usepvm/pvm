@@ -2,7 +2,8 @@
 . "$PSScriptRoot\..\src\actions\ini.ps1"
 
 BeforeAll {
-    $testIniPath = "TestDrive:\php.ini"
+    $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
+    $testIniPath = Join-Path $testDrivePath "php.ini"
     $testBackupPath = "$testIniPath.bak"
     
     Mock Write-Host {}
@@ -17,22 +18,25 @@ zend_extension=php_opcache.dll
 display_errors = On
 "@ | Set-Content -Path $testIniPath -Encoding UTF8
     }
-    # Mock global variables
-    $script:LOG_ERROR_PATH = "TestDrive:\error.log"
-    $script:PHP_CURRENT_VERSION_PATH = "TestDrive:\php"
     
-    # Create symlink for current PHP version
-    New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_VERSION_PATH -Target "TestDrive:\php-8.2" -Force
-    New-Item -ItemType Directory -Path "TestDrive:\php-8.2" -Force
-    Copy-Item $testIniPath "TestDrive:\php-8.2\php.ini" -Force
+    # Create initial ini content first
+    Reset-Ini-Content
+    
+    # Mock global variables
+    $script:LOG_ERROR_PATH = Join-Path $testDrivePath "error.log"
+    $script:PHP_CURRENT_VERSION_PATH = Join-Path $testDrivePath "php"
+    
+    # Create directory and symlink for current PHP version
+    $phpVersionPath = Join-Path $testDrivePath "php-8.2"
+    New-Item -ItemType Directory -Path $phpVersionPath -Force
+    New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
+    Copy-Item $testIniPath (Join-Path $phpVersionPath "php.ini") -Force
     
     # Mock Log-Data function
     function script:Log-Data {
         param($logPath, $message, $data)
         return $true
     }
-    
-    Reset-Ini-Content
 }
 
 Describe "Backup-IniFile" {

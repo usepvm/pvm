@@ -1,21 +1,23 @@
 # Load required modules and functions
 . "$PSScriptRoot\..\src\actions\uninstall.ps1"
 
-Describe "Uninstall-PHP" {
-    BeforeAll {
-        # Mock the external functions
-        function Get-PHP-Path-By-Version { param($version) }
-        function Get-Matching-PHP-Versions { param($version) }
-        function Get-UserSelected-PHP-Version { param($installedVersions) }
-        function Log-Data { param($logPath, $message, $data) }
-        
-        # Create a test directory for PHP installations
-        $global:PHP_CURRENT_VERSION_PATH = "C:\php\current"
-        $testPhpPath = "TestDrive:\PHP"
-        New-Item -Path "$testPhpPath\7.4" -ItemType Directory -Force
-        New-Item -Path "$testPhpPath\8.0" -ItemType Directory -Force
+BeforeAll {
+    # Create a test directory for PHP installations
+    $script:PHP_CURRENT_VERSION_PATH = "TestDrive:\php\current"
+    $script:LOG_ERROR_PATH = "TestDrive:\Logs\error.log"
+    $testPhpPath = "TestDrive:\PHP"
+    New-Item -Path "$testPhpPath\7.4" -ItemType Directory -Force
+    New-Item -Path "$testPhpPath\8.0" -ItemType Directory -Force
+    
+    function Log-Data { param($logPath, $message, $data) }
+    # Mock Log-Data globally - this will be available for all tests
+    Mock Log-Data -MockWith {
+        param($logPath, $message, $data)
+        return $true
     }
+}
 
+Describe "Uninstall-PHP" {
     Context "When PHP version is found directly" {
         BeforeEach {
             Mock Get-PHP-Path-By-Version -ParameterFilter { $version -eq "7.4" } -MockWith {
@@ -160,10 +162,10 @@ Describe "Uninstall-PHP" {
             Mock Get-PHP-Path-By-Version -ParameterFilter { $version -eq "7.4" } -MockWith {
                 "$testPhpPath\7.4"
             }
+            Mock Get-Current-PHP-Version { @{ version = $null } }
             Mock Get-Matching-PHP-Versions -MockWith { }
             Mock Get-UserSelected-PHP-Version -MockWith { }
             Mock Remove-Item -MockWith { throw "Access denied" }
-            Mock Log-Data -MockWith { $true }
         }
 
         It "Should catch the exception and return error message" {

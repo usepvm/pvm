@@ -34,7 +34,7 @@ try {
         exit 1
     }
 
-    $exitCode = $actions[$operation].action.Invoke()
+    $exitCode = $($actions[$operation].action.Invoke())
     exit $exitCode
 } catch {
     $logged = Log-Data -logPath $LOG_ERROR_PATH -message "PVM: An error occurred during operation '$operation'" -data $_.Exception.Message

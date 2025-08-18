@@ -122,26 +122,6 @@ function Invoke-PVMIni {
     return $exitCode
 }
 
-function Invoke-PVMSet {
-    param($arguments)
-    
-    $varName = $arguments[0]
-    $varValue = $arguments[1]
-    
-    if (-not $varName) {
-        Write-Host "`nPlease provide an environment variable name"
-        return 1
-    }
-    if (-not $varValue) {
-        Write-Host "`nPlease provide an environment variable value"
-        return 1
-    }          
-
-    $result = Set-PHP-Env -name $varName -value $varValue
-
-    Display-Msg-By-ExitCode -result $result
-    return 0
-}
 
 function Invoke-PVMTest {
     param($arguments)

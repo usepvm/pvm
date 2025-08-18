@@ -631,7 +631,6 @@ Describe "Install-PHP Integration Tests" {
     It "Should install PHP successfully" {
         function Get-Matching-PHP-Versions { return $null }
         function Download-PHP-From-Url { return "TestDrive:\php"}
-        function Invoke-PVMSet { }
         
         $result = Install-PHP -version "8.1"
         
@@ -656,7 +655,6 @@ Describe "Install-PHP Integration Tests" {
                  }
             }
         }
-        function Invoke-PVMSet { }
         # Setup mock web responses
         $global:MockFileSystem.WebResponses = @{
             "https://windows.php.net/downloads/releases/archives/php-8.1.33-Win32-vs16-x64.zip" = @{
@@ -723,7 +721,6 @@ Describe "Install-PHP Integration Tests" {
             }
         }
         
-        function Invoke-PVMSet { }
         
         Set-EnvVar -name "php8.1" -value $null
         $global:MockRegistry.Machine["php8.1.0"] = "C:\PHP\php-8.1.0"

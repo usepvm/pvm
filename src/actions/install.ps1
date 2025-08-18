@@ -183,18 +183,18 @@ function Config-XDebug {
 
         if ([string]::IsNullOrWhiteSpace($version) -or [string]::IsNullOrWhiteSpace($phpPath)) {
             Write-Host "`nVersion and PHP path cannot be empty!"
-            return
+            return -1
         }
         
         if (-not (Test-Path $phpPath)) {
             Write-Host "$phpPath is not a valid path"
-            return
+            return -1
         }
 
         $phpIniPath = "$phpPath\php.ini"
         if (-not (Test-Path $phpIniPath)) {
             Write-Host "php.ini not found at: $phpIniPath"
-            return
+            return -1
         }
 
         $version = ($version -split '\.')[0..1] -join '.'
@@ -206,14 +206,14 @@ function Config-XDebug {
         # Get the latest xdebug version
         if ($xDebugList.Count -eq 0) {
             Write-Host "`nNo xdebug version found for $version"
-            return
+            return -1
         }
         $xDebugSelectedVersion = $xDebugList[0]
 
         $created = Make-Directory -path "$phpPath\ext"
         if ($created -ne 0) {
             Write-Host "Failed to create directory '$phpPath\ext'"
-            return
+            return -1
         }
 
         Write-Host "`nDownloading XDEBUG $($xDebugSelectedVersion.xDebugVersion)..."
@@ -228,9 +228,11 @@ function Config-XDebug {
         $xDebugConfig = $xDebugConfig -replace "\ +"
         Add-Content -Path $phpIniPath -Value $xDebugConfig
         Write-Host "`nXDEBUG configured successfully for PHP version $version"
+        return 0
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Config-XDebug : Failed to configure XDebug for PHP version $version" -data $_.Exception.Message
         Write-Host "`nFailed to configure XDebug for PHP version $version"
+        return -1
     }
 }
 
@@ -277,7 +279,7 @@ function Enable-Opcache {
         $phpIniPath = "$phpPath\php.ini"
         if (-not (Test-Path $phpIniPath)) {
             Write-Host "php.ini not found at: $phpIniPath"
-            return
+            return -1
         }
 
         $phpIniContent = Get-Content $phpIniPath
@@ -289,9 +291,12 @@ function Enable-Opcache {
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
         Write-Host "`nOpcache enabled successfully for PHP version $version"
+        
+        return 0
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Enable-Opcache : Failed to enable opcache for PHP at $phpPath" -data $_.Exception.Message
         Write-Host "`nFailed to enable opcache for PHP version $version"
+        return -1
     }
 }
 

@@ -476,7 +476,8 @@ opcache.enable = 1
         # Mock the actual XDebug DLL download
         Set-MockWebResponse -url "https://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
         
-        Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
+        $code = Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
+        $code  | Should -Be 0
         
         $phpIniContent = $global:MockFileSystem.Files["TestDrive:\php\php.ini"]
         # Write-Host "PHP.ini content: $phpIniContent" # Debug output
@@ -489,14 +490,16 @@ opcache.enable = 1
         Mock Write-Host { }
         $global:MockFileSystem.Files.Remove("TestDrive:\php\php.ini")
         
-        { Config-XDebug -version "8.1" -phpPath "TestDrive:\php" } | Should -Not -Throw
+        $code = Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
+        $code | Should -Be -1
     }
     
     It "Should handle no XDebug versions found" {
         Mock Write-Host { }
         Set-MockWebResponse -url "https://xdebug.org/download/historical" -links @()
         
-        { Config-XDebug -version "8.1" -phpPath "TestDrive:\php" } | Should -Not -Throw
+        $code = Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
+        $code | Should -Be -1
     }
 }
 
@@ -543,8 +546,9 @@ Describe "Enable-Opcache Tests" {
     }
     
     It "Should enable Opcache successfully" {
-        Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
+        $code = Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
         
+        $code | Should -Be 0
         $content = $global:MockFileSystem.Files["TestDrive:\php\php.ini"]
         $content | Should -Match "extension_dir = `"ext`""
         $content | Should -Match "zend_extension = opcache"
@@ -555,7 +559,8 @@ Describe "Enable-Opcache Tests" {
     It "Should handle missing php.ini" {
         $global:MockFileSystem.Files.Remove("TestDrive:\php\php.ini")
         
-        { Enable-Opcache -version "8.1" -phpPath "TestDrive:\php" } | Should -Not -Throw
+        $code = Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
+        $code | Should -Be -1
     }
 }
 

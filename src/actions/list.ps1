@@ -19,7 +19,7 @@ function Cache-Fetched-PHP-Versions {
         
         return 0
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Cache-Fetched-PHP-Versions: Failed to cache fetched PHP versions" -data $_.Exception.Message;
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Cache-Fetched-PHP-Versions: Failed to cache fetched PHP versions" -data $_.Exception.Message
         return -1
     }
 }

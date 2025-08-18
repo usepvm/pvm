@@ -172,7 +172,7 @@ function Get-Actions {
             action = { return Invoke-PVMCurrent }}
         "list" = [PSCustomObject]@{
             command = "pvm list [available]";
-            description = "Lists the PHP installations. Type 'available' at the end to see what can be installed."; 
+            description = "Lists the PHP installations. Type 'available' at the end to see what can be installed.";
             action = { return Invoke-PVMList -arguments $script:arguments }}
         "install" = [PSCustomObject]@{
             command = "pvm install <version> [--xdebug]";
@@ -180,7 +180,7 @@ function Get-Actions {
             action = { return Invoke-PVMInstall -arguments $script:arguments }}
         "uninstall" = [PSCustomObject]@{
             command = "pvm uninstall <version>";
-            description = "The version must be a specific version."; 
+            description = "The version must be a specific version.";
             action = { return Invoke-PVMUninstall -arguments $script:arguments }}
         "use" = [PSCustomObject]@{
             command = "pvm use <version>|[auto]";
@@ -192,11 +192,11 @@ function Get-Actions {
             action = { $script:arguments = @('info'); return Invoke-PVMIni -arguments $script:arguments }}
         "ini" = [PSCustomObject]@{
             command = "pvm ini <action> [<args>]";
-            description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'enable' or 'disable' for an extension, or 'restore' the original ini file from backup."; 
+            description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'enable' or 'disable' for an extension, or 'restore' the original ini file from backup.";
             action = { return Invoke-PVMIni -arguments $script:arguments }}
         "test" = [PSCustomObject]@{
             command = "pvm test";
-            description = "Run tests."; 
+            description = "Run tests.";
             action = { return Invoke-PVMTest -arguments $script:arguments }}
     }
 }

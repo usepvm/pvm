@@ -34,7 +34,7 @@ function Is-PVM-Setup {
             return $false
         }
 
-        return $true;
+        return $true
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Is-PVM-Setup: Failed to check if PVM is set up" -data $_.Exception.Message
         return $false

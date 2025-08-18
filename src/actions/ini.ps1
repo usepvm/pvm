@@ -220,6 +220,7 @@ function Get-IniExtensionStatus {
                     return -1
                 }
                 Config-XDebug -version $phpVersion -phpPath $phpPath
+                return 0
             }
         }
 

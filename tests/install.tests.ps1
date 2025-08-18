@@ -639,7 +639,7 @@ Describe "Install-PHP Integration Tests" {
         
         $result = Install-PHP -version "8.1"
         
-        $result | Should -Be 0
+        $result.code | Should -Be 0
     }
     
     It "Should return -1 if version already installed" {
@@ -647,7 +647,7 @@ Describe "Install-PHP Integration Tests" {
         
         $result = Install-PHP -version "8.1"
         
-        $result | Should -Be -1
+        $result.code | Should -Be -1
     }
     
     It "Should install with XDebug when requested" {
@@ -678,7 +678,7 @@ Describe "Install-PHP Integration Tests" {
         $result = Install-PHP -version "8.1" -includeXDebug $true
         
         
-        $result | Should -Be 0
+        $result.code | Should -Be 0
     }
     
     It "Should handle no matching versions found" {
@@ -687,7 +687,7 @@ Describe "Install-PHP Integration Tests" {
         
         $result = Install-PHP -version "9.0"
         
-        $result | Should -Be -1
+        $result.code | Should -Be -1
     }
     
     It "Should handle download failure" {
@@ -695,7 +695,7 @@ Describe "Install-PHP Integration Tests" {
         
         $result = Install-PHP -version "8.1"
         
-        $result | Should -Be -1
+        $result.code | Should -Be -1
     }
     
     It "Should prompt for family version when other versions exist" {
@@ -733,7 +733,7 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version "8.1"
         
-        $result | Should -Be 0
+        $result.code | Should -Be 0
     }
     
     It "Should cancel when user declines family version install" {
@@ -742,7 +742,7 @@ Describe "Install-PHP Integration Tests" {
         
         $result = Install-PHP -version "8.1"
         
-        $result | Should -Be -1
+        $result.code | Should -Be -1
     }
 }
 

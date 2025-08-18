@@ -252,7 +252,6 @@ function Get-XDebug-FROM-URL {
         # Return the filtered links (PHP version names)
         $formattedList = @()
         $filteredLinks = $filteredLinks | ForEach-Object {
-            # $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
             $fileName = $_.href -split "/"
             $fileName = $fileName[$fileName.Count - 1]
             $xDebugVersion = "2.0"
@@ -314,7 +313,6 @@ function Select-Version {
         $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
 
         if (-not $selectedVersionInput) {
-            Write-Host "`nInstallation cancelled."
             return $null
         }
 
@@ -338,9 +336,9 @@ function Install-PHP {
 
     try {
         if (Is-PHP-Version-Installed -version $version) {
-            Write-Host "`nVersion '$($version)' already installed."
-            Write-Host "`nRun: pvm use $version"
-            return -1
+            $message = "Version '$($version)' already installed."
+            $message += "`nRun: pvm use $version"
+            return @{ code = -1; message = $message }
         }
 
         $foundInstalledVersions = Get-Matching-PHP-Versions -version $version
@@ -352,7 +350,7 @@ function Install-PHP {
                 $foundInstalledVersions | ForEach-Object { Write-Host " - $_" }
                 $response = Read-Host "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 if ($response -ne "y" -and $response -ne "Y") {
-                    return -1
+                    return @{ code = -1; message = "Installation cancelled" }
                 }
                 $version = $familyVersion
             }
@@ -362,30 +360,27 @@ function Install-PHP {
         $matchingVersions = Get-PHP-Versions -version $version
 
         if ($matchingVersions.Count -eq 0) {
-            $msg = "`nNo matching PHP versions found for '$version', Check one of the following:"
+            $msg = "No matching PHP versions found for '$version', Check one of the following:"
             $msg += "`n- Ensure the version is correct."
             $msg += "`n- Check your internet connection or the source URL."
             $msg += "`n- Use 'pvm list available' to see available versions."
             $msg += "`n- If you are trying to install a version that was announced recently, it may not be available for download yet."
-            Write-Host $msg
-            return -1
+            return @{ code = -1; message = $msg }
         }
 
         $selectedVersionObject = Select-Version -matchingVersions $matchingVersions
         if (-not $selectedVersionObject) {
-            return -1
+            return @{ code = -1; message = "Installation cancelled" }
         }
 
         if (Is-PHP-Version-Installed -version $selectedVersionObject.version) {
-            Write-Host "`nVersion '$($selectedVersionObject.version)' already installed."
-            return -1
+            return @{ code = -1; message = "Version '$($selectedVersionObject.version)' already installed" }
         }
 
         $destination = Download-PHP -version $selectedVersionObject
 
         if (-not $destination) {
-            Write-Host "`nFailed to download PHP version $version."
-            return -1
+            return @{ code = -1; message = "Failed to download PHP version $version"; color = "DarkYellow" }
         }
 
         Write-Host "`nExtracting the downloaded zip ..."
@@ -401,15 +396,15 @@ function Install-PHP {
         Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
 
         if ($includeXDebug) {
-            Config-XDebug -version $selectedVersionObject.version -phpPath "$destination\$($selectedVersionObject.version)"
+            $xdebugConfigured = Config-XDebug -version $selectedVersionObject.version -phpPath "$destination\$($selectedVersionObject.version)"
         }
 
-        Write-Host "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$($selectedVersionObject.version)'"
-        Write-Host "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"
+        $message = "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$($selectedVersionObject.version)'"
+        $message += "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"
 
-        return 0
+        return @{ code = 0; message = $message; color = "DarkGreen" }
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Install-PHP : Failed to install PHP version $version" -data $_.Exception.Message
-        return -1
+        return @{ code = -1; message = "Failed to install PHP version $version"; color = "DarkYellow" }
     }
 }

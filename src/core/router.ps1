@@ -62,8 +62,9 @@ function Invoke-PVMInstall {
     }
 
     $includeXDebug = ($arguments -contains '--xdebug')
-    $exitCode = Install-PHP -version $version -includeXDebug $includeXDebug
-    return $exitCode
+    $result = Install-PHP -version $version -includeXDebug $includeXDebug
+    Display-Msg-By-ExitCode -result $result
+    return 0
 }
 
 function Invoke-PVMUninstall {

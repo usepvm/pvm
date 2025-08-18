@@ -47,8 +47,9 @@ Describe "Cache-Fetched-PHP-Versions" {
             'Releases' = @('php-8.2.0-Win32-x64.zip', 'php-8.1.5-Win32-x64.zip')
         }
         
-        Cache-Fetched-PHP-Versions $testVersions
+        $code = Cache-Fetched-PHP-Versions $testVersions
         
+        $code | Should -Be 0
         $cachePath = "$global:DATA_PATH\available_versions.json"
         $cachePath | Should -Exist
         
@@ -60,8 +61,9 @@ Describe "Cache-Fetched-PHP-Versions" {
     It "Should handle empty version list" {
         $emptyVersions = @{}
         
-        { Cache-Fetched-PHP-Versions $emptyVersions } | Should -Not -Throw
+        $code = Cache-Fetched-PHP-Versions $emptyVersions
         
+        $code | Should -Be -1
         $cachePath = "$global:DATA_PATH\available_versions.json"
         $cachePath | Should -Exist
     }
@@ -69,7 +71,8 @@ Describe "Cache-Fetched-PHP-Versions" {
     It "Should handle null input gracefully" {
         Mock Log-Data { return "Logged error" }
         
-        { Cache-Fetched-PHP-Versions $null } | Should -Not -Throw
+        $code = Cache-Fetched-PHP-Versions $null
+        $code | Should -Be -1
     }
 }
 

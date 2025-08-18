@@ -4,16 +4,23 @@ function Cache-Fetched-PHP-Versions {
     param ($listPhpVersions)
 
     try {
+        if (-not $listPhpVersions -or $listPhpVersions.Count -eq 0) {
+            return -1
+        }
+        
         $jsonString = $listPhpVersions | ConvertTo-Json -Depth 3
         $versionsDataPath = "$DATA_PATH\available_versions.json"
         $created = Make-Directory -path (Split-Path $versionsDataPath)
         if ($created -ne 0) {
             Write-Host "Failed to create directory $(Split-Path $versionsDataPath)"
-            return
+            return -1
         }
         Set-Content -Path $versionsDataPath -Value $jsonString
+        
+        return 0
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Cache-Fetched-PHP-Versions: Failed to cache fetched PHP versions" -data $_.Exception.Message
+        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Cache-Fetched-PHP-Versions: Failed to cache fetched PHP versions" -data $_.Exception.Message;
+        return -1
     }
 }
 
@@ -51,7 +58,7 @@ function Get-From-Source {
             return @{}
         }
         
-        Cache-Fetched-PHP-Versions $fetchedVersionsGrouped
+        $cached = Cache-Fetched-PHP-Versions $fetchedVersionsGrouped
         
         return $fetchedVersionsGrouped
     } catch {

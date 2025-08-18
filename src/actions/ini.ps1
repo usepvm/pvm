@@ -222,6 +222,19 @@ function Get-IniExtensionStatus {
                 Config-XDebug -version $phpVersion -phpPath $phpPath
                 return 0
             }
+        } else {
+            $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
+            if ($response -eq "y" -or $response -eq "Y") {
+                if ($extName -eq "xdebug" -or $extName -eq "opcache") {
+                    $lines += "`nzend_extension=$extName"
+                } else {
+                    $lines += "`nextension=$extName"
+                }
+                Backup-IniFile $iniPath
+                Set-Content $iniPath $lines -Encoding UTF8
+                Write-Host "- '$extName' added and enabled successfully." -ForegroundColor DarkGreen
+                return 0
+            }
         }
 
         return -1

@@ -278,6 +278,7 @@ Describe "Get-IniExtensionStatus" {
     }
     
     It "Returns -1 for non-existent extension" {
+        Mock Read-Host { return "n" }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "nonexistent_ext" | Should -Be -1
     }
     
@@ -295,6 +296,39 @@ Describe "Get-IniExtensionStatus" {
         Mock Read-Host { return "y" }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "xdebug" | Should -Be 0
     }
+    
+    It "Handles xdebug special case with failed PHP version" {
+            @"
+memory_limit = 128M
+extension=php_curl.dll
+zend_extension=php_opcache.dll
+"@ | Set-Content -Path $testIniPath -Encoding UTF8
+        Mock Read-Host { return "y" }
+        Mock Get-Current-PHP-Version { return @{ version = $null; path = $null } }
+        Get-IniExtensionStatus -iniPath $testIniPath -extName "xdebug" | Should -Be -1
+    }
+    
+    It "Handles non-xdebug extension with 'n' input for adding to list" {
+        Mock Read-Host { return "n" }
+        Get-IniExtensionStatus -iniPath $testIniPath -extName "nonexistent_ext" | Should -Be -1
+    }
+    
+    It "Handles non-xdebug extension with 'y' input for adding to list" {
+        Mock Read-Host { return "y" }
+        Get-IniExtensionStatus -iniPath $testIniPath -extName "newext" | Should -Be 0
+        (Get-Content $testIniPath) -match "^extension=newext" | Should -Be $true
+    }
+    
+    It "Handles zend_extension addition for opcache" {
+            @"
+;extension=php_xdebug.dll
+extension=php_curl.dll
+"@ | Set-Content -Path $testIniPath -Encoding UTF8
+        Mock Read-Host { return "y" }
+        Get-IniExtensionStatus -iniPath $testIniPath -extName "opcache" | Should -Be 0
+        (Get-Content $testIniPath) -match "^zend_extension=opcache" | Should -Be $true
+    }
+
     
     It "Returns -1 on error" {
         Mock Get-Content { throw "Access denied" }

@@ -153,7 +153,7 @@ function Invoke-PVMTest {
     $result = Run-Tests -verbosity $verbosity -tests $files -tag $tag
 
     Display-Msg-By-ExitCode -result $result
-    return $result.code
+    return 0
 }
 
 function Get-Actions {

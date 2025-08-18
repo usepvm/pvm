@@ -23,7 +23,7 @@ function Run-Tests {
         }
         
         $result = @{ code = 0; message = "Tests completed successfully."; color = "DarkGreen" }
-        $testFailedCount = 0
+        $testFailedDetails = @()
         Write-Host "`nRunning tests with verbosity: $verbosity" -ForegroundColor Cyan
         $tests | ForEach-Object { 
             try {
@@ -37,9 +37,10 @@ function Run-Tests {
                     throw $msg
                 }
                 $config.Run.Path = $fileName
-                Invoke-Pester -Configuration $config
+                $config.Run.PassThru = $true
+                $testResult = Invoke-Pester -Configuration $config
                 if ($LASTEXITCODE -ne 0) {
-                    $testFailedCount++
+                    $testFailedDetails += @{ Name = $_.Name; Count = $($testResult.FailedCount) }
                 }
             } catch {
                 $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Run-Tests: Failed to run test: $fileName" -data $_.Exception.Message
@@ -49,9 +50,24 @@ function Run-Tests {
             Write-Host "`n"
         }
         
-        if ($testFailedCount -gt 0) {
-            $result = @{ code = 1; message = " $testFailedCount test(s) failed to run!"; color = "DarkYellow" }
+        if ($testFailedDetails.Count -gt 0) {
+            $totalFailedTests = $testFailedDetails | ForEach-Object { $_.Count } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            $message = " Files failed to run: $($testFailedDetails.Count)  |  Total failed tests: $totalFailedTests"
+            $maxFileNameLength = ($testFailedDetails.Name | Measure-Object -Maximum Length).Maximum
+            $maxLineLength = $maxFileNameLength + 10  # padding
+            
+            $testFailedDetails | ForEach-Object {
+                $dotsCount = $maxLineLength - $_.Name.Length
+                if ($dotsCount -lt 0) { $dotsCount = 0 }
+                $dots = '.' * $dotsCount
+                $message += "`n  - $($_.Name) $dots $($_.Count) tests"
+            }
+            $result = @{ code = 1; message = $message; color = "DarkGray" }
         }
+        
+        $message = "Test Results Summary:"
+        $message += "`n=======================`n`n"
+        $result.message = $message + $result.message
         
         return $result
     } catch {

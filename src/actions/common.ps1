@@ -47,7 +47,6 @@ function Get-Installed-PHP-Versions {
         $directories = Get-All-Subdirectories -path "$STORAGE_PATH\php"
         $names = $directories | ForEach-Object { $_.Name }
         return ($names | Sort-Object { [version]$_ })        
-        # return (Get-All-Subdirectories -path "$STORAGE_PATH\php" | Select-Object -ExpandProperty Name | Sort-Object { [version]$_ })
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Installed-PHP-Versions: Failed to retrieve installed PHP versions" -data $_.Exception.Message
         return @()

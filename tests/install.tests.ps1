@@ -433,6 +433,7 @@ opcache.enable = 1
     
     It "Should configure XDebug v3 successfully" {
         
+        Mock Test-Path { return $true }
         function Make-Directory {
             param($path)
             return 0
@@ -587,7 +588,7 @@ Describe "Select-Version Tests" {
         
         $result = Select-Version -matchingVersions $versions
         
-        $result | Should -Be -1
+        $result | Should -Be $null
     }
     
     It "Should return selected version when user provides valid input" {

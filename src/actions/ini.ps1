@@ -209,17 +209,32 @@ function Get-IniExtensionStatus {
 
         Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
 
-        $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
-        if ($response -eq "y" -or $response -eq "Y") {4
-            if ($extName -eq "xdebug" -or $extName -eq "opcache") {
-                $lines += "`nzend_extension=$extName"
-            } else {
-                $lines += "`nextension=$extName"
+        if ($extName -eq "xdebug") {
+            $response = Read-Host "`nWould you like to install xdebug? (y/n)"
+            if ($response -eq "y" -or $response -eq "Y") {
+                $phpCurrentVersion = Get-Current-PHP-Version
+                $phpPath = $phpCurrentVersion.path
+                $phpVersion = $phpCurrentVersion.version
+                if (-not $phpVersion) {
+                    Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
+                    return -1
+                }
+                Config-XDebug -version $phpVersion -phpPath $phpPath
+                return 0
             }
-            Backup-IniFile $iniPath
-            Set-Content $iniPath $lines -Encoding UTF8
-            Write-Host "- '$extName' added and enabled successfully." -ForegroundColor DarkGreen
-            return 0
+        } else {
+            $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
+            if ($response -eq "y" -or $response -eq "Y") {4
+                if ($extName -eq "xdebug" -or $extName -eq "opcache") {
+                    $lines += "`nzend_extension=$extName"
+                } else {
+                    $lines += "`nextension=$extName"
+                }
+                Backup-IniFile $iniPath
+                Set-Content $iniPath $lines -Encoding UTF8
+                Write-Host "- '$extName' added and enabled successfully." -ForegroundColor DarkGreen
+                return 0
+            }
         }
 
         return -1
@@ -233,7 +248,11 @@ function Get-IniExtensionStatus {
 function Get-PHP-Info {
     
     $currentPHPVersion = Get-Current-PHP-Version
-    $currentPHPVersion.version
+    
+    if (-not $currentPHPVersion -or -not $currentPHPVersion.version -or -not $currentPHPVersion.path) {
+        Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
+        return -1
+    }
     
     Write-Host "`n- Running PHP version`t: $($currentPHPVersion.version)"
     Write-Host "`n- PHP path`t`t: $($currentPHPVersion.path)"
@@ -282,17 +301,11 @@ function Get-PHPExtensionsStatus {
     
     $extensions = foreach ($line in $iniContent) {
         # Match both enabled and commented lines
-        if ($line -match '^\s*(;)?(zend_extension|extension)\s*=\s*("?)([^";]+)\3\s*(?:;.*)?$') {
-            $rawPath = $matches[4]
-             # Extract just the filename
-            $fileName = [System.IO.Path]::GetFileNameWithoutExtension($rawPath)
-            # Remove 'php_' prefix if present
-            $cleanName = $fileName -replace '^php_', ''
-            # Remove suffix like -2.9.8-7.1-vc14-x86_64
-            $cleanName = $cleanName -replace '-\d+\.\d+\.\d+.*$', ''
-            # Store clean name instead of raw
+        if ($line -match '^\s*(;)?(zend_extension|extension)\s*=\s*"?([^";]+?)"?\s*(?:;.*)?$') {
+            $rawPath = $matches[3]
+            $extensionName = [System.IO.Path]::GetFileName($rawPath)
             [PSCustomObject]@{
-                Extension = $cleanName
+                Extension = $extensionName
                 Type      = $matches[2] # extension or zend_extension
                 Enabled   = -not $matches[1]
             }

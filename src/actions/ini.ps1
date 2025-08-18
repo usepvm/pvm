@@ -224,7 +224,7 @@ function Get-IniExtensionStatus {
             }
         } else {
             $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
-            if ($response -eq "y" -or $response -eq "Y") {4
+            if ($response -eq "y" -or $response -eq "Y") {
                 if ($extName -eq "xdebug" -or $extName -eq "opcache") {
                     $lines += "`nzend_extension=$extName"
                 } else {

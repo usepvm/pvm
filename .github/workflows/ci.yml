@@ -2,8 +2,14 @@ name: CI
 on:
   push:
     branches: [ master ]
+    paths:
+      - '**/*.ps1'
+      - '.github/workflows/**'
   pull_request:
     branches: [ master ]
+    paths:
+      - '**/*.ps1'
+      - '.github/workflows/**'
 
 jobs:
   test:

@@ -95,3 +95,16 @@ pvm test use install # Runs only use.tests.ps1 and install.tests.ps1 with Normal
 pvm test Detailed # Runs all tests with Detailed verbosity.
 pvm test helpers list Diagnostic # Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity.
 ```
+
+## Contributing
+
+Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+
+## Credits
+
+- [Driss](https://github.com/drissboumlik)
+- [All Contributors](https://github.com/drissboumlik/pvm/contributors)
+
+## License
+
+The MIT License (MIT). Please see [License File](LICENSE) for more information.

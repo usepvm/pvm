@@ -100,7 +100,7 @@ function Make-Symbolic-Link {
         }
         # Remove old link if it exists
         if (Test-Path $link) {
-            $item = Get-Item -LiteralPath $Link -Force
+            $item = Get-Item -LiteralPath $link -Force
             if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
                 Remove-Item -Path $link -Recurse -Force
             } else {
@@ -109,7 +109,7 @@ function Make-Symbolic-Link {
         }
         
         if (-not (Is-Admin)) {
-            $command = "New-Item -ItemType SymbolicLink -Path '$Link' -Target '$Target'"
+            $command = "New-Item -ItemType SymbolicLink -Path '$link' -Target '$target'"
             $exitCode = (Run-Command -command $command)
             if ($exitCode -ne 0) {
                 return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = "DarkYellow" }
@@ -117,7 +117,7 @@ function Make-Symbolic-Link {
             return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = "DarkGreen" }
         }
 
-        New-Item -ItemType SymbolicLink -Path $Link -Target $Target | Out-Null
+        New-Item -ItemType SymbolicLink -Path $link -Target $target | Out-Null
         return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = "DarkGreen" }
     } catch {
         $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Make-Symbolic-Link: Failed to make symbolic link" -data $_.Exception.Message

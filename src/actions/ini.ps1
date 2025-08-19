@@ -209,7 +209,7 @@ function Get-IniExtensionStatus {
 
         Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
 
-        if ($extName -eq "xdebug") {
+        if ($extName -like "*xdebug*") {
             $response = Read-Host "`nWould you like to install xdebug? (y/n)"
             if ($response -eq "y" -or $response -eq "Y") {
                 $phpCurrentVersion = Get-Current-PHP-Version
@@ -225,7 +225,7 @@ function Get-IniExtensionStatus {
         } else {
             $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
             if ($response -eq "y" -or $response -eq "Y") {
-                if ($extName -eq "xdebug" -or $extName -eq "opcache") {
+                if ($extName -like "*opcache*") {
                     $lines += "`nzend_extension=$extName"
                 } else {
                     $lines += "`nextension=$extName"

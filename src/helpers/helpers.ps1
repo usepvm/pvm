@@ -205,7 +205,9 @@ function Log-Data {
             Write-Host "Failed to create directory $(Split-Path $logPath)"
             return -1
         }
-        Add-Content -Path $logPath -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $message :`n$data`n"
+        $content = "--------------------------`n"
+        $content += "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $message :`n$data`n"
+        Add-Content -Path $logPath -Value $content
         return 0
     } catch {
         return -1

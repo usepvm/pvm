@@ -156,6 +156,17 @@ function Invoke-PVMTest {
     return 0
 }
 
+function Invoke-PVMLog {
+    param($arguments)
+    
+    $pageSize = $arguments[0]
+    if (-not $pageSize) {
+        $pageSize = 10
+    }
+    $code = Show-Log -pageSize $pageSize
+    return $code
+}
+
 function Get-Actions {
     param( $arguments )
 
@@ -198,6 +209,10 @@ function Get-Actions {
             command = "pvm test";
             description = "Run tests.";
             action = { return Invoke-PVMTest -arguments $script:arguments }}
+        "log" = [PSCustomObject]@{
+            command = "pvm log";
+            description = "Display the log file.";
+            action = { return Invoke-PVMLog -arguments $script:arguments }}
     }
 }
 

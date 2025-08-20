@@ -190,20 +190,20 @@ function Show-Log {
             $currentIndex += $PageSize
             # Show navigation prompt if there are more entries
             if ($currentIndex -lt $totalEntries) {
-                Write-Host "`nPress [<-] for previous page, [Enter] or [Space] or [->] for next page, [Q] to quit: " -NoNewline -ForegroundColor Yellow
+                Write-Host "`nPress Left/Up arrow for previous page, Right/Down arrow, [Enter] or [Space] for next page, [Q] to quit: " -NoNewline -ForegroundColor Yellow
                 
                 $key = [System.Console]::ReadKey($true) # $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
                 
                 switch ($key.Key) {
-                    "LeftArrow" { $currentIndex = [Math]::Max(0, $currentIndex - (2 * $PageSize)) }
-                    { $_ -in @("RightArrow", "Enter", "Spacebar") } { continue }
-                    { $_ -in @('q', 'Q') } { break }
+                    { $_ -in @("LeftArrow", "UpArrow") } { $currentIndex = [Math]::Max(0, $currentIndex - (2 * $PageSize)) }
+                    { $_ -in @("RightArrow", "DownArrow", "Enter", "Spacebar") } { continue }
+                    { $_ -in @('q', 'Q') } { return 0 }
                     default { $currentIndex -= $PageSize }
                 }
             } else {
-                Write-Host "End of log reached. Press [<-] to go back or any other key to exit..." -ForegroundColor Green
+                Write-Host "End of log reached. Press Left/Up arrow to go back or any other key to exit..." -ForegroundColor Green
                 $key = [System.Console]::ReadKey($true)  # $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-                if ($key.Key -eq "LeftArrow") {
+                if ($key.Key -in @("LeftArrow", "UpArrow")) {
                     # Go back one page from the end
                     $currentIndex = [Math]::Max(0, $currentIndex - (2 * $PageSize))
                 }

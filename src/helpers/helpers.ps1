@@ -217,14 +217,8 @@ function Log-Data {
 function Optimize-SystemPath {
     
     try {
-        $path = Get-EnvVar-ByName -name "Path"
+        $path = $oldPath = Get-EnvVar-ByName -name "Path"
         $envVars = Get-All-EnvVars
-
-        # Saving Path to log
-        $outputLog = Log-Data -logPath $PATH_VAR_BACKUP_PATH -message "Original PATH" -data $path
-        if ($outputLog -eq 0) {
-            Write-Host "`nOriginal Path saved to '$PATH_VAR_BACKUP_PATH'"
-        }
         
         $envVars.Keys | ForEach-Object {
             $envName = $_
@@ -241,9 +235,19 @@ function Optimize-SystemPath {
                 $path = [regex]::Replace($path, $pattern, "%$envName%")
             }
         }
-        $output = Set-EnvVar -name "Path" -value $path
-        if ($output -eq 0) {
-            Write-Host "`nPath optimized successfully" -ForegroundColor DarkGreen
+        
+        $output = 0
+        if ($path -ne $oldPath) {
+            # Saving Path to log
+            $outputLog = Log-Data -logPath $PATH_VAR_BACKUP_PATH -message "Original PATH" -data $oldPath
+            if ($outputLog -eq 0) {
+                Write-Host "`nOriginal Path saved to '$PATH_VAR_BACKUP_PATH'"
+            }
+            
+            $output = Set-EnvVar -name "Path" -value $path
+            if ($output -eq 0) {
+                Write-Host "`nPath optimized successfully" -ForegroundColor DarkGreen
+            }
         }
         
         return $output

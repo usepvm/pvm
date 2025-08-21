@@ -38,10 +38,7 @@ function Is-PVM-Setup {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to check if PVM is set up"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return $false
     }
@@ -56,10 +53,7 @@ function Get-Installed-PHP-Versions {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to retrieve installed PHP versions"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return @()
     }
@@ -103,10 +97,7 @@ function Get-Matching-PHP-Versions {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to check if PHP version $version is installed"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
     }
 
@@ -122,10 +113,7 @@ function Is-PHP-Version-Installed {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to check if PHP version $version is installed"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
     }
 

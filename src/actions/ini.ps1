@@ -16,10 +16,7 @@ function Restore-IniBackup {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Restore-IniBackup: Failed to restore ini backup"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         Write-Host "`nFailed to restore backup: $($_.Exception.Message)"
         return -1
@@ -38,10 +35,7 @@ function Backup-IniFile {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to backup ini file"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return -1
     }
@@ -72,10 +66,7 @@ function Get-IniSetting {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to get ini setting '$key'"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return -1
     }
@@ -120,10 +111,7 @@ function Set-IniSetting {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to set ini setting '$key'"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return -1
     }
@@ -164,10 +152,7 @@ function Enable-IniExtension {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to enable extension '$extName'"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return -1
     }
@@ -210,10 +195,7 @@ function Disable-IniExtension {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to disable extension '$extName'"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return -1
     }
@@ -277,10 +259,7 @@ function Get-IniExtensionStatus {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to check status for '$extName'"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return -1
     }
@@ -447,10 +426,7 @@ function Invoke-PVMIniAction {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to invoke ini action '$action'"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         Write-Host "`nFailed to perform action '$action' on ini settings." -ForegroundColor Red
         return -1

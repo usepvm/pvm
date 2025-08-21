@@ -412,19 +412,25 @@ Describe "System Functions Tests" {
     Describe "Log-Data" {
         Context "When logging data" {
             It "Logs data successfully" {
-                $logPath = "TestDrive:\logs\test.log"
+                $LOG_ERROR_PATH = "TestDrive:\logs\test.log"
                 $result = Log-Data -data @{
-                    logPath = $logPath
                     header = "Test message"
-                    message = "Test data"
+                    exception = @{
+                        Exception = @{ Message = "Test data" }
+                        InvocationInfo = @{
+                            ScriptName = "test.ps1"
+                            ScriptLineNumber = 1
+                            PositionMessage = "Test position"
+                        }
+                    }
                 }
                 $result | Should -Be 0
-                Test-Path $logPath | Should -Be $true
+                Test-Path $LOG_ERROR_PATH | Should -Be $true
                 # Get the actual content
-                $content = Get-Content $logPath -Raw
+                $content = Get-Content $LOG_ERROR_PATH -Raw
                 
                 # Verify the complete log format
-                $content | Should -Match "\[.*\] Test message :\s*`r?`nMessage: Test data"
+                $content | Should -Match "\[.*\] Test message :(.|\s)*Message: Test data"
                 
                 # Alternatively, you could check parts separately
                 $content | Should -Match "Test message"

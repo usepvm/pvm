@@ -27,10 +27,7 @@ function Get-PHP-Versions-From-Url {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to fetch versions from $url"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return @()
     }
@@ -60,10 +57,7 @@ function Get-PHP-Versions {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to get PHP versions"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return @{}
     }
@@ -87,10 +81,7 @@ function Display-Version-List {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to display version list"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
     }
 }
@@ -107,10 +98,7 @@ function Download-PHP-From-Url {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to download PHP from $url"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return $null
     }
@@ -146,10 +134,7 @@ function Download-PHP {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to download PHP version $($versionObject.version)"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
     }
     return $null
@@ -164,10 +149,7 @@ function Extract-Zip {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to extract zip file from $zipPath"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
     }
 }
@@ -183,10 +165,7 @@ function Extract-And-Configure {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to extract and configure PHP from $path"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
     }
 }
@@ -274,10 +253,7 @@ function Config-XDebug {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to configure XDebug for PHP version $version"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         Write-Host "`nFailed to configure XDebug for PHP version $version"
         return -1
@@ -313,10 +289,7 @@ function Get-XDebug-FROM-URL {
     } catch {        
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to fetch xdebug versions from $url"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return @()
     }
@@ -349,10 +322,7 @@ function Enable-Opcache {
     } catch {        
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to enable opcache for PHP at $phpPath"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         Write-Host "`nFailed to enable opcache for PHP version $version"
         return -1
@@ -466,10 +436,7 @@ function Install-PHP {
     } catch {        
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to install PHP version $version"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return @{ code = -1; message = "Failed to install PHP version $version"; color = "DarkYellow" }
     }

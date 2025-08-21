@@ -41,10 +41,7 @@ function Setup-PVM {
         
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to set up PVM environment"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return @{ code = -1; message = "Failed to set up PVM environment."; color = "DarkYellow"}
     }

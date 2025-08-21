@@ -39,10 +39,7 @@ function Uninstall-PHP {
         
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to uninstall PHP version '$version'"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return @{ code = -1; message = "Failed to uninstall PHP version '$version'"; color = "DarkYellow" }
     }

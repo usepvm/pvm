@@ -21,10 +21,7 @@ function Cache-Fetched-PHP-Versions {
     } catch {        
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to cache fetched PHP versions"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return -1
     }
@@ -70,10 +67,7 @@ function Get-From-Source {
     } catch {        
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to fetch PHP versions from source"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return @{}
     }
@@ -95,10 +89,7 @@ function Get-From-Cache {
     } catch {        
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to retrieve cached PHP versions"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return @{}
     }
@@ -135,10 +126,7 @@ function Get-PHP-List-To-Install {
     } catch {        
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to get fetch PHP versions"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return @{}
     }
@@ -175,10 +163,7 @@ function Get-Available-PHP-Versions {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to get available PHP versions"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return 1
     }
@@ -213,10 +198,7 @@ function Display-Installed-PHP-Versions {
     } catch {        
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to display installed PHP versions"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return 1
     }

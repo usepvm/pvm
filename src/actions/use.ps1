@@ -26,10 +26,7 @@ function Detect-PHP-VersionFromProject {
         
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to detect PHP version from project"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
     }
 
@@ -68,10 +65,7 @@ function Update-PHP-Version {
         
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to update PHP version for '$variableName'"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         return @{ code = -1; message = "No matching PHP versions found for '$version', Use 'pvm list' to see installed versions."; color = "DarkYellow"}
     }

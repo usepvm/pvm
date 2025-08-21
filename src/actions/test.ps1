@@ -79,10 +79,7 @@ function Run-Tests {
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name): Failed to run tests"
-            file = $($_.InvocationInfo.ScriptName)
-            line = $($_.InvocationInfo.ScriptLineNumber)
-            message = $_.Exception.Message
-            positionMessage = $_.InvocationInfo.PositionMessage
+            exception = $_
         }
         Write-Host "`nFailed to run tests."
         return @{ code = 1; message = "Failed to run tests."; color = "DarkYellow" }

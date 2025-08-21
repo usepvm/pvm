@@ -63,6 +63,9 @@ pvm ini get memory_limit max_file_uploads
 
 # Restore backup
 pvm ini restore
+
+# Check logs
+pvm log --pageSize=[number] # Default value is 10
 ```
 
 ## Running Tests

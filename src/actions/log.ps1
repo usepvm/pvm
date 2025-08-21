@@ -67,12 +67,18 @@ function Format-NiceTimestamp {
 function Show-Log {
     param($pageSize = 10)
     
-    if ($pageSize -notmatch '^-?\d+$') {
-        Write-Host "`nInvalid page size: $pageSize" -ForegroundColor Red
-        return -1
-    }
-    
     try {
+        if ($pageSize -notmatch '^-?\d+$') {
+            Write-Host "`nInvalid page size: $pageSize" -ForegroundColor Red
+            return -1
+        }
+
+        $pageSize = [int]$pageSize
+        if ($pageSize -le 0) {
+            Write-Host "`nPage size must be a positive integer." -ForegroundColor Red
+            return -1
+        }
+        
         $LogPath = $LOG_ERROR_PATH
         
         # Check if log file exists

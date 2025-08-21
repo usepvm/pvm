@@ -36,7 +36,13 @@ function Is-PVM-Setup {
 
         return $true
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Is-PVM-Setup: Failed to check if PVM is set up" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to check if PVM is set up"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return $false
     }
 }
@@ -48,7 +54,13 @@ function Get-Installed-PHP-Versions {
         $names = $directories | ForEach-Object { $_.Name }
         return ($names | Sort-Object { [version]$_ })        
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Installed-PHP-Versions: Failed to retrieve installed PHP versions" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to retrieve installed PHP versions"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return @()
     }
 }
@@ -89,7 +101,13 @@ function Get-Matching-PHP-Versions {
 
         return $matchingVersions
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Matching-PHP-Versions: Failed to check if PHP version $version is installed" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to check if PHP version $version is installed"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
     }
 
     return $null
@@ -102,7 +120,13 @@ function Is-PHP-Version-Installed {
         $installedVersions = Get-Matching-PHP-Versions -version $version
         return ($installedVersions -contains $version)
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Is-PHP-Version-Installed: Failed to check if PHP version $version is installed" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to check if PHP version $version is installed"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
     }
 
     return $false

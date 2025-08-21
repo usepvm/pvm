@@ -375,14 +375,18 @@ Describe "PVM Main Script - Error Handling Tests" {
         try {
             $actions[$operation].action.Invoke()
         } catch {
-            $logged = Log-Data -logPath $LOG_ERROR_PATH -message "PVM: An error occurred during operation '$operation'" -data $_.Exception.Message
+            $logged = Log-Data -data @{
+                header = "pvm.ps1: An error occurred during operation '$operation'"
+                file = $($_.InvocationInfo.ScriptName)
+                line = $($_.InvocationInfo.ScriptLineNumber)
+                message = $_.Exception.Message
+            }
             Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
         }
         
         Assert-MockCalled Log-Data -Times 1 -ParameterFilter {
-            $logPath -eq $LOG_ERROR_PATH -and
-            $message -eq "PVM: An error occurred during operation 'install'" -and
-            $data -like "*Test exception message*"
+            $data.header -eq "pvm.ps1: An error occurred during operation 'install'" -and
+            $data.message -like "*Test exception message*"
         }
         
         Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
@@ -398,7 +402,7 @@ Describe "PVM Main Script - Error Handling Tests" {
             [System.ArgumentException]::new("Invalid argument")
         )
         
-        foreach ($exception in $testExceptions) {            
+        foreach ($exception in $testExceptions) {
             $mockAction = {
                 throw $exception
             }
@@ -412,13 +416,18 @@ Describe "PVM Main Script - Error Handling Tests" {
             try {
                 $actions[$operation].action.Invoke()
             } catch {
-                $logged = Log-Data -logPath $LOG_ERROR_PATH -message "PVM: An error occurred during operation '$operation'" -data $_.Exception.Message
+                $logged = Log-Data -data @{
+                    header = "pvm.ps1: An error occurred during operation '$operation'"
+                    file = $($_.InvocationInfo.ScriptName)
+                    line = $($_.InvocationInfo.ScriptLineNumber)
+                    message = $_.Exception.Message
+                }
                 Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
             }
             
-            Assert-MockCalled Log-Data -ParameterFilter {
-                $message -eq "PVM: An error occurred during operation 'test'" -and
-                $data -like "*$($exception.Message)*"
+            Assert-MockCalled Log-Data -Times 1 -ParameterFilter {
+                $data.header -eq "pvm.ps1: An error occurred during operation 'test'" -and
+                $data.message -like "*$($exception.Message)*"
             }
         }
     }
@@ -549,7 +558,12 @@ Describe "PVM Main Script - Integration Tests" {
             try {
                 $exitCode = $actions[$operation].action.Invoke()
             } catch {
-                $logged = Log-Data -logPath $LOG_ERROR_PATH -message "PVM: An error occurred during operation '$operation'" -data $_.Exception.Message
+                $logged = Log-Data -data @{
+                    header = "pvm.ps1: An error occurred during operation '$operation'"
+                    file = $($_.InvocationInfo.ScriptName)
+                    line = $($_.InvocationInfo.ScriptLineNumber)
+                    message = $_.Exception.Message
+                }
                 Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
                 $exitCode = 1
             }
@@ -557,8 +571,8 @@ Describe "PVM Main Script - Integration Tests" {
             $exitCode | Should -Be 1
             
             Assert-MockCalled Log-Data -Times 1 -ParameterFilter {
-                $message -eq "PVM: An error occurred during operation 'install'" -and
-                $data -like "*Elevation required*"
+                $data.header -eq "pvm.ps1: An error occurred during operation 'install'" -and
+                $data.message -like "*Elevation required*"
             }
             Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
                 $ForegroundColor -eq "DarkYellow"

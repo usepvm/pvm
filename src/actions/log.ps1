@@ -1,5 +1,5 @@
 
-  
+
 function Format-NiceTimestamp {
     param($timestamp)
     
@@ -107,6 +107,19 @@ function Show-Log {
                     
                     # Combine first message with remaining content
                     $fullMessage = @($firstMessage) + $remainingContent | Where-Object { $_.Trim() -ne '' }
+                    $fullMessageText = ($fullMessage -join "`n").Trim()
+                    
+                    # Parse structured error information if present
+                    $file = $null
+                    $lineNumber = $null
+                    $errorMessage = $null
+                    
+                    # Check if this is a structured error log with File: Line: Message: format
+                    if ($fullMessageText -match '(?s)File:\s*(.+?)\s*\nLine:\s*(\d+)\s*\nMessage:\s*\n(.*)') {
+                        $file = $matches[1].Trim()
+                        $lineNumber = $matches[2].Trim()
+                        $errorMessage = $matches[3].Trim()
+                    }
                     
                     # Format the timestamp nicely
                     $niceTime = Format-NiceTimestamp $timestamp
@@ -114,7 +127,10 @@ function Show-Log {
                     $parsedEntries += [PSCustomObject]@{
                         Timestamp = $timestamp
                         Operation = $operation
-                        Message = ($fullMessage -join "`n").Trim()
+                        Message = $fullMessageText
+                        File = $file
+                        Line = $lineNumber
+                        ErrorMessage = $errorMessage
                         RawEntry = $entry.Trim()
                         NiceTime = $niceTime
                     }
@@ -166,19 +182,40 @@ function Show-Log {
                 Write-Host "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -NoNewline -ForegroundColor White
                 Write-Host "($($entry.NiceTime.Relative))" -ForegroundColor DarkGray
                 
-                Write-Host "Function: " -NoNewline -ForegroundColor Gray
-                Write-Host "$($entry.Operation)" -ForegroundColor $operationColor
-                
-                Write-Host "Message : " -NoNewline -ForegroundColor Gray
-                
-                # Handle multi-line messages with proper indentation
-                $messageLines = $entry.Message -split "`n"
-                if ($messageLines.Count -eq 1) {
-                    Write-Host "$($entry.Message)" -ForegroundColor White
+                # Check if this is a structured error entry
+                if ($entry.File -and $entry.Line -and $entry.ErrorMessage) {
+                    # Display structured error format
+                    Write-Host "File    : " -NoNewline -ForegroundColor Gray
+                    Write-Host "$($entry.File)" -ForegroundColor White
+                    
+                    Write-Host "Line    : " -NoNewline -ForegroundColor Gray
+                    Write-Host "$($entry.Line)" -ForegroundColor White
+                    
+                    Write-Host "Message : " -NoNewline -ForegroundColor Gray
+                    
+                    # Handle multi-line error messages with proper indentation (23 spaces to align with "Message :")
+                    $errorLines = $entry.ErrorMessage -split "`n"
+                    foreach ($errorLine in $errorLines) {
+                        if ($errorLine.Trim() -ne '') {
+                            Write-Host "$($errorLine)" -ForegroundColor White
+                        }
+                    }
                 } else {
-                    Write-Host "$($messageLines[0])" -ForegroundColor White
-                    for ($j = 1; $j -lt $messageLines.Count; $j++) {
-                        Write-Host "          $($messageLines[$j])" -ForegroundColor White
+                    # Display regular format for non-structured entries
+                    Write-Host "Function: " -NoNewline -ForegroundColor Gray
+                    Write-Host "$($entry.Operation)" -ForegroundColor $operationColor
+                    
+                    Write-Host "Message : " -NoNewline -ForegroundColor Gray
+                    
+                    # Handle multi-line messages with proper indentation
+                    $messageLines = $entry.Message -split "`n"
+                    if ($messageLines.Count -eq 1) {
+                        Write-Host "$($entry.Message)" -ForegroundColor White
+                    } else {
+                        Write-Host "$($messageLines[0])" -ForegroundColor White
+                        for ($j = 1; $j -lt $messageLines.Count; $j++) {
+                            Write-Host "          $($messageLines[$j])" -ForegroundColor White
+                        }
                     }
                 }
                 
@@ -212,9 +249,14 @@ function Show-Log {
         
         Clear-Host
         return 0
-    }
-    catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Show-PvmLog: Failed to show log" -data $_.Exception.Message
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to show log"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return -1
     }
 }

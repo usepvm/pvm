@@ -18,8 +18,14 @@ function Cache-Fetched-PHP-Versions {
         Set-Content -Path $versionsDataPath -Value $jsonString
         
         return 0
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Cache-Fetched-PHP-Versions: Failed to cache fetched PHP versions" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to cache fetched PHP versions"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return -1
     }
 }
@@ -61,8 +67,14 @@ function Get-From-Source {
         $cached = Cache-Fetched-PHP-Versions $fetchedVersionsGrouped
         
         return $fetchedVersionsGrouped
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-From-Source: Failed to fetch PHP versions from source" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to fetch PHP versions from source"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return @{}
     }
 }
@@ -80,8 +92,14 @@ function Get-From-Cache {
             $list[$key] = $value
         }
         return $list
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-From-Cache: Failed to retrieve cached PHP versions" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to retrieve cached PHP versions"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return @{}
     }
 }
@@ -114,8 +132,14 @@ function Get-PHP-List-To-Install {
         }
         
         return $fetchedVersionsGrouped
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-PHP-To-Install: Failed to get fetch PHP versions" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to get fetch PHP versions"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return @{}
     }
 }
@@ -149,7 +173,13 @@ function Get-Available-PHP-Versions {
         Write-Host $msg
         return 0
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Available-PHP-Versions: Failed to get available PHP versions" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to get available PHP versions"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return 1
     }
 }
@@ -180,8 +210,14 @@ function Display-Installed-PHP-Versions {
             }
         }
         return 0
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Display-Installed-PHP-Versions: Failed to display installed PHP versions" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to display installed PHP versions"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return 1
     }
     

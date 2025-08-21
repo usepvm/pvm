@@ -7,8 +7,14 @@ function Get-All-Subdirectories {
         }
         $path = $path.Trim()
         return Get-ChildItem -Path $path -Directory
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-All-Subdirectories: Failed to get all subdirectories of '$path'" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to get all subdirectories of '$path'"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return $null
     }
 }
@@ -17,8 +23,14 @@ function Get-All-EnvVars {
 
     try {
         return [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-All-EnvVars: Failed to get all environment variables" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to get all environment variables"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return $null
     }
 }
@@ -33,7 +45,14 @@ function Get-EnvVar-ByName {
         $name = $name.Trim()
         return [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-EnvVar-ByName: Failed to get environment variable '$name'" -data $_.Exception.Message
+        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to get environment variable '$name'"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return $null
     }
 }
@@ -55,8 +74,14 @@ function Set-EnvVar {
         # We already have admin rights, proceed normally
         [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine)
         return 0
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Set-EnvVar: Failed to set environment variable '$name'" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to set environment variable '$name'"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return -1
     }
 }
@@ -119,8 +144,14 @@ function Make-Symbolic-Link {
 
         New-Item -ItemType SymbolicLink -Path $link -Target $target | Out-Null
         return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = "DarkGreen" }
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Make-Symbolic-Link: Failed to make symbolic link" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to make symbolic link"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = "DarkYellow" }
     }
 }
@@ -189,24 +220,41 @@ function Display-Msg-By-ExitCode {
         }
         
         Write-Host "`n$($result.message)" -ForegroundColor $result.color
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Display-Msg-By-ExitCode: Failed to display message by exit code" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to display message by exit code"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
     }
 }
 
 
 
 function Log-Data {
-    param ($logPath, $message, $data)
+    param ($data)
     
     try {
+        $logPath = if ($data.logPath) { $data.logPath } else { $LOG_ERROR_PATH }
         $created = Make-Directory -path (Split-Path $logPath)
         if ($created -ne 0) {
             Write-Host "Failed to create directory $(Split-Path $logPath)"
             return -1
         }
-        $content = "--------------------------`n"
-        $content += "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $message :`n$data`n"
+        $content = "`n--------------------------"
+        $content += "`n[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($data.header) :"
+        if ($data.file) {
+            $content += "`nFile: $($data.file)"
+        }
+        if ($data.line) {
+            $content += "`nLine: $($data.line)"
+        }
+        $content += "`nMessage: $($data.message)"
+        if ($data.positionMessage) {
+            $content += "`nPosition: $($data.positionMessage)"
+        }
         Add-Content -Path $logPath -Value $content
         return 0
     } catch {
@@ -239,7 +287,12 @@ function Optimize-SystemPath {
         $output = 0
         if ($path -ne $oldPath) {
             # Saving Path to log
-            $outputLog = Log-Data -logPath $PATH_VAR_BACKUP_PATH -message "Original PATH" -data $oldPath
+            # $outputLog = Log-Data -logPath $PATH_VAR_BACKUP_PATH -message "Original PATH" -data $oldPath
+            $outputLog = Log-Data -data @{
+                logPath = $PATH_VAR_BACKUP_PATH
+                header = "Original PATH"
+                message = $oldPath
+            }
             if ($outputLog -eq 0) {
                 Write-Host "`nOriginal Path saved to '$PATH_VAR_BACKUP_PATH'"
             }
@@ -252,7 +305,13 @@ function Optimize-SystemPath {
         
         return $output
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Optimize-SystemPath: Failed to optimize system PATH variable" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to optimize system PATH variable"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         return -1
     }
 }

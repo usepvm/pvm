@@ -413,14 +413,18 @@ Describe "System Functions Tests" {
         Context "When logging data" {
             It "Logs data successfully" {
                 $logPath = "TestDrive:\logs\test.log"
-                $result = Log-Data -logPath $logPath -message "Test message" -data "Test data"
+                $result = Log-Data -data @{
+                    logPath = $logPath
+                    header = "Test message"
+                    message = "Test data"
+                }
                 $result | Should -Be 0
                 Test-Path $logPath | Should -Be $true
                 # Get the actual content
                 $content = Get-Content $logPath -Raw
                 
                 # Verify the complete log format
-                $content | Should -Match "\[.*\] Test message :\s*Test data"
+                $content | Should -Match "\[.*\] Test message :\s*`r?`nMessage: Test data"
                 
                 # Alternatively, you could check parts separately
                 $content | Should -Match "Test message"

@@ -159,8 +159,11 @@ function Invoke-PVMTest {
 function Invoke-PVMLog {
     param($arguments)
     
-    $pageSize = $arguments[0]
-    if (-not $pageSize) {
+    
+    $pageSize = $arguments | Where-Object { $_ -match '--pageSize=\d+$' }
+    if ($null -ne $pageSize) {
+        $pageSize = $pageSize -replace '^--pageSize=', ''
+    } else {
         $pageSize = 10
     }
     $code = Show-Log -pageSize $pageSize

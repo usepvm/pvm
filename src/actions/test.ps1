@@ -43,7 +43,13 @@ function Run-Tests {
                     $testFailedDetails += @{ Name = $_.Name; Count = $($testResult.FailedCount) }
                 }
             } catch {
-                $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Run-Tests: Failed to run test: $fileName" -data $_.Exception.Message
+                $logged = Log-Data -data @{
+                    header = "$($MyInvocation.MyCommand.Name): Failed to run test: $fileName"
+                    file = $($_.InvocationInfo.ScriptName)
+                    line = $($_.InvocationInfo.ScriptLineNumber)
+                    message = $_.Exception.Message
+                    positionMessage = $_.InvocationInfo.PositionMessage
+                }
                 Write-Host "`n- Failed to run test: $fileName" -ForegroundColor DarkYellow
                 $result = @{ code = 1; message = "Some tests failed to run!"; color = "DarkYellow" }
             }
@@ -71,7 +77,13 @@ function Run-Tests {
         
         return $result
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Run-Tests: Failed to run tests" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to run tests"
+            file = $($_.InvocationInfo.ScriptName)
+            line = $($_.InvocationInfo.ScriptLineNumber)
+            message = $_.Exception.Message
+            positionMessage = $_.InvocationInfo.PositionMessage
+        }
         Write-Host "`nFailed to run tests."
         return @{ code = 1; message = "Failed to run tests."; color = "DarkYellow" }
     }

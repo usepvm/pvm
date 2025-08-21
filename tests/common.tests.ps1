@@ -121,7 +121,7 @@ Describe "Is-PVM-Setup" {
             $result | Should -Be $false
             
             Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter {
-                $message -eq "Is-PVM-Setup: Failed to check if PVM is set up"
+                $data.header -eq "Is-PVM-Setup: Failed to check if PVM is set up"
             }
         }
     }
@@ -192,7 +192,7 @@ Describe "Get-Installed-PHP-Versions" {
             $result.Count | Should -Be 0
             
             Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter {
-                $message -eq "Get-Installed-PHP-Versions: Failed to retrieve installed PHP versions"
+                $data.header -eq "Get-Installed-PHP-Versions: Failed to retrieve installed PHP versions"
             }
         }
     }
@@ -257,7 +257,7 @@ Describe "Get-Matching-PHP-Versions" {
             $result | Should -Be $null
             
             Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter {
-                $message -eq "Get-Matching-PHP-Versions: Failed to check if PHP version 8.1 is installed"
+                $data.header -eq "Get-Matching-PHP-Versions: Failed to check if PHP version 8.1 is installed"
             }
         }
     }
@@ -313,7 +313,7 @@ Describe "Is-PHP-Version-Installed" {
             $result | Should -Be $false
             
             Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter {
-                $message -eq "Is-PHP-Version-Installed: Failed to check if PHP version 8.1 is installed"
+                $data.header -eq "Is-PHP-Version-Installed: Failed to check if PHP version 8.1 is installed"
             }
         }
     }

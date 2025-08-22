@@ -47,8 +47,9 @@ Describe "Cache-Fetched-PHP-Versions" {
             'Releases' = @('php-8.2.0-Win32-x64.zip', 'php-8.1.5-Win32-x64.zip')
         }
         
-        Cache-Fetched-PHP-Versions $testVersions
+        $code = Cache-Fetched-PHP-Versions $testVersions
         
+        $code | Should -Be 0
         $cachePath = "$global:DATA_PATH\available_versions.json"
         $cachePath | Should -Exist
         
@@ -60,8 +61,9 @@ Describe "Cache-Fetched-PHP-Versions" {
     It "Should handle empty version list" {
         $emptyVersions = @{}
         
-        { Cache-Fetched-PHP-Versions $emptyVersions } | Should -Not -Throw
+        $code = Cache-Fetched-PHP-Versions $emptyVersions
         
+        $code | Should -Be -1
         $cachePath = "$global:DATA_PATH\available_versions.json"
         $cachePath | Should -Exist
     }
@@ -69,7 +71,8 @@ Describe "Cache-Fetched-PHP-Versions" {
     It "Should handle null input gracefully" {
         Mock Log-Data { return "Logged error" }
         
-        { Cache-Fetched-PHP-Versions $null } | Should -Not -Throw
+        $code = Cache-Fetched-PHP-Versions $null
+        $code | Should -Be -1
     }
 }
 
@@ -232,6 +235,8 @@ Describe "Get-Available-PHP-Versions" {
     }
     
     It "Should fetch from source when cache is empty" {
+        Mock Test-Path { $true }
+        Mock Get-Item { @{ LastWriteTime = (Get-Date) } }
         Mock Get-From-Cache { return @{} }
         Mock Get-From-Source {
             return @{
@@ -244,10 +249,11 @@ Describe "Get-Available-PHP-Versions" {
         
         Should -Invoke Get-From-Cache -Exactly 1
         Should -Invoke Get-From-Source -Exactly 1
-        Should -Invoke Write-Host -ParameterFilter { $Object -like "*Cache empty!*" }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like "*Cache is empty*" }
     }
     
-    It "Should force fetch from source when getFromSource parameter is true" {
+    It "Should force fetch from source when cache not exists" {
+        Mock Test-Path { return $false }
         Mock Get-From-Cache { }  # Remove return value since it won't be called
         Mock Get-From-Source {
             return @{
@@ -256,7 +262,7 @@ Describe "Get-Available-PHP-Versions" {
             }
         }
         
-        Get-Available-PHP-Versions -getFromSource $true
+        Get-Available-PHP-Versions
         
         Should -Not -Invoke Get-From-Cache
         Should -Invoke Get-From-Source -Exactly 1

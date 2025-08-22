@@ -433,6 +433,7 @@ opcache.enable = 1
     
     It "Should configure XDebug v3 successfully" {
         
+        Mock Test-Path { return $true }
         function Make-Directory {
             param($path)
             return 0
@@ -475,7 +476,8 @@ opcache.enable = 1
         # Mock the actual XDebug DLL download
         Set-MockWebResponse -url "https://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
         
-        Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
+        $code = Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
+        $code  | Should -Be 0
         
         $phpIniContent = $global:MockFileSystem.Files["TestDrive:\php\php.ini"]
         # Write-Host "PHP.ini content: $phpIniContent" # Debug output
@@ -488,14 +490,16 @@ opcache.enable = 1
         Mock Write-Host { }
         $global:MockFileSystem.Files.Remove("TestDrive:\php\php.ini")
         
-        { Config-XDebug -version "8.1" -phpPath "TestDrive:\php" } | Should -Not -Throw
+        $code = Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
+        $code | Should -Be -1
     }
     
     It "Should handle no XDebug versions found" {
         Mock Write-Host { }
         Set-MockWebResponse -url "https://xdebug.org/download/historical" -links @()
         
-        { Config-XDebug -version "8.1" -phpPath "TestDrive:\php" } | Should -Not -Throw
+        $code = Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
+        $code | Should -Be -1
     }
 }
 
@@ -542,8 +546,9 @@ Describe "Enable-Opcache Tests" {
     }
     
     It "Should enable Opcache successfully" {
-        Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
+        $code = Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
         
+        $code | Should -Be 0
         $content = $global:MockFileSystem.Files["TestDrive:\php\php.ini"]
         $content | Should -Match "extension_dir = `"ext`""
         $content | Should -Match "zend_extension = opcache"
@@ -554,7 +559,8 @@ Describe "Enable-Opcache Tests" {
     It "Should handle missing php.ini" {
         $global:MockFileSystem.Files.Remove("TestDrive:\php\php.ini")
         
-        { Enable-Opcache -version "8.1" -phpPath "TestDrive:\php" } | Should -Not -Throw
+        $code = Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
+        $code | Should -Be -1
     }
 }
 
@@ -587,7 +593,7 @@ Describe "Select-Version Tests" {
         
         $result = Select-Version -matchingVersions $versions
         
-        $result | Should -Be -1
+        $result | Should -Be $null
     }
     
     It "Should return selected version when user provides valid input" {
@@ -630,11 +636,10 @@ Describe "Install-PHP Integration Tests" {
     It "Should install PHP successfully" {
         function Get-Matching-PHP-Versions { return $null }
         function Download-PHP-From-Url { return "TestDrive:\php"}
-        function Invoke-PVMSet { }
         
         $result = Install-PHP -version "8.1"
         
-        $result | Should -Be 0
+        $result.code | Should -Be 0
     }
     
     It "Should return -1 if version already installed" {
@@ -642,7 +647,7 @@ Describe "Install-PHP Integration Tests" {
         
         $result = Install-PHP -version "8.1"
         
-        $result | Should -Be -1
+        $result.code | Should -Be -1
     }
     
     It "Should install with XDebug when requested" {
@@ -655,7 +660,6 @@ Describe "Install-PHP Integration Tests" {
                  }
             }
         }
-        function Invoke-PVMSet { }
         # Setup mock web responses
         $global:MockFileSystem.WebResponses = @{
             "https://windows.php.net/downloads/releases/archives/php-8.1.33-Win32-vs16-x64.zip" = @{
@@ -671,52 +675,10 @@ Describe "Install-PHP Integration Tests" {
             }
         }
         $global:MockUserInput = "y"
-        Write-Host ($global:MockRegistry | ConvertTo-Json)
         $result = Install-PHP -version "8.1" -includeXDebug $true
         
         
-        $result | Should -Be 0
-    }
-    
-    It "Should install with Opcache when requested" {
-        Reset-MockState
-        Mock Get-PHP-Versions {
-            return @{
-                Releases = @{
-                     filename = "php-8.1.33-Win32-vs16-x64.zip"
-                     href = "/downloads/releases/php-8.1.33-Win32-vs16-x64.zip"
-                     version = "8.1.33"
-                 }
-            }
-        }
-        # Setup mock web responses
-        $global:MockFileSystem.WebResponses = @{
-            "https://windows.php.net/downloads/releases/archives/php-8.1.33-Win32-vs16-x64.zip" = @{
-                Content = "Mocked PHP 8.1.33 zip content"
-            }
-            "https://windows.php.net/downloads/releases/archives" = @{
-                Content = '[{"version":"8.1.15","fileName":"php-8.1.15-Win32-vs16-x64.zip","url":"https://windows.php.net/downloads/releases/php-8.1.15-Win32-vs16-x64.zip"}]'
-                Links = @()
-            }
-            "https://windows.php.net/downloads/releases" = @{
-                Content = '[{"version":"8.2.0","fileName":"php-8.2.0-Win32-vs16-x64.zip","url":"https://windows.php.net/downloads/releases/php-8.2.0-Win32-vs16-x64.zip"}]'
-                Links = @()
-            }
-        }
-        
-        $global:MockFileSystem.Files["TestDrive:\storage\php\php-8.1.15-Win32-vs16-x64\php.ini"] = @"
-;extension_dir = "ext"
-;zend_extension = opcache
-;opcache.enable = 1
-"@
-        function Invoke-PVMSet { }
-
-        Write-Host ($global:MockRegistry | ConvertTo-Json)
-        $global:MockUserInput = "y"
-
-        $result = Install-PHP -version "8.1" -enableOpcache $true
-        
-        $result | Should -Be 0
+        $result.code | Should -Be 0
     }
     
     It "Should handle no matching versions found" {
@@ -725,7 +687,7 @@ Describe "Install-PHP Integration Tests" {
         
         $result = Install-PHP -version "9.0"
         
-        $result | Should -Be -1
+        $result.code | Should -Be -1
     }
     
     It "Should handle download failure" {
@@ -733,7 +695,7 @@ Describe "Install-PHP Integration Tests" {
         
         $result = Install-PHP -version "8.1"
         
-        $result | Should -Be -1
+        $result.code | Should -Be -1
     }
     
     It "Should prompt for family version when other versions exist" {
@@ -764,7 +726,6 @@ Describe "Install-PHP Integration Tests" {
             }
         }
         
-        function Invoke-PVMSet { }
         
         Set-EnvVar -name "php8.1" -value $null
         $global:MockRegistry.Machine["php8.1.0"] = "C:\PHP\php-8.1.0"
@@ -772,7 +733,7 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version "8.1"
         
-        $result | Should -Be 0
+        $result.code | Should -Be 0
     }
     
     It "Should cancel when user declines family version install" {
@@ -781,7 +742,7 @@ Describe "Install-PHP Integration Tests" {
         
         $result = Install-PHP -version "8.1"
         
-        $result | Should -Be -1
+        $result.code | Should -Be -1
     }
 }
 

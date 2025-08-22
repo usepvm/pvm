@@ -14,7 +14,10 @@ function Restore-IniBackup {
         Write-Host "`nRestored php.ini from backup: $backupPath"
         return 0
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Restore-IniBackup: Failed to restore ini backup" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Restore-IniBackup: Failed to restore ini backup"
+            exception = $_
+        }
         Write-Host "`nFailed to restore backup: $($_.Exception.Message)"
         return -1
     }
@@ -30,7 +33,10 @@ function Backup-IniFile {
             Copy-Item $iniPath $backup
         }
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Backup-IniFile: Failed to backup ini file" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to backup ini file"
+            exception = $_
+        }
         return -1
     }
 }
@@ -58,7 +64,10 @@ function Get-IniSetting {
         Write-Host "- The setting key '$key' is not found." -ForegroundColor DarkGray
         return -1
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-IniSetting: Failed to get ini setting '$key'" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to get ini setting '$key'"
+            exception = $_
+        }
         return -1
     }
 }
@@ -100,7 +109,10 @@ function Set-IniSetting {
 
         return 0
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Set-IniSetting: Failed to set ini setting '$key'" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to set ini setting '$key'"
+            exception = $_
+        }
         return -1
     }
 }
@@ -138,7 +150,10 @@ function Enable-IniExtension {
 
         return 0
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Enable-IniExtension: Failed to enable extension '$extName'" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to enable extension '$extName'"
+            exception = $_
+        }
         return -1
     }
 }
@@ -178,7 +193,10 @@ function Disable-IniExtension {
         
         return 0
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Disable-IniExtension: Failed to disable extension '$extName'" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to disable extension '$extName'"
+            exception = $_
+        }
         return -1
     }
 }
@@ -198,23 +216,125 @@ function Get-IniExtensionStatus {
 
         foreach ($line in $lines) {
             if ($line -match $enabledPattern) {
-                Write-Host "- $extName`: enabled" -ForegroundColor DarkGreen
+                Write-Host "- $extName`: Enabled" -ForegroundColor DarkGreen
                 return 0
             }
             if ($line -match $disabledPattern) {
-                Write-Host "- $extName`: disabled" -ForegroundColor DarkYellow
+                Write-Host "- $extName`: Disabled" -ForegroundColor DarkYellow
                 return 0
             }
         }
 
         Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
+
+        if ($extName -like "*xdebug*") {
+            $response = Read-Host "`nWould you like to install xdebug? (y/n)"
+            if ($response -eq "y" -or $response -eq "Y") {
+                $phpCurrentVersion = Get-Current-PHP-Version
+                $phpPath = $phpCurrentVersion.path
+                $phpVersion = $phpCurrentVersion.version
+                if (-not $phpVersion) {
+                    Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
+                    return -1
+                }
+                Config-XDebug -version $phpVersion -phpPath $phpPath
+                return 0
+            }
+        } else {
+            $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
+            if ($response -eq "y" -or $response -eq "Y") {
+                if ($extName -like "*opcache*") {
+                    $lines += "`nzend_extension=$extName"
+                } else {
+                    $lines += "`nextension=$extName"
+                }
+                Backup-IniFile $iniPath
+                Set-Content $iniPath $lines -Encoding UTF8
+                Write-Host "- '$extName' added and enabled successfully." -ForegroundColor DarkGreen
+                return 0
+            }
+        }
+
         return -1
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-IniExtensionStatus: Failed to check status for '$extName'" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to check status for '$extName'"
+            exception = $_
+        }
         return -1
     }
 }
 
+
+function Get-PHP-Info {
+    
+    $currentPHPVersion = Get-Current-PHP-Version
+    
+    if (-not $currentPHPVersion -or -not $currentPHPVersion.version -or -not $currentPHPVersion.path) {
+        Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
+        return -1
+    }
+    
+    Write-Host "`n- Running PHP version`t: $($currentPHPVersion.version)"
+    Write-Host "`n- PHP path`t`t: $($currentPHPVersion.path)"
+    $extensions = Get-PHPExtensionsStatus -PhpIniPath "$($currentPHPVersion.path)\php.ini"
+    
+    # Pre-count for summary
+    $enabledCount = ($extensions | Where-Object Enabled).Count
+    $disabledCount = $extensions.Count - $enabledCount
+    
+    # Calculate max length dynamically
+    $maxNameLength = ($extensions.Extension | Measure-Object -Maximum Length).Maximum
+    $maxLineLength = $maxNameLength + 10  # padding
+    
+    Write-Host "`n- Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
+    $extensions |
+    Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true }, `
+                @{Expression = { $_.Extension }; Ascending = $true } |
+    ForEach-Object {
+        $dotsCount = $maxLineLength - $_.Extension.Length
+        if ($dotsCount -lt 0) { $dotsCount = 0 }
+        $dots = '.' * $dotsCount
+
+        if ($_.Enabled) {
+            $status = "Enabled "
+            $color = "DarkGreen"
+        } else {
+            $status = "Disabled"
+            $color = "DarkGray"
+        }
+
+        Write-Host "  $($_.Extension) $dots " -NoNewline
+        Write-Host $status -ForegroundColor $color
+    }
+    
+    return 0
+}
+
+function Get-PHPExtensionsStatus {
+    param($PhpIniPath)
+
+    if (-not (Test-Path $PhpIniPath)) {
+        throw "php.ini file not found at: $PhpIniPath"
+    }
+
+    $iniContent = Get-Content $PhpIniPath
+    
+    $extensions = foreach ($line in $iniContent) {
+        # Match both enabled and commented lines
+        if ($line -match '^\s*(;)?(zend_extension|extension)\s*=\s*"?([^";]+?)"?\s*(?:;.*)?$') {
+            $rawPath = $matches[3]
+            $extensionName = [System.IO.Path]::GetFileName($rawPath)
+            [PSCustomObject]@{
+                Extension = $extensionName
+                Type      = $matches[2] # extension or zend_extension
+                Enabled   = -not $matches[1]
+            }
+        }
+    }
+
+    return $extensions
+}
 
 function Invoke-PVMIniAction {
     param ( $action, $params )
@@ -236,6 +356,9 @@ function Invoke-PVMIniAction {
         }
 
         switch ($action) {
+            "info" {
+                $exitCode = Get-PHP-Info
+            }
             "get" {
                 if ($params.Count -lt 1) {
                     Write-Host "`nPlease specify at least one setting name ('pvm ini get memory_limit)."
@@ -301,7 +424,10 @@ function Invoke-PVMIniAction {
         
         return $exitCode
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Invoke-PVMIniAction: Failed to invoke ini action '$action'" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to invoke ini action '$action'"
+            exception = $_
+        }
         Write-Host "`nFailed to perform action '$action' on ini settings." -ForegroundColor Red
         return -1
     }

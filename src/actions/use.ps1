@@ -23,7 +23,11 @@ function Detect-PHP-VersionFromProject {
             }
         }
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Detect-PHP-VersionFromProject: Failed to detect PHP version from project" -data $_.Exception.Message
+        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to detect PHP version from project"
+            exception = $_
+        }
     }
 
     return $null
@@ -53,9 +57,16 @@ function Update-PHP-Version {
             return @{ code = -1; message = "PHP version $($pathVersionObject.version) was not found!"; color = "DarkYellow"}
         }
         $linkCreated = Make-Symbolic-Link -link $PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
+        if ($linkCreated.code -ne 0) {
+            return $linkCreated
+        }
         return @{ code = 0; message = "Now using PHP $($pathVersionObject.version)"; color = "DarkGreen"}
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Update-PHP-Version: Failed to update PHP version for '$variableName'" -data $_.Exception.Message
+        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to update PHP version for '$variableName'"
+            exception = $_
+        }
         return @{ code = -1; message = "No matching PHP versions found for '$version', Use 'pvm list' to see installed versions."; color = "DarkYellow"}
     }
 }

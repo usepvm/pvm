@@ -1,0 +1,58 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - '**/*.ps1'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - '**/*.ps1'
+      - '.github/workflows/**'
+
+jobs:
+  test:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Pester
+      run: |
+        Write-Host "Installing Pester..." -ForegroundColor Yellow
+        Install-Module -Name Pester -Force -SkipPublisherCheck
+        Import-Module Pester
+        $pesterVersion = Get-Module Pester
+        Write-Host "Pester version: $($pesterVersion.Version)" -ForegroundColor Green
+      shell: pwsh
+      
+    - name: Setup PVM
+      run: |
+        Write-Host "Setting up PVM..." -ForegroundColor Yellow
+        .\src\pvm.ps1 setup
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "PVM setup failed with exit code: $LASTEXITCODE"
+          exit $LASTEXITCODE
+        }
+        Write-Host "✅ PVM setup completed successfully" -ForegroundColor Green
+      shell: pwsh
+        
+    - name: Run tests
+      run: |
+        Write-Host "Running PVM tests..." -ForegroundColor Yellow
+        
+        # Run pvm.ps1 directly and capture exit code
+        .\src\pvm.ps1 test
+        $exitCode = $LASTEXITCODE
+        
+        Write-Host "Test execution completed with exit code: $exitCode"
+        
+        if ($exitCode -eq 0) {
+          Write-Host "✅ All tests passed successfully!" -ForegroundColor Green
+        } else {
+          Write-Host "❌ Tests failed with exit code: $exitCode" -ForegroundColor Red
+          exit $exitCode
+        }
+      shell: pwsh

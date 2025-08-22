@@ -154,8 +154,8 @@ Describe "Setup-PVM" {
             
             $result = Setup-PVM
             
-            $result.code | Should -Be 1
-            $result.message | Should -Be "PVM environment is already set up."
+            $result.code | Should -Be 0
+            $result.message | Should -Be "PVM environment has been set up."
             Should -Invoke Set-EnvVar -ParameterFilter { $name -eq "Path" } -Exactly 0
         }
 
@@ -166,8 +166,8 @@ Describe "Setup-PVM" {
             
             $result = Setup-PVM
             
-            $result.code | Should -Be 1
-            $result.message | Should -Be "PVM environment is already set up."
+            $result.code | Should -Be 0
+            $result.message | Should -Be "PVM environment has been set up."
             Should -Invoke Set-EnvVar -ParameterFilter { $name -eq "Path" } -Exactly 0
         }
     }
@@ -196,18 +196,27 @@ Describe "Setup-PVM" {
 
     Context "When environment variables need to be set" {
         It "Should set PHP_CURRENT_ENV_NAME variable" {
-            Mock Get-EnvVar-ByName -MockWith { return "" }
+            Mock Get-EnvVar-ByName -MockWith { return $null }
             
             $result = Setup-PVM
             
             Should -Invoke Set-EnvVar -ParameterFilter { $name -eq $PHP_CURRENT_ENV_NAME -and $value -eq $PHP_CURRENT_VERSION_PATH } -Exactly 1
         }
 
-        It "Should set PVM variable if not set" {
+        It "Should not set PHP_CURRENT_ENV_NAME variable if already set" -Tag i {
             Mock Get-EnvVar-ByName -MockWith { 
-                if ($name -eq "pvm") { return $null }
-                return ""
+                Write-Host $name
+                if ($name -eq $PHP_CURRENT_ENV_NAME) { return "existing_value" }
+                return $null
             }
+            
+            $result = Setup-PVM
+            
+            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq $PHP_CURRENT_ENV_NAME } -Exactly 0
+        }
+
+        It "Should set PVM variable if not set" {
+            Mock Get-EnvVar-ByName -MockWith { return $null }
             
             $result = Setup-PVM
             
@@ -217,7 +226,7 @@ Describe "Setup-PVM" {
         It "Should not set PVM variable if already set" {
             Mock Get-EnvVar-ByName -MockWith { 
                 if ($name -eq "pvm") { return "existing_value" }
-                return ""
+                return $null
             }
             
             $result = Setup-PVM

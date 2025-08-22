@@ -11,7 +11,9 @@ function Setup-PVM {
         $newPath = $path
         $pathItems = $path.ToLower() -split ';'
 
-        $output = Set-EnvVar -name $PHP_CURRENT_ENV_NAME -value $PHP_CURRENT_VERSION_PATH
+        if ($null -eq (Get-EnvVar-ByName -name $PHP_CURRENT_ENV_NAME)) {
+            $output = Set-EnvVar -name $PHP_CURRENT_ENV_NAME -value $PHP_CURRENT_VERSION_PATH
+        }
         $parent = Split-Path $PHP_CURRENT_VERSION_PATH
         if (-not (Is-Directory-Exists -path $parent)) {
             $created = Make-Directory -path $parent
@@ -28,14 +30,19 @@ function Setup-PVM {
             $output = Set-EnvVar -name "pvm" -value $PVMRoot
         }
         
+        $result = @{ code = 0; message = "PVM environment has been set up."; color = "DarkGreen"}
         if ($newPath -ne $path) {
             $output = Set-EnvVar -name "Path" -value $newPath
-
-            return @{ code = $output; message = "PVM environment has been set up."; color = "DarkGreen"}
+            $result.code = $output
         }
-        return @{ code = 1; message = "PVM environment is already set up."; color = "DarkGreen"}
+
+        return $result
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Setup-PVM: Failed to set up PVM environment" -data $_.Exception.Message
+        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to set up PVM environment"
+            exception = $_
+        }
         return @{ code = -1; message = "Failed to set up PVM environment."; color = "DarkYellow"}
     }
 }

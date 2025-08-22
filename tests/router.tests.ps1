@@ -124,26 +124,8 @@ Describe "Invoke-PVMList Tests" {
         $result = Invoke-PVMList -arguments $arguments
         $result | Should -Be 0
         
-        Assert-MockCalled Get-Available-PHP-Versions -Times 1 -ParameterFilter { $getFromSource -eq $false }
+        Assert-MockCalled Get-Available-PHP-Versions -Times 1
         Assert-MockCalled Display-Installed-PHP-Versions -Times 0
-    }
-
-    It "Should call Get-Available-PHP-Versions with force when '-f' flag is provided" {
-        $arguments = @("available", "-f")
-        
-        $result = Invoke-PVMList -arguments $arguments
-        $result | Should -Be 0
-        
-        Assert-MockCalled Get-Available-PHP-Versions -Times 1 -ParameterFilter { $getFromSource -eq $true }
-    }
-
-    It "Should call Get-Available-PHP-Versions with force when '--force' flag is provided" {
-        $arguments = @("available", "--force")
-        
-        $result = Invoke-PVMList -arguments $arguments
-        $result | Should -Be 0
-        
-        Assert-MockCalled Get-Available-PHP-Versions -Times 1 -ParameterFilter { $getFromSource -eq $true }
     }
 
     It "Should call Display-Installed-PHP-Versions when no 'available' argument" {
@@ -179,9 +161,8 @@ Describe "Invoke-PVMInstall Tests" {
         $result | Should -Be 0
         
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
-            $version -eq "8.2.0" -and 
-            $includeXDebug -eq $false -and 
-            $enableOpcache -eq $false 
+            $version -eq "8.2.0" -and
+            $includeXDebug -eq $false
         }
     }
 
@@ -193,28 +174,6 @@ Describe "Invoke-PVMInstall Tests" {
         $result | Should -Be 0
         
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { $includeXDebug -eq $true }
-    }
-
-    It "Should handle --opcache flag" {
-        $arguments = @("8.2.0", "--opcache")
-        
-        $result = Invoke-PVMInstall -arguments $arguments
-        $result | Should -Be 0
-        
-        Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { $enableOpcache -eq $true }
-    }
-
-    It "Should handle multiple flags together" {
-        $arguments = @("8.2.0", "--xdebug", "--opcache")
-        
-        $result = Invoke-PVMInstall -arguments $arguments
-        $result | Should -Be 0
-        
-        Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
-            $version -eq "8.2.0" -and 
-            $includeXDebug -eq $true -and 
-            $enableOpcache -eq $true 
-        }
     }
 }
 
@@ -499,19 +458,10 @@ Describe "Show-Usage Tests" {
     }
 
     It "Should display current version when available" {
+        $global:PVM_VERSION = "2.0"
         Show-Usage
         
-        Assert-MockCalled Get-Current-PHP-Version -Times 1
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Running version : 8.2.0*" }
-    }
-
-    It "Should not display version when none is set" {
-        Mock Get-Current-PHP-Version { @{ version = $null } }
-        
-        Show-Usage
-        
-        Assert-MockCalled Get-Current-PHP-Version -Times 1
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Running version*" } -Times 0
+        Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Running version : 2.0*" }
     }
 
     It "Should display usage header" {

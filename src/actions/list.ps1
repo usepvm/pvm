@@ -4,16 +4,26 @@ function Cache-Fetched-PHP-Versions {
     param ($listPhpVersions)
 
     try {
+        if (-not $listPhpVersions -or $listPhpVersions.Count -eq 0) {
+            return -1
+        }
+        
         $jsonString = $listPhpVersions | ConvertTo-Json -Depth 3
         $versionsDataPath = "$DATA_PATH\available_versions.json"
         $created = Make-Directory -path (Split-Path $versionsDataPath)
         if ($created -ne 0) {
             Write-Host "Failed to create directory $(Split-Path $versionsDataPath)"
-            return
+            return -1
         }
         Set-Content -Path $versionsDataPath -Value $jsonString
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Cache-Fetched-PHP-Versions: Failed to cache fetched PHP versions" -data $_.Exception.Message
+        
+        return 0
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to cache fetched PHP versions"
+            exception = $_
+        }
+        return -1
     }
 }
 
@@ -51,11 +61,14 @@ function Get-From-Source {
             return @{}
         }
         
-        Cache-Fetched-PHP-Versions $fetchedVersionsGrouped
+        $cached = Cache-Fetched-PHP-Versions $fetchedVersionsGrouped
         
         return $fetchedVersionsGrouped
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-From-Source: Failed to fetch PHP versions from source" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to fetch PHP versions from source"
+            exception = $_
+        }
         return @{}
     }
 }
@@ -73,27 +86,56 @@ function Get-From-Cache {
             $list[$key] = $value
         }
         return $list
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-From-Cache: Failed to retrieve cached PHP versions" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to retrieve cached PHP versions"
+            exception = $_
+        }
+        return @{}
+    }
+}
+
+function Get-PHP-List-To-Install {
+    try {
+        $cacheFile = "$DATA_PATH\available_versions.json"
+        $fetchedVersionsGrouped = @{}
+        $useCache = $false
+
+        if (Test-Path $cacheFile) {
+            $fileAgeHours = (New-TimeSpan -Start (Get-Item $cacheFile).LastWriteTime -End (Get-Date)).TotalHours
+            $useCache = ($fileAgeHours -lt $CacheMaxHours)
+        }
+        
+        if ($useCache) {
+            Write-Host "`nReading from the cache (last updated $([math]::Round($fileAgeHours, 2)) hours ago)"
+            $fetchedVersionsGrouped = Get-From-Cache
+            if (-not $fetchedVersionsGrouped -or $fetchedVersionsGrouped.Count -eq 0) {
+                Write-Host "`nCache is empty, reading from the source..."
+                $fetchedVersionsGrouped = Get-From-Source
+            }
+        } else {
+            if (Test-Path $cacheFile) {
+                Write-Host "`nCache too old ($([math]::Round($fileAgeHours, 2)) hours), reading from the internet..."
+            } else {
+                Write-Host "`nCache missing, reading from the source..."
+            }
+            $fetchedVersionsGrouped = Get-From-Source
+        }
+        
+        return $fetchedVersionsGrouped
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to get fetch PHP versions"
+            exception = $_
+        }
         return @{}
     }
 }
 
 function Get-Available-PHP-Versions {
-    param ($getFromSource = $null)
     
     try {
-        $fetchedVersionsGrouped = @{}
-
-        if (-not $getFromSource) {
-            Write-Host "`nReading from the cache"
-            $fetchedVersionsGrouped = Get-From-Cache
-        }
-        
-        if ($fetchedVersionsGrouped.Count -eq 0) {
-            Write-Host "`nCache empty!, Reading from the internet..."
-            $fetchedVersionsGrouped = Get-From-Source
-        }
+        $fetchedVersionsGrouped = Get-PHP-List-To-Install
 
         if ($fetchedVersionsGrouped.Count -eq 0) {
             Write-Host "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
@@ -119,7 +161,10 @@ function Get-Available-PHP-Versions {
         Write-Host $msg
         return 0
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Available-PHP-Versions: Failed to get available PHP versions" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to get available PHP versions"
+            exception = $_
+        }
         return 1
     }
 }
@@ -150,8 +195,11 @@ function Display-Installed-PHP-Versions {
             }
         }
         return 0
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Display-Installed-PHP-Versions: Failed to display installed PHP versions" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to display installed PHP versions"
+            exception = $_
+        }
         return 1
     }
     

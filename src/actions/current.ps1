@@ -22,7 +22,10 @@ function Get-PHP-Status {
             }
         }    
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-PHP-Status: Failed to retrieve PHP status" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to retrieve PHP status"
+            exception = $_
+        }
         Write-Host "An error occurred while checking PHP status: $_"
     }
     
@@ -49,7 +52,10 @@ function Get-Current-PHP-Version {
             status = Get-PHP-Status -phpPath $currentPhpVersionPath
         }
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-Current-PHP-Version: Failed to retrieve current PHP version" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to retrieve current PHP version"
+            exception = $_
+        }
         return $emptyResult
     }
 }

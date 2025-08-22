@@ -362,7 +362,8 @@ Describe "Get-Current-PHP-Version Function Tests" {
             # Assert
             $result.version | Should -Be "8.1.0"
             $result.path | Should -Be "C:\php\8.1.0"
-            $result.status | Should -Be -Equal @{ opcache = $false; xdebug = $false }
+            $result.status.opcache | Should -Be $false
+            $result.status.xdebug | Should -Be $false
         }
     }
 }

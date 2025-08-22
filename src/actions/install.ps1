@@ -25,7 +25,10 @@ function Get-PHP-Versions-From-Url {
 
         return $formattedList
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-PHP-Versions-From-Url : Failed to fetch versions from $url" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to fetch versions from $url"
+            exception = $_
+        }
         return @()
     }
 }
@@ -52,7 +55,10 @@ function Get-PHP-Versions {
 
         return $fetchedVersions
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-PHP-Versions : Failed to get PHP versions" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to get PHP versions"
+            exception = $_
+        }
         return @{}
     }
 }
@@ -73,7 +79,10 @@ function Display-Version-List {
             }
         }
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Display-Version-List : Failed to display version list" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to display version list"
+            exception = $_
+        }
     }
 }
 
@@ -87,7 +96,10 @@ function Download-PHP-From-Url {
         Invoke-WebRequest -Uri $url -OutFile "$destination\$fileName"
         return $destination
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Download-PHP-From-Url : Failed to download PHP from $url" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to download PHP from $url"
+            exception = $_
+        }
         return $null
     }
 }
@@ -120,7 +132,10 @@ function Download-PHP {
             }
         }
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Download-PHP : Failed to download PHP version $versionObject.version" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to download PHP version $($versionObject.version)"
+            exception = $_
+        }
     }
     return $null
 }
@@ -132,7 +147,10 @@ function Extract-Zip {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Extract-Zip : Failed to extract zip file from $zipPath" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to extract zip file from $zipPath"
+            exception = $_
+        }
     }
 }
 
@@ -145,7 +163,10 @@ function Extract-And-Configure {
         Copy-Item -Path "$fileNamePath\php.ini-development" -Destination "$fileNamePath\php.ini"
         Remove-Item -Path $path
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Extract-And-Configure : Failed to extract and configure PHP from $path" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to extract and configure PHP from $path"
+            exception = $_
+        }
     }
 }
 
@@ -181,11 +202,23 @@ function Config-XDebug {
 
     try {
 
+        if ([string]::IsNullOrWhiteSpace($version) -or [string]::IsNullOrWhiteSpace($phpPath)) {
+            Write-Host "`nVersion and PHP path cannot be empty!"
+            return -1
+        }
+        
+        if (-not (Test-Path $phpPath)) {
+            Write-Host "$phpPath is not a valid path"
+            return -1
+        }
+
         $phpIniPath = "$phpPath\php.ini"
         if (-not (Test-Path $phpIniPath)) {
             Write-Host "php.ini not found at: $phpIniPath"
-            return
+            return -1
         }
+
+        $version = ($version -split '\.')[0..1] -join '.'
 
         # Fetch xdebug links
         $baseUrl = "https://xdebug.org"
@@ -194,14 +227,14 @@ function Config-XDebug {
         # Get the latest xdebug version
         if ($xDebugList.Count -eq 0) {
             Write-Host "`nNo xdebug version found for $version"
-            return
+            return -1
         }
         $xDebugSelectedVersion = $xDebugList[0]
 
         $created = Make-Directory -path "$phpPath\ext"
         if ($created -ne 0) {
             Write-Host "Failed to create directory '$phpPath\ext'"
-            return
+            return -1
         }
 
         Write-Host "`nDownloading XDEBUG $($xDebugSelectedVersion.xDebugVersion)..."
@@ -216,9 +249,14 @@ function Config-XDebug {
         $xDebugConfig = $xDebugConfig -replace "\ +"
         Add-Content -Path $phpIniPath -Value $xDebugConfig
         Write-Host "`nXDEBUG configured successfully for PHP version $version"
+        return 0
     } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Config-XDebug : Failed to configure XDebug for PHP version $version" -data $_.Exception.Message
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to configure XDebug for PHP version $version"
+            exception = $_
+        }
         Write-Host "`nFailed to configure XDebug for PHP version $version"
+        return -1
     }
 }
 
@@ -238,7 +276,6 @@ function Get-XDebug-FROM-URL {
         # Return the filtered links (PHP version names)
         $formattedList = @()
         $filteredLinks = $filteredLinks | ForEach-Object {
-            # $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
             $fileName = $_.href -split "/"
             $fileName = $fileName[$fileName.Count - 1]
             $xDebugVersion = "2.0"
@@ -249,8 +286,11 @@ function Get-XDebug-FROM-URL {
         }
 
         return $formattedList
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-XDebug-FROM-URL : Failed to fetch xdebug versions from $url" -data $_.Exception.Message
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to fetch xdebug versions from $url"
+            exception = $_
+        }
         return @()
     }
 
@@ -265,7 +305,7 @@ function Enable-Opcache {
         $phpIniPath = "$phpPath\php.ini"
         if (-not (Test-Path $phpIniPath)) {
             Write-Host "php.ini not found at: $phpIniPath"
-            return
+            return -1
         }
 
         $phpIniContent = Get-Content $phpIniPath
@@ -277,9 +317,15 @@ function Enable-Opcache {
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
         Write-Host "`nOpcache enabled successfully for PHP version $version"
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Enable-Opcache : Failed to enable opcache for PHP at $phpPath" -data $_.Exception.Message
+        
+        return 0
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to enable opcache for PHP at $phpPath"
+            exception = $_
+        }
         Write-Host "`nFailed to enable opcache for PHP version $version"
+        return -1
     }
 }
 
@@ -297,8 +343,7 @@ function Select-Version {
         $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
 
         if (-not $selectedVersionInput) {
-            Write-Host "`nInstallation cancelled."
-            return -1
+            return $null
         }
 
         $selectedVersionObject = $matchingVersions.Values | ForEach-Object {
@@ -309,22 +354,21 @@ function Select-Version {
     }
 
     if (-not $selectedVersionObject) {
-        $inputDisplay = if ($selectedVersionInput) { $selectedVersionInput } else { $version }
-        Write-Host "`nNo matching version found for '$inputDisplay'."
-        return -1
+        Write-Host "`nNo matching version found for '$selectedVersionInput'."
+        return $null
     }
 
     return $selectedVersionObject
 }
 
 function Install-PHP {
-    param ($version, $includeXDebug = $false, $enableOpcache = $false)
+    param ($version, $includeXDebug = $false)
 
     try {
         if (Is-PHP-Version-Installed -version $version) {
-            Write-Host "`nVersion '$($version)' already installed."
-            Write-Host "`nRun: pvm use $version"
-            return -1
+            $message = "Version '$($version)' already installed."
+            $message += "`nRun: pvm use $version"
+            return @{ code = -1; message = $message }
         }
 
         $foundInstalledVersions = Get-Matching-PHP-Versions -version $version
@@ -336,7 +380,7 @@ function Install-PHP {
                 $foundInstalledVersions | ForEach-Object { Write-Host " - $_" }
                 $response = Read-Host "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 if ($response -ne "y" -and $response -ne "Y") {
-                    return -1
+                    return @{ code = -1; message = "Installation cancelled" }
                 }
                 $version = $familyVersion
             }
@@ -346,30 +390,27 @@ function Install-PHP {
         $matchingVersions = Get-PHP-Versions -version $version
 
         if ($matchingVersions.Count -eq 0) {
-            $msg = "`nNo matching PHP versions found for '$version', Check one of the following:"
+            $msg = "No matching PHP versions found for '$version', Check one of the following:"
             $msg += "`n- Ensure the version is correct."
             $msg += "`n- Check your internet connection or the source URL."
             $msg += "`n- Use 'pvm list available' to see available versions."
             $msg += "`n- If you are trying to install a version that was announced recently, it may not be available for download yet."
-            Write-Host $msg
-            return -1
+            return @{ code = -1; message = $msg }
         }
 
         $selectedVersionObject = Select-Version -matchingVersions $matchingVersions
-        if ($selectedVersionObject -eq -1) {
-            return -1
+        if (-not $selectedVersionObject) {
+            return @{ code = -1; message = "Installation cancelled" }
         }
 
         if (Is-PHP-Version-Installed -version $selectedVersionObject.version) {
-            Write-Host "`nVersion '$($selectedVersionObject.version)' already installed."
-            return -1
+            return @{ code = -1; message = "Version '$($selectedVersionObject.version)' already installed" }
         }
 
         $destination = Download-PHP -version $selectedVersionObject
 
         if (-not $destination) {
-            Write-Host "`nFailed to download PHP version $version."
-            return -1
+            return @{ code = -1; message = "Failed to download PHP version $version"; color = "DarkYellow" }
         }
 
         Write-Host "`nExtracting the downloaded zip ..."
@@ -382,21 +423,21 @@ function Install-PHP {
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
         
-        if ($enableOpcache) {
-            Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
-        }
+        Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
 
         if ($includeXDebug) {
-            $version = ($selectedVersionObject.version -split '\.')[0..1] -join '.'
-            Config-XDebug -version $version -phpPath "$destination\$($selectedVersionObject.version)"
+            $xdebugConfigured = Config-XDebug -version $selectedVersionObject.version -phpPath "$destination\$($selectedVersionObject.version)"
         }
 
-        Write-Host "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$($selectedVersionObject.version)'"
-        Write-Host "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"
+        $message = "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$($selectedVersionObject.version)'"
+        $message += "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"
 
-        return 0
-    } catch {
-        $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Install-PHP : Failed to install PHP version $version" -data $_.Exception.Message
-        return -1
+        return @{ code = 0; message = $message; color = "DarkGreen" }
+    } catch {        
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name): Failed to install PHP version $version"
+            exception = $_
+        }
+        return @{ code = -1; message = "Failed to install PHP version $version"; color = "DarkYellow" }
     }
 }

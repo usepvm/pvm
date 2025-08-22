@@ -34,10 +34,16 @@ try {
         exit 1
     }
 
-    $exitCode = $actions[$operation].action.Invoke()
+    $exitCode = $($actions[$operation].action.Invoke())
     exit $exitCode
 } catch {
-    $logged = Log-Data -logPath $LOG_ERROR_PATH -message "PVM: An error occurred during operation '$operation'" -data $_.Exception.Message
+    $logged = Log-Data -data @{
+        header = "$($MyInvocation.MyCommand.Name): An error occurred during operation '$operation'"
+        file = $($_.InvocationInfo.ScriptName)
+        line = $($_.InvocationInfo.ScriptLineNumber)
+        message = $_.Exception.Message
+        positionMessage = $_.InvocationInfo.PositionMessage
+    }
     Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
     exit 1
 }

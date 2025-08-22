@@ -276,25 +276,68 @@ Describe "System Functions Tests" {
 
     Describe "Make-Symbolic-Link" {
         Context "When creating symbolic links" {
-            It "Creates a symbolic link successfully (admin required)" -Skip:(! (Is-Admin)) {
+            It "Creates a symbolic link successfully when running as admin" {
+                # Mock Is-Admin to return true
+                Mock Is-Admin { return $true }
+                
+                # Mock New-Item to simulate successful symbolic link creation
+                Mock New-Item { 
+                    param($ItemType, $Path, $Target)
+                    if ($ItemType -eq "SymbolicLink") {
+                        # Create a dummy file to simulate the link
+                        New-Item -Path $Path -ItemType File -Force | Out-Null
+                        return @{ FullName = $Path }
+                    }
+                } -ParameterFilter { $ItemType -eq "SymbolicLink" }
+                
                 $linkPath = "TestDrive:\test_link"
                 $targetPath = "$STORAGE_PATH\php\8.1"
                 
                 $result = Make-Symbolic-Link -link $linkPath -target $targetPath
-                $result | Should -Be 0
+                $result.code | Should -Be 0
+                $result.message | Should -Match "Created symbolic link"
+                $result.color | Should -Be "DarkGreen"
                 
-                Test-Path $linkPath | Should -Be $true
-                (Get-Item $linkPath).LinkType | Should -Be "SymbolicLink"
+                # Verify New-Item was called with correct parameters
+                Assert-MockCalled New-Item -ParameterFilter { 
+                    $ItemType -eq "SymbolicLink" -and 
+                    $Path -eq $linkPath -and 
+                    $Target -eq $targetPath 
+                }
+            }
+            
+            It "Creates a symbolic link successfully using elevated command" {
+                # Mock Is-Admin to return false
+                Mock Is-Admin { return $false }
+                
+                # Mock Run-Command to simulate successful elevation
+                Mock Run-Command { return 0 }
+                
+                $linkPath = "TestDrive:\test_link_2"
+                $targetPath = "$STORAGE_PATH\php\8.1"
+                
+                $result = Make-Symbolic-Link -link $linkPath -target $targetPath
+                
+                $result.code | Should -Be 0
+                $result.message | Should -Match "Created symbolic link"
+                $result.color | Should -Be "DarkGreen"
+                
+                # Verify Run-Command was called with the symbolic link command
+                Assert-MockCalled Run-Command -ParameterFilter { 
+                    $command -like "*New-Item -ItemType SymbolicLink*" -and
+                    $command -like "*$linkPath*" -and
+                    $command -like "*$targetPath*"
+                }
             }
 
             It "Returns -1 for empty link path" {
                 $result = Make-Symbolic-Link -link "" -target "TestDrive:\target"
-                $result | Should -Be -1
+                $result.code | Should -Be -1
             }
 
             It "Returns -1 for empty target path" {
                 $result = Make-Symbolic-Link -link "TestDrive:\link" -target ""
-                $result | Should -Be -1
+                $result.code | Should -Be -1
             }
         }
     }
@@ -369,15 +412,25 @@ Describe "System Functions Tests" {
     Describe "Log-Data" {
         Context "When logging data" {
             It "Logs data successfully" {
-                $logPath = "TestDrive:\logs\test.log"
-                $result = Log-Data -logPath $logPath -message "Test message" -data "Test data"
+                $LOG_ERROR_PATH = "TestDrive:\logs\test.log"
+                $result = Log-Data -data @{
+                    header = "Test message"
+                    exception = @{
+                        Exception = @{ Message = "Test data" }
+                        InvocationInfo = @{
+                            ScriptName = "test.ps1"
+                            ScriptLineNumber = 1
+                            PositionMessage = "Test position"
+                        }
+                    }
+                }
                 $result | Should -Be 0
-                Test-Path $logPath | Should -Be $true
+                Test-Path $LOG_ERROR_PATH | Should -Be $true
                 # Get the actual content
-                $content = Get-Content $logPath -Raw
+                $content = Get-Content $LOG_ERROR_PATH -Raw
                 
                 # Verify the complete log format
-                $content | Should -Match "\[.*\] Test message :\s*Test data"
+                $content | Should -Match "\[.*\] Test message :(.|\s)*Message: Test data"
                 
                 # Alternatively, you could check parts separately
                 $content | Should -Match "Test message"
@@ -410,7 +463,7 @@ Describe "System Functions Tests" {
                 Set-EnvVar -name "TEST_PATH2" -value $null
             }
 
-            It "Optimizes PATH by replacing paths with variables" -Skip:(! (Is-Admin)) {
+            It "Optimizes PATH by replacing paths with variables" {
                 $result = Optimize-SystemPath
                 $result | Should -Be 0
                 

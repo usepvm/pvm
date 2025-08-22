@@ -3,7 +3,7 @@ BeforeAll {
 
     # Mock global variables that would be loaded from config
     $global:PVM_VERSION = "1.0.0"
-    $global:LOG_ERROR_PATH = "C:\PVM\Logs\error.log"
+    $global:LOG_ERROR_PATH = "TestDrive:\logs\error.log"
     
     # Mock PSScriptRoot for dot sourcing tests
     $global:PSScriptRoot = "C:\PVM"

@@ -65,7 +65,7 @@ function Format-NiceTimestamp {
 }
 
 function Show-Log {
-    param($pageSize = 10)
+    param($pageSize = $DefaultLogPageSize)
     
     try {
         if ($pageSize -notmatch '^\d+$' -or [int]$pageSize -le 0) {

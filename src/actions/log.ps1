@@ -68,7 +68,7 @@ function Show-Log {
     param($pageSize = 10)
     
     try {
-        if ($pageSize -notmatch '^-?\d+$') {
+        if ($pageSize -notmatch '^\d+$' -or [int]$pageSize -le 0) {
             Write-Host "`nInvalid page size: $pageSize" -ForegroundColor Red
             return -1
         }

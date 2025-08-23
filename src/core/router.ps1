@@ -160,9 +160,9 @@ function Invoke-PVMLog {
     param($arguments)
     
     
-    $pageSize = $arguments | Where-Object { $_ -match '--pageSize=\d+$' }
-    if ($null -ne $pageSize) {
-        $pageSize = $pageSize -replace '^--pageSize=', ''
+    $pageSizeArg = $arguments | Where-Object { $_ -match '^--pageSize=(.+)$' }
+    if ($pageSizeArg) {
+        $pageSize = $pageSizeArg -replace '^--pageSize=', ''
     } else {
         $pageSize = 10
     }

@@ -228,8 +228,6 @@ function Log-Data {
         $content = "`n--------------------------"
         $content += "`n[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($data.header) :"
         if ($data.exception) {
-            $content += "`nFile: $($data.exception.InvocationInfo.ScriptName)"
-            $content += "`nLine: $($data.exception.InvocationInfo.ScriptLineNumber)"
             $content += "`nMessage: $($data.exception.Exception.Message)"
             $content += "`nPosition: $($data.exception.InvocationInfo.PositionMessage)"
         }

@@ -123,12 +123,10 @@ function Show-Log {
                     $header = $null
                     
                     # Check if this is a structured error log with File: Line: Message: Position: format
-                    if ($fullMessageText -match '(?s)File:\s*(.+?)\s*\nLine:\s*(\d+)\s*\nMessage:\s*(.+?)\s*\nPosition:\s*(.*)') {
-                        $file = $matches[1].Trim()
-                        $lineNumber = $matches[2].Trim()
-                        $errorMessage = $matches[3].Trim()
-                        $positionDetail = $matches[4].Trim()
-                        $header = $firstMessage.Trim()
+                    if ($fullMessageText -match '(?s)Message:\s*(.+?)\s*\nPosition:\s*(.*)') {
+                        $errorMessage = $matches[1].Trim()
+                        $positionDetail = $matches[2].Trim()
+                        $header = $firstMessage.Trim(':')
                     }
                     
                     # Format the timestamp nicely
@@ -138,8 +136,6 @@ function Show-Log {
                         Timestamp = $timestamp
                         Operation = $operation
                         Message = $fullMessageText
-                        File = $file
-                        Line = $lineNumber
                         ErrorMessage = $errorMessage
                         PositionDetail = $positionDetail
                         Header = $header
@@ -186,52 +182,26 @@ function Show-Log {
                     default { "White" }
                 }
                 
+                # Display structured error format
+                Write-Host "Header  : " -NoNewline -ForegroundColor Gray
+                Write-Host "$($entry.Header)" -ForegroundColor White
+                
+                Write-Host "Message : " -NoNewline -ForegroundColor Gray
+                # Handle multi-line error messages with proper indentation (23 spaces to align with "Message :")
+                $errorLines = $entry.ErrorMessage -split "`n"
+                foreach ($errorLine in $errorLines) {
+                    if ($errorLine.Trim() -ne '') {
+                        Write-Host "$($errorLine)" -ForegroundColor White
+                    }
+                }
+                
                 # Display entry with nice formatting
-                Write-Host "Time    : " -NoNewline -ForegroundColor Gray
+                Write-Host "When    : " -NoNewline -ForegroundColor Gray
                 Write-Host "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -NoNewline -ForegroundColor White
                 Write-Host "($($entry.NiceTime.Relative))" -ForegroundColor DarkGray
                 
-                # Check if this is a structured error entry
-                if ($entry.File -and $entry.Line -and $entry.ErrorMessage) {
-                    # Display structured error format
-                    Write-Host "File    : " -NoNewline -ForegroundColor Gray
-                    Write-Host "$($entry.File)" -ForegroundColor White
-                    
-                    Write-Host "Header  : " -NoNewline -ForegroundColor Gray
-                    Write-Host "$($entry.Header)" -ForegroundColor White
-                    
-                    Write-Host "Line    : " -NoNewline -ForegroundColor Gray
-                    Write-Host "$($entry.Line)" -ForegroundColor White
-                    
-                    Write-Host "Message : " -NoNewline -ForegroundColor Gray
-                    # Handle multi-line error messages with proper indentation (23 spaces to align with "Message :")
-                    $errorLines = $entry.ErrorMessage -split "`n"
-                    foreach ($errorLine in $errorLines) {
-                        if ($errorLine.Trim() -ne '') {
-                            Write-Host "$($errorLine)" -ForegroundColor White
-                        }
-                    }
-                    Write-Host "Detail  : " -NoNewline -ForegroundColor Gray
-                    Write-Host "$($entry.PositionDetail)" -ForegroundColor White
-                } 
-                # else {
-                #     # Display regular format for non-structured entries
-                #     Write-Host "Function: " -NoNewline -ForegroundColor Gray
-                #     Write-Host "$($entry.Operation)" -ForegroundColor $operationColor
-                    
-                #     Write-Host "Message : " -NoNewline -ForegroundColor Gray
-                    
-                #     # Handle multi-line messages with proper indentation
-                #     $messageLines = $entry.Message -split "`n"
-                #     if ($messageLines.Count -eq 1) {
-                #         Write-Host "$($entry.Message)" -ForegroundColor White
-                #     } else {
-                #         Write-Host "$($messageLines[0])" -ForegroundColor White
-                #         for ($j = 1; $j -lt $messageLines.Count; $j++) {
-                #             Write-Host "          $($messageLines[$j])" -ForegroundColor White
-                #         }
-                #     }
-                # }
+                Write-Host "Where   : " -NoNewline -ForegroundColor Gray
+                Write-Host "$($entry.PositionDetail)" -ForegroundColor White
                 
                 Write-Host ""
                 Write-Host ("-" * 80) -ForegroundColor DarkGray

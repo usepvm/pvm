@@ -164,7 +164,7 @@ function Invoke-PVMLog {
     if ($pageSizeArg) {
         $pageSize = $pageSizeArg -replace '^--pageSize=', ''
     } else {
-        $pageSize = 10
+        $pageSize = 5
     }
     $code = Show-Log -pageSize $pageSize
     return $code

@@ -1,5 +1,5 @@
 function Detect-PHP-VersionFromProject {
-    
+
     try {
         # 1. Check .php-version
         if (Test-Path ".php-version") {
@@ -44,15 +44,15 @@ function Update-PHP-Version {
         } else {
             $pathVersionObject = @{ code = 0; version = $variableValue; path = $phpPath }
         }
-        
+
         if (-not $pathVersionObject) {
             return @{ code = -1; message = "PHP version $variableValue was not found!"; color = "DarkYellow"}
         }
-        
+
         if ($pathVersionObject.code -ne 0) {
             return $pathVersionObject
         }
-        
+
         if (-not $pathVersionObject.path) {
             return @{ code = -1; message = "PHP version $($pathVersionObject.version) was not found!"; color = "DarkYellow"}
         }
@@ -72,21 +72,21 @@ function Update-PHP-Version {
 }
 
 function Auto-Select-PHP-Version {
-    
+
     $version = Detect-PHP-VersionFromProject
-    
+
     if (-not $version) {
         return @{ code = -1; message = "Could not detect PHP version from .php-version or composer.json"; color = "DarkYellow"}
     }
-    
+
     Write-Host "`nDetected PHP version from project: $version"
-    
+
     $installedVersions = Get-Matching-PHP-Versions -version $version
     if (-not $installedVersions) {
         $message = "PHP '$version' is not installed."
         $message += "`nRun: pvm install $version"
         return @{ code = -1; message = $message; }
     }
-    
+
     return @{ code = 0; version = $version; }
 }

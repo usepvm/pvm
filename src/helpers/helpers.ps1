@@ -115,7 +115,7 @@ function Make-Symbolic-Link {
         if (Test-Path $link) {
             $item = Get-Item -LiteralPath $link -Force
             if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
-                Remove-Item -Path $link -Recurse -Force
+                [System.IO.Directory]::Delete($link)
             } else {
                 return @{ code = -1; message = "Link '$link' is not a symbolic link!"; color = "DarkYellow" }
             }

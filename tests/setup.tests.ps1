@@ -203,7 +203,7 @@ Describe "Setup-PVM" {
             Should -Invoke Set-EnvVar -ParameterFilter { $name -eq $PHP_CURRENT_ENV_NAME -and $value -eq $PHP_CURRENT_VERSION_PATH } -Exactly 1
         }
 
-        It "Should not set PHP_CURRENT_ENV_NAME variable if already set" -Tag i {
+        It "Should not set PHP_CURRENT_ENV_NAME variable if already set" {
             Mock Get-EnvVar-ByName -MockWith { 
                 Write-Host $name
                 if ($name -eq $PHP_CURRENT_ENV_NAME) { return "existing_value" }

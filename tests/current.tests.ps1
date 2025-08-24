@@ -354,7 +354,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
             }
         }
         
-        It "Should handle Get-PHP-Status error gracefully" -Tag i {
+        It "Should handle Get-PHP-Status error gracefully" {
             Mock Is-Directory-Exists { return $true }
             # Act
             $result = Get-Current-PHP-Version

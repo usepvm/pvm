@@ -1,4 +1,8 @@
 
+function Get-ConsoleKey {
+    param([bool]$intercept = $true)
+    return [System.Console]::ReadKey($intercept)
+}
 
 function Format-NiceTimestamp {
     param($timestamp)
@@ -68,7 +72,7 @@ function Show-Log {
     param($pageSize = $DefaultLogPageSize)
     
     try {
-        if ($pageSize -notmatch '^\d+$' -or [int]$pageSize -le 0) {
+        if ($pageSize -notmatch '^-?\d+$') {
             Write-Host "`nInvalid page size: $pageSize" -ForegroundColor Red
             return -1
         }
@@ -81,7 +85,7 @@ function Show-Log {
         
         # Check if log file exists
         if (-not (Test-Path $LOG_ERROR_PATH)) {
-            Write-Host "Log file not found: $LOG_ERROR_PATH" -ForegroundColor Red
+            Write-Host "`nLog file not found: $LOG_ERROR_PATH" -ForegroundColor Red
             return -1
         }
 
@@ -197,7 +201,7 @@ function Show-Log {
             if ($currentIndex -lt $totalEntries) {
                 Write-Host "`nPress Left/Up arrow for previous page, Right/Down arrow, [Enter] or [Space] for next page, [Q] to quit: " -NoNewline -ForegroundColor Yellow
                 
-                $key = [System.Console]::ReadKey($true)
+                $key = Get-ConsoleKey
                 
                 switch ($key.Key) {
                     { $_ -in @("LeftArrow", "UpArrow") } { $currentIndex = [Math]::Max(0, $currentIndex - (2 * $PageSize)) }
@@ -207,7 +211,7 @@ function Show-Log {
                 }
             } else {
                 Write-Host "End of log reached. Press Left/Up arrow to go back or any other key to exit..." -ForegroundColor Green
-                $key = [System.Console]::ReadKey($true)
+                $key = Get-ConsoleKey
                 if ($key.Key -in @("LeftArrow", "UpArrow")) {
                     # Go back one page from the end
                     $currentIndex = [Math]::Max(0, $currentIndex - (2 * $PageSize))

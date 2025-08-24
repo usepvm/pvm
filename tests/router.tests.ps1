@@ -326,6 +326,36 @@ Describe "Invoke-PVMIni Tests" {
     }
 }
 
+Describe "Invoke-PVMLog Tests" -Tag i {
+    BeforeAll {
+        # Default log page size value for tests
+        $global:DefaultLogPageSize = 5
+        Mock Show-Log { 0 }
+    }
+    
+    It "Calls Show-Log with provided --pageSize argument" {
+        $arguments = @("--pageSize=5")
+        Invoke-PVMLog -arguments $arguments | Should -Be 0
+
+        Assert-MockCalled Show-Log -Exactly 1 -ParameterFilter { $pageSize -eq "5" }
+    }
+    
+    It "Calls Show-Log with default page size when no argument is given" {
+        $arguments = @()
+        Invoke-PVMLog -arguments $arguments | Should -Be 0
+
+        Assert-MockCalled Show-Log -Exactly 1 -ParameterFilter { $pageSize -eq 5 }
+    }
+    
+    It "Passes return code from Show-Log back to caller" {
+        Mock Show-Log { return 0 }
+        (Invoke-PVMLog -arguments @("--pageSize=2")) | Should -Be 0
+
+        Mock Show-Log { return -1 }
+        (Invoke-PVMLog -arguments @("--pageSize=2")) | Should -Be -1
+    }
+}
+
 
 Describe "Get-Actions Tests" {
     BeforeEach {

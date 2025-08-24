@@ -94,7 +94,6 @@ function Run-Tests {
             header = "$($MyInvocation.MyCommand.Name): Failed to run tests"
             exception = $_
         }
-        Write-Host "`nFailed to run tests."
         return @{ code = 1; message = "Failed to run tests."; color = "DarkYellow" }
     }
 }

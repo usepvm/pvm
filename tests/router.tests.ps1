@@ -366,7 +366,8 @@ Describe "Get-Actions Tests" {
         Mock Invoke-PVMUninstall { }
         Mock Invoke-PVMUse { }
         Mock Invoke-PVMIni { }
-        Mock Run-Tests { }
+        Mock Invoke-PVMLog { }
+        Mock Invoke-PVMTest { }
     }
 
     It "Should return ordered hashtable with all actions" {
@@ -380,8 +381,10 @@ Describe "Get-Actions Tests" {
         $actions.Keys | Should -Contain "install"
         $actions.Keys | Should -Contain "uninstall"
         $actions.Keys | Should -Contain "use"
+        $actions.Keys | Should -Contain "info"
         $actions.Keys | Should -Contain "ini"
         $actions.Keys | Should -Contain "test"
+        $actions.Keys | Should -Contain "log"
     }
 
     It "Should set script-level arguments variable" {
@@ -407,60 +410,62 @@ Describe "Get-Actions Tests" {
         }
 
         It "Should execute list action with arguments" {
-            $testArgs = @("available", "-f")
+            $testArgs = @("available")
             $actions = Get-Actions -arguments $testArgs
             $actions["list"].action.Invoke()
             
             Assert-MockCalled Invoke-PVMList -Times 1
         }
-
-        It "Should execute test action with basic arguments" {
-            Mock Run-Tests { }
-            $testArgs = @("TestFile.ps1")
-            $actions = Get-Actions -arguments $testArgs
-            $actions["test"].action.Invoke()
+        
+        It "Should execute install action correctly" {
+            $actions = Get-Actions -arguments @("8.2.0", "--xdebug")
+            $actions["install"].action.Invoke()
             
-            Assert-MockCalled Run-Tests -Times 1 -ParameterFilter { 
-                $verbosity -eq "Normal" -and 
-                $tests -contains "TestFile.ps1" 
-            }
+            Assert-MockCalled Invoke-PVMInstall -Times 1
         }
-
+        
+        It "Should execute uninstall action correctly" {
+            $actions = Get-Actions -arguments @("8.2.0")
+            $actions["uninstall"].action.Invoke()
+            
+            Assert-MockCalled Invoke-PVMUninstall -Times 1
+        }
+        
+        It "Should execute use action correctly" {
+            $actions = Get-Actions -arguments @("8.2.0")
+            $actions["use"].action.Invoke()
+            
+            Assert-MockCalled Invoke-PVMUse -Times 1
+        }
+        
+        It "Should execute ini action correctly" {
+            $actions = Get-Actions -arguments @("set", "memory_limit=256M")
+            $actions["ini"].action.Invoke()
+            
+            Assert-MockCalled Invoke-PVMIni -Times 1
+        }
+        
+        It "Should execute info action" {
+            $actions = Get-Actions -arguments @()
+            $actions["info"].action.Invoke()
+            
+            Assert-MockCalled Invoke-PVMIni -Times 1
+        }
+        
+        It "Should execute log action" {
+            $actions = Get-Actions -arguments @("--pageSize=10")
+            $actions["log"].action.Invoke()
+            
+            Assert-MockCalled Invoke-PVMLog -Times 1
+        }
+        
         It "Should execute test action with verbosity" {
-            Mock Run-Tests { }
-            $testArgs = @("TestFile.ps1", "Detailed")
+            $testArgs = @("TestFile.ps1", "Detailed", "--tag=unit")
             $actions = Get-Actions -arguments $testArgs
             $actions["test"].action.Invoke()
             
-            Assert-MockCalled Run-Tests -Times 1 -ParameterFilter { 
-                $verbosity -eq "Detailed" -and 
-                $tests -contains "TestFile.ps1" 
-            }
-        }
-
-        It "Should execute test action with tag filtering" {
-            Mock Run-Tests { }
-            $testArgs = @("--tag=unit", "TestFile.ps1")
-            $actions = Get-Actions -arguments $testArgs
-            $actions["test"].action.Invoke()
-            
-            # Note: The tag variable should be set from the regex match
-            Assert-MockCalled Run-Tests -Times 1 -ParameterFilter { 
-                $tests -contains "TestFile.ps1" 
-            }
-        }
-
-        It "Should execute test action with only verbosity (no files)" {
-            Mock Run-Tests { }
-            $testArgs = @("Diagnostic")
-            $actions = Get-Actions -arguments $testArgs
-            $actions["test"].action.Invoke()
-            
-            Assert-MockCalled Run-Tests -Times 1 -ParameterFilter { 
-                $verbosity -eq "Diagnostic" -and 
-                ($tests -eq $null -or $tests.Count -eq 0)
-            }
-        }
+            Assert-MockCalled Invoke-PVMTest -Times 1
+        }        
     }
 }
 

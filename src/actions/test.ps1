@@ -1,4 +1,37 @@
 
+function Get-Tests-Files {
+    param ($tests)
+    
+    if ($tests) {
+        $tests = $tests | ForEach-Object {
+            return @{
+                Name = "$_.tests.ps1"
+                FullName = "$PVMRoot\tests\$_.tests.ps1"
+            }
+        }
+    } else {
+        $tests = Get-ChildItem "$PVMRoot\tests\*.tests.ps1"
+    }
+    
+    return $tests
+} 
+
+function Run-Test-File {
+    param ($config, $file, $verbosity)
+    
+    if (-not (Test-Path $file.FullName)) {
+        return @{ Name = $file.Name; Count = 1; Message = "File not found!" }
+    }
+    
+    $config.Run.Path = $file.FullName
+    $config.Run.PassThru = $true
+    $testResult = Invoke-Pester -Configuration $config
+    if ($LASTEXITCODE -ne 0) {
+        return @{ Name = $file.Name; Count = $($testResult.FailedCount); Message = "$($testResult.FailedCount) tests" }
+    }
+    
+    return $null
+}
 
 function Run-Tests {
     param ($verbosity = "Normal", $tests = $null, $tag = $null)
@@ -7,16 +40,7 @@ function Run-Tests {
         $config = New-PesterConfiguration
         $config.Output.Verbosity = $verbosity
         
-        if ($tests) {
-            $tests = $tests | ForEach-Object {
-                return @{
-                    Name = "$_.tests.ps1"
-                    FullName = "$PVMRoot\tests\$_.tests.ps1"
-                }
-            }
-        } else {
-            $tests = Get-ChildItem "$PVMRoot\tests\*.tests.ps1"
-        }
+        $tests = Get-Tests-Files -tests $tests
         
         if (($tests.Length -eq 1) -and ($null -ne $tag)) {
             $config.Filter.Tag = $tag
@@ -27,25 +51,20 @@ function Run-Tests {
         Write-Host "`nRunning tests with verbosity: $verbosity" -ForegroundColor Cyan
         $tests | ForEach-Object { 
             try {
+                $file = $_
                 Write-Host "`n----------------------------------------------------------------"
-                Write-Host "- Running test: $($_.Name)"
+                Write-Host "- Running test: $($file.Name)"
                 Write-Host "----------------------------------------------------------------" -NoNewline
-                $fileName = $_.FullName
-                if (-not (Test-Path $fileName)) {
-                    throw "File: '$fileName' does not exist."
-                }
-                $config.Run.Path = $fileName
-                $config.Run.PassThru = $true
-                $testResult = Invoke-Pester -Configuration $config
-                if ($LASTEXITCODE -ne 0) {
-                    $testFailedDetails += @{ Name = $_.Name; Count = $($testResult.FailedCount) }
+                $testResult = Run-Test-File -config $config -file $file -verbosity $verbosity
+                if ($testResult -and $testResult.Count -gt 0) {
+                    $testFailedDetails += $testResult
                 }
             } catch {
                 $logged = Log-Data -data @{
-                    header = "$($MyInvocation.MyCommand.Name): Failed to run test: $fileName"
+                    header = "$($MyInvocation.MyCommand.Name): Failed to run test: $($file.FullName)"
                     exception = $_
                 }
-                Write-Host "`nFailed to run test: $fileName" -ForegroundColor DarkYellow
+                Write-Host "`nFailed to run test: $($file.FullName)" -ForegroundColor DarkYellow
                 $result = @{ code = 1; message = "Some tests failed to run!"; color = "DarkYellow" }
             }
         }
@@ -60,13 +79,13 @@ function Run-Tests {
                 $dotsCount = $maxLineLength - $_.Name.Length
                 if ($dotsCount -lt 0) { $dotsCount = 0 }
                 $dots = '.' * $dotsCount
-                $message += "`n  - $($_.Name) $dots $($_.Count) tests"
+                $message += "`n  - $($_.Name) $dots $($_.Message)"
             }
             $result = @{ code = 1; message = $message; color = "DarkGray" }
         }
         
         $message = "`nTest Results Summary:"
-        $message += "`n=======================`n"
+        $message += "`n=======================`n`n"
         $result.message = $message + $result.message
         
         return $result

@@ -39,10 +39,7 @@ try {
 } catch {
     $logged = Log-Data -data @{
         header = "$($MyInvocation.MyCommand.Name): An error occurred during operation '$operation'"
-        file = $($_.InvocationInfo.ScriptName)
-        line = $($_.InvocationInfo.ScriptLineNumber)
-        message = $_.Exception.Message
-        positionMessage = $_.InvocationInfo.PositionMessage
+        exception = $_
     }
     Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
     exit 1

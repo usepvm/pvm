@@ -377,16 +377,14 @@ Describe "PVM Main Script - Error Handling Tests" {
         } catch {
             $logged = Log-Data -data @{
                 header = "pvm.ps1: An error occurred during operation '$operation'"
-                file = $($_.InvocationInfo.ScriptName)
-                line = $($_.InvocationInfo.ScriptLineNumber)
-                message = $_.Exception.Message
+                exception = $_
             }
             Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
         }
         
         Assert-MockCalled Log-Data -Times 1 -ParameterFilter {
             $data.header -eq "pvm.ps1: An error occurred during operation 'install'" -and
-            $data.message -like "*Test exception message*"
+            $data.exception.Exception.Message -like "*Test exception message*"
         }
         
         Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
@@ -418,16 +416,14 @@ Describe "PVM Main Script - Error Handling Tests" {
             } catch {
                 $logged = Log-Data -data @{
                     header = "pvm.ps1: An error occurred during operation '$operation'"
-                    file = $($_.InvocationInfo.ScriptName)
-                    line = $($_.InvocationInfo.ScriptLineNumber)
-                    message = $_.Exception.Message
+                    exception = $_
                 }
                 Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
             }
             
             Assert-MockCalled Log-Data -Times 1 -ParameterFilter {
                 $data.header -eq "pvm.ps1: An error occurred during operation 'test'" -and
-                $data.message -like "*$($exception.Message)*"
+                $data.exception.Exception.Message -like "*$($exception.Message)*"
             }
         }
     }
@@ -560,9 +556,7 @@ Describe "PVM Main Script - Integration Tests" {
             } catch {
                 $logged = Log-Data -data @{
                     header = "pvm.ps1: An error occurred during operation '$operation'"
-                    file = $($_.InvocationInfo.ScriptName)
-                    line = $($_.InvocationInfo.ScriptLineNumber)
-                    message = $_.Exception.Message
+                    exception = $_
                 }
                 Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
                 $exitCode = 1
@@ -572,7 +566,7 @@ Describe "PVM Main Script - Integration Tests" {
             
             Assert-MockCalled Log-Data -Times 1 -ParameterFilter {
                 $data.header -eq "pvm.ps1: An error occurred during operation 'install'" -and
-                $data.message -like "*Elevation required*"
+                $data.exception.Exception.Message -like "*Elevation required*"
             }
             Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
                 $ForegroundColor -eq "DarkYellow"

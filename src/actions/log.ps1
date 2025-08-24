@@ -79,16 +79,14 @@ function Show-Log {
             return -1
         }
         
-        $LogPath = $LOG_ERROR_PATH
-        
         # Check if log file exists
-        if (-not (Test-Path $LogPath)) {
-            Write-Host "Log file not found: $LogPath" -ForegroundColor Red
+        if (-not (Test-Path $LOG_ERROR_PATH)) {
+            Write-Host "Log file not found: $LOG_ERROR_PATH" -ForegroundColor Red
             return -1
         }
 
         # Read the entire log file
-        $logContent = Get-Content $LogPath -Raw
+        $logContent = Get-Content $LOG_ERROR_PATH -Raw
         
         # Split by the separator and filter out empty entries
         $logEntries = $logContent -split '-{26}' | Where-Object { $_.Trim() -ne '' }
@@ -116,13 +114,10 @@ function Show-Log {
                     $fullMessageText = ($fullMessage -join "`n").Trim()
                     
                     # Parse structured error information if present
-                    $file = $null
-                    $lineNumber = $null
                     $errorMessage = $null
                     $positionDetail = $null
                     $header = $null
                     
-                    # Check if this is a structured error log with File: Line: Message: Position: format
                     if ($fullMessageText -match '(?s)Message:\s*(.+?)\s*\nPosition:\s*(.*)') {
                         $errorMessage = $matches[1].Trim()
                         $positionDetail = $matches[2].Trim()
@@ -172,15 +167,6 @@ function Show-Log {
             Write-Host ("-" * 80) -ForegroundColor DarkGray
             for ($i = $currentIndex; $i -le $endIndex; $i++) {
                 $entry = $reversedEntries[$i]
-                
-                # Color code based on operation type
-                $operationColor = switch -Wildcard ($entry.Operation) {
-                    "*Failed*" { "Red" }
-                    "*Error*" { "Red" }
-                    "*Warning*" { "Yellow" }
-                    "*Success*" { "Green" }
-                    default { "White" }
-                }
                 
                 # Display structured error format
                 Write-Host "Header  : " -NoNewline -ForegroundColor Gray

@@ -54,7 +54,7 @@ function Run-Tests {
                 $file = $_
                 Write-Host "`n----------------------------------------------------------------"
                 Write-Host "- Running test: $($file.Name)"
-                Write-Host "----------------------------------------------------------------" -NoNewline
+                Write-Host "----------------------------------------------------------------"
                 $testResult = Run-Test-File -config $config -file $file -verbosity $verbosity
                 if ($testResult -and $testResult.Count -gt 0) {
                     $testFailedDetails += $testResult

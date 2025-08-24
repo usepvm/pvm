@@ -29,12 +29,10 @@ function Run-Tests {
             try {
                 Write-Host "`n----------------------------------------------------------------"
                 Write-Host "- Running test: $($_.Name)"
-                Write-Host "----------------------------------------------------------------"
+                Write-Host "----------------------------------------------------------------" -NoNewline
                 $fileName = $_.FullName
                 if (-not (Test-Path $fileName)) {
-                    $msg = "- $fileName does not exist."
-                    Write-Host "`n$msg" -ForegroundColor DarkYellow
-                    throw $msg
+                    throw "File: '$fileName' does not exist."
                 }
                 $config.Run.Path = $fileName
                 $config.Run.PassThru = $true
@@ -45,15 +43,11 @@ function Run-Tests {
             } catch {
                 $logged = Log-Data -data @{
                     header = "$($MyInvocation.MyCommand.Name): Failed to run test: $fileName"
-                    file = $($_.InvocationInfo.ScriptName)
-                    line = $($_.InvocationInfo.ScriptLineNumber)
-                    message = $_.Exception.Message
-                    positionMessage = $_.InvocationInfo.PositionMessage
+                    exception = $_
                 }
-                Write-Host "`n- Failed to run test: $fileName" -ForegroundColor DarkYellow
+                Write-Host "`nFailed to run test: $fileName" -ForegroundColor DarkYellow
                 $result = @{ code = 1; message = "Some tests failed to run!"; color = "DarkYellow" }
             }
-            Write-Host "`n"
         }
         
         if ($testFailedDetails.Count -gt 0) {
@@ -71,8 +65,8 @@ function Run-Tests {
             $result = @{ code = 1; message = $message; color = "DarkGray" }
         }
         
-        $message = "Test Results Summary:"
-        $message += "`n=======================`n`n"
+        $message = "`nTest Results Summary:"
+        $message += "`n=======================`n"
         $result.message = $message + $result.message
         
         return $result

@@ -24,30 +24,27 @@ Describe "Get-Source-Urls" {
 }
 
 Describe "Is-PVM-Setup" {
+    BeforeAll {
+        $global:PHP_CURRENT_VERSION_PATH = "C:\php\8.1"
+        $global:PVMRoot = "C:\PVM"
+    }
+    
     Context "When PVM is properly set up" {
         It "Should return true when all environment variables are correctly configured" {
-            Mock Get-EnvVar-ByName {
-                param($name)
-                switch ($name) {
-                    "Path" { return "C:\pvm;C:\php8.1;C:\other\paths" }
-                    "php" { return "C:\php8.1" }
-                    "pvm" { return "C:\pvm" }
-                }
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith { 
+                return "C:\pvm;C:\php\8.1;C:\other\paths"
             }
+            Mock Test-Path { return $true}
             
             $result = Is-PVM-Setup
             $result | Should -Be $true
         }
         
         It "Should return true when pvm is in path with different casing" {
-            Mock Get-EnvVar-ByName {
-                param($name)
-                switch ($name) {
-                    "Path" { return "C:\PVM;C:\php8.1;C:\other\paths" }
-                    "PHP" { return "C:\php8.1" }
-                    "pvm" { return "C:\pvm" }
-                }
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith { 
+                return "C:\PVM;C:\php\8.1;C:\other\paths"
             }
+            Mock Test-Path { return $true}
             
             $result = Is-PVM-Setup
             $result | Should -Be $true
@@ -55,42 +52,9 @@ Describe "Is-PVM-Setup" {
     }
     
     Context "When PVM is not properly set up" {
-        It "Should return false when pvm environment variable is null" {
-            Mock Get-EnvVar-ByName {
-                param($name)
-                switch ($name) {
-                    "Path" { return "C:\php8.1;C:\other\paths" }
-                    "PHP" { return "C:\php8.1" }
-                    "pvm" { return $null }
-                }
-            }
-            
-            $result = Is-PVM-Setup
-            $result | Should -Be $false
-        }
-        
         It "Should return false when pvm is not in PATH" {
-            Mock Get-EnvVar-ByName {
-                param($name)
-                switch ($name) {
-                    "Path" { return "C:\php8.1;C:\other\paths" }
-                    "PHP" { return "C:\php8.1" }
-                    "pvm" { return "C:\pvm" }
-                }
-            }
-            
-            $result = Is-PVM-Setup
-            $result | Should -Be $false
-        }
-        
-        It "Should return false when PHP environment variable is null" {
-            Mock Get-EnvVar-ByName {
-                param($name)
-                switch ($name) {
-                    "Path" { return "C:\pvm;C:\other\paths" }
-                    "PHP" { return $null }
-                    "pvm" { return "C:\pvm" }
-                }
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith { 
+                return "C:\php\8.1;C:\other\paths"
             }
             
             $result = Is-PVM-Setup
@@ -98,13 +62,8 @@ Describe "Is-PVM-Setup" {
         }
         
         It "Should return false when PHP value is not in PATH" {
-            Mock Get-EnvVar-ByName {
-                param($name)
-                switch ($name) {
-                    "Path" { return "C:\pvm;C:\other\paths" }
-                    "PHP" { return "C:\php8.1" }
-                    "pvm" { return "C:\pvm" }
-                }
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith { 
+                return "C:\pvm;C:\other\paths"
             }
             
             $result = Is-PVM-Setup
@@ -323,14 +282,10 @@ Describe "Integration Tests" {
     Context "When testing function interactions" {
         It "Should work together for a complete workflow" {
             # Mock the environment to simulate a working PVM setup
-            Mock Get-EnvVar-ByName {
-                param($name)
-                switch ($name) {
-                    "Path" { return "C:\pvm;C:\php8.1;C:\other\paths" }
-                    "PHP" { return "C:\php8.1" }
-                    "pvm" { return "C:\pvm" }
-                }
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith { 
+                return "C:\pvm;C:\php\8.1;C:\other\paths"
             }
+            Mock Test-Path { return $true }
             
             Mock Get-Installed-PHP-Versions {
                 return @("7.4", "8.0", "8.1", "8.1.9", "8.2")

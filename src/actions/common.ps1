@@ -13,22 +13,12 @@ function Is-PVM-Setup {
 
     try {
         $path = Get-EnvVar-ByName -name "Path"
-        $phpEnvValue = Get-EnvVar-ByName -name $PHP_CURRENT_ENV_NAME
-        $pvmPath = Get-EnvVar-ByName -name "pvm"
 
         $parent = Split-Path $PHP_CURRENT_VERSION_PATH
         $pathItems = $path -split ';'
         if (
-            (
-                ($null -eq $pvmPath) -or
-                (($pathItems -notcontains $pvmPath) -and
-                ($pathItems -notcontains "%pvm%"))
-            ) -or
-            (
-                ($null -eq $phpEnvValue) -or
-                (($pathItems -notcontains $phpEnvValue) -and
-                ($pathItems -notcontains "%$PHP_CURRENT_ENV_NAME%"))
-            ) -or 
+            ($pathItems -notcontains $PVMRoot) -or
+            ($pathItems -notcontains $PHP_CURRENT_VERSION_PATH) -or
             (-not (Test-Path $parent))
         ) {
             return $false

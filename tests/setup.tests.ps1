@@ -111,9 +111,7 @@ Describe "Setup-PVM" {
             Process = @{}
             User = @{}
         }
-    }
 
-    BeforeEach {
         Mock Get-EnvVar-ByName -MockWith { return $null }
         Mock Set-EnvVar -MockWith { return 0 }
         Mock Is-Directory-Exists -MockWith { return $false }
@@ -130,7 +128,7 @@ Describe "Setup-PVM" {
             
             $result.code | Should -Be 0
             $result.message | Should -Be "PVM environment has been set up."
-            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq "Path" -and $value -like "*%PHP%;%pvm%" } -Exactly 1
+            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq "Path" -and $value -like "*C:\php\8.2;C:\PVM" } -Exactly 1
         }
     }
 
@@ -144,12 +142,12 @@ Describe "Setup-PVM" {
             
             $result.code | Should -Be 0
             $result.message | Should -Be "PVM environment has been set up."
-            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq "Path" -and $value -like "*%PHP%;%pvm%" } -Exactly 1
+            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq "Path" -and $value -like "*C:\php\8.2;C:\PVM" } -Exactly 1
         }
 
         It "Should not add paths that already exist" {
             Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith { 
-                return "C:\Windows\System32;%PHP%;%pvm%"
+                return "C:\Windows\System32;C:\php\8.2;C:\PVM"
             }
             
             $result = Setup-PVM
@@ -161,7 +159,7 @@ Describe "Setup-PVM" {
 
         It "Should recognize existing paths in different cases" {
             Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith { 
-                return "C:\Windows\System32;%php%;%PVM%"
+                return "C:\Windows\System32;C:\PHP\8.2;C:\pvm"
             }
             
             $result = Setup-PVM
@@ -191,47 +189,6 @@ Describe "Setup-PVM" {
             
             $result.code | Should -Be 0
             Should -Invoke Make-Directory -Exactly 0
-        }
-    }
-
-    Context "When environment variables need to be set" {
-        It "Should set PHP_CURRENT_ENV_NAME variable" {
-            Mock Get-EnvVar-ByName -MockWith { return $null }
-            
-            $result = Setup-PVM
-            
-            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq $PHP_CURRENT_ENV_NAME -and $value -eq $PHP_CURRENT_VERSION_PATH } -Exactly 1
-        }
-
-        It "Should not set PHP_CURRENT_ENV_NAME variable if already set" {
-            Mock Get-EnvVar-ByName -MockWith { 
-                Write-Host $name
-                if ($name -eq $PHP_CURRENT_ENV_NAME) { return "existing_value" }
-                return $null
-            }
-            
-            $result = Setup-PVM
-            
-            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq $PHP_CURRENT_ENV_NAME } -Exactly 0
-        }
-
-        It "Should set PVM variable if not set" {
-            Mock Get-EnvVar-ByName -MockWith { return $null }
-            
-            $result = Setup-PVM
-            
-            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq "pvm" -and $value -eq $PVMRoot } -Exactly 1
-        }
-
-        It "Should not set PVM variable if already set" {
-            Mock Get-EnvVar-ByName -MockWith { 
-                if ($name -eq "pvm") { return "existing_value" }
-                return $null
-            }
-            
-            $result = Setup-PVM
-            
-            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq "pvm" } -Exactly 0
         }
     }
 

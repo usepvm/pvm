@@ -38,7 +38,7 @@ try {
     exit $exitCode
 } catch {
     $logged = Log-Data -data @{
-        header = "$($MyInvocation.MyCommand.Name): An error occurred during operation '$operation'"
+        header = "$($MyInvocation.MyCommand.Name) - An error occurred during operation '$operation'"
         exception = $_
     }
     Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow

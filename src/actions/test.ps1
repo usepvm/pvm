@@ -61,7 +61,7 @@ function Run-Tests {
                 }
             } catch {
                 $logged = Log-Data -data @{
-                    header = "$($MyInvocation.MyCommand.Name): Failed to run test: $($file.FullName)"
+                    header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"
                     exception = $_
                 }
                 Write-Host "`nFailed to run test: $($file.FullName)" -ForegroundColor DarkYellow
@@ -91,7 +91,7 @@ function Run-Tests {
         return $result
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to run tests"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"
             exception = $_
         }
         return @{ code = 1; message = "Failed to run tests."; color = "DarkYellow" }

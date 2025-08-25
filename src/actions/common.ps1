@@ -37,7 +37,7 @@ function Is-PVM-Setup {
         return $true
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to check if PVM is set up"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to check if PVM is set up"
             exception = $_
         }
         return $false
@@ -52,7 +52,7 @@ function Get-Installed-PHP-Versions {
         return ($names | Sort-Object { [version]$_ })        
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to retrieve installed PHP versions"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve installed PHP versions"
             exception = $_
         }
         return @()
@@ -96,7 +96,7 @@ function Get-Matching-PHP-Versions {
         return $matchingVersions
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to check if PHP version $version is installed"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"
             exception = $_
         }
     }
@@ -112,7 +112,7 @@ function Is-PHP-Version-Installed {
         return ($installedVersions -contains $version)
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to check if PHP version $version is installed"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"
             exception = $_
         }
     }

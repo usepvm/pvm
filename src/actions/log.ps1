@@ -100,12 +100,11 @@ function Show-Log {
         foreach ($entry in $logEntries) {
             $lines = $entry.Trim() -split "`n"
             if ($lines.Count -ge 1) {  # Changed from 2 to 1 to catch single-line entries
-                # Extract timestamp and operation from first line
+                # Extract timestamp from first line
                 $firstLine = $lines[0].Trim()
-                if ($firstLine -match '^\[(.+?)\]\s*(.+?)\s*:\s*(.*)$') {
+                if ($firstLine -match '^\[(.+?)\]\s*(.+?)$') {
                     $timestamp = $matches[1]
-                    $operation = $matches[2]
-                    $firstMessage = $matches[3]
+                    $firstMessage = $matches[2]
                     
                     # Get remaining content
                     $remainingContent = @()
@@ -125,7 +124,7 @@ function Show-Log {
                     if ($fullMessageText -match '(?s)Message:\s*(.+?)\s*\nPosition:\s*(.*)') {
                         $errorMessage = $matches[1].Trim()
                         $positionDetail = $matches[2].Trim()
-                        $header = $firstMessage.Trim(':')
+                        $header = $firstMessage.Trim()
                     }
                     
                     # Format the timestamp nicely
@@ -133,7 +132,6 @@ function Show-Log {
                     
                     $parsedEntries += [PSCustomObject]@{
                         Timestamp = $timestamp
-                        Operation = $operation
                         Message = $fullMessageText
                         ErrorMessage = $errorMessage
                         PositionDetail = $positionDetail
@@ -223,7 +221,7 @@ function Show-Log {
         return 0
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to show log"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to show log"
             exception = $_
         }
         return -1

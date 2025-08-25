@@ -26,7 +26,7 @@ function Get-PHP-Versions-From-Url {
         return $formattedList
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to fetch versions from $url"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to fetch versions from $url"
             exception = $_
         }
         return @()
@@ -56,7 +56,7 @@ function Get-PHP-Versions {
         return $fetchedVersions
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to get PHP versions"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP versions"
             exception = $_
         }
         return @{}
@@ -80,7 +80,7 @@ function Display-Version-List {
         }
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to display version list"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to display version list"
             exception = $_
         }
     }
@@ -97,7 +97,7 @@ function Download-PHP-From-Url {
         return $destination
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to download PHP from $url"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP from $url"
             exception = $_
         }
         return $null
@@ -133,7 +133,7 @@ function Download-PHP {
         }
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to download PHP version $($versionObject.version)"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP version $($versionObject.version)"
             exception = $_
         }
     }
@@ -148,7 +148,7 @@ function Extract-Zip {
         [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to extract zip file from $zipPath"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to extract zip file from $zipPath"
             exception = $_
         }
     }
@@ -164,7 +164,7 @@ function Extract-And-Configure {
         Remove-Item -Path $path
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to extract and configure PHP from $path"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to extract and configure PHP from $path"
             exception = $_
         }
     }
@@ -252,7 +252,7 @@ function Config-XDebug {
         return 0
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to configure XDebug for PHP version $version"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to configure XDebug for PHP version $version"
             exception = $_
         }
         Write-Host "`nFailed to configure XDebug for PHP version $version"
@@ -288,7 +288,7 @@ function Get-XDebug-FROM-URL {
         return $formattedList
     } catch {        
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to fetch xdebug versions from $url"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to fetch xdebug versions from $url"
             exception = $_
         }
         return @()
@@ -321,7 +321,7 @@ function Enable-Opcache {
         return 0
     } catch {        
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to enable opcache for PHP at $phpPath"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to enable opcache for PHP at $phpPath"
             exception = $_
         }
         Write-Host "`nFailed to enable opcache for PHP version $version"
@@ -435,7 +435,7 @@ function Install-PHP {
         return @{ code = 0; message = $message; color = "DarkGreen" }
     } catch {        
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to install PHP version $version"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to install PHP version $version"
             exception = $_
         }
         return @{ code = -1; message = "Failed to install PHP version $version"; color = "DarkYellow" }

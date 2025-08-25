@@ -15,7 +15,7 @@ function Restore-IniBackup {
         return 0
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Restore-IniBackup: Failed to restore ini backup"
+            header = "$($MyInvocation.MyCommand.Name) - Restore-IniBackup: Failed to restore ini backup"
             exception = $_
         }
         Write-Host "`nFailed to restore backup: $($_.Exception.Message)"
@@ -34,7 +34,7 @@ function Backup-IniFile {
         }
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to backup ini file"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to backup ini file"
             exception = $_
         }
         return -1
@@ -65,7 +65,7 @@ function Get-IniSetting {
         return -1
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to get ini setting '$key'"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to get ini setting '$key'"
             exception = $_
         }
         return -1
@@ -110,7 +110,7 @@ function Set-IniSetting {
         return 0
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to set ini setting '$key'"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to set ini setting '$key'"
             exception = $_
         }
         return -1
@@ -151,7 +151,7 @@ function Enable-IniExtension {
         return 0
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to enable extension '$extName'"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to enable extension '$extName'"
             exception = $_
         }
         return -1
@@ -194,7 +194,7 @@ function Disable-IniExtension {
         return 0
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to disable extension '$extName'"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to disable extension '$extName'"
             exception = $_
         }
         return -1
@@ -258,7 +258,7 @@ function Get-IniExtensionStatus {
         return -1
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to check status for '$extName'"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to check status for '$extName'"
             exception = $_
         }
         return -1
@@ -425,7 +425,7 @@ function Invoke-PVMIniAction {
         return $exitCode
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to invoke ini action '$action'"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to invoke ini action '$action'"
             exception = $_
         }
         Write-Host "`nFailed to perform action '$action' on ini settings." -ForegroundColor Red

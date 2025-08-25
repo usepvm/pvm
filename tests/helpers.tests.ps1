@@ -430,7 +430,7 @@ Describe "System Functions Tests" {
                 $content = Get-Content $LOG_ERROR_PATH -Raw
                 
                 # Verify the complete log format
-                $content | Should -Match "\[.*\] Test message :(.|\s)*Message: Test data"
+                $content | Should -Match "\[.*\] Test message(.|\s)*Message: Test data"
                 
                 # Alternatively, you could check parts separately
                 $content | Should -Match "Test message"

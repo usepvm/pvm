@@ -9,7 +9,7 @@ function Get-All-Subdirectories {
         return Get-ChildItem -Path $path -Directory
     } catch {        
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to get all subdirectories of '$path'"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to get all subdirectories of '$path'"
             exception = $_
         }
         return $null
@@ -22,7 +22,7 @@ function Get-All-EnvVars {
         return [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
     } catch {        
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to get all environment variables"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to get all environment variables"
             exception = $_
         }
         return $null
@@ -41,7 +41,7 @@ function Get-EnvVar-ByName {
     } catch {
         
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to get environment variable '$name'"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to get environment variable '$name'"
             exception = $_
         }
         return $null
@@ -67,7 +67,7 @@ function Set-EnvVar {
         return 0
     } catch {        
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to set environment variable '$name'"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to set environment variable '$name'"
             exception = $_
         }
         return -1
@@ -134,7 +134,7 @@ function Make-Symbolic-Link {
         return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = "DarkGreen" }
     } catch {        
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to make symbolic link"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to make symbolic link"
             exception = $_
         }
         return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = "DarkYellow" }
@@ -207,7 +207,7 @@ function Display-Msg-By-ExitCode {
         Write-Host "`n$($result.message)" -ForegroundColor $result.color
     } catch {        
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to display message by exit code"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"
             exception = $_
         }
     }
@@ -226,7 +226,7 @@ function Log-Data {
             return -1
         }
         $content = "`n--------------------------"
-        $content += "`n[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($data.header) :"
+        $content += "`n[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($data.header)"
         if ($data.exception) {
             $content += "`nMessage: $($data.exception.Exception.Message)"
             $content += "`nPosition: $($data.exception.InvocationInfo.PositionMessage)"
@@ -281,7 +281,7 @@ function Optimize-SystemPath {
         return $output
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to optimize system PATH variable"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to optimize system PATH variable"
             exception = $_
         }
         return -1

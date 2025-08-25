@@ -23,7 +23,7 @@ function Get-PHP-Status {
         }    
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to retrieve PHP status"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve PHP status"
             exception = $_
         }
         Write-Host "An error occurred while checking PHP status: $_"
@@ -53,7 +53,7 @@ function Get-Current-PHP-Version {
         }
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name): Failed to retrieve current PHP version"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve current PHP version"
             exception = $_
         }
         return $emptyResult

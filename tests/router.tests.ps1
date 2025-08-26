@@ -458,6 +458,31 @@ Describe "Get-Actions Tests" {
     }
 }
 
+Describe "Alias-Handler Tests" {
+    
+    $testCases = @(
+        @{ Operation = "ls"; Expected = "list" }
+        @{ Operation = "rm"; Expected = "uninstall" }
+        @{ Operation = "i"; Expected = "install" }
+        @{ Operation = "LS"; Expected = "list" }
+        @{ Operation = "RM"; Expected = "uninstall" }
+        @{ Operation = "I"; Expected = "install" }
+        @{ Operation = "install"; Expected = "install" }
+        @{ Operation = "list"; Expected = "list" }
+        @{ Operation = "uninstall"; Expected = "uninstall" }
+        @{ Operation = "unknown"; Expected = "unknown" }
+        @{ Operation = ""; Expected = "" }
+        @{ Operation = "    "; Expected = "    " }
+        @{ Operation = $null; Expected = $null }
+    )
+    
+    It "Returns '<Expected>' when '<Operation>' is passed" -TestCases $testCases {
+        param($Operation, $Expected)
+        $result = Alias-Handler $Operation
+        $result | Should -Be $Expected
+    }
+}
+
 Describe "Show-Usage Tests" {
     BeforeEach {
         Mock Get-Current-PHP-Version { @{ version = "8.2.0" } }

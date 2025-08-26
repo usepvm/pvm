@@ -218,6 +218,17 @@ function Get-Actions {
     }
 }
 
+function Alias-Handler {
+    param($alias)
+    
+    switch ($alias) {
+        "ls" { return "list" }
+        "rm" { return "uninstall" }
+        "i"  { return "install" }
+        Default { return $alias }
+    }
+}
+
 function Show-Usage {
     Write-Host "`nRunning version : $PVM_VERSION"
     Write-Host "`nUsage:`n"

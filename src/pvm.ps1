@@ -23,6 +23,8 @@ if ($args -contains '--version' -or $args -contains '-v' -or $operation -eq 'ver
 
 $actions = Get-Actions -arguments $args
 
+$operation = Alias-Handler $operation
+
 if (-not ($operation -and $actions.Contains($operation))) {
     Show-Usage
     exit 0

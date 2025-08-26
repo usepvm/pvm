@@ -29,16 +29,16 @@ pvm ini info
 pvm current
 
 # List installed PHP versions
-pvm list
+pvm list # pvm ls
 
 # List installable PHP versions from remote source
-pvm list available
+pvm list available # pvm ls available
 
 # Install a specific version.
-pvm install <version>
+pvm install <version> # pvm i <version>
 
 # Uninstall a specific version
-pvm uninstall <version>
+pvm uninstall <version> # pvm rm <version>
 
 # Switch to use the specified version
 pvm use <version>

@@ -127,12 +127,18 @@ function Enable-IniExtension {
             return -1
         }
         
+        $status = Get-Single-PHPExtensionStatus -iniPath $iniPath -extName $extName
+        if (-not $status -or $status.status -eq "Enabled") {
+            Write-Host "- '$extName' is already enabled or not found. check with 'pvm ini status $extName'" -ForegroundColor DarkGray
+            return -1
+        }
+        
         $lines = Get-Content $iniPath
-        $pattern = "^\s*[#;]+\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?[^\s`"';]*$extName[^\s`"';]*([`"']?)\s*(;.*)?$"
+        $pattern = "^\s*[#;]+\s*(zend_)?extension\s*=\s*([`"']?)(?![^\s`"';]*[/\\])[^\s`"';]*$extName[^\s`"';]*([`"']?)\s*(;.*)?$"
 
         $modified = $false
         $newLines = $lines | ForEach-Object {
-            if ($_ -match $pattern) {
+            if ($_ -match $pattern -and -not $modified) {
                 $modified = $true
                 return $_ -replace "^[#;]\s*", ""
             }
@@ -168,8 +174,14 @@ function Disable-IniExtension {
             return -1
         }
         
+        $status = Get-Single-PHPExtensionStatus -iniPath $iniPath -extName $extName
+        if (-not $status -or $status.status -eq "Disabled") {
+            Write-Host "- '$extName' is already disabled or not found. check with 'pvm ini status $extName'" -ForegroundColor DarkGray
+            return -1
+        }
+        
         $lines = Get-Content $iniPath
-        $pattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?[^\s`"';]*$extName[^\s`"';]*([`"']?)\s*(;.*)?$"
+        $pattern = "^\s*(zend_)?extension\s*=\s*([`"']?)(?![^\s`"';]*[/\\])[^\s`"';]*$extName[^\s`"';]*([`"']?)\s*(;.*)?$"
 
         $updatedLines = @()
 
@@ -210,19 +222,10 @@ function Get-IniExtensionStatus {
             return -1
         }
 
-        $lines = Get-Content $iniPath
-        $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?[^\s`"';]*$extName[^\s`"';]*([`"']?)\s*(;.*)?$"
-        $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?[^\s`"';]*$extName[^\s`"';]*([`"']?)\s*(;.*)?$"
-
-        foreach ($line in $lines) {
-            if ($line -match $enabledPattern) {
-                Write-Host "- $extName`: Enabled" -ForegroundColor DarkGreen
-                return 0
-            }
-            if ($line -match $disabledPattern) {
-                Write-Host "- $extName`: Disabled" -ForegroundColor DarkYellow
-                return 0
-            }
+        $status = Get-Single-PHPExtensionStatus -iniPath $iniPath -extName $extName
+        if ($status) {
+            Write-Host "- $extName`: $($status.status)" -ForegroundColor $status.color
+            return 0
         }
 
         Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray

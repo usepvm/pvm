@@ -1,4 +1,23 @@
 
+function Get-Single-PHPExtensionStatus {
+    param ($iniPath, $extName)
+    
+    $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?[^\s`"';]*$extName[^\s`"';]*([`"']?)\s*(;.*)?$"
+    $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?[^\s`"';]*$extName[^\s`"';]*([`"']?)\s*(;.*)?$"
+    $lines = Get-Content $iniPath
+
+    foreach ($line in $lines) {
+        if ($line -match $enabledPattern) {
+            return @{ status = "Enabled"; color = "DarkGreen" }
+        }
+        if ($line -match $disabledPattern) {
+            return @{ status = "Disabled"; color = "DarkYellow"}
+        }
+    }
+    
+    return $null
+}
+
 function Get-All-Subdirectories {
     param ($path)
     try {

@@ -241,10 +241,14 @@ function Get-IniExtensionStatus {
         } else {
             $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
             if ($response -eq "y" -or $response -eq "Y") {
-                $currentVersion = Get-Current-PHP-Version
-                if ($currentVersion -and $currentVersion.version) {
+                $phpCurrentVersion = Get-Current-PHP-Version
+                if (-not $phpCurrentVersion -or -not $phpCurrentVersion.version) {
+                    Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
+                    return -1
+                }
+                if ($phpCurrentVersion -and $phpCurrentVersion.version) {
                     $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
-                    if ([version]$currentVersion.version -lt $PhpNewExtensionNamingSince) {
+                    if ([version]$phpCurrentVersion.version -lt $PhpNewExtensionNamingSince) {
                         $extName = "php_$extName.dll"
                     }
                 }
@@ -348,16 +352,16 @@ function Invoke-PVMIniAction {
     try {
         $exitCode = 1
         
-        $currentPhpVersionPath = Get-Item $PHP_CURRENT_VERSION_PATH
-        if (-not $currentPhpVersionPath) {
-            Write-Host "Current PHP version not found at: $PHP_CURRENT_VERSION_PATH"
+        $currentPhpVersion = Get-Current-PHP-Version
+        
+        if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
+            Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
             return -1
         }
-        $currentPhpVersionPath = $currentPhpVersionPath.Target
-        $iniPath = "$currentPhpVersionPath\php.ini"
         
+        $iniPath = "$($currentPhpVersion.path)\php.ini"
         if (-not (Test-Path $iniPath)) {
-            Write-Host "php.ini not found at: $currentPhpVersionPath"
+            Write-Host "php.ini not found at: $($currentPhpVersion.path)"
             return -1
         }
 

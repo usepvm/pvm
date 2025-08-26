@@ -388,9 +388,6 @@ Describe "Invoke-PVMIniAction" {
     BeforeEach {
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
-        Mock Get-Item {
-            return @{ Target = $phpVersionPath }
-        }
     }
     
     Context "info action" {
@@ -497,7 +494,7 @@ extension=php_curl.dll
         }
         
         It "Handles missing PHP current version" {
-            Mock Get-Item { return $null }
+            Mock Get-Current-PHP-Version { return $null }
             $result = Invoke-PVMIniAction -action "info" -params @()
             $result | Should -Be -1
         }
@@ -509,7 +506,7 @@ extension=php_curl.dll
         }
         
         It "Returns -1 on unexpected error" {
-            Mock Get-Item { throw "Unexpected error" }
+            Mock Get-Current-PHP-Version { throw "Unexpected error" }
             $result = Invoke-PVMIniAction -action "info" -params @()
             $result | Should -Be -1
         }

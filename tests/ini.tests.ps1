@@ -55,6 +55,33 @@ upload_max_filesize = 2M
     }
 }
 
+Describe "Get-Single-PHPExtensionStatus" {
+    Context "When extension is enabled" {
+        It "Returns enabled status" {
+            @"
+zend_extension=php_opcache.dll
+extension=php_curl.dll
+"@ | Set-Content $testIniPath
+            $result = Get-Single-PHPExtensionStatus -iniPath $testIniPath -extName "opcache"
+            $result.status | Should -Be "Enabled"
+            $result.color | Should -Be "DarkGreen"
+        }
+    }
+    
+    Context "When extension is disabled" {
+        It "Returns disabled status" {        
+            @"
+;zend_extension=php_opcache.dll
+extension=php_curl.dll
+"@ | Set-Content $testIniPath
+            $result = Get-Single-PHPExtensionStatus -iniPath $testIniPath -extName "opcache"
+            $result.status | Should -Be "Disabled"
+            $result.color | Should -Be "DarkYellow"
+        }
+    }
+}
+
+
 Describe "Backup-IniFile" {
     It "Creates a backup when none exists" {
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue

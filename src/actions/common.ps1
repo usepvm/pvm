@@ -51,11 +51,13 @@ function Get-Installed-PHP-Versions {
 
 
 function Get-UserSelected-PHP-Version {
-    if (-not $installedVersions) {
+    param($installedVersions)
+
+    if (-not $installedVersions -or $installedVersions.Count -eq 0) {
         return $null
     }
     if ($installedVersions.Count -eq 1) {
-        $version = $installedVersions
+        $version = $($installedVersions)
     } else {
         Write-Host "`nInstalled versions :"
         $installedVersions | ForEach-Object { Write-Host " - $_" }

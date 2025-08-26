@@ -157,6 +157,37 @@ Describe "Get-Installed-PHP-Versions" {
     }
 }
 
+Describe "Get-UserSelected-PHP-Version" {
+    It "Should return null when no installed versions are provided" {
+        $result = Get-UserSelected-PHP-Version -installedVersions @()
+        $result | Should -Be $null
+    }
+    
+    It "Should return first version when only one is provided" {
+        $result = Get-UserSelected-PHP-Version -installedVersions @("8.1")
+        $result.version | Should -Be "8.1"
+    }
+    
+    It "Should return null when no version is selected" {
+        Mock Read-Host { return $null }
+        Mock Write-Host { }
+        
+        $result = Get-UserSelected-PHP-Version -installedVersions @("7.4", "8.0", "8.1")
+        $result.code | Should -Be -1
+    }
+    
+    It "Should prompt user and return selected version when multiple are provided" {
+        Mock Read-Host { return "8.1" }
+        Mock Write-Host { }
+        Mock Get-PHP-Path-By-Version { return "C:\php\8.1" }
+        
+        $result = Get-UserSelected-PHP-Version -installedVersions @("7.4", "8.0", "8.1")
+        $result.version | Should -Be "8.1"
+        $result.code | Should -Be 0
+        $result.path | Should -Be "C:\php\8.1"
+    }
+}
+
 Describe "Get-Matching-PHP-Versions" {
     Context "When matching versions exist" {
         It "Should return matching versions for partial version number" {

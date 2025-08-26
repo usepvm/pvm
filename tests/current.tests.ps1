@@ -14,9 +14,7 @@ BeforeAll {
 }
 
 Describe "Get-PHP-Status Function Tests" {
-    
     Context "When php.ini file exists and is valid" {
-        
         It "Should detect enabled opcache extension" {
             # Arrange
             $testPath = "TestDrive:\php"
@@ -199,7 +197,6 @@ Describe "Get-PHP-Status Function Tests" {
     }
     
     Context "When php.ini file does not exist" {
-        
         It "Should return -1 when php.ini is missing" {
             # Arrange
             $testPath = "TestDrive:\nonexistent"
@@ -214,7 +211,6 @@ Describe "Get-PHP-Status Function Tests" {
     }
     
     Context "When exceptions occur" {
-        
         It "Should handle Get-Content exceptions gracefully" {
             # Arrange - Create a directory instead of a file to cause Get-Content to fail
             $testPath = "TestDrive:\php"
@@ -232,9 +228,7 @@ Describe "Get-PHP-Status Function Tests" {
 }
 
 Describe "Get-Current-PHP-Version Function Tests" {
-    
     Context "When PHP current version symlink exists and is valid" {
-        
         BeforeEach {
             # Mock Get-Item to return a symlink object
             Mock Get-Item {
@@ -271,24 +265,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
         }
     }
     
-    Context "When PHP current version path exists but is not a symlink" {
-        
-        BeforeEach {
-            # Mock Get-Item to return a regular directory (no Target property)
-            Mock Get-Item {
-                return @{
-                    # No Target property - regular directory/file
-                }
-            } -ParameterFilter { $Path -eq $PHP_CURRENT_VERSION_PATH }
-            
-            Mock Get-PHP-Status {
-                return @{ opcache = $false; xdebug = $true }
-            }
-        }   
-    }
-    
     Context "When PHP current version path does not exist" {
-        
         BeforeEach {
             # Mock Get-Item to throw an exception
             Mock Get-Item {
@@ -320,7 +297,6 @@ Describe "Get-Current-PHP-Version Function Tests" {
     }
     
     Context "When Get-Item returns null" {
-        
         BeforeEach {
             Mock Get-Item {
                 return $null
@@ -340,7 +316,6 @@ Describe "Get-Current-PHP-Version Function Tests" {
     }
     
     Context "When Get-PHP-Status fails" {
-        
         BeforeEach {
             Mock Get-Item {
                 return @{
@@ -369,9 +344,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
 }
 
 Describe "Integration Tests" {
-    
     Context "Real-world scenarios" {
-        
         It "Should work end-to-end with actual file system" {
             # Arrange
             $testPhpPath = "TestDrive:\php\8.2.0"

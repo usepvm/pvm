@@ -37,9 +37,6 @@ pvm list available
 # Install a specific version.
 pvm install <version>
 
-# Install & enable xdebug
-pvm install <version> --xdebug
-
 # Uninstall a specific version
 pvm uninstall <version>
 

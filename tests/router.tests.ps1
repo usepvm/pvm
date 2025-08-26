@@ -161,19 +161,8 @@ Describe "Invoke-PVMInstall Tests" {
         $result | Should -Be 0
         
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
-            $version -eq "8.2.0" -and
-            $includeXDebug -eq $false
+            $version -eq "8.2.0"
         }
-    }
-
-
-    It "Should handle --xdebug flag" {
-        $arguments = @("8.2.0", "--xdebug")
-        
-        $result = Invoke-PVMInstall -arguments $arguments
-        $result | Should -Be 0
-        
-        Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { $includeXDebug -eq $true }
     }
 }
 
@@ -418,7 +407,7 @@ Describe "Get-Actions Tests" {
         }
         
         It "Should execute install action correctly" {
-            $actions = Get-Actions -arguments @("8.2.0", "--xdebug")
+            $actions = Get-Actions -arguments @("8.2.0")
             $actions["install"].action.Invoke()
             
             Assert-MockCalled Invoke-PVMInstall -Times 1
@@ -533,7 +522,7 @@ Describe "Integration Tests" {
             $result | Should -Be 0
             
             # Install
-            $result = Invoke-PVMInstall -arguments @("8.2.0", "--xdebug")
+            $result = Invoke-PVMInstall -arguments @("8.2.0")
             $result | Should -Be 0
             
             # Use

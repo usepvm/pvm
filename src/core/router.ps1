@@ -61,8 +61,7 @@ function Invoke-PVMInstall {
         return 1
     }
 
-    $includeXDebug = ($arguments -contains '--xdebug')
-    $result = Install-PHP -version $version -includeXDebug $includeXDebug
+    $result = Install-PHP -version $version
     Display-Msg-By-ExitCode -result $result
     return 0
 }
@@ -189,8 +188,8 @@ function Get-Actions {
             description = "Lists the PHP installations. Type 'available' at the end to see what can be installed.";
             action = { return Invoke-PVMList -arguments $script:arguments }}
         "install" = [PSCustomObject]@{
-            command = "pvm install <version> [--xdebug]";
-            description = "The version must be a specific version. '--xdebug' to install and enable xdebug";
+            command = "pvm install <version>";
+            description = "The version must be a specific version.";
             action = { return Invoke-PVMInstall -arguments $script:arguments }}
         "uninstall" = [PSCustomObject]@{
             command = "pvm uninstall <version>";

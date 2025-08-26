@@ -177,7 +177,7 @@ function getXdebugConfigV2 {
     return @"
 
         [xdebug]
-        zend_extension="$XDebugPath"
+        ;zend_extension="$XDebugPath"
         xdebug.remote_enable=1
         xdebug.remote_host=127.0.0.1
         xdebug.remote_port=9000
@@ -190,7 +190,7 @@ function getXdebugConfigV3 {
     return @"
 
         [xdebug]
-        zend_extension="$XDebugPath"
+        ;zend_extension="$XDebugPath"
         xdebug.mode=debug
         xdebug.client_host=127.0.0.1
         xdebug.client_port=9003
@@ -362,7 +362,7 @@ function Select-Version {
 }
 
 function Install-PHP {
-    param ($version, $includeXDebug = $false)
+    param ($version)
 
     try {
         if (Is-PHP-Version-Installed -version $version) {
@@ -425,9 +425,7 @@ function Install-PHP {
         
         Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
 
-        if ($includeXDebug) {
-            $xdebugConfigured = Config-XDebug -version $selectedVersionObject.version -phpPath "$destination\$($selectedVersionObject.version)"
-        }
+        $xdebugConfigured = Config-XDebug -version $selectedVersionObject.version -phpPath "$destination\$($selectedVersionObject.version)"
 
         $message = "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$($selectedVersionObject.version)'"
         $message += "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"

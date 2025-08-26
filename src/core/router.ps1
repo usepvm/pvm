@@ -126,30 +126,25 @@ function Invoke-PVMIni {
 function Invoke-PVMTest {
     param($arguments)
 
-    $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
-    $arguments = $arguments | Where-Object {
+    $verbosity = 'Normal'
+    $coverage = $false
+    $files = $arguments | Where-Object {
         if ($_ -match '^--tag=(.+)$') {
             $tag = $Matches[1]
+            return $false
+        }
+        if ($_ -match '^--coverage$') {
+            $coverage = ($_ -eq '--coverage')
+            return $false
+        }
+        if ($_ -match '^--verbosity=(.+)$') {
+            $verbosity = $Matches[1]
             return $false
         }
         return $true
     }
     
-    $files = $null
-    $verbosity = 'Normal'
-    if ($arguments.Count -gt 0 -and $verbosityOptions -contains $arguments[-1]) {
-        $verbosity = $arguments[-1]
-        
-        if ($arguments.Count -gt 1) {
-            $files = $arguments[0..($arguments.Count - 2)]
-        }
-    } elseif ($arguments.Count -eq 1 -and $verbosityOptions -contains $arguments) {
-        $verbosity = $arguments
-    } else {
-        $files = $arguments
-    }
-    
-    $result = Run-Tests -verbosity $verbosity -tests $files -tag $tag
+    $result = Run-Tests -verbosity $verbosity -tests $files -tag $tag -coverage $coverage
 
     Display-Msg-By-ExitCode -result $result
     return 0

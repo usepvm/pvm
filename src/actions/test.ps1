@@ -10,19 +10,45 @@ function Get-Tests-Files {
             }
         }
     } else {
-        $tests = Get-ChildItem "$PVMRoot\tests\*.tests.ps1"
+        $tests = Get-ChildItem "$PVMRoot\tests\*.tests.ps1" | ForEach-Object {
+            return @{
+                Name = $_.Name
+                FullName = $_.FullName
+            }
+        }
     }
     
     return $tests
 } 
 
 function Run-Test-File {
-    param ($config, $file, $verbosity)
+    param ($config, $file, $verbosity, $coverage = $false)
     
     if (-not (Test-Path $file.FullName)) {
         return @{ Name = $file.Name; Count = 1; Message = "File not found!" }
     }
+
+    $coveredFile = ""
+    if ($coverage) {
+        $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
+        $covered = Get-ChildItem -Path "$PVMRootDirectory\src" -Recurse -Filter "*.ps1"
+        $covered = $covered | Where-Object {
+            return ($_.Name -replace '.ps1','') -eq ($file.Name -replace '.tests.ps1','')
+        }
+            
+        $config.CodeCoverage.Enabled = $true
+        $config.CodeCoverage.Path = $covered.FullName
+        $config.CodeCoverage.OutputPath = "$PVMRootDirectory\coverage\$($file.Name).xml"
+        $config.CodeCoverage.OutputFormat = 'JaCoCo' # 'CoverageGutters'
+        $config.CodeCoverage.OutputEncoding = 'UTF8'
+        $coveredFile = "(covers: $($covered.Name))"
+    }
     
+    Write-Host "`n----------------------------------------------------------------"
+    Write-Host "- Running test: $($file.Name) $coveredFile"
+    Write-Host "----------------------------------------------------------------"
+
+
     $config.Run.Path = $file.FullName
     $config.Run.PassThru = $true
     $testResult = Invoke-Pester -Configuration $config
@@ -34,15 +60,21 @@ function Run-Test-File {
 }
 
 function Run-Tests {
-    param ($verbosity = "Normal", $tests = $null, $tag = $null)
+    param ($verbosity = "Normal", $tests = $null, $tag = $null, $coverage = $false)
     
     try {
+        $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
+        if ($verbosityOptions -notcontains $verbosity) {
+            Write-Host "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')" -ForegroundColor DarkYellow
+            return -1
+        }
+
         $config = New-PesterConfiguration
         $config.Output.Verbosity = $verbosity
         
         $tests = Get-Tests-Files -tests $tests
         
-        if (($tests.Length -eq 1) -and ($null -ne $tag)) {
+        if ($null -ne $tag) {
             $config.Filter.Tag = $tag
         }
         
@@ -52,10 +84,7 @@ function Run-Tests {
         $tests | ForEach-Object { 
             try {
                 $file = $_
-                Write-Host "`n----------------------------------------------------------------"
-                Write-Host "- Running test: $($file.Name)"
-                Write-Host "----------------------------------------------------------------"
-                $testResult = Run-Test-File -config $config -file $file -verbosity $verbosity
+                $testResult = Run-Test-File -config $config -file $file -verbosity $verbosity -coverage $coverage
                 if ($testResult -and $testResult.Count -gt 0) {
                     $testFailedDetails += $testResult
                 }

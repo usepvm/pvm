@@ -16,7 +16,7 @@ Get-ChildItem "$PSScriptRoot\core\*.ps1" | ForEach-Object { . $_.FullName }
 Get-ChildItem "$PSScriptRoot\actions\*.ps1" | ForEach-Object { . $_.FullName }
 
 
-if ($args -contains '--version' -or $args -contains '-v' -or $operation -eq 'version') {
+if ($args -match '^(--version|-v)$' -or $operation -eq 'version') {
     Write-Host "`nPVM version $PVM_VERSION"
     exit 0
 }

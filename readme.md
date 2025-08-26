@@ -22,8 +22,7 @@ pvm setup
 pvm help
 
 # Display information about the environment
-pvm info
-pvm ini info
+pvm info # pvm ini info
 
 # Display active PHP version
 pvm current

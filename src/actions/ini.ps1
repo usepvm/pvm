@@ -231,13 +231,11 @@ function Get-IniExtensionStatus {
             $response = Read-Host "`nWould you like to install xdebug? (y/n)"
             if ($response -eq "y" -or $response -eq "Y") {
                 $phpCurrentVersion = Get-Current-PHP-Version
-                $phpPath = $phpCurrentVersion.path
-                $phpVersion = $phpCurrentVersion.version
-                if (-not $phpVersion) {
+                if (-not $phpCurrentVersion -or -not $phpCurrentVersion.version) {
                     Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
                     return -1
                 }
-                Config-XDebug -version $phpVersion -phpPath $phpPath
+                Config-XDebug -version $phpCurrentVersion.version -phpPath $phpCurrentVersion.path
                 return 0
             }
         } else {

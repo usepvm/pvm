@@ -14,7 +14,7 @@ function Detect-PHP-VersionFromProject {
                 if ($json.require.php) {
                     $constraint = $json.require.php.Trim()
                     # Extract first PHP version number in the string (e.g. from "^8.3" or ">=8.1 <8.3")
-                    if ($constraint -match "(\d+\.\d+(\.\d+)?)") {
+                    if ($constraint -match "(\d+(\.\d+(\.\d+)?)?)") {
                         return $matches[1]
                     }
                 }

@@ -21,3 +21,4 @@ $Global:PHP_CURRENT_ENV_NAME = "php"
 $Global:PHP_CURRENT_VERSION_PATH = "C:\pvm\php"
 $Global:CacheMaxHours = 24 # Cached available versions expiration in hours
 $Global:DefaultLogPageSize = 5 # Default page size for log display
+$Global:PhpNewExtensionNamingSince = [version]"7.2.0" # Since the new extension naming is used (without php_ prefix)

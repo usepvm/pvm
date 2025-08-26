@@ -243,6 +243,14 @@ function Get-IniExtensionStatus {
         } else {
             $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
             if ($response -eq "y" -or $response -eq "Y") {
+                $currentVersion = Get-Current-PHP-Version
+                if ($currentVersion -and $currentVersion.version) {
+                    $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
+                    if ([version]$currentVersion.version -lt $PhpNewExtensionNamingSince) {
+                        $extName = "php_$extName.dll"
+                    }
+                }
+                
                 if ($extName -like "*opcache*") {
                     $lines += "`nzend_extension=$extName"
                 } else {

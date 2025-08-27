@@ -28,10 +28,10 @@ BeforeAll {
         return @()
     }
 
-    function Get-UserSelected-PHP-Version {
+    Mock Get-UserSelected-PHP-Version {
         param($installedVersions)
         # If we're in the Auto-Select test and a specific version was detected
-        if ($global:TestScenario -eq "composer" -and $installedVersions) {
+        if ($global:TestScenario -eq "composer" -or $global:TestScenario -eq ".php-version" -and $installedVersions) {
             # Find the version that matches what we detected (8.2)
             $selected = $installedVersions | Where-Object { $_.version -eq "8.2" }
             if ($selected) {
@@ -58,13 +58,39 @@ BeforeAll {
         return $true
     }
 
-    function Detect-PHP-VersionFromProject {
-        # Mock implementation
-        if ($global:TestScenario -eq "phpversion") { return "8.1" }
-        if ($global:TestScenario -eq "composer") { return "8.2" }
-        return $null
-    }
 }
+
+Describe "Detect-PHP-VersionFromProject" {
+    It "Should detect PHP version from .php-version" {
+        Mock Test-Path { return $true }
+        Mock Get-Content { return "7.4" }
+        $result = Detect-PHP-VersionFromProject
+        $result | Should -Be "7.4"
+    }
+    
+    It "Should detect PHP version from composer.json" {
+        Mock Test-Path {
+            param($path)
+            if ($path -eq "composer.json") { return $true }
+            return $false
+        }
+        Mock Get-Content { return '{"require": {"php": "^8.4"}}' }
+        $result = Detect-PHP-VersionFromProject
+        $result | Should -Be "8.4"
+    }
+    
+    It "Handles parser exceptions gracefully" {
+        Mock Test-Path {
+            param($path)
+            if ($path -eq "composer.json") { return $true }
+            return $false
+        }
+        Mock Get-Content { throw "Simulated parse error" }
+        { Detect-PHP-VersionFromProject } | Should -Not -Throw
+    }
+
+}
+
 
 # Test Cases for Update-PHP-Version
 Describe "Update-PHP-Version" {
@@ -94,6 +120,14 @@ Describe "Update-PHP-Version" {
         $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "5.6"
         $result.code | Should -Be -1
         $result.message | Should -BeExactly "PHP version 5.6 was not found!"
+    }
+    
+    It "Should handle when Make-Symbolic-Link fails" {
+        Mock Make-Symbolic-Link { return @{ code = -1; message = "Failed to create link"; color = "DarkYellow" } }
+        $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "8.1"
+        $result.code | Should -Be -1
+        $result.message | Should -BeExactly "Failed to create link"
+        $result.color | Should -Be "DarkYellow"
     }
 
     It "Should handle exceptions gracefully" {
@@ -129,10 +163,13 @@ Describe "Update-PHP-Version" {
 Describe "Auto-Select-PHP-Version" {
     BeforeEach {
         $global:TestScenario = $null
+        Mock Detect-PHP-VersionFromProject {
+            return "8.1"
+        }
     }
 
     It "Should detect version from .php-version file" {
-        $global:TestScenario = "phpversion"
+        $global:TestScenario = ".php-version"
         $result = Auto-Select-PHP-Version
         $result.code | Should -Be 0
         $result.version | Should -Be "8.1"
@@ -142,17 +179,18 @@ Describe "Auto-Select-PHP-Version" {
         $global:TestScenario = "composer"
         $result = Auto-Select-PHP-Version
         $result.code | Should -Be 0
-        $result.version | Should -Be "8.2"
+        $result.version | Should -Be "8.1"
     }
 
     It "Should return error when no version can be detected" {
+        Mock Detect-PHP-VersionFromProject { return $null }
         $result = Auto-Select-PHP-Version
         $result.code | Should -Be -1
         $result.message | Should -Match "Could not detect PHP version"
     }
 
     It "Should return error when detected version is not installed" {
-        $global:TestScenario = "phpversion"
+        $global:TestScenario = ".php-version"
         Mock Get-Matching-PHP-Versions { return @() }
         $result = Auto-Select-PHP-Version
         $result.code | Should -Be -1

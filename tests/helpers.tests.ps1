@@ -177,6 +177,13 @@ Describe "System Functions Tests" {
                 $result = Get-All-Subdirectories -path "C:\Nonexistent\Path"
                 $result | Should -Be $null
             }
+            
+            It "Returns null when an exception occurs" {
+                # Simulate an exception by passing a path that causes an error
+                Mock Get-ChildItem { throw "Simulated exception" }
+                $result = Get-All-Subdirectories -path $STORAGE_PATH
+                $result | Should -Be $null
+            }
         }
     }
 
@@ -306,6 +313,17 @@ Describe "System Functions Tests" {
                 }
             }
             
+            It "Returns -1 if fails to create symbolic link" {
+                Mock Is-Admin { return $false }
+                Mock Run-Command { return 1 }
+                $linkPath = "TestDrive:\test_link_fail"
+                $targetPath = "$STORAGE_PATH\php\8.1"
+                $result = Make-Symbolic-Link -link $linkPath -target $targetPath
+                $result.code | Should -Be -1
+                $result.message | Should -Be "Failed to make symbolic link '$linkPath' -> '$targetPath'"
+                $result.color | Should -Be "DarkYellow"
+            }
+            
             It "Creates a symbolic link successfully using elevated command" {
                 # Mock Is-Admin to return false
                 Mock Is-Admin { return $false }
@@ -328,6 +346,33 @@ Describe "System Functions Tests" {
                     $command -like "*$linkPath*" -and
                     $command -like "*$targetPath*"
                 }
+            }
+            
+            It "Returns -1 if target directory does not exist" {
+                $result = Make-Symbolic-Link -link "TestDrive:\link" -target "C:\Nonexistent\Target"
+                $result.code | Should -Be -1
+                $result.message | Should -Match "Target directory 'C:\\Nonexistent\\Target' does not exist!"
+                $result.color | Should -Be "DarkYellow"
+            }
+            
+            It "Returns -1 if link already exists and is not a symbolic link" {
+                # Create a regular file to simulate existing non-link
+                $existingPath = "TestDrive:\existing_file"
+                New-Item -Path $existingPath -ItemType File -Force | Out-Null
+                
+                $result = Make-Symbolic-Link -link $existingPath -target "$STORAGE_PATH\php\8.1"
+                $result.code | Should -Be -1
+                $result.message | Should -Be "Link '$existingPath' is not a symbolic link!"
+                $result.color | Should -Be "DarkYellow"
+                
+                # Cleanup
+                Remove-Item -Path $existingPath -Force
+            }
+            
+            It "Handles exceptions gracefully" {
+                Mock Is-Directory-Exists { throw "Simulated exception" }
+                $result = Make-Symbolic-Link -link "TestDrive:\link" -target "TestDrive:\target"
+                $result.code | Should -Be -1
             }
 
             It "Returns -1 for empty link path" {
@@ -400,6 +445,24 @@ Describe "System Functions Tests" {
         Context "When displaying messages" {
             It "Displays message without error" {
                 Mock Write-Host {}
+                $testResult = @{
+                    message = "Test message"
+                    color = "Gray"
+                }
+                { Display-Msg-By-ExitCode -result $testResult } | Should -Not -Throw
+            }
+            
+            It "Displays custom message if provided" {
+                Mock Write-Host {}
+                $testResult = @{
+                    message = "Original message"
+                }
+                $customMessage = "Custom message"
+                { Display-Msg-By-ExitCode -result $testResult -message $customMessage } | Should -Not -Throw
+            }
+            
+            It "Handles exceptions gracefully" {
+                Mock Write-Host { throw "Simulated Write-Host failure" }
                 $testResult = @{
                     message = "Test message"
                     color = "Gray"
@@ -481,6 +544,16 @@ Describe "System Functions Tests" {
                 
                 Test-Path $PATH_VAR_BACKUP_PATH | Should -Be $true
                 Get-Content $PATH_VAR_BACKUP_PATH -Raw | Should -Match "Original PATH"
+            }
+            
+            It "Handles exceptions gracefully" {
+                Mock Get-All-EnvVars { throw "Simulated exception" }
+                $result = Optimize-SystemPath
+                $result | Should -Be -1
+                
+                # Check that an error was logged
+                Test-Path $LOG_ERROR_PATH | Should -Be $true
+                Get-Content $LOG_ERROR_PATH -Raw | Should -Match "Optimize-SystemPath - Failed to optimize system PATH variable"
             }
         }
     }

@@ -16,34 +16,5 @@ Get-ChildItem "$PSScriptRoot\functions\*.ps1" | ForEach-Object { . $_.FullName }
 # Load actions scripts
 Get-ChildItem "$PSScriptRoot\actions\*.ps1" | ForEach-Object { . $_.FullName }
 
-
-if ($args -match '^(--version|-v)$' -or $operation -eq 'version') {
-    Write-Host "`nPVM version $PVM_VERSION"
-    exit 0
-}
-
-$actions = Get-Actions -arguments $args
-
-$operation = Alias-Handler $operation
-
-if (-not ($operation -and $actions.Contains($operation))) {
-    Show-Usage
-    exit 0
-}
-
-try {
-    if ($operation -ne "setup" -and (-not (Is-PVM-Setup))) {
-        Write-Host "`nPVM is not setup. Please run 'pvm setup' first."
-        exit 1
-    }
-
-    $exitCode = $($actions[$operation].action.Invoke())
-    exit $exitCode
-} catch {
-    $logged = Log-Data -data @{
-        header = "$($MyInvocation.MyCommand.Name) - An error occurred during operation '$operation'"
-        exception = $_
-    }
-    Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
-    exit 1
-}
+$exitCode = Start-PVM -operation $operation -arguments $args
+exit $exitCode

@@ -86,13 +86,13 @@ Get-Module -ListAvailable Pester
 ### Run the tests
 
 ```sh
-pvm test [files = (files inside the tests/ directory)] [verbosity = (None|Normal|Detailed|Diagnostic)]
+pvm test [files = (files inside the tests/ directory)] [--coverage] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=yourTag]
 
 # Examples:
 pvm test # Runs all tests with Normal (default) verbosity.
 pvm test use install # Runs only use.tests.ps1 and install.tests.ps1 with Normal verbosity.
-pvm test Detailed # Runs all tests with Detailed verbosity.
-pvm test helpers list Diagnostic # Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity.
+pvm test --verbosity=Detailed --coverage # Runs all tests with Detailed verbosity and generates coverage report.
+pvm test helpers list --verbosity=Diagnostic --tag=myTag # Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity and only runs tests with tag "myTag".
 ```
 
 ## Contributing

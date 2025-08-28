@@ -53,6 +53,7 @@ Describe "Uninstall-PHP" {
         }
         
         It "Should prompt user when trying to uninstall current version and handle 'n' response" -Tag i {
+            Mock Get-PHP-Path-By-Version { "$testPhpPath\8.0" }
             Mock Get-Current-PHP-Version { @{ version = "8.0" } }
             Mock Read-Host { "n" }
             $result = Uninstall-PHP -version "8.0"

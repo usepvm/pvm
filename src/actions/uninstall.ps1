@@ -5,22 +5,13 @@ function Uninstall-PHP {
 
     try {
         
-        $currentVersion = Get-Current-PHP-Version
-        if ($currentVersion -and ($version -eq $currentVersion.version)) {
-            $response = Read-Host "`nYou are trying to uninstall the currently active PHP version ($version). Are you sure? (y/n)"
-            if ($response -ne "y" -and $response -ne "Y") {
-                return @{ code = -1; message = "Uninstallation cancelled"; color = "DarkYellow" }
-            }
-        }
-        
-        
         $phpPath = Get-PHP-Path-By-Version -version $version
 
         if (-not $phpPath) {
             $installedVersions = Get-Matching-PHP-Versions -version $version
             $pathVersionObject = Get-UserSelected-PHP-Version -installedVersions $installedVersions
         } else {
-            $pathVersionObject = @{ code = 0; version = $variableValue; path = $phpPath }
+            $pathVersionObject = @{ code = 0; version = $version; path = $phpPath }
         }
 
         if (-not $pathVersionObject) {
@@ -34,10 +25,18 @@ function Uninstall-PHP {
         if (-not $pathVersionObject.path) {
             return @{ code = -1; message = "PHP version $($pathVersionObject.version) was not found!"; color = "DarkYellow"}
         }
+        
+        $currentVersion = Get-Current-PHP-Version
+        if ($currentVersion -and ($($pathVersionObject.version) -eq $currentVersion.version)) {
+            $response = Read-Host "`nYou are trying to uninstall the currently active PHP version ($($pathVersionObject.version)). Are you sure? (y/n)"
+            if ($response -ne "y" -and $response -ne "Y") {
+                return @{ code = -1; message = "Uninstallation cancelled"; color = "DarkYellow" }
+            }
+        }
 
         Remove-Item -Path ($pathVersionObject.path) -Recurse -Force
         
-        return @{ code = 0; message = "PHP version $version has been uninstalled successfully"; color = "DarkGreen" }
+        return @{ code = 0; message = "PHP version $($pathVersionObject.version) has been uninstalled successfully"; color = "DarkGreen" }
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to uninstall PHP version '$version'"

@@ -44,7 +44,7 @@ jobs:
         Write-Host "Running PVM tests..." -ForegroundColor Yellow
         
         # Run pvm.ps1 directly and capture exit code
-        .\src\pvm.ps1 test
+        .\src\pvm.ps1 test --coverage
         $exitCode = $LASTEXITCODE
         
         Write-Host "Test execution completed with exit code: $exitCode"

@@ -13,11 +13,30 @@ on:
 
 jobs:
   test:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2025
+            name: "Windows Server 2025 (Latest)"
+          - os: windows-2022  
+            name: "Windows Server 2022"
+    
+    runs-on: ${{ matrix.os }}
+    name: Test on ${{ matrix.name }}
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Display OS Information
+      run: |
+        Write-Host "Testing on: ${{ matrix.name }}"
+        Write-Host "Runner OS: ${{ matrix.os }}"
+        Write-Host "OS Name: $(Get-ComputerInfo -Property WindowsProductName | Select-Object -ExpandProperty WindowsProductName)"
+        Write-Host "OS Version: $(Get-ComputerInfo -Property WindowsVersion | Select-Object -ExpandProperty WindowsVersion)"
+        Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
+      shell: pwsh
 
     - name: Install Pester
       run: |

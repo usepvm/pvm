@@ -60,7 +60,14 @@ function Get-UserSelected-PHP-Version {
         $version = $($installedVersions)
     } else {
         Write-Host "`nInstalled versions :"
-        $installedVersions | ForEach-Object { Write-Host " - $_" }
+        $installedVersions | ForEach-Object {
+            $versionNumber = $_
+            $isCurrent = ""
+            if ($currentVersion -eq $versionNumber) {
+                $isCurrent = "(Current)"
+            }
+            Write-Host " - $versionNumber $isCurrent"
+        }
         $response = Read-Host "`nEnter the exact version to use. (or press Enter to cancel)"
         if (-not $response) {
             return @{ code = -1; message = "Operation cancelled."; color = "DarkYellow"}

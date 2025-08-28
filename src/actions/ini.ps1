@@ -267,13 +267,12 @@ function Get-IniExtensionStatus {
                     Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
                     return -1
                 }
-                if ($phpCurrentVersion -and $phpCurrentVersion.version) {
-                    $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
-                    if ([version]$phpCurrentVersion.version -lt $PhpNewExtensionNamingSince) {
-                        $extName = "php_$extName.dll"
-                    }
+                $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
+                if ([version]$phpCurrentVersion.version -lt $PhpNewExtensionNamingSince) {
+                    $extName = "php_$extName.dll"
                 }
                 
+                $lines = Get-Content $iniPath
                 if ($extName -like "*opcache*") {
                     $lines += "`nzend_extension=$extName"
                 } else {

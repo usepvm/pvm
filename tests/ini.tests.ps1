@@ -69,7 +69,7 @@ extension=php_curl.dll
     }
     
     Context "When extension is disabled" {
-        It "Returns disabled status" {        
+        It "Returns disabled status" {
             @"
 ;zend_extension=php_opcache.dll
 extension=php_curl.dll

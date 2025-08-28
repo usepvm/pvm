@@ -286,7 +286,7 @@ function Get-XDebug-FROM-URL {
         }
 
         return $formattedList
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to fetch xdebug versions from $url"
             exception = $_
@@ -319,7 +319,7 @@ function Enable-Opcache {
         Write-Host "`nOpcache enabled successfully for PHP version $version"
         
         return 0
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to enable opcache for PHP at $phpPath"
             exception = $_
@@ -431,7 +431,7 @@ function Install-PHP {
         $message += "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"
 
         return @{ code = 0; message = $message; color = "DarkGreen" }
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to install PHP version $version"
             exception = $_

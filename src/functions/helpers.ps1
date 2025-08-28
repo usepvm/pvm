@@ -7,7 +7,7 @@ function Get-All-Subdirectories {
         }
         $path = $path.Trim()
         return Get-ChildItem -Path $path -Directory
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to get all subdirectories of '$path'"
             exception = $_
@@ -20,7 +20,7 @@ function Get-All-EnvVars {
 
     try {
         return [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to get all environment variables"
             exception = $_
@@ -64,7 +64,7 @@ function Set-EnvVar {
         # We already have admin rights, proceed normally
         [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine)
         return 0
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to set environment variable '$name'"
             exception = $_
@@ -131,7 +131,7 @@ function Make-Symbolic-Link {
 
         New-Item -ItemType SymbolicLink -Path $link -Target $target | Out-Null
         return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = "DarkGreen" }
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to make symbolic link"
             exception = $_
@@ -204,7 +204,7 @@ function Display-Msg-By-ExitCode {
         }
         
         Write-Host "`n$($result.message)" -ForegroundColor $result.color
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"
             exception = $_
@@ -262,7 +262,6 @@ function Optimize-SystemPath {
         $output = 0
         if ($path -ne $oldPath) {
             # Saving Path to log
-            # $outputLog = Log-Data -logPath $PATH_VAR_BACKUP_PATH -message "Original PATH" -data $oldPath
             $outputLog = Log-Data -data @{
                 logPath = $PATH_VAR_BACKUP_PATH
                 header = "Original PATH`n$oldPath"

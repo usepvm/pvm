@@ -18,7 +18,7 @@ function Cache-Fetched-PHP-Versions {
         Set-Content -Path $versionsDataPath -Value $jsonString
         
         return 0
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to cache fetched PHP versions"
             exception = $_
@@ -64,7 +64,7 @@ function Get-From-Source {
         $cached = Cache-Fetched-PHP-Versions $fetchedVersionsGrouped
         
         return $fetchedVersionsGrouped
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to fetch PHP versions from source"
             exception = $_
@@ -86,7 +86,7 @@ function Get-From-Cache {
             $list[$key] = $value
         }
         return $list
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve cached PHP versions"
             exception = $_
@@ -123,7 +123,7 @@ function Get-PHP-List-To-Install {
         }
         
         return $fetchedVersionsGrouped
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to get fetch PHP versions"
             exception = $_
@@ -198,7 +198,7 @@ function Display-Installed-PHP-Versions {
             }
         }
         return 0
-    } catch {        
+    } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to display installed PHP versions"
             exception = $_

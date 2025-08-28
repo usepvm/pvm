@@ -310,7 +310,7 @@ function Get-PHP-Info {
     $extensions = Get-PHPExtensionsStatus -PhpIniPath "$($currentPHPVersion.path)\php.ini"
     
     # Pre-count for summary
-    $enabledCount = ($extensions | Where-Object Enabled).Count
+    $enabledCount = @($extensions | Where-Object Enabled).Count
     $disabledCount = $extensions.Count - $enabledCount
     
     # Calculate max length dynamically

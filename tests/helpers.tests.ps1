@@ -70,7 +70,10 @@ Describe "System Functions Tests" {
             try {
                 return Get-EnvironmentVariablesWrapper -target ([System.EnvironmentVariableTarget]::Machine)
             } catch {
-                $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-All-EnvVars: Failed to get all environment variables" -data $_.Exception.Message
+                $logged = Log-Data -data @{
+                    header = "Get-All-EnvVars: Failed to get all environment variables"
+                    exception = $_
+                }
                 return $null
             }
         }
@@ -99,7 +102,10 @@ Describe "System Functions Tests" {
                 $name = $name.Trim()
                 return Get-EnvironmentVariableWrapper -name $name -target ([System.EnvironmentVariableTarget]::Machine)
             } catch {
-                $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-EnvVar-ByName: Failed to get environment variable '$name'" -data $_.Exception.Message
+                $logged = Log-Data -data @{
+                    header = "Get-EnvVar-ByName: Failed to get environment variable '$name'"
+                    exception = $_
+                }
                 return $null
             }
         }
@@ -146,7 +152,10 @@ Describe "System Functions Tests" {
                 Set-EnvironmentVariableWrapper -name $name -value $value -target ([System.EnvironmentVariableTarget]::Machine)
                 return 0
             } catch {
-                $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Set-EnvVar: Failed to set environment variable '$name'" -data $_.Exception.Message
+                $logged = Log-Data -data @{
+                    header = "Set-EnvVar: Failed to set environment variable '$name'"
+                    exception = $_
+                }
                 return -1
             }
         }
@@ -257,7 +266,7 @@ Describe "System Functions Tests" {
             }
         }
         Context "When version exists" {
-            It "Returns correct path for existing version" {                
+            It "Returns correct path for existing version" {
                 $result = Get-PHP-Path-By-Version -version "8.1"
                 $result | Should -Be "$STORAGE_PATH\php\8.1"
             }
@@ -504,7 +513,10 @@ Describe "System Functions Tests" {
             It "Returns -1 when unable to create directory" {
                 Mock Make-Directory { throw "Failed to create directory" }
                 # Try to log to a protected location
-                $result = Log-Data -logPath "C:\Windows\test.log" -message "Test" -data "Test"
+                $result = Log-Data @{
+                    header = "Test message"
+                    exception = "Test data"
+                }
                 $result | Should -Be -1
             }
         }

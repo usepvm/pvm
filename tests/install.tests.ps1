@@ -224,7 +224,10 @@ BeforeAll {
         try {
             return Get-EnvironmentVariablesWrapper -target ([System.EnvironmentVariableTarget]::Machine)
         } catch {
-            $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-All-EnvVars: Failed to get all environment variables" -data $_.Exception.Message
+            $logged = Log-Data -data @{
+                header = "Get-All-EnvVars: Failed to get all environment variables"
+                exception = $_
+            }
             return $null
         }
     }
@@ -238,7 +241,10 @@ BeforeAll {
             $name = $name.Trim()
             return Get-EnvironmentVariableWrapper -name $name -target ([System.EnvironmentVariableTarget]::Machine)
         } catch {
-            $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Get-EnvVar-ByName: Failed to get environment variable '$name'" -data $_.Exception.Message
+            $logged = Log-Data -data @{
+                header = "Get-EnvVar-ByName: Failed to get environment variable '$name'"
+                exception = $_
+            }
             return $null
         }
     }
@@ -253,7 +259,10 @@ BeforeAll {
             Set-EnvironmentVariableWrapper -name $name -value $value -target ([System.EnvironmentVariableTarget]::Machine)
             return 0
         } catch {
-            $logged = Log-Data -logPath $LOG_ERROR_PATH -message "Set-EnvVar: Failed to set environment variable '$name'" -data $_.Exception.Message
+            $logged = Log-Data -data @{
+                header = "Set-EnvVar: Failed to set environment variable '$name'"
+                exception = $_
+            }
             return -1
         }
     }

@@ -62,7 +62,6 @@ function Update-PHP-Version {
         }
         return @{ code = 0; message = "Now using PHP $($pathVersionObject.version)"; color = "DarkGreen"}
     } catch {
-        
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to update PHP version for '$variableName'"
             exception = $_

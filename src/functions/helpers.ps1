@@ -39,7 +39,6 @@ function Get-EnvVar-ByName {
         $name = $name.Trim()
         return [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
     } catch {
-        
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to get environment variable '$name'"
             exception = $_

@@ -32,7 +32,6 @@ function Setup-PVM {
 
         return $result
     } catch {
-        
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to set up PVM environment"
             exception = $_

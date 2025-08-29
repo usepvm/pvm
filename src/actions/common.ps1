@@ -59,6 +59,10 @@ function Get-UserSelected-PHP-Version {
     if ($installedVersions.Count -eq 1) {
         $version = $($installedVersions)
     } else {
+        $currentVersion = Get-Current-PHP-Version
+        if ($currentVersion -and $currentVersion.version) {
+            $currentVersion = $currentVersion.version
+        }
         Write-Host "`nInstalled versions :"
         $installedVersions | ForEach-Object {
             $versionNumber = $_

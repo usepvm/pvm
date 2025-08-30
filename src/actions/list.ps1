@@ -155,9 +155,9 @@ function Get-Available-PHP-Versions {
             }
         }
         
-        $msg = "`nThis is a partial list. For a complete list, visit"
-        $msg += "`nReleases : https://windows.php.net/downloads/releases"
-        $msg += "`nArchives : https://windows.php.net/downloads/releases/archives"
+        $msg = "`nThis is a partial list. For a complete list, visit:"
+        $msg += "`n Releases : https://windows.php.net/downloads/releases"
+        $msg += "`n Archives : https://windows.php.net/downloads/releases/archives"
         Write-Host $msg
         return 0
     } catch {

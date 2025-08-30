@@ -63,28 +63,6 @@ function Get-PHP-Versions {
     }
 }
 
-function Display-Version-List {
-    param ($matchingVersions)
-
-    Write-Host "`nMatching PHP versions:"
-    try {
-        $matchingVersions.GetEnumerator() | ForEach-Object {
-            $key = $_.Key
-
-            $versionsList = $_.Value
-            Write-Host "`n$key versions:`n"
-            $versionsList | ForEach-Object {
-                $versionItem = $_.version -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
-                Write-Host "  $versionItem"
-            }
-        }
-    } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to display version list"
-            exception = $_
-        }
-    }
-}
 
 
 function Download-PHP-From-Url {
@@ -338,8 +316,21 @@ function Select-Version {
         # There is exactly one key with one item
         $selectedVersionObject = $matchingKeys
     } else {
-        Display-Version-List -matchingVersions $matchingVersions
+        Write-Host "`nMatching PHP versions:"
+        $matchingVersions.GetEnumerator() | ForEach-Object {
+            $key = $_.Key
+            $versionsList = $_.Value
+            Write-Host "`n$key versions:`n"
+            $versionsList | ForEach-Object {
+                $versionItem = $_.version -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
+                Write-Host "  $versionItem"
+            }
+        }
 
+        $msg = "`nThis is a partial list (latest matches only). For the complete list, visit:"
+        $msg += "`n Releases : https://windows.php.net/downloads/releases"
+        $msg += "`n Archives : https://windows.php.net/downloads/releases/archives"
+        Write-Host $msg
         $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
 
         if (-not $selectedVersionInput) {

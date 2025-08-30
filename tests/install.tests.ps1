@@ -850,28 +850,4 @@ Describe "Environment Variable Tests" {
     }
 }
 
-Describe "Display-Version-List Tests" {
-    BeforeEach {
-        Mock Write-Host { }
-        Reset-MockState
-    }
-    
-    It "Should display versions without errors" {
-        $versions = @{
-            "Archives" = @(
-                @{ version = "8.1.0"; fileName = "php-8.1.0.zip" },
-                @{ version = "8.1.1"; fileName = "php-8.1.1.zip" }
-            )
-        }
-        
-        { Display-Version-List -matchingVersions $versions } | Should -Not -Throw
-    }
-    
-    It "Should handle display errors gracefully" {
-        # This test verifies the try-catch in Display-Version-List
-        $invalidVersions = $null
-        
-        { Display-Version-List -matchingVersions $invalidVersions } | Should -Not -Throw
-    }
-}
 

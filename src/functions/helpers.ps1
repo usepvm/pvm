@@ -240,7 +240,11 @@ function Log-Data {
 function Optimize-SystemPath {
     
     try {
-        $path = $oldPath = Get-EnvVar-ByName -name "Path"
+        $path = Get-EnvVar-ByName -name "Path"
+        if ($null -eq $path) {
+            $path = ''
+        }
+        $oldPath = $path 
         $envVars = Get-All-EnvVars
         
         $envVars.Keys | ForEach-Object {

@@ -13,6 +13,9 @@ function Is-PVM-Setup {
 
     try {
         $path = Get-EnvVar-ByName -name "Path"
+        if ($null -eq $path) {
+            $path = ''
+        }
 
         $parent = Split-Path $PHP_CURRENT_VERSION_PATH
         $pathItems = $path -split ';'

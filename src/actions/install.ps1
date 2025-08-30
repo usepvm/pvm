@@ -34,7 +34,7 @@ function Get-PHP-Versions-From-Url {
 }
 
 function Get-PHP-Versions {
-    param ($version)
+    param ($version, $latestVersionCount = 10)
 
     try {
         $urls = Get-Source-Urls
@@ -46,10 +46,14 @@ function Get-PHP-Versions {
                 $sysArch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x64' } else { 'x86' }
                 $fetched = $fetched | Where-Object { $_.href -match "$sysArch" }
 
-                if ($found -notcontains $fetched.fileName) {
-                    $fetchedVersions[$key] = $fetched | Select-Object -Last 5
-                    $found += $fetchedVersions[$key] | ForEach-Object { $_.fileName }
+                $fetchedVersions[$key] = @()
+                $fetched | ForEach-Object {    
+                    if ($found -notcontains $_.fileName) {
+                        $fetchedVersions[$key] += $_
+                        $found += $_.fileName
+                    }
                 }
+                $fetchedVersions[$key] = $fetchedVersions[$key] | Select-Object -Last $latestVersionCount
             }
         }
 
@@ -320,6 +324,9 @@ function Select-Version {
         $matchingVersions.GetEnumerator() | ForEach-Object {
             $key = $_.Key
             $versionsList = $_.Value
+            if ($versionsList.Length -eq 0) {
+                return
+            }
             Write-Host "`n$key versions:`n"
             $versionsList | ForEach-Object {
                 $versionItem = $_.version -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
@@ -378,7 +385,7 @@ function Install-PHP {
         }
 
         Write-Host "`nLoading the matching versions..."
-        $matchingVersions = Get-PHP-Versions -version $version
+        $matchingVersions = Get-PHP-Versions -version $version -latestVersionCount $LatestVersionCount
 
         if ($matchingVersions.Count -eq 0) {
             $msg = "No matching PHP versions found for '$version', Check one of the following:"

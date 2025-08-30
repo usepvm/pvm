@@ -253,12 +253,12 @@ function Optimize-SystemPath {
             
             if (
                 ($null -ne $envValue) -and
-                ($path -like "*$envValue*") -and
-                -not($envValue -like "*\Windows*") -and
-                -not($envValue -like "*\System32*")
+                ($path.ToLower() -like "*$($envValue.ToLower())*") -and
+                -not($envValue -match '(?i)\\Windows') -and
+                -not($envValue -match '(?i)\\System32')
             ) {
                 $envValue = [regex]::Escape($envValue.TrimEnd(';'))
-                $pattern = "(?<=^|;){0}(?=;|$)" -f $envValue
+                $pattern = "(?i)(?<=^|;){0}(?=;|$)" -f $envValue
                 $path = [regex]::Replace($path, $pattern, "%$envName%")
             }
         }

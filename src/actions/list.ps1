@@ -28,6 +28,7 @@ function Cache-Fetched-PHP-Versions {
 }
 
 function Get-From-Source {
+    param ($latestVersionCount = 10)
 
     try {
         $urls = Get-Source-Urls
@@ -49,11 +50,10 @@ function Get-From-Source {
         
         $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x64' } else { 'x86' }
         $fetchedVersions = $fetchedVersions | Where-Object { $_ -match "$arch" }
-        $fetchedVersions = $fetchedVersions | Select-Object -Last 10
         
         $fetchedVersionsGrouped = @{
-            'Archives' = $fetchedVersions | Where-Object { $_ -match "archives" }
-            'Releases' = $fetchedVersions | Where-Object { $_ -notmatch "archives" }
+            'Archives' = $fetchedVersions | Where-Object { $_ -match "archives" } | Select-Object -Last $latestVersionCount
+            'Releases' = $fetchedVersions | Where-Object { $_ -notmatch "archives" } | Select-Object -Last $latestVersionCount
         }
         
         if ($fetchedVersionsGrouped['Archives'].Count -eq 0 -and $fetchedVersionsGrouped['Releases'].Count -eq 0) {
@@ -111,7 +111,7 @@ function Get-PHP-List-To-Install {
             $fetchedVersionsGrouped = Get-From-Cache
             if (-not $fetchedVersionsGrouped -or $fetchedVersionsGrouped.Count -eq 0) {
                 Write-Host "`nCache is empty, reading from the source..."
-                $fetchedVersionsGrouped = Get-From-Source
+                $fetchedVersionsGrouped = Get-From-Source -latestVersionCount $LatestVersionCount
             }
         } else {
             if (Test-Path $cacheFile) {
@@ -119,7 +119,7 @@ function Get-PHP-List-To-Install {
             } else {
                 Write-Host "`nCache missing, reading from the source..."
             }
-            $fetchedVersionsGrouped = Get-From-Source
+            $fetchedVersionsGrouped = Get-From-Source -latestVersionCount $LatestVersionCount
         }
         
         return $fetchedVersionsGrouped

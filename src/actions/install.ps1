@@ -34,7 +34,7 @@ function Get-PHP-Versions-From-Url {
 }
 
 function Get-PHP-Versions {
-    param ($version, $latestVersionCount = 10)
+    param ($version)
 
     try {
         $urls = Get-Source-Urls
@@ -53,7 +53,6 @@ function Get-PHP-Versions {
                         $found += $_.fileName
                     }
                 }
-                $fetchedVersions[$key] = $fetchedVersions[$key] | Select-Object -Last $latestVersionCount
             }
         }
 
@@ -314,6 +313,10 @@ function Enable-Opcache {
 function Select-Version {
     param ($matchingVersions)
 
+    $matchingVersionsPartialList = @{}
+    $matchingVersions.GetEnumerator() | ForEach-Object {
+        $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $LatestVersionCount
+    }
     $matchingKeys = $matchingVersions.Values | Where-Object { $_.Count -gt 0 }
     
     if ($matchingKeys.Length -eq 1) {
@@ -321,7 +324,7 @@ function Select-Version {
         $selectedVersionObject = $matchingKeys
     } else {
         Write-Host "`nMatching PHP versions:"
-        $matchingVersions.GetEnumerator() | ForEach-Object {
+        $matchingVersionsPartialList.GetEnumerator() | ForEach-Object {
             $key = $_.Key
             $versionsList = $_.Value
             if ($versionsList.Length -eq 0) {
@@ -385,7 +388,7 @@ function Install-PHP {
         }
 
         Write-Host "`nLoading the matching versions..."
-        $matchingVersions = Get-PHP-Versions -version $version -latestVersionCount $LatestVersionCount
+        $matchingVersions = Get-PHP-Versions -version $version
 
         if ($matchingVersions.Count -eq 0) {
             $msg = "No matching PHP versions found for '$version', Check one of the following:"

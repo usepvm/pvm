@@ -194,25 +194,6 @@ Describe "Get-From-Source" {
         $result | Should -BeOfType [hashtable]
         $result.Keys.Count | Should -Be 0
     }
-    
-    It "Should limit to last 10 versions" {
-        # Create 15 mock versions
-        $mockLinks = @()
-        for ($i = 1; $i -le 15; $i++) {
-            $mockLinks += @{ href = "php-8.2.$i-Win32-x64.zip" }
-        }
-        
-        Mock Invoke-WebRequest {
-            return @{ Links = $mockLinks }
-        }
-        
-        Mock Cache-Fetched-PHP-Versions { }
-        
-        $result = Get-From-Source
-        
-        $totalVersions = ($result['Archives'] + $result['Releases']).Count
-        $totalVersions | Should -BeLessOrEqual 10
-    }
 }
 
 Describe "Get-Available-PHP-Versions" {

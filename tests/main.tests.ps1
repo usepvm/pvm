@@ -585,9 +585,6 @@ Describe "Start-PVM Function Tests" {
 
         It "Should handle multiple operations through alias handler" {
             Mock Alias-Handler { param($alias) 
-                Write-Host "----------"
-                Write-Host $alias
-                Write-Host "----------"
                 switch ($alias) {
                     "i" { return "install" }
                     "u" { return "use" }

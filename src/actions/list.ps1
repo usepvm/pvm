@@ -143,11 +143,14 @@ function Get-Available-PHP-Versions {
         }
         
         Write-Host "`nAvailable Versions"
-        Write-Host "--------------"
+        Write-Host "------------------"
 
         $fetchedVersionsGrouped.GetEnumerator() | ForEach-Object {
             $key = $_.Key
             $fetchedVersionsGroupe = $_.Value
+            if ($fetchedVersionsGroupe.Length -eq 0) {
+                return
+            }
             Write-Host "`n$key`n"
             $fetchedVersionsGroupe | ForEach-Object {
                 $versionItem = $_ -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
@@ -184,7 +187,7 @@ function Display-Installed-PHP-Versions {
         }
 
         Write-Host "`nInstalled Versions"
-        Write-Host "--------------"
+        Write-Host "------------------"
         $duplicates = @()
         $installedPhp | ForEach-Object {
             $versionNumber = $_

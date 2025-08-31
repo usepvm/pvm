@@ -28,7 +28,6 @@ function Cache-Fetched-PHP-Versions {
 }
 
 function Get-From-Source {
-    param ($latestVersionCount = 10)
 
     try {
         $urls = Get-Source-Urls
@@ -52,8 +51,8 @@ function Get-From-Source {
         $fetchedVersions = $fetchedVersions | Where-Object { $_ -match "$arch" }
         
         $fetchedVersionsGrouped = @{
-            'Archives' = $fetchedVersions | Where-Object { $_ -match "archives" } | Select-Object -Last $latestVersionCount
-            'Releases' = $fetchedVersions | Where-Object { $_ -notmatch "archives" } | Select-Object -Last $latestVersionCount
+            'Archives' = $fetchedVersions | Where-Object { $_ -match "archives" }
+            'Releases' = $fetchedVersions | Where-Object { $_ -notmatch "archives" }
         }
         
         if ($fetchedVersionsGrouped['Archives'].Count -eq 0 -and $fetchedVersionsGrouped['Releases'].Count -eq 0) {
@@ -111,7 +110,7 @@ function Get-PHP-List-To-Install {
             $fetchedVersionsGrouped = Get-From-Cache
             if (-not $fetchedVersionsGrouped -or $fetchedVersionsGrouped.Count -eq 0) {
                 Write-Host "`nCache is empty, reading from the source..."
-                $fetchedVersionsGrouped = Get-From-Source -latestVersionCount $LatestVersionCount
+                $fetchedVersionsGrouped = Get-From-Source
             }
         } else {
             if (Test-Path $cacheFile) {
@@ -119,7 +118,7 @@ function Get-PHP-List-To-Install {
             } else {
                 Write-Host "`nCache missing, reading from the source..."
             }
-            $fetchedVersionsGrouped = Get-From-Source -latestVersionCount $LatestVersionCount
+            $fetchedVersionsGrouped = Get-From-Source
         }
         
         return $fetchedVersionsGrouped
@@ -142,10 +141,15 @@ function Get-Available-PHP-Versions {
             return 1
         }
         
+        $fetchedVersionsGroupedPartialList = @{}
+        $fetchedVersionsGrouped.GetEnumerator() | ForEach-Object {
+            $fetchedVersionsGroupedPartialList[$_.Key] = $_.Value | Select-Object -Last $LatestVersionCount
+        }
+        
         Write-Host "`nAvailable Versions"
         Write-Host "------------------"
 
-        $fetchedVersionsGrouped.GetEnumerator() | ForEach-Object {
+        $fetchedVersionsGroupedPartialList.GetEnumerator() | ForEach-Object {
             $key = $_.Key
             $fetchedVersionsGroupe = $_.Value
             if ($fetchedVersionsGroupe.Length -eq 0) {

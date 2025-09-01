@@ -55,6 +55,7 @@ function Alias-Handler {
         "ls" { return "list" }
         "rm" { return "uninstall" }
         "i"  { return "install" }
+        "h"  { return "help" }
         Default { return $alias }
     }
 }
@@ -81,10 +82,10 @@ function Start-PVM {
             }
             foreach ($key in $usage.Keys) {
                 Write-Host "`n$key`:" -ForegroundColor Cyan
-                if($usage[$key] -is [System.Collections.IEnumerable]) {
-                    $usage[$key] | ForEach-Object { Write-Host "  $_" }
+                if($usage[$key] -is [array]) {
+                    $($usage.$key) | ForEach-Object { Write-Host "  $_" }
                 } else {
-                    Write-Host "  $usage[$key]"
+                    Write-Host "  $($usage[$key])"
                 }
             }
             return 0

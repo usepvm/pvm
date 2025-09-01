@@ -106,6 +106,8 @@ Describe "Show-PVM-Version Function Tests" {
 
 Describe "Alias-Handler Tests" {
     $testCases = @(
+        @{ Operation = "h"; Expected = "help" }
+        @{ Operation = "H"; Expected = "help" }
         @{ Operation = "ls"; Expected = "list" }
         @{ Operation = "rm"; Expected = "uninstall" }
         @{ Operation = "i"; Expected = "install" }
@@ -221,6 +223,43 @@ Describe "Start-PVM Function Tests" {
             $result | Should -Be 0
             Assert-MockCalled Show-PVM-Version -Times 0
             Assert-MockCalled Get-Actions -Times 1
+        }
+    }
+
+    Context "Command help Display Tests" -Tag i {
+        BeforeEach {
+            Mock Get-Actions { 
+                [ordered]@{
+                    "setup" = [PSCustomObject]@{
+                        usage = [ordered]@{
+                            USAGE = "pvm setup";
+                            DESCRIPTION = @(
+                                "Sets environment variables and config paths for PHP.",
+                                "This command should be run once after installation to configure PVM for first use."
+                            )
+                        }
+                    }
+                    "current" = [PSCustomObject]@{
+                        usage = [ordered]@{
+                            USAGE = "pvm current"
+                            DESCRIPTION = @(
+                                "Shows the currently active PHP version, including the absolute path.",
+                                "It also shows the status of xdebug and opcache."
+                            )
+                        };
+                    }
+                    "install" = [PSCustomObject]@{}
+                }
+            }
+        }
+        It "Should display help for setup command" {
+            $result = Start-PVM -operation "help" -arguments @("setup")
+            $result | Should -Be 0
+        }
+        
+        It "Should return -1 for non-existent usage" {
+            $result = Start-PVM -operation "help" -arguments @("install")
+            $result | Should -Be -1
         }
     }
 

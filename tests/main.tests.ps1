@@ -226,7 +226,7 @@ Describe "Start-PVM Function Tests" {
         }
     }
 
-    Context "Command help Display Tests" -Tag i {
+    Context "Command help Display Tests" {
         BeforeEach {
             Mock Get-Actions { 
                 [ordered]@{

@@ -52,7 +52,7 @@ Describe "Uninstall-PHP" {
             Assert-MockCalled Read-Host -ParameterFilter { $Prompt -like "*You are trying to uninstall the currently active PHP version*" }
         }
         
-        It "Should prompt user when trying to uninstall current version and handle 'n' response" -Tag i {
+        It "Should prompt user when trying to uninstall current version and handle 'n' response" {
             Mock Get-PHP-Path-By-Version { "$testPhpPath\8.0" }
             Mock Get-Current-PHP-Version { @{ version = "8.0" } }
             Mock Read-Host { "n" }

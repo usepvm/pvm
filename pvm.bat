@@ -4,12 +4,9 @@ setlocal
 rem Run PowerShell with the provided arguments
 SET FILE_TARGET=%~dp0\src\pvm.ps1
 
-rem If no arguments provided, show help
-if "%~1"=="--" (
-    set ARGS=help
-) else (
-    set ARGS=%*
-)
+rem Handle empty options
+set "ARGS= %* "
+set "ARGS=%ARGS:-- =%"
 
 where pwsh >nul 2>&1
 if %ERRORLEVEL%==0 (

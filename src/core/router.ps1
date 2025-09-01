@@ -243,12 +243,12 @@ function Get-Actions {
                     "to automatically select the version based on project configuration files."
                 )
                 EXAMPLES = @(
-                    "pvm use 8.2.0 : Switches to PHP version 8.2.0"
-                    "pvm use auto  : Automatically uses version from composer.json or .php-version file"
+                    "pvm use 8.2.0 .... Switches to PHP version 8.2.0"
+                    "pvm use auto ..... Automatically uses version from composer.json or .php-version file"
                 )
                 ARGUMENTS = @(
-                    "<version> .... Specific PHP version to use"
-                    "auto ......... Auto-detect version from project files"
+                    "<version> ........ Specific PHP version to use"
+                    "auto ............. Auto-detect version from project files"
                 )
             }
             action = { return Invoke-PVMUse -arguments $script:arguments }}

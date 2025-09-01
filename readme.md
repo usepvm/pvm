@@ -21,6 +21,9 @@ pvm setup
 # Display the avilable options
 pvm help
 
+# Display help for a specific command
+pvm help <command>
+
 # Display information about the environment
 pvm info # pvm ini info
 

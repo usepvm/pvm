@@ -52,7 +52,10 @@ pvm use auto
 ### Manage php.ini settings and extensions directly from the CLI.
 
 ```sh
-# Enable or disable PHP multiple extensions
+# Check status of multiple extensions
+pvm ini status xdebug opcache
+
+# Enable or disable multiple extensions
 pvm ini enable xdebug opcache
 pvm ini disable xdebug opcache
 

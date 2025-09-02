@@ -8,7 +8,7 @@ function Get-PHP-Versions-From-Url {
 
         # Filter the links to find versions that match the given version
         $filteredLinks = $links | Where-Object {
-            $_.href -match "php-$version(\.\d+)*-win" -and
+            $_.href -match "php-$version(\.\d+)*-win.*\.zip$" -and
             $_.href -notmatch "php-debug" -and
             $_.href -notmatch "php-devel" -and
             $_.href -notmatch "nts"
@@ -42,16 +42,20 @@ function Get-PHP-Versions {
         $found = @()
         foreach ($key in $urls.Keys) {
             $fetched = Get-PHP-Versions-From-Url -url $urls[$key] -version $version
-            if ($fetched.Count -gt 0) {
-                $sysArch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x64' } else { 'x86' }
-                $fetched = $fetched | Where-Object { $_.href -match "$sysArch" }
+            if ($fetched.Count -eq 0) {
+                continue
+            }
+            $sysArch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x64' } else { 'x86' }
+            $fetched = $fetched | Where-Object { $_.href -match $sysArch }
+            if ($fetched.Count -eq 0) {
+                continue
+            }
 
-                $fetchedVersions[$key] = @()
-                $fetched | ForEach-Object {    
-                    if ($found -notcontains $_.fileName) {
-                        $fetchedVersions[$key] += $_
-                        $found += $_.fileName
-                    }
+            $fetchedVersions[$key] = @()
+            $fetched | ForEach-Object {    
+                if ($found -notcontains $_.fileName) {
+                    $fetchedVersions[$key] += $_
+                    $found += $_.fileName
                 }
             }
         }
@@ -417,14 +421,7 @@ function Install-PHP {
         Write-Host "`nExtracting the downloaded zip ..."
         Extract-And-Configure -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$($selectedVersionObject.version)"
 
-        $phpIniPath = "$destination\$($selectedVersionObject.version)\php.ini"
-        $phpIniContent = Get-Content $phpIniPath
-        $phpIniContent = $phpIniContent | ForEach-Object {
-            $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1'
-        }
-        Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
-        
-        Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
+        $opcacheEnabled = Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
 
         $xdebugConfigured = Config-XDebug -version $selectedVersionObject.version -phpPath "$destination\$($selectedVersionObject.version)"
 

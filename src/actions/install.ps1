@@ -145,7 +145,18 @@ function Extract-And-Configure {
     try {
         Remove-Item -Path $fileNamePath -Recurse -Force
         Extract-Zip -zipPath $path -extractPath $fileNamePath
-        Copy-Item -Path "$fileNamePath\php.ini-development" -Destination "$fileNamePath\php.ini"
+        $iniCandidates = @(
+            "php.ini-development",
+            "php.ini-production",
+            "php.ini-recommended",
+            "php.ini-dist"
+        )
+        foreach ($candidate in $iniCandidates) {
+            if (Test-Path "$fileNamePath\$candidate") {
+                Copy-Item -Path "$fileNamePath\$candidate" -Destination "$fileNamePath\php.ini"
+                break
+            }
+        }
         Remove-Item -Path $path
     } catch {
         $logged = Log-Data -data @{

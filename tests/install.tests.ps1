@@ -355,7 +355,13 @@ Describe "Get-PHP-Versions Tests" {
     }
     
     It "Should handle exception gracefully" {
-        $global:MockFileSystem.DownloadFails = $true
+        Mock Get-PHP-Versions-From-Url {
+            return @(
+                @{ version = "8.1.0"; fileName = "php-8.1.0-Win32-vs16-x64.zip" },
+                @{ version = "8.1.1"; fileName = "php-8.1.1-Win32-vs16-x64.zip" }
+            )
+        }
+        Mock Where-Object { throw "Test exception" }
         
         $result = Get-PHP-Versions -version "8.1"
         
@@ -416,6 +422,12 @@ Describe "Extract-And-Configure Tests" {
     It "Should extract and configure PHP" {
         { Extract-And-Configure -path "TestDrive:\php.zip" -fileNamePath "TestDrive:\php" } | Should -Not -Throw
         $global:MockFileSystem.Files.ContainsKey("TestDrive:\php\php.ini") | Should -Be $true
+    }
+    
+    It "Should handle extraction failure" {
+        Mock Remove-Item { throw "Test exception" }
+        
+        { Extract-And-Configure -path "TestDrive:\php.zip" -fileNamePath "TestDrive:\php" } | Should -Not -Throw
     }
 }
 
@@ -510,6 +522,14 @@ opcache.enable = 1
         $code = Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
         $code | Should -Be -1
     }
+    
+    It "Should handle exception gracefully" -Tag i  {
+        Mock Add-Content { throw "Test exception" }
+        Mock Test-Path { return $true }
+        
+        $code = Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
+        $code | Should -Be -1
+    }
 }
 
 Describe "Get-XDebug-FROM-URL Tests" {
@@ -567,6 +587,13 @@ Describe "Enable-Opcache Tests" {
     
     It "Should handle missing php.ini" {
         $global:MockFileSystem.Files.Remove("TestDrive:\php\php.ini")
+        
+        $code = Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
+        $code | Should -Be -1
+    }
+    
+    It "Should handle exception gracefully" {
+        Mock Get-Content { throw "Error reading file" }
         
         $code = Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
         $code | Should -Be -1

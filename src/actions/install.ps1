@@ -391,9 +391,20 @@ function Install-PHP {
 
         if ($foundInstalledVersions) {
             if ($version -match '^(\d+)(?:\.(\d+))?') {
+                $currentVersion = Get-Current-PHP-Version
+                if ($currentVersion -and $currentVersion.version) {
+                    $currentVersion = $currentVersion.version
+                }
                 $familyVersion = $matches[0]
                 Write-Host "`nOther versions from the $familyVersion.x family are available:"
-                $foundInstalledVersions | ForEach-Object { Write-Host " - $_" }
+                $foundInstalledVersions | ForEach-Object {
+                    $versionNumber = $_
+                    $isCurrent = ""
+                    if ($currentVersion -eq $versionNumber) {
+                        $isCurrent = "(Current)"
+                    }
+                    Write-Host " - $versionNumber $isCurrent"
+                }
                 $response = Read-Host "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 if ($response -ne "y" -and $response -ne "Y") {
                     return @{ code = -1; message = "Installation cancelled" }
@@ -420,7 +431,9 @@ function Install-PHP {
         }
 
         if (Is-PHP-Version-Installed -version $selectedVersionObject.version) {
-            return @{ code = -1; message = "Version '$($selectedVersionObject.version)' already installed" }
+            $message = "Version '$($selectedVersionObject.version)' already installed"
+            $message += "`nRun: pvm use $($selectedVersionObject.version)"
+            return @{ code = -1; message = $message }
         }
 
         $destination = Download-PHP -version $selectedVersionObject

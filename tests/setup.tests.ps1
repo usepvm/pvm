@@ -5,7 +5,6 @@ Describe "Setup-PVM" {
      BeforeAll {
         Mock Write-Host {}
         # Mock global variables that the function depends on
-        $global:PHP_CURRENT_ENV_NAME = "PHP"
         $global:PHP_CURRENT_VERSION_PATH = "C:\php\8.2"
         $global:PVMRoot = "C:\PVM"
         $global:LOG_ERROR_PATH = "TestDrive:\logs\error.log"
@@ -219,7 +218,6 @@ Describe "Setup-PVM" {
         Remove-Item function:Optimize-SystemPath
         Remove-Item function:Setup-PVM
         
-        Remove-Variable PHP_CURRENT_ENV_NAME -Scope Global -ErrorAction SilentlyContinue
         Remove-Variable PHP_CURRENT_VERSION_PATH -Scope Global -ErrorAction SilentlyContinue
         Remove-Variable PVMRoot -Scope Global -ErrorAction SilentlyContinue
         Remove-Variable LOG_ERROR_PATH -Scope Global -ErrorAction SilentlyContinue

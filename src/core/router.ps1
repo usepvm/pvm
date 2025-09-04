@@ -101,7 +101,7 @@ function Invoke-PVMUse {
         $version = $result.version
     }
     
-    $result = Update-PHP-Version -variableName $PHP_CURRENT_ENV_NAME -variableValue $version
+    $result = Update-PHP-Version -version $version
 
     Display-Msg-By-ExitCode -result $result
     return 0

@@ -34,19 +34,19 @@ function Detect-PHP-VersionFromProject {
 }
 
 function Update-PHP-Version {
-    param ($variableName, $variableValue)
+    param ($version)
 
     try {
-        $phpPath = Get-PHP-Path-By-Version -version $variableValue
+        $phpPath = Get-PHP-Path-By-Version -version $version
         if (-not $phpPath) {
-            $installedVersions = Get-Matching-PHP-Versions -version $variableValue
+            $installedVersions = Get-Matching-PHP-Versions -version $version
             $pathVersionObject = Get-UserSelected-PHP-Version -installedVersions $installedVersions
         } else {
-            $pathVersionObject = @{ code = 0; version = $variableValue; path = $phpPath }
+            $pathVersionObject = @{ code = 0; version = $version; path = $phpPath }
         }
 
         if (-not $pathVersionObject) {
-            return @{ code = -1; message = "PHP version $variableValue was not found!"; color = "DarkYellow"}
+            return @{ code = -1; message = "PHP version $version was not found!"; color = "DarkYellow"}
         }
 
         if ($pathVersionObject.code -ne 0) {
@@ -70,7 +70,7 @@ function Update-PHP-Version {
         return @{ code = 0; message = "Now using PHP $($pathVersionObject.version)"; color = "DarkGreen"}
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to update PHP version for '$variableName'"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to update PHP version to '$version'"
             exception = $_
         }
         return @{ code = -1; message = "No matching PHP versions found for '$version', Use 'pvm list' to see installed versions."; color = "DarkYellow"}

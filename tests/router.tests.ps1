@@ -15,7 +15,6 @@ BeforeAll {
             "WINDOWS_DIR" = "C:\Windows"
             "SYSTEM32_DIR" = "C:\Windows\System32"
             "REGULAR_VAR" = "SomeValue"
-            "PHP_CURRENT_ENV_NAME" = "8.2.0"
         }
         Process = @{}
         User = @{}
@@ -26,9 +25,6 @@ BeforeAll {
         Directories = @()
         Files = @{}
     }
-
-    # Mock variables
-    $global:PHP_CURRENT_ENV_NAME = "PHP"
 }
 
 
@@ -231,8 +227,7 @@ Describe "Invoke-PVMUse Tests" {
         $result | Should -Be 0
         
         Assert-MockCalled Update-PHP-Version -Times 1 -ParameterFilter { 
-            $variableName -eq $PHP_CURRENT_ENV_NAME -and 
-            $variableValue -eq "8.2.0" 
+            $version -eq "8.2.0" 
         }
         Assert-MockCalled Display-Msg-By-ExitCode -Times 1
     }
@@ -244,7 +239,7 @@ Describe "Invoke-PVMUse Tests" {
         $result | Should -Be 0
         
         Assert-MockCalled Auto-Select-PHP-Version -Times 1
-        Assert-MockCalled Update-PHP-Version -Times 1 -ParameterFilter { $variableValue -eq "8.2.0" }
+        Assert-MockCalled Update-PHP-Version -Times 1 -ParameterFilter { $version -eq "8.2.0" }
     }
 
     It "Should return 1 when auto-selection fails" {

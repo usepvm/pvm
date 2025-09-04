@@ -122,6 +122,14 @@ Describe "Update-PHP-Version" {
         $result.message | Should -BeExactly "PHP version 5.6 was not found!"
     }
     
+    It "Should return when switching to same current version" {
+        Mock Get-PHP-Path-By-Version { return "TestDrive:\php\8.2.0" }
+        Mock Get-Current-PHP-Version { return @{ version = "8.2.0"; path = "TestDrive:\php\8.2.0" } }
+        $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "8.2.0"
+        $result.code | Should -Be 0
+        $result.message | Should -BeExactly "Already using PHP 8.2.0"
+    }
+    
     It "Should handle when Make-Symbolic-Link fails" {
         Mock Make-Symbolic-Link { return @{ code = -1; message = "Failed to create link"; color = "DarkYellow" } }
         $result = Update-PHP-Version -variableName "PHP_VERSION" -variableValue "8.1"

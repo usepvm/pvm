@@ -53,6 +53,13 @@ function Update-PHP-Version {
             return $pathVersionObject
         }
 
+        $currentVersion = Get-Current-PHP-Version
+        if ($currentVersion -and $currentVersion.version) {
+            if ($pathVersionObject.version -eq $currentVersion.version) {
+                return @{ code = 0; message = "Already using PHP $($pathVersionObject.version)"; color = "DarkCyan"}
+            }
+        }
+
         if (-not $pathVersionObject.path) {
             return @{ code = -1; message = "PHP version $($pathVersionObject.version) was not found!"; color = "DarkYellow"}
         }

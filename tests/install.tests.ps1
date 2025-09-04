@@ -502,8 +502,8 @@ opcache.enable = 1
         
         $phpIniContent = $global:MockFileSystem.Files["TestDrive:\php\php.ini"]
         # Write-Host "PHP.ini content: $phpIniContent" # Debug output
-        $phpIniContent | Should -Match "xdebug.remote_enable=1"
-        $phpIniContent | Should -Match "xdebug.remote_port=9000"
+        $phpIniContent | Should -Match "xdebug.mode=debug"
+        $phpIniContent | Should -Match "xdebug.client_port=9003"
     }
     
     It "Should handle missing php.ini" {
@@ -523,7 +523,7 @@ opcache.enable = 1
         $code | Should -Be -1
     }
     
-    It "Should handle exception gracefully" -Tag i  {
+    It "Should handle exception gracefully" {
         Mock Add-Content { throw "Test exception" }
         Mock Test-Path { return $true }
         
@@ -540,9 +540,9 @@ Describe "Get-XDebug-FROM-URL Tests" {
     
     It "Should parse XDebug versions correctly" {
         $mockLinks = @(
-            @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" },
-            @{ href = "/download/php_xdebug-2.9.0-8.1-vs16-x64.dll" },
-            @{ href = "/download/php_xdebug-3.1.0-8.1-nts-vs16-x64.dll" }
+            @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x86_64.dll" },
+            @{ href = "/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll" },
+            @{ href = "/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll" }
         )
         Set-MockWebResponse -url "https://test.com" -links $mockLinks
         

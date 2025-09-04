@@ -225,7 +225,10 @@ function Config-XDebug {
             Write-Host "`nNo xdebug version found for $version"
             return -1
         }
-        $xDebugSelectedVersion = $xDebugList[0]
+        $xDebugSelectedVersion = $xDebugList | 
+                                # Where-Object { $_.fileName -match "vs" } |
+                                Sort-Object { [version]$_.xDebugVersion } -Descending |
+                                Select-Object -First 1
 
         $created = Make-Directory -path "$phpPath\ext"
         if ($created -ne 0) {
@@ -234,7 +237,7 @@ function Config-XDebug {
         }
 
         Write-Host "`nDownloading XDEBUG $($xDebugSelectedVersion.xDebugVersion)..."
-        Invoke-WebRequest -Uri "$baseUrl/$($xDebugSelectedVersion.href)" -OutFile "$phpPath\ext\$($xDebugSelectedVersion.fileName)"
+        Invoke-WebRequest -Uri "$baseUrl/$($xDebugSelectedVersion.href.TrimStart('/'))" -OutFile "$phpPath\ext\$($xDebugSelectedVersion.fileName)"
         # config xdebug in the php.ini file
         $xDebugConfig = getXdebugConfigV2 -XDebugPath $($xDebugSelectedVersion.fileName)
         if ($xDebugSelectedVersion.xDebugVersion -like "3.*") {
@@ -264,8 +267,9 @@ function Get-XDebug-FROM-URL {
         $links = $html.Links
 
          # Filter the links to find versions that match the given version
-         $filteredLinks = $links | Where-Object {
-            $_.href -match "php_xdebug-[\d\.]+-$version-.*\.dll" -and
+        $sysArch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x86_64' } else { '' }
+        $filteredLinks = $links | Where-Object {
+            $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$sysArch\.dll" -and
             $_.href -notmatch "nts"
         }
 

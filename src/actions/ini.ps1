@@ -1,3 +1,47 @@
+
+function Add-Missing-PHPExtension {
+    param ($iniPath, $extName, $enable = $true)
+    
+    try {
+        $phpCurrentVersion = Get-Current-PHP-Version
+        if (-not $phpCurrentVersion -or -not $phpCurrentVersion.version) {
+            Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
+            return -1
+        }
+        
+        $iniContent = Get-Content $iniPath
+        Backup-IniFile $iniPath
+        
+        if ($extName -like "*xdebug*") {
+            $xdebugConfigured = Config-XDebug -version $phpCurrentVersion.version -phpPath $phpCurrentVersion.path
+        } else {
+            $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
+            if ([version]$phpCurrentVersion.version -lt $PhpNewExtensionNamingSince) {
+                $extName = "php_$extName.dll"
+            }
+            
+            $lines = Get-Content $iniPath
+            $enabled = if ($enable) { '' } else { ';' }
+            if ($extName -like "*opcache*") {
+                $lines += "`n$enabled zend_extension=$extName"
+            } else {
+                $lines += "`n$enabled extension=$extName"
+            }
+            Set-Content $iniPath $lines -Encoding UTF8
+            Write-Host "- '$extName' added successfully." -ForegroundColor DarkGreen
+        }
+        
+        return 0
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to add extension '$extName'"
+            exception = $_
+        }
+        return -1
+    }
+    
+}
+
 function Get-Single-PHPExtensionStatus {
     param ($iniPath, $extName)
     
@@ -146,8 +190,15 @@ function Enable-IniExtension {
         }
         
         $status = Get-Single-PHPExtensionStatus -iniPath $iniPath -extName $extName
-        if (-not $status -or $status.status -eq "Enabled") {
-            Write-Host "- '$extName' is already enabled or not found. check with 'pvm ini status $extName'" -ForegroundColor DarkGray
+        
+        if (-not $status) {
+            Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
+            $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
+            if ($response -eq "y" -or $response -eq "Y") {
+                $extensionAdded = Add-Missing-PHPExtension -iniPath $iniPath -extName $extName -enable $false
+            }
+        } elseif ($status -and $status.status -eq "Enabled") {
+            Write-Host "- '$extName' already enabled. check with 'pvm ini status $extName'" -ForegroundColor DarkGray
             return -1
         }
         
@@ -193,8 +244,14 @@ function Disable-IniExtension {
         }
         
         $status = Get-Single-PHPExtensionStatus -iniPath $iniPath -extName $extName
-        if (-not $status -or $status.status -eq "Disabled") {
-            Write-Host "- '$extName' is already disabled or not found. check with 'pvm ini status $extName'" -ForegroundColor DarkGray
+        if (-not $status) {
+            Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
+            $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
+            if ($response -eq "y" -or $response -eq "Y") {
+                $extensionAdded = Add-Missing-PHPExtension -iniPath $iniPath -extName $extName -enable $true
+            }
+        } elseif ($status -and $status.status -eq "Disabled") {
+            Write-Host "- '$extName' is already disabled. check with 'pvm ini status $extName'" -ForegroundColor DarkGray
             return -1
         }
         
@@ -248,41 +305,9 @@ function Get-IniExtensionStatus {
 
         Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
 
-        if ($extName -like "*xdebug*") {
-            $response = Read-Host "`nWould you like to install xdebug? (y/n)"
-            if ($response -eq "y" -or $response -eq "Y") {
-                $phpCurrentVersion = Get-Current-PHP-Version
-                if (-not $phpCurrentVersion -or -not $phpCurrentVersion.version) {
-                    Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
-                    return -1
-                }
-                Config-XDebug -version $phpCurrentVersion.version -phpPath $phpCurrentVersion.path
-                return 0
-            }
-        } else {
-            $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
-            if ($response -eq "y" -or $response -eq "Y") {
-                $phpCurrentVersion = Get-Current-PHP-Version
-                if (-not $phpCurrentVersion -or -not $phpCurrentVersion.version) {
-                    Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
-                    return -1
-                }
-                $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
-                if ([version]$phpCurrentVersion.version -lt $PhpNewExtensionNamingSince) {
-                    $extName = "php_$extName.dll"
-                }
-                
-                $lines = Get-Content $iniPath
-                if ($extName -like "*opcache*") {
-                    $lines += "`nzend_extension=$extName"
-                } else {
-                    $lines += "`nextension=$extName"
-                }
-                Backup-IniFile $iniPath
-                Set-Content $iniPath $lines -Encoding UTF8
-                Write-Host "- '$extName' added and enabled successfully." -ForegroundColor DarkGreen
-                return 0
-            }
+        $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
+        if ($response -eq "y" -or $response -eq "Y") {
+            return (Add-Missing-PHPExtension -iniPath $iniPath -extName $extName)
         }
 
         return -1

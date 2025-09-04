@@ -55,6 +55,71 @@ upload_max_filesize = 2M
     }
 }
 
+Describe "Add-Missing-PHPExtension" {
+    BeforeEach {
+        Reset-Ini-Content
+        Remove-Item $testBackupPath -ErrorAction SilentlyContinue
+    }
+    
+    It "Returns -1 when current PHP version is null" {
+        Mock Get-Current-PHP-Version { return @{ version = $null; path = $null } }
+        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl"
+        $result | Should -Be -1
+    }
+    
+    It "Adds and configures xdebug in ini file" {
+        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "xdebug"
+        $result | Should -Be 0
+    }
+    
+    It "Adds any extension to ini file" {
+        @"
+zend_extension=php_opcache.dll
+extension=php_mbstring.dll
+"@ | Set-Content $testIniPath
+        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl"
+        $result | Should -Be 0
+        (Get-Content $testIniPath) -match "extension=curl" | Should -Be $true
+    }
+    
+    It "Adds any extension in disabled state to ini file" {
+        @"
+zend_extension=php_opcache.dll
+;extension=php_mbstring.dll
+"@ | Set-Content $testIniPath
+        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl" -enable $false
+        $result | Should -Be 0
+        (Get-Content $testIniPath) -match "; extension=curl" | Should -Be $true
+    }
+    
+    It "Adds extensions correctly for older PHP versions" {
+        @"
+zend_extension=php_opcache.dll
+extension=php_mbstring.dll
+"@ | Set-Content $testIniPath
+        Mock Get-Current-PHP-Version { return @{ version = "7.1.0"; path = "TestDrive:\php\7.1.0" } }
+        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl"
+        $result | Should -Be 0
+        (Get-Content $testIniPath) -match "extension=php_curl.dll" | Should -Be $true
+    }
+    
+    It "Adds zend_extensions correctly" {
+        @"
+extension=php_mbstring.dll
+"@ | Set-Content $testIniPath
+        Mock Get-Current-PHP-Version { return @{ version = "7.1.0"; path = "TestDrive:\php\7.1.0" } }
+        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "opcache"
+        $result | Should -Be 0
+        (Get-Content $testIniPath) -match "zend_extension=php_opcache.dll" | Should -Be $true
+    }
+    
+    It "Handles exception gracefully" {
+        Mock Get-Content { throw "Access denied" }
+        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl"
+        $result | Should -Be -1
+    }
+}
+
 Describe "Get-Single-PHPExtensionStatus" {
     Context "When extension is enabled" {
         It "Returns enabled status" {
@@ -123,6 +188,7 @@ Describe "Restore-IniBackup" {
     }
     
     It "Returns -1 on error" {
+        Mock Test-Path { return $true }
         Mock Copy-Item { throw "Access denied" }
         Backup-IniFile -iniPath $testIniPath
         Restore-IniBackup -iniPath $testIniPath | Should -Be -1
@@ -205,6 +271,8 @@ Describe "Set-IniSetting" {
 
 Describe "Enable-IniExtension" {
     BeforeEach {
+        Mock Read-Host { return "n" }
+        Mock Add-Missing-PHPExtension { return 0 }
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
     }
@@ -245,10 +313,18 @@ extension=php_curl.dll
         Mock Get-Content { throw "Access denied" }
         Enable-IniExtension -iniPath $testIniPath -extName "xdebug" | Should -Be -1
     }
+    
+    It "Prompts to add missing extension" {
+        Mock Get-Single-PHPExtensionStatus { return $null }
+        Mock Read-Host { return "y" }
+        Enable-IniExtension -iniPath $testIniPath -extName "xdebug" | Should -Be 0
+    }
 }
 
 Describe "Disable-IniExtension" {
     BeforeEach {
+        Mock Read-Host { return "n" }
+        Mock Add-Missing-PHPExtension { return 0 }
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
     }
@@ -285,11 +361,18 @@ Describe "Disable-IniExtension" {
         Mock Get-Content { throw "Access denied" }
         Disable-IniExtension -iniPath $testIniPath -extName "curl" | Should -Be -1
     }
+    
+    It "Prompts to add missing extension" {
+        Mock Get-Single-PHPExtensionStatus { return $null }
+        Mock Read-Host { return "y" }
+        Disable-IniExtension -iniPath $testIniPath -extName "curl" | Should -Be 0
+    }
 }
 
 Describe "Get-IniExtensionStatus" {
     BeforeEach {
         Reset-Ini-Content
+        Mock Add-Missing-PHPExtension { return 0 }
     }
     
     It "Detects enabled extension" {
@@ -331,7 +414,7 @@ extension=php_curl.dll
 zend_extension=php_opcache.dll
 "@ | Set-Content -Path $testIniPath -Encoding UTF8
         Mock Read-Host { return "y" }
-        Mock Get-Current-PHP-Version { return @{ version = $null; path = $null } }
+        Mock Add-Missing-PHPExtension { return -1 }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "xdebug" | Should -Be -1
     }
     
@@ -343,7 +426,6 @@ zend_extension=php_opcache.dll
     It "Handles non-xdebug extension with 'y' input for adding to list" {
         Mock Read-Host { return "y" }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "newext" | Should -Be 0
-        (Get-Content $testIniPath) -match "^extension=newext" | Should -Be $true
     }
     
     It "Handles zend_extension addition for opcache" {
@@ -353,7 +435,6 @@ extension=php_curl.dll
 "@ | Set-Content -Path $testIniPath -Encoding UTF8
         Mock Read-Host { return "y" }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "opcache" | Should -Be 0
-        (Get-Content $testIniPath) -match "^zend_extension=opcache" | Should -Be $true
     }
 
     

@@ -415,7 +415,7 @@ function Invoke-PVMIniAction {
                 $exitCode = Get-PHP-Info
             }
             "get" {
-                if ($params.Count -lt 1) {
+                if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one setting name ('pvm ini get memory_limit)."
                     return -1
                 }
@@ -426,7 +426,7 @@ function Invoke-PVMIniAction {
                 }
             }
             "set" {
-                if ($params.Count -lt 1) {
+                if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
                     return -1
                 }
@@ -437,7 +437,7 @@ function Invoke-PVMIniAction {
                 }
             }
             "enable" {
-                if ($params.Count -lt 1) {
+                if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one extension (pvm ini enable curl)."
                     return -1
                 }

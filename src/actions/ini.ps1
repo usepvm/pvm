@@ -391,6 +391,105 @@ function Get-PHPExtensionsStatus {
     return $extensions
 }
 
+function Install-IniExtension {
+    param ($iniPath, $extName)
+    
+    try {
+        if (-not $extName) {
+            Write-Host "`nPlease provide an extension name to check status"
+            return -1
+        }
+        
+        $baseUrl = "https://windows.php.net"
+        $url = "$baseUrl/downloads/pecl/releases/$extName"
+        $html = Invoke-WebRequest -Uri $url
+        $links = $html.Links | Where-Object {
+            $_.href -match "/downloads/pecl/releases/$extName"
+        }
+        if ($links.Count -eq 0) {
+            Write-Host "`nFailed to fetch versions for $extName" -ForegroundColor DarkYellow
+            return -1
+        }
+        
+        Write-Host "`nAvailable versions for '$extName':"
+        $links | ForEach-Object {
+            $text = ($_.outerHTML -replace '<.*?>','').Trim()
+            Write-Host $text
+        }
+        $response = Read-Host "`nInsert the version number you want to install"
+        if ([string]::IsNullOrWhiteSpace($response)) {
+            Write-Host "`nInstallation cancelled"
+            return -1
+        }
+        $html = Invoke-WebRequest -Uri "https://windows.php.net/downloads/pecl/releases/$extName/$response"
+        $links = $html.Links | Where-Object {
+            $_.href -match "/downloads/pecl/releases/$extName/$response"-and
+            $_.href -match ".zip$"
+        }
+        if ($links.Count -eq 0) {
+            Write-Host "`nFailed to fetch versions for $response" -ForegroundColor DarkYellow
+            return -1
+        }
+        
+        $index = 0
+        $links | ForEach-Object {
+            $text = ($_.outerHTML -replace '<.*?>|.zip','').Trim()
+            Write-Host "[$index] $text"
+            $index++
+        }
+        
+        $response = Read-Host "`nInsert the [number] you want to install"
+        if ([string]::IsNullOrWhiteSpace($response)) {
+            Write-Host "`nInstallation cancelled"
+            return -1
+        }
+        
+        $chosenItem = $links[$response]
+        if (-not $chosenItem) {
+            Write-Host "`nFailed to fetch versions for $response" -ForegroundColor DarkYellow
+            return -1
+        }
+        
+        Invoke-WebRequest -Uri "$baseUrl/$($chosenItem.href.TrimStart('/'))" -OutFile "$STORAGE_PATH\php"
+        $fileNamePath = ($chosenItem.outerHTML -replace '<.*?>|.zip','').Trim()
+        Extract-Zip -zipPath "$STORAGE_PATH\php\$fileNamePath.zip" -extractPath "$STORAGE_PATH\php\$fileNamePath"
+        Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath.zip"
+        $files = Get-ChildItem -Path "$STORAGE_PATH\php\$fileNamePath"
+        $extFile = $files | Where-Object {
+            ($_.Name -match "($extName|php_$extName).dll")
+        }
+        if (-not $extFile) {
+            Write-Host "`nFailed to find $extName" -ForegroundColor DarkYellow
+            return -1
+        }
+        $phpPath = ($iniPath | Split-Path -Parent)
+        if (Test-Path "$phpPath\ext\$($extFile.Name)") {
+            $response = Read-Host "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
+            if ($response -ne "y" -and $response -ne "Y") {
+                Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath" -Force -Recurse
+                Write-Host "`nInstallation cancelled"
+                return -1
+            }
+        }
+        Move-Item -Path $extFile.FullName -Destination "$phpPath\ext"
+        Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath" -Force -Recurse
+        $code = Add-Missing-PHPExtension -iniPath $iniPath -extName $extName -enable $false
+        if ($code -ne 0) {
+            Write-Host "`nFailed to add $extName" -ForegroundColor DarkYellow
+            return -1
+        }
+        
+        Write-Host "`n$extName installed successfully"        
+        return 0
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to install '$extName'"
+            exception = $_
+        }
+        return -1
+    }
+}
+
 function Invoke-PVMIniAction {
     param ( $action, $params )
 
@@ -471,6 +570,17 @@ function Invoke-PVMIniAction {
             }
             "restore" {
                 $exitCode = Restore-IniBackup -iniPath $iniPath
+            }
+            "install" {
+                if ($params.Count -eq 0) {
+                    Write-Host "`nPlease specify at least one extension (pvm ini install xdebug)."
+                    return -1
+                }
+                
+                Write-Host "`nInstalling extension(s): $($remainingArgs -join ', ')"
+                foreach ($extName in $params) {
+                    $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName
+                }
             }
             default {
                 Write-Host "`nUnknown action '$action' for 'pvm ini'. Use 'set', 'enable', or 'disable'."

@@ -166,6 +166,23 @@ function Get-Available-PHP-Versions {
         $msg += "`n Releases : https://windows.php.net/downloads/releases"
         $msg += "`n Archives : https://windows.php.net/downloads/releases/archives"
         Write-Host $msg
+
+        $response = Read-Host "`nWould you like to see the full list? (y/n)"
+        if ($response -eq "y" -or $response -eq "Y") {
+            $fetchedVersionsGrouped.GetEnumerator() | ForEach-Object {
+                $key = $_.Key
+                $fetchedVersionsGroupe = $_.Value
+                if ($fetchedVersionsGroupe.Length -eq 0) {
+                    return
+                }
+                Write-Host "`n$key`n"
+                $fetchedVersionsGroupe | ForEach-Object {
+                    $versionItem = $_ -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
+                    Write-Host "  $versionItem"
+                }
+            }
+        }
+
         return 0
     } catch {
         $logged = Log-Data -data @{

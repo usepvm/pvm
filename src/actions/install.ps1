@@ -360,6 +360,23 @@ function Select-Version {
         $msg += "`n Releases : https://windows.php.net/downloads/releases"
         $msg += "`n Archives : https://windows.php.net/downloads/releases/archives"
         Write-Host $msg
+
+        $response = Read-Host "`nWould you see the full match list? (y/n)"
+        if ($response -eq "y") {
+            $matchingVersions.GetEnumerator() | ForEach-Object {
+                $key = $_.Key
+                $versionsList = $_.Value
+                if ($versionsList.Length -eq 0) {
+                    return
+                }
+                Write-Host "`n$key versions:`n"
+                $versionsList | ForEach-Object {
+                    $versionItem = $_.version -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
+                    Write-Host "  $versionItem"
+                }
+            }
+        }
+        
         $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
 
         if (-not $selectedVersionInput) {
@@ -448,6 +465,17 @@ function Install-PHP {
 
         Write-Host "`nExtracting the downloaded zip ..."
         Extract-And-Configure -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$($selectedVersionObject.version)"
+
+
+        # $phpIniPath = "$destination\$($selectedVersionObject.version)\php.ini"
+        # $phpIniContent = Get-Content $phpIniPath
+        # $phpIniContent = $phpIniContent | ForEach-Object {
+        #     if ($_ -like "*extension*") {
+        #         $modified = $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1'
+        #         return $modified
+        #     }
+        # }
+        # Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
 
         $opcacheEnabled = Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
 

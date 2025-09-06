@@ -57,12 +57,16 @@ function Run-Test-File {
     $config.Run.Path = $file.FullName
     $config.Run.PassThru = $true
     $testResult = Invoke-Pester -Configuration $config
-    $coveragePercent = $testResult.CodeCoverage.CoveragePercent.ToString('00.00')
+    $message = ""
+    if ($testResult.CodeCoverage.CoveragePercent) {
+        $coveragePercent = $testResult.CodeCoverage.CoveragePercent.ToString('00.00')
+        $message = "| Coverage: $coveragePercent%"
+    }
     if ($LASTEXITCODE -ne 0) {
-        return @{ code = -1; Name = $file.Name; FailedCount = $($testResult.FailedCount); Message = "Coverage: $coveragePercent% / Failed: $($testResult.FailedCount)" }
+        return @{ code = -1; Name = $file.Name; FailedCount = $($testResult.FailedCount); Message = "Failed: $($testResult.FailedCount) $message" }
     }
     
-    return @{ code = 0; Name = $file.Name; FailedCount = 0; Message = "Coverage: $coveragePercent%" }
+    return @{ code = 0; Name = $file.Name; FailedCount = 0; Message = "Failed: $($testResult.FailedCount) $message" }
 }
 
 function Run-Tests {

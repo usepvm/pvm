@@ -13,13 +13,14 @@ function Get-Data-From-Cache {
             # Add the key-value pair to the hashtable
             $list[$key] = $value
         }
+        return $list
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"
             exception = $_
         }
+        return @{}
     }
-    return $list
 }
 
 function Cache-Data {

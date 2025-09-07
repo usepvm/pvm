@@ -400,58 +400,70 @@ function Install-IniExtension {
             return -1
         }
         
-        $baseUrl = "https://windows.php.net"
-        $url = "$baseUrl/downloads/pecl/releases/$extName"
+        $baseUrl = "https://pecl.php.net"
+        $url = "$baseUrl/package/$extName"
         $html = Invoke-WebRequest -Uri $url
         $links = $html.Links | Where-Object {
-            $_.href -match "/downloads/pecl/releases/$extName"
+            $_.href -match "/package/$extName/([\d\.]+)/windows$"
         }
         if ($links.Count -eq 0) {
             Write-Host "`nFailed to fetch versions for $extName" -ForegroundColor DarkYellow
             return -1
         }
         
-        Write-Host "`nAvailable versions for '$extName':"
+        $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
+        $pachagesGroupLinks = @()
         $links | ForEach-Object {
-            $text = ($_.outerHTML -replace '<.*?>','').Trim()
-            Write-Host $text
+            $extVersion = $_.href -replace "/package/$extName/", "" -replace "/windows", ""
+            try {
+                $html = Invoke-WebRequest -Uri "$baseUrl/package/$extName/$extVersion/windows"
+                $packageLinks = $html.Links | Where-Object {
+                    $packageName = $_.href -replace "https://downloads.php.net/~windows/pecl/releases/$extName/$extVersion/", ""
+                    if ($packageName -match "^php_$extName-$extVersion-(\d+\.\d+)-.+\.zip$") {
+                        $phpVersion = $matches[1]
+                        return ($phpVersion -eq $currentVersion)
+                    }
+                    return $false
+                }
+                
+                if ($packageLinks -and $packageLinks.Count -gt 0) {
+                    Write-Host "`n$extName v$extVersion :"
+                    $index = $pachagesGroupLinks.Count
+                    foreach ($link in $packageLinks) {
+                        $link | Add-Member -NotePropertyName "extVersion" -NotePropertyValue $extVersion -Force
+                        $pachagesGroupLinks += $link
+                        $text = ($link.outerHTML -replace '<.*?>|.zip','').Trim()
+                        Write-Host " [$index] $text"
+                        $index++
+                    }
+                }
+            } catch {
+                $logged = Log-Data -data @{
+                    header = "$($MyInvocation.MyCommand.Name) - Failed to find packages for $extName v$extVersion"
+                    exception = $_
+                }
+            }
         }
-        $response = Read-Host "`nInsert the version number you want to install"
-        if ([string]::IsNullOrWhiteSpace($response)) {
+        
+        if ($pachagesGroupLinks.Count -eq 0) {
+            Write-Host "`nNo packages found for $extName" -ForegroundColor DarkYellow
+            return -1
+        }
+
+        $packageIndex = Read-Host "`nInsert the [number] you want to install"
+        if ([string]::IsNullOrWhiteSpace($packageIndex)) {
             Write-Host "`nInstallation cancelled"
             return -1
         }
-        $html = Invoke-WebRequest -Uri "https://windows.php.net/downloads/pecl/releases/$extName/$response"
-        $links = $html.Links | Where-Object {
-            $_.href -match "/downloads/pecl/releases/$extName/$response"-and
-            $_.href -match ".zip$"
-        }
-        if ($links.Count -eq 0) {
-            Write-Host "`nFailed to fetch versions for $response" -ForegroundColor DarkYellow
-            return -1
-        }
         
-        $index = 0
-        $links | ForEach-Object {
-            $text = ($_.outerHTML -replace '<.*?>|.zip','').Trim()
-            Write-Host "[$index] $text"
-            $index++
-        }
-        
-        $response = Read-Host "`nInsert the [number] you want to install"
-        if ([string]::IsNullOrWhiteSpace($response)) {
-            Write-Host "`nInstallation cancelled"
-            return -1
-        }
-        
-        $chosenItem = $links[$response]
+        $chosenItem = $pachagesGroupLinks[$packageIndex]
         if (-not $chosenItem) {
-            Write-Host "`nFailed to fetch versions for $response" -ForegroundColor DarkYellow
+            Write-Host "`nYou chose the wrong index: $packageIndex" -ForegroundColor DarkYellow
             return -1
         }
         
-        Invoke-WebRequest -Uri "$baseUrl/$($chosenItem.href.TrimStart('/'))" -OutFile "$STORAGE_PATH\php"
-        $fileNamePath = ($chosenItem.outerHTML -replace '<.*?>|.zip','').Trim()
+        Invoke-WebRequest -Uri $chosenItem.href -OutFile "$STORAGE_PATH\php"
+        $fileNamePath = ($chosenItem.href -replace "https://downloads.php.net/~windows/pecl/releases/$extName/$($chosenItem.extVersion)/|.zip",'').Trim()
         Extract-Zip -zipPath "$STORAGE_PATH\php\$fileNamePath.zip" -extractPath "$STORAGE_PATH\php\$fileNamePath"
         Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath.zip"
         $files = Get-ChildItem -Path "$STORAGE_PATH\php\$fileNamePath"

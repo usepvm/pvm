@@ -525,9 +525,6 @@ Describe "Install-IniExtension" -Tag d {
         
         function Read-Host {
             param($Prompt)
-            if ($Prompt -eq "`nInsert the version number you want to install") {
-                return "1.4.0"
-            }
             if ($Prompt -eq "`nInsert the [number] you want to install") {
                 return 0
             }
@@ -550,35 +547,36 @@ Describe "Install-IniExtension" -Tag d {
         $global:getRandomFile = $false
         $global:MockFileSystem.DownloadFails = $false
         $global:MockFileSystem.WebResponses = @{
-            "https://windows.php.net/downloads/pecl/releases/nonexistent_ext" = @{
+            "https://pecl.php.net/package/nonexistent_ext" = @{
                 Content = "Mocked PHP nonexistent_ext content"
                 Links = @()
             }
-            "https://windows.php.net/downloads/pecl/releases/pdo_mysql" = @{
+            "https://pecl.php.net/package/pdo_mysql" = @{
                 Content = "Mocked pdo_mysql content"
                 Links = @(
-                    @{ href = "/downloads/pecl/releases/pdo_mysql/1.4.0" },
-                    @{ href = "/downloads/pecl/releases/pdo_mysql/2.1.0" }
+                    @{ href = "/package/pdo_mysql/1.4.0/windows" },
+                    @{ href = "/package/pdo_mysql/2.1.0/windows" }
                 )
             }
-            "https://windows.php.net/downloads/pecl/releases/curl" = @{
+            "https://pecl.php.net/package/curl" = @{
                 Content = "Mocked curl content"
                 Links = @(
-                    @{ href = "/downloads/pecl/releases/curl/1.4.0" },
-                    @{ href = "/downloads/pecl/releases/curl/2.1.0" }
+                    @{ href = "/package/curl/1.4.0/windows" },
+                    @{ href = "/package/curl/2.1.0/windows" }
                 )
             }
-            "https://windows.php.net/downloads/pecl/releases/curl/1.4.0" = @{
+            "https://pecl.php.net/package/curl/1.4.0/windows" = @{
                 Content = "Mocked PHP curl 1.4.0 content"
                 Links = @(
-                    @{ href = "/downloads/pecl/releases/curl/1.4.0/php_curl-1.4.0-7.4-ts-vc15-x86.zip" },
-                    @{ href = "/downloads/pecl/releases/curl/1.4.0/php_curl-1.4.0-7.4-ts-vc15-x64.zip" }
+                    @{ href = "other_link" },
+                    @{ href = "https://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" },
+                    @{ href = "https://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip" }
                 )
             }
-            "https://windows.php.net/downloads/pecl/releases/curl/1.4.0/php_curl-1.4.0-7.4-ts-vc15-x86.zip" = @{
+            "https://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" = @{
                 Content = "Mocked PHP curl 1.4.0 zip content"
             }
-            "https://windows.php.net/downloads/pecl/releases/curl/2.1.0" = @{
+            "https://pecl.php.net/package/curl/2.1.0/windows" = @{
                 Content = "Mocked PHP curl 2.1.0 content"
                 Links = @()
             }
@@ -595,14 +593,8 @@ Describe "Install-IniExtension" -Tag d {
         $code | Should -Be -1
     }
     
-    It "Returns -1 when user does not choose a specific extension version" {
-        Mock Read-Host { }        
-        $code = Install-IniExtension -iniPath $testIniPath -extName "pdo_mysql"
-        $code | Should -Be -1
-    }
-    
-    It "Returns -1 when gets empty list from extension versions" {
-        Mock Read-Host { "2.1.0" }
+    It "Returns -1 when No package is found" {
+        Mock Add-Member { throw "error" }
         $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }

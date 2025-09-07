@@ -42,8 +42,14 @@ function Get-Installed-PHP-Versions {
     try {
         $directories = Get-All-Subdirectories -path "$STORAGE_PATH\php"
         $names = $directories | ForEach-Object {
-            if (Test-Path "$($_.FullName)\php.exe"){
-                return $_.Name
+            $phpExe = "$($_.FullName)\php.exe"
+            if (Test-Path $phpExe) {
+                try {
+                    $versionOutput = & $phpExe -v 2>$null
+                    if ($versionOutput -match "^PHP\s+\d+\.\d+") {
+                        return $_.Name
+                    }
+                } catch { }
             }
             return $null
         }

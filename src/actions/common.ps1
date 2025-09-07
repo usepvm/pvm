@@ -41,7 +41,12 @@ function Get-Installed-PHP-Versions {
     
     try {
         $directories = Get-All-Subdirectories -path "$STORAGE_PATH\php"
-        $names = $directories | ForEach-Object { $_.Name }
+        $names = $directories | ForEach-Object {
+            if (Test-Path "$($_.FullName)\php.exe"){
+                return $_.Name
+            }
+            return $null
+        }
         return ($names | Sort-Object { [version]$_ })        
     } catch {
         $logged = Log-Data -data @{

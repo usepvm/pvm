@@ -404,7 +404,7 @@ function Install-IniExtension {
         $url = "$baseUrl/package/$extName"
         $html = Invoke-WebRequest -Uri $url
         $links = $html.Links | Where-Object {
-            $_.href -match "/package/$extName/([\d\.]+)/windows$"
+            $_.href -match "/package/$extName/([^/]+)/windows$"
         }
         if ($links.Count -eq 0) {
             Write-Host "`nFailed to fetch versions for $extName" -ForegroundColor DarkYellow
@@ -494,6 +494,7 @@ function Install-IniExtension {
         Write-Host "`n$extName installed successfully"        
         return 0
     } catch {
+        Write-Host "`nFailed to install $extName" -ForegroundColor DarkYellow
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to install '$extName'"
             exception = $_

@@ -161,7 +161,6 @@ function Invoke-PVMTest {
 function Invoke-PVMLog {
     param($arguments)
     
-    
     $pageSizeArg = $arguments | Where-Object { $_ -match '^--pageSize=(.+)$' }
     if ($pageSizeArg) {
         $pageSize = $pageSizeArg -replace '^--pageSize=', ''
@@ -172,12 +171,48 @@ function Invoke-PVMLog {
     return $code
 }
 
+function Invoke-PVMHelp {
+    param($arguments)
+    
+    $command = $arguments[0]
+    if ($command) {
+        $usage = $actions[$command].usage
+        if ($null -eq $usage) {
+            Write-Host "`nNo usage information available for the '$operation' operation." -ForegroundColor Yellow
+            return -1
+        }
+        foreach ($key in $usage.Keys) {
+            Write-Host "`n$key`:" -ForegroundColor Cyan
+            if($usage[$key] -is [array]) {
+                $($usage.$key) | ForEach-Object { Write-Host "  $_" }
+            } else {
+                Write-Host "  $($usage[$key])"
+            }
+        }
+    } else {
+        Show-Usage
+    }
+    
+    return 0
+}
+
 function Get-Actions {
     param( $arguments )
 
     $script:arguments = $arguments
     
     return [ordered]@{
+        "help" = [PSCustomObject]@{
+            command = "pvm help [command]";
+            description = "Display help for a command.";
+            usage = [ordered]@{
+                USAGE = "pvm help [command]";
+                DESCRIPTION = @(
+                    "Displays help for a command.",
+                    "If no command is provided, displays help for all commands."
+                );
+            };
+            action = { return Invoke-PVMHelp -arguments $script:arguments }}
         "setup" = [PSCustomObject]@{
             command = "pvm setup";
             description = "Setup the environment variables and paths for PHP.";

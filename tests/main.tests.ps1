@@ -226,43 +226,6 @@ Describe "Start-PVM Function Tests" {
         }
     }
 
-    Context "Command help Display Tests" {
-        BeforeEach {
-            Mock Get-Actions { 
-                [ordered]@{
-                    "setup" = [PSCustomObject]@{
-                        usage = [ordered]@{
-                            USAGE = "pvm setup";
-                            DESCRIPTION = @(
-                                "Sets environment variables and config paths for PHP.",
-                                "This command should be run once after installation to configure PVM for first use."
-                            )
-                        }
-                    }
-                    "current" = [PSCustomObject]@{
-                        usage = [ordered]@{
-                            USAGE = "pvm current"
-                            DESCRIPTION = @(
-                                "Shows the currently active PHP version, including the absolute path.",
-                                "It also shows the status of xdebug and opcache."
-                            )
-                        };
-                    }
-                    "install" = [PSCustomObject]@{}
-                }
-            }
-        }
-        It "Should display help for setup command" {
-            $result = Start-PVM -operation "help" -arguments @("setup")
-            $result | Should -Be 0
-        }
-        
-        It "Should return -1 for non-existent usage" {
-            $result = Start-PVM -operation "help" -arguments @("install")
-            $result | Should -Be -1
-        }
-    }
-
     Context "Operation Validation Path Tests" {
         It "Should show usage and return 0 when operation is null" {
             $result = Start-PVM -operation $null -arguments @()

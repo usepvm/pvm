@@ -5,6 +5,7 @@
 
 
 BeforeAll {
+    Mock Write-Host {}
     # Global mock registry for environment variables
     $global:MockRegistry = @{
         Machine = @{
@@ -75,7 +76,7 @@ Describe "Invoke-PVMSetup Tests" {
 Describe "Invoke-PVMCurrent Tests" {
     BeforeEach {
         Mock Get-Current-PHP-Version { @{ version = "8.2.0"; status = @{ "xdebug" = $true; "opcache" = $false }; path = "C:\PHP\8.2.0" } }
-        Mock Write-Host { }
+        # Mock Write-Host { }
     }
 
     It "Should display current PHP version and extensions when version is set" {
@@ -138,7 +139,7 @@ Describe "Invoke-PVMList Tests" {
 Describe "Invoke-PVMInstall Tests" {
     BeforeEach {
         Mock Install-PHP { 0 }
-        Mock Write-Host { }
+        # Mock Write-Host { }
     }
 
     It "Should return 1 when no version is provided" {
@@ -167,7 +168,7 @@ Describe "Invoke-PVMUninstall Tests" {
         Mock Get-Current-PHP-Version { @{ version = "8.1.0" } }
         Mock Uninstall-PHP { @{ code = 0; message = "Uninstalled successfully" } }
         Mock Display-Msg-By-ExitCode { }
-        Mock Write-Host { }
+        # Mock Write-Host { }
         Mock Read-Host { }
     }
 
@@ -208,7 +209,7 @@ Describe "Invoke-PVMUse Tests" {
         Mock Auto-Select-PHP-Version { @{ code = 0; version = "8.2.0" } }
         Mock Update-PHP-Version { @{ code = 0; message = "Version updated" } }
         Mock Display-Msg-By-ExitCode { }
-        Mock Write-Host { }
+        # Mock Write-Host { }
     }
 
     It "Should return 1 when no version is provided" {
@@ -258,7 +259,7 @@ Describe "Invoke-PVMUse Tests" {
 Describe "Invoke-PVMIni Tests" {
     BeforeEach {
         Mock Invoke-PVMIniAction { 0 }
-        Mock Write-Host { }
+        # Mock Write-Host { }
     }
 
     It "Should return 1 when no action is provided" {
@@ -337,6 +338,50 @@ Describe "Invoke-PVMLog Tests" {
 
         Mock Show-Log { return -1 }
         (Invoke-PVMLog -arguments @("--pageSize=2")) | Should -Be -1
+    }
+}
+
+Describe "Invoke-PVMHelp Tests" {
+
+    BeforeEach {
+        Mock Get-Actions {
+            [ordered]@{
+                "setup" = [PSCustomObject]@{
+                    usage = [ordered]@{
+                        USAGE = "pvm setup";
+                        DESCRIPTION = @(
+                            "Sets environment variables and config paths for PHP.",
+                            "This command should be run once after installation to configure PVM for first use."
+                        )
+                    }
+                }
+                "current" = [PSCustomObject]@{
+                    usage = [ordered]@{
+                        USAGE = "pvm current"
+                        DESCRIPTION = @(
+                            "Shows the currently active PHP version, including the absolute path.",
+                            "It also shows the status of xdebug and opcache."
+                        )
+                    };
+                }
+                "install" = [PSCustomObject]@{}
+            }
+        }
+    }
+    
+    It "Should display help for setup command" {
+        $result = Invoke-PVMHelp -arguments @("setup")
+        $result | Should -Be 0
+    }
+    
+    It "Should return -1 for non-existent usage" {
+        $result = Invoke-PVMHelp -arguments @("nonexistent")
+        $result | Should -Be -1
+    }
+    
+    It "Should display general help when no command is provided" {
+        $result = Invoke-PVMHelp -arguments @()
+        $result | Should -Be 0
     }
 }
 
@@ -464,7 +509,7 @@ Describe "Integration Tests" {
             Mock Get-Current-PHP-Version { @{ version = "8.2.0"; status = @{ "xdebug" = $true }; path = "C:\PHP\8.2.0" } }
             Mock Install-PHP { 0 }
             Mock Update-PHP-Version { @{ code = 0; message = "Version updated" } }
-            Mock Write-Host { }
+            # Mock Write-Host { }
         }
 
         It "Should handle complete workflow: setup -> install -> use -> current" {
@@ -498,7 +543,7 @@ Describe "Integration Tests" {
             Mock Setup-PVM { @{ code = 1; message = "Setup failed" } }
             Mock Optimize-SystemPath { 1 }
             Mock Display-Msg-By-ExitCode { }
-            Mock Write-Host { }
+            # Mock Write-Host { }
             
             $result = Invoke-PVMSetup
             $result | Should -Be 0

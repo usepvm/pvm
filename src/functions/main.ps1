@@ -70,27 +70,9 @@ function Start-PVM {
         }
         
         $actions = Get-Actions -arguments $arguments
-
+        
         $operation = Alias-Handler -alias $operation
-
-        if ($operation -eq "help" -and $arguments.Count -gt 0) {
-            $actionKey = $arguments[0]
-            $usage = $actions[$actionKey].usage
-            if ($null -eq $usage) {
-                Write-Host "`nNo usage information available for the '$operation' operation." -ForegroundColor Yellow
-                return -1
-            }
-            foreach ($key in $usage.Keys) {
-                Write-Host "`n$key`:" -ForegroundColor Cyan
-                if($usage[$key] -is [array]) {
-                    $($usage.$key) | ForEach-Object { Write-Host "  $_" }
-                } else {
-                    Write-Host "  $($usage[$key])"
-                }
-            }
-            return 0
-        }
-
+        
         if (-not ($operation -and $actions.Contains($operation))) {
             Show-Usage
             return 0

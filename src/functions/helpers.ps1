@@ -1,4 +1,50 @@
 
+function Get-Data-From-Cache {
+    param ($cacheFileName)
+    
+    $path = "$DATA_PATH\$cacheFileName.json"
+    $list = @{}
+    try {
+        $jsonData = Get-Content $path | ConvertFrom-Json
+        $jsonData.PSObject.Properties.GetEnumerator() | ForEach-Object {
+            $key = $_.Name
+            $value = $_.Value
+            
+            # Add the key-value pair to the hashtable
+            $list[$key] = $value
+        }
+        return $list
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"
+            exception = $_
+        }
+        return @{}
+    }
+}
+
+function Cache-Data {
+    param ($cacheFileName, $data, $depth = 3)
+    
+    try {
+        $jsonString = $data | ConvertTo-Json -Depth $depth
+        $path = "$DATA_PATH\$cacheFileName.json"
+        $created = Make-Directory -path (Split-Path $path)
+        if ($created -ne 0) {
+            Write-Host "Failed to create directory $(Split-Path $versionsDataPath)"
+            return -1
+        }
+        Set-Content -Path $path -Value $jsonString
+        return 0
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to cache data"
+            exception = $_
+        }
+        return -1
+    }
+}
+
 function Get-All-Subdirectories {
     param ($path)
     try {

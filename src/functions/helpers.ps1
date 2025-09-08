@@ -31,7 +31,7 @@ function Cache-Data {
         $path = "$DATA_PATH\$cacheFileName.json"
         $created = Make-Directory -path (Split-Path $path)
         if ($created -ne 0) {
-            Write-Host "Failed to create directory $(Split-Path $versionsDataPath)"
+            Write-Host "Failed to create directory $(Split-Path $path)"
             return -1
         }
         Set-Content -Path $path -Value $jsonString

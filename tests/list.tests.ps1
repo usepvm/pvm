@@ -33,93 +33,6 @@ AfterAll {
     Remove-Item -Path "$PSScriptRoot\storage" -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-Describe "Cache-Fetched-PHP-Versions" {
-    BeforeEach {
-        # Clean test directory
-        if (Test-Path "TestDrive:\data") {
-            Remove-Item "TestDrive:\data" -Recurse -Force
-        }
-    }
-    
-    It "Should cache PHP versions successfully" {
-        $testVersions = @{
-            'Archives' = @('php-8.1.0-Win32-x64.zip', 'php-7.4.33-Win32-x64.zip')
-            'Releases' = @('php-8.2.0-Win32-x64.zip', 'php-8.1.5-Win32-x64.zip')
-        }
-        
-        $code = Cache-Fetched-PHP-Versions $testVersions
-        
-        $code | Should -Be 0
-        $cachePath = "$global:DATA_PATH\available_php_versions.json"
-        $cachePath | Should -Exist
-        
-        $cachedContent = Get-Content $cachePath | ConvertFrom-Json
-        $cachedContent.Archives.Count | Should -Be 2
-        $cachedContent.Releases.Count | Should -Be 2
-    }
-    
-    It "Should handle empty version list" {
-        $emptyVersions = @{}
-        
-        $code = Cache-Fetched-PHP-Versions $emptyVersions
-        
-        $code | Should -Be -1
-        $cachePath = "$global:DATA_PATH\available_php_versions.json"
-        $cachePath | Should -Exist
-    }
-    
-    It "Should handle null input gracefully" {
-        Mock Log-Data { return "Logged error" }
-        
-        $code = Cache-Fetched-PHP-Versions $null
-        $code | Should -Be -1
-    }
-}
-
-Describe "Get-From-Cache" {
-    BeforeEach {
-        # Clean test directory
-        if (Test-Path "TestDrive:\data") {
-            Remove-Item "TestDrive:\data" -Recurse -Force
-        }
-        New-Item -Path "TestDrive:\data" -ItemType Directory -Force
-    }
-    
-    It "Should retrieve cached versions successfully" {
-        $testData = @{
-            'Archives' = @('php-8.1.0-Win32-x64.zip')
-            'Releases' = @('php-8.2.0-Win32-x64.zip')
-        }
-        $jsonContent = $testData | ConvertTo-Json -Depth 3
-        Set-Content -Path "$global:DATA_PATH\available_php_versions.json" -Value $jsonContent
-        
-        $result = Get-From-Cache
-        
-        $result | Should -Not -BeNullOrEmpty
-        $result.Keys.Count | Should -Be 2
-        $result['Archives'].Count | Should -Be 1
-        $result['Releases'].Count | Should -Be 1
-    }
-    
-    It "Should return empty hashtable when cache file doesn't exist" {
-        Set-Content -Path "$DATA_PATH\available_php_versions.json" -Value "{}"
-        
-        $result = Get-From-Cache
-        
-        $result | Should -BeOfType [hashtable]
-        $result.Keys.Count | Should -Be 0
-    }
-    
-    It "Should handle corrupted cache file" {
-        Set-Content -Path "$global:DATA_PATH\available_php_versions.json" -Value "invalid json content"
-        Mock Log-Data { return "Logged error" }
-        
-        $result = Get-From-Cache
-        
-        $result | Should -BeOfType [hashtable]
-        $result.Keys.Count | Should -Be 0
-    }
-}
 
 Describe "Get-From-Source" {
     BeforeEach {
@@ -148,7 +61,7 @@ Describe "Get-From-Source" {
             return @{ Links = $mockLinks }
         }
         
-        Mock Cache-Fetched-PHP-Versions { }
+        Mock Cache-Data { }
         
         $result = Get-From-Source
         
@@ -176,7 +89,7 @@ Describe "Get-From-Source" {
             return @{ Links = $mockLinks }
         }
         
-        Mock Cache-Fetched-PHP-Versions { }
+        Mock Cache-Data { }
         
         $result = Get-From-Source
         
@@ -202,23 +115,26 @@ Describe "Get-Available-PHP-Versions" {
     }
     
     It "Should read from cache by default" {
-        Mock Get-From-Cache {
+        Mock Get-Data-From-Cache {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
                 'Releases' = @('php-8.2.0-Win32-x64.zip')
             }
         }
+        Mock Test-Path { return $true }
+        Mock Get-Item { @{ LastWriteTime = "2025-09-07T20:38:25.1574179+01:00" } }
         
-        Get-Available-PHP-Versions
+        $code = Get-Available-PHP-Versions
         
-        Should -Invoke Get-From-Cache -Exactly 1
+        $code | Should -Be 0
+        Should -Invoke Get-Data-From-Cache -Exactly 1
         Should -Invoke Write-Host -ParameterFilter { $Object -like "*Reading from the cache*" }
     }
     
     It "Should fetch from source when cache is empty" {
         Mock Test-Path { $true }
         Mock Get-Item { @{ LastWriteTime = (Get-Date) } }
-        Mock Get-From-Cache { return @{} }
+        Mock Get-Data-From-Cache { return @{} }
         Mock Get-From-Source {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
@@ -226,16 +142,17 @@ Describe "Get-Available-PHP-Versions" {
             }
         }
         
-        Get-Available-PHP-Versions
+        $code = Get-Available-PHP-Versions
         
-        Should -Invoke Get-From-Cache -Exactly 1
+        $code | Should -Be 0
+        Should -Invoke Get-Data-From-Cache -Exactly 1
         Should -Invoke Get-From-Source -Exactly 1
         Should -Invoke Write-Host -ParameterFilter { $Object -like "*Cache is empty*" }
     }
     
     It "Should force fetch from source when cache not exists" {
         Mock Test-Path { return $false }
-        Mock Get-From-Cache { }  # Remove return value since it won't be called
+        Mock Get-Data-From-Cache { }  # Remove return value since it won't be called
         Mock Get-From-Source {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
@@ -243,22 +160,27 @@ Describe "Get-Available-PHP-Versions" {
             }
         }
         
-        Get-Available-PHP-Versions
+        $code = Get-Available-PHP-Versions
         
-        Should -Not -Invoke Get-From-Cache
+        $code | Should -Be 0
+        Should -Not -Invoke Get-Data-From-Cache
         Should -Invoke Get-From-Source -Exactly 1
     }
     
     It "Should display versions in correct format" {
-        Mock Get-From-Cache {
+        Mock Get-Data-From-Cache {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
                 'Releases' = @('php-8.2.0-Win32-x64.zip')
             }
         }
+        Mock Test-Path { return $true }
+        Mock Get-Item { @{ LastWriteTime = "2025-09-07T20:38:25.1574179+01:00" } }
         
-        Get-Available-PHP-Versions
         
+        $code = Get-Available-PHP-Versions
+        
+        $code | Should -Be 0
         Should -Invoke Write-Host -ParameterFilter { $Object -like "*Available Versions*" }
         Should -Invoke Write-Host -ParameterFilter { $Object -like "*Archives*" }
         Should -Invoke Write-Host -ParameterFilter { $Object -like "*Releases*" }
@@ -266,13 +188,25 @@ Describe "Get-Available-PHP-Versions" {
         Should -Invoke Write-Host -ParameterFilter { $Object -like "*8.2.0*" }
     }
     
+    It "Returns -1 on empty list" {
+        Mock Get-PHP-List-To-Install { return @{} }
+        
+        $result = Get-Available-PHP-Versions
+        
+        $result | Should -Be -1
+    }
+    
     It "Should handle exceptions gracefully" {
-        Mock Get-From-Cache { throw "Cache error" }
+        Mock Get-PHP-List-To-Install { return @{
+            'Archives' = @('php-8.1.0-Win32-x64.zip')
+            'Releases' = @('php-8.2.0-Win32-x64.zip')
+        }}
+        Mock ForEach-Object { throw "Cache error" }
         Mock Log-Data { return "Logged error" }
         
         $result = Get-Available-PHP-Versions
         
-        $result | Should -Be 1
+        $result | Should -Be -1
     }
 }
 
@@ -327,46 +261,5 @@ Describe "Display-Installed-PHP-Versions" {
         Mock Log-Data { return "Logged error" }
         
         { Display-Installed-PHP-Versions } | Should -Not -Throw
-    }
-}
-
-Describe "Integration Tests" {
-    BeforeEach {
-        # Clean test environment
-        if (Test-Path "TestDrive:\data") {
-            Remove-Item "TestDrive:\data" -Recurse -Force
-        }
-        Mock Write-Host { }
-    }
-    
-    It "Should complete full cache workflow" {
-        $testVersions = @{
-            'Archives' = @('php-8.1.0-Win32-x64.zip')
-            'Releases' = @('php-8.2.0-Win32-x64.zip')
-        }
-        
-        # Cache versions
-        Cache-Fetched-PHP-Versions $testVersions
-        
-        # Retrieve from cache
-        $cachedVersions = Get-From-Cache
-        
-        $cachedVersions | Should -Not -BeNullOrEmpty
-        $cachedVersions.Keys.Count | Should -Be 2
-        $cachedVersions['Archives'][0] | Should -Be 'php-8.1.0-Win32-x64.zip'
-        $cachedVersions['Releases'][0] | Should -Be 'php-8.2.0-Win32-x64.zip'
-    }
-    
-    It "Should fallback from cache to source correctly" {
-        Mock Get-From-Source {
-            return @{
-                'Archives' = @('php-8.1.0-Win32-x64.zip')
-                'Releases' = @('php-8.2.0-Win32-x64.zip')
-            }
-        }
-        
-        # Should try cache first, then source
-        $result = Get-Available-PHP-Versions
-        $result | Should -Be 0
     }
 }

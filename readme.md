@@ -63,6 +63,15 @@ pvm ini disable xdebug opcache
 pvm ini set memory_limit=512M max_file_uploads=20
 pvm ini get memory_limit max_file_uploads
 
+# Install extensions from remote source
+pvm ini install opcache
+
+# List installed extensions
+pvm ini list
+
+# List available extensions from remote source
+pvm ini list available
+
 # Restore backup
 pvm ini restore
 

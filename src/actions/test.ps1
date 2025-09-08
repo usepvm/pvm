@@ -110,10 +110,12 @@ function Run-Tests {
             }
         }
         
-        $message = "`n`nTest Results Summary:`n"
+        $messages = @(@{ content = "`n----------------------------------------------------------------" })
+        $messages += @(@{ content = "`n`nTest Results Summary:`n" })
         if ($testSummary.Count -gt 0) {
             $totalFailedTests = $testSummary | Where-Object { $_.code -ne 0 } | ForEach-Object { $_.FailedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
-            $message += "`n Files tested : $($testSummary.Count)  |  Total failed tests: $totalFailedTests`n"
+            $color = if ($totalFailedTests -gt 0) { "DarkYellow" } else { "DarkGreen" }
+            $messages += @{ content = " Files tested : $($testSummary.Count) | Total failed tests: $totalFailedTests`n"; color = $color }
             $maxFileNameLength = ($testSummary.Name | Measure-Object -Maximum Length).Maximum
             $maxLineLength = $maxFileNameLength + 10  # padding
             
@@ -121,9 +123,10 @@ function Run-Tests {
                 $dotsCount = $maxLineLength - $_.Name.Length
                 if ($dotsCount -lt 0) { $dotsCount = 0 }
                 $dots = '.' * $dotsCount
-                $message += "`n  - $($_.Name) $dots $($_.Message)"
+                $color = if ($_.code -ne 0) { "DarkYellow" } else { "DarkGreen" }
+                $messages += @{ content = "  - $($_.Name) $dots $($_.Message)"; color = $color }
             }
-            $result = @{ code = 1; message = $message }
+            $result = @{ code = 1; messages = $messages }
         }
         
         return $result

@@ -8,16 +8,7 @@ function Cache-Fetched-PHP-Versions {
             return -1
         }
         
-        $jsonString = $listPhpVersions | ConvertTo-Json -Depth 3
-        $versionsDataPath = "$DATA_PATH\available_versions.json"
-        $created = Make-Directory -path (Split-Path $versionsDataPath)
-        if ($created -ne 0) {
-            Write-Host "Failed to create directory $(Split-Path $versionsDataPath)"
-            return -1
-        }
-        Set-Content -Path $versionsDataPath -Value $jsonString
-        
-        return 0
+        return (Cache-Data -cacheFileName "available_php_versions" -data $listPhpVersions -depth 3)
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to cache fetched PHP versions"
@@ -75,16 +66,7 @@ function Get-From-Source {
 function Get-From-Cache {
     
     try {
-        $list = @{}
-        $jsonData = Get-Content "$DATA_PATH\available_versions.json" | ConvertFrom-Json
-        $jsonData.PSObject.Properties.GetEnumerator() | ForEach-Object {
-            $key = $_.Name
-            $value = $_.Value
-            
-            # Add the key-value pair to the hashtable
-            $list[$key] = $value
-        }
-        return $list
+        return (Get-Data-From-Cache -cacheFileName "available_php_versions")
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve cached PHP versions"
@@ -96,7 +78,7 @@ function Get-From-Cache {
 
 function Get-PHP-List-To-Install {
     try {
-        $cacheFile = "$DATA_PATH\available_versions.json"
+        $cacheFile = "$DATA_PATH\available_php_versions.json"
         $fetchedVersionsGrouped = @{}
         $useCache = $false
 

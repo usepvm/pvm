@@ -50,7 +50,7 @@ Describe "Cache-Fetched-PHP-Versions" {
         $code = Cache-Fetched-PHP-Versions $testVersions
         
         $code | Should -Be 0
-        $cachePath = "$global:DATA_PATH\available_versions.json"
+        $cachePath = "$global:DATA_PATH\available_php_versions.json"
         $cachePath | Should -Exist
         
         $cachedContent = Get-Content $cachePath | ConvertFrom-Json
@@ -64,7 +64,7 @@ Describe "Cache-Fetched-PHP-Versions" {
         $code = Cache-Fetched-PHP-Versions $emptyVersions
         
         $code | Should -Be -1
-        $cachePath = "$global:DATA_PATH\available_versions.json"
+        $cachePath = "$global:DATA_PATH\available_php_versions.json"
         $cachePath | Should -Exist
     }
     
@@ -91,7 +91,7 @@ Describe "Get-From-Cache" {
             'Releases' = @('php-8.2.0-Win32-x64.zip')
         }
         $jsonContent = $testData | ConvertTo-Json -Depth 3
-        Set-Content -Path "$global:DATA_PATH\available_versions.json" -Value $jsonContent
+        Set-Content -Path "$global:DATA_PATH\available_php_versions.json" -Value $jsonContent
         
         $result = Get-From-Cache
         
@@ -102,7 +102,7 @@ Describe "Get-From-Cache" {
     }
     
     It "Should return empty hashtable when cache file doesn't exist" {
-        Set-Content -Path "$DATA_PATH\available_versions.json" -Value "{}"
+        Set-Content -Path "$DATA_PATH\available_php_versions.json" -Value "{}"
         
         $result = Get-From-Cache
         
@@ -111,7 +111,7 @@ Describe "Get-From-Cache" {
     }
     
     It "Should handle corrupted cache file" {
-        Set-Content -Path "$global:DATA_PATH\available_versions.json" -Value "invalid json content"
+        Set-Content -Path "$global:DATA_PATH\available_php_versions.json" -Value "invalid json content"
         Mock Log-Data { return "Logged error" }
         
         $result = Get-From-Cache

@@ -716,7 +716,7 @@ function Invoke-PVMIniAction {
                 $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains "available")
             }
             default {
-                Write-Host "`nUnknown action '$action' use one of following: 'info', 'get, 'set', 'enable', 'disable', 'status', 'install' or 'restore'."
+                Write-Host "`nUnknown action '$action' use one of following: 'info', 'get, 'set', 'enable', 'disable', 'status', 'install', 'list' or 'restore'."
             }
         }
         

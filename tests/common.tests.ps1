@@ -91,6 +91,7 @@ Describe "Get-Installed-PHP-Versions" {
         It "Should return sorted PHP versions" {
             $script:STORAGE_PATH = "C:\mock\path"
             $script:LOG_ERROR_PATH = "C:\mock\error"
+            Mock Test-Path { return $true }
             Mock Get-All-Subdirectories {
                 param ($path)
                 return @(
@@ -126,6 +127,7 @@ Describe "Get-Installed-PHP-Versions" {
         }
         
         It "Should handle single digit versions" {
+            Mock Test-Path { return $true }
             Mock Get-All-Subdirectories {
                 param ($path)
                 return @(

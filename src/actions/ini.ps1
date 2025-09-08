@@ -333,6 +333,13 @@ function Get-PHP-Info {
     Write-Host "`n- Running PHP version`t: $($currentPHPVersion.version)"
     Write-Host "`n- PHP path`t`t: $($currentPHPVersion.path)"
     $extensions = Get-PHPExtensionsStatus -PhpIniPath "$($currentPHPVersion.path)\php.ini"
+    Display-Installed-Extensions -extensions $extensions
+    
+    return 0
+}
+
+function Display-Installed-Extensions {
+    param ($extensions)
     
     # Pre-count for summary
     $enabledCount = @($extensions | Where-Object Enabled).Count
@@ -362,16 +369,10 @@ function Get-PHP-Info {
         Write-Host "  $($_.Extension) $dots " -NoNewline
         Write-Host $status -ForegroundColor $color
     }
-    
-    return 0
 }
 
 function Get-PHPExtensionsStatus {
     param($PhpIniPath)
-
-    if (-not (Test-Path $PhpIniPath)) {
-        throw "php.ini file not found at: $PhpIniPath"
-    }
 
     $iniContent = Get-Content $PhpIniPath
     
@@ -401,8 +402,7 @@ function Install-IniExtension {
         }
         
         $baseUrl = "https://pecl.php.net"
-        $url = "$baseUrl/package/$extName"
-        $html = Invoke-WebRequest -Uri $url
+        $html = Invoke-WebRequest -Uri "$baseUrl/package/$extName"
         $links = $html.Links | Where-Object {
             $_.href -match "/package/$extName/([^/]+)/windows$"
         }
@@ -503,6 +503,123 @@ function Install-IniExtension {
     }
 }
 
+function Get-PHPExtensions-From-Source {
+    $baseUrl = "https://pecl.php.net"
+    $availableExtensions = @{}
+    try {
+        $html_cat = Invoke-WebRequest -Uri "$baseUrl/packages.php"
+        $links = $html_cat.Links | Where-Object {
+            if (-not $_.href) { return $false }
+            if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+$') {
+                $extCategory = ($_.outerHTML -replace '<[^>]*>', '').Trim()
+                $availableExtensions[$extCategory] = @()
+                
+                # fetch the extensions from the category
+                $html = Invoke-WebRequest -Uri "$baseUrl/$($_.href)"
+                $links = $html.Links | Where-Object {
+                    if (-not $_.href) { return $false }
+                    if ($_.href -match '^/package/[A-Za-z0-9_]+$') {
+                        $extName = ($_.href -replace '/package/', '').Trim()
+                        $_ | Add-Member -NotePropertyName "extName" -NotePropertyValue $extName -Force
+                        $_ | Add-Member -NotePropertyName "extCategory" -NotePropertyValue $extCategory -Force
+                        $availableExtensions[$extCategory] += $_
+                        return $true
+                    }
+                }
+                if ($availableExtensions[$extCategory].Count -eq 0) {
+                    $availableExtensions.Remove($extCategory)
+                }
+                return $true
+            }
+            return $false
+        }
+        $cached = Cache-Data -cacheFileName "available_extensions" -data $availableExtensions -depth 3
+        
+        return $availableExtensions
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"
+            exception = $_
+        }
+    }
+    return @{}
+}
+
+function List-PHP-Extensions {
+    param ($iniPath, $available = $false)
+    
+    try {
+        if (-not $available) {
+            $extensions = Get-PHPExtensionsStatus -PhpIniPath $iniPath
+            if ($extensions.Count -eq 0) {
+                Write-Host "`nNo extensions found"
+                return -1
+            }
+            Display-Installed-Extensions -extensions $extensions
+        } else {
+            Write-Host "`nLoading available extensions..."
+            
+            $cacheFile = "$DATA_PATH\available_extensions.json"
+            $useCache = $false
+            
+            if (Test-Path $cacheFile) {
+                $fileAgeHours = (New-TimeSpan -Start (Get-Item $cacheFile).LastWriteTime -End (Get-Date)).TotalHours
+                $useCache = ($fileAgeHours -lt $CacheMaxHours)
+            }
+            
+            if ($useCache) {
+                Write-Host "`nReading from the cache (last updated $([math]::Round($fileAgeHours, 2)) hours ago)"
+                $availableExtensions = Get-Data-From-Cache -cacheFileName "available_extensions"
+                if ($availableExtensions.Count -eq 0) {
+                    $availableExtensions = Get-PHPExtensions-From-Source
+                }
+            } else {
+                if (Test-Path $cacheFile) {
+                    Write-Host "`nCache too old ($([math]::Round($fileAgeHours, 2)) hours), reading from the internet..."
+                } else {
+                    Write-Host "`nCache missing, reading from the source..."
+                }
+                $availableExtensions = Get-PHPExtensions-From-Source
+            }
+
+            if ($availableExtensions.Count -eq 0) {
+                Write-Host "`nNo extensions found"
+                return -1
+            }
+            
+            $availableExtensionsPartialList = @{}
+            $availableExtensions.GetEnumerator() | ForEach-Object {
+                $availableExtensionsPartialList[$_.Key] = $_.Value | Select-Object -Last 10
+            }
+            
+            $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
+            $maxLineLength = $maxKeyLength + 5   # adjust padding
+            Write-Host "`nAvailable Extensions"
+            Write-Host    "------------------"
+            $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
+                $key  = $_.Key
+                $vals = ($_.Value | ForEach-Object { $_.extName }) -join ", "
+                $dotsCount = $maxLineLength - $key.Length
+                if ($dotsCount -lt 0) { $dotsCount = 0 }
+                $dots = '.' * $dotsCount
+
+                Write-Host "$key $dots $vals"
+            }
+            
+            Write-Host "`nThis is a partial list. For a complete list, visit: https://pecl.php.net/packages.php"
+        }
+        
+        return 0
+    } catch {
+        Write-Host "`nFailed to list extensions"
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"
+            exception = $_
+        }
+        return -1
+    }
+}
+
 function Invoke-PVMIniAction {
     param ( $action, $params )
 
@@ -595,8 +712,11 @@ function Invoke-PVMIniAction {
                     $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName
                 }
             }
+            "list" {
+                $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains "available")
+            }
             default {
-                Write-Host "`nUnknown action '$action' for 'pvm ini'. Use 'set', 'enable', or 'disable'."
+                Write-Host "`nUnknown action '$action' use one of following: 'info', 'get, 'set', 'enable', 'disable', 'status', 'install' or 'restore'."
             }
         }
         

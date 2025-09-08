@@ -508,15 +508,15 @@ function Get-PHPExtensions-From-Source {
     $availableExtensions = @{}
     try {
         $html_cat = Invoke-WebRequest -Uri "$baseUrl/packages.php"
-        $links = $html_cat.Links | Where-Object {
+        $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
             if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+$') {
                 $extCategory = ($_.outerHTML -replace '<[^>]*>', '').Trim()
                 $availableExtensions[$extCategory] = @()
                 
                 # fetch the extensions from the category
-                $html = Invoke-WebRequest -Uri "$baseUrl/$($_.href)"
-                $links = $html.Links | Where-Object {
+                $html = Invoke-WebRequest -Uri "$baseUrl/$($_.href.TrimStart('/'))"
+                $html.Links | Where-Object {
                     if (-not $_.href) { return $false }
                     if ($_.href -match '^/package/[A-Za-z0-9_]+$') {
                         $extName = ($_.href -replace '/package/', '').Trim()
@@ -541,8 +541,8 @@ function Get-PHPExtensions-From-Source {
             header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"
             exception = $_
         }
+        return @{}
     }
-    return @{}
 }
 
 function List-PHP-Extensions {

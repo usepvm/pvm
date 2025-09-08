@@ -242,14 +242,23 @@ function Display-Msg-By-ExitCode {
     param($result, $message = $null)
     
     try {
-        if ($message) {
-            $result.message = $message
+        if ($result.messages -and $result.messages.Count -gt 1) {
+            foreach ($msg in $result.messages) {
+                if (-not $msg.color) {
+                    $msg.color = "White"
+                }
+                Write-Host $($msg.content) -ForegroundColor $msg.color
+            }
+        } else {
+            if ($message) {
+                $result.message = $message
+            }
+            if (-not $result.color) {
+                $result.color = "Gray"
+            }
+            
+            Write-Host "`n$($result.message)" -ForegroundColor $result.color
         }
-        if (-not $result.color) {
-            $result.color = "Gray"
-        }
-        
-        Write-Host "`n$($result.message)" -ForegroundColor $result.color
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"

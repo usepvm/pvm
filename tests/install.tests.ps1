@@ -835,6 +835,7 @@ Describe "Environment Variable Tests" {
     }
     
     It "Get-Installed-PHP-Versions should return sorted versions" {
+        Mock Test-Path { return $true }
         Mock Get-All-Subdirectories {
             param ($path)
             return @(
@@ -860,6 +861,7 @@ Describe "Environment Variable Tests" {
     }
     
     It "Get-Matching-PHP-Versions should find matching versions" {
+        Mock Test-Path { return $true }
         Mock Get-All-Subdirectories {
             param ($path)
             return @(

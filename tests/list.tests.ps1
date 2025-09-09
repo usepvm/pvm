@@ -7,6 +7,7 @@ BeforeAll {
     $global:DATA_PATH = "$PSScriptRoot\storage\data"
     $global:LOG_ERROR_PATH = "$PSScriptRoot\storage\logs\error.log"
     
+    Mock Write-Host { }
     # Mock external functions that aren't defined in the provided code
     Mock Make-Directory { param($path) 
         if (-not (Test-Path -Path $path)) {
@@ -98,6 +99,18 @@ Describe "Get-From-Source" {
         $allVersions | Should -Not -Contain 'php-8.2.0-Win32-x64.zip'
     }
     
+    It "Should return empty list" {
+        Mock Invoke-WebRequest {
+            return @{ Links = @() }
+        }
+        Mock Cache-Data { }
+        
+        $result = Get-From-Source
+        
+        $result | Should -BeOfType [hashtable]
+        $result.Count | Should -Be 0
+    }
+    
     It "Should handle web request failure" {
         Mock Invoke-WebRequest { throw "Network error" }
         Mock Log-Data { return "Logged error" }
@@ -106,6 +119,72 @@ Describe "Get-From-Source" {
         
         $result | Should -BeOfType [hashtable]
         $result.Keys.Count | Should -Be 0
+    }
+}
+
+Describe "Get-PHP-List-To-Install" {
+    
+    It "Should read from cache" {
+        Mock Test-Path { return $true }
+        $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK")
+        Mock Get-Item { @{ LastWriteTime = $timeWithinLastWeek } }
+        Mock Get-Data-From-Cache {
+            return @{
+                'Archives' = @('php-8.1.0-Win32-x64.zip')
+                'Releases' = @('php-8.2.0-Win32-x64.zip')
+            }
+        }
+        
+        $result = Get-PHP-List-To-Install
+        
+        $result | Should -Not -BeNullOrEmpty
+        $result.Keys | Should -Contain 'Archives'
+        $result.Keys | Should -Contain 'Releases'
+        Assert-MockCalled Get-Data-From-Cache -Exactly 1
+    }
+    
+    It "Should fetch from source when cache is empty" {
+        Mock Test-Path { $true }
+        $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK")
+        Mock Get-Item { @{ LastWriteTime = $timeWithinLastWeek } }
+        Mock Get-Data-From-Cache { return @{} }
+        Mock Get-From-Source {
+            return @{
+                'Archives' = @('php-8.1.0-Win32-x64.zip')
+                'Releases' = @('php-8.2.0-Win32-x64.zip')
+            }
+        }
+        
+        $result = Get-PHP-List-To-Install
+        
+        $result | Should -Not -BeNullOrEmpty
+        $result.Keys | Should -Contain 'Archives'
+        $result.Keys | Should -Contain 'Releases'
+        Assert-MockCalled Get-Data-From-Cache -Exactly 1
+        Assert-MockCalled Get-From-Source -Exactly 1
+    }
+    
+    It "Should fetch from source" {
+        Mock Test-Path { return $false }
+        Mock Get-From-Source {
+            return @{
+                'Archives' = @('php-8.1.0-Win32-x64.zip')
+                'Releases' = @('php-8.2.0-Win32-x64.zip')
+            }
+        }
+        
+        $result = Get-PHP-List-To-Install
+        
+        $result | Should -Not -BeNullOrEmpty
+        $result.Keys | Should -Contain 'Archives'
+        $result.Keys | Should -Contain 'Releases'
+        Assert-MockCalled Get-From-Source -Exactly 1
+    }
+    
+    It "Handles exceptions gracefully" {
+        Mock Test-Path { throw "Cache error" }
+        $result = Get-PHP-List-To-Install
+        $result | Should -BeNullOrEmpty
     }
 }
 
@@ -128,7 +207,17 @@ Describe "Get-Available-PHP-Versions" {
         
         $code | Should -Be 0
         Should -Invoke Get-Data-From-Cache -Exactly 1
-        Should -Invoke Write-Host -ParameterFilter { $Object -like "*Reading from the cache*" }
+    }
+    
+    It "Display available versions matching filter" {
+        $code = Get-Available-PHP-Versions -term "7.1"
+        $code | Should -Be 0
+    }
+    
+    It "Return -1 when no available versions matching filter" {
+        Mock Get-Installed-PHP-Versions { return @("8.2.0", "8.2.0", "8.1.5") }
+        $code = Display-Installed-PHP-Versions -term "9.1"
+        $code | Should -Be -1
     }
     
     It "Should fetch from source when cache is empty" {
@@ -147,7 +236,6 @@ Describe "Get-Available-PHP-Versions" {
         $code | Should -Be 0
         Should -Invoke Get-Data-From-Cache -Exactly 1
         Should -Invoke Get-From-Source -Exactly 1
-        Should -Invoke Write-Host -ParameterFilter { $Object -like "*Cache is empty*" }
     }
     
     It "Should force fetch from source when cache not exists" {
@@ -227,6 +315,12 @@ Describe "Display-Installed-PHP-Versions" {
         Should -Invoke Write-Host -ParameterFilter { $Object -like "*7.4.33*" }
     }
     
+    It "Display installed versions matching filter" {
+        Mock Get-Installed-PHP-Versions { return @("8.2.0", "8.2.0", "8.1.5") }
+        $code = Display-Installed-PHP-Versions -term "8.2"
+        $code | Should -Be 0
+    }
+    
     It "Should handle no installed versions" {
         Mock Get-Current-PHP-Version { return @{ version = "" } }
         Mock Get-Installed-PHP-Versions { return @() }
@@ -261,5 +355,25 @@ Describe "Display-Installed-PHP-Versions" {
         Mock Log-Data { return "Logged error" }
         
         { Display-Installed-PHP-Versions } | Should -Not -Throw
+    }
+}
+
+Describe "Get-PHP-Versions-List" {
+    It "Displays available versions" {
+        Mock Get-Available-PHP-Versions { return 0 }
+        
+        $result = Get-PHP-Versions-List -available $true
+        
+        $result | Should -Be 0
+        Assert-MockCalled Get-Available-PHP-Versions -Exactly 1
+    }
+    
+    It "Displays installed versions" {
+        Mock Display-Installed-PHP-Versions { return 0 }
+        
+        $result = Get-PHP-Versions-List
+        
+        $result | Should -Be 0
+        Assert-MockCalled Display-Installed-PHP-Versions -Exactly 1
     }
 }

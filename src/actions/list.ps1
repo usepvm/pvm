@@ -150,7 +150,7 @@ function Display-Installed-PHP-Versions {
         
         if ($installedPhp.Count -eq 0) {
             Write-Host "`nNo PHP versions found matching '$term'"
-            return 1
+            return -1
         }
 
         Write-Host "`nInstalled Versions"

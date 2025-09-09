@@ -138,7 +138,7 @@ function Display-Installed-PHP-Versions {
         
         if ($installedPhp.Count -eq 0) {
             Write-Host "`nNo PHP versions found"
-            return 1
+            return -1
         }
 
         Write-Host "`nInstalled Versions"
@@ -161,7 +161,7 @@ function Display-Installed-PHP-Versions {
             header = "$($MyInvocation.MyCommand.Name) - Failed to display installed PHP versions"
             exception = $_
         }
-        return 1
+        return -1
     }
     
 }

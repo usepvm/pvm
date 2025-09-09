@@ -19,13 +19,13 @@ function Invoke-PVMCurrent {
     $result = Get-Current-PHP-Version
     if (-not $result.version) {
         Write-Host "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
-        return 1
+        return -1
     }
     Write-Host "`nRunning version: PHP $($result.version)"
     
     if (-not $result.status) {
         Write-Host "No status information available for the current PHP version." -ForegroundColor Yellow
-        return 1
+        return -1
     }
     
     foreach ($ext in $result.status.Keys) {
@@ -58,7 +58,7 @@ function Invoke-PVMInstall {
     $version = $arguments[0]        
     if (-not $version) {
         Write-Host "`nPlease provide a PHP version to install"
-        return 1
+        return -1
     }
 
     $result = Install-PHP -version $version
@@ -73,7 +73,7 @@ function Invoke-PVMUninstall {
 
     if (-not $version) {
         Write-Host "`nPlease provide a PHP version to uninstall"
-        return 1
+        return -1
     }
 
     $result = Uninstall-PHP -version $version
@@ -89,14 +89,14 @@ function Invoke-PVMUse {
 
     if (-not $version) {
         Write-Host "`nPlease provide a PHP version to use"
-        return 1
+        return -1
     }
 
     if ($version -eq 'auto') {
         $result = Auto-Select-PHP-Version
         if ($result.code -ne 0) {
             Display-Msg-By-ExitCode -result $result
-            return 1
+            return -1
         }
         $version = $result.version
     }
@@ -113,7 +113,7 @@ function Invoke-PVMIni {
     $action = $arguments[0]
     if (-not $action) {
         Write-Host "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable' or 'restore'."
-        return 1
+        return -1
     }
     
     $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }

@@ -561,6 +561,7 @@ function List-PHP-Extensions {
                 Write-Host "`nNo extensions found"
                 return -1
             }
+            $searchResult = $extensions
             if ($term) {
                 $searchResult = $extensions | Where-Object { $_.Extension -like "*$term*" }
             }

@@ -155,7 +155,7 @@ function Invoke-PVMTest {
     $result = Run-Tests -tests $files -options $options
 
     Display-Msg-By-ExitCode -result $result
-    return 0
+    return $result.code
 }
 
 function Invoke-PVMLog {

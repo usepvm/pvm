@@ -43,11 +43,8 @@ function Invoke-PVMCurrent {
 function Invoke-PVMList{
     param($arguments)
     
-    if ($arguments -contains "available") {
-        $result = Get-Available-PHP-Versions
-    } else {
-        $result = Display-Installed-PHP-Versions
-    }
+    $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
+    $result = Get-PHP-Versions-List -available ($arguments -contains "available") -term $term
     
     return $result
 }

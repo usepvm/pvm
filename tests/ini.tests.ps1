@@ -746,8 +746,8 @@ Describe "List-PHP-Extensions" {
                 @{Extension = "curl"; Enabled = $true; Type = "extension"}
                 @{Extension = "opcache"; Enabled = $false; Type = "zend_extension"}
             )
-        }        
-        Mock Get-PHPExtensions-From-Source {
+        }
+        Mock Get-Data-From-Cache {
             return @{
                 Authentication = @(
                     @{
@@ -783,6 +783,9 @@ Describe "List-PHP-Extensions" {
                 )
             }
         }
+        Mock Get-PHPExtensions-From-Source -MockWith{
+            return Get-Data-From-Cache
+        }
         Mock Display-Installed-Extensions {}
     }
     
@@ -808,6 +811,7 @@ Describe "List-PHP-Extensions" {
     It "Displays available extensions from cache" {
         Mock Test-Path { return $true }
         Mock Get-PHPExtensions-From-Source { return @{} }
+        Mock Get-Item { return @{LastWriteTime = "2025-09-09T18:27:39.5309088+01:00"} }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be 0
     }

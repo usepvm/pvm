@@ -371,13 +371,13 @@ Describe "Start-PVM Function Tests" {
         It "Should execute action and return non-zero exit code" {
             Mock Get-Actions {
                 [ordered]@{
-                    "install" = [PSCustomObject]@{ action = { return 1 } }
+                    "install" = [PSCustomObject]@{ action = { return -1 } }
                 }
             }
             
             $result = Start-PVM -operation "install" -arguments @()
             
-            $result | Should -Be 1
+            $result | Should -Be -1
         }
 
         It "Should execute action and return custom exit code" {
@@ -411,7 +411,7 @@ Describe "Start-PVM Function Tests" {
                 [ordered]@{
                     "test" = [PSCustomObject]@{ 
                         action = { 
-                            if (Test-Path "C:\Test") { return 0 } else { return 1 }
+                            if (Test-Path "C:\Test") { return 0 } else { return -1 }
                         } 
                     }
                 }
@@ -425,7 +425,7 @@ Describe "Start-PVM Function Tests" {
     }
 
     Context "Error Handling Path Tests" {
-        It "Should catch exception and return 1" {
+        It "Should catch exception and return -1" {
             Mock Get-Actions {
                 [ordered]@{
                     "install" = [PSCustomObject]@{ 

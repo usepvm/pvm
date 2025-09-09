@@ -90,11 +90,11 @@ Describe "Invoke-PVMCurrent Tests" {
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Path: C:\PHP\8.2.0*" -and $ForegroundColor -eq "Gray" }
     }
 
-    It "Should return 1 when no PHP version is set" {
+    It "Should return -1 when no PHP version is set" {
         Mock Get-Current-PHP-Version { @{ version = $null; status = $null; path = $null } }
         
         $result = Invoke-PVMCurrent
-        $result | Should -Be 1
+        $result | Should -Be -1
         
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*No PHP version is currently set*" }
     }
@@ -103,7 +103,7 @@ Describe "Invoke-PVMCurrent Tests" {
         Mock Get-Current-PHP-Version { @{ version = "8.2.0"; status = $null; path = "C:\PHP\8.2.0" } }
         
         $result = Invoke-PVMCurrent
-        $result | Should -Be 1
+        $result | Should -Be -1
         
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*No status information available*" -and $ForegroundColor -eq "Yellow" }
     }
@@ -142,11 +142,11 @@ Describe "Invoke-PVMInstall Tests" {
         # Mock Write-Host { }
     }
 
-    It "Should return 1 when no version is provided" {
+    It "Should return -1 when no version is provided" {
         $arguments = @()
         
         $result = Invoke-PVMInstall -arguments $arguments
-        $result | Should -Be 1
+        $result | Should -Be -1
         
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Please provide a PHP version to install*" }
     }
@@ -172,11 +172,11 @@ Describe "Invoke-PVMUninstall Tests" {
         Mock Read-Host { }
     }
 
-    It "Should return 1 when no version is provided" {
+    It "Should return -1 when no version is provided" {
         $arguments = @()
         
         $result = Invoke-PVMUninstall -arguments $arguments
-        $result | Should -Be 1
+        $result | Should -Be -1
         
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Please provide a PHP version to uninstall*" }
     }
@@ -212,11 +212,11 @@ Describe "Invoke-PVMUse Tests" {
         # Mock Write-Host { }
     }
 
-    It "Should return 1 when no version is provided" {
+    It "Should return -1 when no version is provided" {
         $arguments = @()
         
         $result = Invoke-PVMUse -arguments $arguments
-        $result | Should -Be 1
+        $result | Should -Be -1
         
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Please provide a PHP version to use*" }
     }
@@ -243,12 +243,12 @@ Describe "Invoke-PVMUse Tests" {
         Assert-MockCalled Update-PHP-Version -Times 1 -ParameterFilter { $version -eq "8.2.0" }
     }
 
-    It "Should return 1 when auto-selection fails" {
+    It "Should return -1 when auto-selection fails" {
         Mock Auto-Select-PHP-Version { @{ code = 1; message = "Auto selection failed" } }
         $arguments = @("auto")
         
         $result = Invoke-PVMUse -arguments $arguments
-        $result | Should -Be 1
+        $result | Should -Be -1
         
         Assert-MockCalled Auto-Select-PHP-Version -Times 1
         Assert-MockCalled Display-Msg-By-ExitCode -Times 1
@@ -262,11 +262,11 @@ Describe "Invoke-PVMIni Tests" {
         # Mock Write-Host { }
     }
 
-    It "Should return 1 when no action is provided" {
+    It "Should return -1 when no action is provided" {
         $arguments = @()
         
         $result = Invoke-PVMIni -arguments $arguments
-        $result | Should -Be 1
+        $result | Should -Be -1
         
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Please specify an action for 'pvm ini'*" }
     }

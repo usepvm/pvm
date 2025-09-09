@@ -376,7 +376,7 @@ Describe "Make-Symbolic-Link" {
         
         It "Returns -1 if fails to create symbolic link" {
             Mock Is-Admin { return $false }
-            Mock Run-Command { return 1 }
+            Mock Run-Command { return -1 }
             $linkPath = "TestDrive:\test_link_fail"
             $targetPath = "$STORAGE_PATH\php\8.1"
             $result = Make-Symbolic-Link -link $linkPath -target $targetPath

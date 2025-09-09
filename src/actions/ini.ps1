@@ -333,23 +333,29 @@ function Get-PHP-Info {
     Write-Host "`n- Running PHP version`t: $($currentPHPVersion.version)"
     Write-Host "`n- PHP path`t`t: $($currentPHPVersion.path)"
     $extensions = Get-PHPExtensionsStatus -PhpIniPath "$($currentPHPVersion.path)\php.ini"
+    Display-Extensions-States -extensions $extensions
     Display-Installed-Extensions -extensions $extensions
     
     return 0
 }
 
-function Display-Installed-Extensions {
+function Display-Extensions-States {
     param ($extensions)
     
     # Pre-count for summary
     $enabledCount = @($extensions | Where-Object Enabled).Count
     $disabledCount = $extensions.Count - $enabledCount
     
+    Write-Host "`n- Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
+}
+
+function Display-Installed-Extensions {
+    param ($extensions)
+    
     # Calculate max length dynamically
     $maxNameLength = ($extensions.Extension | Measure-Object -Maximum Length).Maximum
     $maxLineLength = $maxNameLength + 10  # padding
     
-    Write-Host "`n- Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
     $extensions |
     Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true }, `
                 @{Expression = { $_.Extension }; Ascending = $true } |
@@ -546,7 +552,7 @@ function Get-PHPExtensions-From-Source {
 }
 
 function List-PHP-Extensions {
-    param ($iniPath, $available = $false)
+    param ($iniPath, $available = $false, $term = $null)
     
     try {
         if (-not $available) {
@@ -555,7 +561,19 @@ function List-PHP-Extensions {
                 Write-Host "`nNo extensions found"
                 return -1
             }
-            Display-Installed-Extensions -extensions $extensions
+            if ($term) {
+                $searchResult = $extensions | Where-Object { $_.Extension -like "*$term*" }
+            }
+            if ($searchResult.Count -eq 0) {
+                $msg = "`nNo extensions found"
+                if ($term) {
+                    $msg += " matching '$term'"
+                }
+                Write-Host $msg -ForegroundColor DarkYellow
+                return -1
+            }
+            Display-Extensions-States -extensions $extensions
+            Display-Installed-Extensions -extensions $searchResult
         } else {
             Write-Host "`nLoading available extensions..."
             
@@ -568,17 +586,11 @@ function List-PHP-Extensions {
             }
             
             if ($useCache) {
-                Write-Host "`nReading from the cache (last updated $([math]::Round($fileAgeHours, 2)) hours ago)"
                 $availableExtensions = Get-Data-From-Cache -cacheFileName "available_extensions"
                 if ($availableExtensions.Count -eq 0) {
                     $availableExtensions = Get-PHPExtensions-From-Source
                 }
             } else {
-                if (Test-Path $cacheFile) {
-                    Write-Host "`nCache too old ($([math]::Round($fileAgeHours, 2)) hours), reading from the internet..."
-                } else {
-                    Write-Host "`nCache missing, reading from the source..."
-                }
                 $availableExtensions = Get-PHPExtensions-From-Source
             }
 
@@ -589,13 +601,33 @@ function List-PHP-Extensions {
             
             $availableExtensionsPartialList = @{}
             $availableExtensions.GetEnumerator() | ForEach-Object {
-                $availableExtensionsPartialList[$_.Key] = $_.Value | Select-Object -Last 10
+                $searchResult = $_.Value
+                if ($term) {
+                    if ($_.Key -notlike "*$term*") {
+                        # Search the list if the category doesn't match
+                        $searchResult = $searchResult | Where-Object {
+                            $_.extName -like "*$term*"
+                        }
+                    }
+                }
+                if ($searchResult.Count -gt 0) {
+                    $availableExtensionsPartialList[$_.Key] = $searchResult | Select-Object -Last 10
+                }
+            }
+            
+            if ($availableExtensionsPartialList.Count -eq 0) {
+                $msg = "`nNo extensions found"
+                if ($term) {
+                    $msg += " matching '$term'"
+                }
+                Write-Host $msg -ForegroundColor DarkYellow
+                return -1
             }
             
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
             $maxLineLength = $maxKeyLength + 5   # adjust padding
-            Write-Host "`nAvailable Extensions"
-            Write-Host    "------------------"
+            Write-Host "`nAvailable Extensions by Category:"
+            Write-Host    "--------------------------------"
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
                 $key  = $_.Key
                 $vals = ($_.Value | ForEach-Object { $_.extName }) -join ", "
@@ -713,7 +745,8 @@ function Invoke-PVMIniAction {
                 }
             }
             "list" {
-                $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains "available")
+                $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
+                $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains "available") -term $term
             }
             default {
                 Write-Host "`nUnknown action '$action' use one of following: 'info', 'get, 'set', 'enable', 'disable', 'status', 'install', 'list' or 'restore'."

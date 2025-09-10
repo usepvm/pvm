@@ -485,7 +485,7 @@ opcache.enable = 1
                 Content = '[{"xDebugVersion":"3.1.0","fileName":"php_xdebug-3.1.0-8.1-vs16-x64.dll","url":"https://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"}]'
                 Links = @()
             }
-        }        
+        }
 
         # Mock the XDebug download page with proper XDebug v3 links
         $mockLinks = @(

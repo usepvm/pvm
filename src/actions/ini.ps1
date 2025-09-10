@@ -492,25 +492,35 @@ function Install-Extension {
                 }
             }
             
-            Write-Host "`nMatching '$extName' extension:"
-            $index = 0
-            $linksMatchnigExtName | ForEach-Object {
-                $extItem = $_.href -replace "/package/", ""
-                Write-Host "[$index] $extItem"
-                $index++
-            }
-            $extIndex = Read-Host "`nInsert the [number] you want to install"
-            $extIndex = $extIndex.Trim()
-            if ([string]::IsNullOrWhiteSpace($extIndex)) {
-                Write-Host "`nInstallation cancelled"
+            if ($linksMatchnigExtName.Count -eq 0) {
+                Write-Host "`nExtension '$extName' not found" -ForegroundColor DarkYellow
                 return -1
             }
             
-            $chosenItem = $linksMatchnigExtName[$extIndex]
-            if (-not $chosenItem) {
-                Write-Host "`nYou chose the wrong index: $extIndex" -ForegroundColor DarkYellow
-                return -1
+            if ($linksMatchnigExtName.Count -eq 1) {
+                $chosenItem = $linksMatchnigExtName[0]
+            } else {
+                Write-Host "`nMatching '$extName' extension:"
+                $index = 0
+                $linksMatchnigExtName | ForEach-Object {
+                    $extItem = $_.href -replace "/package/", ""
+                    Write-Host "[$index] $extItem"
+                    $index++
+                }
+                $extIndex = Read-Host "`nInsert the [number] you want to install"
+                $extIndex = $extIndex.Trim()
+                if ([string]::IsNullOrWhiteSpace($extIndex)) {
+                    Write-Host "`nInstallation cancelled"
+                    return -1
+                }
+                
+                $chosenItem = $linksMatchnigExtName[$extIndex]
+                if (-not $chosenItem) {
+                    Write-Host "`nYou chose the wrong index: $extIndex" -ForegroundColor DarkYellow
+                    return -1
+                }
             }
+
             $extName = $chosenItem.href -replace "/package/", ""
             $html = Invoke-WebRequest -Uri "$baseUrl/package/$extName"
         }

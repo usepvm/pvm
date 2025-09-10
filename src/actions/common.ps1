@@ -81,6 +81,7 @@ function Get-UserSelected-PHP-Version {
             Write-Host " - $versionNumber $isCurrent"
         }
         $response = Read-Host "`nEnter the exact version to use. (or press Enter to cancel)"
+        $response = $response.Trim()
         if (-not $response) {
             return @{ code = -1; message = "Operation cancelled."; color = "DarkYellow"}
         }

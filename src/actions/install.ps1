@@ -361,6 +361,7 @@ function Select-Version {
         $msg += "`n Archives : https://windows.php.net/downloads/releases/archives"
         Write-Host $msg
         $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
+        $selectedVersionInput = $selectedVersionInput.Trim()
 
         if (-not $selectedVersionInput) {
             return $null
@@ -410,6 +411,7 @@ function Install-PHP {
                     Write-Host " - $versionNumber $isCurrent"
                 }
                 $response = Read-Host "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
+                $response = $response.Trim()
                 if ($response -ne "y" -and $response -ne "Y") {
                     return @{ code = -1; message = "Installation cancelled" }
                 }

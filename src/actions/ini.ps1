@@ -514,7 +514,7 @@ function Get-PHPExtensions-From-Source {
     $availableExtensions = @{}
     try {
         $html_cat = Invoke-WebRequest -Uri "$baseUrl/packages.php"
-        $html_cat.Links | Where-Object {
+        $resultCat = $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
             if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+$') {
                 $extCategory = ($_.outerHTML -replace '<[^>]*>', '').Trim()
@@ -522,7 +522,7 @@ function Get-PHPExtensions-From-Source {
                 
                 # fetch the extensions from the category
                 $html = Invoke-WebRequest -Uri "$baseUrl/$($_.href.TrimStart('/'))"
-                $html.Links | Where-Object {
+                $resultLinks = $html.Links | Where-Object {
                     if (-not $_.href) { return $false }
                     if ($_.href -match '^/package/[A-Za-z0-9_]+$') {
                         $extName = ($_.href -replace '/package/', '').Trim()
@@ -539,7 +539,9 @@ function Get-PHPExtensions-From-Source {
             }
             return $false
         }
-        $cached = Cache-Data -cacheFileName "available_extensions" -data $availableExtensions -depth 3
+        $dataToCache = [ordered] @{}
+        ($availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object { $dataToCache[$_.Key] = $_.Value })
+        $cached = Cache-Data -cacheFileName "available_extensions" -data $dataToCache -depth 3
         
         return $availableExtensions
     } catch {

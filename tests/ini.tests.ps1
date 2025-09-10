@@ -697,11 +697,11 @@ Describe "Get-PHPExtensions-From-Source" {
                     @{ href = $null }
                     @{ href = "random_link" }
                     @{ href = "/packages.php?catpid=1&amp;catname=Authentication"; 
-                    outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>' }
+                        outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>' }
                     @{ href = "/packages.php?catpid=3&amp;catname=Caching"; 
-                    outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>' }
+                        outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>' }
                     @{ href = "/packages.php?catpid=7&amp;catname=EmptyCat"; 
-                    outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>' }
+                        outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>' }
                 )
             }
             "https://pecl.php.net/packages.php?catpid=1&amp;catname=Authentication" = @{
@@ -728,7 +728,7 @@ Describe "Get-PHPExtensions-From-Source" {
     
     It "Returns list of available extensions" {
         $list = Get-PHPExtensions-From-Source
-        $list.Count | Should -Be 4
+        $list.Count | Should -Be 2
     }
     
     It "Handles thrown exception" {

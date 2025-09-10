@@ -23,8 +23,7 @@ pvm help
 
 # Display help for a specific command
 pvm help <command>
-# Example: 
-pvm help setup
+# Example: pvm help setup
 
 # Display information about the environment
 pvm info # pvm ini info
@@ -39,25 +38,24 @@ pvm list # pvm ls
 pvm list available # pvm ls available
 
 # List installed versions with 8.2 in the name
-pvm list --search=8.2
+pvm list --search=<version>
+# Example: pvm list --search=8.2
 
 # List available versions with 8.2 in the name
-pvm list available --search=8.2
+pvm list available --search=<version>
+# Example: pvm list available --search=8.2
 
 # Install a specific version.
 pvm install <version> # pvm i <version>
-# Example:
-pvm install 8.4 # pvm i 8.4
+# Example: pvm install 8.4 # pvm i 8.4
 
 # Uninstall a specific version
 pvm uninstall <version> # pvm rm <version>
-# Example:
-pvm uninstall 8.4 # pvm rm 8.4
+# Example: pvm uninstall 8.4 # pvm rm 8.4
 
 # Switch to use the specified version
 pvm use <version>
-# Example:
-pvm use 8.4
+# Example: pvm use 8.4
 
 # Switch to use the detected PHP version from .php-version or composer.json in your current project/directory
 pvm use auto
@@ -67,18 +65,24 @@ pvm use auto
 
 ```sh
 # Check status of multiple extensions
-pvm ini status xdebug opcache
+pvm ini status <extension>
+# Example: pvm ini status xdebug opcache
 
 # Enable or disable multiple extensions
-pvm ini enable xdebug opcache
-pvm ini disable xdebug opcache
+pvm ini enable <extension>
+# Example: pvm ini enable xdebug opcache
+pvm ini disable <extension>
+# Example: pvm ini disable xdebug opcache
 
 # Set or Get multiple settings values
-pvm ini set memory_limit=512M max_file_uploads=20
-pvm ini get memory_limit max_file_uploads
+pvm ini set <setting>=<value>
+# Example: pvm ini set memory_limit=512M max_file_uploads=20
+pvm ini get <setting>
+# Example: pvm ini get memory_limit max_file_uploads
 
 # Install extensions from remote source
-pvm ini install opcache
+pvm ini install <extension>
+# Example: pvm ini install opcache
 
 # List installed extensions
 pvm ini list
@@ -87,18 +91,19 @@ pvm ini list
 pvm ini list available
 
 # List installed extensions with 'zip' in their name
-pvm ini list --search=zip
+pvm ini list --search=<extension>
+# Example: pvm ini list --search=zip
 
 # List available extensions with 'zip' in their name
-pvm ini list available --search=zip
+pvm ini list available --search=<extension>
+# Example: pvm ini list available --search=zip
 
 # Restore backup
 pvm ini restore
 
 # Check logs
 pvm log --pageSize=[number] # Default value is 5
-# Example:
-pvm log --pageSize=3
+# Example: pvm log --pageSize=3
 ```
 
 ## Running Tests
@@ -126,10 +131,11 @@ Get-Module -ListAvailable Pester
 pvm test [files = (files inside the tests/ directory)] [--coverage] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=yourTag]
 
 # Examples:
-pvm test # Runs all tests with Normal (default) verbosity.
-pvm test use install # Runs only use.tests.ps1 and install.tests.ps1 with Normal verbosity.
-pvm test --verbosity=Detailed --coverage # Runs all tests with Detailed verbosity and generates coverage report.
-pvm test helpers list --verbosity=Diagnostic --tag=myTag # Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity and only runs tests with tag "myTag".
+pvm test # .............................. Runs all tests with Normal (default) verbosity.
+pvm test use install # .................. Runs only 'use.tests.ps1' and 'install.tests.ps1' files with Normal verbosity.
+pvm test --verbosity=Detailed # ......... Runs all tests with Detailed verbosity.
+pvm test --coverage # ................... Runs all tests and generates coverage report
+pvm test --tag=myTag #................... Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity and only runs tests with tag "myTag".
 ```
 
 ## Contributing

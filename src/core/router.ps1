@@ -315,21 +315,27 @@ function Get-Actions {
                     "Manage PHP configuration (php.ini) settings and extensions for the currently active PHP version."
                 )
                 ARGUMENTS = @(
-                    "set <setting>=<value> ............ Set a php.ini configuration value"
-                    "get <setting> .................... Get a php.ini configuration value"
-                    "enable <extension> ............... Enable a PHP extension"
-                    "disable <extension> .............. Disable a PHP extension"
-                    "status <extension> ............... Check if extension is enabled"
-                    "info ............................. Displays information about the environment and php.ini information summary"
-                    "restore .......................... Restore original php.ini from backup"
-                    
+                    "set <setting>=<value> ................... Set a php.ini configuration value"
+                    "get <setting> ........................... Get a php.ini configuration value"
+                    "enable <extension> ...................... Enable a PHP extension"
+                    "disable <extension> ..................... Disable a PHP extension"
+                    "status <extension> ...................... Check if extension is enabled"
+                    "info .................................... Displays information about the environment and php.ini information summary"
+                    "restore ................................. Restore original php.ini from backup"
+                    "install <extension> ..................... Install a PHP extension"
+                    "list [available] [--search=<term>] ...... Lists the PHP extensions. Type 'available' at the end to see what can be installed."
                 )
                 EXAMPLES = @(
-                    "pvm ini set memory_limit=256M .... Sets memory limit to 256MB"
-                    "pvm ini get memory_limit ......... Shows current memory limit setting"
-                    "pvm ini enable mysqli ............ Enables the mysqli extension"
-                    "pvm ini disable xdebug ........... Disables the xdebug extension"
-                    "pvm ini status opcache ........... Shows if opcache extension is enabled"
+                    "pvm ini set memory_limit=256M ........... Sets memory limit to 256MB"
+                    "pvm ini get memory_limit ................ Shows current memory limit setting"
+                    "pvm ini enable mysqli ................... Enables the mysqli extension"
+                    "pvm ini disable xdebug .................. Disables the xdebug extension"
+                    "pvm ini status opcache .................. Shows if opcache extension is enabled"
+                    "pvm ini install opcache ................. Installs the opcache extension"
+                    "pvm ini list ............................ Lists the PHP extensions"
+                    "pvm ini list available .................. Lists available PHP extensions"
+                    "pvm ini list --search=zip ............... Lists PHP extensions with 'zip' in their name"
+                    "pvm ini list available --search=zip ..... Lists available PHP extensions with 'zip' in their name"
                 )
             }
             action = { return Invoke-PVMIni -arguments $script:arguments }}

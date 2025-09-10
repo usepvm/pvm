@@ -72,6 +72,12 @@ pvm ini list
 # List available extensions from remote source
 pvm ini list available
 
+# List installed extensions with 'zip' in their name
+pvm ini list --search=zip
+
+# List available extensions with 'zip' in their name
+pvm ini list available --search=zip
+
 # Restore backup
 pvm ini restore
 

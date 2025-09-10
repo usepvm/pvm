@@ -79,7 +79,7 @@ extension=php_mbstring.dll
 "@ | Set-Content $testIniPath
         $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl"
         $result | Should -Be 0
-        (Get-Content $testIniPath) -match "extension=curl" | Should -Be $true
+        (Get-Content $testIniPath) -match "extension=php_curl.dll" | Should -Be $true
     }
     
     It "Adds any extension in disabled state to ini file" {
@@ -89,7 +89,7 @@ zend_extension=php_opcache.dll
 "@ | Set-Content $testIniPath
         $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl" -enable $false
         $result | Should -Be 0
-        (Get-Content $testIniPath) -match ";extension=curl" | Should -Be $true
+        (Get-Content $testIniPath) -match ";extension=php_curl.dll" | Should -Be $true
     }
     
     It "Adds extensions correctly for older PHP versions" {
@@ -642,7 +642,7 @@ Describe "Install-IniExtension" {
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
             return "y"
         }
-        Mock Add-Missing-PHPExtension { return 0 }
+        Mock Install-Extension { return 0 }
         
         $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
         $code | Should -Be 0
@@ -1052,9 +1052,9 @@ extension=php_curl.dll
             Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
                 return "y"
             }
-            Mock Add-Missing-PHPExtension { return 0 }
+            Mock Install-Extension { return 0 }
         }
-        It "Installs extension" -Tag i {
+        It "Installs extension" {
             $result = Invoke-PVMIniAction -action "install" -params @("curl")
             $result | Should -Be 0
         }
@@ -1065,7 +1065,7 @@ extension=php_curl.dll
         }
     }
     
-    Context "list action" -Tag i {
+    Context "list action" {
         It "Lists extensions" {
             Mock Get-PHPExtensionsStatus {
                 return @(

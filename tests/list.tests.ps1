@@ -214,7 +214,7 @@ Describe "Get-Available-PHP-Versions" {
         $code | Should -Be 0
     }
     
-    It "Return -1 when no available versions matching filter" -Tag i {
+    It "Return -1 when no available versions matching filter" {
         $code = Get-Available-PHP-Versions -term "9.1"
         $code | Should -Be -1
     }

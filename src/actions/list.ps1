@@ -22,7 +22,7 @@ function Get-From-Source {
         $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x64' } else { 'x86' }
         $fetchedVersions = $fetchedVersions | Where-Object { $_ -match "$arch" }
         
-        $fetchedVersionsGrouped = @{
+        $fetchedVersionsGrouped = [ordered]@{
             'Archives' = $fetchedVersions | Where-Object { $_ -match "archives" }
             'Releases' = $fetchedVersions | Where-Object { $_ -notmatch "archives" }
         }
@@ -57,18 +57,11 @@ function Get-PHP-List-To-Install {
         }
         
         if ($useCache) {
-            Write-Host "`nReading from the cache (last updated $([math]::Round($fileAgeHours, 2)) hours ago)"
             $fetchedVersionsGrouped = Get-Data-From-Cache -cacheFileName "available_php_versions"
             if (-not $fetchedVersionsGrouped -or $fetchedVersionsGrouped.Count -eq 0) {
-                Write-Host "`nCache is empty, reading from the source..."
                 $fetchedVersionsGrouped = Get-From-Source
             }
         } else {
-            if (Test-Path $cacheFile) {
-                Write-Host "`nCache too old ($([math]::Round($fileAgeHours, 2)) hours), reading from the internet..."
-            } else {
-                Write-Host "`nCache missing, reading from the source..."
-            }
             $fetchedVersionsGrouped = Get-From-Source
         }
         
@@ -83,8 +76,11 @@ function Get-PHP-List-To-Install {
 }
 
 function Get-Available-PHP-Versions {
+    param($term = $null)
     
     try {
+        Write-Host "`nLoading available PHP versions..."
+
         $fetchedVersionsGrouped = Get-PHP-List-To-Install
 
         if ($fetchedVersionsGrouped.Count -eq 0) {
@@ -94,7 +90,13 @@ function Get-Available-PHP-Versions {
         
         $fetchedVersionsGroupedPartialList = @{}
         $fetchedVersionsGrouped.GetEnumerator() | ForEach-Object {
-            $fetchedVersionsGroupedPartialList[$_.Key] = $_.Value | Select-Object -Last $LatestVersionCount
+            $searchResult = $_.Value
+            if ($term) {
+                $searchResult = $searchResult | Where-Object {
+                    $_ -like "*php-$term*"
+                }
+            }
+            $fetchedVersionsGroupedPartialList[$_.Key] = $searchResult | Select-Object -Last $LatestVersionCount
         }
         
         Write-Host "`nAvailable Versions"
@@ -128,6 +130,7 @@ function Get-Available-PHP-Versions {
 }
 
 function Display-Installed-PHP-Versions {
+    param ($term)
 
     try {
         $currentVersion = Get-Current-PHP-Version
@@ -138,6 +141,15 @@ function Display-Installed-PHP-Versions {
         
         if ($installedPhp.Count -eq 0) {
             Write-Host "`nNo PHP versions found"
+            return -1
+        }
+        
+        if ($term) {
+            $installedPhp = $installedPhp | Where-Object { $_ -like "$term*" }
+        }
+        
+        if ($installedPhp.Count -eq 0) {
+            Write-Host "`nNo PHP versions found matching '$term'"
             return -1
         }
 
@@ -164,4 +176,17 @@ function Display-Installed-PHP-Versions {
         return -1
     }
     
+}
+
+
+function Get-PHP-Versions-List {
+    param($available = $false, $term = $null)
+    
+    if ($available) {
+        $result = Get-Available-PHP-Versions -term $term
+    } else {
+        $result = Display-Installed-PHP-Versions -term $term
+    }
+    
+    return $result
 }

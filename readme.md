@@ -36,6 +36,12 @@ pvm list # pvm ls
 # List installable PHP versions from remote source
 pvm list available # pvm ls available
 
+# List installed versions with 8.2 in the name
+pvm list --search=8.2
+
+# List available versions with 8.2 in the name
+pvm list available --search=8.2
+
 # Install a specific version.
 pvm install <version> # pvm i <version>
 

@@ -96,7 +96,14 @@ function Get-Available-PHP-Versions {
                     $_ -like "*php-$term*"
                 }
             }
-            $fetchedVersionsGroupedPartialList[$_.Key] = $searchResult | Select-Object -Last $LatestVersionCount
+            if ($searchResult.Count -ne 0) {
+                $fetchedVersionsGroupedPartialList[$_.Key] = $searchResult | Select-Object -Last $LatestVersionCount
+            }
+        }
+        
+        if ($fetchedVersionsGroupedPartialList.Count -eq 0) {
+            Write-Host "`nNo PHP versions found matching '$term'"
+            return -1
         }
         
         Write-Host "`nAvailable Versions"
@@ -146,11 +153,10 @@ function Display-Installed-PHP-Versions {
         
         if ($term) {
             $installedPhp = $installedPhp | Where-Object { $_ -like "$term*" }
-        }
-        
-        if ($installedPhp.Count -eq 0) {
-            Write-Host "`nNo PHP versions found matching '$term'"
-            return -1
+            if ($installedPhp.Count -eq 0) {
+                Write-Host "`nNo PHP versions found matching '$term'"
+                return -1
+            }
         }
 
         Write-Host "`nInstalled Versions"

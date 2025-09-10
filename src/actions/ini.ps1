@@ -21,11 +21,11 @@ function Add-Missing-PHPExtension {
             }
             
             $lines = Get-Content $iniPath
-            $enabled = if ($enable) { '' } else { ';' }
+            $commented = if ($enable) { '' } else { ';' }
             if ($extName -like "*opcache*") {
-                $lines += "`n$enabled zend_extension=$extName"
+                $lines += "`n$commented" + "zend_extension=$extName"
             } else {
-                $lines += "`n$enabled extension=$extName"
+                $lines += "`n$commented" + "extension=$extName"
             }
             Set-Content $iniPath $lines -Encoding UTF8
             Write-Host "- '$extName' added successfully." -ForegroundColor DarkGreen

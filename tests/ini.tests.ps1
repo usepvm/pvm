@@ -89,7 +89,7 @@ zend_extension=php_opcache.dll
 "@ | Set-Content $testIniPath
         $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl" -enable $false
         $result | Should -Be 0
-        (Get-Content $testIniPath) -match "; extension=curl" | Should -Be $true
+        (Get-Content $testIniPath) -match ";extension=curl" | Should -Be $true
     }
     
     It "Adds extensions correctly for older PHP versions" {

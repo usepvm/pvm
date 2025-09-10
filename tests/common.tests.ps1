@@ -171,7 +171,7 @@ Describe "Get-UserSelected-PHP-Version" {
     }
     
     It "Should return null when no version is selected" {
-        Mock Read-Host { return $null }
+        Mock Read-Host { return "" }
         Mock Write-Host { }
         
         $result = Get-UserSelected-PHP-Version -installedVersions @("7.4", "8.0", "8.1")

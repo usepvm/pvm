@@ -314,7 +314,7 @@ function Enable-Opcache {
                -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
-        Write-Host "`nOpcache enabled successfully for PHP version $version"
+        Write-Host "`nOpcache configured successfully for PHP version $version"
         
         return 0
     } catch {

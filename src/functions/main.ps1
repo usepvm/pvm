@@ -60,6 +60,10 @@ function Alias-Handler {
     }
 }
 
+function Allowed-Operations {
+    return @("help", "setup", "log")
+}
+
 function Start-PVM {
     param ($operation, $arguments)
     try {
@@ -78,7 +82,9 @@ function Start-PVM {
             return 0
         }
         
-        if ($operation -ne "setup" -and (-not (Is-PVM-Setup))) {
+        $allowedOperations = Allowed-Operations
+
+        if (($allowedOperations -notcontains $operation) -and (-not (Is-PVM-Setup))) {
             Write-Host "`nPVM is not setup. Please run 'pvm setup' first."
             return -1
         }

@@ -23,6 +23,8 @@ pvm help
 
 # Display help for a specific command
 pvm help <command>
+# Example: 
+pvm help setup
 
 # Display information about the environment
 pvm info # pvm ini info
@@ -44,12 +46,18 @@ pvm list available --search=8.2
 
 # Install a specific version.
 pvm install <version> # pvm i <version>
+# Example:
+pvm install 8.4 # pvm i 8.4
 
 # Uninstall a specific version
 pvm uninstall <version> # pvm rm <version>
+# Example:
+pvm uninstall 8.4 # pvm rm 8.4
 
 # Switch to use the specified version
 pvm use <version>
+# Example:
+pvm use 8.4
 
 # Switch to use the detected PHP version from .php-version or composer.json in your current project/directory
 pvm use auto
@@ -89,6 +97,8 @@ pvm ini restore
 
 # Check logs
 pvm log --pageSize=[number] # Default value is 5
+# Example:
+pvm log --pageSize=3
 ```
 
 ## Running Tests

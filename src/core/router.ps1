@@ -236,13 +236,16 @@ function Get-Actions {
             command = "pvm list [available]";
             description = "Lists the PHP installations. Type 'available' at the end to see what can be installed.";
             usage = [ordered]@{
-                USAGE = "pvm list [available] (alias: pvm ls [available])"
+                USAGE = "pvm list [available] [--search=<term>] (alias: pvm ls [available])"
                 DESCRIPTION = @(
                     "shows installed PHP versions."
                     "With 'available' argument, shows available PHP versions for installation. (list is cashed for $CacheMaxHours hours)"
                 )
-                OPTIONS = @(
-                    "available .... Show versions available for installation instead of installed versions"
+                EXAMPLES = @(
+                    "pvm list ........................... Show installed versions"
+                    "pvm list available ................. Show versions available for installation instead of installed versions"
+                    "pvm list --search=8.2 .............. Show installed versions with 8.2 in the name"
+                    "pvm list available --search=8.2 .... Show available versions with 8.2 in the name"
                 )
             };
             action = { return Invoke-PVMList -arguments $script:arguments }}

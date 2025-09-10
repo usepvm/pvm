@@ -72,6 +72,12 @@ pvm ini list
 # List available extensions from remote source
 pvm ini list available
 
+# List installed versions with 8.2 in the name
+pvm list --search=8.2
+
+# List available versions with 8.2 in the name
+pvm list available --search=8.2
+
 # Restore backup
 pvm ini restore
 

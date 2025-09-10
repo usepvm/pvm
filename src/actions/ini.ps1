@@ -12,24 +12,19 @@ function Add-Missing-PHPExtension {
         $iniContent = Get-Content $iniPath
         Backup-IniFile $iniPath
         
-        if ($extName -like "*xdebug*") {
-            $xdebugConfigured = Config-XDebug -version $phpCurrentVersion.version -phpPath $phpCurrentVersion.path
-        } else {
             $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
-            if ([version]$phpCurrentVersion.version -lt $PhpNewExtensionNamingSince) {
                 $extName = "php_$extName.dll"
-            }
             
             $lines = Get-Content $iniPath
             $commented = if ($enable) { '' } else { ';' }
-            if ($extName -like "*opcache*") {
+        $isZendExtension = Get-Zend-Extensions-List | Where-Object { $extName -like "*$_*" }
+        if ($isZendExtension) {
                 $lines += "`n$commented" + "zend_extension=$extName"
             } else {
                 $lines += "`n$commented" + "extension=$extName"
             }
             Set-Content $iniPath $lines -Encoding UTF8
             Write-Host "- '$extName' added successfully." -ForegroundColor DarkGreen
-        }
         
         return 0
     } catch {
@@ -398,15 +393,80 @@ function Get-PHPExtensionsStatus {
     return $extensions
 }
 
-function Install-IniExtension {
+function Install-XDebug-Extension {
     param ($iniPath, $extName)
     
     try {
-        if (-not $extName) {
-            Write-Host "`nPlease provide an extension name to check status"
+        $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
+        $baseUrl = "https://xdebug.org"
+        $url = "$baseUrl/download/historical"
+        $xDebugList = Get-XDebug-FROM-URL -url $url -version $currentVersion
+        $xDebugList = $xDebugList | Sort-Object { [version]$_.xDebugVersion } -Descending
+        $xDebugListGrouped = [ordered]@{}
+        $xDebugList | 
+            Group-Object xDebugVersion | 
+            Sort-Object { [version]$_.Name } -Descending | 
+            ForEach-Object {
+                $xDebugListGrouped[$_.Name] = $_.Group
+            }
+
+        $index = 0
+        $xDebugListGrouped.GetEnumerator() | ForEach-Object {
+            Write-Host "`n$($_.Key)"
+            $_.Value | ForEach-Object {
+                $text = ($_.outerHTML -replace '<.*?>|.zip','').Trim()
+                Write-Host " [$index] $text"
+                $index++
+            }
+        }
+        
+        $packageIndex = Read-Host "`nInsert the [number] you want to install"
+        $packageIndex = $packageIndex.Trim()
+        if ([string]::IsNullOrWhiteSpace($packageIndex)) {
+            Write-Host "`nInstallation cancelled"
             return -1
         }
         
+        $chosenItem = $xDebugList[$packageIndex]
+        if (-not $chosenItem) {
+            Write-Host "`nYou chose the wrong index: $packageIndex" -ForegroundColor DarkYellow
+            return -1
+        }
+        
+        Invoke-WebRequest -Uri "$baseUrl/$($chosenItem.href.TrimStart('/'))" -OutFile "$STORAGE_PATH\php"
+        $phpPath = ($iniPath | Split-Path -Parent)
+        if (Test-Path "$phpPath\ext\$($chosenItem.fileName)") {
+            $response = Read-Host "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
+            $response = $response.Trim()
+            if ($response -ne "y" -and $response -ne "Y") {
+                Remove-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)"
+                Write-Host "`nInstallation cancelled"
+                return -1
+            }
+        }
+        Move-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)" -Destination "$phpPath\ext"
+        Remove-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)"
+        $xDebugConfig = getXdebugConfigV2 -XDebugPath $($chosenItem.fileName)
+        if ($chosenItem.xDebugVersion -like "3.*") {
+            $xDebugConfig = getXdebugConfigV3 -XDebugPath $($chosenItem.fileName)
+        }
+        $xDebugConfig = $xDebugConfig -replace "\ +"
+        Add-Content -Path $iniPath -Value $xDebugConfig
+        
+        return 0
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to install extension '$extName'"
+            exception = $_
+        }
+        return -1
+    }
+}
+
+function Install-Extension {
+    param ($iniPath, $extName)
+    
+    try {
         $baseUrl = "https://pecl.php.net"
         $html = Invoke-WebRequest -Uri "$baseUrl/package/$extName"
         $links = $html.Links | Where-Object {
@@ -495,6 +555,35 @@ function Install-IniExtension {
         if ($code -ne 0) {
             Write-Host "`nFailed to add $extName" -ForegroundColor DarkYellow
             return -1
+        }
+        return 0
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to install extension '$extName'"
+            exception = $_
+        }
+        return -1
+    }
+}
+
+function Install-IniExtension {
+    param ($iniPath, $extName)
+    
+    try {
+        if (-not $extName) {
+            Write-Host "`nPlease provide an extension name to check status"
+            return -1
+        }
+        
+        $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
+        if ($extName -like "*xdebug*") {
+            $code = Install-XDebug-Extension -iniPath $iniPath -extName $extName
+        } else {
+            $code = Install-Extension -iniPath $iniPath -extName $extName
+        }
+        
+        if ($code -ne 0) {
+            throw "`nFailed to install $extName"
         }
         
         Write-Host "`n$extName installed successfully"        

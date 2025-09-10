@@ -269,8 +269,7 @@ function Get-XDebug-FROM-URL {
          # Filter the links to find versions that match the given version
         $sysArch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x86_64' } else { '' }
         $filteredLinks = $links | Where-Object {
-            $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$sysArch\.dll" -and
-            $_.href -notmatch "nts"
+            $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$sysArch\.dll"
         }
 
         # Return the filtered links (PHP version names)
@@ -282,7 +281,7 @@ function Get-XDebug-FROM-URL {
             if ($_.href -match "php_xdebug-([\d\.]+)") {
                 $xDebugVersion = $matches[1]
             }
-            $formattedList += @{ href = $_.href; version = $version; xDebugVersion = $xDebugVersion; fileName = $fileName }
+            $formattedList += @{ href = $_.href; version = $version; xDebugVersion = $xDebugVersion; fileName = $fileName; outerHTML = $_.outerHTML }
         }
 
         return $formattedList
@@ -311,7 +310,6 @@ function Enable-Opcache {
         $phpIniContent = Get-Content $phpIniPath
         $phpIniContent = $phpIniContent | ForEach-Object {
             $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1' `
-               -replace '^\s*;\s*(zend_extension\s*=\s*opcache)', '$1' `
                -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `
                -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
         }
@@ -450,8 +448,6 @@ function Install-PHP {
         Extract-And-Configure -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$($selectedVersionObject.version)"
 
         $opcacheEnabled = Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
-
-        $xdebugConfigured = Config-XDebug -version $selectedVersionObject.version -phpPath "$destination\$($selectedVersionObject.version)"
 
         $message = "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$($selectedVersionObject.version)'"
         $message += "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"

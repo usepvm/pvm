@@ -305,7 +305,7 @@ function Get-Actions {
                     "including active PHP version, PHP paths, and extensions."
                 )
             }
-            action = { $script:arguments = @('info'); return Invoke-PVMIni -arguments $script:arguments }}
+            action = { $script:arguments = @('info') + $script:arguments; return Invoke-PVMIni -arguments $script:arguments }}
         "ini" = [PSCustomObject]@{
             command = "pvm ini <action> [<args>]";
             description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'enable' or 'disable' for an extension, 'info' for a summary or 'restore' the original ini file from backup.";

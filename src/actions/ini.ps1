@@ -1,4 +1,41 @@
 
+
+function Get-XDebug-FROM-URL {
+    param ($url, $version)
+
+    try {
+        $html = Invoke-WebRequest -Uri $url
+        $links = $html.Links
+
+         # Filter the links to find versions that match the given version
+        $sysArch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x86_64' } else { '' }
+        $filteredLinks = $links | Where-Object {
+            $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$sysArch\.dll"
+        }
+
+        # Return the filtered links (PHP version names)
+        $formattedList = @()
+        $filteredLinks = $filteredLinks | ForEach-Object {
+            $fileName = $_.href -split "/"
+            $fileName = $fileName[$fileName.Count - 1]
+            $xDebugVersion = "2.0"
+            if ($_.href -match "php_xdebug-([\d\.]+)") {
+                $xDebugVersion = $matches[1]
+            }
+            $formattedList += @{ href = $_.href; version = $version; xDebugVersion = $xDebugVersion; fileName = $fileName; outerHTML = $_.outerHTML }
+        }
+
+        return $formattedList
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to fetch xdebug versions from $url"
+            exception = $_
+        }
+        return @()
+    }
+
+}
+
 function Add-Missing-PHPExtension {
     param ($iniPath, $extName, $enable = $true)
     

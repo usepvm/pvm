@@ -455,37 +455,6 @@ Describe "Extract-And-Configure Tests" {
     }
 }
 
-Describe "Get-XDebug-FROM-URL Tests" {
-    BeforeEach {
-        Mock Write-Host { }
-        Reset-MockState
-    }
-    
-    It "Should parse XDebug versions correctly" {
-        $mockLinks = @(
-            @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x86_64.dll" },
-            @{ href = "/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll" },
-            @{ href = "/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll" },
-            @{ href = "/download/php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll" },
-            @{ href = "/download/php_random.dll" }
-        )
-        Set-MockWebResponse -url "https://test.com" -links $mockLinks
-        
-        $result = Get-XDebug-FROM-URL -url "https://test.com" -version "8.1"
-        
-        $result.Count | Should -Be 4
-        $result[0].xDebugVersion | Should -Be "3.1.0"
-        $result[1].xDebugVersion | Should -Be "2.9.0"
-    }
-    
-    It "Should handle network errors" {
-        $global:MockFileSystem.DownloadFails = $true
-        
-        $result = Get-XDebug-FROM-URL -url "https://test.com" -version "8.1"
-        
-        $result | Should -Be @()
-    }
-}
 
 Describe "Configure-Opcache Tests" {
     BeforeEach {

@@ -48,12 +48,6 @@ upload_max_filesize = 2M
         }
     }
     
-    # Mock Config-XDebug function
-    function script:Config-XDebug {
-        param($version, $phpPath)
-        return 0
-    }
-    
     $global:MockFileSystem = @{
         Directories = @()
         Files = @{}

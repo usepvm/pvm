@@ -342,32 +342,6 @@ Describe "Invoke-PVMLog Tests" {
 }
 
 Describe "Invoke-PVMHelp Tests" {
-
-    BeforeEach {
-        Mock Get-Actions {
-            [ordered]@{
-                "setup" = [PSCustomObject]@{
-                    usage = [ordered]@{
-                        USAGE = "pvm setup";
-                        DESCRIPTION = @(
-                            "Sets environment variables and config paths for PHP.",
-                            "This command should be run once after installation to configure PVM for first use."
-                        )
-                    }
-                }
-                "current" = [PSCustomObject]@{
-                    usage = [ordered]@{
-                        USAGE = "pvm current"
-                        DESCRIPTION = @(
-                            "Shows the currently active PHP version, including the absolute path.",
-                            "It also shows the status of xdebug and opcache."
-                        )
-                    };
-                }
-                "install" = [PSCustomObject]@{}
-            }
-        }
-    }
     
     It "Should display help for setup command" {
         $result = Invoke-PVMHelp -arguments @("setup")
@@ -385,9 +359,26 @@ Describe "Invoke-PVMHelp Tests" {
     }
 }
 
+Describe "Invoke-PVMTest Tests" {
+    BeforeAll {
+        Mock Run-Tests { @{ code = 0; message = "Tests passed" } }
+    }
+    
+    It "Should call Run-Tests with no arguments" {
+        $result = Invoke-PVMTest -arguments @()
+        $result | Should -Be 0
+    }
+    
+    It "Should call Run-Tests with provided arguments" {
+        $result = Invoke-PVMTest -arguments @("TestFile.ps1", "TestFile2.ps1", "--coverage", "--verbosity=detailed", "--tag=unit", "--target=75")
+        $result | Should -Be 0
+    }
+}
+
 
 Describe "Get-Actions Tests" {
     BeforeEach {
+        Mock Invoke-PVMHelp { }
         Mock Invoke-PVMSetup { }
         Mock Invoke-PVMCurrent { }
         Mock Invoke-PVMList { }
@@ -404,6 +395,7 @@ Describe "Get-Actions Tests" {
         $actions = Get-Actions -arguments $arguments
         
         $actions | Should -BeOfType [System.Collections.Specialized.OrderedDictionary]
+        $actions.Keys | Should -Contain "help"
         $actions.Keys | Should -Contain "setup"
         $actions.Keys | Should -Contain "current"
         $actions.Keys | Should -Contain "list"
@@ -424,6 +416,13 @@ Describe "Get-Actions Tests" {
     }
 
     Context "Action Execution Tests" {
+        It "Should execute help action correctly" {
+            $actions = Get-Actions -arguments @()
+            $actions["help"].action.Invoke()
+            
+            Assert-MockCalled Invoke-PVMHelp -Times 1
+        }
+        
         It "Should execute setup action correctly" {
             $actions = Get-Actions -arguments @()
             $actions["setup"].action.Invoke()

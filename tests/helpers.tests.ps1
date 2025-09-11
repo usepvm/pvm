@@ -522,6 +522,19 @@ Describe "Display-Msg-By-ExitCode" {
             { Display-Msg-By-ExitCode -result $testResult -message $customMessage } | Should -Not -Throw
         }
         
+        It "Displays list of messages if provided" {
+            Mock Write-Host { }
+            $testResults = @{
+                code = 0
+                messages = @(
+                    @{ content = "Message 1"; color = "Red" }
+                    @{ content = "Message 2"; color = "Green" }
+                    @{ content = "Message 3" }
+                )
+            }
+            { Display-Msg-By-ExitCode -result $testResults } | Should -Not -Throw
+        }
+        
         It "Handles exceptions gracefully" {
             Mock Write-Host { throw "Simulated Write-Host failure" }
             $testResult = @{

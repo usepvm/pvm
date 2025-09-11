@@ -463,7 +463,7 @@ Describe "Get-XDebug-FROM-URL Tests" {
     }
 }
 
-Describe "Enable-Opcache Tests" {
+Describe "Configure-Opcache Tests" {
     BeforeEach {
         Mock Write-Host { }
         Reset-MockState
@@ -476,7 +476,7 @@ Describe "Enable-Opcache Tests" {
     }
     
     It "Should enable Opcache successfully" {
-        $code = Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
+        $code = Configure-Opcache -version "8.1" -phpPath "TestDrive:\php"
         
         $code | Should -Be 0
         $content = $global:MockFileSystem.Files["TestDrive:\php\php.ini"]
@@ -489,14 +489,14 @@ Describe "Enable-Opcache Tests" {
     It "Should handle missing php.ini" {
         $global:MockFileSystem.Files.Remove("TestDrive:\php\php.ini")
         
-        $code = Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
+        $code = Configure-Opcache -version "8.1" -phpPath "TestDrive:\php"
         $code | Should -Be -1
     }
     
     It "Should handle exception gracefully" {
         Mock Get-Content { throw "Error reading file" }
         
-        $code = Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
+        $code = Configure-Opcache -version "8.1" -phpPath "TestDrive:\php"
         $code | Should -Be -1
     }
 }

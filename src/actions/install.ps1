@@ -38,7 +38,7 @@ function Get-PHP-Versions {
 
     try {
         $urls = Get-Source-Urls
-        $fetchedVersions = @{}
+        $fetchedVersions = [ordered]@{}
         $found = @()
         foreach ($key in $urls.Keys) {
             $fetched = Get-PHP-Versions-From-Url -url $urls[$key] -version $version
@@ -229,7 +229,7 @@ function Get-XDebug-FROM-URL {
 
 }
 
-function Enable-Opcache {
+function Configure-Opcache {
     param ($version, $phpPath)
 
     try {
@@ -383,7 +383,7 @@ function Install-PHP {
         Write-Host "`nExtracting the downloaded zip ..."
         Extract-And-Configure -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$($selectedVersionObject.version)"
 
-        $opcacheEnabled = Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
+        $opcacheEnabled = Configure-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
 
         $message = "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$($selectedVersionObject.version)'"
         $message += "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"

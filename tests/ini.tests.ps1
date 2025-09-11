@@ -836,7 +836,7 @@ Describe "Get-PHPExtensions-From-Source" {
     
     It "Returns list of available extensions" {
         $list = Get-PHPExtensions-From-Source
-        $list.Count | Should -Be 2
+        $list.Count | Should -Be 3 # include xdebug category
     }
     
     It "Handles thrown exception" {

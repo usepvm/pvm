@@ -395,13 +395,13 @@ function Display-Settings-States {
 function Display-Settings {
     param ($settings)
     
-    $MAX_LINE_LENGTH = 60
+    $MIN_LINE_LENGTH = 57
     $maxLineLength = (($settings.Name + $settings.Value) | Measure-Object -Maximum Length).Maximum
     $maxLineLength = $maxLineLength + 20  # padding
     if ($maxLineLength -lt $MIN_LINE_LENGTH) { $maxLineLength = $MIN_LINE_LENGTH }
 
     $settings |
-    Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true }, `
+    Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true },
                 @{Expression = { $_.Name }; Ascending = $true } |
     ForEach-Object {
         $dotsCount = $maxLineLength - ($_.Name.Length + $_.Value.Length)
@@ -747,6 +747,13 @@ function Get-PHPExtensions-From-Source {
             }
             return $false
         }
+        $availableExtensions["XDebug"] = @(
+            @{
+                href = "https://xdebug.org/download/historical"
+                extName = "xdebug"
+                extCategory = "XDebug"
+            }
+        )
         $dataToCache = [ordered] @{}
         ($availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object { $dataToCache[$_.Key] = $_.Value })
         $cached = Cache-Data -cacheFileName "available_extensions" -data $dataToCache -depth 3
@@ -835,8 +842,10 @@ function List-PHP-Extensions {
                 return -1
             }
             
+            $MIN_LINE_LENGTH = 50
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
-            $maxLineLength = $maxKeyLength + 5   # adjust padding
+            $maxLineLength = $maxKeyLength + 30   # adjust padding
+            if ($maxLineLength -lt $MIN_LINE_LENGTH) { $maxLineLength = $MIN_LINE_LENGTH }
             Write-Host "`nAvailable Extensions by Category:"
             Write-Host    "--------------------------------"
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
@@ -849,7 +858,10 @@ function List-PHP-Extensions {
                 Write-Host "$key $dots $vals"
             }
             
-            Write-Host "`nThis is a partial list. For a complete list, visit: https://pecl.php.net/packages.php"
+            $msg = "`nThis is a partial list. For a complete list, visit:"
+            $msg += "`nPHP Extensions : https://pecl.php.net/packages.php"
+            $msg += "`nXDebug : https://xdebug.org/download/historical"
+            Write-Host $msg
         }
         
         return 0

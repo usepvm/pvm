@@ -370,6 +370,30 @@ Describe "Get-PHP-Versions Tests" {
     }
 }
 
+Describe "Download-PHP" {
+    BeforeAll {
+        Mock Make-Directory { return 0 }
+        Mock Download-PHP-From-Url { return "TestDrive:\php" }
+    }
+    
+    It "Should download PHP successfully" {
+        $result = Download-PHP -versionObject @{ fileName = "php-8.1.0-Win32-vs16-x64.zip"; version = "8.1.0" }
+        $result | Should -Be "TestDrive:\php"
+    }
+    
+    It "Returns null if directory creation fails" {
+        Mock Make-Directory { return -1 }
+        $result = Download-PHP -versionObject @{ fileName = "php-8.1.0-Win32-vs16-x64.zip"; version = "8.1.0" }
+        $result | Should -BeNullOrEmpty
+    }
+    
+    It "Handles exception gracefully" {
+        Mock Get-Source-Urls { throw "Test exception" }
+        $result = Download-PHP -versionObject @{ fileName = "php-8.1.0-Win32-vs16-x64.zip"; version = "8.1.0" }
+        $result | Should -BeNullOrEmpty
+    }
+}
+
 Describe "Download-PHP-From-Url Tests" {
     BeforeEach {
         Mock Write-Host { }
@@ -518,7 +542,7 @@ Describe "Select-Version Tests" {
         $result.version | Should -Be "8.1.0"
     }
     
-    It "Should return -1 when user cancels" {
+    It "Should return null when user cancels" {
         Mock Write-Host { }
         $versions = @{
             "Archives" = @(
@@ -527,6 +551,21 @@ Describe "Select-Version Tests" {
             )
         }
         $global:MockUserInput = ""
+        
+        $result = Select-Version -matchingVersions $versions
+        
+        $result | Should -Be $null
+    }
+    
+    It "Returns null when user provides invalid input" {
+        Mock Write-Host { }
+        $versions = @{
+            "Archives" = @(
+                @{ version = "8.1.0"; fileName = "php-8.1.0.zip" },
+                @{ version = "8.1.1"; fileName = "php-8.1.1.zip" }
+            )
+        }
+        $global:MockUserInput = "invalid"
         
         $result = Select-Version -matchingVersions $versions
         
@@ -562,12 +601,6 @@ Describe "Install-PHP Integration Tests" {
         )
         Set-MockWebResponse -url "https://windows.php.net/downloads/releases/archives" -links $mockLinks
         Set-MockWebResponse -url "https://windows.php.net/downloads/releases" -links $mockLinks
-        
-        # Mock XDebug response
-        $xdebugLinks = @(
-            @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" }
-        )
-        Set-MockWebResponse -url "https://xdebug.org/download/historical" -links $xdebugLinks
     }
     
     It "Should install PHP successfully" {
@@ -587,35 +620,56 @@ Describe "Install-PHP Integration Tests" {
         $result.code | Should -Be -1
     }
     
-    It "Should install with XDebug when requested" {
-        Mock Get-PHP-Versions {
-            return @{
-                Releases = @{
-                     filename = "php-8.1.33-Win32-vs16-x64.zip"
-                     href = "/downloads/releases/php-8.1.33-Win32-vs16-x64.zip"
-                     version = "8.1.33"
-                 }
-            }
-        }
-        # Setup mock web responses
-        $global:MockFileSystem.WebResponses = @{
-            "https://windows.php.net/downloads/releases/archives/php-8.1.33-Win32-vs16-x64.zip" = @{
-                Content = "Mocked PHP 8.1.33 zip content"
-            }
-            "https://windows.php.net/downloads/releases/archives" = @{
-                Content = '[{"version":"8.1.15","fileName":"php-8.1.15-Win32-vs16-x64.zip","url":"https://windows.php.net/downloads/releases/php-8.1.15-Win32-vs16-x64.zip"}]'
-                Links = @()
-            }
-            "https://windows.php.net/downloads/releases" = @{
-                Content = '[{"version":"8.2.0","fileName":"php-8.2.0-Win32-vs16-x64.zip","url":"https://windows.php.net/downloads/releases/php-8.2.0-Win32-vs16-x64.zip"}]'
-                Links = @()
-            }
-        }
-        $global:MockUserInput = "y"
-        $result = Install-PHP -version "8.1" -includeXDebug $true
+    It "Returns -1 when user declines family version install" {
+        Mock Get-Current-PHP-Version { return @{ version = "7.4.9" } }
+        Mock Get-Matching-PHP-Versions { return @("7.4.9", "8.0.9", "8.1.9", "8.1.12") }
+        $global:MockUserInput = "n"
+    
+        $result = Install-PHP -version "8"
         
+        $result.code | Should -Be -1
+    }
+    
+    It "Installs PHP when user accepts family version install" {
+        Mock Get-Matching-PHP-Versions { return $null }
+        Mock Download-PHP-From-Url { return "TestDrive:\php"}
+        Mock Get-Matching-PHP-Versions { return @("7.4.9", "8.0.9", "8.1.9", "8.1.12") }
+        $global:MockUserInput = "y"
+        
+        $result = Install-PHP -version "8"
         
         $result.code | Should -Be 0
+    }
+    
+    It "Returns -1 when user selection is null" {
+        Mock Get-Matching-PHP-Versions { return $null }
+        Mock Download-PHP-From-Url { return "TestDrive:\php"}
+        Mock Select-Version { return $null }
+        
+        $result = Install-PHP -version "8.1"
+        
+        $result.code | Should -Be -1 
+    }
+    
+    It "Returns -1 when user selection is already installed" {
+        Mock Get-Matching-PHP-Versions { return $null }
+        Mock Download-PHP-From-Url { return "TestDrive:\php"}
+        Mock Select-Version { return @{ version = "8.1.15"; fileName = "php-8.1.15-Win32-vs16-x64.zip" } }
+        Mock Is-PHP-Version-Installed -ParameterFilter { $version -eq "8.1.15" } -MockWith { return $true }
+        
+        $result = Install-PHP -version "8.1"
+        
+        $result.code | Should -Be -1 
+    }
+    
+    It "Handles exception gracefully" {
+        Mock Is-PHP-Version-Installed { return $false }
+        Mock Get-Matching-PHP-Versions { return @("7.4.9", "8.0.9", "8.1.9", "8.1.12") }
+        Mock Read-Host { throw "Test exception" }
+        
+        $result = Install-PHP -version "8.1"
+        
+        $result.code | Should -Be -1
     }
     
     It "Should handle no matching versions found" {

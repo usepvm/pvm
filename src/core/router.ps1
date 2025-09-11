@@ -236,7 +236,7 @@ function Get-Actions {
             command = "pvm list [available]";
             description = "Lists the PHP installations. Type 'available' at the end to see what can be installed.";
             usage = [ordered]@{
-                USAGE = "pvm list [available] [--search=<term>] (alias: pvm ls [available])"
+                USAGE = "pvm list [available] [--search=<term>] (alias: pvm ls [available] [--search=<term>])"
                 DESCRIPTION = @(
                     "shows installed PHP versions."
                     "With 'available' argument, shows available PHP versions for installation. (list is cashed for $CacheMaxHours hours)"
@@ -320,7 +320,7 @@ function Get-Actions {
                     "enable <extension> ...................... Enable a PHP extension"
                     "disable <extension> ..................... Disable a PHP extension"
                     "status <extension> ...................... Check if extension is enabled"
-                    "info .................................... Displays information about the environment and php.ini information summary"
+                    "info [--search=<term>] .................. Displays information about the environment and php.ini information summary"
                     "restore ................................. Restore original php.ini from backup"
                     "install <extension> ..................... Install a PHP extension"
                     "list [available] [--search=<term>] ...... Lists the PHP extensions. Type 'available' at the end to see what can be installed."
@@ -331,6 +331,8 @@ function Get-Actions {
                     "pvm ini enable mysqli ................... Enables the mysqli extension"
                     "pvm ini disable xdebug .................. Disables the xdebug extension"
                     "pvm ini status opcache .................. Shows if opcache extension is enabled"
+                    "pvm ini info ............................ Lists php.ini settings and extensions"
+                    "pvm ini info --search=cache ............. Lists php.ini settings and extensions with 'cache' in their name"
                     "pvm ini install opcache ................. Installs the opcache extension"
                     "pvm ini list ............................ Lists the PHP extensions"
                     "pvm ini list available .................. Lists available PHP extensions"

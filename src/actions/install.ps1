@@ -264,7 +264,7 @@ function Configure-Opcache {
 function Select-Version {
     param ($matchingVersions)
 
-    $matchingVersionsPartialList = @{}
+    $matchingVersionsPartialList = [ordered]@{}
     $matchingVersions.GetEnumerator() | ForEach-Object {
         $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $LatestVersionCount
     }

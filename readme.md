@@ -25,8 +25,12 @@ pvm help
 pvm help <command>
 # Example: pvm help setup
 
-# Display information about the environment
+# Display information about the current PHP (version, path, extensions, settings)
 pvm info # pvm ini info
+
+# Display information about the current PHP (version, path, extensions, settings) with 'cache' in their name
+pvm info --search=<term> # pvm ini info --search=<term>
+# Example: pvm info --search=cache
 
 # Display active PHP version
 pvm current
@@ -34,12 +38,12 @@ pvm current
 # List installed PHP versions
 pvm list # pvm ls
 
-# List installable PHP versions from remote source
-pvm list available # pvm ls available
-
 # List installed versions with 8.2 in the name
 pvm list --search=<version>
 # Example: pvm list --search=8.2
+
+# List installable PHP versions from remote source
+pvm list available # pvm ls available
 
 # List available versions with 8.2 in the name
 pvm list available --search=<version>

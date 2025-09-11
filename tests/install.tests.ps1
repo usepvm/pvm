@@ -431,107 +431,6 @@ Describe "Extract-And-Configure Tests" {
     }
 }
 
-Describe "Config-XDebug Tests" {
-    BeforeEach {
-        # Mock Write-Host {}
-        Reset-MockState
-        # Ensure directories exist
-        $global:MockFileSystem.Directories += "TestDrive:\php"
-        $global:MockFileSystem.Directories += "TestDrive:\php\ext"
-    
-        # Ensure php.ini exists
-        $global:MockFileSystem.Files["TestDrive:\php\php.ini"] = @"
-;extension_dir = "ext"
-zend_extension = opcache
-opcache.enable = 1
-"@
-        
-        $mockLinks = @(
-            @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" }
-        )
-        Set-MockWebResponse -url "https://xdebug.org/download/historical" -links $mockLinks
-    }
-    
-    It "Should configure XDebug v3 successfully" {
-        
-        Mock Test-Path { return $true }
-        function Make-Directory {
-            param($path)
-            return 0
-        }
-
-        function Get-XDebug-FROM-URL {
-            param($url, $version)
-            # Return a mock XDebug v3 version
-            return @(
-                @{
-                    xDebugVersion = "3.1.0"
-                    href = "/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"
-                    fileName = "php_xdebug-3.1.0-8.1-vs16-x64.dll"
-                }
-            )
-        }
-
-        # Ensure the php.ini file exists in the mock file system
-        $global:MockFileSystem.Files["TestDrive:\php\php.ini"] = @"
-;extension_dir = "ext"
-zend_extension = opcache
-opcache.enable = 1
-"@
-        
-        # Setup mock web responses
-        $global:MockFileSystem.WebResponses = @{
-            "https://xdebug.org/" = @{
-                Content = '[{"xDebugVersion":"3.1.0","fileName":"php_xdebug-3.1.0-8.1-vs16-x64.dll","url":"https://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"}]'
-                Links = @()
-            }
-        }        
-
-        # Mock the XDebug download page with proper XDebug v3 links
-        $mockLinks = @(
-            @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" }
-        )
-        Set-MockWebResponse -url "https://xdebug.org" -links @()
-        Set-MockWebResponse -url "https://xdebug.org/download/historical" -links $mockLinks
-        
-        # Mock the actual XDebug DLL download
-        Set-MockWebResponse -url "https://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
-        
-        $code = Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
-        $code  | Should -Be 0
-        
-        $phpIniContent = $global:MockFileSystem.Files["TestDrive:\php\php.ini"]
-        # Write-Host "PHP.ini content: $phpIniContent" # Debug output
-        $phpIniContent | Should -Match "xdebug.mode=debug"
-        $phpIniContent | Should -Match "xdebug.client_port=9003"
-    }
-    
-    It "Should handle missing php.ini" {
-        
-        Mock Write-Host { }
-        $global:MockFileSystem.Files.Remove("TestDrive:\php\php.ini")
-        
-        $code = Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
-        $code | Should -Be -1
-    }
-    
-    It "Should handle no XDebug versions found" {
-        Mock Write-Host { }
-        Set-MockWebResponse -url "https://xdebug.org/download/historical" -links @()
-        
-        $code = Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
-        $code | Should -Be -1
-    }
-    
-    It "Should handle exception gracefully" {
-        Mock Add-Content { throw "Test exception" }
-        Mock Test-Path { return $true }
-        
-        $code = Config-XDebug -version "8.1" -phpPath "TestDrive:\php"
-        $code | Should -Be -1
-    }
-}
-
 Describe "Get-XDebug-FROM-URL Tests" {
     BeforeEach {
         Mock Write-Host { }
@@ -542,13 +441,15 @@ Describe "Get-XDebug-FROM-URL Tests" {
         $mockLinks = @(
             @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x86_64.dll" },
             @{ href = "/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll" },
-            @{ href = "/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll" }
+            @{ href = "/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll" },
+            @{ href = "/download/php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll" },
+            @{ href = "/download/php_random.dll" }
         )
         Set-MockWebResponse -url "https://test.com" -links $mockLinks
         
         $result = Get-XDebug-FROM-URL -url "https://test.com" -version "8.1"
         
-        $result.Count | Should -Be 2
+        $result.Count | Should -Be 4
         $result[0].xDebugVersion | Should -Be "3.1.0"
         $result[1].xDebugVersion | Should -Be "2.9.0"
     }
@@ -562,7 +463,7 @@ Describe "Get-XDebug-FROM-URL Tests" {
     }
 }
 
-Describe "Enable-Opcache Tests" {
+Describe "Configure-Opcache Tests" {
     BeforeEach {
         Mock Write-Host { }
         Reset-MockState
@@ -575,7 +476,7 @@ Describe "Enable-Opcache Tests" {
     }
     
     It "Should enable Opcache successfully" {
-        $code = Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
+        $code = Configure-Opcache -version "8.1" -phpPath "TestDrive:\php"
         
         $code | Should -Be 0
         $content = $global:MockFileSystem.Files["TestDrive:\php\php.ini"]
@@ -588,14 +489,14 @@ Describe "Enable-Opcache Tests" {
     It "Should handle missing php.ini" {
         $global:MockFileSystem.Files.Remove("TestDrive:\php\php.ini")
         
-        $code = Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
+        $code = Configure-Opcache -version "8.1" -phpPath "TestDrive:\php"
         $code | Should -Be -1
     }
     
     It "Should handle exception gracefully" {
         Mock Get-Content { throw "Error reading file" }
         
-        $code = Enable-Opcache -version "8.1" -phpPath "TestDrive:\php"
+        $code = Configure-Opcache -version "8.1" -phpPath "TestDrive:\php"
         $code | Should -Be -1
     }
 }

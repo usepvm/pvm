@@ -48,10 +48,32 @@ upload_max_filesize = 2M
         }
     }
     
-    # Mock Config-XDebug function
-    function script:Config-XDebug {
-        param($version, $phpPath)
-        return 0
+    $global:MockFileSystem = @{
+        Directories = @()
+        Files = @{}
+        WebResponses = @{}
+        DownloadFails = $false
+    }
+    function Invoke-WebRequest {
+        param($Uri, $OutFile = $null)
+        
+        if ($global:MockFileSystem.DownloadFails) {
+            throw "Network error"
+        }
+        
+        if ($global:MockFileSystem.WebResponses.ContainsKey($Uri)) {
+            $response = $global:MockFileSystem.WebResponses[$Uri]
+            if ($OutFile) {
+                $global:MockFileSystem.Files[$OutFile] = "Downloaded content"
+                return
+            }
+            return @{
+                Content = $response.Content
+                Links = $response.Links
+            }
+        }
+        
+        throw "URL not mocked: $Uri"
     }
 }
 
@@ -79,7 +101,7 @@ extension=php_mbstring.dll
 "@ | Set-Content $testIniPath
         $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl"
         $result | Should -Be 0
-        (Get-Content $testIniPath) -match "extension=curl" | Should -Be $true
+        (Get-Content $testIniPath) -match "extension=php_curl.dll" | Should -Be $true
     }
     
     It "Adds any extension in disabled state to ini file" {
@@ -89,7 +111,7 @@ zend_extension=php_opcache.dll
 "@ | Set-Content $testIniPath
         $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl" -enable $false
         $result | Should -Be 0
-        (Get-Content $testIniPath) -match ";extension=curl" | Should -Be $true
+        (Get-Content $testIniPath) -match ";extension=php_curl.dll" | Should -Be $true
     }
     
     It "Adds extensions correctly for older PHP versions" {
@@ -488,7 +510,7 @@ Describe "Get-PHPExtensionsStatus" {
     }
 }
 
-Describe "Install-IniExtension" {
+Describe "Install-Extension" {
     BeforeAll {
         $global:MockFileSystem = @{
             Directories = @()
@@ -497,32 +519,10 @@ Describe "Install-IniExtension" {
             DownloadFails = $false
         }
         
-        function Invoke-WebRequest {
-            param($Uri, $OutFile = $null)
-            
-            if ($global:MockFileSystem.DownloadFails) {
-                throw "Network error"
-            }
-            
-            if ($global:MockFileSystem.WebResponses.ContainsKey($Uri)) {
-                $response = $global:MockFileSystem.WebResponses[$Uri]
-                if ($OutFile) {
-                    $global:MockFileSystem.Files[$OutFile] = "Downloaded content"
-                    return
-                }
-                return @{
-                    Content = $response.Content
-                    Links = $response.Links
-                }
-            }
-            
-            throw "URL not mocked: $Uri"
-        }
-        
         function Read-Host {
             param($Prompt)
             if ($Prompt -eq "`nInsert the [number] you want to install") {
-                return 0
+                return "0"
             }
         }
         function Get-ChildItem {
@@ -579,41 +579,36 @@ Describe "Install-IniExtension" {
         }
     }
     
-    It "Handles null extension name" {
-        $code = Install-IniExtension -iniPath $testIniPath -extName $null
-        $code | Should -Be -1
-    }
-    
     It "Returns -1 when gets empty list from extension" {
-        $code = Install-IniExtension -iniPath $testIniPath -extName "nonexistent_ext"
+        $code = Install-Extension -iniPath $testIniPath -extName "nonexistent_ext"
         $code | Should -Be -1
     }
     
     It "Returns -1 when No package is found" {
         Mock Add-Member { throw "error" }
-        $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
+        $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
     
     It "Returns -1 when user does not choose a zip extension version to install" {
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { '' }
 
-        $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
+        $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
     
     It "Returns -1 when user does choose a non valid zip extension version to install" {
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith {
-            return 5
+            return '5'
         }
 
-        $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
+        $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
     
     It "Returns -1 when downloaded zip extension has no dll" {
         $global:getRandomFile = $true        
-        $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
+        $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
     
@@ -622,18 +617,18 @@ Describe "Install-IniExtension" {
             return "n"
         }
         
-        $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
+        $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
     
-    It "Returns -1 when user answers no to replace existing extension" {
+    It "Returns -1 when user answers yes to replace existing extension" {
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
             return "y"
         }
         Mock Move-Item { }
         Mock Add-Missing-PHPExtension { return -1 }
         
-        $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
+        $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
     
@@ -642,14 +637,139 @@ Describe "Install-IniExtension" {
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
             return "y"
         }
-        Mock Add-Missing-PHPExtension { return 0 }
         
-        $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
+        $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be 0
+    }
+    
+    Context "When extension has no direct link" {
+        BeforeEach {
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/package/nonexistent_ext" } -MockWith { 
+                throw "Network error"
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/packages.php" } -MockWith {
+                return @{
+                    Content = "Mocked PHP extensions content"
+                    Links = @(
+                        @{ href = $null }
+                        @{ href = "random_link" }
+                        @{ href = "/packages.php?catpid=1&amp;catname=Authentication"; 
+                            outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>' }
+                        @{ href = "/packages.php?catpid=3&amp;catname=Caching"; 
+                            outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>' }
+                        @{ href = "/packages.php?catpid=7&amp;catname=EmptyCat"; 
+                            outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>' }
+                    )
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/packages.php?catpid=1&amp;catname=Authentication" } -MockWith {
+                return @{
+                    Content = "Mocked PHP extension Auth content"
+                    Links = @(
+                        @{ href = $null }
+                        @{ href = "/package/courierauth" }
+                        @{ href = "/package/krb5" }
+                    )
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/packages.php?catpid=3&amp;catname=Caching" } -MockWith {
+                return @{
+                    Content = "Mocked PHP extension Caching content"
+                    Links = @(
+                        @{ href = "/package/APC" }
+                        @{ href = "/package/APCu" }
+                        @{ href = "/package/memcache" }
+                        @{ href = "/package/memcached" }
+                    )
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/packages.php?catpid=7&amp;catname=EmptyCat" } -MockWith {
+                return @{
+                    Content = "Mocked PHP extension EmptyCat content"
+                    Links = @()
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/package/courierauth" } -MockWith {
+                return @{
+                    Content = "Mocked courierauth content"
+                    Links = @(
+                        @{ href = "/package/courierauth/1.4.0/windows" },
+                        @{ href = "/package/courierauth/2.1.0/windows" }
+                    )
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/package/courierauth/1.4.0/windows" } -MockWith {
+                return @{
+                    Content = "Mocked PHP courierauth 1.4.0 content"
+                    Links = @(
+                        @{ href = "other_link" },
+                        @{ href = "https://downloads.php.net/~windows/pecl/releases/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" },
+                        @{ href = "https://downloads.php.net/~windows/pecl/releases/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip" }
+                    )
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://downloads.php.net/~windows/pecl/releases/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" } -MockWith {
+                $global:MockFileSystem.Files[$OutFile] = "Downloaded content"
+                return
+            }
+            Mock Get-ChildItem {
+                param($Path)
+                return @( @{ Name = "php_courierauth.dll"; FullName = "TestDrive:\php_courierauth-1.4.0-7.4-ts-vc15-x86\php_courierauth.dll" } )
+            }
+        }
+        It "Falls back to matching links if extension direct link is not found" {
+            Mock Test-Path { return $false }
+            Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
+                return "y"
+            }
+            
+            $code = Install-Extension -iniPath $testIniPath -extName "cour"
+            $code | Should -Be 0        
+        }
+        It "Returns -1 when no extension is found" {
+            $code = Install-Extension -iniPath $testIniPath -extName "nonexistent_ext"
+            $code | Should -Be -1
+        }
+        It "Returns -1 when user does not choose a dll extension version to install" {
+            Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { '' }
+            $code = Install-Extension -iniPath $testIniPath -extName "cache"
+            $code | Should -Be -1
+        }
+        It "Returns -1 when user does choose a non valid dll extension version to install" {
+            Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { '-10' }
+            $code = Install-Extension -iniPath $testIniPath -extName "cache"
+            $code | Should -Be -1
+        }
     }
     
     It "Handles thrown exception" {
         $global:MockFileSystem.DownloadFails = $true
+        $code = Install-Extension -iniPath $testIniPath -extName "curl"
+        $code | Should -Be -1
+    }
+}
+
+Describe "Install-IniExtension" {
+    
+    It "Handles null extension name" {
+        $code = Install-IniExtension -iniPath $testIniPath -extName $null
+        $code | Should -Be -1
+    }
+    
+    It "Installs xdebug" {
+        Mock Install-XDebug-Extension { return 0 }
+        $code = Install-IniExtension -iniPath $testIniPath -extName "xdebug"
+        $code | Should -Be 0
+    }
+    
+    It "Installs extension" {
+        Mock Install-Extension { return 0 }
+        $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
+        $code | Should -Be 0
+    }
+    
+    It "Returns -1 on error" {
+        Mock Install-Extension { return -1 }
         $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
@@ -663,27 +783,6 @@ Describe "Get-PHPExtensions-From-Source" {
             Files = @{}
             WebResponses = @{}
             DownloadFails = $false
-        }
-        function Invoke-WebRequest {
-            param($Uri, $OutFile = $null)
-            
-            if ($global:MockFileSystem.DownloadFails) {
-                throw "Network error"
-            }
-            
-            if ($global:MockFileSystem.WebResponses.ContainsKey($Uri)) {
-                $response = $global:MockFileSystem.WebResponses[$Uri]
-                if ($OutFile) {
-                    $global:MockFileSystem.Files[$OutFile] = "Downloaded content"
-                    return
-                }
-                return @{
-                    Content = $response.Content
-                    Links = $response.Links
-                }
-            }
-            
-            throw "URL not mocked: $Uri"
         }
     }
     
@@ -862,7 +961,102 @@ Describe "List-PHP-Extensions" {
         Mock New-TimeSpan { throw "Access denied" }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be -1
-    }    
+    }
+}
+
+Describe "Install-XDebug-Extension" {
+    BeforeAll {
+        Mock Get-Current-PHP-Version { return @{ version = "7.1.0"; path = "TestDrive:\php\7.1.0" }}
+        Mock Get-XDebug-FROM-URL {
+            return @(
+                @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"; version = "3.1.0"; xDebugVersion = "3.1.0"; fileName = "php_xdebug-3.1.0-8.1-vs16-x64.dll"; outerHTML = "<a href='/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'>php_xdebug-3.1.0-8.1-vs16-x64.dll</a>" }
+                @{ href = "/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll"; version = "2.9.0"; xDebugVersion = "2.9.0"; fileName = "php_xdebug-2.9.0-8.1-vs16-x86_64.dll"; outerHTML = "<a href='/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll'>php_xdebug-2.9.0-8.1-vs16-x86_64.dll</a>" }
+                @{ href = "/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll"; version = "3.1.0"; xDebugVersion = "3.1.0"; fileName = "php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll"; outerHTML = "<a href='/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll'>php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll</a>" }
+                @{ href = "/download/php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll"; version = "2.9.0"; xDebugVersion = "2.9.0"; fileName = "php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll"; outerHTML = "<a href='/download/php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll'>php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll</a>" }
+            )
+        }
+        Mock Read-Host {
+            param($Prompt)
+            if ($Prompt -eq "`nInsert the [number] you want to install") {
+                return ''
+            }
+        }
+        function Reset-MockState {
+            $global:MockRegistryThrowException = $false
+            $global:MockFileSystem.DownloadFails = $false
+            $global:MockFileSystem.WebResponses = @{}
+            $global:MockFileSystem.Files = @{}
+            $global:MockFileSystem.Directories = @()
+        }
+        function Add-Content {
+            param($Path, $Value)
+            if ($global:MockFileSystem.Files.ContainsKey($Path)) {
+                $global:MockFileSystem.Files[$Path] += "`n$Value"
+            } else {
+                $global:MockFileSystem.Files[$Path] = $Value
+            }
+        }
+        function Set-MockWebResponse {
+            param($url, $content, $links = @())
+            $global:MockFileSystem.WebResponses[$url] = @{
+                Content = $content
+                Links = $links
+            }
+        }
+    }
+    
+    BeforeEach {
+        $global:MockFileSystem.Directories += "TestDrive:\php"
+        $global:MockFileSystem.Directories += "TestDrive:\php\ext"
+        $global:MockFileSystem.Files["TestDrive:\php\php.ini"] = @"
+;extension_dir = "ext"
+zend_extension = opcache
+opcache.enable = 1
+"@
+        Reset-MockState
+        $mockLinks = @(
+            @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" }
+        )
+        Set-MockWebResponse -url "https://xdebug.org/download/historical" -links $mockLinks
+    }
+    
+    It "Returns -1 when user does not choose a dll extension version to install" {
+        $code = Install-XDebug-Extension -iniPath $testIniPath
+        $code | Should -Be -1
+    }
+    
+    It "Returns -1 when user does choose a non valid dll extension version to install" {
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return "-10" }
+        $code = Install-XDebug-Extension -iniPath $testIniPath
+        $code | Should -Be -1
+    }
+    
+    It "Returns -1 when user does not want to overwrite existing dll extension version" {
+        # $global:MockFileSystem.DownloadFails = $false
+        Set-MockWebResponse -url "https://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
+        Mock Test-Path { return $true }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return "0" }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_xdebug-3.1.0-8.1-vs16-x64.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { return "n" }
+        
+        $code = Install-XDebug-Extension -iniPath $testIniPath
+        $code | Should -Be -1
+    }
+    
+    It "Returns 0 when user wants to overwrite existing dll extension version" {
+        Set-MockWebResponse -url "https://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
+        Mock Test-Path { return $false }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return "0" }
+        Mock Remove-Item { }
+        Mock Move-Item { }
+        $code = Install-XDebug-Extension -iniPath $testIniPath
+        $code | Should -Be 0
+    }
+    
+    It "Handles exception gracefully" {
+        Mock Sort-Object { throw "Error" }
+        $code = Install-XDebug-Extension -iniPath $testIniPath
+        $code | Should -Be -1
+    }
 }
 
 Describe "Invoke-PVMIniAction" {
@@ -1011,27 +1205,6 @@ extension=php_curl.dll
                             }
                 DownloadFails = $false
             }
-            function Invoke-WebRequest {
-                param($Uri, $OutFile = $null)
-                
-                if ($global:MockFileSystem.DownloadFails) {
-                    throw "Network error"
-                }
-                
-                if ($global:MockFileSystem.WebResponses.ContainsKey($Uri)) {
-                    $response = $global:MockFileSystem.WebResponses[$Uri]
-                    if ($OutFile) {
-                        $global:MockFileSystem.Files[$OutFile] = "Downloaded content"
-                        return
-                    }
-                    return @{
-                        Content = $response.Content
-                        Links = $response.Links
-                    }
-                }
-                
-                throw "URL not mocked: $Uri"
-            }
             
             function Read-Host {
                 param($Prompt)
@@ -1052,9 +1225,9 @@ extension=php_curl.dll
             Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
                 return "y"
             }
-            Mock Add-Missing-PHPExtension { return 0 }
+            Mock Install-Extension { return 0 }
         }
-        It "Installs extension" -Tag i {
+        It "Installs extension" {
             $result = Invoke-PVMIniAction -action "install" -params @("curl")
             $result | Should -Be 0
         }
@@ -1065,7 +1238,7 @@ extension=php_curl.dll
         }
     }
     
-    Context "list action" -Tag i {
+    Context "list action" {
         It "Lists extensions" {
             Mock Get-PHPExtensionsStatus {
                 return @(

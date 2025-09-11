@@ -20,7 +20,7 @@ function Get-PHP-Status {
             if ($trimmed -match '^(;)?\s*zend_extension\s*=.*xdebug.*$') {
                 $status.xdebug = -not $trimmed.StartsWith(';')
             }
-        }    
+        }
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve PHP status"

@@ -1,4 +1,8 @@
 
+function Get-Zend-Extensions-List {
+    return @('xdebug', 'opcache')
+}
+
 function Get-Data-From-Cache {
     param ($cacheFileName)
     

@@ -38,7 +38,7 @@ function Get-PHP-Versions {
 
     try {
         $urls = Get-Source-Urls
-        $fetchedVersions = @{}
+        $fetchedVersions = [ordered]@{}
         $found = @()
         foreach ($key in $urls.Keys) {
             $fetched = Get-PHP-Versions-From-Url -url $urls[$key] -version $version
@@ -193,72 +193,6 @@ function getXdebugConfigV3 {
 "@
 }
 
-function Config-XDebug {
-    param ($version, $phpPath)
-
-    try {
-
-        if ([string]::IsNullOrWhiteSpace($version) -or [string]::IsNullOrWhiteSpace($phpPath)) {
-            Write-Host "`nVersion and PHP path cannot be empty!"
-            return -1
-        }
-        
-        if (-not (Test-Path $phpPath)) {
-            Write-Host "$phpPath is not a valid path"
-            return -1
-        }
-
-        $phpIniPath = "$phpPath\php.ini"
-        if (-not (Test-Path $phpIniPath)) {
-            Write-Host "php.ini not found at: $phpIniPath"
-            return -1
-        }
-
-        $version = ($version -split '\.')[0..1] -join '.'
-
-        # Fetch xdebug links
-        $baseUrl = "https://xdebug.org"
-        $url = "$baseUrl/download/historical"
-        $xDebugList = Get-XDebug-FROM-URL -url $url -version $version
-        # Get the latest xdebug version
-        if ($xDebugList.Count -eq 0) {
-            Write-Host "`nNo xdebug version found for $version"
-            return -1
-        }
-        $xDebugSelectedVersion = $xDebugList | 
-                                # Where-Object { $_.fileName -match "vs" } |
-                                Sort-Object { [version]$_.xDebugVersion } -Descending |
-                                Select-Object -First 1
-
-        $created = Make-Directory -path "$phpPath\ext"
-        if ($created -ne 0) {
-            Write-Host "Failed to create directory '$phpPath\ext'"
-            return -1
-        }
-
-        Write-Host "`nDownloading XDEBUG $($xDebugSelectedVersion.xDebugVersion)..."
-        Invoke-WebRequest -Uri "$baseUrl/$($xDebugSelectedVersion.href.TrimStart('/'))" -OutFile "$phpPath\ext\$($xDebugSelectedVersion.fileName)"
-        # config xdebug in the php.ini file
-        $xDebugConfig = getXdebugConfigV2 -XDebugPath $($xDebugSelectedVersion.fileName)
-        if ($xDebugSelectedVersion.xDebugVersion -like "3.*") {
-            $xDebugConfig = getXdebugConfigV3 -XDebugPath $($xDebugSelectedVersion.fileName)
-        }
-
-        Write-Host "`nConfigure XDEBUG with PHP..."
-        $xDebugConfig = $xDebugConfig -replace "\ +"
-        Add-Content -Path $phpIniPath -Value $xDebugConfig
-        Write-Host "`nXDEBUG configured successfully for PHP version $version"
-        return 0
-    } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to configure XDebug for PHP version $version"
-            exception = $_
-        }
-        Write-Host "`nFailed to configure XDebug for PHP version $version"
-        return -1
-    }
-}
-
 function Get-XDebug-FROM-URL {
     param ($url, $version)
 
@@ -269,8 +203,7 @@ function Get-XDebug-FROM-URL {
          # Filter the links to find versions that match the given version
         $sysArch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x86_64' } else { '' }
         $filteredLinks = $links | Where-Object {
-            $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$sysArch\.dll" -and
-            $_.href -notmatch "nts"
+            $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$sysArch\.dll"
         }
 
         # Return the filtered links (PHP version names)
@@ -282,7 +215,7 @@ function Get-XDebug-FROM-URL {
             if ($_.href -match "php_xdebug-([\d\.]+)") {
                 $xDebugVersion = $matches[1]
             }
-            $formattedList += @{ href = $_.href; version = $version; xDebugVersion = $xDebugVersion; fileName = $fileName }
+            $formattedList += @{ href = $_.href; version = $version; xDebugVersion = $xDebugVersion; fileName = $fileName; outerHTML = $_.outerHTML }
         }
 
         return $formattedList
@@ -296,7 +229,7 @@ function Get-XDebug-FROM-URL {
 
 }
 
-function Enable-Opcache {
+function Configure-Opcache {
     param ($version, $phpPath)
 
     try {
@@ -311,7 +244,6 @@ function Enable-Opcache {
         $phpIniContent = Get-Content $phpIniPath
         $phpIniContent = $phpIniContent | ForEach-Object {
             $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1' `
-               -replace '^\s*;\s*(zend_extension\s*=\s*opcache)', '$1' `
                -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `
                -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
         }
@@ -332,7 +264,7 @@ function Enable-Opcache {
 function Select-Version {
     param ($matchingVersions)
 
-    $matchingVersionsPartialList = @{}
+    $matchingVersionsPartialList = [ordered]@{}
     $matchingVersions.GetEnumerator() | ForEach-Object {
         $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $LatestVersionCount
     }
@@ -451,9 +383,7 @@ function Install-PHP {
         Write-Host "`nExtracting the downloaded zip ..."
         Extract-And-Configure -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$($selectedVersionObject.version)"
 
-        $opcacheEnabled = Enable-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
-
-        $xdebugConfigured = Config-XDebug -version $selectedVersionObject.version -phpPath "$destination\$($selectedVersionObject.version)"
+        $opcacheEnabled = Configure-Opcache -version $version -phpPath "$destination\$($selectedVersionObject.version)"
 
         $message = "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$($selectedVersionObject.version)'"
         $message += "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"

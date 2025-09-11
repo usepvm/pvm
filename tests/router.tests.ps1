@@ -494,7 +494,7 @@ Describe "Get-Actions Tests" {
             $actions["test"].action.Invoke()
             
             Assert-MockCalled Invoke-PVMTest -Times 1
-        }        
+        }
     }
 }
 

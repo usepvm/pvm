@@ -473,6 +473,7 @@ function Install-Extension {
         try {
             $html = Invoke-WebRequest -Uri "$baseUrl/package/$extName"
         } catch {
+            Write-Host "`nExtension '$extName' not found, Loading matching extensions..."
             # check by match
             $html_cat = Invoke-WebRequest -Uri "$baseUrl/packages.php"
             $linksMatchnigExtName = @()

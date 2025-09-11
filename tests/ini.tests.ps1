@@ -53,6 +53,34 @@ upload_max_filesize = 2M
         param($version, $phpPath)
         return 0
     }
+    
+    $global:MockFileSystem = @{
+        Directories = @()
+        Files = @{}
+        WebResponses = @{}
+        DownloadFails = $false
+    }
+    function Invoke-WebRequest {
+        param($Uri, $OutFile = $null)
+        
+        if ($global:MockFileSystem.DownloadFails) {
+            throw "Network error"
+        }
+        
+        if ($global:MockFileSystem.WebResponses.ContainsKey($Uri)) {
+            $response = $global:MockFileSystem.WebResponses[$Uri]
+            if ($OutFile) {
+                $global:MockFileSystem.Files[$OutFile] = "Downloaded content"
+                return
+            }
+            return @{
+                Content = $response.Content
+                Links = $response.Links
+            }
+        }
+        
+        throw "URL not mocked: $Uri"
+    }
 }
 
 Describe "Add-Missing-PHPExtension" {
@@ -497,28 +525,6 @@ Describe "Install-Extension" {
             DownloadFails = $false
         }
         
-        function Invoke-WebRequest {
-            param($Uri, $OutFile = $null)
-            
-            if ($global:MockFileSystem.DownloadFails) {
-                throw "Network error"
-            }
-            
-            if ($global:MockFileSystem.WebResponses.ContainsKey($Uri)) {
-                $response = $global:MockFileSystem.WebResponses[$Uri]
-                if ($OutFile) {
-                    $global:MockFileSystem.Files[$OutFile] = "Downloaded content"
-                    return
-                }
-                return @{
-                    Content = $response.Content
-                    Links = $response.Links
-                }
-            }
-            
-            throw "URL not mocked: $Uri"
-        }
-        
         function Read-Host {
             param($Prompt)
             if ($Prompt -eq "`nInsert the [number] you want to install") {
@@ -764,27 +770,6 @@ Describe "Get-PHPExtensions-From-Source" {
             WebResponses = @{}
             DownloadFails = $false
         }
-        function Invoke-WebRequest {
-            param($Uri, $OutFile = $null)
-            
-            if ($global:MockFileSystem.DownloadFails) {
-                throw "Network error"
-            }
-            
-            if ($global:MockFileSystem.WebResponses.ContainsKey($Uri)) {
-                $response = $global:MockFileSystem.WebResponses[$Uri]
-                if ($OutFile) {
-                    $global:MockFileSystem.Files[$OutFile] = "Downloaded content"
-                    return
-                }
-                return @{
-                    Content = $response.Content
-                    Links = $response.Links
-                }
-            }
-            
-            throw "URL not mocked: $Uri"
-        }
     }
     
     BeforeEach {
@@ -965,6 +950,101 @@ Describe "List-PHP-Extensions" {
     }
 }
 
+Describe "Install-XDebug-Extension" {
+    BeforeAll {
+        Mock Get-Current-PHP-Version { return @{ version = "7.1.0"; path = "TestDrive:\php\7.1.0" }}
+        Mock Get-XDebug-FROM-URL {
+            return @(
+                @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"; version = "3.1.0"; xDebugVersion = "3.1.0"; fileName = "php_xdebug-3.1.0-8.1-vs16-x64.dll"; outerHTML = "<a href='/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'>php_xdebug-3.1.0-8.1-vs16-x64.dll</a>" }
+                @{ href = "/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll"; version = "2.9.0"; xDebugVersion = "2.9.0"; fileName = "php_xdebug-2.9.0-8.1-vs16-x86_64.dll"; outerHTML = "<a href='/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll'>php_xdebug-2.9.0-8.1-vs16-x86_64.dll</a>" }
+                @{ href = "/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll"; version = "3.1.0"; xDebugVersion = "3.1.0"; fileName = "php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll"; outerHTML = "<a href='/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll'>php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll</a>" }
+                @{ href = "/download/php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll"; version = "2.9.0"; xDebugVersion = "2.9.0"; fileName = "php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll"; outerHTML = "<a href='/download/php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll'>php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll</a>" }
+            )
+        }
+        Mock Read-Host {
+            param($Prompt)
+            if ($Prompt -eq "`nInsert the [number] you want to install") {
+                return ''
+            }
+        }
+        function Reset-MockState {
+            $global:MockRegistryThrowException = $false
+            $global:MockFileSystem.DownloadFails = $false
+            $global:MockFileSystem.WebResponses = @{}
+            $global:MockFileSystem.Files = @{}
+            $global:MockFileSystem.Directories = @()
+        }
+        function Add-Content {
+            param($Path, $Value)
+            if ($global:MockFileSystem.Files.ContainsKey($Path)) {
+                $global:MockFileSystem.Files[$Path] += "`n$Value"
+            } else {
+                $global:MockFileSystem.Files[$Path] = $Value
+            }
+        }
+        function Set-MockWebResponse {
+            param($url, $content, $links = @())
+            $global:MockFileSystem.WebResponses[$url] = @{
+                Content = $content
+                Links = $links
+            }
+        }
+    }
+    
+    BeforeEach {
+        $global:MockFileSystem.Directories += "TestDrive:\php"
+        $global:MockFileSystem.Directories += "TestDrive:\php\ext"
+        $global:MockFileSystem.Files["TestDrive:\php\php.ini"] = @"
+;extension_dir = "ext"
+zend_extension = opcache
+opcache.enable = 1
+"@
+        Reset-MockState
+        $mockLinks = @(
+            @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" }
+        )
+        Set-MockWebResponse -url "https://xdebug.org/download/historical" -links $mockLinks
+    }
+    
+    It "Returns -1 when user does not choose a dll extension version to install" {
+        $code = Install-XDebug-Extension -iniPath $testIniPath
+        $code | Should -Be -1
+    }
+    
+    It "Returns -1 when user does choose a non valid dll extension version to install" {
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return "-10" }
+        $code = Install-XDebug-Extension -iniPath $testIniPath
+        $code | Should -Be -1
+    }
+    
+    It "Returns -1 when user does not want to overwrite existing dll extension version" {
+        # $global:MockFileSystem.DownloadFails = $false
+        Set-MockWebResponse -url "https://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
+        Mock Test-Path { return $true }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return "0" }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_xdebug-3.1.0-8.1-vs16-x64.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { return "n" }
+        
+        $code = Install-XDebug-Extension -iniPath $testIniPath
+        $code | Should -Be -1
+    }
+    
+    It "Returns 0 when user wants to overwrite existing dll extension version" {
+        Set-MockWebResponse -url "https://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
+        Mock Test-Path { return $false }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return "0" }
+        Mock Remove-Item { }
+        Mock Move-Item { }
+        $code = Install-XDebug-Extension -iniPath $testIniPath
+        $code | Should -Be 0
+    }
+    
+    It "Handles exception gracefully" {
+        Mock Sort-Object { throw "Error" }
+        $code = Install-XDebug-Extension -iniPath $testIniPath
+        $code | Should -Be -1
+    }
+}
+
 Describe "Invoke-PVMIniAction" {
     BeforeEach {
         Reset-Ini-Content
@@ -1110,27 +1190,6 @@ extension=php_curl.dll
                                 }
                             }
                 DownloadFails = $false
-            }
-            function Invoke-WebRequest {
-                param($Uri, $OutFile = $null)
-                
-                if ($global:MockFileSystem.DownloadFails) {
-                    throw "Network error"
-                }
-                
-                if ($global:MockFileSystem.WebResponses.ContainsKey($Uri)) {
-                    $response = $global:MockFileSystem.WebResponses[$Uri]
-                    if ($OutFile) {
-                        $global:MockFileSystem.Files[$OutFile] = "Downloaded content"
-                        return
-                    }
-                    return @{
-                        Content = $response.Content
-                        Links = $response.Links
-                    }
-                }
-                
-                throw "URL not mocked: $Uri"
             }
             
             function Read-Host {

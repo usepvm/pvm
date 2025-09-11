@@ -472,8 +472,17 @@ Describe "Get-PHP-Info" {
     }
     
     It "Returns PHP version info successfully" {
-        Mock Get-PHPExtensionsStatus {
-            return @()
+        Mock Get-PHP-Data {
+            return @{
+                extensions = @(
+                    @{ Extension = "curl"; Enabled = $true }
+                    @{ Extension = "xdebug"; Enabled = $false }
+                )
+                settings = @(
+                    @{ Name = "memory_limit"; Value = "128M"; Enabled = $true }
+                    @{ Name = "max_execution_time"; Value = "30"; Enabled = $false }
+                )
+            }
         }
         $result = Get-PHP-Info
         $result | Should -Be 0
@@ -486,13 +495,13 @@ Describe "Get-PHP-Info" {
     }
 }
 
-Describe "Get-PHPExtensionsStatus" {
+Describe "Get-PHP-Data" {
     BeforeEach {
         Reset-Ini-Content
     }
     
     It "Returns extensions with correct status" {
-        $extensions = Get-PHPExtensionsStatus -PhpIniPath $testIniPath
+        $extensions = (Get-PHP-Data -PhpIniPath $testIniPath).extensions
         $extensions | Should -Not -Be $null
         $extensions.Count | Should -BeGreaterThan 0
         
@@ -505,7 +514,7 @@ Describe "Get-PHPExtensionsStatus" {
     
     It "Handles empty ini file" {
         "" | Set-Content $testIniPath
-        $extensions = Get-PHPExtensionsStatus -PhpIniPath $testIniPath
+        $extensions = (Get-PHP-Data -PhpIniPath $testIniPath).extensions
         $extensions | Should -Be $null
     }
 }
@@ -839,11 +848,13 @@ Describe "Get-PHPExtensions-From-Source" {
 
 Describe "List-PHP-Extensions" {
     BeforeAll {
-        Mock Get-PHPExtensionsStatus {
-            return @(
-                @{Extension = "curl"; Enabled = $true; Type = "extension"}
-                @{Extension = "opcache"; Enabled = $false; Type = "zend_extension"}
-            )
+        Mock Get-PHP-Data {
+            return @{
+                extensions = @(
+                    @{Extension = "curl"; Enabled = $true; Type = "extension"}
+                    @{Extension = "opcache"; Enabled = $false; Type = "zend_extension"}
+                )
+            }
         }
         function Get-Extension-List {
             return @{
@@ -888,7 +899,7 @@ Describe "List-PHP-Extensions" {
     }
     
     It "Returns -1 when no extensions are installed" {
-        Mock Get-PHPExtensionsStatus { return @() }
+        Mock Get-PHP-Data { return @{ extensions = @() } }
         $code = List-PHP-Extensions -iniPath $testIniPath
         $code | Should -Be -1
     }
@@ -896,7 +907,7 @@ Describe "List-PHP-Extensions" {
     It "Displays installed extensions" {
         $code = List-PHP-Extensions -iniPath $testIniPath
         $code | Should -Be 0
-        Assert-MockCalled Get-PHPExtensionsStatus -Exactly 1
+        Assert-MockCalled Get-PHP-Data -Exactly 1
         Assert-MockCalled Display-Extensions-States -Exactly 1
         Assert-MockCalled Display-Installed-Extensions -Exactly 1
     }
@@ -904,7 +915,7 @@ Describe "List-PHP-Extensions" {
     It "Displays local extensions matching the filter" {
         $code = List-PHP-Extensions -iniPath $testIniPath -term "pc"
         $code | Should -Be 0
-        Assert-MockCalled Get-PHPExtensionsStatus -Exactly 1
+        Assert-MockCalled Get-PHP-Data -Exactly 1
         Assert-MockCalled Display-Extensions-States -Exactly 1
         Assert-MockCalled Display-Installed-Extensions -Exactly 1
     }
@@ -912,7 +923,7 @@ Describe "List-PHP-Extensions" {
     It "Returns -1 when no local extensions matchs the filter" {
         $code = List-PHP-Extensions -iniPath $testIniPath -term "nonexistent"
         $code | Should -Be -1
-        Assert-MockCalled Get-PHPExtensionsStatus -Exactly 1
+        Assert-MockCalled Get-PHP-Data -Exactly 1
         Assert-MockCalled Display-Extensions-States -Exactly 0
         Assert-MockCalled Display-Installed-Extensions -Exactly 0
     }
@@ -1067,7 +1078,7 @@ Describe "Invoke-PVMIniAction" {
     
     Context "info action" {
         It "Executes info action successfully" {
-            $result = Invoke-PVMIniAction -action "info" -params @()
+            $result = Invoke-PVMIniAction -action "info" -params @("--search=cache")
             $result | Should -Be 0
         }
     }
@@ -1240,11 +1251,17 @@ extension=php_curl.dll
     
     Context "list action" {
         It "Lists extensions" {
-            Mock Get-PHPExtensionsStatus {
-                return @(
-                    @{Extension = "curl"; Enabled = $true; Type = "extension"}
-                    @{Extension = "opcache"; Enabled = $false; Type = "zend_extension"}
-                )
+            Mock Get-PHP-Data {
+                @{
+                    extensions = @(
+                        @{Extension = "curl"; Enabled = $true; Type = "extension"}
+                        @{Extension = "opcache"; Enabled = $false; Type = "zend_extension"}
+                    )
+                    settings = @(
+                        @{Name = "memory_limit"; Value = "128M"; Enabled = $true; Type = "setting"}
+                        @{Name = "max_execution_time"; Value = "60"; Enabled = $false; Type = "setting"}
+                    )
+                }
             }
             $result = Invoke-PVMIniAction -action "list" -params @("--search=pc")
             $result | Should -Be 0

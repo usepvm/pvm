@@ -319,6 +319,7 @@ function Get-IniExtensionStatus {
 
 
 function Get-PHP-Info {
+    param ($term = $null)
     
     $currentPHPVersion = Get-Current-PHP-Version
     
@@ -329,9 +330,13 @@ function Get-PHP-Info {
     
     Write-Host "`n- Running PHP version`t: $($currentPHPVersion.version)"
     Write-Host "`n- PHP path`t`t: $($currentPHPVersion.path)"
-    $extensions = Get-PHPExtensionsStatus -PhpIniPath "$($currentPHPVersion.path)\php.ini"
-    Display-Extensions-States -extensions $extensions
+    $phpIniData = Get-PHP-Data -PhpIniPath "$($currentPHPVersion.path)\php.ini"
+    $extensions = $phpIniData.extensions | Where-Object { $_.Extension -like "*$term*" }
+    $settings = $phpIniData.settings | Where-Object { $_.Name -like "*$term*" }
+    Display-Extensions-States -extensions $phpIniData.extensions
     Display-Installed-Extensions -extensions $extensions
+    Display-Settings-States -settings $phpIniData.settings
+    Display-Settings -settings $settings
     
     return 0
 }
@@ -350,8 +355,10 @@ function Display-Installed-Extensions {
     param ($extensions)
     
     # Calculate max length dynamically
+    $MIN_LINE_LENGTH = 60
     $maxNameLength = ($extensions.Extension | Measure-Object -Maximum Length).Maximum
-    $maxLineLength = $maxNameLength + 10  # padding
+    $maxLineLength = $maxNameLength + 20  # padding
+    if ($maxLineLength -lt $MIN_LINE_LENGTH) { $maxLineLength = $MIN_LINE_LENGTH }
     
     $extensions |
     Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true }, `
@@ -374,25 +381,79 @@ function Display-Installed-Extensions {
     }
 }
 
-function Get-PHPExtensionsStatus {
+
+function Display-Settings-States {
+    param ($settings)
+    
+    # Pre-count for summary
+    $enabledCount = @($settings | Where-Object Enabled).Count
+    $disabledCount = $settings.Count - $enabledCount
+    
+    Write-Host "`n- Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
+}
+
+function Display-Settings {
+    param ($settings)
+    
+    $MAX_LINE_LENGTH = 60
+    $maxLineLength = (($settings.Name + $settings.Value) | Measure-Object -Maximum Length).Maximum
+    $maxLineLength = $maxLineLength + 20  # padding
+    if ($maxLineLength -lt $MIN_LINE_LENGTH) { $maxLineLength = $MIN_LINE_LENGTH }
+
+    $settings |
+    Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true }, `
+                @{Expression = { $_.Name }; Ascending = $true } |
+    ForEach-Object {
+        $dotsCount = $maxLineLength - ($_.Name.Length + $_.Value.Length)
+        if ($dotsCount -lt 0) { $dotsCount = 0 }
+        $dots = '.' * $dotsCount
+
+        if ($_.Enabled) {
+            $status = "Enabled "
+            $color = "DarkGreen"
+        } else {
+            $status = "Disabled"
+            $color = "DarkGray"
+        }
+
+        Write-Host "  $($_.Name) = $($_.Value) $dots " -NoNewline
+        Write-Host $status -ForegroundColor $color
+    }
+}
+
+function Get-PHP-Data {
     param($PhpIniPath)
 
     $iniContent = Get-Content $PhpIniPath
     
-    $extensions = foreach ($line in $iniContent) {
+    $phpIniData = @{
+        extensions = @()
+        settings   = @()
+    }
+    
+    foreach ($line in $iniContent) {
         # Match both enabled and commented lines
         if ($line -match '^\s*(;)?(zend_extension|extension)\s*=\s*"?([^";]+?)"?\s*(?:;.*)?$') {
             $rawPath = $matches[3]
             $extensionName = [System.IO.Path]::GetFileName($rawPath)
-            [PSCustomObject]@{
+            $phpIniData.extensions += [PSCustomObject]@{
+                Section   = "extension"
                 Extension = $extensionName
                 Type      = $matches[2] # extension or zend_extension
                 Enabled   = -not $matches[1]
             }
+        } elseif ($line -match '^\s*(;)?([A-Za-z0-9_.]+)\s*=\s*("?[^";]+?"?)\s*(?:;.*)?$') {
+            $phpIniData.settings += [PSCustomObject]@{
+                Section   = "setting"
+                Name      = $matches[2]   # e.g. memory_limit
+                Type      = "setting"
+                Value     = $matches[3].Trim('"') # strip quotes if present
+                Enabled   = -not $matches[1]      # false if line starts with ;
+            }
         }
     }
 
-    return $extensions
+    return $phpIniData
 }
 
 function Install-XDebug-Extension {
@@ -705,7 +766,7 @@ function List-PHP-Extensions {
     
     try {
         if (-not $available) {
-            $extensions = Get-PHPExtensionsStatus -PhpIniPath $iniPath
+            $extensions = (Get-PHP-Data -PhpIniPath $iniPath).extensions
             if ($extensions.Count -eq 0) {
                 Write-Host "`nNo extensions found"
                 return -1
@@ -823,7 +884,8 @@ function Invoke-PVMIniAction {
 
         switch ($action) {
             "info" {
-                $exitCode = Get-PHP-Info
+                $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
+                $exitCode = Get-PHP-Info -term $term
             }
             "get" {
                 if ($params.Count -eq 0) {

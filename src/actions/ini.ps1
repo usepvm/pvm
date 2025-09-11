@@ -529,7 +529,7 @@ function Install-Extension {
             $_.href -match "/package/$extName/([^/]+)/windows$"
         }
         if ($links.Count -eq 0) {
-            Write-Host "`No versions found for $extName" -ForegroundColor DarkYellow
+            Write-Host "`nNo versions found for $extName" -ForegroundColor DarkYellow
             return -1
         }
         

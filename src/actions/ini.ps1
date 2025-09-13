@@ -394,7 +394,7 @@ function Display-Installed-Extensions {
     # Calculate max length dynamically
     $MIN_LINE_LENGTH = 60
     $maxNameLength = ($extensions.Extension | Measure-Object -Maximum Length).Maximum
-    $maxLineLength = $maxNameLength + 20  # padding
+    $maxLineLength = $maxNameLength + 40  # padding
     if ($maxLineLength -lt $MIN_LINE_LENGTH) { $maxLineLength = $MIN_LINE_LENGTH }
     
     $extensions |
@@ -434,7 +434,7 @@ function Display-Settings {
     
     $MIN_LINE_LENGTH = 57
     $maxLineLength = (($settings.Name + $settings.Value) | Measure-Object -Maximum Length).Maximum
-    $maxLineLength = $maxLineLength + 20  # padding
+    $maxLineLength = $maxLineLength + 40 # padding
     if ($maxLineLength -lt $MIN_LINE_LENGTH) { $maxLineLength = $MIN_LINE_LENGTH }
 
     $settings |
@@ -453,7 +453,7 @@ function Display-Settings {
             $color = "DarkGray"
         }
 
-        Write-Host "  $($_.Name) = $($_.Value) $dots " -NoNewline
+        Write-Host "  $($_.Name) $dots $($_.Value) " -NoNewline
         Write-Host $status -ForegroundColor $color
     }
 }

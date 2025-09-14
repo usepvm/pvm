@@ -149,7 +149,14 @@ function Get-IniSetting {
         foreach ($line in $lines) {
             if ($line -match $pattern) {
                 $value = $matches[1].Trim()
-                Write-Host "- $key = $value"
+                $enabled = 'Enabled'
+                $color = 'DarkGreen'
+                if ($matches[0] -match '^[#;]') {
+                    $enabled = 'Disabled'
+                    $color = 'DarkYellow'
+                }
+                Write-Host "- $key ....................... $value " -NoNewline
+                Write-Host "$enabled" -ForegroundColor $color
                 return 0
             }
         }
@@ -167,10 +174,10 @@ function Get-IniSetting {
 
 
 function Set-IniSetting {
-    param ($iniPath, $keyValue)
+    param ($iniPath, $keyValue, $enable = $true)
     
     try {
-        if (-not ($keyValue -match '^(?<key>[^=]+)=(?<value>.+)$')) {
+        if (-not ($keyValue -match '^[#;]?(?<key>[^=]+)=(?<value>.+)$')) {
             Write-Host "`nInvalid format. Use key=value (e.g., memory_limit=512M)"
             return -1
         }
@@ -185,10 +192,13 @@ function Set-IniSetting {
         $newLines = $lines | ForEach-Object {
             if ($_ -match $pattern) {
                 $matched = $true
-                return $line
-            } else {
-                return $_
+                if ($enable) {
+                    return ($line -replace '^[#;]\s*', '')
+                } else {
+                    return ";$line"
+                }
             }
+            return $_
         }
 
         if (-not $matched) {
@@ -965,8 +975,10 @@ function Invoke-PVMIniAction {
                 }
 
                 Write-Host "`nSetting ini value..."
+                $enable = (-not ($params -contains '--disable'))
+                $params = $params | Where-Object { $_ -notmatch '^--disable$' }
                 foreach ($keyValue in $params) {
-                    $exitCode = Set-IniSetting -iniPath $iniPath -keyValue $keyValue
+                    $exitCode = Set-IniSetting -iniPath $iniPath -keyValue $keyValue -enable $enable
                 }
             }
             "enable" {

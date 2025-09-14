@@ -84,9 +84,10 @@ pvm ini enable <extension>
 pvm ini disable <extension>
 # Example: pvm ini disable xdebug opcache
 
-# Set or Get multiple settings values
-pvm ini set <setting>=<value>
+# Set or Get multiple settings values and change the status
+pvm ini set <setting>=<value> [--disable] # Default is enabling the setting
 # Example: pvm ini set memory_limit=512M max_file_uploads=20
+# Example: pvm ini set max_input_time=60 --disable
 pvm ini get <setting>
 # Example: pvm ini get memory_limit max_file_uploads
 

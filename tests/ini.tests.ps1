@@ -17,7 +17,7 @@ extension=php_curl.dll
 zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
-upload_max_filesize = 2M
+;upload_max_filesize = 2M
 "@ | Set-Content -Path $testIniPath -Encoding UTF8
     }
     
@@ -265,7 +265,7 @@ Describe "Restore-IniBackup" {
 
 Describe "Get-IniSetting" {
     It "Gets existing setting" {
-        Get-IniSetting -iniPath $testIniPath -key "memory_limit" | Should -Be 0
+        Get-IniSetting -iniPath $testIniPath -key "upload_max_filesize" | Should -Be 0
     }
     
     It "Gets setting with spaces in value" {
@@ -309,6 +309,11 @@ Describe "Set-IniSetting" {
     It "Updates setting with spaces" {
         Set-IniSetting -iniPath $testIniPath -keyValue "display_errors=Off" | Should -Be 0
         (Get-Content $testIniPath) -match "^display_errors\s*=\s*Off" | Should -Be $true
+    }
+    
+    It "Updates setting and disables" {
+        Set-IniSetting -iniPath $testIniPath -keyValue "max_execution_time=60" -enable $false | Should -Be 0
+        (Get-Content $testIniPath) -match "^;max_execution_time\s*=\s*60" | Should -Be $true
     }
     
     It "Creates backup before modifying" {

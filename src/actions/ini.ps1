@@ -195,10 +195,7 @@ function Set-IniSetting {
                 if ($enable) {
                     return ($line -replace '^[#;]\s*', '')
                 } else {
-                    if ($_ -notmatch '^[#;]') {
-                        return ";$line"
-                    }
-                    return $line
+                    return ";$line"
                 }
             }
             return $_

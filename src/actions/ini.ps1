@@ -149,7 +149,14 @@ function Get-IniSetting {
         foreach ($line in $lines) {
             if ($line -match $pattern) {
                 $value = $matches[1].Trim()
-                Write-Host "- $key = $value"
+                $enabled = 'Enabled'
+                $color = 'DarkGreen'
+                if ($matches[0] -match '^[#;]') {
+                    $enabled = 'Disabled'
+                    $color = 'DarkYellow'
+                }
+                Write-Host "- $key ....................... $value " -NoNewline
+                Write-Host "$enabled" -ForegroundColor $color
                 return 0
             }
         }

@@ -366,7 +366,12 @@ function Get-IniExtensionStatus {
 
 
 function Get-PHP-Info {
-    param ($term = $null)
+    param ($term = $null, $extensions = $false, $settings = $false)
+
+    if (-not $extensions -and -not $settings) {
+        $extensions = $true
+        $settings = $true
+    }
     
     $currentPHPVersion = Get-Current-PHP-Version
     
@@ -378,13 +383,19 @@ function Get-PHP-Info {
     Write-Host "`n- Running PHP version`t: $($currentPHPVersion.version)"
     Write-Host "`n- PHP path`t`t: $($currentPHPVersion.path)"
     $phpIniData = Get-PHP-Data -PhpIniPath "$($currentPHPVersion.path)\php.ini"
-    $extensions = $phpIniData.extensions | Where-Object { $_.Extension -like "*$term*" }
-    $settings = $phpIniData.settings | Where-Object { $_.Name -like "*$term*" }
-    Display-Extensions-States -extensions $phpIniData.extensions
-    Display-Installed-Extensions -extensions $extensions
-    Display-Settings-States -settings $phpIniData.settings
-    Display-Settings -settings $settings
-    
+
+    if ($extensions) {
+        $extensions = $phpIniData.extensions | Where-Object { $_.Extension -like "*$term*" }
+        Display-Extensions-States -extensions $phpIniData.extensions
+        Display-Installed-Extensions -extensions $extensions
+    }
+
+    if ($settings) {
+        $settings = $phpIniData.settings | Where-Object { $_.Name -like "*$term*" }
+        Display-Settings-States -settings $phpIniData.settings
+        Display-Settings -settings $settings
+    }
+
     return 0
 }
 
@@ -944,7 +955,7 @@ function Invoke-PVMIniAction {
         switch ($action) {
             "info" {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-                $exitCode = Get-PHP-Info -term $term
+                $exitCode = Get-PHP-Info -term $term -extensions ($params -contains "extensions") -settings ($params -contains "settings")
             }
             "get" {
                 if ($params.Count -eq 0) {

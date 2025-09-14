@@ -28,6 +28,12 @@ pvm help <command>
 # Display information about the current PHP (version, path, extensions, settings)
 pvm info # pvm ini info
 
+# Display information about the current PHP extensions
+pvm info extensions # pvm ini info extensions
+
+# Display information about the current PHP settings
+pvm info settings # pvm ini info settings
+
 # Display information about the current PHP (version, path, extensions, settings) with 'cache' in their name
 pvm info --search=<term> # pvm ini info --search=<term>
 # Example: pvm info --search=cache

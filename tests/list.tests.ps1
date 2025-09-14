@@ -201,7 +201,8 @@ Describe "Get-Available-PHP-Versions" {
             }
         }
         Mock Test-Path { return $true }
-        Mock Get-Item { @{ LastWriteTime = "2025-09-07T20:38:25.1574179+01:00" } }
+        $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK")
+        Mock Get-Item { @{ LastWriteTime = $timeWithinLastWeek } }
         
         $code = Get-Available-PHP-Versions
         
@@ -268,7 +269,8 @@ Describe "Get-Available-PHP-Versions" {
             }
         }
         Mock Test-Path { return $true }
-        Mock Get-Item { @{ LastWriteTime = "2025-09-07T20:38:25.1574179+01:00" } }
+        $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK")
+        Mock Get-Item { @{ LastWriteTime = $timeWithinLastWeek } }
         
         
         $code = Get-Available-PHP-Versions

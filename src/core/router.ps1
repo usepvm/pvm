@@ -52,7 +52,20 @@ function Invoke-PVMList{
 function Invoke-PVMInstall {
     param($arguments)
     
-    $version = $arguments[0]        
+    $version = $arguments[0]
+
+    if ($version -eq 'auto') {
+        $result = Auto-Select-PHP-Version
+
+        if ($result.code -eq 0) {
+            $version = $result.version
+            Display-Msg-By-ExitCode -result $result -message "php $version is already installed!"
+            return -1
+        }
+
+        $version = $result.version
+    }
+
     if (-not $version) {
         Write-Host "`nPlease provide a PHP version to install"
         return -1

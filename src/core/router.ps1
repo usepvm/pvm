@@ -263,15 +263,17 @@ function Get-Actions {
             };
             action = { return Invoke-PVMList -arguments $script:arguments }}
         "install" = [PSCustomObject]@{
-            command = "pvm install <version>";
-            description = "The version must be a specific version.";
+            command = "pvm install <version>|[auto]";
+            description = "The version must be a specific version. use 'auto' to install the version specified in the current directory's composer.json or .php-version file.";
             usage = [ordered]@{
-                USAGE = "pvm install <version> (alias: pvm i <version>)"
+                USAGE = "pvm install <version> (alias: pvm i <version>) | pvm install auto"
                 DESCRIPTION = @(
                     "Downloads and installs the PHP version, including opcache and xdebug."
+                    "or use 'auto' to automatically select the version based on project configuration files."
                 )
                 ARGUMENTS = @(
                     "<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)"
+                    "auto ......... Auto-detect version from project files"
                 )
             }
             action = { return Invoke-PVMInstall -arguments $script:arguments }}

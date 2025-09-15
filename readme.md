@@ -59,6 +59,9 @@ pvm list available --search=<version>
 pvm install <version> # pvm i <version>
 # Example: pvm install 8.4 # pvm i 8.4
 
+# Install the php version specified on your project.
+pvm install auto # pvm i auto
+
 # Uninstall a specific version
 pvm uninstall <version> # pvm rm <version>
 # Example: pvm uninstall 8.4 # pvm rm 8.4

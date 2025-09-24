@@ -1000,7 +1000,8 @@ Describe "List-PHP-Extensions" {
     
     It "Displays available extensions from source when cache is empty" {
         Mock Test-Path { return $true }
-        Mock Get-Item { return @{LastWriteTime = "2025-09-09T18:27:39.5309088+01:00"} }
+        $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK")
+        Mock Get-Item { return @{ LastWriteTime = $timeWithinLastWeek } }
         Mock Get-Data-From-Cache { return @{} }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be 0

@@ -91,7 +91,7 @@ function Auto-Select-PHP-Version {
     if (-not $installedVersions) {
         $message = "PHP '$version' is not installed."
         $message += "`nRun: pvm install $version"
-        return @{ code = -1; message = $message; }
+        return @{ code = -1; version = $version; message = $message; }
     }
 
     return @{ code = 0; version = $version; }

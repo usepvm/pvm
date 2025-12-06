@@ -161,6 +161,18 @@ Describe "Invoke-PVMInstall Tests" {
             $version -eq "8.2.0"
         }
     }
+
+    It "Should install detected PHP version from the project" {
+        $arguments = @("auto")
+
+        Mock Detect-PHP-VersionFromProject { return "8.1" }
+        $result = Invoke-PVMInstall -arguments $arguments
+        $result | Should -Be 0
+
+        Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
+            $version -eq "8.1"
+        }
+    }
 }
 
 Describe "Invoke-PVMUninstall Tests" {

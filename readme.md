@@ -142,7 +142,7 @@ Get-Module -ListAvailable Pester
 ### Run the tests
 
 ```sh
-pvm test [files = (files inside the tests/ directory)] [--coverage] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=yourTag]
+pvm test [files = (files inside the tests/ directory)] [--coverage] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=yourTag][--target=80]
 
 # Examples:
 pvm test # .............................. Runs all tests with Normal (default) verbosity.
@@ -150,6 +150,7 @@ pvm test use install # .................. Runs only 'use.tests.ps1' and 'install
 pvm test --verbosity=Detailed # ......... Runs all tests with Detailed verbosity.
 pvm test --coverage # ................... Runs all tests and generates coverage report
 pvm test --tag=myTag #................... Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity and only runs tests with tag "myTag".
+pvm test --target=80 # .................. Sets code coverage target to 80% (default is 75%)
 ```
 
 ## Contributing

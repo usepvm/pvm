@@ -375,6 +375,7 @@ function Get-Actions {
                     "pvm test --verbosity=Detailed .... Runs all tests with Detailed verbosity."
                     "pvm test --coverage .............. Runs all tests and generates coverage report."
                     "pvm test --tag=unit .............. Runs only tests with tag 'unit'"
+                    "pvm test --target=80 ............. Sets code coverage target to 80% (default is 75%)"
                 )
                 ARGUMENTS = @(
                     "files ............................ Run only specific test files (e.g. use, install)"
@@ -383,6 +384,7 @@ function Get-Actions {
                     "--coverage ....................... Generate coverage report"
                     "--verbosity=<verbosity> .......... Set verbosity level (None, Normal (Default), Detailed, Diagnostic)"
                     "--tag=<tag> ...................... Run only tests with specific tag"
+                    "--target=<number> ................ Set code coverage target percentage (default is 75%)"
                 )
             }
             action = { return Invoke-PVMTest -arguments $script:arguments }}

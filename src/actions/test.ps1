@@ -59,15 +59,16 @@ function Run-Test-File {
         $config.Run.PassThru = $true
         $testResult = Invoke-Pester -Configuration $config
         $message = ""
+        $coveragePercent = $null
         if ($testResult.CodeCoverage.CoveragePercent) {
             $coveragePercent = $testResult.CodeCoverage.CoveragePercent.ToString('00.00')
             $message = "| Coverage: $coveragePercent%"
         }
         if ($LASTEXITCODE -ne 0) {
-            return @{ code = -1; Name = $file.Name; FailedCount = $($testResult.FailedCount); Message = "Failed: $($testResult.FailedCount) $message" }
+            return @{ code = -1; Name = $file.Name; FailedCount = $($testResult.FailedCount); Message = "Failed: $($testResult.FailedCount) $message"; coverage = $coveragePercent }
         }
         
-        return @{ code = 0; Name = $file.Name; FailedCount = 0; Message = "Failed: $($testResult.FailedCount) $message" }
+        return @{ code = 0; Name = $file.Name; FailedCount = 0; Message = "Failed: $($testResult.FailedCount) $message"; coverage = $coveragePercent }
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"
@@ -122,7 +123,13 @@ function Run-Tests {
                 $dotsCount = $maxLineLength - $_.Name.Length
                 if ($dotsCount -lt 0) { $dotsCount = 0 }
                 $dots = '.' * $dotsCount
-                $color = if ($_.code -ne 0) { "DarkYellow" } else { "DarkGreen" }
+                $color = "DarkYellow"
+                if ($_.code -eq 0) {
+                    $color = "DarkGreen"
+                    if ($null -ne $_.coverage -and [double]$_.coverage -lt $options.target) {
+                        $color = "DarkGray"
+                    }
+                }
                 $messages += @{ content = "  - $($_.Name) $dots $($_.Message)"; color = $color }
             }
         } else {

@@ -301,44 +301,67 @@ Describe "Set-IniSetting" {
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
     }
     
+    It "Handles null key" {
+        $result = Set-IniSetting -iniPath $testIniPath -key $null
+        $result | Should -Be -1
+    }
+    
     It "Updates existing setting" {
-        Set-IniSetting -iniPath $testIniPath -keyValue "memory_limit=256M" | Should -Be 0
+        Mock Read-Host { return "256M" }
+        Set-IniSetting -iniPath $testIniPath -key "memory_limit" | Should -Be 0
         (Get-Content $testIniPath) -match "^memory_limit\s*=\s*256M" | Should -Be $true
     }
     
     It "Updates setting with spaces" {
-        Set-IniSetting -iniPath $testIniPath -keyValue "display_errors=Off" | Should -Be 0
+        Mock Read-Host { return "Off" }
+        Set-IniSetting -iniPath $testIniPath -key "display_errors" | Should -Be 0
         (Get-Content $testIniPath) -match "^display_errors\s*=\s*Off" | Should -Be $true
     }
     
     It "Updates setting and disables" {
-        Set-IniSetting -iniPath $testIniPath -keyValue "max_execution_time=60" -enable $false | Should -Be 0
+        Mock Read-Host { return "60" }
+        Set-IniSetting -iniPath $testIniPath -key "max_execution_time" -enable $false | Should -Be 0
         (Get-Content $testIniPath) -match "^;max_execution_time\s*=\s*60" | Should -Be $true
     }
     
+    It "Prompts user when multiple matches found" -Tag i {
+        @"
+;memory_limit=2G
+opcache.protect_memory=1
+"@ | Set-Content $testIniPath
+
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return "4G" }
+        
+        Set-IniSetting -iniPath $testIniPath -key "memory" | Should -Be 0
+        (Get-Content $testIniPath) -match "^memory_limit\s*=\s*4G" | Should -Be $true
+    }
+    
     It "Creates backup before modifying" {
-        Set-IniSetting -iniPath $testIniPath -keyValue "memory_limit=256M"
+        Mock Read-Host { return "256M" }
+        Set-IniSetting -iniPath $testIniPath -key "memory_limit"
         Test-Path $testBackupPath | Should -Be $true
     }
     
     It "Fails for non-existent setting" {
-        Set-IniSetting -iniPath $testIniPath -keyValue "nonexistent_setting=value" | Should -Be -1
+        Set-IniSetting -iniPath $testIniPath -key "nonexistent_setting=value" | Should -Be -1
     }
     
     It "Validates key=value format" {
-        Set-IniSetting -iniPath $testIniPath -keyValue "invalidformat" | Should -Be -1
-        Set-IniSetting -iniPath $testIniPath -keyValue "novalue=" | Should -Be -1
-        Set-IniSetting -iniPath $testIniPath -keyValue "=nokey" | Should -Be -1
+        Set-IniSetting -iniPath $testIniPath -key "invalidformat" | Should -Be -1
+        Set-IniSetting -iniPath $testIniPath -key "novalue=" | Should -Be -1
+        Set-IniSetting -iniPath $testIniPath -key "=nokey" | Should -Be -1
     }
     
     It "Handles values with special characters" {
-        Set-IniSetting -iniPath $testIniPath -keyValue "upload_max_filesize=10M" | Should -Be 0
+        Mock Read-Host { return "10M" }
+        Set-IniSetting -iniPath $testIniPath -key "upload_max_filesize" | Should -Be 0
         (Get-Content $testIniPath) -match "^upload_max_filesize\s*=\s*10M" | Should -Be $true
     }
     
     It "Returns -1 on error" {
         Mock Get-Content { throw "Access denied" }
-        Set-IniSetting -iniPath $testIniPath -keyValue "memory_limit=256M" | Should -Be -1
+        Set-IniSetting -iniPath $testIniPath -key "memory_limit=256M" | Should -Be -1
     }
 }
 
@@ -1155,12 +1178,16 @@ Describe "Invoke-PVMIniAction" {
     
     Context "set action" {
         It "Sets single setting" {
-            $result = Invoke-PVMIniAction -action "set" -params @("memory_limit=512M")
+            Mock Read-Host { return "256M" }
+            $result = Invoke-PVMIniAction -action "set" -params @("memory_limit")
             $result | Should -Be 0
         }
         
         It "Sets multiple settings" {
-            $result = Invoke-PVMIniAction -action "set" -params @("memory_limit=512M", "max_execution_time=60")
+            Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { '512M' }
+            Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'max_execution_time'" } -MockWith { '60' }
+
+            $result = Invoke-PVMIniAction -action "set" -params @("memory_limit", "max_execution_time")
             $result | Should -Be 0
         }
         

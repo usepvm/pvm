@@ -143,26 +143,41 @@ function Get-IniSetting {
             return -1
         }
         
-        $pattern = "^[#;]?\s*{0}\s*=\s*(.+)" -f [regex]::Escape($key)
+        $pattern = "^[#;]?\s*([^=\s]*{0}[^=\s]*)\s*=\s*(.+)" -f [regex]::Escape($key)
         $lines = Get-Content $iniPath
 
+        $result = @()
         foreach ($line in $lines) {
             if ($line -match $pattern) {
-                $value = $matches[1].Trim()
-                $enabled = 'Enabled'
-                $color = 'DarkGreen'
-                if ($matches[0] -match '^[#;]') {
-                    $enabled = 'Disabled'
-                    $color = 'DarkYellow'
+                $item = @{
+                    extensionName = $matches[1].Trim()
+                    value = $matches[2].Trim()
+                    enabled = 'Enabled'
+                    color = 'DarkGreen'
                 }
-                Write-Host "- $key ....................... $value " -NoNewline
-                Write-Host "$enabled" -ForegroundColor $color
-                return 0
+                
+                if ($matches[0] -match '^[#;]') {
+                    $item.enabled = 'Disabled'
+                    $item.color = 'DarkYellow'
+                }
+                
+                $result += $item
             }
         }
+        
+        if ($result.Count -eq 0) {
+            Write-Host "- The setting key '$key' is not found." -ForegroundColor DarkGray
+            return -1
+        }
 
-        Write-Host "- The setting key '$key' is not found." -ForegroundColor DarkGray
-        return -1
+        $maxLineLength = ($result.extensionName | Measure-Object -Maximum Length).Maximum + 10
+        $result | ForEach-Object {
+            $name = $_.extensionName.PadRight($maxLineLength, '.')
+            
+            Write-Host "- $name $($_.value) " -NoNewline
+            Write-Host "$($_.enabled)" -ForegroundColor $_.color
+        }
+        return 0
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to get ini setting '$key'"

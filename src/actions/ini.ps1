@@ -189,41 +189,77 @@ function Get-IniSetting {
 
 
 function Set-IniSetting {
-    param ($iniPath, $keyValue, $enable = $true)
-    
+    param ($iniPath, $key, $enable = $true)
     try {
-        if (-not ($keyValue -match '^[#;]?(?<key>[^=]+)=(?<value>.+)$')) {
-            Write-Host "`nInvalid format. Use key=value (e.g., memory_limit=512M)"
+        if (-not $key) {
+            Write-Host "Key is required." -ForegroundColor DarkGray
             return -1
         }
 
-        $key = $matches['key'].Trim()
-        $value = $matches['value'].Trim()
-        $pattern = "^[#;]?\s*{0}\s*=" -f [regex]::Escape($key)
-        $line = "$key = $value"
+        $pattern = "^[#;]?\s*(?<key>[^=\s]*{0}[^=\s]*)\s*=\s*(?<value>.*)$" -f [regex]::Escape($key)
         $lines = Get-Content $iniPath
 
-        $matched = $false
-        $newLines = $lines | ForEach-Object {
-            if ($_ -match $pattern) {
-                $matched = $true
-                if ($enable) {
-                    return ($line -replace '^[#;]\s*', '')
-                } else {
-                    return ";$line"
+        $matchesList = @()
+        $index = 0
+
+        foreach ($line in $lines) {
+            if ($line -match $pattern) {
+                $matchesList += @{
+                    Index = ++$index
+                    Key = $matches['key'].Trim()
+                    Value = $matches['value'].Trim()
+                    Enabled = -not ($line -match '^[#;]')
+                    Line = $line
                 }
             }
-            return $_
         }
 
-        if (-not $matched) {
-            Write-Host "- The setting key '$key' is not found" -ForegroundColor DarkGray
+        if ($matchesList.Count -eq 0) {
+            Write-Host "- No settings match '$key'" -ForegroundColor DarkGray
             return -1
+        }
+
+        if ($matchesList.Count -gt 1) {
+            Write-Host "`nMultiple settings match '$key':`n" -ForegroundColor Cyan
+
+            foreach ($m in $matchesList) {
+                $state = if ($m.Enabled) { 'Enabled' } else { 'Disabled' }
+                Write-Host "[$($m.Index)] $($m.Key) = $($m.Value) ($state)"
+            }
+
+            do {
+                $choice = Read-Host "`nSelect a number"
+            } until ($choice -match '^\d+$' -and $choice -ge 1 -and $choice -le $matchesList.Count)
+
+            $selected = $matchesList[$choice - 1]
+            
+        } else {
+            $selected = $matchesList[0]
+        }
+
+        $newValue = Read-Host "Enter new value for '$($selected.Key)'"
+
+        $replacePattern = "^[#;]?\s*{0}\s*=.*$" -f [regex]::Escape($selected.Key)
+        $newLine = if ($enable) {
+            "$($selected.Key) = $newValue"
+        } else {
+            ";$($selected.Key) = $newValue"
         }
         
         Backup-IniFile $iniPath
+
+        $newLines = $lines | ForEach-Object {
+            if ($_ -match $replacePattern) {
+                return $newLine
+            }
+            $_
+        }
+
         Set-Content $iniPath $newLines -Encoding UTF8
-        Write-Host "- $key set to '$value' successfully" -ForegroundColor DarkGreen
+        $status = if ($enable) {'Enabled'} else {'Disabled'}
+        $color = if ($enable) {'DarkGreen'} else {'DarkYellow'}
+        Write-Host "`n- $($selected.Key) set to '$newValue' successfully | " -ForegroundColor DarkGreen -NoNewline
+        Write-Host "$status" -ForegroundColor $color
 
         return 0
     } catch {
@@ -992,8 +1028,8 @@ function Invoke-PVMIniAction {
                 Write-Host "`nSetting ini value..."
                 $enable = (-not ($params -contains '--disable'))
                 $params = $params | Where-Object { $_ -notmatch '^--disable$' }
-                foreach ($keyValue in $params) {
-                    $exitCode = Set-IniSetting -iniPath $iniPath -keyValue $keyValue -enable $enable
+                foreach ($key in $params) {
+                    $exitCode = Set-IniSetting -iniPath $iniPath -key $key -enable $enable
                 }
             }
             "enable" {

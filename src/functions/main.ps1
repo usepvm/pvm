@@ -11,14 +11,8 @@ function Show-Usage {
         $command = $_.Value.command
         $description = $_.Value.description
 
-        # Dots for first line
-        $dotsCount = [Math]::Max($maxLineLength - $command.Length, 0)
-        $dots = '.' * $dotsCount
-
-        # First line available space for description
-        $descLines = @()
-
         # Wrap description by spaces without breaking words
+        $descLines = @()
         $remaining = $description
         while ($remaining.Length -gt $maxDescLength) {
             $breakPos = $remaining.LastIndexOf(' ', $maxDescLength)
@@ -28,11 +22,13 @@ function Show-Usage {
         }
         if ($remaining) { $descLines += $remaining }
 
-        # Print first line (command + dots + first part of description)
-        Write-Host "  $command $dots $($descLines[0])"
+        # First line (command + dots + description)
+        $label = "  $command "
+        $line = $label.PadRight($maxLineLength, '.') + " $($descLines[0])"
+        Write-Host $line
 
-        # Print remaining description lines aligned with first description start
-        $indent = (' ' * ($maxLineLength + 4))  # +1 for space after dots
+        # Remaining description lines aligned under description column
+        $indent = ' ' * ($maxLineLength + 1)
         for ($i = 1; $i -lt $descLines.Count; $i++) {
             Write-Host "$indent$($descLines[$i])"
         }

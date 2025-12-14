@@ -415,16 +415,15 @@ function Display-Installed-Extensions {
     # Calculate max length dynamically
     $MIN_LINE_LENGTH = 60
     $maxNameLength = ($extensions.Extension | Measure-Object -Maximum Length).Maximum
-    $maxLineLength = $maxNameLength + 40  # padding
+    $maxLineLength = [Math]::Max($MIN_LINE_LENGTH, $maxNameLength + 40)
     if ($maxLineLength -lt $MIN_LINE_LENGTH) { $maxLineLength = $MIN_LINE_LENGTH }
     
     $extensions |
-    Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true }, `
+    Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true },
                 @{Expression = { $_.Extension }; Ascending = $true } |
     ForEach-Object {
-        $dotsCount = $maxLineLength - $_.Extension.Length
-        if ($dotsCount -lt 0) { $dotsCount = 0 }
-        $dots = '.' * $dotsCount
+        $label = "  $($_.Extension) "
+        $label = $label.PadRight($maxLineLength, '.')
 
         if ($_.Enabled) {
             $status = "Enabled "
@@ -434,7 +433,7 @@ function Display-Installed-Extensions {
             $color = "DarkGray"
         }
 
-        Write-Host "  $($_.Extension) $dots " -NoNewline
+        Write-Host $label -NoNewline
         Write-Host $status -ForegroundColor $color
     }
 }
@@ -455,16 +454,17 @@ function Display-Settings {
     
     $MIN_LINE_LENGTH = 57
     $maxLineLength = (($settings.Name + $settings.Value) | Measure-Object -Maximum Length).Maximum
-    $maxLineLength = $maxLineLength + 40 # padding
-    if ($maxLineLength -lt $MIN_LINE_LENGTH) { $maxLineLength = $MIN_LINE_LENGTH }
+    $maxLineLength = [Math]::Max($MIN_LINE_LENGTH, $maxLineLength + 40)
 
     $settings |
     Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true },
                 @{Expression = { $_.Name }; Ascending = $true } |
     ForEach-Object {
-        $dotsCount = $maxLineLength - ($_.Name.Length + $_.Value.Length)
-        if ($dotsCount -lt 0) { $dotsCount = 0 }
-        $dots = '.' * $dotsCount
+        $label = "  $($_.Name) "
+        $value = " $($_.Value) "
+
+        # pad with dots so value always starts at same column
+        $line  = ($label).PadRight($maxLineLength - $value.Length, '.') + $value
 
         if ($_.Enabled) {
             $status = "Enabled "
@@ -474,7 +474,7 @@ function Display-Settings {
             $color = "DarkGray"
         }
 
-        Write-Host "  $($_.Name) $dots $($_.Value) " -NoNewline
+        Write-Host $line -NoNewline
         Write-Host $status -ForegroundColor $color
     }
 }
@@ -902,18 +902,16 @@ function List-PHP-Extensions {
             
             $MIN_LINE_LENGTH = 50
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
-            $maxLineLength = $maxKeyLength + 30   # adjust padding
-            if ($maxLineLength -lt $MIN_LINE_LENGTH) { $maxLineLength = $MIN_LINE_LENGTH }
+            $maxLineLength = [Math]::Max($MIN_LINE_LENGTH, $maxKeyLength + 30)
+
             Write-Host "`nAvailable Extensions by Category:"
             Write-Host    "--------------------------------"
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
                 $key  = $_.Key
                 $vals = ($_.Value | ForEach-Object { $_.extName }) -join ", "
-                $dotsCount = $maxLineLength - $key.Length
-                if ($dotsCount -lt 0) { $dotsCount = 0 }
-                $dots = '.' * $dotsCount
 
-                Write-Host "$key $dots $vals"
+                $line  = $key.PadRight($maxLineLength, '.') + " $vals"
+                Write-Host $line
             }
             
             $msg = "`nThis is a partial list. For a complete list, visit:"

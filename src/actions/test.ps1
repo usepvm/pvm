@@ -109,7 +109,7 @@ function Run-Tests {
         }
         
         $messages = @(@{ content = "`n----------------------------------------------------------------" })
-        $messages += @(@{ content = "`n`nTest Results Summary:`n" })
+        $messages += @(@{ content = "`n`nTest Results Summary: (Target : $($options.target)%)`n" })
         $code = 0
         if ($testSummary.Count -gt 0) {
             $totalFailedTests = $testSummary | Where-Object { $_.code -ne 0 } | ForEach-Object { $_.FailedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum

@@ -155,7 +155,7 @@ function Invoke-PVMTest {
             $options.verbosity = $Matches[1]
             return $false
         }
-        if ($_ -match '^--target=(\d+)$') {
+        if ($_ -match '^--target=(\d+(?:\.\d)?)$') {
             $options.target = [decimal] $Matches[1]
             return $false
         }

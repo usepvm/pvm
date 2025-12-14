@@ -120,9 +120,8 @@ function Run-Tests {
             $maxLineLength = $maxFileNameLength + 10  # padding
             
             $testSummary | ForEach-Object {
-                $dotsCount = $maxLineLength - $_.Name.Length
-                if ($dotsCount -lt 0) { $dotsCount = 0 }
-                $dots = '.' * $dotsCount
+                $label = "  - $($_.Name) "
+                $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
                 $color = "DarkYellow"
                 if ($_.code -eq 0) {
                     $color = "DarkGreen"
@@ -130,7 +129,7 @@ function Run-Tests {
                         $color = "DarkGray"
                     }
                 }
-                $messages += @{ content = "  - $($_.Name) $dots $($_.Message)"; color = $color }
+                $messages += @{ content = $line; color = $color }
             }
         } else {
             $code = -1

@@ -143,7 +143,7 @@ function Get-IniSetting {
             return -1
         }
         
-        $pattern = "^[#;]?\s*([^=\s]*{0}[^=\s]*)\s*=\s*(.+)" -f [regex]::Escape($key)
+        $pattern = "^[#;]?\s*([^=\s]*{0}[^=\s]*)\s*=\s*(.*)" -f [regex]::Escape($key)
         $lines = Get-Content $iniPath
 
         $result = @()

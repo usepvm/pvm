@@ -260,9 +260,10 @@ function Set-IniSetting {
             }
 
             do {
-                $choice = Read-Host "`nSelect a number"
+                $choiceRaw = Read-Host "`nSelect a number"
+                $choice = $null
 
-                if (-not [int]::TryParse($choice, [ref]$choice)) {
+                if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
                     Write-Host "Please enter a valid positive number." -ForegroundColor Yellow
                     continue
                 }

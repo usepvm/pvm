@@ -370,6 +370,22 @@ opcache.protect_memory=1
         Set-IniSetting -iniPath $testIniPath -key "nonexistent_setting=value" | Should -Be -1
     }
     
+    It "Prints error message for non-valid number" {
+        @"
+;memory_limit=2G
+opcache.protect_memory=1
+"@ | Set-Content $testIniPath
+
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
+            $script:callCount++
+            if ($script:callCount -eq 1) { 'A' } 
+            if ($script:callCount -eq 2) { -1 }
+            else { '1' }
+        }
+
+        Set-IniSetting -iniPath $testIniPath -key "memory=1G" | Should -Be 0
+    }
+    
     It "Validates key=value format" {
         Set-IniSetting -iniPath $testIniPath -key "invalidformat" | Should -Be -1
         Set-IniSetting -iniPath $testIniPath -key "novalue=" | Should -Be -1

@@ -173,8 +173,9 @@ function Get-IniSetting {
         $maxLineLength = ($result.extensionName | Measure-Object -Maximum Length).Maximum + 10
         $result | ForEach-Object {
             $name = $_.extensionName.PadRight($maxLineLength, '.')
+            $value = if ($_.value -eq '') { '(not set)' } else { $_.value }
             
-            Write-Host "- $name $($_.value) " -NoNewline
+            Write-Host "- $name $value " -NoNewline
             Write-Host "$($_.enabled)" -ForegroundColor $_.color
         }
         return 0

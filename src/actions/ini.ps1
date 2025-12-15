@@ -172,7 +172,7 @@ function Get-IniSetting {
 
         $maxLineLength = ($result.extensionName | Measure-Object -Maximum Length).Maximum + 10
         $result | ForEach-Object {
-            $name = $_.extensionName.PadRight($maxLineLength, '.')
+            $name = "$($_.extensionName) ".PadRight($maxLineLength, '.')
             $value = if ($_.value -eq '') { '(not set)' } else { $_.value }
             
             Write-Host "- $name $value " -NoNewline
@@ -233,7 +233,7 @@ function Set-IniSetting {
             $maxLineLength = ($matchesList.Key | Measure-Object -Maximum Length).Maximum + 10
             $matchesList | ForEach-Object {
                 $state = if ($_.Enabled) { 'Enabled' } else { 'Disabled' }
-                $key = $_.Key.PadRight($maxLineLength, '.')
+                $key = "$($_.Key) ".PadRight($maxLineLength, '.')
                 $value = if ($_.value -eq '') { '(not set)' } else { $_.value }
                 Write-Host "[$($_.Index)] $key = $value " -NoNewline
                 Write-Host $state -ForegroundColor $_.Color

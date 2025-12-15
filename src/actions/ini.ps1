@@ -261,7 +261,19 @@ function Set-IniSetting {
 
             do {
                 $choice = Read-Host "`nSelect a number"
-            } until ($choice -match '^\d+$' -and $choice -ge 1 -and $choice -le $matchesList.Count)
+
+                if (-not [int]::TryParse($choice, [ref]$choice)) {
+                    Write-Host "Please enter a valid positive number." -ForegroundColor Yellow
+                    continue
+                }
+
+                if ($choice -lt 1 -or $choice -gt $matchesList.Count) {
+                    Write-Host "Number must be between 1 and $($matchesList.Count)." -ForegroundColor Yellow
+                    continue
+                }
+
+                break
+            } while ($true)
 
             $selected = $matchesList[$choice - 1]
         } else {

@@ -191,40 +191,51 @@ function Get-IniSetting {
 function Set-IniSetting {
     param ($iniPath, $key, $enable = $true)
     try {
-        if (-not $key) {
-            Write-Host "Key is required." -ForegroundColor DarkGray
+        # Accept: key OR key=value
+        if ($key -match '^(?<k>[^=]+)(=(?<v>.*))?$') {
+            $searchKey = $matches.k.Trim()
+            $inputValue = if ($null -ne $matches.v) { $matches.v.Trim() } else { $null }
+        } else {
+            Write-Host "Invalid input." -ForegroundColor DarkGray
             return -1
         }
 
-        $pattern = "^[#;]?\s*(?<key>[^=\s]*{0}[^=\s]*)\s*=\s*(?<value>.*)$" -f [regex]::Escape($key)
-        $lines = Get-Content $iniPath
+        $pattern = "^[#;]?\s*(?<key>[^=\s]*{0}[^=\s]*)\s*=\s*(?<value>.*)$" -f [regex]::Escape($searchKey)
 
         $matchesList = @()
-        $index = 0
+        $lines = Get-Content $iniPath
 
+        $index = 0
         foreach ($line in $lines) {
             if ($line -match $pattern) {
                 $matchesList += @{
-                    Index = ++$index
+                    Index = $matchesList.Count + 1
                     Key = $matches['key'].Trim()
                     Value = $matches['value'].Trim()
                     Enabled = -not ($line -match '^[#;]')
                     Line = $line
+                    LineNo  = $index
+                    Color   = if ($line -match '^[#;]') { 'DarkYellow' } else { 'DarkGreen' }
                 }
             }
+            $index++
         }
 
         if ($matchesList.Count -eq 0) {
-            Write-Host "- No settings match '$key'" -ForegroundColor DarkGray
+            Write-Host "- No settings match '$searchKey'" -ForegroundColor DarkGray
             return -1
         }
 
         if ($matchesList.Count -gt 1) {
-            Write-Host "`nMultiple settings match '$key':`n" -ForegroundColor Cyan
+            Write-Host "`nMultiple settings match '$searchKey':`n" -ForegroundColor Cyan
 
-            foreach ($m in $matchesList) {
-                $state = if ($m.Enabled) { 'Enabled' } else { 'Disabled' }
-                Write-Host "[$($m.Index)] $($m.Key) = $($m.Value) ($state)"
+            $maxLineLength = ($matchesList.Key | Measure-Object -Maximum Length).Maximum + 10
+            $matchesList | ForEach-Object {
+                $state = if ($_.Enabled) { 'Enabled' } else { 'Disabled' }
+                $key = $_.Key.PadRight($maxLineLength, '.')
+                $value = if ($_.value -eq '') { '(not set)' } else { $_.value }
+                Write-Host "[$($_.Index)] $key = $value " -NoNewline
+                Write-Host $state -ForegroundColor $_.Color
             }
 
             do {
@@ -232,34 +243,30 @@ function Set-IniSetting {
             } until ($choice -match '^\d+$' -and $choice -ge 1 -and $choice -le $matchesList.Count)
 
             $selected = $matchesList[$choice - 1]
-            
         } else {
             $selected = $matchesList[0]
         }
 
-        $newValue = Read-Host "Enter new value for '$($selected.Key)'"
+        if (-not $inputValue) {
+            $inputValue = Read-Host "Enter new value for '$($selected.Key)'"
+        }
 
-        $replacePattern = "^[#;]?\s*{0}\s*=.*$" -f [regex]::Escape($selected.Key)
         $newLine = if ($enable) {
-            "$($selected.Key) = $newValue"
+            "$($selected.Key) = $inputValue"
         } else {
-            ";$($selected.Key) = $newValue"
+            ";$($selected.Key) = $inputValue"
         }
         
         Backup-IniFile $iniPath
 
-        $newLines = $lines | ForEach-Object {
-            if ($_ -match $replacePattern) {
-                return $newLine
-            }
-            $_
-        }
+        $lines[$selected.LineNo] = $newLine
+        Set-Content $iniPath $lines -Encoding UTF8
 
-        Set-Content $iniPath $newLines -Encoding UTF8
         $status = if ($enable) {'Enabled'} else {'Disabled'}
         $color = if ($enable) {'DarkGreen'} else {'DarkYellow'}
-        Write-Host "`n- $($selected.Key) set to '$newValue' successfully | " -ForegroundColor DarkGreen -NoNewline
-        Write-Host "$status" -ForegroundColor $color
+
+        Write-Host "`n- $($selected.Key) set to '$inputValue' successfully | " -NoNewline -ForegroundColor DarkGreen
+        Write-Host $status -ForegroundColor $color
 
         return 0
     } catch {

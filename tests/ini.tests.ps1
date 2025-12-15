@@ -301,6 +301,17 @@ Describe "Set-IniSetting" {
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
     }
     
+    It "Accepts key parameter without value" {
+        Mock Read-Host { return "256M" }
+        $result = Set-IniSetting -iniPath $testIniPath -key "memory_limit"
+        $result | Should -Be 0
+    }
+    
+    It "Accepts key parameter with value" {
+        $result = Set-IniSetting -iniPath $testIniPath -key "memory_limit=1G"
+        $result | Should -Be 0
+    }
+    
     It "Handles null key" {
         $result = Set-IniSetting -iniPath $testIniPath -key $null
         $result | Should -Be -1
@@ -324,7 +335,7 @@ Describe "Set-IniSetting" {
         (Get-Content $testIniPath) -match "^;max_execution_time\s*=\s*60" | Should -Be $true
     }
     
-    It "Prompts user when multiple matches found" -Tag i {
+    It "Prompts user when multiple matches found and requires input" {
         @"
 ;memory_limit=2G
 opcache.protect_memory=1
@@ -335,6 +346,18 @@ opcache.protect_memory=1
         
         Set-IniSetting -iniPath $testIniPath -key "memory" | Should -Be 0
         (Get-Content $testIniPath) -match "^memory_limit\s*=\s*4G" | Should -Be $true
+    }
+    
+    It "Prompts user when multiple matches found and does not require input" {
+            @"
+;memory_limit=2G
+opcache.protect_memory=1
+"@ | Set-Content $testIniPath
+
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
+        
+        Set-IniSetting -iniPath $testIniPath -key "memory=2G" | Should -Be 0
+        (Get-Content $testIniPath) -match "^memory_limit\s*=\s*2G" | Should -Be $true
     }
     
     It "Creates backup before modifying" {

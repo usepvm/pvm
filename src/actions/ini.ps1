@@ -73,6 +73,26 @@ function Add-Missing-PHPExtension {
     
 }
 
+function Get-Matching-PHPExtensionsStatus {
+    param ($iniPath, $extName)
+    
+    $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*$extName[^\s`"';]*)\2\s*(;.*)?$"
+    $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*$extName[^\s`"';]*)\2\s*(;.*)?$"
+    $lines = Get-Content $iniPath
+
+    $matchesList = @()
+    foreach ($line in $lines) {
+        if ($line -match $enabledPattern) {
+            $matchesList += @{ name = $matches['ext']; status = "Enabled"; color = "DarkGreen" }
+        }
+        if ($line -match $disabledPattern) {
+            $matchesList += @{ name = $matches['ext']; status = "Disabled"; color = "DarkYellow"}
+        }
+    }
+    
+    return $matchesList
+}
+
 function Get-Single-PHPExtensionStatus {
     param ($iniPath, $extName)
     
@@ -399,21 +419,28 @@ function Get-IniExtensionStatus {
             return -1
         }
 
-        $status = Get-Single-PHPExtensionStatus -iniPath $iniPath -extName $extName
-        if ($status) {
-            Write-Host "- $extName`: $($status.status)" -ForegroundColor $status.color
-            return 0
+        $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
+        
+        if ($matchesListStatus.Count -eq 0) {
+            Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
+
+            $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
+            $response = $response.Trim()
+            if ($response -eq "y" -or $response -eq "Y") {
+                return (Add-Missing-PHPExtension -iniPath $iniPath -extName $extName)
+            }
+
+            return -1
         }
-
-        Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
-
-        $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
-        $response = $response.Trim()
-        if ($response -eq "y" -or $response -eq "Y") {
-            return (Add-Missing-PHPExtension -iniPath $iniPath -extName $extName)
+        
+        $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + 10
+        $matchesListStatus | ForEach-Object {
+            $name = "$($_.name) ".PadRight($maxLineLength, '.')
+            Write-Host "- $name " -NoNewline
+            Write-Host "$($_.status)" -ForegroundColor $_.color
         }
-
-        return -1
+        
+        return 0
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to check status for '$extName'"

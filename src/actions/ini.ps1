@@ -73,6 +73,26 @@ function Add-Missing-PHPExtension {
     
 }
 
+function Get-Matching-PHPExtensionsStatus {
+    param ($iniPath, $extName)
+    
+    $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*$extName[^\s`"';]*)\2\s*(;.*)?$"
+    $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*$extName[^\s`"';]*)\2\s*(;.*)?$"
+    $lines = Get-Content $iniPath
+
+    $matchesList = @()
+    foreach ($line in $lines) {
+        if ($line -match $enabledPattern) {
+            $matchesList += @{ name = $matches['ext']; status = "Enabled"; color = "DarkGreen" }
+        }
+        if ($line -match $disabledPattern) {
+            $matchesList += @{ name = $matches['ext']; status = "Disabled"; color = "DarkYellow"}
+        }
+    }
+    
+    return $matchesList
+}
+
 function Get-Single-PHPExtensionStatus {
     param ($iniPath, $extName)
     
@@ -143,26 +163,42 @@ function Get-IniSetting {
             return -1
         }
         
-        $pattern = "^[#;]?\s*{0}\s*=\s*(.+)" -f [regex]::Escape($key)
+        $pattern = "^[#;]?\s*([^=\s]*{0}[^=\s]*)\s*=\s*(.*)" -f [regex]::Escape($key)
         $lines = Get-Content $iniPath
 
+        $result = @()
         foreach ($line in $lines) {
             if ($line -match $pattern) {
-                $value = $matches[1].Trim()
-                $enabled = 'Enabled'
-                $color = 'DarkGreen'
-                if ($matches[0] -match '^[#;]') {
-                    $enabled = 'Disabled'
-                    $color = 'DarkYellow'
+                $item = @{
+                    extensionName = $matches[1].Trim()
+                    value = $matches[2].Trim()
+                    enabled = 'Enabled'
+                    color = 'DarkGreen'
                 }
-                Write-Host "- $key ....................... $value " -NoNewline
-                Write-Host "$enabled" -ForegroundColor $color
-                return 0
+                
+                if ($matches[0] -match '^[#;]') {
+                    $item.enabled = 'Disabled'
+                    $item.color = 'DarkYellow'
+                }
+                
+                $result += $item
             }
         }
+        
+        if ($result.Count -eq 0) {
+            Write-Host "- The setting key '$key' is not found." -ForegroundColor DarkGray
+            return -1
+        }
 
-        Write-Host "- The setting key '$key' is not found." -ForegroundColor DarkGray
-        return -1
+        $maxLineLength = ($result.extensionName | Measure-Object -Maximum Length).Maximum + 10
+        $result | ForEach-Object {
+            $name = "$($_.extensionName) ".PadRight($maxLineLength, '.')
+            $value = if ($_.value -eq '') { '(not set)' } else { $_.value }
+            
+            Write-Host "- $name $value " -NoNewline
+            Write-Host "$($_.enabled)" -ForegroundColor $_.color
+        }
+        return 0
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to get ini setting '$key'"
@@ -174,41 +210,84 @@ function Get-IniSetting {
 
 
 function Set-IniSetting {
-    param ($iniPath, $keyValue, $enable = $true)
-    
+    param ($iniPath, $key, $enable = $true)
     try {
-        if (-not ($keyValue -match '^[#;]?(?<key>[^=]+)=(?<value>.+)$')) {
-            Write-Host "`nInvalid format. Use key=value (e.g., memory_limit=512M)"
+        # Accept: key OR key=value
+        if ($key -match '^(?<k>[^=]+)(=(?<v>.*))?$') {
+            $searchKey = $matches.k.Trim()
+            $inputValue = if ($null -ne $matches.v) { $matches.v.Trim() } else { $null }
+        } else {
+            Write-Host "Invalid input." -ForegroundColor DarkGray
             return -1
         }
 
-        $key = $matches['key'].Trim()
-        $value = $matches['value'].Trim()
-        $pattern = "^[#;]?\s*{0}\s*=" -f [regex]::Escape($key)
-        $line = "$key = $value"
+        $pattern = "^[#;]?\s*(?<key>[^=\s]*{0}[^=\s]*)\s*=\s*(?<value>.*)$" -f [regex]::Escape($searchKey)
+
+        $matchesList = @()
         $lines = Get-Content $iniPath
 
-        $matched = $false
-        $newLines = $lines | ForEach-Object {
-            if ($_ -match $pattern) {
-                $matched = $true
-                if ($enable) {
-                    return ($line -replace '^[#;]\s*', '')
-                } else {
-                    return ";$line"
+        $index = 0
+        foreach ($line in $lines) {
+            if ($line -match $pattern) {
+                $matchesList += @{
+                    Index = $matchesList.Count + 1
+                    Key = $matches['key'].Trim()
+                    Value = $matches['value'].Trim()
+                    Enabled = -not ($line -match '^[#;]')
+                    Line = $line
+                    LineNo  = $index
+                    Color   = if ($line -match '^[#;]') { 'DarkYellow' } else { 'DarkGreen' }
                 }
             }
-            return $_
+            $index++
         }
 
-        if (-not $matched) {
-            Write-Host "- The setting key '$key' is not found" -ForegroundColor DarkGray
+        if ($matchesList.Count -eq 0) {
+            Write-Host "- No settings match '$searchKey'" -ForegroundColor DarkGray
             return -1
+        }
+
+        if ($matchesList.Count -gt 1) {
+            Write-Host "`nMultiple settings match '$searchKey':`n" -ForegroundColor Cyan
+
+            $maxLineLength = ($matchesList.Key | Measure-Object -Maximum Length).Maximum + 10
+            $matchesList | ForEach-Object {
+                $state = if ($_.Enabled) { 'Enabled' } else { 'Disabled' }
+                $key = "$($_.Key) ".PadRight($maxLineLength, '.')
+                $value = if ($_.value -eq '') { '(not set)' } else { $_.value }
+                Write-Host "[$($_.Index)] $key = $value " -NoNewline
+                Write-Host $state -ForegroundColor $_.Color
+            }
+
+            do {
+                $choice = Read-Host "`nSelect a number"
+            } until ($choice -match '^\d+$' -and $choice -ge 1 -and $choice -le $matchesList.Count)
+
+            $selected = $matchesList[$choice - 1]
+        } else {
+            $selected = $matchesList[0]
+        }
+
+        if (-not $inputValue) {
+            $inputValue = Read-Host "Enter new value for '$($selected.Key)'"
+        }
+
+        $newLine = if ($enable) {
+            "$($selected.Key) = $inputValue"
+        } else {
+            ";$($selected.Key) = $inputValue"
         }
         
         Backup-IniFile $iniPath
-        Set-Content $iniPath $newLines -Encoding UTF8
-        Write-Host "- $key set to '$value' successfully" -ForegroundColor DarkGreen
+
+        $lines[$selected.LineNo] = $newLine
+        Set-Content $iniPath $lines -Encoding UTF8
+
+        $status = if ($enable) {'Enabled'} else {'Disabled'}
+        $color = if ($enable) {'DarkGreen'} else {'DarkYellow'}
+
+        Write-Host "`n- $($selected.Key) set to '$inputValue' successfully | " -NoNewline -ForegroundColor DarkGreen
+        Write-Host $status -ForegroundColor $color
 
         return 0
     } catch {
@@ -340,21 +419,28 @@ function Get-IniExtensionStatus {
             return -1
         }
 
-        $status = Get-Single-PHPExtensionStatus -iniPath $iniPath -extName $extName
-        if ($status) {
-            Write-Host "- $extName`: $($status.status)" -ForegroundColor $status.color
-            return 0
+        $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
+        
+        if ($matchesListStatus.Count -eq 0) {
+            Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
+
+            $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
+            $response = $response.Trim()
+            if ($response -eq "y" -or $response -eq "Y") {
+                return (Add-Missing-PHPExtension -iniPath $iniPath -extName $extName)
+            }
+
+            return -1
         }
-
-        Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
-
-        $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
-        $response = $response.Trim()
-        if ($response -eq "y" -or $response -eq "Y") {
-            return (Add-Missing-PHPExtension -iniPath $iniPath -extName $extName)
+        
+        $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + 10
+        $matchesListStatus | ForEach-Object {
+            $name = "$($_.name) ".PadRight($maxLineLength, '.')
+            Write-Host "- $name " -NoNewline
+            Write-Host "$($_.status)" -ForegroundColor $_.color
         }
-
-        return -1
+        
+        return 0
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to check status for '$extName'"
@@ -975,8 +1061,8 @@ function Invoke-PVMIniAction {
                 Write-Host "`nSetting ini value..."
                 $enable = (-not ($params -contains '--disable'))
                 $params = $params | Where-Object { $_ -notmatch '^--disable$' }
-                foreach ($keyValue in $params) {
-                    $exitCode = Set-IniSetting -iniPath $iniPath -keyValue $keyValue -enable $enable
+                foreach ($key in $params) {
+                    $exitCode = Set-IniSetting -iniPath $iniPath -key $key -enable $enable
                 }
             }
             "enable" {

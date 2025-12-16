@@ -230,7 +230,7 @@ function Set-IniSetting {
         foreach ($line in $lines) {
             if ($line -match $pattern) {
                 $matchesList += @{
-                    Index = $matchesList.Count + 1
+                    Index = $matchesList.Length + 1
                     Key = $matches['key'].Trim()
                     Value = $matches['value'].Trim()
                     Enabled = -not ($line -match '^[#;]')
@@ -242,12 +242,12 @@ function Set-IniSetting {
             $index++
         }
 
-        if ($matchesList.Count -eq 0) {
+        if ($matchesList.Length -eq 0) {
             Write-Host "- No settings match '$searchKey'" -ForegroundColor DarkGray
             return -1
         }
 
-        if ($matchesList.Count -gt 1) {
+        if ($matchesList.Length -gt 1) {
             Write-Host "`nMultiple settings match '$searchKey':`n" -ForegroundColor Cyan
 
             $maxLineLength = ($matchesList.Key | Measure-Object -Maximum Length).Maximum + 10
@@ -255,7 +255,7 @@ function Set-IniSetting {
                 $state = if ($_.Enabled) { 'Enabled' } else { 'Disabled' }
                 $key = "$($_.Key) ".PadRight($maxLineLength, '.')
                 $value = if ($_.value -eq '') { '(not set)' } else { $_.value }
-                Write-Host "[$($_.Index)] $key = $value " -NoNewline
+                Write-Host "[$($_.Index)] $key $value " -NoNewline
                 Write-Host $state -ForegroundColor $_.Color
             }
 
@@ -268,8 +268,8 @@ function Set-IniSetting {
                     continue
                 }
 
-                if ($choice -lt 1 -or $choice -gt $matchesList.Count) {
-                    Write-Host "Number must be between 1 and $($matchesList.Count)." -ForegroundColor Yellow
+                if ($choice -lt 1 -or $choice -gt $matchesList.Length) {
+                    Write-Host "Number must be between 1 and $($matchesList.Length)." -ForegroundColor Yellow
                     continue
                 }
 
@@ -278,7 +278,7 @@ function Set-IniSetting {
 
             $selected = $matchesList[$choice - 1]
         } else {
-            $selected = $matchesList[0]
+            $selected = $($matchesList)
         }
 
         if (-not $inputValue) {
@@ -434,7 +434,7 @@ function Get-IniExtensionStatus {
 
         $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
         
-        if ($matchesListStatus.Count -eq 0) {
+        if ($matchesListStatus.Length -eq 0) {
             Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
 
             $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"

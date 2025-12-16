@@ -972,7 +972,7 @@ function Get-PHPExtensions-From-Source {
             }
         )
         $dataToCache = [ordered] @{}
-        ($availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object { $dataToCache[$_.Key] = $_.Value })
+        $availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object { $dataToCache[$_.Key] = $_.Value }
         $cached = Cache-Data -cacheFileName "available_extensions" -data $dataToCache -depth 3
         
         return $availableExtensions
@@ -1190,7 +1190,7 @@ function Invoke-PVMIniAction {
                 $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains "available") -term $term
             }
             default {
-                Write-Host "`nUnknown action '$action' use one of following: 'info', 'get, 'set', 'enable', 'disable', 'status', 'install', 'list' or 'restore'."
+                Write-Host "`nUnknown action '$action' use one of following: 'info', 'get', 'set', 'enable', 'disable', 'status', 'install', 'list' or 'restore'."
             }
         }
         

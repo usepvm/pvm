@@ -122,7 +122,7 @@ function Invoke-PVMIni {
     
     $action = $arguments[0]
     if (-not $action) {
-        Write-Host "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable' or 'restore'."
+        Write-Host "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable', 'install', 'list' or 'restore'."
         return -1
     }
     

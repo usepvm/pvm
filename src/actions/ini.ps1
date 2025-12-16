@@ -324,26 +324,65 @@ function Enable-IniExtension {
             return -1
         }
         
-        $status = Get-Single-PHPExtensionStatus -iniPath $iniPath -extName $extName
+        $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
         
-        if (-not $status) {
+        if ($matchesListStatus.Length -eq 0) {
             Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
             $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
             $response = $response.Trim()
             if ($response -eq "y" -or $response -eq "Y") {
-                $extensionAdded = Add-Missing-PHPExtension -iniPath $iniPath -extName $extName -enable $false
+                return (Add-Missing-PHPExtension -iniPath $iniPath -extName $extName -enable $false)
             }
-        } elseif ($status -and $status.status -eq "Enabled") {
-            Write-Host "- '$extName' already enabled. check with 'pvm ini status $extName'" -ForegroundColor DarkGray
+            
+            return -1
+        } 
+        
+        if ($matchesListStatus.Length -gt 1) {
+            Write-Host "`nMultiple extensions match '$extName':`n" -ForegroundColor Cyan
+
+            $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + 10
+            $index = 1
+            $matchesListStatus | ForEach-Object {
+                $name = "$($_.name) ".PadRight($maxLineLength, '.')
+                Write-Host "[$index] $name " -NoNewline
+                Write-Host "$($_.status)" -ForegroundColor $_.color
+                $index++
+            }
+
+            do {
+                $choiceRaw = Read-Host "`nSelect a number"
+                $choice = $null
+
+                if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
+                    Write-Host "Please enter a valid positive number." -ForegroundColor Yellow
+                    continue
+                }
+
+                if ($choice -lt 1 -or $choice -gt $matchesListStatus.Length) {
+                    Write-Host "Number must be between 1 and $($matchesListStatus.Length)." -ForegroundColor Yellow
+                    continue
+                }
+
+                break
+            } while ($true)
+
+            $selected = $matchesListStatus[$choice - 1]
+        } else {
+            $selected = $($matchesListStatus)
+        }
+        
+        if ($selected.status -eq "Enabled") {
+            Write-Host "- '$($selected.name)' already enabled. check with 'pvm ini status $($selected.name)'" -ForegroundColor DarkGray
             return -1
         }
         
         $lines = Get-Content $iniPath
-        $pattern = "^\s*[#;]+\s*(zend_)?extension\s*=\s*([`"']?)(?![^\s`"';]*[/\\])[^\s`"';]*$extName[^\s`"';]*([`"']?)\s*(;.*)?$"
 
         $modified = $false
+        $lineNumber = 0
         $newLines = $lines | ForEach-Object {
-            if ($_ -match $pattern -and -not $modified) {
+            $lineNumber++
+            if ($_ -eq $selected.line -and $selected.lineNumber -eq $lineNumber -and -not $modified) {
                 $modified = $true
                 return $_ -replace "^[#;]\s*", ""
             }
@@ -351,13 +390,13 @@ function Enable-IniExtension {
         }
 
         if (-not $modified) {
-            Write-Host "- '$extName' is already enabled or not found. check with 'pvm ini status $extName'" -ForegroundColor DarkGray
+            Write-Host "- '$($selected.name)' is already enabled or not found. check with 'pvm ini status $($selected.name)'" -ForegroundColor DarkGray
             return -1
         }
 
         Backup-IniFile $iniPath
         Set-Content $iniPath $newLines -Encoding UTF8
-        Write-Host "- '$extName' enabled successfully." -ForegroundColor DarkGreen
+        Write-Host "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
 
         return 0
     } catch {

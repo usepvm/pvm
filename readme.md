@@ -78,21 +78,28 @@ pvm use auto
 
 ```sh
 # Check status of multiple extensions
-pvm ini status <extension>
+pvm ini status <extension> # It shows all matching extensions
 # Example: pvm ini status xdebug opcache
+# Example: pvm ini status sql
 
 # Enable or disable multiple extensions
-pvm ini enable <extension>
+pvm ini enable <extension> # It shows all matching extensions
 # Example: pvm ini enable xdebug opcache
-pvm ini disable <extension>
+# Example: pvm ini enable sql
+pvm ini disable <extension> # It shows all matching extensions
 # Example: pvm ini disable xdebug opcache
+# Example: pvm ini disable sql
 
 # Set or Get multiple settings values and change the status
 pvm ini set <setting>=<value> [--disable] # Default is enabling the setting
+pvm ini set <setting> [--disable] # It shows all matching settings
 # Example: pvm ini set memory_limit=512M max_file_uploads=20
 # Example: pvm ini set max_input_time=60 --disable
-pvm ini get <setting>
+# Example: pvm ini set memory=1G
+# Example: pvm ini set memory
+pvm ini get <setting> # It shows all matching settings
 # Example: pvm ini get memory_limit max_file_uploads
+# Example: pvm ini get memory
 
 # Install extensions from remote source
 pvm ini install <extension>

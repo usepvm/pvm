@@ -81,13 +81,15 @@ function Get-Matching-PHPExtensionsStatus {
     $lines = Get-Content $iniPath
 
     $matchesList = @()
+    $lineNumber = 1
     foreach ($line in $lines) {
         if ($line -match $enabledPattern) {
-            $matchesList += @{ name = $matches['ext']; status = "Enabled"; color = "DarkGreen" }
+            $matchesList += @{ name = $matches['ext']; status = "Enabled"; color = "DarkGreen"; line = $line; lineNumber = $lineNumber }
         }
         if ($line -match $disabledPattern) {
-            $matchesList += @{ name = $matches['ext']; status = "Disabled"; color = "DarkYellow"}
+            $matchesList += @{ name = $matches['ext']; status = "Disabled"; color = "DarkYellow"; line = $line; lineNumber = $lineNumber }
         }
+        $lineNumber++
     }
     
     return $matchesList

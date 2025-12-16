@@ -1144,7 +1144,7 @@ function Invoke-PVMIniAction {
                     return -1
                 }
                 
-                Write-Host "`nEnabling extension(s): $($remainingArgs -join ', ')"
+                Write-Host "`nEnabling extension(s): $($params -join ', ')"
                 foreach ($extName in $params) {
                     $exitCode = Enable-IniExtension -iniPath $iniPath -extName $extName
                 }
@@ -1155,7 +1155,7 @@ function Invoke-PVMIniAction {
                     return -1
                 }
                 
-                Write-Host "`nDisabling extension(s): $($remainingArgs -join ', ')"
+                Write-Host "`nDisabling extension(s): $($params -join ', ')"
                 foreach ($extName in $params) {
                     $exitCode = Disable-IniExtension -iniPath $iniPath -extName $extName
                 }
@@ -1166,7 +1166,7 @@ function Invoke-PVMIniAction {
                     return -1
                 }
                 
-                Write-Host "`nChecking status of extension(s): $($remainingArgs -join ', ')"
+                Write-Host "`nChecking status of extension(s): $($params -join ', ')"
                 foreach ($extName in $params) {
                     $exitCode = Get-IniExtensionStatus -iniPath $iniPath -extName $extName
                 }
@@ -1180,7 +1180,7 @@ function Invoke-PVMIniAction {
                     return -1
                 }
                 
-                Write-Host "`nInstalling extension(s): $($remainingArgs -join ', ')"
+                Write-Host "`nInstalling extension(s): $($params -join ', ')"
                 foreach ($extName in $params) {
                     $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName
                 }

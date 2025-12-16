@@ -142,31 +142,6 @@ extension=php_mbstring.dll
     }
 }
 
-Describe "Get-Single-PHPExtensionStatus" {
-    Context "When extension is enabled" {
-        It "Returns enabled status" {
-            @"
-zend_extension=php_opcache.dll
-extension=php_curl.dll
-"@ | Set-Content $testIniPath
-            $result = Get-Single-PHPExtensionStatus -iniPath $testIniPath -extName "opcache"
-            $result.status | Should -Be "Enabled"
-            $result.color | Should -Be "DarkGreen"
-        }
-    }
-    
-    Context "When extension is disabled" {
-        It "Returns disabled status" {
-            @"
-;zend_extension=php_opcache.dll
-extension=php_curl.dll
-"@ | Set-Content $testIniPath
-            $result = Get-Single-PHPExtensionStatus -iniPath $testIniPath -extName "opcache"
-            $result.status | Should -Be "Disabled"
-            $result.color | Should -Be "DarkYellow"
-        }
-    }
-}
 
 Describe "Get-XDebug-FROM-URL Tests" {
     BeforeAll {
@@ -349,7 +324,7 @@ opcache.protect_memory=1
     }
     
     It "Prompts user when multiple matches found and does not require input" {
-            @"
+        @"
 ;memory_limit=2G
 opcache.protect_memory=1
 "@ | Set-Content $testIniPath
@@ -376,6 +351,7 @@ opcache.protect_memory=1
 opcache.protect_memory=1
 "@ | Set-Content $testIniPath
 
+        $script:callCount = 0
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
             $script:callCount++
             if ($script:callCount -eq 1) { 'A' } 
@@ -439,6 +415,59 @@ extension=php_curl.dll
         (Get-Content $testIniPath) -match "^zend_extension=php_opcache.dll" | Should -Be $true
     }
     
+    It "Prompts user to select extension if multiple matches found" {
+        @"
+;extension=pdo_mysql
+extension=pdo_pgsql
+;extension=pdo_sqlite
+;extension=pgsql
+extension=sqlite3
+"@ | Set-Content $testIniPath
+
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
+        
+        Enable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
+        
+        (Get-Content $testIniPath) -match "^extension\s*=\s*pdo_mysql" | Should -Be $true
+    }
+    
+    It "Prompts user to add extension if no match found" {
+        @"
+extension=gettext
+;extension=gmp
+extension=intl
+;extension=imap
+extension=mbstring
+"@ | Set-Content $testIniPath
+
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nWould you like to add 'sql' to the extensions list? (y/n)" } -MockWith { return 'y' }
+        
+        Mock Add-Missing-PHPExtension { return 0 }
+        Enable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
+    }
+    
+    It "Prints error message for non-valid number" -Tag i {
+        @"
+;extension=pdo_mysql
+extension=pdo_pgsql
+;extension=pdo_sqlite
+;extension=pgsql
+extension=sqlite3
+"@ | Set-Content $testIniPath
+
+        $script:callCount = 0
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
+            $script:callCount++
+            if ($script:callCount -eq 1) { 'A' } 
+            if ($script:callCount -eq 2) { -1 }
+            else { 4 }
+        }
+
+        Enable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
+        
+        (Get-Content $testIniPath) -match "^extension\s*=\s*pgsql" | Should -Be $true
+    }
+    
     It "Creates backup before modifying" {
         Enable-IniExtension -iniPath $testIniPath -extName "xdebug"
         Test-Path $testBackupPath | Should -Be $true
@@ -450,7 +479,7 @@ extension=php_curl.dll
     }
     
     It "Prompts to add missing extension" {
-        Mock Get-Single-PHPExtensionStatus { return $null }
+        Mock Get-Matching-PHPExtensionsStatus { return @() }
         Mock Read-Host { return "y" }
         Enable-IniExtension -iniPath $testIniPath -extName "xdebug" | Should -Be 0
     }
@@ -487,6 +516,60 @@ Describe "Disable-IniExtension" {
         (Get-Content $testIniPath) -match "^;zend_extension=php_opcache.dll" | Should -Be $true
     }
     
+    
+    It "Prompts user to select extension if multiple matches found" {
+        @"
+extension=pdo_mysql
+;extension=pdo_pgsql
+extension=pdo_sqlite
+extension=pgsql
+;extension=sqlite3
+"@ | Set-Content $testIniPath
+
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
+        
+        Disable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
+        
+        (Get-Content $testIniPath) -match "^;extension\s*=\s*pdo_mysql" | Should -Be $true
+    }
+    
+    It "Prompts user to add extension if no match found" {
+        @"
+;extension=gettext
+extension=gmp
+;extension=intl
+extension=imap
+;extension=mbstring
+"@ | Set-Content $testIniPath
+
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nWould you like to add 'sql' to the extensions list? (y/n)" } -MockWith { return 'y' }
+        
+        Mock Add-Missing-PHPExtension { return 0 }
+        Disable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
+    }
+    
+    It "Prints error message for non-valid number" {
+        @"
+extension=pdo_mysql
+;extension=pdo_pgsql
+extension=pdo_sqlite
+extension=pgsql
+;extension=sqlite3
+"@ | Set-Content $testIniPath
+
+        $script:callCount = 0
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
+            $script:callCount++
+            if ($script:callCount -eq 1) { 'A' } 
+            if ($script:callCount -eq 2) { -1 }
+            else { 4 }
+        }
+
+        Disable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
+        
+        (Get-Content $testIniPath) -match "^;extension\s*=\s*pgsql" | Should -Be $true
+    }
+    
     It "Creates backup before modifying" {
         Disable-IniExtension -iniPath $testIniPath -extName "curl"
         Test-Path $testBackupPath | Should -Be $true
@@ -498,7 +581,7 @@ Describe "Disable-IniExtension" {
     }
     
     It "Prompts to add missing extension" {
-        Mock Get-Single-PHPExtensionStatus { return $null }
+        Mock Get-Matching-PHPExtensionsStatus { return @() }
         Mock Read-Host { return "y" }
         Disable-IniExtension -iniPath $testIniPath -extName "curl" | Should -Be 0
     }
@@ -543,7 +626,7 @@ Describe "Get-IniExtensionStatus" {
     }
     
     It "Handles xdebug special case with failed PHP version" {
-            @"
+        @"
 memory_limit = 128M
 extension=php_curl.dll
 zend_extension=php_opcache.dll
@@ -564,7 +647,7 @@ zend_extension=php_opcache.dll
     }
     
     It "Handles zend_extension addition for opcache" {
-            @"
+        @"
 ;extension=php_xdebug.dll
 extension=php_curl.dll
 "@ | Set-Content -Path $testIniPath -Encoding UTF8

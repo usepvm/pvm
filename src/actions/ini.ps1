@@ -175,10 +175,10 @@ function Get-IniSetting {
 
         $maxLineLength = ($result.extensionName | Measure-Object -Maximum Length).Maximum + 10
         $result | ForEach-Object {
-            $name = "$($_.extensionName) ".PadRight($maxLineLength, '.')
+            $extensionName = "$($_.extensionName) ".PadRight($maxLineLength, '.')
             $value = if ($_.value -eq '') { '(not set)' } else { $_.value }
             
-            Write-Host "- $name $value " -NoNewline
+            Write-Host "- $extensionName $value " -NoNewline
             Write-Host "$($_.enabled)" -ForegroundColor $_.color
         }
         return 0
@@ -592,7 +592,7 @@ function Display-Installed-Extensions {
             $color = "DarkGray"
         }
 
-        Write-Host $label -NoNewline
+        Write-Host "$label " -NoNewline
         Write-Host $status -ForegroundColor $color
     }
 }
@@ -623,7 +623,7 @@ function Display-Settings {
         $value = " $($_.Value) "
 
         # pad with dots so value always starts at same column
-        $line  = ($label).PadRight($maxLineLength - $value.Length, '.') + $value
+        $line  = $label.PadRight($maxLineLength - $value.Length, '.') + $value
 
         if ($_.Enabled) {
             $status = "Enabled "
@@ -1066,7 +1066,7 @@ function List-PHP-Extensions {
             Write-Host "`nAvailable Extensions by Category:"
             Write-Host    "--------------------------------"
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
-                $key  = $_.Key
+                $key  = "$($_.Key) "
                 $vals = ($_.Value | ForEach-Object { $_.extName }) -join ", "
 
                 $line  = $key.PadRight($maxLineLength, '.') + " $vals"

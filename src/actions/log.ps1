@@ -69,7 +69,7 @@ function Format-NiceTimestamp {
 }
 
 function Show-Log {
-    param($pageSize = $DefaultLogPageSize, $term = $null)
+    param($pageSize = $DEFAULT_LOG_PAGE_SIZE, $term = $null)
     
     try {
         if ($pageSize -notmatch '^-?\d+$') {

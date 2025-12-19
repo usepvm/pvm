@@ -48,7 +48,7 @@ Describe "Format-NiceTimestamp" {
 
 Describe "Show-Log" {
     BeforeAll {
-        $global:DefaultLogPageSize = 3
+        $global:DEFAULT_LOG_PAGE_SIZE = 3
         $global:LOG_ERROR_PATH = "TestDrive:\logs\error.log"
         New-Item -ItemType Directory -Path (Split-Path $LOG_ERROR_PATH) -Force | Out-Null
         Mock Write-Host {}

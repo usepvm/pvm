@@ -326,7 +326,7 @@ Describe "Invoke-PVMIni Tests" {
 Describe "Invoke-PVMLog Tests" {
     BeforeAll {
         # Default log page size value for tests
-        $global:DefaultLogPageSize = 5
+        $global:DEFAULT_LOG_PAGE_SIZE = 5
         Mock Show-Log { 0 }
     }
     

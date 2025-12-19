@@ -1017,7 +1017,7 @@ function List-PHP-Extensions {
             
             if (Test-Path $cacheFile) {
                 $fileAgeHours = (New-TimeSpan -Start (Get-Item $cacheFile).LastWriteTime -End (Get-Date)).TotalHours
-                $useCache = ($fileAgeHours -lt $CacheMaxHours)
+                $useCache = ($fileAgeHours -lt $CACHE_MAX_HOURS)
             }
             
             if ($useCache) {

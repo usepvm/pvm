@@ -53,7 +53,7 @@ function Get-PHP-List-To-Install {
 
         if (Test-Path $cacheFile) {
             $fileAgeHours = (New-TimeSpan -Start (Get-Item $cacheFile).LastWriteTime -End (Get-Date)).TotalHours
-            $useCache = ($fileAgeHours -lt $CacheMaxHours)
+            $useCache = ($fileAgeHours -lt $CACHE_MAX_HOURS)
         }
         
         if ($useCache) {
@@ -97,7 +97,7 @@ function Get-Available-PHP-Versions {
                 }
             }
             if ($searchResult.Count -ne 0) {
-                $fetchedVersionsGroupedPartialList[$_.Key] = $searchResult | Select-Object -Last $LatestVersionCount
+                $fetchedVersionsGroupedPartialList[$_.Key] = $searchResult | Select-Object -Last $LATEST_VERSION_COUNT
             }
         }
         

@@ -175,7 +175,7 @@ function Invoke-PVMLog {
     if ($pageSizeArg) {
         $pageSize = $pageSizeArg -replace '^--pageSize=', ''
     } else {
-        $pageSize = $DefaultLogPageSize
+        $pageSize = $DEFAULT_LOG_PAGE_SIZE
     }
 
     $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
@@ -254,7 +254,7 @@ function Get-Actions {
                 USAGE = "pvm list [available] [--search=<term>] (alias: pvm ls [available] [--search=<term>])"
                 DESCRIPTION = @(
                     "shows installed PHP versions."
-                    "With 'available' argument, shows available PHP versions for installation. (list is cashed for $CacheMaxHours hours)"
+                    "With 'available' argument, shows available PHP versions for installation. (list is cashed for $CACHE_MAX_HOURS hours)"
                 )
                 EXAMPLES = @(
                     "pvm list ........................... Show installed versions"
@@ -400,13 +400,13 @@ function Get-Actions {
             command = "pvm log";
             description = "Display the log file.";
             usage = [ordered]@{
-                USAGE = "pvm log --pageSize=[number] (default is $DefaultLogPageSize)"
+                USAGE = "pvm log --pageSize=[number] (default is $DEFAULT_LOG_PAGE_SIZE)"
                 DESCRIPTION = @(
                     "Displays the PVM log file contents, showing recent errors,"
                     "and system messages. Useful for troubleshooting issues."
                 )
                 EXAMPLES = @(
-                    "pvm log .................. Shows the last $DefaultLogPageSize entries of the log file"
+                    "pvm log .................. Shows the last $DEFAULT_LOG_PAGE_SIZE entries of the log file"
                     "pvm log --pageSize=50 .... Shows the last 50 entries of the log file"
                 )
             }

@@ -177,7 +177,9 @@ function Invoke-PVMLog {
     } else {
         $pageSize = $DefaultLogPageSize
     }
-    $code = Show-Log -pageSize $pageSize
+
+    $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
+    $code = Show-Log -pageSize $pageSize -term $term
     return $code
 }
 

@@ -69,7 +69,7 @@ function Format-NiceTimestamp {
 }
 
 function Show-Log {
-    param($pageSize = $DefaultLogPageSize)
+    param($pageSize = $DefaultLogPageSize, $term = $null)
     
     try {
         if ($pageSize -notmatch '^-?\d+$') {
@@ -98,6 +98,9 @@ function Show-Log {
         # Parse each entry into objects
         $parsedEntries = @()
         foreach ($entry in $logEntries) {
+            if ($term -and ($entry -notmatch [regex]::Escape($term))) {
+                continue
+            }
             $lines = $entry.Trim() -split "`n"
             if ($lines.Count -ge 1) {  # Changed from 2 to 1 to catch single-line entries
                 # Extract timestamp from first line
@@ -147,7 +150,7 @@ function Show-Log {
         $reversedEntries = $parsedEntries[-1..-($parsedEntries.Length)]
         
         if ($reversedEntries.Count -eq 0) {
-            Write-Host "No log entries found." -ForegroundColor Yellow
+            Write-Host "`nNo log entries found." -ForegroundColor Yellow
             return
         }
         

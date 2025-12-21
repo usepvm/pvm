@@ -14,6 +14,7 @@ $Global:DATA_PATH = "$STORAGE_PATH\data"
 # Log paths
 $Global:LOG_ERROR_PATH = "$STORAGE_PATH\logs\error.log"
 $Global:PATH_VAR_BACKUP_PATH = "$STORAGE_PATH\logs\path.bak.log"
+$Global:CACHE_PATH = "$DATA_PATH\cache"
 
 # Environment variable names
 $Global:PATH_VAR_BACKUP_NAME = "Path.bak"

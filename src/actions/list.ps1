@@ -47,7 +47,7 @@ function Get-From-Source {
 
 function Get-PHP-List-To-Install {
     try {
-        $cacheFile = "$DATA_PATH\available_php_versions.json"
+        $cacheFile = "$CACHE_PATH\available_php_versions.json"
         $fetchedVersionsGrouped = @{}
         $useCache = $false
 

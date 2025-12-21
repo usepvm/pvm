@@ -6,7 +6,7 @@ function Get-Zend-Extensions-List {
 function Get-Data-From-Cache {
     param ($cacheFileName)
     
-    $path = "$DATA_PATH\$cacheFileName.json"
+    $path = "$CACHE_PATH\$cacheFileName.json"
     $list = @{}
     try {
         $jsonData = Get-Content $path | ConvertFrom-Json
@@ -32,7 +32,7 @@ function Cache-Data {
     
     try {
         $jsonString = $data | ConvertTo-Json -Depth $depth
-        $path = "$DATA_PATH\$cacheFileName.json"
+        $path = "$CACHE_PATH\$cacheFileName.json"
         $created = Make-Directory -path (Split-Path $path)
         if ($created -ne 0) {
             Write-Host "Failed to create directory $(Split-Path $path)"

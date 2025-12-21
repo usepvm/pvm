@@ -1012,7 +1012,7 @@ function List-PHP-Extensions {
         } else {
             Write-Host "`nLoading available extensions..."
             
-            $cacheFile = "$DATA_PATH\available_extensions.json"
+            $cacheFile = "$CACHE_PATH\available_extensions.json"
             $useCache = $false
             
             if (Test-Path $cacheFile) {

@@ -48,19 +48,40 @@ function Enable-IniExtension-Direct {
         
         $lines = [string[]](Get-Content $iniPath)
         $modified = $false
-        $escapedFileName = [regex]::Escape($extFileName)
         
-        # Pattern matches extension line with the exact filename (may have path prefix)
-        $extPattern = if ($extType -eq "zend_extension") {
-            "^[#;]?\s*zend_extension\s*=\s*.*$escapedFileName"
-        } else {
-            "^[#;]?\s*extension\s*=\s*.*$escapedFileName"
-        }
-        
+        # Check for extension in multiple formats:
+        # 1. extension=php_openssl.dll (full filename, may have path)
+        # 2. extension=openssl (just the name without php_ prefix and .dll suffix)
         for ($i = 0; $i -lt $lines.Count; $i++) {
-            if ($lines[$i] -match $extPattern) {
+            $line = $lines[$i]
+            $isMatch = $false
+            
+            # Match extension or zend_extension lines (commented or not)
+            $pattern = if ($extType -eq "zend_extension") {
+                "^[#;]?\s*zend_extension\s*=\s*([`"']?)([^\s`"';]*)\1\s*(;.*)?$"
+            } else {
+                "^[#;]?\s*extension\s*=\s*([`"']?)([^\s`"';]*)\1\s*(;.*)?$"
+            }
+            
+            if ($line -match $pattern) {
+                $foundExt = $matches[2].Trim()
+                # Extract just the filename if there's a path
+                $foundExtFileName = [System.IO.Path]::GetFileName($foundExt)
+                # Normalize: remove php_ prefix and .dll suffix to get base name
+                $foundExtBaseName = $foundExtFileName -replace '^php_', '' -replace '\.dll$', ''
+                
+                # Also check the original value (for cases like extension=openssl)
+                $foundExtBaseNameOriginal = $foundExt -replace '^php_', '' -replace '\.dll$', ''
+                
+                # Match if the normalized base name matches (handles both formats)
+                if ($foundExtBaseName -eq $extName -or $foundExtBaseNameOriginal -eq $extName) {
+                    $isMatch = $true
+                }
+            }
+            
+            if ($isMatch) {
                 # Uncomment the line (remove leading ; or #)
-                $lines[$i] = $lines[$i] -replace '^[#;]\s*', ''
+                $lines[$i] = $line -replace '^[#;]\s*', ''
                 $modified = $true
                 break
             }
@@ -93,19 +114,45 @@ function Disable-IniExtension-Direct {
         
         $lines = [string[]](Get-Content $iniPath)
         $modified = $false
-        $escapedFileName = [regex]::Escape($extFileName)
         
-        # Pattern matches enabled extension line (not commented) with the exact filename
-        $extPattern = if ($extType -eq "zend_extension") {
-            "^\s*zend_extension\s*=\s*.*$escapedFileName"
-        } else {
-            "^\s*extension\s*=\s*.*$escapedFileName"
-        }
-        
+        # Check for extension in multiple formats (only enabled/not commented lines):
+        # 1. extension=php_openssl.dll (full filename, may have path)
+        # 2. extension=openssl (just the name without php_ prefix and .dll suffix)
         for ($i = 0; $i -lt $lines.Count; $i++) {
-            if ($lines[$i] -match $extPattern -and $lines[$i] -notmatch '^\s*[#;]') {
+            $line = $lines[$i]
+            # Skip commented lines
+            if ($line -match '^\s*[#;]') {
+                continue
+            }
+            
+            $isMatch = $false
+            
+            # Match extension or zend_extension lines (must be enabled/not commented)
+            $pattern = if ($extType -eq "zend_extension") {
+                "^\s*zend_extension\s*=\s*([`"']?)([^\s`"';]*)\1\s*(;.*)?$"
+            } else {
+                "^\s*extension\s*=\s*([`"']?)([^\s`"';]*)\1\s*(;.*)?$"
+            }
+            
+            if ($line -match $pattern) {
+                $foundExt = $matches[2].Trim()
+                # Extract just the filename if there's a path
+                $foundExtFileName = [System.IO.Path]::GetFileName($foundExt)
+                # Normalize: remove php_ prefix and .dll suffix to get base name
+                $foundExtBaseName = $foundExtFileName -replace '^php_', '' -replace '\.dll$', ''
+                
+                # Also check the original value (for cases like extension=openssl)
+                $foundExtBaseNameOriginal = $foundExt -replace '^php_', '' -replace '\.dll$', ''
+                
+                # Match if the normalized base name matches (handles both formats)
+                if ($foundExtBaseName -eq $extName -or $foundExtBaseNameOriginal -eq $extName) {
+                    $isMatch = $true
+                }
+            }
+            
+            if ($isMatch) {
                 # Comment out the line
-                $lines[$i] = ";$($lines[$i])"
+                $lines[$i] = ";$line"
                 $modified = $true
                 break
             }

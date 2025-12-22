@@ -147,16 +147,15 @@ function Invoke-PVMTest {
             $options.tag = $Matches[1]
             return $false
         }
-        if ($_ -match '^--coverage$') {
-            $options.coverage = ($_ -eq '--coverage')
+        if ($_ -match '^--coverage(?:=(\d+(?:\.\d+)?))?$') {
+            $options.coverage = $true
+            if ($Matches[1]) {
+                $options.target = [decimal] $Matches[1]
+            }
             return $false
         }
         if ($_ -match '^--verbosity=(.+)$') {
             $options.verbosity = $Matches[1]
-            return $false
-        }
-        if ($_ -match '^--target=(\d+(?:\.\d)?)$') {
-            $options.target = [decimal] $Matches[1]
             return $false
         }
         return $true
@@ -451,7 +450,7 @@ function Get-Actions {
             command = "pvm test";
             description = "Run tests.";
             usage = [ordered]@{
-                USAGE = "pvm test [files] [--coverage] [--verbosity=<verbosity>] [--tag=<tag>] [--target=<number>]"
+                USAGE = "pvm test [files] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>]"
                 DESCRIPTION = @(
                     "Runs the PVM test suite to verify that the installation and configuration"
                     "are working correctly. This includes testing PHP version switching,"
@@ -461,18 +460,17 @@ function Get-Actions {
                     "pvm test ......................... Runs all tests with Normal (default) verbosity"
                     "pvm test use install ............. Runs only use.tests.ps1 and install.tests.ps1 with Normal verbosity."
                     "pvm test --verbosity=Detailed .... Runs all tests with Detailed verbosity."
-                    "pvm test --coverage .............. Runs all tests and generates coverage report."
+                    "pvm test --coverage .............. Runs all tests and generates coverage report (target: 75%)"
+                    "pvm test --coverage=80 ........... Runs all tests and generates coverage report (target: 80%)"
                     "pvm test --tag=unit .............. Runs only tests with tag 'unit'"
-                    "pvm test --target=80 ............. Sets code coverage target to 80% (default is 75%)"
                 )
                 ARGUMENTS = @(
                     "files ............................ Run only specific test files (e.g. use, install)"
                 )
                 OPTIONS = @(
-                    "--coverage ....................... Generate coverage report"
+                    "--coverage[=<number>] ............ Generate coverage report with optional target percentage (default: 75%)"
                     "--verbosity=<verbosity> .......... Set verbosity level (None, Normal (Default), Detailed, Diagnostic)"
                     "--tag=<tag> ...................... Run only tests with specific tag"
-                    "--target=<number> ................ Set code coverage target percentage (default is 75%)"
                 )
             }
             action = { return Invoke-PVMTest -arguments $script:arguments }}

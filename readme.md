@@ -127,6 +127,49 @@ pvm log --pageSize=[number] # Default value is 5
 # Example: pvm log --pageSize=3
 ```
 
+### Manage PHP Configuration Profiles
+
+Save, load, and share PHP settings and extensions using JSON profiles:
+
+```sh
+# Save current PHP configuration to a profile
+pvm profile save <name> [description]
+# Example: pvm profile save development
+# Example: pvm profile save production "Production configuration"
+
+# Load and apply a saved profile
+pvm profile load <name>
+# Example: pvm profile load development
+
+# List all available profiles
+pvm profile list
+
+# Show detailed profile contents
+pvm profile show <name>
+# Example: pvm profile show development
+
+# Delete a profile
+pvm profile delete <name>
+# Example: pvm profile delete old-profile
+
+# Export profile to a JSON file
+pvm profile export <name> [path]
+# Example: pvm profile export development
+# Example: pvm profile export dev ./backup.json
+
+# Import profile from a JSON file
+pvm profile import <path> [name]
+# Example: pvm profile import ./my-profile.json
+# Example: pvm profile import ./profile.json custom-name
+```
+
+**Profile Structure**: Profiles are stored as JSON files in `storage/data/profiles/` and contain:
+- Popular/common PHP settings (key-value pairs with enabled/disabled state)
+- Popular/common extensions (enabled/disabled state and type)
+- Metadata (name, description, creation date, PHP version)
+
+**Note**: Only popular/common settings and extensions are saved in profiles. This keeps profiles focused and manageable.
+
 ## Running Tests
 Run tests against the PowerShell scripts in the repo — especially useful for contributors verifying changes before submitting a pull request:
 

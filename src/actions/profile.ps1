@@ -3,7 +3,7 @@ function Set-IniSetting-Direct {
     param ($iniPath, $settingName, $value, $enabled = $true)
     
     try {
-        $lines = Get-Content $iniPath
+        $lines = [string[]](Get-Content $iniPath)
         $modified = $false
         $escapedName = [regex]::Escape($settingName)
         $exactPattern = "^[#;]?\s*$escapedName\s*=\s*(.*)$"
@@ -46,7 +46,7 @@ function Enable-IniExtension-Direct {
         $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
         $extFileName = "php_$extName.dll"
         
-        $lines = Get-Content $iniPath
+        $lines = [string[]](Get-Content $iniPath)
         $modified = $false
         $escapedFileName = [regex]::Escape($extFileName)
         
@@ -91,7 +91,7 @@ function Disable-IniExtension-Direct {
         $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
         $extFileName = "php_$extName.dll"
         
-        $lines = Get-Content $iniPath
+        $lines = [string[]](Get-Content $iniPath)
         $modified = $false
         $escapedFileName = [regex]::Escape($extFileName)
         

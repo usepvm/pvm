@@ -1,7 +1,7 @@
 
 
 # PVM version
-$Global:PVM_VERSION = "2.4"
+$Global:PVM_VERSION = "2.5"
 
 # Root path of the PVM script
 $Global:PVMRoot = (Resolve-Path "$PSScriptRoot\..\..").Path

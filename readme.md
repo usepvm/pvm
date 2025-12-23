@@ -127,6 +127,49 @@ pvm log --pageSize=[number] # Default value is 5
 # Example: pvm log --pageSize=3
 ```
 
+### Manage PHP Configuration Profiles
+
+Save, load, and share PHP settings and extensions using JSON profiles:
+
+```sh
+# Save current PHP configuration to a profile
+pvm profile save <name> [description]
+# Example: pvm profile save development
+# Example: pvm profile save production "Production configuration"
+
+# Load and apply a saved profile
+pvm profile load <name>
+# Example: pvm profile load development
+
+# List all available profiles
+pvm profile list
+
+# Show detailed profile contents
+pvm profile show <name>
+# Example: pvm profile show development
+
+# Delete a profile
+pvm profile delete <name>
+# Example: pvm profile delete old-profile
+
+# Export profile to a JSON file
+pvm profile export <name> [path]
+# Example: pvm profile export development
+# Example: pvm profile export dev ./backup.json
+
+# Import profile from a JSON file
+pvm profile import <path> [name]
+# Example: pvm profile import ./my-profile.json
+# Example: pvm profile import ./profile.json custom-name
+```
+
+**Profile Structure**: Profiles are stored as JSON files in `storage/data/profiles/` and contain:
+- Popular/common PHP settings (key-value pairs with enabled/disabled state)
+- Popular/common extensions (enabled/disabled state and type)
+- Metadata (name, description, creation date, PHP version)
+
+**Note**: Only popular/common settings and extensions are saved in profiles. This keeps profiles focused and manageable.
+
 ## Running Tests
 Run tests against the PowerShell scripts in the repo — especially useful for contributors verifying changes before submitting a pull request:
 
@@ -149,15 +192,15 @@ Get-Module -ListAvailable Pester
 ### Run the tests
 
 ```sh
-pvm test [files = (files inside the tests/ directory)] [--coverage] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=yourTag][--target=80]
+pvm test [files = (files inside the tests/ directory)] [--coverage[=<number>]] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=<tag>]
 
 # Examples:
 pvm test # .............................. Runs all tests with Normal (default) verbosity.
 pvm test use install # .................. Runs only 'use.tests.ps1' and 'install.tests.ps1' files with Normal verbosity.
 pvm test --verbosity=Detailed # ......... Runs all tests with Detailed verbosity.
-pvm test --coverage # ................... Runs all tests and generates coverage report
+pvm test --coverage # ................... Runs all tests and generates coverage report (target: 75%)
+pvm test --coverage=80.5 # .............. Runs all tests and generates coverage report (target: 80.5%)
 pvm test --tag=myTag #................... Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity and only runs tests with tag "myTag".
-pvm test --target=80 # .................. Sets code coverage target to 80% (default is 75%)
 ```
 
 ## Contributing

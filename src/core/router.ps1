@@ -147,16 +147,15 @@ function Invoke-PVMTest {
             $options.tag = $Matches[1]
             return $false
         }
-        if ($_ -match '^--coverage$') {
-            $options.coverage = ($_ -eq '--coverage')
+        if ($_ -match '^--coverage(?:=(\d+(?:\.\d+)?))?$') {
+            $options.coverage = $true
+            if ($Matches[1]) {
+                $options.target = [decimal] $Matches[1]
+            }
             return $false
         }
         if ($_ -match '^--verbosity=(.+)$') {
             $options.verbosity = $Matches[1]
-            return $false
-        }
-        if ($_ -match '^--target=(\d+(?:\.\d)?)$') {
-            $options.target = [decimal] $Matches[1]
             return $false
         }
         return $true
@@ -206,6 +205,86 @@ function Invoke-PVMHelp {
     }
     
     return 0
+}
+
+function Invoke-PVMProfile {
+    param($arguments)
+    
+    $action = $arguments[0]
+    
+    if (-not $action) {
+        Write-Host "`nPlease specify an action for 'pvm profile'. Use 'save', 'load', 'list', 'show', 'delete', 'export', or 'import'." -ForegroundColor Yellow
+        return -1
+    }
+    
+    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
+    
+    switch ($action.ToLower()) {
+        "save" {
+            if ($remainingArgs.Count -eq 0) {
+                Write-Host "`nPlease provide a profile name: pvm profile save <name> [description]" -ForegroundColor Yellow
+                return -1
+            }
+            $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
+            $description = if ($remainingArgs.Count -gt 1) { ($remainingArgs[1..($remainingArgs.Count - 1)] -join ' ') } else { $null }
+            return (Save-PHP-Profile -profileName $profileName -description $description)
+        }
+        "load" {
+            if ($remainingArgs.Count -eq 0) {
+                Write-Host "`nPlease provide a profile name: pvm profile load <name>" -ForegroundColor Yellow
+                return -1
+            }
+            $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
+            return (Load-PHP-Profile -profileName $profileName)
+        }
+        "list" {
+            return (List-PHP-Profiles)
+        }
+        "show" {
+            if ($remainingArgs.Count -eq 0) {
+                Write-Host "`nPlease provide a profile name: pvm profile show <name>" -ForegroundColor Yellow
+                return -1
+            }
+            $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
+            
+            return (Show-PHP-Profile -profileName $profileName)
+        }
+        "delete" {
+            if ($remainingArgs.Count -eq 0) {
+                Write-Host "`nPlease provide a profile name: pvm profile delete <name>" -ForegroundColor Yellow
+                return -1
+            }
+            
+            $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
+            
+            return (Delete-PHP-Profile -profileName $profileName)
+        }
+        "export" {
+            if ($remainingArgs.Count -eq 0) {
+                Write-Host "`nPlease provide a profile name: pvm profile export <name> [path]" -ForegroundColor Yellow
+                return -1
+            }
+            
+            $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
+            $exportPath = if ($remainingArgs.Count -gt 1) { $remainingArgs[1] } else { $null }
+            
+            return (Export-PHP-Profile -profileName $profileName -exportPath $exportPath)
+        }
+        "import" {
+            if ($remainingArgs.Count -eq 0) {
+                Write-Host "`nPlease provide a file path: pvm profile import <path> [name]" -ForegroundColor Yellow
+                return -1
+            }
+            $importPath = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
+            $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[1] } else { $null }
+            
+            return (Import-PHP-Profile -importPath $importPath -profileName $profileName)
+        }
+        default {
+            Write-Host "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'export', or 'import'." -ForegroundColor Yellow
+            return -1
+        }
+    }
 }
 
 function Get-Actions {
@@ -371,7 +450,7 @@ function Get-Actions {
             command = "pvm test";
             description = "Run tests.";
             usage = [ordered]@{
-                USAGE = "pvm test [files] [--coverage] [--verbosity=<verbosity>] [--tag=<tag>] [--target=<number>]"
+                USAGE = "pvm test [files] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>]"
                 DESCRIPTION = @(
                     "Runs the PVM test suite to verify that the installation and configuration"
                     "are working correctly. This includes testing PHP version switching,"
@@ -381,18 +460,17 @@ function Get-Actions {
                     "pvm test ......................... Runs all tests with Normal (default) verbosity"
                     "pvm test use install ............. Runs only use.tests.ps1 and install.tests.ps1 with Normal verbosity."
                     "pvm test --verbosity=Detailed .... Runs all tests with Detailed verbosity."
-                    "pvm test --coverage .............. Runs all tests and generates coverage report."
+                    "pvm test --coverage .............. Runs all tests and generates coverage report (target: 75%)"
+                    "pvm test --coverage=80 ........... Runs all tests and generates coverage report (target: 80%)"
                     "pvm test --tag=unit .............. Runs only tests with tag 'unit'"
-                    "pvm test --target=80 ............. Sets code coverage target to 80% (default is 75%)"
                 )
                 ARGUMENTS = @(
                     "files ............................ Run only specific test files (e.g. use, install)"
                 )
                 OPTIONS = @(
-                    "--coverage ....................... Generate coverage report"
+                    "--coverage[=<number>] ............ Generate coverage report with optional target percentage (default: 75%)"
                     "--verbosity=<verbosity> .......... Set verbosity level (None, Normal (Default), Detailed, Diagnostic)"
                     "--tag=<tag> ...................... Run only tests with specific tag"
-                    "--target=<number> ................ Set code coverage target percentage (default is 75%)"
                 )
             }
             action = { return Invoke-PVMTest -arguments $script:arguments }}
@@ -411,6 +489,39 @@ function Get-Actions {
                 )
             }
             action = { return Invoke-PVMLog -arguments $script:arguments }}
+        "profile" = [PSCustomObject]@{
+            command = "pvm profile <action> [<args>]";
+            description = "Manage PHP configuration profiles. Save, load, and share popular PHP settings and extensions.";
+            usage = [ordered]@{
+                USAGE = "pvm profile <action> [arguments]"
+                DESCRIPTION = @(
+                    "Manage PHP configuration profiles stored as JSON files.",
+                    "Profiles contain popular/common PHP settings and extension states that can be saved and loaded.",
+                    "Only popular/common settings and extensions are included. Other settings/extensions can be added manually using 'pvm ini' commands."
+                )
+                ARGUMENTS = @(
+                    "save <name> [description] .................... Save current PHP configuration to a profile"
+                    "load <name> .................................. Load and apply a saved profile"
+                    "list ......................................... List all available profiles"
+                    "show <name> .................................. Show detailed profile contents"
+                    "delete <name> ................................ Delete a profile"
+                    "export <name> [path] ......................... Export profile to a JSON file"
+                    "import <path> [name] ......................... Import profile from a JSON file"
+                )
+                EXAMPLES = @(
+                    "pvm profile save development ................. Saves current config as 'development' profile"
+                    "pvm profile save production 'Prod config' .... Saves with description"
+                    "pvm profile load development ................. Applies 'development' profile to current PHP"
+                    "pvm profile list ............................. Lists all saved profiles"
+                    "pvm profile show development ................. Shows detailed profile information"
+                    "pvm profile delete old-profile ............... Deletes a profile"
+                    "pvm profile export development ............... Exports profile to current directory"
+                    "pvm profile export dev ./backup.json ......... Exports to specific path"
+                    "pvm profile import ./my-profile.json ......... Imports profile from file"
+                    "pvm profile import ./profile.json custom ..... Imports with custom name"
+                )
+            }
+            action = { return Invoke-PVMProfile -arguments $script:arguments }}
     }
 }
 

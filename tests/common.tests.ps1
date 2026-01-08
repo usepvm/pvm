@@ -14,12 +14,12 @@ Describe "Get-Source-Urls" {
     
     It "Should return correct Archive URL" {
         $result = Get-Source-Urls
-        $result["Archives"] | Should -Be "https://windows.php.net/downloads/releases/archives"
+        $result["Archives"] | Should -Be "http://windows.php.net/downloads/releases/archives"
     }
     
     It "Should return correct Releases URL" {
         $result = Get-Source-Urls
-        $result["Releases"] | Should -Be "https://windows.php.net/downloads/releases"
+        $result["Releases"] | Should -Be "http://windows.php.net/downloads/releases"
     }
 }
 

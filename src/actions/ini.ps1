@@ -7,7 +7,7 @@ function Get-XDebug-FROM-URL {
         $html = Invoke-WebRequest -Uri $url
         $links = $html.Links
 
-         # Filter the links to find versions that match the given version
+        # Filter the links to find versions that match the given version
         $sysArch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x86_64' } else { '' }
         $filteredLinks = $links | Where-Object {
             $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$sysArch\.dll"
@@ -78,18 +78,133 @@ function Get-Matching-PHPExtensionsStatus {
     
     $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*$extName[^\s`"';]*)\2\s*(;.*)?$"
     $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*$extName[^\s`"';]*)\2\s*(;.*)?$"
+    Backup-IniFile $iniPath
     $lines = Get-Content $iniPath
 
     $matchesList = @()
+    $matchesInExt = @()
+
+    # helper to normalize extension identifiers for comparison
+    $normalizeId = {
+        param($n)
+        if (-not $n) { return '' }
+        $s = $n.ToString()
+        $s = $s.Trim('"', "'") # remove surrounding quotes (single or double)
+        $s = [System.IO.Path]::GetFileName($s) # get file name only (strip path)
+        $s = $s -replace '^php_', '' -replace '\.dll$', '' # strip php_ prefix and .dll suffix and lowercase
+        return $s.ToLower()
+    }
+
+    # normalized search id from the provided extName
+    $searchId = & $normalizeId $extName
+
+    # Step 1: Check ext directory first for matches
+    $phpDirectory = Split-Path -Path $iniPath -Parent
+    $extDirectory = Join-Path -Path $phpDirectory -ChildPath "ext"
+
+    if (Test-Path $extDirectory) {
+        $dllPattern = if ($searchId) { "*$searchId*.dll" } else { "*.dll" }
+        $dllFiles = Get-ChildItem -Path $extDirectory -Filter $dllPattern -File -ErrorAction SilentlyContinue
+        foreach ($file in $dllFiles) {
+            $fileId = & $normalizeId $file.BaseName
+            if (-not $fileId) { continue }
+
+            $matchesInExt += @{ 
+                name = $file.BaseName
+                id = $fileId
+                fullPath = $file.FullName
+            }
+        }
+    }
+
+    if ($matchesInExt.Count -eq 0) {
+        return @()
+    }
+
+    # Step 2: Search ini file for matching extensions (only if found in ext)
     $lineNumber = 1
+    $iniMatches = @{}  # hashtable to track ini entries by id
+
     foreach ($line in $lines) {
         if ($line -match $enabledPattern) {
-            $matchesList += @{ name = $matches['ext']; status = "Enabled"; color = "DarkGreen"; line = $line; lineNumber = $lineNumber }
+            $rawExt = $matches['ext']
+            $displayName = ($rawExt).Trim('"', "'")
+            $id = & $normalizeId $displayName
+            if (-not $id) { $lineNumber++; continue }
+
+            # track ini matches by normalized id
+            $iniMatches[$id] = @{
+                name = $displayName
+                status = "Enabled"
+                color = "DarkGreen"
+                line = $line
+                lineNumber = $lineNumber
+                source = "ini"
+            }
         }
         if ($line -match $disabledPattern) {
-            $matchesList += @{ name = $matches['ext']; status = "Disabled"; color = "DarkYellow"; line = $line; lineNumber = $lineNumber }
+            $rawExt = $matches['ext']
+            $displayName = ($rawExt).Trim('"', "'")
+            $id = & $normalizeId $displayName
+            if (-not $id) { $lineNumber++; continue }
+
+            $iniMatches[$id] = @{
+                name = $displayName
+                status = "Disabled"
+                color = "DarkYellow"
+                line = $line
+                lineNumber = $lineNumber
+                source = "ini"
+            }
         }
         $lineNumber++
+    }
+    # Step 3: Build result list: merge ext files with ini entries (ini status takes precedence if exists)
+    foreach ($extMatch in $matchesInExt) {
+        $id = $extMatch.id
+        
+        if ($iniMatches.ContainsKey($id)) {
+            # Extension is configured in ini
+            $matchesList += @{
+                name = $iniMatches[$id].name
+                id = $id
+                status = $iniMatches[$id].status
+                color = $iniMatches[$id].color
+                line = $iniMatches[$id].line
+                lineNumber = $iniMatches[$id].lineNumber
+                source = "ext,ini"
+            }
+        } else {
+            # Extension exists in ext but not configured in ini - add it as disabled
+            $isZendExtension = Get-Zend-Extensions-List | Where-Object { $extMatch.name -like "*$_*" }
+            $extensionLine = if ($isZendExtension) { ";zend_extension=$($extMatch.name).dll" } else { ";extension=$($extMatch.name).dll" }
+            
+            try {
+                $lines += $extensionLine
+                Set-Content $iniPath $lines -Encoding UTF8
+                
+                $matchesList += @{
+                    name = $extMatch.name
+                    id = $id
+                    status = "Disabled"
+                    color = "DarkYellow"
+                    line = $extensionLine
+                    lineNumber = $lines.Count
+                    source = "ext,ini"
+                }
+            } catch {
+                # If adding fails, still return it as available
+                $matchesList += @{
+                    name = $extMatch.name
+                    id = $id
+                    status = "Available (not configured)"
+                    color = "DarkCyan"
+                    line = "Found in ext directory: $($extMatch.fullPath)"
+                    lineNumber = 0
+                    source = "ext"
+                }
+            }
+        }
     }
     
     return $matchesList
@@ -309,11 +424,6 @@ function Enable-IniExtension {
         
         if ($matchesListStatus.Length -eq 0) {
             Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
-            $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
-            $response = $response.Trim()
-            if ($response -eq "y" -or $response -eq "Y") {
-                return (Add-Missing-PHPExtension -iniPath $iniPath -extName $extName -enable $false)
-            }
             
             return -1
         } 
@@ -403,11 +513,6 @@ function Disable-IniExtension {
 
         if ($matchesListStatus.Length -eq 0) {
             Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
-            $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
-            $response = $response.Trim()
-            if ($response -eq "y" -or $response -eq "Y") {
-                return (Add-Missing-PHPExtension -iniPath $iniPath -extName $extName -enable $true)
-            }
 
             return -1
         }
@@ -496,12 +601,6 @@ function Get-IniExtensionStatus {
         
         if ($matchesListStatus.Length -eq 0) {
             Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
-
-            $response = Read-Host "`nWould you like to add '$extName' to the extensions list? (y/n)"
-            $response = $response.Trim()
-            if ($response -eq "y" -or $response -eq "Y") {
-                return (Add-Missing-PHPExtension -iniPath $iniPath -extName $extName)
-            }
 
             return -1
         }

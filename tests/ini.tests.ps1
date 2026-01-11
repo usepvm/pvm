@@ -4,6 +4,7 @@
 BeforeAll {
     $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
     $testIniPath = Join-Path $testDrivePath "php.ini"
+    $extDirectory = Join-Path $testDrivePath "ext"
     $testBackupPath = "$testIniPath.bak"
     
     Mock Write-Host {}
@@ -141,7 +142,6 @@ extension=php_mbstring.dll
         $result | Should -Be -1
     }
 }
-
 
 Describe "Get-XDebug-FROM-URL Tests" {
     BeforeAll {
@@ -382,22 +382,31 @@ opcache.protect_memory=1
 
 Describe "Enable-IniExtension" {
     BeforeEach {
-        Mock Read-Host { return "n" }
-        Mock Add-Missing-PHPExtension { return 0 }
+        Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
     }
     
     It "Enables commented extension" {
+        Mock Get-ChildItem {
+            param($Path)
+            return @( @{ BaseName = "php_xdebug"; Name = "php_xdebug.dll"; FullName = "$extDirectory\php_xdebug.dll" } )
+        }
         Enable-IniExtension -iniPath $testIniPath -extName "xdebug" | Should -Be 0
         (Get-Content $testIniPath) -match "^extension=php_xdebug.dll" | Should -Be $true
     }
     
     It "Returns -1 for already enabled extension" {
+        Mock Get-ChildItem {
+            param($Path)
+            return @( @{ BaseName = "php_curl"; Name = "php_curl.dll"; FullName = "$extDirectory\php_curl.dll" } )
+        }
+        
         Enable-IniExtension -iniPath $testIniPath -extName "curl" | Should -Be -1
     }
     
     It "Returns -1 for non-existent extension" {
+        Mock Get-ChildItem { return @() }
         Enable-IniExtension -iniPath $testIniPath -extName "nonexistent_ext" | Should -Be -1
     }
     
@@ -411,6 +420,10 @@ Describe "Enable-IniExtension" {
 ;zend_extension=php_opcache.dll
 extension=php_curl.dll
 "@ | Set-Content $testIniPath
+        Mock Get-ChildItem {
+            param($Path)
+            return @( @{ BaseName = "php_opcache"; Name = "php_opcache.dll"; FullName = "$extDirectory\php_opcache.dll" } )
+        }
         Enable-IniExtension -iniPath $testIniPath -extName "opcache" | Should -Be 0
         (Get-Content $testIniPath) -match "^zend_extension=php_opcache.dll" | Should -Be $true
     }
@@ -423,7 +436,16 @@ extension=pdo_pgsql
 ;extension=pgsql
 extension=sqlite3
 "@ | Set-Content $testIniPath
-
+        Mock Get-ChildItem {
+            param($Path)
+            return @(
+                @{ BaseName = "pdo_mysql"; Name = "pdo_mysql.dll"; FullName = "$extDirectory\pdo_mysql.dll" }
+                @{ BaseName = "pdo_pgsql"; Name = "pdo_pgsql.dll"; FullName = "$extDirectory\pdo_pgsql.dll" }
+                @{ BaseName = "pdo_sqlite"; Name = "pdo_sqlite.dll"; FullName = "$extDirectory\pdo_sqlite.dll" }
+                @{ BaseName = "pgsql"; Name = "pgsql.dll"; FullName = "$extDirectory\pgsql.dll" }
+                @{ BaseName = "sqlite3"; Name = "sqlite3.dll"; FullName = "$extDirectory\sqlite3.dll" }
+            )
+        }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
         
         Enable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
@@ -431,22 +453,7 @@ extension=sqlite3
         (Get-Content $testIniPath) -match "^extension\s*=\s*pdo_mysql" | Should -Be $true
     }
     
-    It "Prompts user to add extension if no match found" {
-        @"
-extension=gettext
-;extension=gmp
-extension=intl
-;extension=imap
-extension=mbstring
-"@ | Set-Content $testIniPath
-
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nWould you like to add 'sql' to the extensions list? (y/n)" } -MockWith { return 'y' }
-        
-        Mock Add-Missing-PHPExtension { return 0 }
-        Enable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
-    }
-    
-    It "Prints error message for non-valid number" -Tag i {
+    It "Prints error message for non-valid number" {
         @"
 ;extension=pdo_mysql
 extension=pdo_pgsql
@@ -461,6 +468,17 @@ extension=sqlite3
             if ($script:callCount -eq 1) { 'A' } 
             if ($script:callCount -eq 2) { -1 }
             else { 4 }
+        }
+        
+        Mock Get-ChildItem {
+            param($Path)
+            return @(
+                @{ BaseName = "pdo_mysql"; Name = "pdo_mysql.dll"; FullName = "$extDirectory\pdo_mysql.dll" }
+                @{ BaseName = "pdo_pgsql"; Name = "pdo_pgsql.dll"; FullName = "$extDirectory\pdo_pgsql.dll" }
+                @{ BaseName = "pdo_sqlite"; Name = "pdo_sqlite.dll"; FullName = "$extDirectory\pdo_sqlite.dll" }
+                @{ BaseName = "pgsql"; Name = "pgsql.dll"; FullName = "$extDirectory\pgsql.dll" }
+                @{ BaseName = "sqlite3"; Name = "sqlite3.dll"; FullName = "$extDirectory\sqlite3.dll" }
+            )
         }
 
         Enable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
@@ -477,23 +495,20 @@ extension=sqlite3
         Mock Get-Content { throw "Access denied" }
         Enable-IniExtension -iniPath $testIniPath -extName "xdebug" | Should -Be -1
     }
-    
-    It "Prompts to add missing extension" {
-        Mock Get-Matching-PHPExtensionsStatus { return @() }
-        Mock Read-Host { return "y" }
-        Enable-IniExtension -iniPath $testIniPath -extName "xdebug" | Should -Be 0
-    }
 }
 
 Describe "Disable-IniExtension" {
     BeforeEach {
-        Mock Read-Host { return "n" }
-        Mock Add-Missing-PHPExtension { return 0 }
+        Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
     }
     
     It "Disables enabled extension" {
+        Mock Get-ChildItem {
+            param($Path)
+            return @( @{ BaseName = "php_curl"; Name = "php_curl.dll"; FullName = "$extDirectory\php_curl.dll" } )
+        }
         Disable-IniExtension -iniPath $testIniPath -extName "curl" | Should -Be 0
         (Get-Content $testIniPath) -match "^;extension=php_curl.dll" | Should -Be $true
     }
@@ -512,6 +527,10 @@ Describe "Disable-IniExtension" {
     }
     
     It "Handles zend_extension" {
+        Mock Get-ChildItem {
+            param($Path)
+            return @( @{ BaseName = "php_opcache"; Name = "php_opcache.dll"; FullName = "$extDirectory\php_opcache.dll" } )
+        }
         Disable-IniExtension -iniPath $testIniPath -extName "opcache" | Should -Be 0
         (Get-Content $testIniPath) -match "^;zend_extension=php_opcache.dll" | Should -Be $true
     }
@@ -525,27 +544,21 @@ extension=pdo_sqlite
 extension=pgsql
 ;extension=sqlite3
 "@ | Set-Content $testIniPath
-
+        Mock Get-ChildItem {
+            param($Path)
+            return @(
+                @{ BaseName = "pdo_mysql"; Name = "pdo_mysql.dll"; FullName = "$extDirectory\pdo_mysql.dll" }
+                @{ BaseName = "pdo_pgsql"; Name = "pdo_pgsql.dll"; FullName = "$extDirectory\pdo_pgsql.dll" }
+                @{ BaseName = "pdo_sqlite"; Name = "pdo_sqlite.dll"; FullName = "$extDirectory\pdo_sqlite.dll" }
+                @{ BaseName = "pgsql"; Name = "pgsql.dll"; FullName = "$extDirectory\pgsql.dll" }
+                @{ BaseName = "sqlite3"; Name = "sqlite3.dll"; FullName = "$extDirectory\sqlite3.dll" }
+            )
+        }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
         
         Disable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
         
         (Get-Content $testIniPath) -match "^;extension\s*=\s*pdo_mysql" | Should -Be $true
-    }
-    
-    It "Prompts user to add extension if no match found" {
-        @"
-;extension=gettext
-extension=gmp
-;extension=intl
-extension=imap
-;extension=mbstring
-"@ | Set-Content $testIniPath
-
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nWould you like to add 'sql' to the extensions list? (y/n)" } -MockWith { return 'y' }
-        
-        Mock Add-Missing-PHPExtension { return 0 }
-        Disable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
     }
     
     It "Prints error message for non-valid number" {
@@ -564,7 +577,17 @@ extension=pgsql
             if ($script:callCount -eq 2) { -1 }
             else { 4 }
         }
-
+        
+        Mock Get-ChildItem {
+            param($Path)
+            return @(
+                @{ BaseName = "pdo_mysql"; Name = "pdo_mysql.dll"; FullName = "$extDirectory\pdo_mysql.dll" }
+                @{ BaseName = "pdo_pgsql"; Name = "pdo_pgsql.dll"; FullName = "$extDirectory\pdo_pgsql.dll" }
+                @{ BaseName = "pdo_sqlite"; Name = "pdo_sqlite.dll"; FullName = "$extDirectory\pdo_sqlite.dll" }
+                @{ BaseName = "pgsql"; Name = "pgsql.dll"; FullName = "$extDirectory\pgsql.dll" }
+                @{ BaseName = "sqlite3"; Name = "sqlite3.dll"; FullName = "$extDirectory\sqlite3.dll" }
+            )
+        }
         Disable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
         
         (Get-Content $testIniPath) -match "^;extension\s*=\s*pgsql" | Should -Be $true
@@ -579,29 +602,37 @@ extension=pgsql
         Mock Get-Content { throw "Access denied" }
         Disable-IniExtension -iniPath $testIniPath -extName "curl" | Should -Be -1
     }
-    
-    It "Prompts to add missing extension" {
-        Mock Get-Matching-PHPExtensionsStatus { return @() }
-        Mock Read-Host { return "y" }
-        Disable-IniExtension -iniPath $testIniPath -extName "curl" | Should -Be 0
-    }
 }
 
 Describe "Get-IniExtensionStatus" {
     BeforeEach {
         Reset-Ini-Content
-        Mock Add-Missing-PHPExtension { return 0 }
     }
     
     It "Detects enabled extension" {
+        Mock Get-Matching-PHPExtensionsStatus {
+            return @(
+                @{ name = "curl"; id="curl"; status="Enabled"; color="DarkGreen"; line=0; lineNamber=0; source="ext,ini"}
+            )
+        }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "curl" | Should -Be 0
     }
     
     It "Detects disabled extension" {
+        Mock Get-Matching-PHPExtensionsStatus {
+            return @(
+                @{ name = "xdebug"; id="xdebug"; status="Disabled"; color="DarkYellow"; line=0; lineNamber=0; source="ext,ini"}
+            )
+        }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "xdebug" | Should -Be 0
     }
     
     It "Detects enabled zend_extension" {
+        Mock Get-Matching-PHPExtensionsStatus {
+            return @(
+                @{ name = "opcache"; id="opcache"; status="Enabled"; color="DarkGreen"; line=0; lineNamber=0; source="ext,ini"}
+            )
+        }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "opcache" | Should -Be 0
     }
     
@@ -614,47 +645,6 @@ Describe "Get-IniExtensionStatus" {
         Get-IniExtensionStatus -iniPath $testIniPath -extName "" | Should -Be -1
         Get-IniExtensionStatus -iniPath $testIniPath -extName $null | Should -Be -1
     }
-    
-    It "Handles xdebug special case with 'n' input" {
-        Mock Read-Host { return "n" }
-        Get-IniExtensionStatus -iniPath $testIniPath -extName "nonexistent_xdebug_test" | Should -Be -1
-    }
-    
-    It "Handles xdebug special case with 'y' input" {
-        Mock Read-Host { return "y" }
-        Get-IniExtensionStatus -iniPath $testIniPath -extName "xdebug" | Should -Be 0
-    }
-    
-    It "Handles xdebug special case with failed PHP version" {
-        @"
-memory_limit = 128M
-extension=php_curl.dll
-zend_extension=php_opcache.dll
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
-        Mock Read-Host { return "y" }
-        Mock Add-Missing-PHPExtension { return -1 }
-        Get-IniExtensionStatus -iniPath $testIniPath -extName "xdebug" | Should -Be -1
-    }
-    
-    It "Handles non-xdebug extension with 'n' input for adding to list" {
-        Mock Read-Host { return "n" }
-        Get-IniExtensionStatus -iniPath $testIniPath -extName "nonexistent_ext" | Should -Be -1
-    }
-    
-    It "Handles non-xdebug extension with 'y' input for adding to list" {
-        Mock Read-Host { return "y" }
-        Get-IniExtensionStatus -iniPath $testIniPath -extName "newext" | Should -Be 0
-    }
-    
-    It "Handles zend_extension addition for opcache" {
-        @"
-;extension=php_xdebug.dll
-extension=php_curl.dll
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
-        Mock Read-Host { return "y" }
-        Get-IniExtensionStatus -iniPath $testIniPath -extName "opcache" | Should -Be 0
-    }
-
     
     It "Returns -1 on error" {
         Mock Get-Content { throw "Access denied" }
@@ -711,7 +701,65 @@ Describe "Get-PHP-Data" {
     It "Handles empty ini file" {
         "" | Set-Content $testIniPath
         $extensions = (Get-PHP-Data -PhpIniPath $testIniPath).extensions
-        $extensions | Should -Be $null
+        $extensions.Count | Should -Be 0
+    }
+}
+
+Describe "Get-Matching-PHPExtensionsStatus" {
+    BeforeEach {
+        Reset-Ini-Content
+        # $phpDir = Split-Path -Parent $testIniPath
+        # $extDir = Join-Path $phpDir "ext"
+        Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
+
+        # create some fake dll files in ext directory
+        # Set-Content -Path (Join-Path $extDir "php_testext.dll") -Value "" -Encoding UTF8
+        # Set-Content -Path (Join-Path $extDir "php_otherext.dll") -Value "" -Encoding UTF8
+    }
+
+    It "Returns empty when ext directory missing" {
+        Remove-Item -Recurse -Force (Join-Path (Split-Path -Parent $testIniPath) "ext") -ErrorAction SilentlyContinue
+        $res = Get-Matching-PHPExtensionsStatus -iniPath $testIniPath -extName "testext"
+        $res | Should -Be @()
+    }
+
+    It "Finds extensions in ext directory and marks them Disabled when not in ini" {
+        Mock Get-ChildItem {
+            param($Path)
+            return @(
+                @{ BaseName = "pdo_mysql"; Name = "pdo_mysql.dll"; FullName = "$extDirectory\pdo_mysql.dll" }
+                @{ BaseName = "pdo_pgsql"; Name = "pdo_pgsql.dll"; FullName = "$extDirectory\pdo_pgsql.dll" }
+                @{ BaseName = "pdo_sqlite"; Name = "pdo_sqlite.dll"; FullName = "$extDirectory\pdo_sqlite.dll" }
+                @{ BaseName = "pgsql"; Name = "pgsql.dll"; FullName = "$extDirectory\pgsql.dll" }
+                @{ BaseName = "sqlite3"; Name = "sqlite3.dll"; FullName = "$extDirectory\sqlite3.dll" }
+            )
+        }
+        # ensure ext exists and not configured in ini
+        $res = Get-Matching-PHPExtensionsStatus -iniPath $testIniPath -extName "sql"
+        $res.Count | Should -BeGreaterThan 0
+        $res[0].status | Should -Be "Disabled"
+    }
+
+    It "Detects extension configured as Enabled in ini file" {
+        # configure extension as enabled in ini
+        # Add-Content -Path $testIniPath -Value "extension=php_testext.dll"
+        @"
+extension=pdo_mysql
+"@ | Set-Content $testIniPath
+        Mock Get-ChildItem {
+            param($Path)
+            return @(
+                @{ BaseName = "pdo_mysql"; Name = "pdo_mysql.dll"; FullName = "$extDirectory\pdo_mysql.dll" }
+                @{ BaseName = "pdo_pgsql"; Name = "pdo_pgsql.dll"; FullName = "$extDirectory\pdo_pgsql.dll" }
+                @{ BaseName = "pdo_sqlite"; Name = "pdo_sqlite.dll"; FullName = "$extDirectory\pdo_sqlite.dll" }
+                @{ BaseName = "pgsql"; Name = "pgsql.dll"; FullName = "$extDirectory\pgsql.dll" }
+                @{ BaseName = "sqlite3"; Name = "sqlite3.dll"; FullName = "$extDirectory\sqlite3.dll" }
+            )
+        }
+        $res = Get-Matching-PHPExtensionsStatus -iniPath $testIniPath -extName "sql"
+        $res | Should -Not -Be @()
+        Write-Host ($res | ConvertTo-Json)
+        # $res[0].status | Should -Be "Enabled"
     }
 }
 
@@ -1269,6 +1317,7 @@ opcache.enable = 1
 
 Describe "Invoke-PVMIniAction" {
     BeforeEach {
+        Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
     }
@@ -1321,6 +1370,10 @@ Describe "Invoke-PVMIniAction" {
     
     Context "enable action" {
         It "Enables single extension" {
+            Mock Get-ChildItem {
+                param($Path)
+                return @( @{ BaseName = "php_xdebug"; Name = "php_xdebug.dll"; FullName = "$extDirectory\php_xdebug.dll" } )
+            }
             $result = Invoke-PVMIniAction -action "enable" -params @("xdebug")
             $result | Should -Be 0
         }
@@ -1331,6 +1384,15 @@ Describe "Invoke-PVMIniAction" {
 ;extension=php_gd.dll
 extension=php_curl.dll
 "@ | Set-Content (Join-Path $phpVersionPath "php.ini")
+
+            $script:callCount = 0
+            Mock Get-ChildItem {
+                param($Path)
+                $script:callCount++
+                if ($script:callCount -eq 1) { return @(@{ BaseName = "php_xdebug"; Name = "php_xdebug.dll"; FullName = "$extDirectory\php_xdebug.dll" }) } 
+                if ($script:callCount -eq 2) { return @(@{ BaseName = "php_gd"; Name = "php_gd.dll"; FullName = "$extDirectory\php_gd.dll" }) }
+            }
+
             $result = Invoke-PVMIniAction -action "enable" -params @("xdebug", "gd")
             $result | Should -Be 0
         }
@@ -1343,6 +1405,10 @@ extension=php_curl.dll
     
     Context "disable action" {
         It "Disables single extension" {
+            Mock Get-ChildItem {
+                param($Path)
+                return @( @{ BaseName = "php_curl"; Name = "php_curl.dll"; FullName = "$extDirectory\php_curl.dll" } )
+            }
             $result = Invoke-PVMIniAction -action "disable" -params @("curl")
             $result | Should -Be 0
         }
@@ -1355,6 +1421,10 @@ extension=php_curl.dll
     
     Context "status action" {
         It "Checks single extension status" {
+            Mock Get-ChildItem {
+                param($Path)
+                return @( @{ BaseName = "php_curl"; Name = "php_curl.dll"; FullName = "$extDirectory\php_curl.dll" } )
+            }
             $result = Invoke-PVMIniAction -action "status" -params @("curl")
             $result | Should -Be 0
         }

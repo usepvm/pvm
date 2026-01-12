@@ -346,8 +346,8 @@ Describe "Get-PHP-Versions Tests" {
             @{ href = "/downloads/releases/php-8.1.0-Win32-vs16-x86.zip" }
         )
         
-        Set-MockWebResponse -url "https://windows.php.net/downloads/releases/archives" -links $mockLinks
-        Set-MockWebResponse -url "https://windows.php.net/downloads/releases" -links $mockLinks
+        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
+        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
         
         $result = Get-PHP-Versions -version "8.1"
         
@@ -568,8 +568,8 @@ Describe "Install-PHP Integration Tests" {
         $mockLinks = @(
             @{ href = "/downloads/releases/php-8.1.15-Win32-vs16-x64.zip" }
         )
-        Set-MockWebResponse -url "https://windows.php.net/downloads/releases/archives" -links $mockLinks
-        Set-MockWebResponse -url "https://windows.php.net/downloads/releases" -links $mockLinks
+        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
+        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
     }
     
     It "Should install PHP successfully" {
@@ -642,8 +642,8 @@ Describe "Install-PHP Integration Tests" {
     }
     
     It "Should handle no matching versions found" {
-        Set-MockWebResponse -url "https://windows.php.net/downloads/releases/archives" -links @()
-        Set-MockWebResponse -url "https://windows.php.net/downloads/releases" -links @()
+        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links @()
+        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links @()
         
         $result = Install-PHP -version "9.0"
         
@@ -660,18 +660,18 @@ Describe "Install-PHP Integration Tests" {
     
     It "Should prompt for family version when other versions exist" {
         $global:MockFileSystem.WebResponses = @{
-            "https://windows.php.net/downloads/releases/archives/php-8.1.15-Win32-vs16-x64.zip" = @{
+            "$PHP_WIN_ARCHIVES_URL/php-8.1.15-Win32-vs16-x64.zip" = @{
                 Content = "Mocked PHP 8.1.33 zip content"
             }
-            "https://windows.php.net/downloads/releases/archives/php-8.1.33-Win32-vs16-x64.zip" = @{
+            "$PHP_WIN_ARCHIVES_URL/php-8.1.33-Win32-vs16-x64.zip" = @{
                 Content = "Mocked PHP 8.1.33 zip content"
             }
-            "https://windows.php.net/downloads/releases/archives" = @{
-                Content = '[{"version":"8.1.15","fileName":"php-8.1.15-Win32-vs16-x64.zip","url":"https://windows.php.net/downloads/releases/php-8.1.15-Win32-vs16-x64.zip"}]'
+            "$PHP_WIN_ARCHIVES_URL" = @{
+                Content = '[{"version":"8.1.15","fileName":"php-8.1.15-Win32-vs16-x64.zip","url":"$PHP_WIN_RELEASES_URL/php-8.1.15-Win32-vs16-x64.zip"}]'
                 Links = @()
             }
-            "https://windows.php.net/downloads/releases" = @{
-                Content = '[{"version":"8.2.0","fileName":"php-8.2.0-Win32-vs16-x64.zip","url":"https://windows.php.net/downloads/releases/php-8.2.0-Win32-vs16-x64.zip"}]'
+            "$PHP_WIN_RELEASES_URL" = @{
+                Content = '[{"version":"8.2.0","fileName":"php-8.2.0-Win32-vs16-x64.zip","url":"$PHP_WIN_RELEASES_URL/php-8.2.0-Win32-vs16-x64.zip"}]'
                 Links = @()
             }
         }
@@ -679,10 +679,10 @@ Describe "Install-PHP Integration Tests" {
         Mock Get-PHP-Versions {
             return @{
                 Releases = @{
-                     filename = "php-8.1.33-Win32-vs16-x64.zip"
-                     href = "/downloads/releases/php-8.1.33-Win32-vs16-x64.zip"
-                     version = "8.1.33"
-                 }
+                    filename = "php-8.1.33-Win32-vs16-x64.zip"
+                    href = "/downloads/releases/php-8.1.33-Win32-vs16-x64.zip"
+                    version = "8.1.33"
+                }
             }
         }
         

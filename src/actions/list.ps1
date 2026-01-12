@@ -123,8 +123,8 @@ function Get-Available-PHP-Versions {
         }
         
         $msg = "`nThis is a partial list. For a complete list, visit:"
-        $msg += "`n Releases : https://windows.php.net/downloads/releases"
-        $msg += "`n Archives : https://windows.php.net/downloads/releases/archives"
+        $msg += "`n Releases : $PHP_WIN_RELEASES_URL"
+        $msg += "`n Archives : $PHP_WIN_ARCHIVES_URL"
         Write-Host $msg
         return 0
     } catch {

@@ -3,8 +3,8 @@
 function Get-Source-Urls {
 
     return [ordered]@{
-        "Archives" = "https://windows.php.net/downloads/releases/archives"
-        "Releases" = "https://windows.php.net/downloads/releases"
+        "Archives" = $PHP_WIN_ARCHIVES_URL
+        "Releases" = $PHP_WIN_RELEASES_URL
     }
 }
 

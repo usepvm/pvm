@@ -777,7 +777,7 @@ function Install-XDebug-Extension {
     
     try {
         $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
-        $xDebugList = Get-XDebug-FROM-URL -url $XDEBUG_BASE_URL -version $currentVersion
+        $xDebugList = Get-XDebug-FROM-URL -url $XDEBUG_HISTORICAL_URL -version $currentVersion
         $xDebugList = $xDebugList | Sort-Object { [version]$_.xDebugVersion } -Descending
         $xDebugListGrouped = [ordered]@{}
         $xDebugList | 
@@ -1170,7 +1170,7 @@ function List-PHP-Extensions {
             
             $msg = "`nThis is a partial list. For a complete list, visit:"
             $msg += "`nPHP Extensions : $PECL_PACKAGES_URL"
-            $msg += "`nXDebug : $XDEBUG_BASE_URL"
+            $msg += "`nXDebug : $XDEBUG_HISTORICAL_URL"
             Write-Host $msg
         }
         

@@ -1,7 +1,7 @@
 
 
 # PVM version
-$Global:PVM_VERSION = "2.4"
+$Global:PVM_VERSION = "2.5"
 
 # Root path of the PVM script
 $Global:PVMRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
@@ -15,6 +15,7 @@ $Global:DATA_PATH = "$STORAGE_PATH\data"
 $Global:LOG_ERROR_PATH = "$STORAGE_PATH\logs\error.log"
 $Global:PATH_VAR_BACKUP_PATH = "$STORAGE_PATH\logs\path.bak.log"
 $Global:CACHE_PATH = "$DATA_PATH\cache"
+$Global:PROFILES_PATH = "$DATA_PATH\profiles"
 
 # Environment variable names
 $Global:PATH_VAR_BACKUP_NAME = "Path.bak"

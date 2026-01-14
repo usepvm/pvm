@@ -446,49 +446,6 @@ function Get-Actions {
                 )
             }
             action = { return Invoke-PVMIni -arguments $script:arguments }}
-        "test" = [PSCustomObject]@{
-            command = "pvm test";
-            description = "Run tests.";
-            usage = [ordered]@{
-                USAGE = "pvm test [files] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>]"
-                DESCRIPTION = @(
-                    "Runs the PVM test suite to verify that the installation and configuration"
-                    "are working correctly. This includes testing PHP version switching,"
-                    "path resolution, and core functionality."
-                )
-                EXAMPLES = @(
-                    "pvm test ......................... Runs all tests with Normal (default) verbosity"
-                    "pvm test use install ............. Runs only use.tests.ps1 and install.tests.ps1 with Normal verbosity."
-                    "pvm test --verbosity=Detailed .... Runs all tests with Detailed verbosity."
-                    "pvm test --coverage .............. Runs all tests and generates coverage report (target: 75%)"
-                    "pvm test --coverage=80 ........... Runs all tests and generates coverage report (target: 80%)"
-                    "pvm test --tag=unit .............. Runs only tests with tag 'unit'"
-                )
-                ARGUMENTS = @(
-                    "files ............................ Run only specific test files (e.g. use, install)"
-                )
-                OPTIONS = @(
-                    "--coverage[=<number>] ............ Generate coverage report with optional target percentage (default: 75%)"
-                    "--verbosity=<verbosity> .......... Set verbosity level (None, Normal (Default), Detailed, Diagnostic)"
-                    "--tag=<tag> ...................... Run only tests with specific tag"
-                )
-            }
-            action = { return Invoke-PVMTest -arguments $script:arguments }}
-        "log" = [PSCustomObject]@{
-            command = "pvm log";
-            description = "Display the log file.";
-            usage = [ordered]@{
-                USAGE = "pvm log --pageSize=[number] (default is $DEFAULT_LOG_PAGE_SIZE)"
-                DESCRIPTION = @(
-                    "Displays the PVM log file contents, showing recent errors,"
-                    "and system messages. Useful for troubleshooting issues."
-                )
-                EXAMPLES = @(
-                    "pvm log .................. Shows the last $DEFAULT_LOG_PAGE_SIZE entries of the log file"
-                    "pvm log --pageSize=50 .... Shows the last 50 entries of the log file"
-                )
-            }
-            action = { return Invoke-PVMLog -arguments $script:arguments }}
         "profile" = [PSCustomObject]@{
             command = "pvm profile <action> [<args>]";
             description = "Manage PHP configuration profiles. Save, load, and share popular PHP settings and extensions.";
@@ -522,6 +479,49 @@ function Get-Actions {
                 )
             }
             action = { return Invoke-PVMProfile -arguments $script:arguments }}
+        "log" = [PSCustomObject]@{
+            command = "pvm log";
+            description = "Display the log file.";
+            usage = [ordered]@{
+                USAGE = "pvm log --pageSize=[number] (default is $DEFAULT_LOG_PAGE_SIZE)"
+                DESCRIPTION = @(
+                    "Displays the PVM log file contents, showing recent errors,"
+                    "and system messages. Useful for troubleshooting issues."
+                )
+                EXAMPLES = @(
+                    "pvm log .................. Shows the last $DEFAULT_LOG_PAGE_SIZE entries of the log file"
+                    "pvm log --pageSize=50 .... Shows the last 50 entries of the log file"
+                )
+            }
+            action = { return Invoke-PVMLog -arguments $script:arguments }}
+        "test" = [PSCustomObject]@{
+            command = "pvm test";
+            description = "Run tests.";
+            usage = [ordered]@{
+                USAGE = "pvm test [files] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>]"
+                DESCRIPTION = @(
+                    "Runs the PVM test suite to verify that the installation and configuration"
+                    "are working correctly. This includes testing PHP version switching,"
+                    "path resolution, and core functionality."
+                )
+                EXAMPLES = @(
+                    "pvm test ......................... Runs all tests with Normal (default) verbosity"
+                    "pvm test use install ............. Runs only use.tests.ps1 and install.tests.ps1 with Normal verbosity."
+                    "pvm test --verbosity=Detailed .... Runs all tests with Detailed verbosity."
+                    "pvm test --coverage .............. Runs all tests and generates coverage report (target: 75%)"
+                    "pvm test --coverage=80 ........... Runs all tests and generates coverage report (target: 80%)"
+                    "pvm test --tag=unit .............. Runs only tests with tag 'unit'"
+                )
+                ARGUMENTS = @(
+                    "files ............................ Run only specific test files (e.g. use, install)"
+                )
+                OPTIONS = @(
+                    "--coverage[=<number>] ............ Generate coverage report with optional target percentage (default: 75%)"
+                    "--verbosity=<verbosity> .......... Set verbosity level (None, Normal (Default), Detailed, Diagnostic)"
+                    "--tag=<tag> ...................... Run only tests with specific tag"
+                )
+            }
+            action = { return Invoke-PVMTest -arguments $script:arguments }}
     }
 }
 

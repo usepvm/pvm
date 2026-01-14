@@ -779,6 +779,12 @@ function Install-XDebug-Extension {
         $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
         $xDebugList = Get-XDebug-FROM-URL -url $XDEBUG_HISTORICAL_URL -version $currentVersion
         $xDebugList = $xDebugList | Sort-Object { [version]$_.xDebugVersion } -Descending
+
+        if ($null -eq $xDebugList -or $xDebugList.Count -eq 0) {
+            Write-Host "`nNo match was found, check the '$LOG_ERROR_PATH' for any potentiel errors"
+            return -1
+        }
+
         $xDebugListGrouped = [ordered]@{}
         $xDebugList | 
             Group-Object xDebugVersion | 

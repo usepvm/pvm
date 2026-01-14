@@ -281,8 +281,8 @@ Describe "Get-Source-Urls Tests" {
     It "Should return ordered hashtable with correct URLs" {
         $urls = Get-Source-Urls
         $urls | Should -BeOfType [System.Collections.Specialized.OrderedDictionary]
-        $urls["Archives"] | Should -Be "https://windows.php.net/downloads/releases/archives"
-        $urls["Releases"] | Should -Be "https://windows.php.net/downloads/releases"
+        $urls["Archives"] | Should -Be "http://windows.php.net/downloads/releases/archives"
+        $urls["Releases"] | Should -Be "http://windows.php.net/downloads/releases"
     }
 }
 

@@ -1061,7 +1061,7 @@ function Get-PHPExtensions-From-Source {
         }
         $availableExtensions["XDebug"] = @(
             @{
-                href = $XDEBUG_BASE_URL
+                href = $XDEBUG_HISTORICAL_URL
                 extName = "xdebug"
                 extCategory = "XDebug"
             }

@@ -777,7 +777,7 @@ function Install-XDebug-Extension {
     
     try {
         $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
-        $baseUrl = "https://xdebug.org"
+        $baseUrl = "http://xdebug.org"
         $url = "$baseUrl/download/historical"
         $xDebugList = Get-XDebug-FROM-URL -url $url -version $currentVersion
         $xDebugList = $xDebugList | Sort-Object { [version]$_.xDebugVersion } -Descending
@@ -846,7 +846,7 @@ function Install-Extension {
     param ($iniPath, $extName)
     
     try {
-        $baseUrl = "https://pecl.php.net"
+        $baseUrl = "http://pecl.php.net"
         try {
             $html = Invoke-WebRequest -Uri "$baseUrl/package/$extName"
         } catch {
@@ -918,7 +918,7 @@ function Install-Extension {
             try {
                 $html = Invoke-WebRequest -Uri "$baseUrl/package/$extName/$extVersion/windows"
                 $packageLinks = $html.Links | Where-Object {
-                    $packageName = $_.href -replace "https://downloads.php.net/~windows/pecl/releases/$extName/$extVersion/", ""
+                    $packageName = $_.href -replace "http://downloads.php.net/~windows/pecl/releases/$extName/$extVersion/", ""
                     if ($packageName -match "^php_$extName-$extVersion-(\d+\.\d+)-.+\.zip$") {
                         $phpVersion = $matches[1]
                         return ($phpVersion -eq $currentVersion)
@@ -964,7 +964,7 @@ function Install-Extension {
         }
         
         Invoke-WebRequest -Uri $chosenItem.href -OutFile "$STORAGE_PATH\php"
-        $fileNamePath = ($chosenItem.href -replace "https://downloads.php.net/~windows/pecl/releases/$extName/$($chosenItem.extVersion)/|.zip",'').Trim()
+        $fileNamePath = ($chosenItem.href -replace "http://downloads.php.net/~windows/pecl/releases/$extName/$($chosenItem.extVersion)/|.zip",'').Trim()
         Extract-Zip -zipPath "$STORAGE_PATH\php\$fileNamePath.zip" -extractPath "$STORAGE_PATH\php\$fileNamePath"
         Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath.zip"
         $files = Get-ChildItem -Path "$STORAGE_PATH\php\$fileNamePath"
@@ -1034,7 +1034,7 @@ function Install-IniExtension {
 }
 
 function Get-PHPExtensions-From-Source {
-    $baseUrl = "https://pecl.php.net"
+    $baseUrl = "http://pecl.php.net"
     $availableExtensions = @{}
     try {
         $html_cat = Invoke-WebRequest -Uri "$baseUrl/packages.php"
@@ -1065,7 +1065,7 @@ function Get-PHPExtensions-From-Source {
         }
         $availableExtensions["XDebug"] = @(
             @{
-                href = "https://xdebug.org/download/historical"
+                href = "http://xdebug.org/download/historical"
                 extName = "xdebug"
                 extCategory = "XDebug"
             }
@@ -1173,8 +1173,8 @@ function List-PHP-Extensions {
             }
             
             $msg = "`nThis is a partial list. For a complete list, visit:"
-            $msg += "`nPHP Extensions : https://pecl.php.net/packages.php"
-            $msg += "`nXDebug : https://xdebug.org/download/historical"
+            $msg += "`nPHP Extensions : http://pecl.php.net/packages.php"
+            $msg += "`nXDebug : http://xdebug.org/download/historical"
             Write-Host $msg
         }
         

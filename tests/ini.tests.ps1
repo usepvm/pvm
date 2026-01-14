@@ -796,36 +796,36 @@ Describe "Install-Extension" {
         $global:getRandomFile = $false
         $global:MockFileSystem.DownloadFails = $false
         $global:MockFileSystem.WebResponses = @{
-            "https://pecl.php.net/package/nonexistent_ext" = @{
+            "http://pecl.php.net/package/nonexistent_ext" = @{
                 Content = "Mocked PHP nonexistent_ext content"
                 Links = @()
             }
-            "https://pecl.php.net/package/pdo_mysql" = @{
+            "http://pecl.php.net/package/pdo_mysql" = @{
                 Content = "Mocked pdo_mysql content"
                 Links = @(
                     @{ href = "/package/pdo_mysql/1.4.0/windows" },
                     @{ href = "/package/pdo_mysql/2.1.0/windows" }
                 )
             }
-            "https://pecl.php.net/package/curl" = @{
+            "http://pecl.php.net/package/curl" = @{
                 Content = "Mocked curl content"
                 Links = @(
                     @{ href = "/package/curl/1.4.0/windows" },
                     @{ href = "/package/curl/2.1.0/windows" }
                 )
             }
-            "https://pecl.php.net/package/curl/1.4.0/windows" = @{
+            "http://pecl.php.net/package/curl/1.4.0/windows" = @{
                 Content = "Mocked PHP curl 1.4.0 content"
                 Links = @(
                     @{ href = "other_link" },
-                    @{ href = "https://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" },
-                    @{ href = "https://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip" }
+                    @{ href = "http://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" },
+                    @{ href = "http://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip" }
                 )
             }
-            "https://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" = @{
+            "http://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" = @{
                 Content = "Mocked PHP curl 1.4.0 zip content"
             }
-            "https://pecl.php.net/package/curl/2.1.0/windows" = @{
+            "http://pecl.php.net/package/curl/2.1.0/windows" = @{
                 Content = "Mocked PHP curl 2.1.0 content"
                 Links = @()
             }
@@ -897,10 +897,10 @@ Describe "Install-Extension" {
     
     Context "When extension has no direct link" {
         BeforeEach {
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/package/nonexistent_ext" } -MockWith { 
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "http://pecl.php.net/package/nonexistent_ext" } -MockWith { 
                 throw "Network error"
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/packages.php" } -MockWith {
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "http://pecl.php.net/packages.php" } -MockWith {
                 return @{
                     Content = "Mocked PHP extensions content"
                     Links = @(
@@ -915,7 +915,7 @@ Describe "Install-Extension" {
                     )
                 }
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/packages.php?catpid=1&amp;catname=Authentication" } -MockWith {
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "http://pecl.php.net/packages.php?catpid=1&amp;catname=Authentication" } -MockWith {
                 return @{
                     Content = "Mocked PHP extension Auth content"
                     Links = @(
@@ -925,7 +925,7 @@ Describe "Install-Extension" {
                     )
                 }
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/packages.php?catpid=3&amp;catname=Caching" } -MockWith {
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "http://pecl.php.net/packages.php?catpid=3&amp;catname=Caching" } -MockWith {
                 return @{
                     Content = "Mocked PHP extension Caching content"
                     Links = @(
@@ -936,13 +936,13 @@ Describe "Install-Extension" {
                     )
                 }
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/packages.php?catpid=7&amp;catname=EmptyCat" } -MockWith {
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "http://pecl.php.net/packages.php?catpid=7&amp;catname=EmptyCat" } -MockWith {
                 return @{
                     Content = "Mocked PHP extension EmptyCat content"
                     Links = @()
                 }
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/package/courierauth" } -MockWith {
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "http://pecl.php.net/package/courierauth" } -MockWith {
                 return @{
                     Content = "Mocked courierauth content"
                     Links = @(
@@ -951,17 +951,17 @@ Describe "Install-Extension" {
                     )
                 }
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://pecl.php.net/package/courierauth/1.4.0/windows" } -MockWith {
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "http://pecl.php.net/package/courierauth/1.4.0/windows" } -MockWith {
                 return @{
                     Content = "Mocked PHP courierauth 1.4.0 content"
                     Links = @(
                         @{ href = "other_link" },
-                        @{ href = "https://downloads.php.net/~windows/pecl/releases/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" },
-                        @{ href = "https://downloads.php.net/~windows/pecl/releases/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip" }
+                        @{ href = "http://downloads.php.net/~windows/pecl/releases/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" },
+                        @{ href = "http://downloads.php.net/~windows/pecl/releases/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip" }
                     )
                 }
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "https://downloads.php.net/~windows/pecl/releases/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" } -MockWith {
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "http://downloads.php.net/~windows/pecl/releases/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" } -MockWith {
                 $global:MockFileSystem.Files[$OutFile] = "Downloaded content"
                 return
             }
@@ -1043,7 +1043,7 @@ Describe "Get-PHPExtensions-From-Source" {
         $global:getRandomFile = $false
         $global:MockFileSystem.DownloadFails = $false
         $global:MockFileSystem.WebResponses = @{
-            "https://pecl.php.net/packages.php" = @{
+            "http://pecl.php.net/packages.php" = @{
                 Content = "Mocked PHP extensions content"
                 Links = @(
                     @{ href = $null }
@@ -1056,7 +1056,7 @@ Describe "Get-PHPExtensions-From-Source" {
                         outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>' }
                 )
             }
-            "https://pecl.php.net/packages.php?catpid=1&amp;catname=Authentication" = @{
+            "http://pecl.php.net/packages.php?catpid=1&amp;catname=Authentication" = @{
                 Content = "Mocked PHP extension Auth content"
                 Links = @(
                     @{ href = $null }
@@ -1064,14 +1064,14 @@ Describe "Get-PHPExtensions-From-Source" {
                     @{ href = "/package/krb5" }
                 )
             }
-            "https://pecl.php.net/packages.php?catpid=3&amp;catname=Caching" = @{
+            "http://pecl.php.net/packages.php?catpid=3&amp;catname=Caching" = @{
                 Content = "Mocked PHP extension Caching content"
                 Links = @(
                     @{ href = "/package/APC" }
                     @{ href = "/package/APCu" }
                 )
             }
-            "https://pecl.php.net/packages.php?catpid=7&amp;catname=EmptyCat" = @{
+            "http://pecl.php.net/packages.php?catpid=7&amp;catname=EmptyCat" = @{
                 Content = "Mocked PHP extension EmptyCat content"
                 Links = @()
             }
@@ -1273,7 +1273,7 @@ opcache.enable = 1
         $mockLinks = @(
             @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" }
         )
-        Set-MockWebResponse -url "https://xdebug.org/download/historical" -links $mockLinks
+        Set-MockWebResponse -url "http://xdebug.org/download/historical" -links $mockLinks
     }
     
     It "Returns -1 when user does not choose a dll extension version to install" {
@@ -1289,7 +1289,7 @@ opcache.enable = 1
     
     It "Returns -1 when user does not want to overwrite existing dll extension version" {
         # $global:MockFileSystem.DownloadFails = $false
-        Set-MockWebResponse -url "https://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
+        Set-MockWebResponse -url "http://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
         Mock Test-Path { return $true }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return "0" }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_xdebug-3.1.0-8.1-vs16-x64.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { return "n" }
@@ -1299,7 +1299,7 @@ opcache.enable = 1
     }
     
     It "Returns 0 when user wants to overwrite existing dll extension version" {
-        Set-MockWebResponse -url "https://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
+        Set-MockWebResponse -url "http://xdebug.org/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
         Mock Test-Path { return $false }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return "0" }
         Mock Remove-Item { }
@@ -1451,36 +1451,36 @@ extension=php_curl.dll
                 Directories = @()
                 Files = @{}
                 WebResponses = @{
-                                "https://pecl.php.net/package/nonexistent_ext" = @{
+                                "http://pecl.php.net/package/nonexistent_ext" = @{
                                     Content = "Mocked PHP nonexistent_ext content"
                                     Links = @()
                                 }
-                                "https://pecl.php.net/package/pdo_mysql" = @{
+                                "http://pecl.php.net/package/pdo_mysql" = @{
                                     Content = "Mocked pdo_mysql content"
                                     Links = @(
                                         @{ href = "/package/pdo_mysql/1.4.0/windows" },
                                         @{ href = "/package/pdo_mysql/2.1.0/windows" }
                                     )
                                 }
-                                "https://pecl.php.net/package/curl" = @{
+                                "http://pecl.php.net/package/curl" = @{
                                     Content = "Mocked curl content"
                                     Links = @(
                                         @{ href = "/package/curl/1.4.0/windows" },
                                         @{ href = "/package/curl/2.1.0/windows" }
                                     )
                                 }
-                                "https://pecl.php.net/package/curl/1.4.0/windows" = @{
+                                "http://pecl.php.net/package/curl/1.4.0/windows" = @{
                                     Content = "Mocked PHP curl 1.4.0 content"
                                     Links = @(
                                         @{ href = "other_link" },
-                                        @{ href = "https://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" },
-                                        @{ href = "https://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip" }
+                                        @{ href = "http://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" },
+                                        @{ href = "http://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip" }
                                     )
                                 }
-                                "https://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" = @{
+                                "http://downloads.php.net/~windows/pecl/releases/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" = @{
                                     Content = "Mocked PHP curl 1.4.0 zip content"
                                 }
-                                "https://pecl.php.net/package/curl/2.1.0/windows" = @{
+                                "http://pecl.php.net/package/curl/2.1.0/windows" = @{
                                     Content = "Mocked PHP curl 2.1.0 content"
                                     Links = @()
                                 }

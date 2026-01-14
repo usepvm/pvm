@@ -126,6 +126,9 @@ Describe "Save-PHP-Profile Tests" {
     }
     
     It "Should use default description when none provided" {
+        $mockDate = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        Mock Get-Date { return $mockDate } -ParameterFilter { $Format -eq 'yyyy-MM-dd HH:mm:ss' }
+        
         $result = Save-PHP-Profile -profileName "testprofile"
         $result | Should -Be 0
         
@@ -133,7 +136,7 @@ Describe "Save-PHP-Profile Tests" {
         Test-Path $profilePath | Should -Be $true
         
         $profileContent = Get-Content $profilePath -Raw | ConvertFrom-Json
-        $profileContent.description | Should -Be "Profile saved on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+        $profileContent.description | Should -Be "Profile saved on $mockDate"
     }
     
     It "Should return -1 when profile directory cannot be created" {

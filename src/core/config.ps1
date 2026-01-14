@@ -25,7 +25,7 @@ $Global:DEFAULT_LOG_PAGE_SIZE = 5 # Default page size for log display
 $Global:LATEST_VERSION_COUNT = 10
 
 # Links
-$Global:XDEBUG_BASE_URL = "https://xdebug.org"
+$Global:XDEBUG_BASE_URL = "http://xdebug.org"
 $Global:XDEBUG_DOWNLOAD_URL = "$XDEBUG_BASE_URL/download"
 $Global:XDEBUG_HISTORICAL_URL = "$XDEBUG_DOWNLOAD_URL/historical"
 $Global:PHP_WIN_BASE_URL = "https://windows.php.net"

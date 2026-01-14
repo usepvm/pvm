@@ -777,9 +777,7 @@ function Install-XDebug-Extension {
     
     try {
         $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
-        $baseUrl = "http://xdebug.org"
-        $url = "$baseUrl/download/historical"
-        $xDebugList = Get-XDebug-FROM-URL -url $url -version $currentVersion
+        $xDebugList = Get-XDebug-FROM-URL -url $XDEBUG_HISTORICAL_URL -version $currentVersion
         $xDebugList = $xDebugList | Sort-Object { [version]$_.xDebugVersion } -Descending
         $xDebugListGrouped = [ordered]@{}
         $xDebugList | 
@@ -812,7 +810,7 @@ function Install-XDebug-Extension {
             return -1
         }
         
-        Invoke-WebRequest -Uri "$baseUrl/$($chosenItem.href.TrimStart('/'))" -OutFile "$STORAGE_PATH\php"
+        Invoke-WebRequest -Uri "$XDEBUG_BASE_URL/$($chosenItem.href.TrimStart('/'))" -OutFile "$STORAGE_PATH\php"
         $phpPath = ($iniPath | Split-Path -Parent)
         if (Test-Path "$phpPath\ext\$($chosenItem.fileName)") {
             $response = Read-Host "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
@@ -846,18 +844,17 @@ function Install-Extension {
     param ($iniPath, $extName)
     
     try {
-        $baseUrl = "http://pecl.php.net"
         try {
-            $html = Invoke-WebRequest -Uri "$baseUrl/package/$extName"
+            $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName"
         } catch {
             Write-Host "`nExtension '$extName' not found, Loading matching extensions..."
             # check by match
-            $html_cat = Invoke-WebRequest -Uri "$baseUrl/packages.php"
+            $html_cat = Invoke-WebRequest -Uri $PECL_PACKAGES_URL
             $linksMatchnigExtName = @()
             $resultCat = $html_cat.Links | Where-Object {
                 if (-not $_.href) { return $false }
                 if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+$') {
-                    $html = Invoke-WebRequest -Uri "$baseUrl/$($_.href.TrimStart('/'))"
+                    $html = Invoke-WebRequest -Uri "$PECL_BASE_URL/$($_.href.TrimStart('/'))"
                     $resultLinks = $html.Links | Where-Object {
                         if (-not $_.href) { return $false }
                         return ($_.href -like "/package/*$extName*")
@@ -900,7 +897,7 @@ function Install-Extension {
             }
 
             $extName = $chosenItem.href -replace "/package/", ""
-            $html = Invoke-WebRequest -Uri "$baseUrl/package/$extName"
+            $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName"
         }
         
         $links = $html.Links | Where-Object {
@@ -916,9 +913,9 @@ function Install-Extension {
         $links | ForEach-Object {
             $extVersion = $_.href -replace "/package/$extName/", "" -replace "/windows", ""
             try {
-                $html = Invoke-WebRequest -Uri "$baseUrl/package/$extName/$extVersion/windows"
+                $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName/$extVersion/windows"
                 $packageLinks = $html.Links | Where-Object {
-                    $packageName = $_.href -replace "http://downloads.php.net/~windows/pecl/releases/$extName/$extVersion/", ""
+                    $packageName = $_.href -replace "$PECL_WIN_EXT_DOWNLOAD_URL/$extName/$extVersion/", ""
                     if ($packageName -match "^php_$extName-$extVersion-(\d+\.\d+)-.+\.zip$") {
                         $phpVersion = $matches[1]
                         return ($phpVersion -eq $currentVersion)
@@ -964,7 +961,7 @@ function Install-Extension {
         }
         
         Invoke-WebRequest -Uri $chosenItem.href -OutFile "$STORAGE_PATH\php"
-        $fileNamePath = ($chosenItem.href -replace "http://downloads.php.net/~windows/pecl/releases/$extName/$($chosenItem.extVersion)/|.zip",'').Trim()
+        $fileNamePath = ($chosenItem.href -replace "$PECL_WIN_EXT_DOWNLOAD_URL/$extName/$($chosenItem.extVersion)/|.zip",'').Trim()
         Extract-Zip -zipPath "$STORAGE_PATH\php\$fileNamePath.zip" -extractPath "$STORAGE_PATH\php\$fileNamePath"
         Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath.zip"
         $files = Get-ChildItem -Path "$STORAGE_PATH\php\$fileNamePath"
@@ -1034,10 +1031,9 @@ function Install-IniExtension {
 }
 
 function Get-PHPExtensions-From-Source {
-    $baseUrl = "http://pecl.php.net"
     $availableExtensions = @{}
     try {
-        $html_cat = Invoke-WebRequest -Uri "$baseUrl/packages.php"
+        $html_cat = Invoke-WebRequest -Uri $PECL_PACKAGES_URL
         $resultCat = $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
             if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+$') {
@@ -1045,7 +1041,7 @@ function Get-PHPExtensions-From-Source {
                 $availableExtensions[$extCategory] = @()
                 
                 # fetch the extensions from the category
-                $html = Invoke-WebRequest -Uri "$baseUrl/$($_.href.TrimStart('/'))"
+                $html = Invoke-WebRequest -Uri "$PECL_BASE_URL/$($_.href.TrimStart('/'))"
                 $resultLinks = $html.Links | Where-Object {
                     if (-not $_.href) { return $false }
                     if ($_.href -match '^/package/[A-Za-z0-9_]+$') {
@@ -1065,7 +1061,7 @@ function Get-PHPExtensions-From-Source {
         }
         $availableExtensions["XDebug"] = @(
             @{
-                href = "http://xdebug.org/download/historical"
+                href = $XDEBUG_HISTORICAL_URL
                 extName = "xdebug"
                 extCategory = "XDebug"
             }
@@ -1173,8 +1169,8 @@ function List-PHP-Extensions {
             }
             
             $msg = "`nThis is a partial list. For a complete list, visit:"
-            $msg += "`nPHP Extensions : http://pecl.php.net/packages.php"
-            $msg += "`nXDebug : http://xdebug.org/download/historical"
+            $msg += "`nPHP Extensions : $PECL_PACKAGES_URL"
+            $msg += "`nXDebug : $XDEBUG_HISTORICAL_URL"
             Write-Host $msg
         }
         

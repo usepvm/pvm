@@ -22,8 +22,8 @@ BeforeAll {
     Mock Log-Data { param($logPath, $message, $data) return "Logged: $message - $data" }
     Mock Get-Source-Urls { 
         return @{
-            'releases' = 'http://windows.php.net/downloads/releases/'
-            'archives' = 'http://windows.php.net/downloads/releases/archives/'
+            'releases' = $PHP_WIN_RELEASES_URL
+            'archives' = $PHP_WIN_ARCHIVES_URL
         }
     }
     Mock Get-Current-PHP-Version { return @{ version = "8.2.0" } }

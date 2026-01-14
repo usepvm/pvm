@@ -1,0 +1,134 @@
+{
+  "name": "example-profile",
+  "description": "Dev",
+  "created": "2025-12-28T16:29:00Z",
+  "phpVersion": "8.2.30",
+  "settings": {
+    "max_execution_time": {
+      "enabled": true,
+      "value": "300"
+    },
+    "max_input_time": {
+      "enabled": true,
+      "value": "300"
+    },
+    "memory_limit": {
+      "enabled": true,
+      "value": "2G"
+    },
+    "error_reporting": {
+      "enabled": true,
+      "value": "E_ALL"
+    },
+    "display_errors": {
+      "enabled": true,
+      "value": "On"
+    },
+    "log_errors": {
+      "enabled": true,
+      "value": "On"
+    },
+    "post_max_size": {
+      "enabled": true,
+      "value": "40M"
+    },
+    "upload_max_filesize": {
+      "enabled": true,
+      "value": "30M"
+    },
+    "max_file_uploads": {
+      "enabled": true,
+      "value": "40"
+    },
+    "opcache.enable": {
+      "enabled": true,
+      "value": "1"
+    },
+    "opcache.enable_cli": {
+      "enabled": true,
+      "value": "1"
+    },
+    "opcache.memory_consumption": {
+      "enabled": true,
+      "value": "1G"
+    },
+    "opcache.max_accelerated_files": {
+      "enabled": true,
+      "value": "10000"
+    }
+  },
+  "extensions": {
+    "curl": {
+      "enabled": true,
+      "type": "extension"
+    },
+    "fileinfo": {
+      "enabled": true,
+      "type": "extension"
+    },
+    "gd": {
+      "enabled": true,
+      "type": "extension"
+    },
+    "gettext": {
+      "enabled": true,
+      "type": "extension"
+    },
+    "intl": {
+      "enabled": true,
+      "type": "extension"
+    },
+    "mbstring": {
+      "enabled": true,
+      "type": "extension"
+    },
+    "exif": {
+      "enabled": true,
+      "type": "extension"
+    },
+    "mysqli": {
+      "enabled": false,
+      "type": "extension"
+    },
+    "openssl": {
+      "enabled": true,
+      "type": "extension"
+    },
+    "pdo_mysql": {
+      "enabled": true,
+      "type": "extension"
+    },
+    "pdo_pgsql": {
+      "enabled": false,
+      "type": "extension"
+    },
+    "pdo_sqlite": {
+      "enabled": false,
+      "type": "extension"
+    },
+    "pgsql": {
+      "enabled": false,
+      "type": "extension"
+    },
+    "sodium": {
+      "enabled": false,
+      "type": "extension"
+    },
+    "sqlite3": {
+      "enabled": false,
+      "type": "extension"
+    },
+    "zip": {
+      "enabled": true,
+      "type": "extension"
+    },
+    "opcache": {
+      "enabled": true,
+      "type": "zend_extension"
+    },
+    "xdebug": {
+      "enabled": false,
+      "type": "zend_extension"
+    }
+  }
+}

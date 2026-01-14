@@ -253,8 +253,8 @@ function Select-Version {
         }
 
         $msg = "`nThis is a partial list (latest matches only). For the complete list, visit:"
-        $msg += "`n Releases : https://windows.php.net/downloads/releases"
-        $msg += "`n Archives : https://windows.php.net/downloads/releases/archives"
+        $msg += "`n Releases : http://windows.php.net/downloads/releases"
+        $msg += "`n Archives : http://windows.php.net/downloads/releases/archives"
         Write-Host $msg
         $selectedVersionInput = Read-Host "`nEnter the exact version to install (or press Enter to cancel)"
         $selectedVersionInput = $selectedVersionInput.Trim()

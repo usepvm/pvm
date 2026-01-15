@@ -19,7 +19,7 @@ function Get-XDebug-FROM-URL {
             $fileName = $_.href -split "/"
             $fileName = $fileName[$fileName.Count - 1]
             $xDebugVersion = "2.0"
-            if ($_.href -match "php_xdebug-([\d\.]+)") {
+            if ($_.href -match "php_xdebug-([^-]+)") {
                 $xDebugVersion = $matches[1]
             }
             $formattedList += @{ href = $_.href; version = $version; xDebugVersion = $xDebugVersion; fileName = $fileName; outerHTML = $_.outerHTML }

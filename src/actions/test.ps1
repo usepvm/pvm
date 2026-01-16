@@ -25,8 +25,15 @@ function Run-Test-File {
     param ($config, $file, $options = $null)
     
     try {
+        $testResultData = @{
+            passedCount = 0
+            failedCount = 0
+            duration = 0
+            coverageRaw = $null
+        }
+        
         if (-not (Test-Path $file.FullName)) {
-            return @{ code = -1; Name = $file.Name; FailedCount = 1; Message = "File not found!" }
+            return @{ code = -1; Name = $file.Name; Message = "File not found!"; testResultData = $testResultData }
         }
         
         if (-not $options) {
@@ -58,23 +65,50 @@ function Run-Test-File {
         $config.Run.Path = $file.FullName
         $config.Run.PassThru = $true
         $testResult = Invoke-Pester -Configuration $config
-        $message = ""
-        $coveragePercent = $null
+        $coverageRaw = $null
+        $coverageText = "-"
         if ($testResult.CodeCoverage.CoveragePercent) {
-            $coveragePercent = $testResult.CodeCoverage.CoveragePercent.ToString('00.00')
-            $message = "| Coverage: $coveragePercent%"
+            $coverageRaw = [double]$testResult.CodeCoverage.CoveragePercent
+            $coverageText = '{0,6:00.00}%' -f $coverageRaw
         }
+        $durationText = "-"
+        $rawDuration = $testResult.Duration.TotalSeconds
+        $duration = Format-Seconds -totalSeconds $rawDuration
+        if ($duration -ne -1) {
+            $durationText = $duration
+        }
+        $message = (
+            'Passed : {0,-4} | Failed : {1,-4} | Duration : {2,-6}' -f
+            $testResult.PassedCount,
+            $testResult.FailedCount,
+            $durationText
+        )
+        if ($coverageRaw) {
+            $message = (
+                'Passed : {0,-4} | Failed : {1,-4} | Duration : {2,-6} | Coverage : {3,-7}' -f
+                $testResult.PassedCount,
+                $testResult.FailedCount,
+                $durationText,
+                $coverageText
+            )
+        }
+
+        $testResultData.passedCount = $testResult.PassedCount
+        $testResultData.failedCount = $testResult.FailedCount
+        $testResultData.duration = $rawDuration
+        $testResultData.coverageRaw = $coverageRaw
+
         if ($LASTEXITCODE -ne 0) {
-            return @{ code = -1; Name = $file.Name; FailedCount = $($testResult.FailedCount); Message = "Failed: $($testResult.FailedCount) $message"; coverage = $coveragePercent }
+            return @{ code = -1; Name = $file.Name; Message = $message; testResultData = $testResultData }
         }
         
-        return @{ code = 0; Name = $file.Name; FailedCount = 0; Message = "Failed: $($testResult.FailedCount) $message"; coverage = $coveragePercent }
+        return @{ code = 0; Name = $file.Name; Message = $message; testResultData = $testResultData }
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"
             exception = $_
         }
-        return @{ code = -1; Name = $file.Name; FailedCount = 1; Message = "Failed to run test, check log." }
+        return @{ code = -1; Name = $file.Name; Message = "Failed to run test, check log."; testResultData = $testResultData }
     }
 }
 
@@ -108,16 +142,23 @@ function Run-Tests {
             $testSummary += $testResult
         }
         
-        $messages = @(@{ content = "`n----------------------------------------------------------------" })
-        $messages += @(@{ content = "`n`nTest Results Summary: (Target : $($options.target)%)`n" })
+        Write-Host "`n----------------------------------------------------------------"
+        Write-Host "`n`nTest Results Summary: (Coverage : $($options.target)%)`n"
         $code = 0
         if ($testSummary.Count -gt 0) {
-            $totalFailedTests = $testSummary | Where-Object { $_.code -ne 0 } | ForEach-Object { $_.FailedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            $totalFailedTests = $testSummary | Where-Object { $_.code -ne 0 } | ForEach-Object { $_.testResultData.failedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            $totalDuration = $testSummary | ForEach-Object { $_.testResultData.duration } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            $totalDurationFormatted = Format-Seconds -totalSeconds $totalDuration
             if ($totalFailedTests -gt 0) { $code = -1; $color = "DarkYellow" } else { $code = 0; $color = "DarkGreen" }
-            $messages += @{ content = " Files tested : $($testSummary.Count) | Total failed tests: $totalFailedTests`n"; color = $color }
+            $content = " Files tested : $($testSummary.Count) | Total failed tests: $totalFailedTests"
+            if ($totalDurationFormatted -ne -1) {
+                $content += " | Total duration: $totalDurationFormatted"
+            }
+            $content += "`n"
+            Write-Host $content -ForegroundColor $color
             
             $maxFileNameLength = ($testSummary.Name | Measure-Object -Maximum Length).Maximum
-            $maxLineLength = $maxFileNameLength + 10  # padding
+            $maxLineLength = $maxFileNameLength + 20  # padding
             
             $testSummary | ForEach-Object {
                 $label = "  - $($_.Name) "
@@ -125,24 +166,25 @@ function Run-Tests {
                 $color = "DarkYellow"
                 if ($_.code -eq 0) {
                     $color = "DarkGreen"
-                    if ($null -ne $_.coverage -and [double]$_.coverage -lt $options.target) {
+                    if ($null -ne $_.testResultData.coverageRaw -and $_.testResultData.coverageRaw -lt $options.target) {
                         $color = "DarkGray"
                     }
                 }
-                $messages += @{ content = $line; color = $color }
+                Write-Host $line -ForegroundColor $color
             }
         } else {
             $code = -1
-            $messages += @{ content = "No tests found."; color = "DarkYellow" }
+            Write-Host "No tests found." -ForegroundColor DarkYellow
         }
-        $result = @{ code = $code; messages = $messages }
-        return $result
+        return $code
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"
             exception = $_
         }
-        return @{ code = -1; message = "Failed to run tests."; color = "DarkYellow" }
+        Write-Host "`nFailed to run tests, check log: $LOG_ERROR_PATH" -ForegroundColor DarkYellow
+
+        return -1
     }
 }
 

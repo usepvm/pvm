@@ -373,7 +373,7 @@ Describe "Invoke-PVMHelp Tests" {
 
 Describe "Invoke-PVMTest Tests" {
     BeforeAll {
-        Mock Run-Tests { @{ code = 0; message = "Tests passed" } }
+        Mock Run-Tests { 0 }
     }
     
     It "Should call Run-Tests with no arguments" {

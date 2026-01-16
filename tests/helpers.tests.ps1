@@ -634,3 +634,77 @@ Describe "Optimize-SystemPath" {
         }
     }
 }
+
+Describe "Format-Seconds" {
+    Context "When formatting seconds" {
+        It "Formats seconds less than 60 with decimal precision" {
+            $result = Format-Seconds -totalSeconds 30.5
+            $result | Should -Be "30.5s"
+            
+            $result = Format-Seconds -totalSeconds 45.123
+            $result | Should -Be "45.1s"
+            
+            $result = Format-Seconds -totalSeconds 0
+            $result | Should -Be "0s"
+        }
+        
+        It "Formats minutes and seconds without hours" {
+            $result = Format-Seconds -totalSeconds 90
+            $result | Should -Be "01:30"
+            
+            $result = Format-Seconds -totalSeconds 125
+            $result | Should -Be "02:05"
+            
+            $result = Format-Seconds -totalSeconds 3599
+            $result | Should -Be "59:59"
+        }
+        
+        It "Formats hours, minutes, and seconds" {
+            $result = Format-Seconds -totalSeconds 3600
+            $result | Should -Be "01:00:00"
+            
+            $result = Format-Seconds -totalSeconds 3661
+            $result | Should -Be "01:01:01"
+            
+            $result = Format-Seconds -totalSeconds 7325
+            $result | Should -Be "02:02:05"
+            
+            $result = Format-Seconds -totalSeconds 86400
+            $result | Should -Be "24:00:00"
+        }
+        
+        It "Handles negative values by converting to zero" {
+            $result = Format-Seconds -totalSeconds -10
+            $result | Should -Be "0s"
+            
+            $result = Format-Seconds -totalSeconds -100.5
+            $result | Should -Be "0s"
+        }
+        
+        It "Handles decimal values in minute ranges" {
+            $result = Format-Seconds -totalSeconds 90.7
+            $result | Should -Be "01:30"
+            
+            $result = Format-Seconds -totalSeconds 125.9
+            $result | Should -Be "02:05"
+        }
+        
+        It "Handles decimal values in hour ranges" {
+            $result = Format-Seconds -totalSeconds 3600.5
+            $result | Should -Be "01:00:00"
+            
+            $result = Format-Seconds -totalSeconds 3661.8
+            $result | Should -Be "01:01:01"
+        }
+        
+        It "Handles null input" {
+            $result = Format-Seconds -totalSeconds $null
+            $result | Should -Be 0
+        }
+        
+        It "Handles string input that can be converted" {
+            $result = Format-Seconds -totalSeconds "90"
+            $result | Should -Be "01:30"
+        }
+    }
+}

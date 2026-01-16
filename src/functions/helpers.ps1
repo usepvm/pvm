@@ -348,3 +348,34 @@ function Optimize-SystemPath {
         return -1
     }
 }
+
+function Format-Seconds {
+    param ($totalSeconds)
+    
+    try {
+        if ($null -eq $totalSeconds -or $totalSeconds -lt 0) {
+            $totalSeconds = 0
+        }
+        
+        if ($totalSeconds -lt 60) {
+            $rounded = [math]::Round($totalSeconds, 1)
+            return "{0}s" -f $rounded
+        }
+        
+        $hours = [int][math]::Floor($totalSeconds / 3600)
+        $minutes = [int][math]::Floor(($totalSeconds % 3600) / 60)
+        $seconds = [int][math]::Floor($totalSeconds % 60)
+        
+        if ($hours -gt 0) {
+            return "{0:D2}:{1:D2}:{2:D2}" -f $hours, $minutes, $seconds
+        }
+        
+        return "{0:D2}:{1:D2}" -f $minutes, $seconds
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to format seconds"
+            exception = $_
+        }
+        return -1
+    }
+}

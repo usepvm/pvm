@@ -42,8 +42,7 @@ Describe "Get-From-Source" {
             Remove-Item "TestDrive:\data" -Recurse -Force
         }
         
-        # Mock environment variable
-        $env:PROCESSOR_ARCHITECTURE = 'AMD64'
+        Mock Is-OS-64Bit { return $true }
     }
     
     It "Should fetch and filter PHP versions from source" {
@@ -79,7 +78,7 @@ Describe "Get-From-Source" {
     }
     
     It "Should handle x86 architecture" {
-        $env:PROCESSOR_ARCHITECTURE = 'X86'
+        Mock Is-OS-64Bit { return $false }
         
         $mockLinks = @(
             @{ href = 'php-8.2.0-Win32-x86.zip' },

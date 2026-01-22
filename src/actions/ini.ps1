@@ -8,7 +8,7 @@ function Get-XDebug-FROM-URL {
         $links = $html.Links
 
         # Filter the links to find versions that match the given version
-        $sysArch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x86_64' } else { '' }
+        $sysArch = if (Is-OS-64Bit) { 'x86_64' } else { '' }
         $filteredLinks = $links | Where-Object {
             $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$sysArch\.dll"
         }

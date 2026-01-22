@@ -19,7 +19,7 @@ function Get-From-Source {
             $fetchedVersions = $fetchedVersions + ($filteredLinks | ForEach-Object { $_.href })
         }
         
-        $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x64' } else { 'x86' }
+        $arch = if (Is-OS-64Bit) { 'x64' } else { 'x86' }
         $fetchedVersions = $fetchedVersions | Where-Object { $_ -match "$arch" }
         
         $fetchedVersionsGrouped = [ordered]@{

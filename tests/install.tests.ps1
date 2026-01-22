@@ -336,8 +336,6 @@ Describe "Get-PHP-Versions Tests" {
     BeforeEach {
         Mock Write-Host { }
         Reset-MockState
-        # Mock processor architecture
-        $env:PROCESSOR_ARCHITECTURE = "AMD64"
     }
     
     It "Should return versions for x64 architecture" {

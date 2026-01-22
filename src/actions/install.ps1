@@ -45,7 +45,7 @@ function Get-PHP-Versions {
             if ($fetched.Count -eq 0) {
                 continue
             }
-            $sysArch = if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'x64' } else { 'x86' }
+            $sysArch = if (Is-OS-64Bit) { 'x64' } else { 'x86' }
             $fetched = $fetched | Where-Object { $_.href -match $sysArch }
             if ($fetched.Count -eq 0) {
                 continue

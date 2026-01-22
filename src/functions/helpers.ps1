@@ -379,3 +379,7 @@ function Format-Seconds {
         return -1
     }
 }
+
+function Is-OS-64Bit {
+    return [System.Environment]::Is64BitOperatingSystem
+}

@@ -463,8 +463,8 @@ function Enable-IniExtension {
         }
         
         if ($selected.status -eq "Enabled") {
-            Write-Host "- '$($selected.name)' already enabled. check with 'pvm ini status $($selected.name)'" -ForegroundColor DarkGray
-            return -1
+            Write-Host "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
+            return 0
         }
         
         $lines = Get-Content $iniPath
@@ -481,8 +481,8 @@ function Enable-IniExtension {
         }
 
         if (-not $modified) {
-            Write-Host "- '$($selected.name)' is already enabled or not found. check with 'pvm ini status $($selected.name)'" -ForegroundColor DarkGray
-            return -1
+            Write-Host "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
+            return 0
         }
 
         Backup-IniFile $iniPath
@@ -552,8 +552,8 @@ function Disable-IniExtension {
         }
         
         if ($selected.status -eq "Disabled") {
-            Write-Host "- '$($selected.name)' is already disabled. check with 'pvm ini status $($selected.name)'" -ForegroundColor DarkGray
-            return -1
+            Write-Host "- '$($selected.name)' disabled successfully." -ForegroundColor DarkGreen
+            return 0
         }
         
         $lines = Get-Content $iniPath
@@ -570,8 +570,8 @@ function Disable-IniExtension {
         }
 
         if (-not $modified) {
-            Write-Host "- '$($selected.name)' is already disabled or not found. check with 'pvm ini status $($selected.name)'" -ForegroundColor DarkGray
-            return -1
+            Write-Host "- '$($selected.name)' disabled successfully." -ForegroundColor DarkGreen
+            return 0
         }
         
         Backup-IniFile $iniPath

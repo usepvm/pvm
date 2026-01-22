@@ -396,13 +396,13 @@ Describe "Enable-IniExtension" {
         (Get-Content $testIniPath) -match "^extension=php_xdebug.dll" | Should -Be $true
     }
     
-    It "Returns -1 for already enabled extension" {
+    It "Returns 0 for already enabled extension" {
         Mock Get-ChildItem {
             param($Path)
             return @( @{ BaseName = "php_curl"; Name = "php_curl.dll"; FullName = "$extDirectory\php_curl.dll" } )
         }
         
-        Enable-IniExtension -iniPath $testIniPath -extName "curl" | Should -Be -1
+        Enable-IniExtension -iniPath $testIniPath -extName "curl" | Should -Be 0
     }
     
     It "Returns -1 for non-existent extension" {

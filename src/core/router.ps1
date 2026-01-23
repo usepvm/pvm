@@ -147,7 +147,7 @@ function Invoke-PVMTest {
             $options.tag = $Matches[1]
             return $false
         }
-        if ($_ -match '^--coverage(?:=(\d+(?:\.\d+)?))?$') {
+        if ($_ -match '^--coverage(?:=(\-?\d+(?:\.\d+)?))?$') {
             $options.coverage = $true
             if ($Matches[1]) {
                 $options.target = [decimal] $Matches[1]
@@ -159,6 +159,11 @@ function Invoke-PVMTest {
             return $false
         }
         return $true
+    }
+    
+    if ($options.target -lt 0 -or $options.target -gt 100) {
+        Write-Host "`nInvalid coverage value : $($options.target) | Min: 0, Max: 100" -ForegroundColor Yellow
+        return -1
     }
     
     return Run-Tests -tests $files -options $options

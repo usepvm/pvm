@@ -382,8 +382,13 @@ Describe "Invoke-PVMTest Tests" {
     }
     
     It "Should call Run-Tests with provided arguments" {
-        $result = Invoke-PVMTest -arguments @("TestFile.ps1", "TestFile2.ps1", "--coverage", "--verbosity=detailed", "--tag=unit", "--target=75")
+        $result = Invoke-PVMTest -arguments @("TestFile.ps1", "TestFile2.ps1", "--coverage=80", "--verbosity=detailed", "--tag=unit")
         $result | Should -Be 0
+    }
+    
+    It "Should return -1 for invalid coverage target" {
+        $result = Invoke-PVMTest -arguments @("TestFile.ps1", "--coverage=150")
+        $result | Should -Be -1
     }
 }
 

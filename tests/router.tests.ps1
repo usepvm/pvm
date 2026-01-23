@@ -386,9 +386,16 @@ Describe "Invoke-PVMTest Tests" {
         $result | Should -Be 0
     }
     
-    It "Should return -1 for invalid coverage target" {
-        $result = Invoke-PVMTest -arguments @("TestFile.ps1", "--coverage=150")
-        $result | Should -Be -1
+    Context "Handle invalid coverage target values" {
+        It "Should return -1 for over 100 coverage target" {
+            $result = Invoke-PVMTest -arguments @("TestFile.ps1", "--coverage=150")
+            $result | Should -Be -1
+        }
+        
+        It "Should return -1 for negative coverage value" {
+            $result = Invoke-PVMTest -arguments @("TestFile.ps1", "--coverage=-10")
+            $result | Should -Be -1
+        }
     }
 }
 

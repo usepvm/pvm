@@ -138,9 +138,18 @@ function Invoke-PVMIni {
         return -1
     }
     
-    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
+    $arch = Resolve-Arch -arch ($arguments | Where-Object { @('x86', 'x64') -contains $_ })
+    if ($null -eq $arch) {
+        Write-Host "`nInvalid architecture specified. Allowed values are 'x86' or 'x64'." -ForegroundColor DarkYellow
+        return -1
+    }
+    
+    $remainingArgs = if ($arguments.Count -gt 1) { 
+        $arguments[1..($arguments.Count - 1)] | Where-Object { $_ -ne $arch }
+    } else { @() }
 
-    $exitCode = Invoke-PVMIniAction -action $action -params $remainingArgs
+
+    $exitCode = Invoke-PVMIniAction -action $action -params $remainingArgs -arch $arch
     return $exitCode
 }
 

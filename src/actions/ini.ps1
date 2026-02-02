@@ -1,16 +1,25 @@
 
 
 function Get-XDebug-FROM-URL {
-    param ($url, $version)
+    param ($url, $version, $arch = $null)
 
     try {
         $html = Invoke-WebRequest -Uri $url
         $links = $html.Links
 
         # Filter the links to find versions that match the given version
-        $sysArch = if (Is-OS-64Bit) { 'x86_64' } else { '' }
+        if ($null -ne $arch) {
+            $arch = if ($arch -eq 'x64') { 'x86_64' } else { '' }
+        }
         $filteredLinks = $links | Where-Object {
-            $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$sysArch\.dll"
+            if ($arch) {
+                return ($_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$arch\.dll")
+            }
+            if ($arch -eq '') {
+                return ($_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*\.dll" -and $_.href -notmatch "x86_64")
+            }
+            
+            return $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*\.dll"
         }
 
         # Return the filtered links (PHP version names)
@@ -773,11 +782,11 @@ function Get-PHP-Data {
 }
 
 function Install-XDebug-Extension {
-    param ($iniPath)
+    param ($iniPath, $arch = $null)
     
     try {
         $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
-        $xDebugList = Get-XDebug-FROM-URL -url $XDEBUG_HISTORICAL_URL -version $currentVersion
+        $xDebugList = Get-XDebug-FROM-URL -url $XDEBUG_HISTORICAL_URL -version $currentVersion -arch $arch
         $xDebugList = $xDebugList | Sort-Object { [version]$_.xDebugVersion } -Descending
 
         if ($null -eq $xDebugList -or $xDebugList.Count -eq 0) {
@@ -866,7 +875,7 @@ function Install-XDebug-Extension {
 }
 
 function Install-Extension {
-    param ($iniPath, $extName)
+    param ($iniPath, $extName, $arch = $null)
     
     try {
         try {
@@ -941,7 +950,10 @@ function Install-Extension {
                 $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName/$extVersion/windows"
                 $packageLinks = $html.Links | Where-Object {
                     $packageName = $_.href -replace "$PECL_WIN_EXT_DOWNLOAD_URL/$extName/$extVersion/", ""
-                    if ($packageName -match "^php_$extName-$extVersion-(\d+\.\d+)-.+\.zip$") {
+                    if ($null -eq $arch) {
+                        $arch = ''
+                    }
+                    if ($packageName -match "^php_$extName-$extVersion-(\d+\.\d+)-.+$arch\.zip$") {
                         $phpVersion = $matches[1]
                         return ($phpVersion -eq $currentVersion)
                     }
@@ -1025,7 +1037,7 @@ function Install-Extension {
 }
 
 function Install-IniExtension {
-    param ($iniPath, $extName)
+    param ($iniPath, $extName, $arch = $null)
     
     try {
         if (-not $extName) {
@@ -1034,9 +1046,9 @@ function Install-IniExtension {
         }
         
         if ($extName -like "*xdebug*") {
-            $code = Install-XDebug-Extension -iniPath $iniPath
+            $code = Install-XDebug-Extension -iniPath $iniPath -arch $arch
         } else {
-            $code = Install-Extension -iniPath $iniPath -extName $extName
+            $code = Install-Extension -iniPath $iniPath -extName $extName -arch $arch
         }
         
         if ($code -ne 0) {
@@ -1211,7 +1223,7 @@ function List-PHP-Extensions {
 }
 
 function Invoke-PVMIniAction {
-    param ( $action, $params )
+    param ( $action, $params, $arch = $null )
 
     try {
         $exitCode = 1
@@ -1302,7 +1314,7 @@ function Invoke-PVMIniAction {
                 
                 Write-Host "`nInstalling extension(s): $($params -join ', ')"
                 foreach ($extName in $params) {
-                    $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName
+                    $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName -arch $arch
                 }
             }
             "list" {

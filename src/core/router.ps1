@@ -43,8 +43,14 @@ function Invoke-PVMCurrent {
 function Invoke-PVMList{
     param($arguments)
     
+    $arch = Resolve-Arch -arch ($arguments | Where-Object { @('x86', 'x64') -contains $_ })
+    if ($null -eq $arch) {
+        Write-Host "`nInvalid architecture specified. Allowed values are 'x86' or 'x64'." -ForegroundColor DarkYellow
+        return -1
+    }
+    
     $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-    $result = Get-PHP-Versions-List -available ($arguments -contains "available") -term $term
+    $result = Get-PHP-Versions-List -available ($arguments -contains "available") -term $term -arch $arch
     
     return $result
 }

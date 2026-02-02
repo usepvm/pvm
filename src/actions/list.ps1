@@ -1,5 +1,6 @@
 
 function Get-From-Source {
+    param ($arch = $null)
 
     try {
         $urls = Get-Source-Urls
@@ -19,8 +20,9 @@ function Get-From-Source {
             $fetchedVersions = $fetchedVersions + ($filteredLinks | ForEach-Object { $_.href })
         }
         
-        $arch = if (Is-OS-64Bit) { 'x64' } else { 'x86' }
-        $fetchedVersions = $fetchedVersions | Where-Object { $_ -match "$arch" }
+        if ($null -ne $arch) {
+            $fetchedVersions = $fetchedVersions | Where-Object { $_ -match $arch }
+        }
         
         $fetchedVersionsGrouped = [ordered]@{
             'Archives' = $fetchedVersions | Where-Object { $_ -match "archives" }
@@ -46,6 +48,7 @@ function Get-From-Source {
 }
 
 function Get-PHP-List-To-Install {
+    param ($arch = $null)
     try {
         $cacheFile = "$CACHE_PATH\available_php_versions.json"
         $fetchedVersionsGrouped = @{}
@@ -59,10 +62,10 @@ function Get-PHP-List-To-Install {
         if ($useCache) {
             $fetchedVersionsGrouped = Get-Data-From-Cache -cacheFileName "available_php_versions"
             if (-not $fetchedVersionsGrouped -or $fetchedVersionsGrouped.Count -eq 0) {
-                $fetchedVersionsGrouped = Get-From-Source
+                $fetchedVersionsGrouped = Get-From-Source -arch $arch
             }
         } else {
-            $fetchedVersionsGrouped = Get-From-Source
+            $fetchedVersionsGrouped = Get-From-Source -arch $arch
         }
         
         return $fetchedVersionsGrouped
@@ -76,12 +79,12 @@ function Get-PHP-List-To-Install {
 }
 
 function Get-Available-PHP-Versions {
-    param($term = $null)
+    param($term = $null, $arch = $null)
     
     try {
         Write-Host "`nLoading available PHP versions..."
 
-        $fetchedVersionsGrouped = Get-PHP-List-To-Install
+        $fetchedVersionsGrouped = Get-PHP-List-To-Install -arch $arch
 
         if ($fetchedVersionsGrouped.Count -eq 0) {
             Write-Host "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
@@ -118,7 +121,11 @@ function Get-Available-PHP-Versions {
             Write-Host "`n$key`n"
             $fetchedVersionsGroupe | ForEach-Object {
                 $versionItem = $_ -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
-                Write-Host "  $versionItem"
+                $fileName = $_ -split "/"
+                $fileName = $fileName[$fileName.Count - 1]
+                $arch = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                
+                Write-Host "  $versionItem $arch"
             }
         }
         
@@ -163,10 +170,14 @@ function Display-Installed-PHP-Versions {
         Write-Host "------------------"
         $duplicates = @()
         $installedPhp | ForEach-Object {
-            $versionNumber = $_
+            $versionNumber = $_.name
+            $arch = $_.arch
             if ($duplicates -notcontains $versionNumber) {
-                $duplicates += $versionNumber
+                $duplicates += "$($versionNumber)_$($arch)"
                 $isCurrent = ""
+                if ($arch) {
+                    $versionNumber += " " + $arch
+                }
                 if ($currentVersion -eq $versionNumber) {
                     $isCurrent = "(Current)"
                 }
@@ -186,10 +197,10 @@ function Display-Installed-PHP-Versions {
 
 
 function Get-PHP-Versions-List {
-    param($available = $false, $term = $null)
+    param($available = $false, $term = $null, $arch = $null)
     
     if ($available) {
-        $result = Get-Available-PHP-Versions -term $term
+        $result = Get-Available-PHP-Versions -term $term -arch $arch
     } else {
         $result = Display-Installed-PHP-Versions -term $term
     }

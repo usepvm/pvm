@@ -383,3 +383,19 @@ function Format-Seconds {
 function Is-OS-64Bit {
     return [System.Environment]::Is64BitOperatingSystem
 }
+
+function Resolve-Arch {
+    param ($arch = $null)
+    
+    if ($null -eq $arch) {
+        $arch = if (Is-OS-64Bit) { 'x64' } else { 'x86' }
+    }
+    
+    $arch = $arch.ToLower()
+    
+    if (@('x86', 'x64') -notcontains $arch) {
+        return $null
+    }
+    
+    return $arch
+}

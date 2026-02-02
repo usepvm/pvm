@@ -42,12 +42,13 @@ function Get-Installed-PHP-Versions {
     try {
         $directories = Get-All-Subdirectories -path "$STORAGE_PATH\php"
         $names = $directories | ForEach-Object {
+            $filenameParts = $_.Name -split '_'
             if (Test-Path "$($_.FullName)\php.exe"){
-                return $_.Name
+                return @{ name = $filenameParts[0]; arch = $filenameParts[1]; dirName = $_.Name }
             }
             return $null
         }
-        return ($names | Sort-Object { [version]$_ })        
+        return ($names | Sort-Object { [version]$_.name })        
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve installed PHP versions"
@@ -100,8 +101,8 @@ function Get-Matching-PHP-Versions {
 
         $matchingVersions = @()
         foreach ($v in $installedVersions) {
-            if ($v -like "$version*") {
-                $matchingVersions += ($v -replace 'php', '')
+            if ($v.dirName -like "$version*") {
+                $matchingVersions += ($v.dirName -replace 'php', '')
             }
         }
 

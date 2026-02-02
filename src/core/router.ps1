@@ -77,7 +77,13 @@ function Invoke-PVMInstall {
         return -1
     }
 
-    $result = Install-PHP -version $version
+    $arch = Resolve-Arch -arch ($arguments | Where-Object { @('x86', 'x64') -contains $_ })
+    if ($null -eq $arch) {
+        Write-Host "`nInvalid architecture specified. Allowed values are 'x86' or 'x64'." -ForegroundColor DarkYellow
+        return -1
+    }
+
+    $result = Install-PHP -version $version -arch $arch
     Display-Msg-By-ExitCode -result $result
     return 0
 }

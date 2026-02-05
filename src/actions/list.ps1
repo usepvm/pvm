@@ -10,23 +10,35 @@ function Get-From-Source {
             $links = $html.Links
 
             # Filter the links to find versions that match the given version
-            $filteredLinks = $links | Where-Object { 
-                $_.href -match "php-\d+\.\d+\.\d+(?:-\d+)?-Win32.*\.zip$" -and
-                $_.href -notmatch "php-debug" -and
-                $_.href -notmatch "php-devel" -and
-                $_.href -notmatch "nts"
+            $filteredLinks = @()
+            $links | ForEach-Object {
+                if ($_.href -match "php-\d+\.\d+\.\d+(?:-\d+)?-(?:nts-)?Win32.*\.zip$" -and
+                    $_.href -notmatch "php-debug" -and
+                    $_.href -notmatch "php-devel" # -and $_.href -notmatch "nts"
+                ) {
+                    $fileName = $_.href -split "/"
+                    $fileName = $fileName[$fileName.Count - 1]
+                    $BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
+                    
+                    $filteredLinks += @{
+                        Version = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
+                        Arch    = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                        BuildType = $BuildType
+                        Link    = $_.href
+                    }
+                }
             }
             # Return the filtered links (PHP version names)
-            $fetchedVersions = $fetchedVersions + ($filteredLinks | ForEach-Object { $_.href })
+            $fetchedVersions = $fetchedVersions + $filteredLinks # ($filteredLinks | ForEach-Object { $_.href })
         }
         
         if ($null -ne $arch) {
-            $fetchedVersions = $fetchedVersions | Where-Object { $_ -match $arch }
+            $fetchedVersions = $fetchedVersions | Where-Object { $_.Arch -match $arch }
         }
         
         $fetchedVersionsGrouped = [ordered]@{
-            'Archives' = $fetchedVersions | Where-Object { $_ -match "archives" }
-            'Releases' = $fetchedVersions | Where-Object { $_ -notmatch "archives" }
+            'Archives' = $fetchedVersions | Where-Object { $_.Link -match "archives" }
+            'Releases' = $fetchedVersions | Where-Object { $_.Link -notmatch "archives" }
         }
         
         if ($fetchedVersionsGrouped.Count -eq 0 -or 
@@ -90,7 +102,7 @@ function Get-Available-PHP-Versions {
             $searchResult = $_.Value
             if ($term) {
                 $searchResult = $searchResult | Where-Object {
-                    $_ -like "*php-$term*"
+                    $_.Version -like "$term*"
                 }
             }
             if ($searchResult.Count -ne 0) {
@@ -114,12 +126,12 @@ function Get-Available-PHP-Versions {
             }
             Write-Host "`n$key`n"
             $fetchedVersionsGroupe | ForEach-Object {
-                $versionItem = $_ -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
-                $fileName = $_ -split "/"
-                $fileName = $fileName[$fileName.Count - 1]
-                $arch = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                $version = $_.Version
+                $arch = $_.Arch
+                $buildType = $_.BuildType
+                $versionNumber = "$version ".PadRight(15, '.')
                 
-                Write-Host "  $versionItem $arch"
+                Write-Host "  $versionNumber $arch $buildType"
             }
         }
         
@@ -138,14 +150,14 @@ function Get-Available-PHP-Versions {
 }
 
 function Display-Installed-PHP-Versions {
-    param ($term)
+    param ($term = $null, $arch = $null)
 
     try {
         $currentVersion = Get-Current-PHP-Version
         if ($currentVersion -and $currentVersion.version) {
             $currentVersion = $currentVersion.version
         }
-        $installedPhp = Get-Installed-PHP-Versions
+        $installedPhp = Get-Installed-PHP-Versions -arch $arch
         
         if ($installedPhp.Count -eq 0) {
             Write-Host "`nNo PHP versions found"
@@ -153,7 +165,7 @@ function Display-Installed-PHP-Versions {
         }
         
         if ($term) {
-            $installedPhp = $installedPhp | Where-Object { $_ -like "$term*" }
+            $installedPhp = $installedPhp | Where-Object { $_.Version -like "$term*" }
             if ($installedPhp.Count -eq 0) {
                 Write-Host "`nNo PHP versions found matching '$term'"
                 return -1
@@ -164,18 +176,24 @@ function Display-Installed-PHP-Versions {
         Write-Host "------------------"
         $duplicates = @()
         $installedPhp | ForEach-Object {
-            $versionNumber = $_.name
-            $arch = $_.arch
+            $versionNumber = $_.Version
+            $arch = $_.Arch
+            $buildType = $_.BuildType
             if ($duplicates -notcontains $versionNumber) {
                 $duplicates += "$($versionNumber)_$($arch)"
                 $isCurrent = ""
+                $metaData = ""
                 if ($arch) {
-                    $versionNumber += " " + $arch
+                    $metaData += $arch + " "
+                }
+                if ($buildType) {
+                    $metaData += $buildType
                 }
                 if ($currentVersion -eq $versionNumber) {
                     $isCurrent = "(Current)"
                 }
-                Write-Host "  $versionNumber $isCurrent"
+                $versionNumber = "$versionNumber ".PadRight(15, '.')
+                Write-Host " $versionNumber $metaData $isCurrent"
             }
         }
         return 0
@@ -196,7 +214,7 @@ function Get-PHP-Versions-List {
     if ($available) {
         $result = Get-Available-PHP-Versions -term $term -arch $arch
     } else {
-        $result = Display-Installed-PHP-Versions -term $term
+        $result = Display-Installed-PHP-Versions -term $term -arch $arch
     }
     
     return $result

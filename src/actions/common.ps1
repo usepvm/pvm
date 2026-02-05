@@ -37,18 +37,43 @@ function Is-PVM-Setup {
     }
 }
 
-function Get-Installed-PHP-Versions {
-    
-    try {
-        $directories = Get-All-Subdirectories -path "$STORAGE_PATH\php"
-        $names = $directories | ForEach-Object {
-            $filenameParts = $_.Name -split '_'
-            if (Test-Path "$($_.FullName)\php.exe"){
-                return @{ name = $filenameParts[0]; arch = $filenameParts[1]; dirName = $_.Name }
-            }
-            return $null
+function Get-Installed-PHP-Versions-From-Directory {
+    $directories = Get-All-Subdirectories -path "$STORAGE_PATH\php"
+    $installedVersions = $directories | ForEach-Object {
+        if (Test-Path "$($_.FullName)\php.exe"){
+            $phpInfo = Get-PHPInstallInfo -path $_.FullName
+            
+            return $phpInfo
         }
-        return ($names | Sort-Object { [version]$_.name })        
+        return $null
+    }
+
+    $installedVersions = ($installedVersions | Sort-Object { [version]$_.Version })
+
+    return $installedVersions
+}
+
+function Get-Installed-PHP-Versions {
+    param ($arch = $null)
+    try {
+        $useCache = Can-Use-Cache -cacheFileName 'installed_php_versions'
+        
+        if ($useCache) {
+            $installedVersions = Get-Data-From-Cache -cacheFileName "installed_php_versions"
+            if (-not $installedVersions -or $installedVersions.Count -eq 0) {
+                $installedVersions = Get-Installed-PHP-Versions-From-Directory
+                $cached = Cache-Data -cacheFileName "installed_php_versions" -data $installedVersions -depth 1
+            }
+        } else {
+            $installedVersions = Get-Installed-PHP-Versions-From-Directory
+            $cached = Cache-Data -cacheFileName "installed_php_versions" -data $installedVersions -depth 1
+        }
+        
+        if ($arch) {
+            $installedVersions = $installedVersions | Where-Object { $_.Arch -eq $arch }
+        }
+        
+        return $installedVersions
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve installed PHP versions"

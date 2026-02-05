@@ -106,7 +106,7 @@ function Get-UserSelected-PHP-Version {
     if (-not $installedVersions -or $installedVersions.Count -eq 0) {
         return $null
     }
-    if ($installedVersions.Count -eq 1) {
+    if ($installedVersions.Length -eq 1) {
         $versionObj = $($installedVersions)
     } else {
         $currentVersion = Get-Current-PHP-Version

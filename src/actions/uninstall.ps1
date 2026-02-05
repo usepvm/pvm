@@ -27,6 +27,8 @@ function Uninstall-PHP {
 
         Remove-Item -Path ($pathVersionObject.path) -Recurse -Force
         
+        $cacheRefreshed = Refresh-Installed-PHP-Versions-Cache
+        
         return @{ code = 0; message = "PHP version $($pathVersionObject.version) has been uninstalled successfully"; color = "DarkGreen" }
     } catch {
         $logged = Log-Data -data @{

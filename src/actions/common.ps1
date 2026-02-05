@@ -107,31 +107,37 @@ function Get-UserSelected-PHP-Version {
         return $null
     }
     if ($installedVersions.Count -eq 1) {
-        $version = $($installedVersions)
+        $versionObj = $($installedVersions)
     } else {
         $currentVersion = Get-Current-PHP-Version
-        if ($currentVersion -and $currentVersion.version) {
-            $currentVersion = $currentVersion.version
-        }
+        $index = 0
         Write-Host "`nInstalled versions :"
         $installedVersions | ForEach-Object {
-            $versionNumber = $_
+            $_.index = $index
             $isCurrent = ""
             if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
                 $isCurrent = "(Current)"
             }
-            Write-Host " - $versionNumber $isCurrent"
+            $metaData = ""
+            if ($_.Arch) {
+                $metaData += $_.Arch + " "
+            }
+            if ($_.BuildType) {
+                $metaData += $_.BuildType
+            }
+            $versionNumber = "$($_.version) ".PadRight(15, '.')
+            Write-Host " [$index] $versionNumber $metaData $isCurrent"
+            $index++
         }
-        $response = Read-Host "`nEnter the exact version to use. (or press Enter to cancel)"
+        $response = Read-Host "`nInsert the [number] matching the version to uninstall (or press Enter to cancel)"
         $response = $response.Trim()
         if (-not $response) {
             return @{ code = -1; message = "Operation cancelled."; color = "DarkYellow"}
         }
-        $version = $response
+        $versionObj = $installedVersions | Where-Object { $_.index -eq $response }
     }
-    $phpPath = Get-PHP-Path-By-Version -version $version
     
-    return @{ code = 0; version = $version; path = $phpPath }
+    return @{ code = 0; version = $versionObj.version; arch = $versionObj.arch; buildType = $versionObj.BuildType; path = $versionObj.InstallPath }
 }
 
 function Get-Matching-PHP-Versions {

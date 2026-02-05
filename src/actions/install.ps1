@@ -296,18 +296,27 @@ function Install-PHP {
         if ($foundInstalledVersions) {
             if ($version -match '^(\d+)(?:\.(\d+))?') {
                 $currentVersion = Get-Current-PHP-Version
-                if ($currentVersion -and $currentVersion.version) {
-                    $currentVersion = $currentVersion.version
-                }
                 $familyVersion = $matches[0]
                 Write-Host "`nOther versions from the $familyVersion.x family are available:"
                 $foundInstalledVersions | ForEach-Object {
-                    $versionNumber = $_
+                    $versionNumber = $_.Version
                     $isCurrent = ""
-                    if ($currentVersion -eq $versionNumber) {
+                    $metaData = ""
+                    if ($_.Arch) {
+                        $metaData += $_.Arch + " "
+                    }
+                    if ($_.BuildType) {
+                        $metaData += $_.BuildType
+                    }
+                    if ($currentVersion -and
+                        $currentVersion.version -eq $_.version -and
+                        $currentVersion.arch -eq $_.arch -and
+                        $currentVersion.buildType -eq $_.BuildType
+                    ) {
                         $isCurrent = "(Current)"
                     }
-                    Write-Host " - $versionNumber $isCurrent"
+                    $versionNumber = "$versionNumber ".PadRight(15, '.')
+                    Write-Host " $versionNumber $metaData $isCurrent"
                 }
                 $response = Read-Host "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 $response = $response.Trim()

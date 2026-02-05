@@ -138,15 +138,10 @@ function Get-Matching-PHP-Versions {
     param ($version)
 
     try {
-        $installedVersions = Get-Installed-PHP-Versions  # You should have this function
+        $installedVersions = Get-Installed-PHP-Versions
 
-        $matchingVersions = @()
-        foreach ($v in $installedVersions) {
-            if ($v.dirName -like "$version*") {
-                $matchingVersions += ($v.dirName -replace 'php', '')
-            }
-        }
-
+        $matchingVersions = $installedVersions | Where-Object { $_.Version -like "$version*" }
+        
         return $matchingVersions
     } catch {
         $logged = Log-Data -data @{

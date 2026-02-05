@@ -146,8 +146,12 @@ function Is-PHP-Version-Installed {
     param ($version)
 
     try {
-        $installedVersions = Get-Matching-PHP-Versions -version $version
-        return ($installedVersions -contains $version)
+        $installedVersions = Get-Matching-PHP-Versions -version $version.version
+        return ($installedVersions | Where-Object {
+            $_.Version -eq $version.version -and
+            $_.Arch -eq $version.arch -and
+            $_.BuildType -eq $version.BuildType
+        })
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"

@@ -291,12 +291,6 @@ function Install-PHP {
     param ($version, $arch = $null)
 
     try {
-        if (Is-PHP-Version-Installed -version $version) {
-            $message = "Version '$($version)' already installed."
-            $message += "`nRun: pvm use $version"
-            return @{ code = -1; message = $message }
-        }
-
         $foundInstalledVersions = Get-Matching-PHP-Versions -version $version
 
         if ($foundInstalledVersions) {
@@ -341,7 +335,7 @@ function Install-PHP {
             return @{ code = -1; message = "Installation cancelled" }
         }
 
-        if (Is-PHP-Version-Installed -version $selectedVersionObject.version) {
+        if (Is-PHP-Version-Installed -version $selectedVersionObject) {
             $message = "Version '$($selectedVersionObject.version)' already installed"
             $message += "`nRun: pvm use $($selectedVersionObject.version)"
             return @{ code = -1; message = $message }

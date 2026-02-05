@@ -1144,13 +1144,7 @@ function List-PHP-Extensions {
         } else {
             Write-Host "`nLoading available extensions..."
             
-            $cacheFile = "$CACHE_PATH\available_extensions.json"
-            $useCache = $false
-            
-            if (Test-Path $cacheFile) {
-                $fileAgeHours = (New-TimeSpan -Start (Get-Item $cacheFile).LastWriteTime -End (Get-Date)).TotalHours
-                $useCache = ($fileAgeHours -lt $CACHE_MAX_HOURS)
-            }
+            $useCache = Can-Use-Cache -cacheFileName 'available_extensions'
             
             if ($useCache) {
                 $availableExtensions = Get-Data-From-Cache -cacheFileName "available_extensions"

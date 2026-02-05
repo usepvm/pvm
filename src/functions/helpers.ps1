@@ -3,6 +3,20 @@ function Get-Zend-Extensions-List {
     return @('xdebug', 'opcache')
 }
 
+function Can-Use-Cache {
+    param ($cacheFileName)
+    
+    $path = "$CACHE_PATH\$cacheFileName.json"
+    $useCache = $false
+
+    if (Test-Path $cacheFileName) {
+        $fileAgeHours = (New-TimeSpan -Start (Get-Item $cacheFileName).LastWriteTime -End (Get-Date)).TotalHours
+        $useCache = ($fileAgeHours -lt $CACHE_MAX_HOURS)
+    }
+    
+    return $useCache
+}
+
 function Get-Data-From-Cache {
     param ($cacheFileName)
     

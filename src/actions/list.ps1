@@ -50,14 +50,8 @@ function Get-From-Source {
 function Get-PHP-List-To-Install {
     param ($arch = $null)
     try {
-        $cacheFile = "$CACHE_PATH\available_php_versions.json"
         $fetchedVersionsGrouped = @{}
-        $useCache = $false
-
-        if (Test-Path $cacheFile) {
-            $fileAgeHours = (New-TimeSpan -Start (Get-Item $cacheFile).LastWriteTime -End (Get-Date)).TotalHours
-            $useCache = ($fileAgeHours -lt $CACHE_MAX_HOURS)
-        }
+        $useCache = Can-Use-Cache -cacheFileName 'available_php_versions'
         
         if ($useCache) {
             $fetchedVersionsGrouped = Get-Data-From-Cache -cacheFileName "available_php_versions"

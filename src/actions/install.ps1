@@ -8,20 +8,24 @@ function Get-PHP-Versions-From-Url {
 
         # Filter the links to find versions that match the given version
         $filteredLinks = $links | Where-Object {
-            $_.href -match "php-$version(\.\d+)*-win.*\.zip$" -and
+            $_.href -match "php-$version(\.\d+)*-(?:nts-)?win.*\.zip$" -and
             $_.href -notmatch "php-debug" -and
-            $_.href -notmatch "php-devel" -and
-            $_.href -notmatch "nts"
+            $_.href -notmatch "php-devel" # -and $_.href -notmatch "nts"
         }
 
         # Return the filtered links (PHP version names)
         $formattedList = @()
         $filteredLinks = $filteredLinks | ForEach-Object {
-            $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
+            $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
             $fileName = $_.href -split "/"
             $fileName = $fileName[$fileName.Count - 1]
-            $arch = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
-            $formattedList += @{ href = $_.href; version = $version; fileName = $fileName; arch = $arch }
+            $formattedList += @{
+                href = $_.href
+                version = $version
+                fileName = $fileName
+                BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
+                arch = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+            }
         }
 
         return $formattedList
@@ -99,6 +103,8 @@ function Download-PHP {
 
         $fileName = $versionObject.fileName
         $version = $versionObject.version
+        $buildType = $versionObject.BuildType
+        $arch = $versionObject.arch
 
         $destination = "$STORAGE_PATH\php"
         $created = Make-Directory -path $destination
@@ -107,7 +113,7 @@ function Download-PHP {
             return $null
         }
 
-        Write-Host "`nDownloading PHP $version..."
+        Write-Host "`nDownloading PHP $version ($buildType $arch)..."
 
         foreach ($key in $urls.Keys) {
             $_url = $urls[$key]
@@ -255,8 +261,7 @@ function Select-Version {
             Write-Host "`n$key versions:`n"
             $versionsList | ForEach-Object {
                 $_.index = $index
-                $versionItem = $_.version -replace '/downloads/releases/archives/|/downloads/releases/|php-|-Win.*|.zip', ''
-                Write-Host " [$index] $versionItem $($_.arch)"
+                Write-Host " [$index] $($_.version) $($_.arch) $($_.BuildType)"
                 $index++
             }
         }
@@ -357,7 +362,7 @@ function Install-PHP {
         }
 
         Write-Host "`nExtracting the downloaded zip ..."
-        $phpDirectoryName = "$($selectedVersionObject.version)_$arch"
+        $phpDirectoryName = "$($selectedVersionObject.version)_$($selectedVersionObject.BuildType)_$($selectedVersionObject.arch)"
         Extract-And-Configure -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$phpDirectoryName"
 
         $opcacheEnabled = Configure-Opcache -version $version -phpPath "$destination\$phpDirectoryName"

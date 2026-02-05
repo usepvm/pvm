@@ -18,12 +18,11 @@ function Get-From-Source {
                 ) {
                     $fileName = $_.href -split "/"
                     $fileName = $fileName[$fileName.Count - 1]
-                    $BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
                     
                     $filteredLinks += @{
                         Version = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
                         Arch    = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
-                        BuildType = $BuildType
+                        BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
                         Link    = $_.href
                     }
                 }
@@ -154,9 +153,6 @@ function Display-Installed-PHP-Versions {
 
     try {
         $currentVersion = Get-Current-PHP-Version
-        if ($currentVersion -and $currentVersion.version) {
-            $currentVersion = $currentVersion.version
-        }
         $installedPhp = Get-Installed-PHP-Versions -arch $arch
         
         if ($installedPhp.Count -eq 0) {
@@ -177,19 +173,21 @@ function Display-Installed-PHP-Versions {
         $duplicates = @()
         $installedPhp | ForEach-Object {
             $versionNumber = $_.Version
-            $arch = $_.Arch
-            $buildType = $_.BuildType
-            if ($duplicates -notcontains $versionNumber) {
-                $duplicates += "$($versionNumber)_$($arch)"
+            $versionID = "$($_.Version)_$($_.buildType)_$($_.Arch)"
+            if ($duplicates -notcontains $versionID) {
+                $duplicates += $versionID
                 $isCurrent = ""
                 $metaData = ""
-                if ($arch) {
-                    $metaData += $arch + " "
+                if ($_.Arch) {
+                    $metaData += $_.Arch + " "
                 }
-                if ($buildType) {
-                    $metaData += $buildType
+                if ($_.BuildType) {
+                    $metaData += $_.BuildType
                 }
-                if ($currentVersion -eq $versionNumber) {
+                if ($currentVersion.version -eq $_.version -and
+                    $currentVersion.arch -eq $_.arch -and
+                    $currentVersion.buildType -eq $_.BuildType
+                ) {
                     $isCurrent = "(Current)"
                 }
                 $versionNumber = "$versionNumber ".PadRight(15, '.')

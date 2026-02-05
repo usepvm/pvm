@@ -27,7 +27,7 @@ function Uninstall-PHP {
         }
         
         $currentVersion = Get-Current-PHP-Version
-        if ($currentVersion -and ($($pathVersionObject.version) -eq $currentVersion.version)) {
+        if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $pathVersionObject) {
             $response = Read-Host "`nYou are trying to uninstall the currently active PHP version ($($pathVersionObject.version)). Are you sure? (y/n)"
             $response = $response.Trim()
             if ($response -ne "y" -and $response -ne "Y") {

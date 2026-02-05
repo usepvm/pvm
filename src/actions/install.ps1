@@ -313,11 +313,7 @@ function Install-PHP {
                     if ($_.BuildType) {
                         $metaData += $_.BuildType
                     }
-                    if ($currentVersion -and
-                        $currentVersion.version -eq $_.version -and
-                        $currentVersion.arch -eq $_.arch -and
-                        $currentVersion.buildType -eq $_.BuildType
-                    ) {
+                    if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
                         $isCurrent = "(Current)"
                     }
                     $versionNumber = "$versionNumber ".PadRight(15, '.')

@@ -441,3 +441,15 @@ function Get-BinaryArchitecture-From-DLL {
         default { "Unknown" }
     }
 }
+
+function Is-Two-PHP-Versions-Equal {
+    param ($version1, $version2)
+
+    if ($null -eq $version1 -or $null -eq $version2) {
+        return $false
+    }
+
+    return (($version1.version -eq $version2.version) -and
+            ($version1.arch -eq $version2.arch) -and
+            ($version1.buildType -eq $version2.buildType))
+}

@@ -117,7 +117,7 @@ function Get-UserSelected-PHP-Version {
         $installedVersions | ForEach-Object {
             $versionNumber = $_
             $isCurrent = ""
-            if ($currentVersion -eq $versionNumber) {
+            if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
                 $isCurrent = "(Current)"
             }
             Write-Host " - $versionNumber $isCurrent"

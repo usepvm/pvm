@@ -37,13 +37,8 @@ function Update-PHP-Version {
     param ($version)
 
     try {
-        $phpPath = Get-PHP-Path-By-Version -version $version
-        if (-not $phpPath) {
-            $installedVersions = Get-Matching-PHP-Versions -version $version
-            $pathVersionObject = Get-UserSelected-PHP-Version -installedVersions $installedVersions
-        } else {
-            $pathVersionObject = @{ code = 0; version = $version; path = $phpPath }
-        }
+        $installedVersions = Get-Matching-PHP-Versions -version $version
+        $pathVersionObject = Get-UserSelected-PHP-Version -installedVersions $installedVersions
 
         if (-not $pathVersionObject) {
             return @{ code = -1; message = "PHP version $version was not found!"; color = "DarkYellow"}
@@ -55,26 +50,17 @@ function Update-PHP-Version {
 
         $currentVersion = Get-Current-PHP-Version
         if ($currentVersion -and $currentVersion.version) {
-            if ($pathVersionObject.version -eq $currentVersion.version -and
-                $pathVersionObject.arch -eq $currentVersion.arch) {
+            if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $pathVersionObject) {
                 return @{ code = 0; message = "Already using PHP $($pathVersionObject.version)"; color = "DarkCyan"}
             }
         }
 
-        if (-not $pathVersionObject.path) {
-            return @{ code = -1; message = "PHP version $($pathVersionObject.version) was not found!"; color = "DarkYellow"}
-        }
         $linkCreated = Make-Symbolic-Link -link $PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
         if ($linkCreated.code -ne 0) {
             return $linkCreated
         }
-        $text = "Now using PHP $($pathVersionObject.version)"
-        if ($pathVersionObject.arch) {
-            $text += " ($($pathVersionObject.arch))"
-        } else {
-            $dll = Get-ChildItem "$currentPhpVersionPath\php*nts.dll","$currentPhpVersionPath\php*ts.dll" | Select-Object -First 1
-            $arch = Get-BinaryArchitecture $dll.FullName
-        }
+        $text = "Now using PHP $($pathVersionObject.version) $($pathVersionObject.buildType) $($pathVersionObject.arch)"
+        
         return @{ code = 0; message = $text; color = "DarkGreen"}
     } catch {
         $logged = Log-Data -data @{

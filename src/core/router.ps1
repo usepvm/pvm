@@ -47,11 +47,7 @@ function Invoke-PVMCurrent {
 function Invoke-PVMList{
     param($arguments)
     
-    $arch = Resolve-Arch -arch ($arguments | Where-Object { @('x86', 'x64') -contains $_ })
-    if ($null -eq $arch) {
-        Write-Host "`nInvalid architecture specified. Allowed values are 'x86' or 'x64'." -ForegroundColor DarkYellow
-        return -1
-    }
+    $arch = Resolve-Arch -arguments $arguments
     
     $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
     $result = Get-PHP-Versions-List -available ($arguments -contains "available") -term $term -arch $arch
@@ -81,11 +77,7 @@ function Invoke-PVMInstall {
         return -1
     }
 
-    $arch = Resolve-Arch -arch ($arguments | Where-Object { @('x86', 'x64') -contains $_ })
-    if ($null -eq $arch) {
-        Write-Host "`nInvalid architecture specified. Allowed values are 'x86' or 'x64'." -ForegroundColor DarkYellow
-        return -1
-    }
+    $arch = Resolve-Arch -arguments $arguments
 
     $result = Install-PHP -version $version -arch $arch
     Display-Msg-By-ExitCode -result $result
@@ -142,11 +134,7 @@ function Invoke-PVMIni {
         return -1
     }
     
-    $arch = Resolve-Arch -arch ($arguments | Where-Object { @('x86', 'x64') -contains $_ })
-    if ($null -eq $arch) {
-        Write-Host "`nInvalid architecture specified. Allowed values are 'x86' or 'x64'." -ForegroundColor DarkYellow
-        return -1
-    }
+    $arch = Resolve-Arch -arguments $arguments
     
     $remainingArgs = if ($arguments.Count -gt 1) { 
         $arguments[1..($arguments.Count - 1)] | Where-Object { $_ -ne $arch }

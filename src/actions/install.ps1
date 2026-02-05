@@ -370,6 +370,8 @@ function Install-PHP {
         $message = "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$phpDirectoryName'"
         $message += "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"
 
+        $cacheRefreshed = Refresh-Installed-PHP-Versions-Cache
+
         return @{ code = 0; message = $message; color = "DarkGreen" }
     } catch {
         $logged = Log-Data -data @{

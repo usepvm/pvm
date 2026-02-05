@@ -37,6 +37,22 @@ function Is-PVM-Setup {
     }
 }
 
+function Refresh-Installed-PHP-Versions-Cache {
+    try {
+        $installedVersions = Get-Installed-PHP-Versions-From-Directory
+        $cached = Cache-Data -cacheFileName "installed_php_versions" -data $installedVersions -depth 1
+        
+        return 0
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to refresh installed PHP versions cache"
+            exception = $_
+        }
+        
+        return -1
+    }
+}
+
 function Get-Installed-PHP-Versions-From-Directory {
     $directories = Get-All-Subdirectories -path "$STORAGE_PATH\php"
     $installedVersions = $directories | ForEach-Object {

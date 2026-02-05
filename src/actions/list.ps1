@@ -94,7 +94,7 @@ function Get-Available-PHP-Versions {
                 }
             }
             if ($searchResult.Count -ne 0) {
-                $fetchedVersionsGroupedPartialList[$_.Key] = $searchResult | Select-Object -Last $LATEST_VERSION_COUNT
+                $fetchedVersionsGroupedPartialList[$_.Name] = $searchResult | Select-Object -Last $LATEST_VERSION_COUNT
             }
         }
         

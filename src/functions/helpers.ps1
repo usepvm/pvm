@@ -24,14 +24,7 @@ function Get-Data-From-Cache {
     $list = @{}
     try {
         $jsonData = Get-Content $path | ConvertFrom-Json
-        $jsonData.PSObject.Properties.GetEnumerator() | ForEach-Object {
-            $key = $_.Name
-            $value = $_.Value
-            
-            # Add the key-value pair to the hashtable
-            $list[$key] = $value
-        }
-        return $list
+        return $jsonData
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"

@@ -1161,7 +1161,7 @@ function List-PHP-Extensions {
             }
             
             $availableExtensionsPartialList = @{}
-            $availableExtensions.GetEnumerator() | ForEach-Object {
+            $availableExtensions.PSObject.Properties | ForEach-Object {
                 $searchResult = $_.Value
                 if ($term) {
                     if ($_.Key -notlike "*$term*") {
@@ -1172,7 +1172,7 @@ function List-PHP-Extensions {
                     }
                 }
                 if ($searchResult.Count -gt 0) {
-                    $availableExtensionsPartialList[$_.Key] = $searchResult | Select-Object -Last 10
+                    $availableExtensionsPartialList[$_.Name] = $searchResult | Select-Object -Last 10
                 }
             }
             

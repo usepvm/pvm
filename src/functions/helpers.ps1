@@ -399,3 +399,38 @@ function Resolve-Arch {
     
     return $arch
 }
+
+function Get-PHPInstallInfo {
+    param ($path)
+
+    $dll = Get-ChildItem "$path\php*nts.dll","$path\php*ts.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+
+    if (-not $dll) {
+        return $null
+    }
+
+    return @{
+        Version      = $dll.VersionInfo.ProductVersion
+        Arch         = Get-BinaryArchitecture-From-DLL -path $dll.FullName
+        BuildType    = if ($dll.Name -match 'nts') { 'NTS' } else { 'TS' }
+        Dll          = $dll.Name
+        InstallPath  = $path
+    }
+}
+
+
+function Get-BinaryArchitecture-From-DLL {
+    param ($path)
+
+    $bytes = [System.IO.File]::ReadAllBytes($path)
+
+    $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
+
+    $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
+
+    switch ($machine) {
+        0x8664 { "x64" }
+        0x014c { "x86" }
+        default { "Unknown" }
+    }
+}

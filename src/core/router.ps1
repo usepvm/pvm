@@ -21,7 +21,11 @@ function Invoke-PVMCurrent {
         Write-Host "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
         return -1
     }
-    Write-Host "`nRunning version: PHP $($result.version)"
+    $text = "`nRunning version: PHP $($result.version)"
+    if ($result.arch) {
+        $text += " ($($result.arch))"
+    }
+    Write-Host $text
     
     if (-not $result.status) {
         Write-Host "No status information available for the current PHP version." -ForegroundColor Yellow

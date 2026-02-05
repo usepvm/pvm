@@ -55,7 +55,8 @@ function Update-PHP-Version {
 
         $currentVersion = Get-Current-PHP-Version
         if ($currentVersion -and $currentVersion.version) {
-            if ($pathVersionObject.version -eq $currentVersion.version) {
+            if ($pathVersionObject.version -eq $currentVersion.version -and
+                $pathVersionObject.arch -eq $currentVersion.arch) {
                 return @{ code = 0; message = "Already using PHP $($pathVersionObject.version)"; color = "DarkCyan"}
             }
         }
@@ -67,7 +68,14 @@ function Update-PHP-Version {
         if ($linkCreated.code -ne 0) {
             return $linkCreated
         }
-        return @{ code = 0; message = "Now using PHP $($pathVersionObject.version)"; color = "DarkGreen"}
+        $text = "Now using PHP $($pathVersionObject.version)"
+        if ($pathVersionObject.arch) {
+            $text += " ($($pathVersionObject.arch))"
+        } else {
+            $dll = Get-ChildItem "$currentPhpVersionPath\php*nts.dll","$currentPhpVersionPath\php*ts.dll" | Select-Object -First 1
+            $arch = Get-BinaryArchitecture $dll.FullName
+        }
+        return @{ code = 0; message = $text; color = "DarkGreen"}
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to update PHP version to '$version'"

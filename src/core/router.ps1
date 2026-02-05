@@ -22,8 +22,11 @@ function Invoke-PVMCurrent {
         return -1
     }
     $text = "`nRunning version: PHP $($result.version)"
+    if ($result.buildType) {
+        $text += " $($result.buildType)"
+    }
     if ($result.arch) {
-        $text += " ($($result.arch))"
+        $text += " $($result.arch)"
     }
     Write-Host $text
     

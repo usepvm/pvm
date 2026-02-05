@@ -49,7 +49,8 @@ function Get-Current-PHP-Version {
         
         return @{
             version = $phpInfo.Version
-            arch = "$($phpInfo.BuildType) $($phpInfo.Arch)"
+            arch = $phpInfo.Arch
+            buildType = $phpInfo.BuildType
             path = $phpInfo.InstallPath
             status = Get-PHP-Status -phpPath $currentPhpVersionPath
         }

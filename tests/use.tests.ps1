@@ -8,13 +8,6 @@ BeforeAll {
     $LOG_ERROR_PATH = "C:\logs\error.log"
 
     Mock Write-Host {}
-    function Get-PHP-Path-By-Version {
-        param($version)
-        # Mock implementation
-        if ($version -eq "8.1") { return "C:\php\8.1" }
-        if ($version -eq "8.2") { return "C:\php\8.2" }
-        return $null
-    }
 
     function Get-Matching-PHP-Versions {
         param($version)
@@ -110,12 +103,6 @@ Describe "Update-PHP-Version" {
         $result.message | Should -BeExactly "PHP version 7.4 was not found!"
     }
 
-    It "Should handle when Get-PHP-Path-By-Version returns null but matching versions exist" {
-        $result = Update-PHP-Version -version "8.x"
-        $result.code | Should -Be 0
-        $result.message | Should -BeExactly "Now using PHP 8.1"  # Assuming it selects the first match
-    }
-
     It "Should handle when no matching versions are found" {
         $result = Update-PHP-Version -version "5.6"
         $result.code | Should -Be -1
@@ -123,7 +110,6 @@ Describe "Update-PHP-Version" {
     }
     
     It "Should return when switching to same current version" {
-        Mock Get-PHP-Path-By-Version { return "TestDrive:\php\8.2.0" }
         Mock Get-Current-PHP-Version { return @{ version = "8.2.0"; path = "TestDrive:\php\8.2.0" } }
         $result = Update-PHP-Version -version "8.2.0"
         $result.code | Should -Be 0
@@ -139,8 +125,6 @@ Describe "Update-PHP-Version" {
     }
 
     It "Should handle exceptions gracefully" {
-        # Force an exception by mocking Get-PHP-Path-By-Version to throw
-        Mock Get-PHP-Path-By-Version { throw "Test exception" }
         $result = Update-PHP-Version -version "8.1"
         $result.code | Should -Be -1
         $result.message | Should -Match "No matching PHP versions found"

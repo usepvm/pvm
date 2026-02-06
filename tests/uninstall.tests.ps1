@@ -20,10 +20,6 @@ BeforeAll {
 Describe "Uninstall-PHP" {
     Context "When PHP version is found directly" {
         BeforeEach {
-            Mock Get-PHP-Path-By-Version -ParameterFilter { $version -eq "7.4" } -MockWith {
-                "$testPhpPath\7.4"
-            }
-            
             Mock Get-Matching-PHP-Versions -MockWith { }
             Mock Get-UserSelected-PHP-Version -MockWith { }
             Mock Remove-Item -MockWith { }
@@ -37,7 +33,6 @@ Describe "Uninstall-PHP" {
             $result.message | Should -BeLike "*PHP version 7.4 has been uninstalled successfully*"
             $result.color | Should -Be "DarkGreen"
             
-            Should -Invoke Get-PHP-Path-By-Version -Exactly 1
             Should -Invoke Remove-Item -Exactly 1 -ParameterFilter {
                 $Path -eq "$testPhpPath\7.4" -and $Recurse -eq $true -and $Force -eq $true
             }
@@ -53,7 +48,6 @@ Describe "Uninstall-PHP" {
         }
         
         It "Should prompt user when trying to uninstall current version and handle 'n' response" {
-            Mock Get-PHP-Path-By-Version { "$testPhpPath\8.0" }
             Mock Get-Current-PHP-Version { @{ version = "8.0" } }
             Mock Read-Host { "n" }
             $result = Uninstall-PHP -version "8.0"
@@ -64,7 +58,6 @@ Describe "Uninstall-PHP" {
         }
         
         It "Should prompt user when trying to uninstall current version and handle 'y' response" {
-            Mock Get-PHP-Path-By-Version { "$testPhpPath\8.0" }
             Mock Get-Current-PHP-Version { @{ version = "8.0" } }
             Mock Read-Host { "y" }
             $result = Uninstall-PHP -version "8.0"
@@ -76,7 +69,6 @@ Describe "Uninstall-PHP" {
 
     Context "When PHP version is not found directly but matches exist" {
         BeforeEach {
-            Mock Get-PHP-Path-By-Version -MockWith { $null }
             Mock Get-Matching-PHP-Versions -ParameterFilter { $version -eq "8.*" } -MockWith {
                 @("8.0", "8.1")
             }
@@ -104,7 +96,6 @@ Describe "Uninstall-PHP" {
 
     Context "When PHP version is not found at all" {
         BeforeEach {
-            Mock Get-PHP-Path-By-Version -MockWith { $null }
             Mock Get-Matching-PHP-Versions -ParameterFilter { $version -eq "5.6" } -MockWith {
                 @()
             }
@@ -120,7 +111,6 @@ Describe "Uninstall-PHP" {
             $result.message | Should -BeExactly "PHP version 5.6 was not found!"
             $result.color | Should -Be "DarkYellow"
             
-            Should -Invoke Get-PHP-Path-By-Version -Exactly 1
             Should -Invoke Get-Matching-PHP-Versions -Exactly 1
             Should -Invoke Remove-Item -Exactly 0
         }
@@ -128,7 +118,6 @@ Describe "Uninstall-PHP" {
 
     Context "When user selection returns an error" {
         BeforeEach {
-            Mock Get-PHP-Path-By-Version -MockWith { $null }
             Mock Get-Matching-PHP-Versions -ParameterFilter { $version -eq "8.*" } -MockWith {
                 @("8.0", "8.1")
             }
@@ -154,7 +143,6 @@ Describe "Uninstall-PHP" {
 
     Context "When user selection returns a version but no path" {
         BeforeEach {
-            Mock Get-PHP-Path-By-Version -MockWith { $null }
             Mock Get-Matching-PHP-Versions -ParameterFilter { $version -eq "8.*" } -MockWith {
                 @("8.0", "8.1")
             }
@@ -180,9 +168,6 @@ Describe "Uninstall-PHP" {
 
     Context "When uninstallation fails with an exception" {
         BeforeEach {
-            Mock Get-PHP-Path-By-Version -ParameterFilter { $version -eq "7.4" } -MockWith {
-                "$testPhpPath\7.4"
-            }
             Mock Get-Current-PHP-Version { @{ version = $null } }
             Mock Get-Matching-PHP-Versions -MockWith { }
             Mock Get-UserSelected-PHP-Version -MockWith { }

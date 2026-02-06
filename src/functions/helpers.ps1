@@ -128,22 +128,6 @@ function Set-EnvVar {
     }
 }
 
-function Get-PHP-Path-By-Version {
-    param ($version)
-    
-    if ([string]::IsNullOrWhiteSpace($version)) {
-        return $null
-    }
-    
-    $phpContainerPath = "$STORAGE_PATH\php"
-    $version = $version.Trim()
-
-    if (-not(Is-Directory-Exists -path $phpContainerPath) -or -not(Is-Directory-Exists -path "$phpContainerPath\$version")) {
-        return $null
-    }
-
-    return "$phpContainerPath\$version"
-}
 
 function Make-Symbolic-Link {
     param($link, $target)

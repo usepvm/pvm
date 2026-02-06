@@ -181,7 +181,6 @@ Describe "Get-UserSelected-PHP-Version" {
     It "Should prompt user and return selected version when multiple are provided" {
         Mock Read-Host { return "8.1" }
         Mock Write-Host { }
-        Mock Get-PHP-Path-By-Version { return "C:\php\8.1" }
         
         $result = Get-UserSelected-PHP-Version -installedVersions @("7.4", "8.0", "8.1")
         $result.version | Should -Be "8.1"

@@ -310,37 +310,6 @@ Describe "Set-EnvVar" {
     }
 }
 
-Describe "Get-PHP-Path-By-Version" {
-    BeforeEach {
-        Mock Is-Directory-Exists {
-            param ($path)                    
-            return (Test-Path $path)
-        }
-    }
-    Context "When version exists" {
-        It "Returns correct path for existing version" {
-            $result = Get-PHP-Path-By-Version -version "8.1"
-            $result | Should -Be "$STORAGE_PATH\php\8.1"
-        }
-    }
-
-    Context "When version doesn't exist" {
-        It "Returns null for non-existent version" {
-            $result = Get-PHP-Path-By-Version -version "5.6"
-            $result | Should -Be $null
-        }
-
-        It "Returns null for empty version" {
-            $result = Get-PHP-Path-By-Version -version ""
-            $result | Should -Be $null
-        }
-
-        It "Returns null for whitespace version" {
-            $result = Get-PHP-Path-By-Version -version "   "
-            $result | Should -Be $null
-        }
-    }
-}
 
 Describe "Make-Symbolic-Link" {
     Context "When creating symbolic links" {

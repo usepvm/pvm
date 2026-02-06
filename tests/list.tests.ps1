@@ -91,11 +91,11 @@ Describe "Get-From-Source" {
         
         Mock Cache-Data { }
         
-        $result = Get-From-Source
+        $result = Get-From-Source -arch x86
         
         $allVersions = $result['Archives'] + $result['Releases']
-        $allVersions | Should -Contain 'php-8.2.0-Win32-x86.zip'
-        $allVersions | Should -Not -Contain 'php-8.2.0-Win32-x64.zip'
+        $allVersions | Where-Object { $_.link -eq 'php-8.2.0-Win32-x86.zip' } | Should -Not -BeNullOrEmpty
+        $allVersions | Where-Object { $_.link -eq 'php-8.2.0-Win32-x64.zip' } | Should -BeNullOrEmpty
     }
     
     It "Should return empty list" {
@@ -263,8 +263,18 @@ Describe "Get-Available-PHP-Versions" {
     It "Should display versions in correct format" {
         Mock Get-Data-From-Cache {
             return @{
-                'Archives' = @('php-8.1.0-Win32-x64.zip')
-                'Releases' = @('php-8.2.0-Win32-x64.zip')
+                'Archives' = @(@{
+                    BuildType = "NTS";
+                    Version = "8.1.0";
+                    Link = "php-8.1.0-Win32-x64.zip";
+                    Arch = "x86"
+                })
+                'Releases' = @(@{
+                    BuildType = "NTS";
+                    Version = "8.2.0";
+                    Link = "php-8.2.0-Win32-x64.zip";
+                    Arch = "x64";
+                })
             }
         }
         Mock Test-Path { return $true }
@@ -310,8 +320,16 @@ Describe "Display-Installed-PHP-Versions" {
     }
     
     It "Should display installed versions with current version marked" {
-        Mock Get-Current-PHP-Version { return @{ version = "8.2.0" } }
-        Mock Get-Installed-PHP-Versions { return @("8.2.0", "8.1.5", "7.4.33") }
+        Mock Get-Current-PHP-Version { return @{ 
+            version = "8.2.0"
+            arch = "x64"
+            buildType = "nts"
+        }}
+        Mock Get-Installed-PHP-Versions { return @(
+            @{Version = "8.2.0"; Arch = "x64"; BuildType = 'NTS'}
+            @{Version = "8.1.5"; Arch = "x64"; BuildType = 'NTS'}
+            @{Version = "7.4.33"; Arch = "x64"; BuildType = 'NTS'}
+        )}
         
         Display-Installed-PHP-Versions
         
@@ -322,7 +340,11 @@ Describe "Display-Installed-PHP-Versions" {
     }
     
     It "Display installed versions matching filter" {
-        Mock Get-Installed-PHP-Versions { return @("8.2.0", "8.2.0", "8.1.5") }
+        Mock Get-Installed-PHP-Versions { return @(
+            @{Version = "8.2.0"; Arch = "x64"; BuildType = 'NTS'}
+            @{Version = "8.2.0"; Arch = "x64"; BuildType = 'TS'}
+            @{Version = "8.1.5"; Arch = "x64"; BuildType = 'NTS'}
+        )}
         $code = Display-Installed-PHP-Versions -term "8.2"
         $code | Should -Be 0
     }
@@ -337,8 +359,16 @@ Describe "Display-Installed-PHP-Versions" {
     }
     
     It "Should handle duplicate versions" {
-        Mock Get-Current-PHP-Version { return @{ version = "8.2.0" } }
-        Mock Get-Installed-PHP-Versions { return @("php8.2.0", "php8.2.0", "php8.1.5") }
+        Mock Get-Current-PHP-Version { return @{ 
+            version = "8.2.0"
+            arch = "x64"
+            buildType = "NTS"
+        }}
+        Mock Get-Installed-PHP-Versions { return @(
+            @{Version = "8.2.0"; Arch = "x64"; BuildType = 'NTS'}
+            @{Version = "8.2.0"; Arch = "x64"; BuildType = 'NTS'}
+            @{Version = "8.1.5"; Arch = "x64"; BuildType = 'NTS'}
+        )}
         
         Display-Installed-PHP-Versions
         
@@ -348,7 +378,10 @@ Describe "Display-Installed-PHP-Versions" {
     
     It "Should handle no current version set" {
         Mock Get-Current-PHP-Version { return @{ version = "" } }
-        Mock Get-Installed-PHP-Versions { return @("php8.2.0", "php8.1.5") }
+        Mock Get-Installed-PHP-Versions { return @(
+            @{Version = "8.2.0"; Arch = "x64"; BuildType = 'NTS'}
+            @{Version = "8.1.5"; Arch = "x64"; BuildType = 'NTS'}
+        )}
         
         Display-Installed-PHP-Versions
         

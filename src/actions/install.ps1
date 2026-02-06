@@ -58,7 +58,7 @@ function Get-PHP-Versions {
             }
 
             $fetchedVersions[$key] = @()
-            $fetched | ForEach-Object {    
+            $fetched | ForEach-Object {
                 if ($found -notcontains $_.fileName) {
                     $fetchedVersions[$key] += $_
                     $found += $_.fileName

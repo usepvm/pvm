@@ -59,7 +59,7 @@ function Update-PHP-Version {
         if ($linkCreated.code -ne 0) {
             return $linkCreated
         }
-        $text = "Now using PHP $($pathVersionObject.version) $($pathVersionObject.buildType) $($pathVersionObject.arch)"
+        $text = ("Now using PHP $($pathVersionObject.version) $($pathVersionObject.buildType) $($pathVersionObject.arch)").Trim()
         
         return @{ code = 0; message = $text; color = "DarkGreen"}
     } catch {

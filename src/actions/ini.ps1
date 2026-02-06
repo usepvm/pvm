@@ -1153,6 +1153,7 @@ function List-PHP-Extensions {
                 }
             } else {
                 $availableExtensions = Get-PHPExtensions-From-Source
+                $availableExtensions = [pscustomobject] $availableExtensions
             }
 
             if ($availableExtensions.Count -eq 0) {

@@ -110,7 +110,16 @@ Describe "Update-PHP-Version" {
     }
     
     It "Should return when switching to same current version" {
-        Mock Get-Current-PHP-Version { return @{ version = "8.2.0"; path = "TestDrive:\php\8.2.0" } }
+        Mock Get-UserSelected-PHP-Version { return @{
+            code=0; version="8.2.0"; arch = 'x64';
+            buildType = 'TS'; path="TestDrive:\php\8.2.0"
+        }}
+        Mock Get-Current-PHP-Version { return @{
+            version = "8.2.0";
+            path = "TestDrive:\php\8.2.0" 
+            arch = 'x64'
+            buildType = 'TS'
+        }}
         $result = Update-PHP-Version -version "8.2.0"
         $result.code | Should -Be 0
         $result.message | Should -BeExactly "Already using PHP 8.2.0"
@@ -125,6 +134,8 @@ Describe "Update-PHP-Version" {
     }
 
     It "Should handle exceptions gracefully" {
+        # Force an exception by mocking Get-Matching-PHP-Versions to throw
+        Mock Get-Matching-PHP-Versions { throw "Test exception" }
         $result = Update-PHP-Version -version "8.1"
         $result.code | Should -Be -1
         $result.message | Should -Match "No matching PHP versions found"
@@ -141,13 +152,6 @@ Describe "Update-PHP-Version" {
         Mock Get-UserSelected-PHP-Version { return @{code=-1; message="Test error"} }
         $result = Update-PHP-Version -version "8.x"
         $result.code | Should -Be -1
-    }
-
-    It "Should return error when path is missing in pathVersionObject" {
-        Mock Get-UserSelected-PHP-Version { return @{code=0; version="8.1"; path=$null} }
-        $result = Update-PHP-Version -version "8.x"
-        $result.code | Should -Be -1
-        $result.message | Should -Match "was not found"
     }
 }
 

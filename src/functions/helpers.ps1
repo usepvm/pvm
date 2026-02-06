@@ -20,10 +20,8 @@ function Can-Use-Cache {
 function Get-Data-From-Cache {
     param ($cacheFileName)
     
-    $path = "$CACHE_PATH\$cacheFileName.json"
-    $list = @{}
     try {
-        $jsonData = Get-Content $path | ConvertFrom-Json
+        $jsonData = Get-Content "$CACHE_PATH\$cacheFileName.json" | ConvertFrom-Json
         return $jsonData
     } catch {
         $logged = Log-Data -data @{

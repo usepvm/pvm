@@ -27,6 +27,9 @@ Describe "Uninstall-PHP" {
         }
 
         It "Should successfully uninstall when version is found directly" {
+            Mock Get-UserSelected-PHP-Version -MockWith {
+                return @{ code = 0; version = '7.4'; arch = 'x86'; buildType = 'nts'; path = "$testPhpPath\7.4" }
+            }
             $result = Uninstall-PHP -version "7.4"
             
             $result.code | Should -Be 0
@@ -39,7 +42,10 @@ Describe "Uninstall-PHP" {
         }
         
         It "Should prompt user when trying to uninstall current version" {
-            Mock Get-Current-PHP-Version { @{ version = "7.4" } }
+            Mock Get-UserSelected-PHP-Version -MockWith {
+                return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\7.4" }
+            }
+            Mock Get-Current-PHP-Version { @{ version = "7.4"; arch = 'x64'; buildType = 'nts' } }
             Mock Read-Host { }
             $result = Uninstall-PHP -version "7.4"
             $result.code | Should -Be -1
@@ -48,7 +54,10 @@ Describe "Uninstall-PHP" {
         }
         
         It "Should prompt user when trying to uninstall current version and handle 'n' response" {
-            Mock Get-Current-PHP-Version { @{ version = "8.0" } }
+            Mock Get-UserSelected-PHP-Version -MockWith {
+                return @{ code = 0; version = '8.0'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\8.0" }
+            }
+            Mock Get-Current-PHP-Version { @{ version = "8.0"; arch = 'x64'; buildType = 'nts' } }
             Mock Read-Host { "n" }
             $result = Uninstall-PHP -version "8.0"
             $result.code | Should -Be -1
@@ -58,7 +67,10 @@ Describe "Uninstall-PHP" {
         }
         
         It "Should prompt user when trying to uninstall current version and handle 'y' response" {
-            Mock Get-Current-PHP-Version { @{ version = "8.0" } }
+            Mock Get-UserSelected-PHP-Version -MockWith {
+                return @{ code = 0; version = '8.0'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\8.0" }
+            }
+            Mock Get-Current-PHP-Version { @{ version = "8.0"; arch = 'x64'; buildType = 'nts' } }
             Mock Read-Host { "y" }
             $result = Uninstall-PHP -version "8.0"
             $result.code | Should -Be 0
@@ -154,7 +166,9 @@ Describe "Uninstall-PHP" {
         }
 
         It "Should return version not found message" {
-            $result = Uninstall-PHP -version "8.*"
+            Mock Get-Matching-PHP-Versions { return $null }
+            Mock Get-UserSelected-PHP-Version { return $null }
+            $result = Uninstall-PHP -version "8.2"
             
             $result.code | Should -Be -1
             $result.message | Should -BeExactly "PHP version 8.2 was not found!"
@@ -175,6 +189,10 @@ Describe "Uninstall-PHP" {
         }
 
         It "Should catch the exception and return error message" {
+            Mock Get-UserSelected-PHP-Version -MockWith {
+                return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\7.4" }
+            }
+            Mock Refresh-Installed-PHP-Versions-Cache { throw 'Error' }
             $result = Uninstall-PHP -version "7.4"
             
             $result.code | Should -Be -1

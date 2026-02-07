@@ -412,3 +412,118 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
         }
     }
 }
+
+Describe "Get-Installed-PHP-Versions-From-Directory" {
+    BeforeAll {
+        $script:STORAGE_PATH = "C:\test\storage"
+    }
+    
+    Context "When PHP versions exist" {
+        It "Should return installed PHP versions with php.exe present" {
+            Mock Get-All-Subdirectories {
+                return @(
+                    @{FullName = "C:\test\storage\php\8.1"}
+                    @{FullName = "C:\test\storage\php\8.2"}
+                )
+            }
+            Mock Test-Path { return $true }
+            Mock Get-PHPInstallInfo {
+                param($path)
+                if ($path -eq "C:\test\storage\php\8.1") {
+                    return @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'; InstallPath = "C:\test\storage\php\8.1"}
+                } else {
+                    return @{Version = "8.2"; Arch = "x64"; BuildType = 'NTS'; InstallPath = "C:\test\storage\php\8.2"}
+                }
+            }
+            
+            $result = Get-Installed-PHP-Versions-From-Directory
+            $result.Count | Should -Be 2
+        }
+        
+        It "Should skip directories without php.exe" {
+            Mock Get-All-Subdirectories {
+                return @(
+                    @{FullName = "C:\test\storage\php\8.1"}
+                    @{FullName = "C:\test\storage\php\invalid"}
+                    @{FullName = "C:\test\storage\php\8.2"}
+                )
+            }
+            Mock Test-Path {
+                param($path)
+                return $path -notmatch "invalid"
+            }
+            Mock Get-PHPInstallInfo {
+                param($path)
+                if ($path -eq "C:\test\storage\php\8.1") {
+                    return @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                } elseif ($path -eq "C:\test\storage\php\8.2") {
+                    return @{Version = "8.2"; Arch = "x64"; BuildType = 'NTS'}
+                }
+            }
+            
+            $result = Get-Installed-PHP-Versions-From-Directory
+            $result.Count | Should -Be 2
+        }
+        
+        It "Should return versions sorted by version number" {
+            Mock Get-All-Subdirectories {
+                return @(
+                    @{FullName = "C:\test\storage\php\8.2"}
+                    @{FullName = "C:\test\storage\php\7.4"}
+                    @{FullName = "C:\test\storage\php\8.1"}
+                )
+            }
+            Mock Test-Path { return $true }
+            Mock Get-PHPInstallInfo {
+                param($path)
+                if ($path -eq "C:\test\storage\php\8.2") {
+                    return @{Version = "8.2"; Arch = "x64"; BuildType = 'NTS'}
+                } elseif ($path -eq "C:\test\storage\php\7.4") {
+                    return @{Version = "7.4"; Arch = "x86"; BuildType = 'TS'}
+                } else {
+                    return @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                }
+            }
+            
+            $result = Get-Installed-PHP-Versions-From-Directory
+            $result.Count | Should -Be 3
+            $result[0].Version | Should -Be "7.4"
+            $result[1].Version | Should -Be "8.1"
+            $result[2].Version | Should -Be "8.2"
+        }
+    }
+    
+    Context "When no PHP versions exist" {
+        It "Should return empty array when no directories exist" {
+            Mock Get-All-Subdirectories { return @() }
+            
+            $result = Get-Installed-PHP-Versions-From-Directory
+            $result.Count | Should -Be 0
+        }
+        
+        It "Should return empty array when no php.exe files are present" {
+            Mock Get-All-Subdirectories {
+                return @(
+                    @{FullName = "C:\test\storage\php\invalid1"}
+                    @{FullName = "C:\test\storage\php\invalid2"}
+                )
+            }
+            Mock Test-Path { return $false }
+            
+            $result = Get-Installed-PHP-Versions-From-Directory
+            $result.Count | Should -Be 0
+        }
+    }
+    
+    Context "When calling Get-All-Subdirectories" {
+        It "Should call Get-All-Subdirectories with php storage path" {
+            Mock Get-All-Subdirectories { return @() }
+            
+            Get-Installed-PHP-Versions-From-Directory
+            
+            Assert-MockCalled Get-All-Subdirectories -Exactly 1 -ParameterFilter {
+                $path -eq "$STORAGE_PATH\php"
+            }
+        }
+    }
+}

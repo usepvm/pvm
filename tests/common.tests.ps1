@@ -113,13 +113,8 @@ Describe "Get-Installed-PHP-Versions" {
         }
         
         It "Should return empty array when no PHP versions are found" {
-            Mock Get-All-EnvVars {
-                return @{
-                    "PATH" = "C:\Windows"
-                    "OTHER_VAR" = "some value"
-                }
-            }
-            Mock Log-Data { return $true }
+            Mock Can-Use-Cache { return $false }
+            Mock Get-Installed-PHP-Versions-From-Directory { return @() }
             
             $result = Get-Installed-PHP-Versions
             $result.Count | Should -Be 0
@@ -143,8 +138,8 @@ Describe "Get-Installed-PHP-Versions" {
     }
     
     Context "When exceptions occur" {
-        It "Should return empty array and log error when Get-All-EnvVars throws exception" {
-            Mock Get-All-Subdirectories { throw "Test exception" }
+        It "Should return empty array and log error when Get-Installed-PHP-Versions-From-Directory throws exception" {
+            Mock Get-Installed-PHP-Versions-From-Directory { throw "Test exception" }
             Mock Log-Data { return $true }
             
             $result = Get-Installed-PHP-Versions

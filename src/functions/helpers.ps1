@@ -385,7 +385,7 @@ function Is-OS-64Bit {
 function Resolve-Arch {
     param ($arguments, $choseDefault = $false)
     
-    $arch = $arguments | Where-Object { @('x86', 'x64') -contains $_ }
+    $arch = $arguments | Where-Object { @('x86', 'x64') -contains $_ } | Select-Object -First 1
     
     if ($null -eq $arch -and $choseDefault) {
         $arch = if (Is-OS-64Bit) { 'x64' } else { 'x86' }

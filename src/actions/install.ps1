@@ -260,7 +260,7 @@ function Select-Version {
             }
             Write-Host "`n$key versions:`n"
             $versionsList | ForEach-Object {
-                $_.index = $index
+                $_ | Add-Member -NotePropertyName "index" -NotePropertyValue $index -Force
                 Write-Host " [$index] $($_.version) $($_.arch) $($_.BuildType)"
                 $index++
             }

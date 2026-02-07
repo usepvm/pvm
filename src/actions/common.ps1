@@ -113,7 +113,7 @@ function Get-UserSelected-PHP-Version {
         $index = 0
         Write-Host "`nInstalled versions :"
         $installedVersions | ForEach-Object {
-            $_.index = $index
+            $_ | Add-Member -NotePropertyName "index" -NotePropertyValue $index -Force
             $isCurrent = ""
             if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
                 $isCurrent = "(Current)"

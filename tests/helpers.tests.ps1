@@ -960,3 +960,171 @@ Describe "Get-PHPInstallInfo" {
         }
     }
 }
+
+Describe "Is-Two-PHP-Versions-Equal" {
+    Context "When both versions are equal" {
+        It "Returns true when all properties match" {
+            $version1 = @{
+                version = "8.3.0"
+                arch = "x64"
+                buildType = "NTS"
+            }
+            $version2 = @{
+                version = "8.3.0"
+                arch = "x64"
+                buildType = "NTS"
+            }
+            
+            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result | Should -Be $true
+        }
+        
+        It "Returns true for x86 TS build versions" {
+            $version1 = @{
+                version = "8.1.5"
+                arch = "x86"
+                buildType = "TS"
+            }
+            $version2 = @{
+                version = "8.1.5"
+                arch = "x86"
+                buildType = "TS"
+            }
+            
+            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result | Should -Be $true
+        }
+    }
+    
+    Context "When versions differ" {
+        It "Returns false when version numbers differ" {
+            $version1 = @{
+                version = "8.3.0"
+                arch = "x64"
+                buildType = "NTS"
+            }
+            $version2 = @{
+                version = "8.2.0"
+                arch = "x64"
+                buildType = "NTS"
+            }
+            
+            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result | Should -Be $false
+        }
+        
+        It "Returns false when architecture differs" {
+            $version1 = @{
+                version = "8.3.0"
+                arch = "x64"
+                buildType = "NTS"
+            }
+            $version2 = @{
+                version = "8.3.0"
+                arch = "x86"
+                buildType = "NTS"
+            }
+            
+            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result | Should -Be $false
+        }
+        
+        It "Returns false when build type differs" {
+            $version1 = @{
+                version = "8.3.0"
+                arch = "x64"
+                buildType = "NTS"
+            }
+            $version2 = @{
+                version = "8.3.0"
+                arch = "x64"
+                buildType = "TS"
+            }
+            
+            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result | Should -Be $false
+        }
+    }
+    
+    Context "With null or incomplete versions" {
+        It "Returns false when first version is null" {
+            $version2 = @{
+                version = "8.3.0"
+                arch = "x64"
+                buildType = "NTS"
+            }
+            
+            $result = Is-Two-PHP-Versions-Equal -version1 $null -version2 $version2
+            $result | Should -Be $false
+        }
+        
+        It "Returns false when second version is null" {
+            $version1 = @{
+                version = "8.3.0"
+                arch = "x64"
+                buildType = "NTS"
+            }
+            
+            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $null
+            $result | Should -Be $false
+        }
+        
+        It "Returns false when both versions are null" {
+            $result = Is-Two-PHP-Versions-Equal -version1 $null -version2 $null
+            $result | Should -Be $false
+        }
+        
+        It "Returns false when a property value is missing (null)" {
+            $version1 = @{
+                version = "8.3.0"
+                arch = $null
+                buildType = "NTS"
+            }
+            $version2 = @{
+                version = "8.3.0"
+                arch = "x64"
+                buildType = "NTS"
+            }
+            
+            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result | Should -Be $false
+        }
+    }
+    
+    Context "With edge cases" {
+        It "Returns true for versions with additional properties" {
+            $version1 = @{
+                version = "8.3.0"
+                arch = "x64"
+                buildType = "NTS"
+                Dll = "php8_nts.dll"
+                InstallPath = "C:\php\8.3"
+            }
+            $version2 = @{
+                version = "8.3.0"
+                arch = "x64"
+                buildType = "NTS"
+            }
+            
+            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result | Should -Be $true
+        }
+        
+        It "Returns false when version is empty string vs null" {
+            $version1 = @{
+                version = ""
+                arch = "x64"
+                buildType = "NTS"
+            }
+            $version2 = @{
+                version = "8.3.0"
+                arch = "x64"
+                buildType = "NTS"
+            }
+            
+            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result | Should -Be $false
+        }
+    }
+}
+

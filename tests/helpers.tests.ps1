@@ -677,3 +677,110 @@ Describe "Format-Seconds" {
         }
     }
 }
+
+Describe "Can-Use-Cache" {
+    BeforeAll {
+        $global:CACHE_PATH = "TestDrive:\cache"
+        $global:CACHE_MAX_HOURS = 168
+    
+        New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
+    }
+    Context "When cache file exists" {
+        It "Returns true when cache file is within max age" {
+            $cacheFileName = "test_cache"
+            $cacheFile = "$cacheFileName.json"
+            
+            # Create a cache file with recent timestamp
+            New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
+            Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
+            
+            $result = Can-Use-Cache -cacheFileName $cacheFileName
+            $result | Should -Be $true
+        }
+        
+        It "Returns false when cache file is older than max age" {
+            $cacheFileName = "old_cache"
+            $cacheFile = "$cacheFileName.json"
+            
+            # Create a cache file with old timestamp (older than CACHE_MAX_HOURS)
+            New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
+            Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
+            
+            # Set file modification time to be older than CACHE_MAX_HOURS (168 hours)
+            $oldTime = (Get-Date).AddHours(-200)
+            (Get-Item "$CACHE_PATH\$cacheFile").LastWriteTime = $oldTime
+            
+            $result = Can-Use-Cache -cacheFileName $cacheFileName
+            $result | Should -Be $false
+        }
+        
+        It "Returns false when cache file is exactly at max age boundary" {
+            $cacheFileName = "boundary_cache"
+            $cacheFile = "$cacheFileName.json"
+            
+            # Create a cache file
+            New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
+            Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
+            
+            # Set file modification time to be exactly at CACHE_MAX_HOURS
+            $boundaryTime = (Get-Date).AddHours(-$CACHE_MAX_HOURS)
+            (Get-Item "$CACHE_PATH\$cacheFile").LastWriteTime = $boundaryTime
+            
+            $result = Can-Use-Cache -cacheFileName $cacheFileName
+            # Since the function uses -lt (less than), equality should return false
+            $result | Should -Be $false
+        }
+    }
+    
+    Context "When cache file does not exist" {
+        It "Returns false when cache file does not exist" {
+            $cacheFileName = "nonexistent_cache"
+            
+            $result = Can-Use-Cache -cacheFileName $cacheFileName
+            $result | Should -Be $false
+        }
+    }
+    
+    Context "With edge cases" {
+        It "Returns false for empty cache file name" {
+            $result = Can-Use-Cache -cacheFileName ""
+            $result | Should -Be $false
+        }
+        
+        It "Returns false for null cache file name" {
+            $result = Can-Use-Cache -cacheFileName $null
+            $result | Should -Be $false
+        }
+        
+        It "Handles exceptions gracefully" {
+            Mock Test-Path { throw "Simulated exception" }
+            { Can-Use-Cache -cacheFileName "test" } | Should -Not -Throw
+            $result = Can-Use-Cache -cacheFileName "test"
+            $result | Should -Be $false
+        }
+    }
+    
+    Context "With special file names" {
+        It "Works with file names containing special characters" {
+            $cacheFileName = "cache-with_special.chars"
+            $cacheFile = "$cacheFileName.json"
+            
+            New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
+            Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
+            
+            $result = Can-Use-Cache -cacheFileName $cacheFileName
+            $result | Should -Be $true
+        }
+        
+        It "Works with file names containing numbers" {
+            $cacheFileName = "cache123available_versions456"
+            $cacheFile = "$cacheFileName.json"
+            
+            New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
+            Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
+            
+            $result = Can-Use-Cache -cacheFileName $cacheFileName
+            $result | Should -Be $true
+        }
+    }
+}

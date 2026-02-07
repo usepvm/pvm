@@ -165,6 +165,7 @@ Describe "Invoke-PVMInstall Tests" {
     It "Should install detected PHP version from the project" {
         $arguments = @("auto")
 
+        Mock Get-Matching-PHP-Versions { return @() }
         Mock Detect-PHP-VersionFromProject { return "8.1" }
         $result = Invoke-PVMInstall -arguments $arguments
         $result | Should -Be 0

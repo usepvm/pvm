@@ -266,13 +266,6 @@ BeforeAll {
             return -1
         }
     }
-
-    function Is-PHP-Version-Installed {
-        param($version)
-        
-        $envVars = Get-All-EnvVars
-        return $envVars.ContainsKey("php$version")
-    }
 }
 
 # Test Suites

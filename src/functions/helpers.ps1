@@ -6,15 +6,24 @@ function Get-Zend-Extensions-List {
 function Can-Use-Cache {
     param ($cacheFileName)
     
-    $path = "$CACHE_PATH\$cacheFileName.json"
-    $useCache = $false
+    try {
+        $path = "$CACHE_PATH\$cacheFileName.json"
+        $useCache = $false
 
-    if (Test-Path $cacheFileName) {
-        $fileAgeHours = (New-TimeSpan -Start (Get-Item $cacheFileName).LastWriteTime -End (Get-Date)).TotalHours
-        $useCache = ($fileAgeHours -lt $CACHE_MAX_HOURS)
+        if (Test-Path $path) {
+            $fileAgeHours = (New-TimeSpan -Start (Get-Item $path).LastWriteTime -End (Get-Date)).TotalHours
+            $useCache = ($fileAgeHours -lt $CACHE_MAX_HOURS)
+        }
+        
+        return $useCache
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"
+            exception = $_
+        }
+        
+        return $false
     }
-    
-    return $useCache
 }
 
 function Get-Data-From-Cache {

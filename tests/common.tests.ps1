@@ -320,3 +320,95 @@ Describe "Is-PHP-Version-Installed" {
         }
     }
 }
+
+Describe "Refresh-Installed-PHP-Versions-Cache" {
+    Context "When cache is successfully refreshed" {
+        It "Should return 0 on success" {
+            Mock Get-Installed-PHP-Versions-From-Directory {
+                return @(
+                    @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "8.2"; Arch = "x64"; BuildType = 'NTS'}
+                )
+            }
+            Mock Cache-Data { return 0 }
+            
+            $result = Refresh-Installed-PHP-Versions-Cache
+            $result | Should -Be 0
+        }
+        
+        It "Should call Get-Installed-PHP-Versions-From-Directory" {
+            Mock Get-Installed-PHP-Versions-From-Directory {
+                return @(
+                    @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                )
+            }
+            Mock Cache-Data { return 0 }
+            
+            $result = Refresh-Installed-PHP-Versions-Cache
+            
+            Assert-MockCalled Get-Installed-PHP-Versions-From-Directory -Exactly 1
+        }
+        
+        It "Should call Cache-Data with installed_php_versions file and depth 1" {
+            Mock Get-Installed-PHP-Versions-From-Directory {
+                return @(
+                    @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                )
+            }
+            Mock Cache-Data { return 0 }
+            
+            $result = Refresh-Installed-PHP-Versions-Cache
+            
+            Assert-MockCalled Cache-Data -Exactly 1 -ParameterFilter {
+                $cacheFileName -eq "installed_php_versions" -and $depth -eq 1
+            }
+        }
+        
+        It "Should cache the results from Get-Installed-PHP-Versions-From-Directory" {
+            $mockVersions = @(
+                @{Version = "7.4"; Arch = "x64"; BuildType = 'NTS'}
+                @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+            )
+            Mock Get-Installed-PHP-Versions-From-Directory { return $mockVersions }
+            Mock Cache-Data { return 0 }
+            
+            $result = Refresh-Installed-PHP-Versions-Cache
+            
+            Assert-MockCalled Cache-Data -Exactly 1 -ParameterFilter {
+                $data.Count -eq 2 -and $data[0].Version -eq "7.4"
+            }
+        }
+    }
+    
+    Context "When exceptions occur" {
+        It "Should return -1 on exception" {
+            Mock Get-Installed-PHP-Versions-From-Directory { throw "Test exception" }
+            Mock Log-Data { return $true }
+            
+            $result = Refresh-Installed-PHP-Versions-Cache
+            $result | Should -Be -1
+        }
+        
+        It "Should log error when exception occurs" {
+            Mock Get-Installed-PHP-Versions-From-Directory { throw "Test exception" }
+            Mock Log-Data { return $true }
+            
+            $result = Refresh-Installed-PHP-Versions-Cache
+            
+            Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter {
+                $data.header -eq "Refresh-Installed-PHP-Versions-Cache - Failed to refresh installed PHP versions cache"
+            }
+        }
+        
+        It "Should return -1 when Cache-Data throws exception" {
+            Mock Get-Installed-PHP-Versions-From-Directory {
+                return @(@{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'})
+            }
+            Mock Cache-Data { throw "Cache exception" }
+            Mock Log-Data { return $true }
+            
+            $result = Refresh-Installed-PHP-Versions-Cache
+            $result | Should -Be -1
+        }
+    }
+}

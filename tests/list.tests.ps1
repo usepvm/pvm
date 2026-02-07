@@ -143,9 +143,7 @@ Describe "Get-PHP-List-To-Install" {
     }
     
     It "Should fetch from source when cache is empty" {
-        Mock Test-Path { $true }
-        $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK")
-        Mock Get-Item { @{ LastWriteTime = $timeWithinLastWeek } }
+        Mock Can-Use-Cache { return $true }
         Mock Get-Data-From-Cache { return @{} }
         Mock Get-From-Source {
             return @{
@@ -157,14 +155,14 @@ Describe "Get-PHP-List-To-Install" {
         $result = Get-PHP-List-To-Install
         
         $result | Should -Not -BeNullOrEmpty
-        $result.Keys | Should -Contain 'Archives'
-        $result.Keys | Should -Contain 'Releases'
+        $result.Archives | Should -Not -BeNullOrEmpty
+        $result.Releases | Should -Not -BeNullOrEmpty
         Assert-MockCalled Get-Data-From-Cache -Exactly 1
         Assert-MockCalled Get-From-Source -Exactly 1
     }
     
     It "Should fetch from source" {
-        Mock Test-Path { return $false }
+        Mock Can-Use-Cache { return $false }
         Mock Get-From-Source {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
@@ -175,13 +173,13 @@ Describe "Get-PHP-List-To-Install" {
         $result = Get-PHP-List-To-Install
         
         $result | Should -Not -BeNullOrEmpty
-        $result.Keys | Should -Contain 'Archives'
-        $result.Keys | Should -Contain 'Releases'
+        $result.Archives | Should -Not -BeNullOrEmpty
+        $result.Releases | Should -Not -BeNullOrEmpty
         Assert-MockCalled Get-From-Source -Exactly 1
     }
     
     It "Handles exceptions gracefully" {
-        Mock Test-Path { throw "Cache error" }
+        Mock Can-Use-Cache { throw "Cache error" }
         $result = Get-PHP-List-To-Install
         $result | Should -BeNullOrEmpty
     }
@@ -210,6 +208,20 @@ Describe "Get-Available-PHP-Versions" {
     }
     
     It "Display available versions matching filter" {
+        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+            'Archives' = @(@{
+                Link = "php-7.1.0-Win32-x64.zip"
+                BuildType = "TS"
+                Arch = "x64"
+                Version = "7.1.0"
+            })
+            'Releases' = @(@{
+                Link = "php-7.2.0-Win32-x64.zip"
+                BuildType = "TS"
+                Arch = "x64"
+                Version = "7.2.0"
+            })
+        }}
         $code = Get-Available-PHP-Versions -term "7.1"
         $code | Should -Be 0
     }
@@ -226,8 +238,7 @@ Describe "Get-Available-PHP-Versions" {
     }
     
     It "Should fetch from source when cache is empty" {
-        Mock Test-Path { $true }
-        Mock Get-Item { @{ LastWriteTime = (Get-Date) } }
+        Mock Can-Use-Cache { return $true }
         Mock Get-Data-From-Cache { return @{} }
         Mock Get-From-Source {
             return @{

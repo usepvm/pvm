@@ -861,8 +861,21 @@ function Install-XDebug-Extension {
         if ($chosenItem.xDebugVersion -like "3.*") {
             $xDebugConfig = getXdebugConfigV3 -XDebugPath $($chosenItem.fileName)
         }
-        $xDebugConfig = $xDebugConfig -replace "\ +"
-        Add-Content -Path $iniPath -Value $xDebugConfig
+        # check existence of previous xdebug
+        $iniContent = Get-Content $iniPath
+        $dllXDebugExists = $false
+        for ($i = 0; $i -lt $iniContent.Count; $i++) {
+            if ($iniContent[$i] -match '^(?<comment>;)?\s*zend_extension\s*=.*xdebug.*$') {
+                $iniContent[$i] = $iniContent[$i] -replace '^(?<comment>;)?(\s*zend_extension\s*=).*$', "zend_extension='$($chosenItem.fileName)'"
+                $dllXDebugExists = $true
+            }
+        }
+        if ($dllXDebugExists) {
+            Set-Content -Path $iniPath -Value $iniContent -Encoding UTF8
+        } else {
+            $xDebugConfig = $xDebugConfig -replace "\ +"
+            Add-Content -Path $iniPath -Value $xDebugConfig
+        }
         
         return 0
     } catch {

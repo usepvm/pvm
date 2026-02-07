@@ -3,7 +3,7 @@
 BeforeAll {
     # Mock dependencies
     $global:LOG_ERROR_PATH = "TestDrive:\logs\error.log"
-    $global:PHP_CURRENT_VERSION_PATH = "C:\php\current"
+    $global:PHP_CURRENT_VERSION_PATH = "TestDrive:\php\current"
     
     # Mock Log-Data function
     Mock Write-Host {}

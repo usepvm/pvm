@@ -68,9 +68,11 @@ function Get-PHP-List-To-Install {
             $fetchedVersionsGrouped = Get-Data-From-Cache -cacheFileName "available_php_versions"
             if (-not $fetchedVersionsGrouped -or $fetchedVersionsGrouped.Count -eq 0) {
                 $fetchedVersionsGrouped = Get-From-Source -arch $arch
+                $fetchedVersionsGrouped = [pscustomobject] $fetchedVersionsGrouped
             }
         } else {
             $fetchedVersionsGrouped = Get-From-Source -arch $arch
+            $fetchedVersionsGrouped = [pscustomobject] $fetchedVersionsGrouped
         }
         
         return $fetchedVersionsGrouped
@@ -97,7 +99,7 @@ function Get-Available-PHP-Versions {
         }
         
         $fetchedVersionsGroupedPartialList = @{}
-        $fetchedVersionsGrouped.GetEnumerator() | ForEach-Object {
+        $fetchedVersionsGrouped.PSObject.Properties | ForEach-Object {
             $searchResult = $_.Value
             if ($term) {
                 $searchResult = $searchResult | Where-Object {

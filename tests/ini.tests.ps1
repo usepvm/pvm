@@ -1213,8 +1213,7 @@ Describe "List-PHP-Extensions" {
     }
     
     It "Handles thrown exception" {
-        Mock Test-Path { return $true }
-        Mock New-TimeSpan { throw "Access denied" }
+        Mock Can-Use-Cache { throw 'Error' }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be -1
     }

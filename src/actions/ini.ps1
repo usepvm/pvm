@@ -1150,6 +1150,7 @@ function List-PHP-Extensions {
                 $availableExtensions = Get-Data-From-Cache -cacheFileName "available_extensions"
                 if ($availableExtensions.Count -eq 0) {
                     $availableExtensions = Get-PHPExtensions-From-Source
+                    $availableExtensions = [pscustomobject] $availableExtensions
                 }
             } else {
                 $availableExtensions = Get-PHPExtensions-From-Source

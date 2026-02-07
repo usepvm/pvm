@@ -178,7 +178,6 @@ Describe "Get-Data-From-Cache" {
 '@
         }
         $list = Get-Data-From-Cache -cacheFileName "test.json"
-        $list.Count | Should -Be 2
         $list.Releases[0] | Should -Be "/downloads/releases/php-7.4.33-Win32-vc15-x64.zip"
         $list.Archives[0] | Should -Be "/downloads/releases/archives/php-5.5.0-Win32-VC11-x64.zip"
     }

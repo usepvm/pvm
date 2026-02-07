@@ -1,6 +1,5 @@
 
 function Get-From-Source {
-    param ($arch = $null)
 
     try {
         $urls = Get-Source-Urls
@@ -31,10 +30,6 @@ function Get-From-Source {
             $fetchedVersions = $fetchedVersions + $filteredLinks # ($filteredLinks | ForEach-Object { $_.href })
         }
         
-        if ($null -ne $arch) {
-            $fetchedVersions = $fetchedVersions | Where-Object { $_.Arch -match $arch }
-        }
-        
         $fetchedVersionsGrouped = [ordered]@{
             'Archives' = $fetchedVersions | Where-Object { $_.Link -match "archives" }
             'Releases' = $fetchedVersions | Where-Object { $_.Link -notmatch "archives" }
@@ -59,7 +54,6 @@ function Get-From-Source {
 }
 
 function Get-PHP-List-To-Install {
-    param ($arch = $null)
     try {
         $fetchedVersionsGrouped = @{}
         $useCache = Can-Use-Cache -cacheFileName 'available_php_versions'
@@ -67,11 +61,11 @@ function Get-PHP-List-To-Install {
         if ($useCache) {
             $fetchedVersionsGrouped = Get-Data-From-Cache -cacheFileName "available_php_versions"
             if (-not $fetchedVersionsGrouped -or $fetchedVersionsGrouped.Count -eq 0) {
-                $fetchedVersionsGrouped = Get-From-Source -arch $arch
+                $fetchedVersionsGrouped = Get-From-Source
                 $fetchedVersionsGrouped = [pscustomobject] $fetchedVersionsGrouped
             }
         } else {
-            $fetchedVersionsGrouped = Get-From-Source -arch $arch
+            $fetchedVersionsGrouped = Get-From-Source
             $fetchedVersionsGrouped = [pscustomobject] $fetchedVersionsGrouped
         }
         
@@ -91,7 +85,7 @@ function Get-Available-PHP-Versions {
     try {
         Write-Host "`nLoading available PHP versions..."
 
-        $fetchedVersionsGrouped = Get-PHP-List-To-Install -arch $arch
+        $fetchedVersionsGrouped = Get-PHP-List-To-Install
 
         if ($fetchedVersionsGrouped.Count -eq 0) {
             Write-Host "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
@@ -101,10 +95,11 @@ function Get-Available-PHP-Versions {
         $fetchedVersionsGroupedPartialList = @{}
         $fetchedVersionsGrouped.PSObject.Properties | ForEach-Object {
             $searchResult = $_.Value
+            if ($null -ne $arch) {
+                $searchResult = $searchResult | Where-Object { $_.Arch -match $arch }
+            }
             if ($term) {
-                $searchResult = $searchResult | Where-Object {
-                    $_.Version -like "$term*"
-                }
+                $searchResult = $searchResult | Where-Object { $_.Version -like "$term*" }
             }
             if ($searchResult.Count -ne 0) {
                 $fetchedVersionsGroupedPartialList[$_.Name] = $searchResult | Select-Object -Last $LATEST_VERSION_COUNT
@@ -127,12 +122,8 @@ function Get-Available-PHP-Versions {
             }
             Write-Host "`n$key`n"
             $fetchedVersionsGroupe | ForEach-Object {
-                $version = $_.Version
-                $arch = $_.Arch
-                $buildType = $_.BuildType
-                $versionNumber = "$version ".PadRight(15, '.')
-                
-                Write-Host "  $versionNumber $arch $buildType"
+                $versionNumber = "$($_.Version) ".PadRight(15, '.')
+                Write-Host "  $versionNumber $($_.Arch) $($_.BuildType)"
             }
         }
         

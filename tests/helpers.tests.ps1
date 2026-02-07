@@ -872,3 +872,91 @@ Describe "Resolve-Arch" {
         }
     }
 }
+
+Describe "Get-PHPInstallInfo" {
+    Context "When PHP DLL exists" {
+        It "Returns PHP install info with NTS build type" {
+            $testPath = "TestDrive:\php\8.3"
+            New-Item -Path $testPath -ItemType Directory -Force | Out-Null
+            
+            # Create a mock NTS DLL file
+            New-Item -Path "$testPath\php8nts.dll" -ItemType File -Force | Out-Null
+            
+            Mock Get-ChildItem {
+                return @{
+                    VersionInfo = @{ ProductVersion = "8.3.0" }
+                    Name = "php8nts.dll"
+                    FullName = "$testPath\php8nts.dll"
+                }
+            }
+            
+            Mock Get-BinaryArchitecture-From-DLL { return "x64" }
+            
+            $result = Get-PHPInstallInfo -path $testPath
+            
+            $result | Should -Not -BeNullOrEmpty
+            $result.Version | Should -Be "8.3.0"
+            $result.Arch | Should -Be "x64"
+            $result.BuildType | Should -Be "NTS"
+            $result.Dll | Should -Be "php8nts.dll"
+            $result.InstallPath | Should -Be $testPath
+        }
+        
+        It "Returns PHP install info with TS build type" {
+            $testPath = "TestDrive:\php\8.2"
+            New-Item -Path $testPath -ItemType Directory -Force | Out-Null
+            
+            Mock Get-ChildItem {
+                return @{
+                    VersionInfo = @{ ProductVersion = "8.2.5" }
+                    Name = "php8ts.dll"
+                    FullName = "$testPath\php8ts.dll"
+                }
+            }
+            
+            Mock Get-BinaryArchitecture-From-DLL { return "x86" }
+            
+            $result = Get-PHPInstallInfo -path $testPath
+            
+            $result.BuildType | Should -Be "TS"
+            $result.Arch | Should -Be "x86"
+            $result.Version | Should -Be "8.2.5"
+        }
+        
+        It "Returns first DLL when multiple match" {
+            $testPath = "TestDrive:\php\8.1"
+            
+            Mock Get-ChildItem {
+                return @(
+                    @{
+                        VersionInfo = @{ ProductVersion = "8.1.0" }
+                        Name = "php81nts.dll"
+                        FullName = "$testPath\php81nts.dll"
+                    },
+                    @{
+                        VersionInfo = @{ ProductVersion = "8.1.0" }
+                        Name = "php81ts.dll"
+                        FullName = "$testPath\php81ts.dll"
+                    }
+                ) | Select-Object -First 1
+            }
+            
+            Mock Get-BinaryArchitecture-From-DLL { return "x64" }
+            
+            $result = Get-PHPInstallInfo -path $testPath
+            $result.Dll | Should -Be "php81nts.dll"
+        }
+    }
+    
+    Context "When PHP DLL does not exist" {
+        It "Returns null when no DLL found" {
+            $testPath = "TestDrive:\php\empty"
+            New-Item -Path $testPath -ItemType Directory -Force | Out-Null
+            
+            Mock Get-ChildItem { return $null }
+            
+            $result = Get-PHPInstallInfo -path $testPath
+            $result | Should -BeNullOrEmpty
+        }
+    }
+}

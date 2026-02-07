@@ -401,7 +401,21 @@ function Resolve-Arch {
 function Get-PHPInstallInfo {
     param ($path)
 
-    $dll = Get-ChildItem "$path\php*nts.dll","$path\php*ts.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+    $tsDll = Get-ChildItem "$path\php*ts.dll" -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -notmatch 'nts\.dll$' } |
+        Select-Object -First 1
+
+    if ($tsDll) {
+        $buildType = 'TS'
+        $dll = $tsDll
+    }
+    else {
+        $dll = Get-ChildItem "$path\php*.dll" |
+            Where-Object { $_.Name -notmatch 'phpdbg' } |
+            Select-Object -First 1
+        $buildType = 'NTS'
+    }
+
 
     if (-not $dll) {
         return $null
@@ -410,7 +424,7 @@ function Get-PHPInstallInfo {
     return @{
         Version      = $dll.VersionInfo.ProductVersion
         Arch         = Get-BinaryArchitecture-From-DLL -path $dll.FullName
-        BuildType    = if ($dll.Name -match 'nts') { 'NTS' } else { 'TS' }
+        BuildType    = $buildType
         Dll          = $dll.Name
         InstallPath  = $path
     }

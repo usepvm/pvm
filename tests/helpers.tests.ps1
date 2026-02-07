@@ -1128,3 +1128,107 @@ Describe "Is-Two-PHP-Versions-Equal" {
     }
 }
 
+
+Describe "Get-BinaryArchitecture-From-DLL" {
+    Context "Reading PE format from binary files" {
+        It "Returns x64 architecture when machine type is 0x8664" {
+            $dllPath = "TestDrive:\php\php8_x64.dll"
+            New-Item -Path $dllPath -ItemType File -Force | Out-Null
+            
+            # Convert TestDrive path to actual filesystem path
+            $actualPath = (Resolve-Path -Path $dllPath).ProviderPath
+            
+            # Create a minimal PE file structure for x64
+            # PE Header starts at offset 0x3C
+            $bytes = [byte[]]::new(1024)
+            
+            # Write MZ header
+            $bytes[0] = 0x4D  # 'M'
+            $bytes[1] = 0x5A  # 'Z'
+            
+            # PE offset is at 0x3C (60 decimal)
+            $peOffset = 0x80
+            [BitConverter]::GetBytes($peOffset) | `
+                ForEach-Object -Begin { $i = 0 } -Process { $bytes[0x3C + $i] = $_; $i++ }
+            
+            # At PE offset, write "PE\0\0"
+            $bytes[$peOffset] = 0x50      # 'P'
+            $bytes[$peOffset + 1] = 0x45  # 'E'
+            
+            # Machine type at PE offset + 4 (0x8664 for x64)
+            [BitConverter]::GetBytes([uint16]0x8664) | `
+                ForEach-Object -Begin { $i = 0 } -Process { $bytes[$peOffset + 4 + $i] = $_; $i++ }
+            
+            [System.IO.File]::WriteAllBytes($actualPath, $bytes)
+            
+            $result = Get-BinaryArchitecture-From-DLL -path $actualPath
+            $result | Should -Be "x64"
+        }
+        
+        It "Returns x86 architecture when machine type is 0x014c" {
+            $dllPath = "TestDrive:\php\php8_x86.dll"
+            New-Item -Path $dllPath -ItemType File -Force | Out-Null
+            
+            # Convert TestDrive path to actual filesystem path
+            $actualPath = (Resolve-Path -Path $dllPath).ProviderPath
+            
+            # Create a minimal PE file structure for x86
+            $bytes = [byte[]]::new(1024)
+            
+            # Write MZ header
+            $bytes[0] = 0x4D  # 'M'
+            $bytes[1] = 0x5A  # 'Z'
+            
+            # PE offset is at 0x3C (60 decimal)
+            $peOffset = 0x80
+            [BitConverter]::GetBytes($peOffset) | `
+                ForEach-Object -Begin { $i = 0 } -Process { $bytes[0x3C + $i] = $_; $i++ }
+            
+            # At PE offset, write "PE\0\0"
+            $bytes[$peOffset] = 0x50      # 'P'
+            $bytes[$peOffset + 1] = 0x45  # 'E'
+            
+            # Machine type at PE offset + 4 (0x014c for x86)
+            [BitConverter]::GetBytes([uint16]0x014c) | `
+                ForEach-Object -Begin { $i = 0 } -Process { $bytes[$peOffset + 4 + $i] = $_; $i++ }
+            
+            [System.IO.File]::WriteAllBytes($actualPath, $bytes)
+            
+            $result = Get-BinaryArchitecture-From-DLL -path $actualPath
+            $result | Should -Be "x86"
+        }
+        
+        It "Returns Unknown for unknown machine type" {
+            $dllPath = "TestDrive:\php\php8_unknown.dll"
+            New-Item -Path $dllPath -ItemType File -Force | Out-Null
+            
+            # Convert TestDrive path to actual filesystem path
+            $actualPath = (Resolve-Path -Path $dllPath).ProviderPath
+            
+            # Create a minimal PE file structure with unknown type
+            $bytes = [byte[]]::new(1024)
+            
+            # Write MZ header
+            $bytes[0] = 0x4D  # 'M'
+            $bytes[1] = 0x5A  # 'Z'
+            
+            # PE offset is at 0x3C (60 decimal)
+            $peOffset = 0x80
+            [BitConverter]::GetBytes($peOffset) | `
+                ForEach-Object -Begin { $i = 0 } -Process { $bytes[0x3C + $i] = $_; $i++ }
+            
+            # At PE offset, write "PE\0\0"
+            $bytes[$peOffset] = 0x50      # 'P'
+            $bytes[$peOffset + 1] = 0x45  # 'E'
+            
+            # Machine type at PE offset + 4 (0x0000 for unknown)
+            [BitConverter]::GetBytes([uint16]0x0000) | `
+                ForEach-Object -Begin { $i = 0 } -Process { $bytes[$peOffset + 4 + $i] = $_; $i++ }
+            
+            [System.IO.File]::WriteAllBytes($actualPath, $bytes)
+            
+            $result = Get-BinaryArchitecture-From-DLL -path $actualPath
+            $result | Should -Be "Unknown"
+        }
+    }
+}

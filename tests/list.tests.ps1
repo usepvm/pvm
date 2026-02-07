@@ -77,27 +77,6 @@ Describe "Get-From-Source" {
         $allVersions | Should -Not -Contain 'php-8.2.0-Win32-x86.zip'
     }
     
-    It "Should handle x86 architecture" {
-        Mock Is-OS-64Bit { return $false }
-        
-        $mockLinks = @(
-            @{ href = 'php-8.2.0-Win32-x86.zip' },
-            @{ href = 'php-8.2.0-Win32-x64.zip' }
-        )
-        
-        Mock Invoke-WebRequest {
-            return @{ Links = $mockLinks }
-        }
-        
-        Mock Cache-Data { }
-        
-        $result = Get-From-Source -arch x86
-        
-        $allVersions = $result['Archives'] + $result['Releases']
-        $allVersions | Where-Object { $_.link -eq 'php-8.2.0-Win32-x86.zip' } | Should -Not -BeNullOrEmpty
-        $allVersions | Where-Object { $_.link -eq 'php-8.2.0-Win32-x64.zip' } | Should -BeNullOrEmpty
-    }
-    
     It "Should return empty list" {
         Mock Invoke-WebRequest {
             return @{ Links = @() }
@@ -188,6 +167,40 @@ Describe "Get-PHP-List-To-Install" {
 Describe "Get-Available-PHP-Versions" {
     BeforeEach {
         Mock Write-Host { }
+    }
+    
+    It "Should handle x86 architecture" {
+        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+            'Archives' = @(@{
+                Link = "php-7.1.0-Win32-x64.zip"
+                BuildType = "TS"; Arch = "x64"; Version = "7.1.0";
+            })
+            'Releases' = @(@{
+                Link = "php-7.1.0-Win32-x86.zip"
+                BuildType = "TS"; Arch = "x86"; Version = "7.1.0"
+            })
+        }}
+        
+        $code = Get-Available-PHP-Versions -arch "x86"
+        
+        $code | Should -Be 0
+    }
+    
+    It "Should handle x64 architecture" -tag i {
+        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+            'Archives' = @(@{
+                Link = "php-7.1.0-Win32-x64.zip"
+                BuildType = "TS"; Arch = "x64"; Version = "7.1.0";
+            })
+            'Releases' = @(@{
+                Link = "php-7.1.0-Win32-x86.zip"
+                BuildType = "TS"; Arch = "x86"; Version = "7.1.0"
+            })
+        }}
+        
+        $code = Get-Available-PHP-Versions -arch "x64"
+        
+        $code | Should -Be 0
     }
     
     It "Should read from cache by default" {

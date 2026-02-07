@@ -783,3 +783,92 @@ Describe "Can-Use-Cache" {
         }
     }
 }
+
+Describe "Resolve-Arch" {
+    Context "When searching in arguments" {
+        It "Returns x86 when x86 is in arguments" {
+            $arguments = @("some_arg", "x86", "another_arg")
+            $result = Resolve-Arch -arguments $arguments
+            $result | Should -Be "x86"
+        }
+        
+        It "Returns x64 when x64 is in arguments" {
+            $arguments = @("some_arg", "x64", "another_arg")
+            $result = Resolve-Arch -arguments $arguments
+            $result | Should -Be "x64"
+        }
+        
+        It "Returns first matching architecture when multiple are present" {
+            $arguments = @("x86", "x64", "other")
+            $result = Resolve-Arch -arguments $arguments
+            $result | Should -Be "x86"
+        }
+        
+        It "Returns null when no matching architecture in arguments" {
+            $arguments = @("some_arg", "another_arg", "third_arg")
+            $result = Resolve-Arch -arguments $arguments
+            $result | Should -BeNullOrEmpty
+        }
+    }
+    
+    Context "Case insensitivity" {
+        It "Returns lowercase x86 when uppercase X86 provided" {
+            $arguments = @("X86")
+            $result = Resolve-Arch -arguments $arguments
+            $result | Should -Be "x86"
+        }
+        
+        It "Returns lowercase x64 when mixed case X64 provided" {
+            $arguments = @("X64")
+            $result = Resolve-Arch -arguments $arguments
+            $result | Should -Be "x64"
+        }
+    }
+    
+    Context "With default choice" {
+        It "Returns x64 as default when 64-bit OS and choseDefault is true" {
+            Mock Is-OS-64Bit { return $true }
+            $arguments = @("some_arg", "other_arg")
+            
+            $result = Resolve-Arch -arguments $arguments -choseDefault $true
+            $result | Should -Be "x64"
+        }
+        
+        It "Returns x86 as default when 32-bit OS and choseDefault is true" {
+            Mock Is-OS-64Bit { return $false }
+            $arguments = @("some_arg", "other_arg")
+            
+            $result = Resolve-Arch -arguments $arguments -choseDefault $true
+            $result | Should -Be "x86"
+        }
+        
+        It "Returns argument arch even when choseDefault is true" {
+            Mock Is-OS-64Bit { return $true }
+            $arguments = @("x86", "some_arg")
+            
+            $result = Resolve-Arch -arguments $arguments -choseDefault $true
+            $result | Should -Be "x86"
+        }
+    }
+    
+    Context "With empty or null inputs" {
+        It "Returns null when arguments array is empty and choseDefault is false" {
+            $arguments = @()
+            $result = Resolve-Arch -arguments $arguments -choseDefault $false
+            $result | Should -BeNullOrEmpty
+        }
+        
+        It "Returns default when arguments array is empty and choseDefault is true" {
+            Mock Is-OS-64Bit { return $true }
+            $arguments = @()
+            
+            $result = Resolve-Arch -arguments $arguments -choseDefault $true
+            $result | Should -Be "x64"
+        }
+        
+        It "Returns null when arguments is null" {
+            $result = Resolve-Arch -arguments $null
+            $result | Should -BeNullOrEmpty
+        }
+    }
+}

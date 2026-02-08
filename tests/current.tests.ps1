@@ -262,8 +262,14 @@ Describe "Get-Current-PHP-Version Function Tests" {
         }
         
         It "Should call Get-PHP-Status with correct path" {
-            Mock Is-Directory-Exists { return $true }
             # Act
+            Mock Get-PHPInstallInfo {@{
+                Version = '8.2.0'
+                Arch = 'x64'
+                BuildType = 'ts'
+                InstallPath = 'C:\php\8.2.0'
+            }}
+            Mock Is-Directory-Exists { return $true }
             $result = Get-Current-PHP-Version
             
             # Assert

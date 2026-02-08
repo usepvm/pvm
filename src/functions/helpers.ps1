@@ -351,6 +351,10 @@ function Format-Seconds {
     param ($totalSeconds)
     
     try {
+        if ($totalSeconds -ne $null) {
+            $totalSeconds = [Single] $totalSeconds
+        }
+
         if ($null -eq $totalSeconds -or $totalSeconds -lt 0) {
             $totalSeconds = 0
         }

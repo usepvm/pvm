@@ -667,7 +667,7 @@ Describe "Format-Seconds" {
         
         It "Handles null input" {
             $result = Format-Seconds -totalSeconds $null
-            $result | Should -Be 0
+            $result | Should -Be "0s"
         }
         
         It "Handles string input that can be converted" {

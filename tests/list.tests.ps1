@@ -186,7 +186,7 @@ Describe "Get-Available-PHP-Versions" {
         $code | Should -Be 0
     }
     
-    It "Should handle x64 architecture" -tag i {
+    It "Should handle x64 architecture" {
         Mock Get-PHP-List-To-Install { return [pscustomobject]@{
             'Archives' = @(@{
                 Link = "php-7.1.0-Win32-x64.zip"

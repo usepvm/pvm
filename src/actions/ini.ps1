@@ -31,7 +31,16 @@ function Get-XDebug-FROM-URL {
             if ($_.href -match "php_xdebug-([^-]+)") {
                 $xDebugVersion = $matches[1]
             }
-            $formattedList += @{ href = $_.href; version = $version; xDebugVersion = $xDebugVersion; fileName = $fileName; outerHTML = $_.outerHTML }
+            
+            $formattedList += @{
+                href = $_.href
+                version = $version
+                xDebugVersion = $xDebugVersion;
+                arch = if ($fileName -match '(x86_64|x64)(?=\.dll$)') { 'x64' } else { 'x86' }
+                buildType = if ($fileName -match '-nts-') { 'NTS' } else { 'TS' }
+                fileName = $fileName;
+                outerHTML = $_.outerHTML
+            }
         }
 
         return $formattedList

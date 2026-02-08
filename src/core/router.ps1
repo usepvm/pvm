@@ -21,7 +21,14 @@ function Invoke-PVMCurrent {
         Write-Host "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
         return -1
     }
-    Write-Host "`nRunning version: PHP $($result.version)"
+    $text = "`nRunning version: PHP $($result.version)"
+    if ($result.buildType) {
+        $text += " $($result.buildType)"
+    }
+    if ($result.arch) {
+        $text += " $($result.arch)"
+    }
+    Write-Host $text
     
     if (-not $result.status) {
         Write-Host "No status information available for the current PHP version." -ForegroundColor Yellow
@@ -43,8 +50,10 @@ function Invoke-PVMCurrent {
 function Invoke-PVMList{
     param($arguments)
     
+    $arch = Resolve-Arch -arguments $arguments
+    
     $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-    $result = Get-PHP-Versions-List -available ($arguments -contains "available") -term $term
+    $result = Get-PHP-Versions-List -available ($arguments -contains "available") -term $term -arch $arch
     
     return $result
 }
@@ -71,7 +80,9 @@ function Invoke-PVMInstall {
         return -1
     }
 
-    $result = Install-PHP -version $version
+    $arch = Resolve-Arch -arguments $arguments
+
+    $result = Install-PHP -version $version -arch $arch
     Display-Msg-By-ExitCode -result $result
     return 0
 }
@@ -126,9 +137,14 @@ function Invoke-PVMIni {
         return -1
     }
     
-    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
+    $arch = Resolve-Arch -arguments $arguments
+    
+    $remainingArgs = if ($arguments.Count -gt 1) { 
+        $arguments[1..($arguments.Count - 1)] | Where-Object { $_ -ne $arch }
+    } else { @() }
 
-    $exitCode = Invoke-PVMIniAction -action $action -params $remainingArgs
+
+    $exitCode = Invoke-PVMIniAction -action $action -params $remainingArgs -arch $arch
     return $exitCode
 }
 

@@ -91,62 +91,55 @@ Describe "Get-Installed-PHP-Versions" {
         It "Should return sorted PHP versions" {
             $script:STORAGE_PATH = "C:\mock\path"
             $script:LOG_ERROR_PATH = "C:\mock\error"
-            Mock Test-Path { return $true }
-            Mock Get-All-Subdirectories {
-                param ($path)
+            Mock Cache-Data { return 0 }
+            Mock Can-Use-Cache { return $false }
+            Mock Get-Installed-PHP-Versions-From-Directory {
                 return @(
-                    @{ Name = "8.1"; FullName = "path\php\8.1" }
-                    @{ Name = "7.4"; FullName = "path\php\7.4" }
-                    @{ Name = "8.2"; FullName = "path\php\8.2" }
-                    @{ Name = "8.0"; FullName = "path\php\8.0" }
-                    @{ Name = "5.6"; FullName = "path\php\5.6" }
+                    @{version = "5.6"; arch = "x64"; buildType = "nts"}
+                    @{version = "7.4"; arch = "x64"; buildType = "nts"}
+                    @{version = "8.0"; arch = "x64"; buildType = "nts"}
+                    @{version = "8.1"; arch = "x64"; buildType = "nts"}
+                    @{version = "8.2"; arch = "x64"; buildType = "nts"}
                 )
             }
-            Mock Log-Data { return $true }
             
             $result = Get-Installed-PHP-Versions
             $expected = @("5.6", "7.4", "8.0", "8.1", "8.2")
             
             $result.Count | Should -Be $expected.Count
             for ($i = 0; $i -lt $result.Count; $i++) {
-                $result[$i] | Should -Be $expected[$i]
+                $result[$i].version | Should -Be $expected[$i]
             }
         }
         
         It "Should return empty array when no PHP versions are found" {
-            Mock Get-All-EnvVars {
-                return @{
-                    "PATH" = "C:\Windows"
-                    "OTHER_VAR" = "some value"
-                }
-            }
-            Mock Log-Data { return $true }
+            Mock Can-Use-Cache { return $false }
+            Mock Get-Installed-PHP-Versions-From-Directory { return @() }
             
             $result = Get-Installed-PHP-Versions
             $result.Count | Should -Be 0
         }
         
         It "Should handle single digit versions" {
-            Mock Test-Path { return $true }
-            Mock Get-All-Subdirectories {
-                param ($path)
+            Mock Cache-Data { return 0 }
+            Mock Can-Use-Cache { return $false }
+            Mock Get-Installed-PHP-Versions-From-Directory {
                 return @(
-                    @{ Name = "8.1"; FullName = "path\php\8.1" }
-                    @{ Name = "7.4"; FullName = "path\php\7.4" }
+                    @{version = "7.4"; arch = "x64"; buildType = "nts"}
+                    @{version = "8.1"; arch = "x64"; buildType = "nts"}
                 )
             }
-            Mock Log-Data { return $true }
             
             $result = Get-Installed-PHP-Versions
             $result.Count | Should -Be 2
-            $result[0] | Should -Be "7.4"
-            $result[1] | Should -Be "8.1"
+            $result[0].version | Should -Be "7.4"
+            $result[1].version | Should -Be "8.1"
         }
     }
     
     Context "When exceptions occur" {
-        It "Should return empty array and log error when Get-All-EnvVars throws exception" {
-            Mock Get-All-Subdirectories { throw "Test exception" }
+        It "Should return empty array and log error when Get-Installed-PHP-Versions-From-Directory throws exception" {
+            Mock Get-Installed-PHP-Versions-From-Directory { throw "Test exception" }
             Mock Log-Data { return $true }
             
             $result = Get-Installed-PHP-Versions
@@ -166,7 +159,7 @@ Describe "Get-UserSelected-PHP-Version" {
     }
     
     It "Should return first version when only one is provided" {
-        $result = Get-UserSelected-PHP-Version -installedVersions @("8.1")
+        $result = Get-UserSelected-PHP-Version -installedVersions @(@{ version = '8.1'; Arch = 'x64'; BuildType = 'ts'})
         $result.version | Should -Be "8.1"
     }
     
@@ -174,16 +167,23 @@ Describe "Get-UserSelected-PHP-Version" {
         Mock Read-Host { return "" }
         Mock Write-Host { }
         
-        $result = Get-UserSelected-PHP-Version -installedVersions @("7.4", "8.0", "8.1")
+        $result = Get-UserSelected-PHP-Version -installedVersions @(
+            @{ version = '7.4'; Arch = 'x64'; BuildType = 'ts'}
+            @{ version = '8.0'; Arch = 'x64'; BuildType = 'ts'}
+            @{ version = '8.1'; Arch = 'x64'; BuildType = 'ts'}
+        )
         $result.code | Should -Be -1
     }
     
     It "Should prompt user and return selected version when multiple are provided" {
-        Mock Read-Host { return "8.1" }
+        Mock Read-Host { return "2" }
         Mock Write-Host { }
-        Mock Get-PHP-Path-By-Version { return "C:\php\8.1" }
         
-        $result = Get-UserSelected-PHP-Version -installedVersions @("7.4", "8.0", "8.1")
+        $result = Get-UserSelected-PHP-Version -installedVersions @(
+            @{ version = '7.4'; Arch = 'x64'; BuildType = 'ts'; InstallPath = "C:\php\7.4"}
+            @{ version = '8.0'; Arch = 'x64'; BuildType = 'ts'; InstallPath = "C:\php\8.0"}
+            @{ version = '8.1'; Arch = 'x64'; BuildType = 'ts'; InstallPath = "C:\php\8.1"}
+        )
         $result.version | Should -Be "8.1"
         $result.code | Should -Be 0
         $result.path | Should -Be "C:\php\8.1"
@@ -193,40 +193,52 @@ Describe "Get-UserSelected-PHP-Version" {
 Describe "Get-Matching-PHP-Versions" {
     Context "When matching versions exist" {
         It "Should return matching versions for partial version number" {
-            Mock Get-Installed-PHP-Versions {
-                return @("7.4", "8.0", "8.1", "8.2")
-            }
-            Mock Log-Data { return $true }
+            Mock Get-Installed-PHP-Versions { return @(
+                @{Version = "8.2"; Arch = "x64"; BuildType = 'NTS'}
+                @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                @{Version = "8.0"; Arch = "x64"; BuildType = 'NTS'}
+                @{Version = "7.4"; Arch = "x64"; BuildType = 'NTS'}
+            )}
             
             $result = Get-Matching-PHP-Versions -version "8"
             $expected = @("8.0", "8.1", "8.2")
             
             $result.Count | Should -Be $expected.Count
-            $result -contains "8.0" | Should -Be $true
-            $result -contains "8.1" | Should -Be $true
-            $result -contains "8.2" | Should -Be $true
+            $result | Where-Object { $_.version -eq '8.2' } | Should -Not -BeNullOrEmpty
+            $result | Where-Object { $_.version -eq '8.1' } | Should -Not -BeNullOrEmpty
+            $result | Where-Object { $_.version -eq '8.0' } | Should -Not -BeNullOrEmpty
         }
         
         It "Should return exact match for pattern version number" {
             Mock Get-Installed-PHP-Versions {
-                return @("7.4", "8.0", "8.1", "8.1.9", "8.2")
+                return @(
+                    @{Version = "8.2"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "8.1.9"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "8.0"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "7.4"; Arch = "x64"; BuildType = 'NTS'}
+                )
             }
-            Mock Log-Data { return $true }
             
             $result = Get-Matching-PHP-Versions -version "8.1"
             $result.Count | Should -Be 2
-            $result[0] | Should -Be "8.1"
+            $result[0].version | Should -Be "8.1.9"
         }
         
-         It "Should return exact match for full version number" {
+        It "Should return exact match for full version number" {
             Mock Get-Installed-PHP-Versions {
-                return @("7.4", "8.0", "8.1", "8.1.9", "8.2")
+                return @(
+                    @{Version = "7.4"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "8.0"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "8.1.9"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "8.2"; Arch = "x64"; BuildType = 'NTS'}
+                )
             }
-            Mock Log-Data { return $true }
             
             $result = Get-Matching-PHP-Versions -version "8.1.9"
-            $result.Count | Should -Be 1
-            $result | Should -Be "8.1.9"
+            $result.Length | Should -Be 1
+            $result.version | Should -Be "8.1.9"
         }
         
         It "Should return empty array when no matches found" {
@@ -260,39 +272,37 @@ Describe "Is-PHP-Version-Installed" {
         It "Should return true for installed version" {
             Mock Get-Matching-PHP-Versions {
                 param($version)
-                if ($version -eq "8.1") {
-                    return @("8.1", "8.1.1", "8.1.2")
-                }
-                return @()
+                return @(
+                    @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "8.1.1"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "8.1.2"; Arch = "x64"; BuildType = 'NTS'}
+                )
             }
-            Mock Log-Data { return $true }
             
-            $result = Is-PHP-Version-Installed -version "8.1"
+            $result = Is-PHP-Version-Installed -version @{version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
             $result | Should -Be $true
         }
         
         It "Should return false for non-installed version" {
             Mock Get-Matching-PHP-Versions {
                 param($version)
-                if ($version -eq "8.1") {
-                    return @("8.1.1", "8.1.2")  # 8.1 exact match not included
-                }
-                return @()
+                return @(
+                    @{Version = "8.1.1"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "8.1.2"; Arch = "x64"; BuildType = 'NTS'}
+                )
             }
-            Mock Log-Data { return $true }
             
-            $result = Is-PHP-Version-Installed -version "8.1"
-            $result | Should -Be $false
+            $result = Is-PHP-Version-Installed -version @{version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+            $result | Should -Be $null
         }
         
         It "Should return false when no matching versions found" {
             Mock Get-Matching-PHP-Versions {
                 return @()
             }
-            Mock Log-Data { return $true }
             
             $result = Is-PHP-Version-Installed -version "9.0"
-            $result | Should -Be $false
+            $result | Should -Be $null
         }
     }
     
@@ -311,31 +321,209 @@ Describe "Is-PHP-Version-Installed" {
     }
 }
 
-Describe "Integration Tests" {
-    Context "When testing function interactions" {
-        It "Should work together for a complete workflow" {
-            # Mock the environment to simulate a working PVM setup
-            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith { 
-                return "C:\pvm;C:\php\8.1;C:\other\paths"
+Describe "Refresh-Installed-PHP-Versions-Cache" {
+    Context "When cache is successfully refreshed" {
+        It "Should return 0 on success" {
+            Mock Get-Installed-PHP-Versions-From-Directory {
+                return @(
+                    @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                    @{Version = "8.2"; Arch = "x64"; BuildType = 'NTS'}
+                )
             }
-            Mock Test-Path { return $true }
+            Mock Cache-Data { return 0 }
             
-            Mock Get-Installed-PHP-Versions {
-                return @("7.4", "8.0", "8.1", "8.1.9", "8.2")
+            $result = Refresh-Installed-PHP-Versions-Cache
+            $result | Should -Be 0
+        }
+        
+        It "Should call Get-Installed-PHP-Versions-From-Directory" {
+            Mock Get-Installed-PHP-Versions-From-Directory {
+                return @(
+                    @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                )
             }
+            Mock Cache-Data { return 0 }
             
+            $result = Refresh-Installed-PHP-Versions-Cache
+            
+            Assert-MockCalled Get-Installed-PHP-Versions-From-Directory -Exactly 1
+        }
+        
+        It "Should call Cache-Data with installed_php_versions file and depth 1" {
+            Mock Get-Installed-PHP-Versions-From-Directory {
+                return @(
+                    @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                )
+            }
+            Mock Cache-Data { return 0 }
+            
+            $result = Refresh-Installed-PHP-Versions-Cache
+            
+            Assert-MockCalled Cache-Data -Exactly 1 -ParameterFilter {
+                $cacheFileName -eq "installed_php_versions" -and $depth -eq 1
+            }
+        }
+        
+        It "Should cache the results from Get-Installed-PHP-Versions-From-Directory" {
+            $mockVersions = @(
+                @{Version = "7.4"; Arch = "x64"; BuildType = 'NTS'}
+                @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+            )
+            Mock Get-Installed-PHP-Versions-From-Directory { return $mockVersions }
+            Mock Cache-Data { return 0 }
+            
+            $result = Refresh-Installed-PHP-Versions-Cache
+            
+            Assert-MockCalled Cache-Data -Exactly 1 -ParameterFilter {
+                $data.Count -eq 2 -and $data[0].Version -eq "7.4"
+            }
+        }
+    }
+    
+    Context "When exceptions occur" {
+        It "Should return -1 on exception" {
+            Mock Get-Installed-PHP-Versions-From-Directory { throw "Test exception" }
             Mock Log-Data { return $true }
             
-            # Test the complete workflow
-            $pvmSetup = Is-PVM-Setup
-            $installedVersions = Get-Installed-PHP-Versions
-            $matchingVersions = Get-Matching-PHP-Versions -version "8"
-            $isInstalled = Is-PHP-Version-Installed -version "8.1"
+            $result = Refresh-Installed-PHP-Versions-Cache
+            $result | Should -Be -1
+        }
+        
+        It "Should log error when exception occurs" {
+            Mock Get-Installed-PHP-Versions-From-Directory { throw "Test exception" }
+            Mock Log-Data { return $true }
             
-            $pvmSetup | Should -Be $true
-            $installedVersions -contains "8.1" | Should -Be $true
-            $matchingVersions -contains "8.1" | Should -Be $true
-            $isInstalled | Should -Be $true
+            $result = Refresh-Installed-PHP-Versions-Cache
+            
+            Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter {
+                $data.header -eq "Refresh-Installed-PHP-Versions-Cache - Failed to refresh installed PHP versions cache"
+            }
+        }
+        
+        It "Should return -1 when Cache-Data throws exception" {
+            Mock Get-Installed-PHP-Versions-From-Directory {
+                return @(@{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'})
+            }
+            Mock Cache-Data { throw "Cache exception" }
+            Mock Log-Data { return $true }
+            
+            $result = Refresh-Installed-PHP-Versions-Cache
+            $result | Should -Be -1
+        }
+    }
+}
+
+Describe "Get-Installed-PHP-Versions-From-Directory" {
+    BeforeAll {
+        $script:STORAGE_PATH = "C:\test\storage"
+    }
+    
+    Context "When PHP versions exist" {
+        It "Should return installed PHP versions with php.exe present" {
+            Mock Get-All-Subdirectories {
+                return @(
+                    @{FullName = "C:\test\storage\php\8.1"}
+                    @{FullName = "C:\test\storage\php\8.2"}
+                )
+            }
+            Mock Test-Path { return $true }
+            Mock Get-PHPInstallInfo {
+                param($path)
+                if ($path -eq "C:\test\storage\php\8.1") {
+                    return @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'; InstallPath = "C:\test\storage\php\8.1"}
+                } else {
+                    return @{Version = "8.2"; Arch = "x64"; BuildType = 'NTS'; InstallPath = "C:\test\storage\php\8.2"}
+                }
+            }
+            
+            $result = Get-Installed-PHP-Versions-From-Directory
+            $result.Count | Should -Be 2
+        }
+        
+        It "Should skip directories without php.exe" {
+            Mock Get-All-Subdirectories {
+                return @(
+                    @{FullName = "C:\test\storage\php\8.1"}
+                    @{FullName = "C:\test\storage\php\invalid"}
+                    @{FullName = "C:\test\storage\php\8.2"}
+                )
+            }
+            Mock Test-Path {
+                param($path)
+                return $path -notmatch "invalid"
+            }
+            Mock Get-PHPInstallInfo {
+                param($path)
+                if ($path -eq "C:\test\storage\php\8.1") {
+                    return @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                } elseif ($path -eq "C:\test\storage\php\8.2") {
+                    return @{Version = "8.2"; Arch = "x64"; BuildType = 'NTS'}
+                }
+            }
+            
+            $result = Get-Installed-PHP-Versions-From-Directory
+            $result.Count | Should -Be 2
+        }
+        
+        It "Should return versions sorted by version number" {
+            Mock Get-All-Subdirectories {
+                return @(
+                    @{FullName = "C:\test\storage\php\8.2"}
+                    @{FullName = "C:\test\storage\php\7.4"}
+                    @{FullName = "C:\test\storage\php\8.1"}
+                )
+            }
+            Mock Test-Path { return $true }
+            Mock Get-PHPInstallInfo {
+                param($path)
+                if ($path -eq "C:\test\storage\php\8.2") {
+                    return @{Version = "8.2"; Arch = "x64"; BuildType = 'NTS'}
+                } elseif ($path -eq "C:\test\storage\php\7.4") {
+                    return @{Version = "7.4"; Arch = "x86"; BuildType = 'TS'}
+                } else {
+                    return @{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'}
+                }
+            }
+            
+            $result = Get-Installed-PHP-Versions-From-Directory
+            $result.Count | Should -Be 3
+            $result[0].Version | Should -Be "7.4"
+            $result[1].Version | Should -Be "8.1"
+            $result[2].Version | Should -Be "8.2"
+        }
+    }
+    
+    Context "When no PHP versions exist" {
+        It "Should return empty array when no directories exist" {
+            Mock Get-All-Subdirectories { return @() }
+            
+            $result = Get-Installed-PHP-Versions-From-Directory
+            $result.Count | Should -Be 0
+        }
+        
+        It "Should return empty array when no php.exe files are present" {
+            Mock Get-All-Subdirectories {
+                return @(
+                    @{FullName = "C:\test\storage\php\invalid1"}
+                    @{FullName = "C:\test\storage\php\invalid2"}
+                )
+            }
+            Mock Test-Path { return $false }
+            
+            $result = Get-Installed-PHP-Versions-From-Directory
+            $result.Count | Should -Be 0
+        }
+    }
+    
+    Context "When calling Get-All-Subdirectories" {
+        It "Should call Get-All-Subdirectories with php storage path" {
+            Mock Get-All-Subdirectories { return @() }
+            
+            Get-Installed-PHP-Versions-From-Directory
+            
+            Assert-MockCalled Get-All-Subdirectories -Exactly 1 -ParameterFilter {
+                $path -eq "$STORAGE_PATH\php"
+            }
         }
     }
 }

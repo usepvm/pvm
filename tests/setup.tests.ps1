@@ -2,7 +2,7 @@
 . "$PSScriptRoot\..\src\actions\setup.ps1"
 
 Describe "Setup-PVM" {
-     BeforeAll {
+    BeforeAll {
         Mock Write-Host {}
         # Mock global variables that the function depends on
         $global:PHP_CURRENT_VERSION_PATH = "C:\php\8.2"

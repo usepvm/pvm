@@ -45,10 +45,13 @@ function Get-Current-PHP-Version {
         if (-not (Is-Directory-Exists -path $currentPhpVersionPath)) {
             return $emptyResult
         }
+        $phpInfo = Get-PHPInstallInfo -path $currentPhpVersionPath
         
         return @{
-            version = $(Split-Path $currentPhpVersionPath -Leaf)
-            path = $currentPhpVersionPath
+            version = $phpInfo.Version
+            arch = $phpInfo.Arch
+            buildType = $phpInfo.BuildType
+            path = $phpInfo.InstallPath
             status = Get-PHP-Status -phpPath $currentPhpVersionPath
         }
     } catch {

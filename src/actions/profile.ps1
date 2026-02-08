@@ -458,10 +458,14 @@ function Show-PHP-Profile {
         
         $userProfile = Get-Content $profilePath -Raw | ConvertFrom-Json
         
+        $dt = [datetime]$userProfile.Created
+        $utc = $dt.ToUniversalTime()
+        $createdAtFormatted = $utc.ToString("dd/MM/yyyy HH:mm:ss")
+
         Write-Host "`nProfile: $($userProfile.name)" -ForegroundColor Cyan
         Write-Host "========================="
         Write-Host "Description: $($userProfile.description)" -ForegroundColor White
-        Write-Host "Created: $($userProfile.created)" -ForegroundColor White
+        Write-Host "Created: $createdAtFormatted" -ForegroundColor White
         Write-Host "PHP Version: $($userProfile.phpVersion)" -ForegroundColor White
         Write-Host "PATH: $profilePath" -ForegroundColor White
         

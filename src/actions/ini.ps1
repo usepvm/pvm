@@ -796,7 +796,6 @@ function Install-XDebug-Extension {
     try {
         $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
         $xDebugList = Get-XDebug-FROM-URL -url $XDEBUG_HISTORICAL_URL -version $currentVersion -arch $arch
-        $xDebugList = $xDebugList | Sort-Object { [version]$_.xDebugVersion } -Descending
 
         if ($null -eq $xDebugList -or $xDebugList.Count -eq 0) {
             Write-Host "`nNo match was found, check the '$LOG_ERROR_PATH' for any potentiel errors"
@@ -827,14 +826,25 @@ function Install-XDebug-Extension {
                     }
                 }; Descending = $true } |
             ForEach-Object {
-                $xDebugListGrouped[$_.Name] = $_.Group
+                $sortedGroup = $_.Group | Sort-Object `
+                    @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
+                    @{ Expression = {
+                        switch ($_.arch) {
+                            'x86_64' { 2 }
+                            'x64'    { 2 }
+                            'x86'    { 1 }
+                            default  { 0 }
+                        }
+                    }; Descending = $true }
+
+                $xDebugListGrouped[$_.Name] = $sortedGroup
             }
 
         $index = 0
         $xDebugListGrouped.GetEnumerator() | ForEach-Object {
-            Write-Host "`n$($_.Key)"
+            Write-Host "`nXDebug $($_.Key)"
             $_.Value | ForEach-Object {
-                $text = ($_.outerHTML -replace '<.*?>|.zip','').Trim()
+                $text = "PHP XDebug $($_.version) $($_.buildType) $($_.arch)"
                 Write-Host " [$index] $text"
                 $index++
             }

@@ -63,6 +63,27 @@ function Cache-Data {
     }
 }
 
+function Get-OrUpdateCache {
+    param ($cacheFileName, $compute, $depth = 3)
+    
+    $useCache = Can-Use-Cache -cacheFileName $cacheFileName
+    
+    if ($useCache) {
+        $data = Get-Data-From-Cache -cacheFileName $cacheFileName
+        if ($null -ne $data -and $data.Count -gt 0) {
+            return $data
+        }
+    }
+    
+    $data = & $compute
+    
+    if ($null -ne $data) {
+        $cached = Cache-Data -cacheFileName $cacheFileName -data $data -depth $depth
+    }
+    
+    return $data
+}
+
 function Get-All-Subdirectories {
     param ($path)
     try {

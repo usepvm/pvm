@@ -784,6 +784,48 @@ Describe "Can-Use-Cache" {
     }
 }
 
+Describe "Get-OrUpdateCache" {
+    It "Reads from cache first" {
+        function Example { return @{} }
+        Mock Example { return @{} }
+        Mock Can-Use-Cache { return $true }
+        Mock Cache-Data { return 0 }
+        Mock Get-Data-From-Cache {
+            return @{
+                'Archives' = @('php-8.1.0-Win32-x64.zip')
+                'Releases' = @('php-8.2.0-Win32-x64.zip')
+            }
+        }
+        
+        $result = Get-OrUpdateCache -cacheFileName "file.json" -compute {
+            Example
+        }
+        
+        Assert-MockCalled Get-Data-From-Cache -Exactly 1
+        Assert-MockCalled Example -Exactly 0
+        Assert-MockCalled Cache-Data -Exactly 0
+    }
+    
+    It "Runs the passed command when can't read from cache" {
+        function Example { return @{} }
+        Mock Example {
+            return @{
+                'Archives' = @('php-8.1.0-Win32-x64.zip')
+                'Releases' = @('php-8.2.0-Win32-x64.zip')
+            }
+        }
+        Mock Cache-Data { return 0 }
+        Mock Can-Use-Cache { return $false }
+        
+        $result = Get-OrUpdateCache -cacheFileName "file.json" -compute {
+            Example
+        }
+        
+        Assert-MockCalled Example -Exactly 1
+        Assert-MockCalled Cache-Data -Exactly 1
+    }
+}
+
 Describe "Resolve-Arch" {
     Context "When searching in arguments" {
         It "Returns x86 when x86 is in arguments" {

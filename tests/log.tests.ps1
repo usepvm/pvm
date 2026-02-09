@@ -142,6 +142,14 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
         $result | Should -Be 0
     }
 
+    It "returns -1 if no entries found" {
+        "" | Set-Content $LOG_ERROR_PATH
+        
+        $result = Show-Log -pageSize 1
+        
+        $result | Should -Be -1
+    }
+
     It "returns -1 if log file is missing" {
         Mock Test-Path { $false }
         

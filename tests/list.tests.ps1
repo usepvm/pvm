@@ -102,6 +102,14 @@ Describe "Get-From-Source" {
 
 Describe "Get-PHP-List-To-Install" {
     
+    It "Returns empty object when cache and/or source not working" {
+        Mock Get-OrUpdateCache { return $null }
+        
+        $result = Get-PHP-List-To-Install
+        
+        $result.Count | Should -Be 0
+    }
+    
     It "Should read from cache" {
         Mock Test-Path { return $true }
         $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK")
@@ -116,8 +124,8 @@ Describe "Get-PHP-List-To-Install" {
         $result = Get-PHP-List-To-Install
         
         $result | Should -Not -BeNullOrEmpty
-        $result.Keys | Should -Contain 'Archives'
-        $result.Keys | Should -Contain 'Releases'
+        $result.Archives | Should -Not -BeNullOrEmpty
+        $result.Releases | Should -Not -BeNullOrEmpty
         Assert-MockCalled Get-Data-From-Cache -Exactly 1
     }
     

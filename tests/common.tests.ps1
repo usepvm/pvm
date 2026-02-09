@@ -135,6 +135,24 @@ Describe "Get-Installed-PHP-Versions" {
             $result[0].version | Should -Be "7.4"
             $result[1].version | Should -Be "8.1"
         }
+        
+        It "Should filter the right arch input" {
+            Mock Get-OrUpdateCache {
+                return @(
+                    @{version = "5.6"; arch = "x64"; buildType = "nts"}
+                    @{version = "5.6"; arch = "x86"; buildType = "nts"}
+                    @{version = "7.4"; arch = "x64"; buildType = "nts"}
+                    @{version = "8.0"; arch = "x64"; buildType = "nts"}
+                    @{version = "8.0"; arch = "x86"; buildType = "nts"}
+                )
+            }
+            
+            $result = Get-Installed-PHP-Versions -arch "x86"
+            
+            $result.Count | Should -Be 2
+            $result[0].version | Should -Be "5.6"
+            $result[1].version | Should -Be "8.0"
+        }
     }
     
     Context "When exceptions occur" {

@@ -55,19 +55,15 @@ function Get-From-Source {
 
 function Get-PHP-List-To-Install {
     try {
-        $fetchedVersionsGrouped = @{}
-        $useCache = Can-Use-Cache -cacheFileName 'available_php_versions'
-        
-        if ($useCache) {
-            $fetchedVersionsGrouped = Get-Data-From-Cache -cacheFileName "available_php_versions"
-            if (-not $fetchedVersionsGrouped -or $fetchedVersionsGrouped.Count -eq 0) {
-                $fetchedVersionsGrouped = Get-From-Source
-                $fetchedVersionsGrouped = [pscustomobject] $fetchedVersionsGrouped
-            }
-        } else {
-            $fetchedVersionsGrouped = Get-From-Source
-            $fetchedVersionsGrouped = [pscustomobject] $fetchedVersionsGrouped
+        $fetchedVersionsGrouped = Get-OrUpdateCache -cacheFileName "available_php_versions" -compute {
+            Get-From-Source
         }
+
+        if (-not $fetchedVersionsGrouped) {
+            return @{}
+        }
+        
+        $fetchedVersionsGrouped = [pscustomobject] $fetchedVersionsGrouped
         
         return $fetchedVersionsGrouped
     } catch {

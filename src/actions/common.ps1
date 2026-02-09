@@ -66,27 +66,24 @@ function Get-Installed-PHP-Versions-From-Directory {
 
     $installedVersions = ($installedVersions | Sort-Object { [version]$_.Version })
 
+    $cached = Cache-Data -cacheFileName "installed_php_versions" -data $installedVersions -depth 1
+
     return $installedVersions
 }
 
 function Get-Installed-PHP-Versions {
     param ($arch = $null)
     try {
-        $useCache = Can-Use-Cache -cacheFileName 'installed_php_versions'
+        $installedVersions = Get-OrUpdateCache -cacheFileName "installed_php_versions" -depth 1 -compute {
+            Get-Installed-PHP-Versions-From-Directory
+        }
         
-        if ($useCache) {
-            $installedVersions = Get-Data-From-Cache -cacheFileName "installed_php_versions"
-            if (-not $installedVersions -or $installedVersions.Count -eq 0) {
-                $installedVersions = Get-Installed-PHP-Versions-From-Directory
-                $cached = Cache-Data -cacheFileName "installed_php_versions" -data $installedVersions -depth 1
-            }
-        } else {
-            $installedVersions = Get-Installed-PHP-Versions-From-Directory
-            $cached = Cache-Data -cacheFileName "installed_php_versions" -data $installedVersions -depth 1
+        if ($null -eq $installedVersions) {
+            return @()
         }
         
         if ($arch) {
-            $installedVersions = $installedVersions | Where-Object { $_.Arch -eq $arch }
+            $installedVersions = $installedVersions | Where-Object { $_.Arch -eq $arch } | Sort-Object { [version]$_.Version }
         }
         
         return $installedVersions

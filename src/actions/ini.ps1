@@ -37,7 +37,8 @@ function Get-XDebug-FROM-URL {
                 version = $version
                 xDebugVersion = $xDebugVersion;
                 arch = if ($fileName -match '(x86_64|x64)(?=\.dll$)') { 'x64' } else { 'x86' }
-                buildType = if ($fileName -match '-nts-') { 'NTS' } else { 'TS' }
+                buildType = if ($fileName -match '(?i)(?:^|-)nts(?:-|\.dll$)') { 'NTS' } else { 'TS' }
+                compiler = if ($fileName -match '(?i)\b(vs|vc)\d+\b') { $matches[0].ToUpper() } else { 'unknown' }
                 fileName = $fileName;
                 outerHTML = $_.outerHTML
             }
@@ -844,7 +845,7 @@ function Install-XDebug-Extension {
         $xDebugListGrouped.GetEnumerator() | ForEach-Object {
             Write-Host "`nXDebug $($_.Key)"
             $_.Value | ForEach-Object {
-                $text = "PHP XDebug $($_.version) $($_.buildType) $($_.arch)"
+                $text = "PHP XDebug $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
                 Write-Host " [$index] $text"
                 $index++
             }

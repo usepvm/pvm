@@ -21,7 +21,7 @@ Describe "Setup-PVM" {
         }
         
         # Mock Log-Data function
-        Mock Log-Data { return $true }
+        Mock Log-Data { return 0 }
         
         # Mock the System.Environment methods
         function Get-EnvironmentVariableWrapper {
@@ -121,7 +121,7 @@ Describe "Setup-PVM" {
         Mock Set-EnvVar -MockWith { return 0 }
         Mock Is-Directory-Exists -MockWith { return $false }
         Mock Make-Directory -MockWith { return $true }
-        Mock Log-Data -MockWith { return $true }
+        Mock Log-Data -MockWith { return 0 }
         Mock Optimize-SystemPath -MockWith {}
     }
 

@@ -74,7 +74,7 @@ Describe "Is-PVM-Setup" {
     Context "When exceptions occur" {
         It "Should return false and log error when Get-EnvVar-ByName throws exception" {
             Mock Get-EnvVar-ByName { throw "Test exception" }
-            Mock Log-Data { return $true }
+            Mock Log-Data { return 0 }
             
             $result = Is-PVM-Setup
             $result | Should -Be $false
@@ -158,7 +158,7 @@ Describe "Get-Installed-PHP-Versions" {
     Context "When exceptions occur" {
         It "Should return empty array and log error when Get-Installed-PHP-Versions-From-Directory throws exception" {
             Mock Get-Installed-PHP-Versions-From-Directory { throw "Test exception" }
-            Mock Log-Data { return $true }
+            Mock Log-Data { return 0 }
             
             $result = Get-Installed-PHP-Versions
             $result.Count | Should -Be 0
@@ -263,7 +263,7 @@ Describe "Get-Matching-PHP-Versions" {
             Mock Get-Installed-PHP-Versions {
                 return @("php7.4", "php8.0", "php8.1")
             }
-            Mock Log-Data { return $true }
+            Mock Log-Data { return 0 }
             
             $result = Get-Matching-PHP-Versions -version "9"
             $result.Count | Should -Be 0
@@ -273,7 +273,7 @@ Describe "Get-Matching-PHP-Versions" {
     Context "When exceptions occur" {
         It "Should return null and log error when Get-Installed-PHP-Versions throws exception" {
             Mock Get-Installed-PHP-Versions { throw "Test exception" }
-            Mock Log-Data { return $true }
+            Mock Log-Data { return 0 }
             
             $result = Get-Matching-PHP-Versions -version "8.1"
             $result | Should -Be $null
@@ -327,7 +327,7 @@ Describe "Is-PHP-Version-Installed" {
     Context "When exceptions occur" {
         It "Should return false and log error when Get-Matching-PHP-Versions throws exception" {
             Mock Get-Matching-PHP-Versions { throw "Test exception" }
-            Mock Log-Data { return $true }
+            Mock Log-Data { return 0 }
             
             $result = Is-PHP-Version-Installed -version "8.1"
             $result | Should -Be $false
@@ -401,7 +401,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
     Context "When exceptions occur" {
         It "Should return -1 on exception" {
             Mock Get-Installed-PHP-Versions-From-Directory { throw "Test exception" }
-            Mock Log-Data { return $true }
+            Mock Log-Data { return 0 }
             
             $result = Refresh-Installed-PHP-Versions-Cache
             $result | Should -Be -1
@@ -409,7 +409,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
         
         It "Should log error when exception occurs" {
             Mock Get-Installed-PHP-Versions-From-Directory { throw "Test exception" }
-            Mock Log-Data { return $true }
+            Mock Log-Data { return 0 }
             
             $result = Refresh-Installed-PHP-Versions-Cache
             
@@ -423,7 +423,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
                 return @(@{Version = "8.1"; Arch = "x64"; BuildType = 'NTS'})
             }
             Mock Cache-Data { throw "Cache exception" }
-            Mock Log-Data { return $true }
+            Mock Log-Data { return 0 }
             
             $result = Refresh-Installed-PHP-Versions-Cache
             $result | Should -Be -1

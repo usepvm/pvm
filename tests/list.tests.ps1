@@ -19,7 +19,7 @@ BeforeAll {
         }
         return 0
     }
-    Mock Log-Data { param($logPath, $message, $data) return "Logged: $message - $data" }
+    Mock Log-Data { param($logPath, $message, $data) return 0 }
     Mock Get-Source-Urls { 
         return @{
             'releases' = $PHP_WIN_RELEASES_URL
@@ -91,7 +91,7 @@ Describe "Get-From-Source" {
     
     It "Should handle web request failure" {
         Mock Invoke-WebRequest { throw "Network error" }
-        Mock Log-Data { return "Logged error" }
+        Mock Log-Data { return 0 }
         
         $result = Get-From-Source
         
@@ -338,7 +338,7 @@ Describe "Get-Available-PHP-Versions" {
             'Releases' = @('php-8.2.0-Win32-x64.zip')
         }}
         Mock ForEach-Object { throw "Cache error" }
-        Mock Log-Data { return "Logged error" }
+        Mock Log-Data { return 0 }
         
         $result = Get-Available-PHP-Versions
         
@@ -423,7 +423,7 @@ Describe "Display-Installed-PHP-Versions" {
     
     It "Should handle exceptions gracefully" {
         Mock Get-Current-PHP-Version { throw "Error getting current version" }
-        Mock Log-Data { return "Logged error" }
+        Mock Log-Data { return 0 }
         
         { Display-Installed-PHP-Versions } | Should -Not -Throw
     }

@@ -13,7 +13,7 @@ BeforeAll {
     # Mock Log-Data globally - this will be available for all tests
     Mock Log-Data -MockWith {
         param($logPath, $message, $data)
-        return $true
+        return 0
     }
 }
 
@@ -23,7 +23,7 @@ Describe "Uninstall-PHP" {
             Mock Get-Matching-PHP-Versions -MockWith { }
             Mock Get-UserSelected-PHP-Version -MockWith { }
             Mock Remove-Item -MockWith { }
-            Mock Log-Data -MockWith { $true }
+            Mock Log-Data -MockWith { 0 }
         }
 
         It "Should successfully uninstall when version is found directly" {
@@ -88,7 +88,7 @@ Describe "Uninstall-PHP" {
                 @{ code = 0; version = "8.0"; path = "$testPhpPath\8.0" }
             }
             Mock Remove-Item -MockWith { }
-            Mock Log-Data -MockWith { $true }
+            Mock Log-Data -MockWith { 0 }
         }
 
         It "Should successfully uninstall after user selection" {
@@ -113,7 +113,7 @@ Describe "Uninstall-PHP" {
             }
             Mock Get-UserSelected-PHP-Version -MockWith { }
             Mock Remove-Item -MockWith { }
-            Mock Log-Data -MockWith { $true }
+            Mock Log-Data -MockWith { 0 }
         }
 
         It "Should return version not found message" {
@@ -137,7 +137,7 @@ Describe "Uninstall-PHP" {
                 @{ code = -1; message = "User cancelled the selection"; color = "DarkYellow" }
             }
             Mock Remove-Item -MockWith { }
-            Mock Log-Data -MockWith { $true }
+            Mock Log-Data -MockWith { 0 }
         }
 
         It "Should return the user selection error" {
@@ -162,7 +162,7 @@ Describe "Uninstall-PHP" {
                 @{ code = 0; version = "8.2"; path = $null }
             }
             Mock Remove-Item -MockWith { }
-            Mock Log-Data -MockWith { $true }
+            Mock Log-Data -MockWith { 0 }
         }
 
         It "Should return version not found message" {

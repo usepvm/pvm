@@ -326,7 +326,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
         It "Should call Log-Data when exception occurs" {
             # Arrange
             Mock Get-Item { throw "Path does not exist" }
-            Mock Log-Data { return $true }
+            Mock Log-Data { return 0 }
             
             # Act
             $result = Get-Current-PHP-Version

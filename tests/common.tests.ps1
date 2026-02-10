@@ -49,6 +49,14 @@ Describe "Is-PVM-Setup" {
             $result = Is-PVM-Setup
             $result | Should -Be $true
         }
+        
+        It "Should return false when the path var is null" {
+            Mock Get-EnvVar-ByName { return $null }
+            Mock Test-Path { return $true}
+            
+            $result = Is-PVM-Setup
+            $result | Should -Be $false
+        }
     }
     
     Context "When PVM is not properly set up" {
@@ -205,6 +213,21 @@ Describe "Get-UserSelected-PHP-Version" {
         $result.version | Should -Be "8.1"
         $result.code | Should -Be 0
         $result.path | Should -Be "C:\php\8.1"
+    }
+    
+    It "Should print current next to active php version" {
+        Mock Read-Host { return "2" }
+        Mock Write-Host { }
+        Mock Get-Current-PHP-Version { return @{ version = "8.0"; arch = "x64"; buildType = "ts"}}
+        
+        $result = Get-UserSelected-PHP-Version -installedVersions @(
+            @{ version = '7.4'; Arch = 'x64'; BuildType = 'ts'; InstallPath = "C:\php\7.4"}
+            @{ version = '8.0'; Arch = 'x64'; BuildType = 'ts'; InstallPath = "C:\php\8.0"}
+            @{ version = '8.1'; Arch = 'x64'; BuildType = 'ts'; InstallPath = "C:\php\8.1"}
+        )
+        
+        $version = "8.0 ".PadRight(15, '.')
+        Assert-MockCalled Write-Host -ParameterFilter { $Object -eq " [1] $version x64 ts (Current)" }
     }
 }
 

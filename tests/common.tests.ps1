@@ -157,7 +157,7 @@ Describe "Get-Installed-PHP-Versions" {
     
     Context "When exceptions occur" {
         It "Should return empty array and log error when Get-Installed-PHP-Versions-From-Directory throws exception" {
-            Mock Get-Installed-PHP-Versions-From-Directory { throw "Test exception" }
+            Mock Get-OrUpdateCache { throw "Test exception" }
             Mock Log-Data { return 0 }
             
             $result = Get-Installed-PHP-Versions

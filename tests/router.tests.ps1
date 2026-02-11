@@ -75,7 +75,13 @@ Describe "Invoke-PVMSetup Tests" {
 
 Describe "Invoke-PVMCurrent Tests" {
     BeforeEach {
-        Mock Get-Current-PHP-Version { @{ version = "8.2.0"; status = @{ "xdebug" = $true; "opcache" = $false }; path = "C:\PHP\8.2.0" } }
+        Mock Get-Current-PHP-Version { @{
+            version = "8.2.0"
+            arch = "x64"
+            buildType = "TS"
+            path = "C:\PHP\8.2.0"
+            status = @{ "xdebug" = $true; "opcache" = $false }
+        }}
         # Mock Write-Host { }
     }
 
@@ -173,6 +179,15 @@ Describe "Invoke-PVMInstall Tests" {
         Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
             $version -eq "8.1"
         }
+    }
+    
+    It "Should return -1 when detected PHP version is already installed" {
+        $arguments = @("auto")
+        Mock Auto-Select-PHP-Version { return @{ code = 0; version = "8.2" } }
+
+        $result = Invoke-PVMInstall -arguments $arguments
+        
+        $result | Should -Be -1
     }
 }
 
@@ -484,6 +499,17 @@ Describe "Invoke-PVMProfile Tests" {
                 $profileName -eq "myprofile"
             }
         }
+        
+        It "Should take first and ignore extra arguments" {
+            $arguments = @("load", "myprofile", "to-be-ignored")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Load-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile"
+            }
+        }
     }
 
     Context "List action" {
@@ -519,6 +545,17 @@ Describe "Invoke-PVMProfile Tests" {
                 $profileName -eq "myprofile"
             }
         }
+        
+        It "Should take first and ignore extra arguments" {
+            $arguments = @("show", "myprofile", "to-be-ignored")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Show-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile"
+            }
+        }
     }
 
     Context "Delete action" {
@@ -535,6 +572,17 @@ Describe "Invoke-PVMProfile Tests" {
 
         It "Should delete profile with provided name" {
             $arguments = @("delete", "myprofile")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Delete-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile"
+            }
+        }
+        
+        It "Should take first and ignore extra arguments" {
+            $arguments = @("delete", "myprofile", "to-be-ignored")
             
             $result = Invoke-PVMProfile -arguments $arguments
             $result | Should -Be 0
@@ -680,6 +728,7 @@ Describe "Get-Actions Tests" {
         Mock Invoke-PVMIni { }
         Mock Invoke-PVMLog { }
         Mock Invoke-PVMTest { }
+        Mock Invoke-PVMProfile { }
     }
 
     It "Should return ordered hashtable with all actions" {
@@ -785,6 +834,13 @@ Describe "Get-Actions Tests" {
             $actions["test"].action.Invoke()
             
             Assert-MockCalled Invoke-PVMTest -Times 1
+        }
+        
+        It "Should execute profile action" {
+            $actions = Get-Actions -arguments @("save")
+            $actions["profile"].action.Invoke()
+            
+            Assert-MockCalled Invoke-PVMProfile -Times 1
         }
     }
 }

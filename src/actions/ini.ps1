@@ -1,16 +1,25 @@
 
 
 function Get-XDebug-FROM-URL {
-    param ($url, $version)
+    param ($url, $version, $arch = $null)
 
     try {
         $html = Invoke-WebRequest -Uri $url
         $links = $html.Links
 
         # Filter the links to find versions that match the given version
-        $sysArch = if (Is-OS-64Bit) { 'x86_64' } else { '' }
+        if ($null -ne $arch) {
+            $arch = if ($arch -eq 'x64') { 'x86_64' } else { '' }
+        }
         $filteredLinks = $links | Where-Object {
-            $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$sysArch\.dll"
+            if ($arch) {
+                return ($_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$arch\.dll")
+            }
+            if ($arch -eq '') {
+                return ($_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*\.dll" -and $_.href -notmatch "x86_64")
+            }
+            
+            return $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*\.dll"
         }
 
         # Return the filtered links (PHP version names)
@@ -22,7 +31,17 @@ function Get-XDebug-FROM-URL {
             if ($_.href -match "php_xdebug-([^-]+)") {
                 $xDebugVersion = $matches[1]
             }
-            $formattedList += @{ href = $_.href; version = $version; xDebugVersion = $xDebugVersion; fileName = $fileName; outerHTML = $_.outerHTML }
+            
+            $formattedList += @{
+                href = $_.href
+                version = $version
+                xDebugVersion = $xDebugVersion;
+                arch = if ($fileName -match '(x86_64|x64)(?=\.dll$)') { 'x64' } else { 'x86' }
+                buildType = if ($fileName -match '(?i)(?:^|-)nts(?:-|\.dll$)') { 'NTS' } else { 'TS' }
+                compiler = if ($fileName -match '(?i)\b(vs|vc)\d+\b') { $matches[0].ToUpper() } else { 'unknown' }
+                fileName = $fileName;
+                outerHTML = $_.outerHTML
+            }
         }
 
         return $formattedList
@@ -773,12 +792,13 @@ function Get-PHP-Data {
 }
 
 function Install-XDebug-Extension {
-    param ($iniPath)
+    param ($iniPath, $arch = $null)
     
     try {
         $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
-        $xDebugList = Get-XDebug-FROM-URL -url $XDEBUG_HISTORICAL_URL -version $currentVersion
-        $xDebugList = $xDebugList | Sort-Object { [version]$_.xDebugVersion } -Descending
+        $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions" -compute {
+            Get-XDebug-FROM-URL -url $XDEBUG_HISTORICAL_URL -version $currentVersion -arch $arch
+        }
 
         if ($null -eq $xDebugList -or $xDebugList.Count -eq 0) {
             Write-Host "`nNo match was found, check the '$LOG_ERROR_PATH' for any potentiel errors"
@@ -786,7 +806,9 @@ function Install-XDebug-Extension {
         }
 
         $xDebugListGrouped = [ordered]@{}
+        $index = 0
         $xDebugList | 
+            Select-Object -First $LATEST_VERSION_COUNT | 
             Group-Object xDebugVersion | 
             Sort-Object `
                 @{ Expression = {
@@ -809,18 +831,33 @@ function Install-XDebug-Extension {
                     }
                 }; Descending = $true } |
             ForEach-Object {
-                $xDebugListGrouped[$_.Name] = $_.Group
+                $sortedGroup = $_.Group | Sort-Object `
+                    @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
+                    @{ Expression = {
+                        switch ($_.arch) {
+                            'x86_64' { 2 }
+                            'x64'    { 2 }
+                            'x86'    { 1 }
+                            default  { 0 }
+                        }
+                    }; Descending = $true }
+
+                $sortedGroup | ForEach-Object {
+                    $_ | Add-Member -NotePropertyName "index" -NotePropertyValue $index -Force
+                    $index++
+                }
+
+                $xDebugListGrouped[$_.Name] = $sortedGroup
             }
 
-        $index = 0
         $xDebugListGrouped.GetEnumerator() | ForEach-Object {
-            Write-Host "`n$($_.Key)"
+            Write-Host "`nXDebug $($_.Key)"
             $_.Value | ForEach-Object {
-                $text = ($_.outerHTML -replace '<.*?>|.zip','').Trim()
-                Write-Host " [$index] $text"
-                $index++
+                $text = "PHP XDebug $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
+                Write-Host " [$($_.index)] $text"
             }
         }
+        Write-Host "`nThis is a partial list. For a complete list, visit: $XDEBUG_HISTORICAL_URL"
         
         $packageIndex = Read-Host "`nInsert the [number] you want to install"
         $packageIndex = $packageIndex.Trim()
@@ -829,7 +866,11 @@ function Install-XDebug-Extension {
             return -1
         }
         
-        $chosenItem = $xDebugList[$packageIndex]
+        $chosenItem = $xDebugListGrouped.GetEnumerator() | ForEach-Object {
+            $_.Value | Where-Object {
+                $_.index -eq $packageIndex
+            }
+        }
         if (-not $chosenItem) {
             Write-Host "`nYou chose the wrong index: $packageIndex" -ForegroundColor DarkYellow
             return -1
@@ -852,8 +893,21 @@ function Install-XDebug-Extension {
         if ($chosenItem.xDebugVersion -like "3.*") {
             $xDebugConfig = getXdebugConfigV3 -XDebugPath $($chosenItem.fileName)
         }
-        $xDebugConfig = $xDebugConfig -replace "\ +"
-        Add-Content -Path $iniPath -Value $xDebugConfig
+        # check existence of previous xdebug
+        $iniContent = Get-Content $iniPath
+        $dllXDebugExists = $false
+        for ($i = 0; $i -lt $iniContent.Count; $i++) {
+            if ($iniContent[$i] -match '^(?<comment>;)?\s*zend_extension\s*=.*xdebug.*$') {
+                $iniContent[$i] = $iniContent[$i] -replace '^(?<comment>;)?(\s*zend_extension\s*=).*$', "zend_extension='$($chosenItem.fileName)'"
+                $dllXDebugExists = $true
+            }
+        }
+        if ($dllXDebugExists) {
+            Set-Content -Path $iniPath -Value $iniContent -Encoding UTF8
+        } else {
+            $xDebugConfig = $xDebugConfig -replace "\ +"
+            Add-Content -Path $iniPath -Value $xDebugConfig
+        }
         
         return 0
     } catch {
@@ -866,7 +920,7 @@ function Install-XDebug-Extension {
 }
 
 function Install-Extension {
-    param ($iniPath, $extName)
+    param ($iniPath, $extName, $arch = $null)
     
     try {
         try {
@@ -941,7 +995,10 @@ function Install-Extension {
                 $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName/$extVersion/windows"
                 $packageLinks = $html.Links | Where-Object {
                     $packageName = $_.href -replace "$PECL_WIN_EXT_DOWNLOAD_URL/$extName/$extVersion/", ""
-                    if ($packageName -match "^php_$extName-$extVersion-(\d+\.\d+)-.+\.zip$") {
+                    if ($null -eq $arch) {
+                        $arch = ''
+                    }
+                    if ($packageName -match "^php_$extName-$extVersion-(\d+\.\d+)-.+$arch\.zip$") {
                         $phpVersion = $matches[1]
                         return ($phpVersion -eq $currentVersion)
                     }
@@ -1025,7 +1082,7 @@ function Install-Extension {
 }
 
 function Install-IniExtension {
-    param ($iniPath, $extName)
+    param ($iniPath, $extName, $arch = $null)
     
     try {
         if (-not $extName) {
@@ -1034,16 +1091,16 @@ function Install-IniExtension {
         }
         
         if ($extName -like "*xdebug*") {
-            $code = Install-XDebug-Extension -iniPath $iniPath
+            $code = Install-XDebug-Extension -iniPath $iniPath -arch $arch
         } else {
-            $code = Install-Extension -iniPath $iniPath -extName $extName
+            $code = Install-Extension -iniPath $iniPath -extName $extName -arch $arch
         }
         
         if ($code -ne 0) {
             throw "`nFailed to install $extName"
         }
         
-        Write-Host "`n$extName installed successfully"        
+        Write-Host "`n$extName installed successfully" -ForegroundColor DarkGreen
         return 0
     } catch {
         Write-Host "`nFailed to install $extName" -ForegroundColor DarkYellow
@@ -1132,21 +1189,17 @@ function List-PHP-Extensions {
         } else {
             Write-Host "`nLoading available extensions..."
             
-            $cacheFile = "$CACHE_PATH\available_extensions.json"
-            $useCache = $false
-            
-            if (Test-Path $cacheFile) {
-                $fileAgeHours = (New-TimeSpan -Start (Get-Item $cacheFile).LastWriteTime -End (Get-Date)).TotalHours
-                $useCache = ($fileAgeHours -lt $CACHE_MAX_HOURS)
-            }
+            $useCache = Can-Use-Cache -cacheFileName 'available_extensions'
             
             if ($useCache) {
                 $availableExtensions = Get-Data-From-Cache -cacheFileName "available_extensions"
                 if ($availableExtensions.Count -eq 0) {
                     $availableExtensions = Get-PHPExtensions-From-Source
+                    $availableExtensions = [pscustomobject] $availableExtensions
                 }
             } else {
                 $availableExtensions = Get-PHPExtensions-From-Source
+                $availableExtensions = [pscustomobject] $availableExtensions
             }
 
             if ($availableExtensions.Count -eq 0) {
@@ -1155,7 +1208,7 @@ function List-PHP-Extensions {
             }
             
             $availableExtensionsPartialList = @{}
-            $availableExtensions.GetEnumerator() | ForEach-Object {
+            $availableExtensions.PSObject.Properties | ForEach-Object {
                 $searchResult = $_.Value
                 if ($term) {
                     if ($_.Key -notlike "*$term*") {
@@ -1166,7 +1219,7 @@ function List-PHP-Extensions {
                     }
                 }
                 if ($searchResult.Count -gt 0) {
-                    $availableExtensionsPartialList[$_.Key] = $searchResult | Select-Object -Last 10
+                    $availableExtensionsPartialList[$_.Name] = $searchResult | Select-Object -Last 10
                 }
             }
             
@@ -1211,7 +1264,7 @@ function List-PHP-Extensions {
 }
 
 function Invoke-PVMIniAction {
-    param ( $action, $params )
+    param ( $action, $params, $arch = $null )
 
     try {
         $exitCode = 1
@@ -1302,7 +1355,7 @@ function Invoke-PVMIniAction {
                 
                 Write-Host "`nInstalling extension(s): $($params -join ', ')"
                 foreach ($extName in $params) {
-                    $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName
+                    $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName -arch $arch
                 }
             }
             "list" {

@@ -151,7 +151,7 @@ function Show-Log {
         
         if ($reversedEntries.Count -eq 0) {
             Write-Host "`nNo log entries found." -ForegroundColor Yellow
-            return
+            return -1
         }
         
         # Display entries with pagination

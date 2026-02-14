@@ -1098,7 +1098,7 @@ function Install-IniExtension {
             throw "`nFailed to install $extName"
         }
         
-        Write-Host "`n$extName installed successfully"        
+        Write-Host "`n$extName installed successfully" -ForegroundColor DarkGreen
         return 0
     } catch {
         Write-Host "`nFailed to install $extName" -ForegroundColor DarkYellow

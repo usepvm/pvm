@@ -804,7 +804,9 @@ function Install-XDebug-Extension {
         }
 
         $xDebugListGrouped = [ordered]@{}
+        $index = 0
         $xDebugList | 
+            Select-Object -First $LATEST_VERSION_COUNT | 
             Group-Object xDebugVersion | 
             Sort-Object `
                 @{ Expression = {
@@ -838,18 +840,22 @@ function Install-XDebug-Extension {
                         }
                     }; Descending = $true }
 
+                $sortedGroup | ForEach-Object {
+                    $_ | Add-Member -NotePropertyName "index" -NotePropertyValue $index -Force
+                    $index++
+                }
+
                 $xDebugListGrouped[$_.Name] = $sortedGroup
             }
 
-        $index = 0
         $xDebugListGrouped.GetEnumerator() | ForEach-Object {
             Write-Host "`nXDebug $($_.Key)"
             $_.Value | ForEach-Object {
                 $text = "PHP XDebug $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
-                Write-Host " [$index] $text"
-                $index++
+                Write-Host " [$($_.index)] $text"
             }
         }
+        Write-Host "`nThis is a partial list. For a complete list, visit: $XDEBUG_HISTORICAL_URL"
         
         $packageIndex = Read-Host "`nInsert the [number] you want to install"
         $packageIndex = $packageIndex.Trim()
@@ -858,7 +864,11 @@ function Install-XDebug-Extension {
             return -1
         }
         
-        $chosenItem = $xDebugList[$packageIndex]
+        $chosenItem = $xDebugListGrouped.GetEnumerator() | ForEach-Object {
+            $_.Value | Where-Object {
+                $_.index -eq $packageIndex
+            }
+        }
         if (-not $chosenItem) {
             Write-Host "`nYou chose the wrong index: $packageIndex" -ForegroundColor DarkYellow
             return -1

@@ -41,8 +41,6 @@ function Get-From-Source {
             return @{}
         }
         
-        $cached = Cache-Data -cacheFileName "available_php_versions" -data $fetchedVersionsGrouped -depth 3
-        
         return $fetchedVersionsGrouped
     } catch {
         $logged = Log-Data -data @{

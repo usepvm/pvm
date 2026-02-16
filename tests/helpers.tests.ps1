@@ -915,6 +915,84 @@ Describe "Resolve-Arch" {
     }
 }
 
+Describe "Resolve-BuildType" {
+    Context "When searching in arguments" {
+        It "Returns nts when nts is in arguments" {
+            $arguments = @("some_arg", "nts", "another_arg")
+            $result = Resolve-BuildType -arguments $arguments
+            $result | Should -Be "nts"
+        }
+        
+        It "Returns ts when ts is in arguments" {
+            $arguments = @("some_arg", "ts", "another_arg")
+            $result = Resolve-BuildType -arguments $arguments
+            $result | Should -Be "ts"
+        }
+        
+        It "Returns first matching architecture when multiple are present" {
+            $arguments = @("ts", "nts", "other")
+            $result = Resolve-BuildType -arguments $arguments
+            $result | Should -Be "ts"
+        }
+        
+        It "Returns null when no matching architecture in arguments" {
+            $arguments = @("some_arg", "another_arg", "third_arg")
+            $result = Resolve-BuildType -arguments $arguments
+            $result | Should -BeNullOrEmpty
+        }
+    }
+    
+    Context "Case insensitivity" {
+        It "Returns lowercase nts when uppercase NTS provided" {
+            $arguments = @("NTS")
+            $result = Resolve-BuildType -arguments $arguments
+            $result | Should -Be "nts"
+        }
+        
+        It "Returns lowercase TS when mixed case TS provided" {
+            $arguments = @("TS")
+            $result = Resolve-BuildType -arguments $arguments
+            $result | Should -Be "TS"
+        }
+    }
+    
+    Context "With default choice" {
+        It "Returns ts as default when choseDefault is true" {
+            $arguments = @("some_arg", "other_arg")
+            
+            $result = Resolve-BuildType -arguments $arguments -choseDefault $true
+            $result | Should -Be "ts"
+        }
+        
+        It "Returns argument arch even when choseDefault is true" {
+            $arguments = @("nts", "some_arg")
+            
+            $result = Resolve-BuildType -arguments $arguments -choseDefault $true
+            $result | Should -Be "nts"
+        }
+    }
+    
+    Context "With empty or null inputs" {
+        It "Returns null when arguments array is empty and choseDefault is false" {
+            $arguments = @()
+            $result = Resolve-BuildType -arguments $arguments -choseDefault $false
+            $result | Should -BeNullOrEmpty
+        }
+        
+        It "Returns default when arguments array is empty and choseDefault is true" {
+            $arguments = @()
+            
+            $result = Resolve-BuildType -arguments $arguments -choseDefault $true
+            $result | Should -Be "ts"
+        }
+        
+        It "Returns null when arguments is null" {
+            $result = Resolve-BuildType -arguments $null
+            $result | Should -BeNullOrEmpty
+        }
+    }
+}
+
 Describe "Get-PHPInstallInfo" {
     Context "When PHP DLL exists" {
         It "Returns PHP install info with NTS build type" {

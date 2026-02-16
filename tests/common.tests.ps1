@@ -161,6 +161,25 @@ Describe "Get-Installed-PHP-Versions" {
             $result[0].version | Should -Be "5.6"
             $result[1].version | Should -Be "8.0"
         }
+        
+        It "Should filter the right build type input" {
+            Mock Get-OrUpdateCache {
+                return @(
+                    @{version = "5.6"; arch = "x64"; buildType = "nts"}
+                    @{version = "5.6"; arch = "x64"; buildType = "ts"}
+                    @{version = "7.4"; arch = "x64"; buildType = "nts"}
+                    @{version = "8.0"; arch = "x64"; buildType = "nts"}
+                    @{version = "8.0"; arch = "x64"; buildType = "ts"}
+                )
+            }
+            
+            $result = Get-Installed-PHP-Versions -buildType "nts"
+            
+            $result.Count | Should -Be 3
+            $result[0].version | Should -Be "5.6"
+            $result[1].version | Should -Be "7.4"
+            $result[2].version | Should -Be "8.0"
+        }
     }
     
     Context "When exceptions occur" {

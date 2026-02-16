@@ -74,7 +74,7 @@ function Get-PHP-List-To-Install {
 }
 
 function Get-Available-PHP-Versions {
-    param($term = $null, $arch = $null)
+    param($term = $null, $arch = $null, $buildType = $null)
     
     try {
         Write-Host "`nLoading available PHP versions..."
@@ -91,6 +91,9 @@ function Get-Available-PHP-Versions {
             $searchResult = $_.Value
             if ($null -ne $arch) {
                 $searchResult = $searchResult | Where-Object { $_.Arch -match $arch }
+            }
+            if ($null -ne $buildType) {
+                $searchResult = $searchResult | Where-Object { $_.BuildType -match $buildType }
             }
             if ($term) {
                 $searchResult = $searchResult | Where-Object { $_.Version -like "$term*" }
@@ -136,11 +139,11 @@ function Get-Available-PHP-Versions {
 }
 
 function Display-Installed-PHP-Versions {
-    param ($term = $null, $arch = $null)
+    param ($term = $null, $arch = $null, $buildType = $null)
 
     try {
         $currentVersion = Get-Current-PHP-Version
-        $installedPhp = Get-Installed-PHP-Versions -arch $arch
+        $installedPhp = Get-Installed-PHP-Versions -arch $arch -buildType $buildType
         
         if ($installedPhp.Count -eq 0) {
             Write-Host "`nNo PHP versions found"
@@ -191,12 +194,12 @@ function Display-Installed-PHP-Versions {
 
 
 function Get-PHP-Versions-List {
-    param($available = $false, $term = $null, $arch = $null)
+    param($available = $false, $term = $null, $arch = $null, $buildType = $null)
     
     if ($available) {
-        $result = Get-Available-PHP-Versions -term $term -arch $arch
+        $result = Get-Available-PHP-Versions -term $term -arch $arch -buildType $buildType
     } else {
-        $result = Display-Installed-PHP-Versions -term $term -arch $arch
+        $result = Display-Installed-PHP-Versions -term $term -arch $arch -buildType $buildType
     }
     
     return $result

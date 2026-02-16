@@ -51,9 +51,10 @@ function Invoke-PVMList{
     param($arguments)
     
     $arch = Resolve-Arch -arguments $arguments
+    $buildType = Resolve-BuildType -arguments $arguments
     
     $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-    $result = Get-PHP-Versions-List -available ($arguments -contains "available") -term $term -arch $arch
+    $result = Get-PHP-Versions-List -available ($arguments -contains "available") -term $term -arch $arch -buildType $buildType
     
     return $result
 }

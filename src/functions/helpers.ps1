@@ -407,6 +407,22 @@ function Is-OS-64Bit {
     return [System.Environment]::Is64BitOperatingSystem
 }
 
+function Resolve-BuildType {
+    param ($arguments, $choseDefault = $false)
+    
+    $buildType = $arguments | Where-Object { @('ts', 'nts') -contains $_ } | Select-Object -First 1
+    
+    if ($null -eq $buildType -and $choseDefault) {
+        $buildType = "ts";
+    }
+
+    if ($buildType -ne $null) {
+        $buildType = $buildType.ToLower()
+    }
+    
+    return $buildType
+}
+
 function Resolve-Arch {
     param ($arguments, $choseDefault = $false)
     

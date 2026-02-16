@@ -211,6 +211,40 @@ Describe "Get-Available-PHP-Versions" {
         $code | Should -Be 0
     }
     
+    It "Should handle TS build type" {
+        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+            'Archives' = @(@{
+                Link = "php-7.1.0-Win32-x64.zip"
+                BuildType = "TS"; Arch = "x64"; Version = "7.1.0";
+            })
+            'Releases' = @(@{
+                Link = "php-7.1.0-Win32-nts-x64.zip"
+                BuildType = "NTS"; Arch = "x64"; Version = "7.1.0"
+            })
+        }}
+        
+        $code = Get-Available-PHP-Versions -buildType "ts"
+        
+        $code | Should -Be 0
+    }
+    
+    It "Should handle NTS build type" {
+        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+            'Archives' = @(@{
+                Link = "php-7.1.0-Win32-x64.zip"
+                BuildType = "TS"; Arch = "x64"; Version = "7.1.0";
+            })
+            'Releases' = @(@{
+                Link = "php-7.1.0-Win32-nts-x64.zip"
+                BuildType = "NTS"; Arch = "x64"; Version = "7.1.0"
+            })
+        }}
+        
+        $code = Get-Available-PHP-Versions -buildType "nts"
+        
+        $code | Should -Be 0
+    }
+    
     It "Should read from cache by default" {
         Mock Get-Data-From-Cache {
             return @{

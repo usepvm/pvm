@@ -90,10 +90,10 @@ function Get-Available-PHP-Versions {
         $fetchedVersionsGrouped.PSObject.Properties | ForEach-Object {
             $searchResult = $_.Value
             if ($null -ne $arch) {
-                $searchResult = $searchResult | Where-Object { $_.Arch -match $arch }
+                $searchResult = $searchResult | Where-Object { $_.Arch -eq $arch }
             }
             if ($null -ne $buildType) {
-                $searchResult = $searchResult | Where-Object { $_.BuildType -match $buildType }
+                $searchResult = $searchResult | Where-Object { $_.BuildType -eq $buildType }
             }
             if ($term) {
                 $searchResult = $searchResult | Where-Object { $_.Version -like "$term*" }

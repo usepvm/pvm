@@ -30,7 +30,7 @@ function Get-From-Source {
             $fetchedVersions = $fetchedVersions + $filteredLinks # ($filteredLinks | ForEach-Object { $_.href })
         }
         
-        $fetchedVersionsGrouped = [ordered]@{
+        $fetchedVersionsGrouped = @{
             'Archives' = $fetchedVersions | Where-Object { $_.Link -match "archives" }
             'Releases' = $fetchedVersions | Where-Object { $_.Link -notmatch "archives" }
         }
@@ -86,7 +86,7 @@ function Get-Available-PHP-Versions {
             return -1
         }
         
-        $fetchedVersionsGroupedPartialList = @{}
+        $fetchedVersionsGroupedPartialList = [ordered]@{}
         $fetchedVersionsGrouped.PSObject.Properties | ForEach-Object {
             $searchResult = $_.Value
             if ($null -ne $arch) {

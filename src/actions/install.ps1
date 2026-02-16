@@ -39,7 +39,7 @@ function Get-PHP-Versions-From-Url {
 }
 
 function Get-PHP-Versions {
-    param ($version, $arch = $null)
+    param ($version, $arch = $null, $buildType = $null)
 
     try {
         $urls = Get-Source-Urls
@@ -52,6 +52,9 @@ function Get-PHP-Versions {
             }
             if ($null -ne $arch) {
                 $fetched = $fetched | Where-Object { $_.href -match $arch }
+            }
+            if ($null -ne $buildType) {
+                $fetched = $fetched | Where-Object { $_.href -match $buildType }
             }
             if ($fetched.Count -eq 0) {
                 continue
@@ -267,7 +270,7 @@ function Select-Version {
 }
 
 function Install-PHP {
-    param ($version, $arch = $null)
+    param ($version, $arch = $null, $buildType = $null)
 
     try {
         $foundInstalledVersions = Get-Matching-PHP-Versions -version $version
@@ -303,7 +306,7 @@ function Install-PHP {
         }
 
         Write-Host "`nLoading the matching versions..."
-        $matchingVersions = Get-PHP-Versions -version $version -arch $arch
+        $matchingVersions = Get-PHP-Versions -version $version -arch $arch -buildType $buildType
 
         if ($matchingVersions.Count -eq 0) {
             $msg = "No matching PHP versions found for '$version', Check one of the following:"

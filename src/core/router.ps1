@@ -82,8 +82,9 @@ function Invoke-PVMInstall {
     }
 
     $arch = Resolve-Arch -arguments $arguments
+    $buildType = Resolve-BuildType -arguments $arguments
 
-    $result = Install-PHP -version $version -arch $arch
+    $result = Install-PHP -version $version -arch $arch -buildType $buildType
     Display-Msg-By-ExitCode -result $result
     return 0
 }

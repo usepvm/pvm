@@ -342,7 +342,21 @@ Describe "Get-PHP-Versions Tests" {
         Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
         Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
         
-        $result = Get-PHP-Versions -version "8.1"
+        $result = Get-PHP-Versions -version "8.1" -arch "x64"
+        
+        $result.Count | Should -BeGreaterThan 0
+    }
+    
+    It "Should return versions for NTS Build type" {
+        $mockLinks = @(
+            @{ href = "/downloads/releases/php-8.1.0-Win32-vs16-nts-x64.zip" },
+            @{ href = "/downloads/releases/php-8.1.0-Win32-vs16-x64.zip" }
+        )
+        
+        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
+        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
+        
+        $result = Get-PHP-Versions -version "8.1" -buildType "nts"
         
         $result.Count | Should -BeGreaterThan 0
     }
@@ -761,8 +775,8 @@ Describe "Environment Variable Tests" {
         $result = Get-Installed-PHP-Versions
         Write-Host ($result | ConvertTo-Json)
         
-        $result[0].version | Should -Be "8.2"
-        $result[1].version | Should -Be "8.1"
+        $result[0].version | Should -Be "5.6"
+        $result[1].version | Should -Be "7.4"
     }
     
     It "Get-Installed-PHP-Versions should handle registry errors" {

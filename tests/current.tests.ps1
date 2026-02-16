@@ -1,4 +1,3 @@
-# Comprehensive Tests for Get-PHP-Status and Get-Current-PHP-Version Functions
 
 BeforeAll {
     # Mock dependencies

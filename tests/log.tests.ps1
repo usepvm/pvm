@@ -1,6 +1,4 @@
 
-. "$PSScriptRoot\..\src\actions\log.ps1"
-
 Describe "Format-NiceTimestamp" {
     It "returns 'just now' for current timestamp" {
         $now = Get-Date

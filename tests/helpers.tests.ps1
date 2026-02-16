@@ -1,5 +1,3 @@
-# Load required modules and functions
-. "$PSScriptRoot\..\src\functions\helpers.ps1"
 
 BeforeAll {
     

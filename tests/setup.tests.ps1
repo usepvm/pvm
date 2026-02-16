@@ -1,5 +1,3 @@
-# Load required modules and functions
-. "$PSScriptRoot\..\src\actions\setup.ps1"
 
 Describe "Setup-PVM" {
     BeforeAll {

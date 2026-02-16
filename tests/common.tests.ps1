@@ -1,6 +1,3 @@
-# Load required modules and functions
-. "$PSScriptRoot\..\src\actions\common.ps1"
-
 
 Describe "Get-Source-Urls" {
     It "Should return correct URL structure" {

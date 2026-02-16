@@ -1,8 +1,3 @@
-# Comprehensive Tests for PVM Actions
-
-# Load required modules and functions
-. "$PSScriptRoot\..\src\core\router.ps1"
-
 
 BeforeAll {
     Mock Write-Host {}

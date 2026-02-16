@@ -1,6 +1,4 @@
 
-. "$PSScriptRoot\..\src\actions\profile.ps1"
-
 BeforeAll {
     # Mock global variables
     $global:PROFILES_PATH = "TestDrive:\\profiles"

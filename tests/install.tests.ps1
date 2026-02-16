@@ -1,6 +1,3 @@
-# Comprehensive Test Suite for PHP Installation Functions
-# Load required modules and functions
-. "$PSScriptRoot\..\src\actions\install.ps1"
 
 BeforeAll {
     Mock Write-Host {}

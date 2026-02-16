@@ -1,5 +1,3 @@
-# Load required modules and functions
-. "$PSScriptRoot\..\src\actions\uninstall.ps1"
 
 BeforeAll {
     # Create a test directory for PHP installations

@@ -1,5 +1,3 @@
-# Load required modules and functions
-. "$PSScriptRoot\..\src\actions\ini.ps1"
 
 BeforeAll {
     $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root

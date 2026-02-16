@@ -138,13 +138,14 @@ function Invoke-PVMIni {
     }
     
     $arch = Resolve-Arch -arguments $arguments
+    $buildType = Resolve-BuildType -arguments $arguments
     
     $remainingArgs = if ($arguments.Count -gt 1) { 
         $arguments[1..($arguments.Count - 1)] | Where-Object { $_ -ne $arch }
     } else { @() }
 
 
-    $exitCode = Invoke-PVMIniAction -action $action -params $remainingArgs -arch $arch
+    $exitCode = Invoke-PVMIniAction -action $action -params $remainingArgs -arch $arch -buildType $buildType
     return $exitCode
 }
 

@@ -1,34 +1,25 @@
 
 
 function Get-XDebug-FROM-URL {
-    param ($url, $version, $arch = $null)
+    param ($url, $version)
 
     try {
         $html = Invoke-WebRequest -Uri $url
         $links = $html.Links
 
-        # Filter the links to find versions that match the given version
-        if ($null -ne $arch) {
-            $arch = if ($arch -eq 'x64') { 'x86_64' } else { '' }
-        }
-        $filteredLinks = $links | Where-Object {
-            if ($arch) {
-                return ($_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*$arch\.dll")
-            }
-            if ($arch -eq '') {
-                return ($_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*\.dll" -and $_.href -notmatch "x86_64")
-            }
-            
-            return $_.href -match "php_xdebug-[\d\.a-zA-Z]+-$version-.*\.dll"
-        }
-
         # Return the filtered links (PHP version names)
         $formattedList = @()
-        $filteredLinks = $filteredLinks | ForEach-Object {
-            $fileName = $_.href -split "/"
-            $fileName = $fileName[$fileName.Count - 1]
+        $links | ForEach-Object {
+            if (-not $_.href) { return }
+            
+            $fileName = [System.IO.Path]::GetFileName($_.href)
+
+            if ($fileName -notmatch '^php_xdebug-.*\.dll$') { return }
+
+            if ($fileName -notmatch "php_xdebug-[\d\.a-zA-Z]+-$version-") { return }
+
             $xDebugVersion = "2.0"
-            if ($_.href -match "php_xdebug-([^-]+)") {
+            if ($fileName -match "php_xdebug-([^-]+)") {
                 $xDebugVersion = $matches[1]
             }
             
@@ -792,17 +783,29 @@ function Get-PHP-Data {
 }
 
 function Install-XDebug-Extension {
-    param ($iniPath, $arch = $null)
+    param ($iniPath, $arch = $null, $buildType = $null)
     
     try {
         $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
         $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions" -compute {
-            Get-XDebug-FROM-URL -url $XDEBUG_HISTORICAL_URL -version $currentVersion -arch $arch
+            Get-XDebug-FROM-URL -url $XDEBUG_HISTORICAL_URL -version $currentVersion
         }
 
         if ($null -eq $xDebugList -or $xDebugList.Count -eq 0) {
             Write-Host "`nNo match was found, check the '$LOG_ERROR_PATH' for any potentiel errors"
             return -1
+        }
+        
+        $xDebugList = $xDebugList | Where-Object {
+            if ($arch -ne $null) {
+                if ($_.arch -ne $arch) { return $false }
+            }
+
+            if ($buildType -ne $null) {
+                if ($_.buildType -ne $buildType) { return $false }
+            }
+
+            return $true
         }
 
         $xDebugListGrouped = [ordered]@{}
@@ -1082,7 +1085,7 @@ function Install-Extension {
 }
 
 function Install-IniExtension {
-    param ($iniPath, $extName, $arch = $null)
+    param ($iniPath, $extName, $arch = $null, $buildType = $null)
     
     try {
         if (-not $extName) {
@@ -1091,7 +1094,7 @@ function Install-IniExtension {
         }
         
         if ($extName -like "*xdebug*") {
-            $code = Install-XDebug-Extension -iniPath $iniPath -arch $arch
+            $code = Install-XDebug-Extension -iniPath $iniPath -arch $arch -buildType $buildType
         } else {
             $code = Install-Extension -iniPath $iniPath -extName $extName -arch $arch
         }
@@ -1264,7 +1267,7 @@ function List-PHP-Extensions {
 }
 
 function Invoke-PVMIniAction {
-    param ( $action, $params, $arch = $null )
+    param ( $action, $params, $arch = $null, $buildType = $null )
 
     try {
         $exitCode = 1
@@ -1355,7 +1358,7 @@ function Invoke-PVMIniAction {
                 
                 Write-Host "`nInstalling extension(s): $($params -join ', ')"
                 foreach ($extName in $params) {
-                    $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName -arch $arch
+                    $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName -arch $arch -buildType $buildType
                 }
             }
             "list" {

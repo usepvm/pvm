@@ -808,11 +808,12 @@ function Get-PHP-Data {
 }
 
 function Install-XDebug-Extension {
-    param ($iniPath, $arch = $null, $buildType = $null)
+    param ($iniPath)
     
     try {
-        $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
-        $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions" -compute {
+        $currentVersionObj = Get-Current-PHP-Version
+        $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
+        $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions_$currentVersion" -compute {
             Get-XDebug-FROM-URL -url $XDEBUG_HISTORICAL_URL -version $currentVersion
         }
 
@@ -822,12 +823,12 @@ function Install-XDebug-Extension {
         }
         
         $xDebugList = $xDebugList | Where-Object {
-            if ($arch -ne $null) {
-                if ($_.arch -ne $arch) { return $false }
+            if ($currentVersionObj.arch -ne $null) {
+                if ($_.arch -ne $currentVersionObj.arch) { return $false }
             }
 
-            if ($buildType -ne $null) {
-                if ($_.buildType -ne $buildType) { return $false }
+            if ($currentVersionObj.buildType -ne $null) {
+                if ($_.buildType -ne $currentVersionObj.buildType) { return $false }
             }
 
             return $true
@@ -948,7 +949,7 @@ function Install-XDebug-Extension {
 }
 
 function Install-Extension {
-    param ($iniPath, $extName, $arch = $null)
+    param ($iniPath, $extName)
     
     try {
         try {
@@ -1015,7 +1016,9 @@ function Install-Extension {
             return -1
         }
         
-        $currentVersion = (Get-Current-PHP-Version).version -replace '^(\d+\.\d+)\..*$', '$1'
+        $currentVersionObj = Get-Current-PHP-Version
+        $arch = $currentVersionObj.arch
+        $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
         $pachagesGroupLinks = @()
         $links | ForEach-Object {
             $extVersion = $_.href -replace "/package/$extName/", "" -replace "/windows", ""
@@ -1110,7 +1113,7 @@ function Install-Extension {
 }
 
 function Install-IniExtension {
-    param ($iniPath, $extName, $arch = $null, $buildType = $null)
+    param ($iniPath, $extName)
     
     try {
         if (-not $extName) {
@@ -1119,9 +1122,9 @@ function Install-IniExtension {
         }
         
         if ($extName -like "*xdebug*") {
-            $code = Install-XDebug-Extension -iniPath $iniPath -arch $arch -buildType $buildType
+            $code = Install-XDebug-Extension -iniPath $iniPath
         } else {
-            $code = Install-Extension -iniPath $iniPath -extName $extName -arch $arch
+            $code = Install-Extension -iniPath $iniPath -extName $extName
         }
         
         if ($code -ne 0) {
@@ -1292,7 +1295,7 @@ function List-PHP-Extensions {
 }
 
 function Invoke-PVMIniAction {
-    param ( $action, $params, $arch = $null, $buildType = $null )
+    param ( $action, $params )
 
     try {
         $exitCode = 1
@@ -1383,7 +1386,7 @@ function Invoke-PVMIniAction {
                 
                 Write-Host "`nInstalling extension(s): $($params -join ', ')"
                 foreach ($extName in $params) {
-                    $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName -arch $arch -buildType $buildType
+                    $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName
                 }
             }
             "list" {

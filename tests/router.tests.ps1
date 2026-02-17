@@ -77,7 +77,7 @@ Describe "Invoke-PVMCurrent Tests" {
             path = "C:\PHP\8.2.0"
             status = @{ "xdebug" = $true; "opcache" = $false }
         }}
-        # Mock Write-Host { }
+        Mock Write-Host { }
     }
 
     It "Should display current PHP version and extensions when version is set" {
@@ -140,7 +140,7 @@ Describe "Invoke-PVMList Tests" {
 Describe "Invoke-PVMInstall Tests" {
     BeforeEach {
         Mock Install-PHP { 0 }
-        # Mock Write-Host { }
+        Mock Write-Host { }
     }
 
     It "Should return -1 when no version is provided" {
@@ -191,7 +191,7 @@ Describe "Invoke-PVMUninstall Tests" {
         Mock Get-Current-PHP-Version { @{ version = "8.1.0" } }
         Mock Uninstall-PHP { @{ code = 0; message = "Uninstalled successfully" } }
         Mock Display-Msg-By-ExitCode { }
-        # Mock Write-Host { }
+        Mock Write-Host { }
         Mock Read-Host { }
     }
 
@@ -232,7 +232,7 @@ Describe "Invoke-PVMUse Tests" {
         Mock Auto-Select-PHP-Version { @{ code = 0; version = "8.2.0" } }
         Mock Update-PHP-Version { @{ code = 0; message = "Version updated" } }
         Mock Display-Msg-By-ExitCode { }
-        # Mock Write-Host { }
+        Mock Write-Host { }
     }
 
     It "Should return -1 when no version is provided" {
@@ -282,7 +282,7 @@ Describe "Invoke-PVMUse Tests" {
 Describe "Invoke-PVMIni Tests" {
     BeforeEach {
         Mock Invoke-PVMIniAction { 0 }
-        # Mock Write-Host { }
+        Mock Write-Host { }
     }
 
     It "Should return -1 when no action is provided" {
@@ -854,7 +854,7 @@ Describe "Integration Tests" {
             Mock Get-Current-PHP-Version { @{ version = "8.2.0"; status = @{ "xdebug" = $true }; path = "C:\PHP\8.2.0" } }
             Mock Install-PHP { 0 }
             Mock Update-PHP-Version { @{ code = 0; message = "Version updated" } }
-            # Mock Write-Host { }
+            Mock Write-Host { }
         }
 
         It "Should handle complete workflow: setup -> install -> use -> current" {
@@ -888,7 +888,7 @@ Describe "Integration Tests" {
             Mock Setup-PVM { @{ code = 1; message = "Setup failed" } }
             Mock Optimize-SystemPath { 1 }
             Mock Display-Msg-By-ExitCode { }
-            # Mock Write-Host { }
+            Mock Write-Host { }
             
             $result = Invoke-PVMSetup
             $result | Should -Be 0

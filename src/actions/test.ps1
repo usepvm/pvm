@@ -160,6 +160,7 @@ function Run-Tests {
             $maxFileNameLength = ($testSummary.Name | Measure-Object -Maximum Length).Maximum
             $maxLineLength = $maxFileNameLength + 20  # padding
             
+            $testSummary = SortBy -data $testSummary -sortByColumn $options.sortBy
             $testSummary | ForEach-Object {
                 $label = "  - $($_.Name) "
                 $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
@@ -188,4 +189,40 @@ function Run-Tests {
     }
 }
 
+function SortBy {
+    param ($data, $sortByColumn = $null)
+    
+    if ($sortByColumn -ne $null) {
+        $direction = $sortByColumn -match "^-"
+        $sortByColumn = $sortByColumn -replace '-', ''
+    }
+    
+    switch ($sortByColumn) {
+        "duration" {
+            return $data | Sort-Object `
+                @{ Expression = {
+                        if ($null -eq $_.testResultData.duration) {
+                            [double]::PositiveInfinity
+                        } else {
+                            [double]$_.testResultData.duration
+                        }
+                }; Descending = $direction }
+        }
+        "coverage" {
+            return $data | Sort-Object `
+                @{ Expression = {
+                        if ($null -eq $_.testResultData.coverageRaw) {
+                            [double]::PositiveInfinity
+                        } else {
+                            [double]$_.testResultData.coverageRaw
+                        }
+                }; Descending = $direction }
+        }
+        "file" {
+            return $data | Sort-Object @{ Expression = { [string]$_.Name }; Descending = $direction }
+        }
+    }
+    
+    return $data;
+}
 

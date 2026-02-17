@@ -393,7 +393,10 @@ Describe "Invoke-PVMTest Tests" {
     }
     
     It "Should call Run-Tests with provided arguments" {
-        $result = Invoke-PVMTest -arguments @("TestFile.ps1", "TestFile2.ps1", "--coverage=80", "--verbosity=detailed", "--tag=unit")
+        $result = Invoke-PVMTest -arguments @(
+            "TestFile.ps1", "TestFile2.ps1",
+            "--coverage=80", "--verbosity=detailed", "--tag=unit", "--sort=coverage"
+        )
         $result | Should -Be 0
     }
     

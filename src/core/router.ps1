@@ -160,8 +160,13 @@ function Invoke-PVMTest {
         coverage = $false
         tag = $null
         target = 75
+        sortBy = $null
     }
     $files = $arguments | Where-Object {
+        if ($_ -match '^--sort=(.+)$') {
+            $options.sortBy = $Matches[1]
+            return $false
+        }
         if ($_ -match '^--tag=(.+)$') {
             $options.tag = $Matches[1]
             return $false
@@ -519,7 +524,7 @@ function Get-Actions {
             command = "pvm test";
             description = "Run tests.";
             usage = [ordered]@{
-                USAGE = "pvm test [files] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>]"
+                USAGE = "pvm test [files] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>] [--sort=[coverage|duration|file]]"
                 DESCRIPTION = @(
                     "Runs the PVM test suite to verify that the installation and configuration"
                     "are working correctly. This includes testing PHP version switching,"
@@ -532,11 +537,13 @@ function Get-Actions {
                     "pvm test --coverage .............. Runs all tests and generates coverage report (target: 75%)"
                     "pvm test --coverage=80 ........... Runs all tests and generates coverage report (target: 80%)"
                     "pvm test --tag=unit .............. Runs only tests with tag 'unit'"
+                    "pvm test --sort=coverage ......... Runs all tests and sort results by coverage"
                 )
                 ARGUMENTS = @(
                     "files ............................ Run only specific test files (e.g. use, install)"
                 )
                 OPTIONS = @(
+                    "--sort=[coverage|duration|file] .. Sort tests results by coverage, duration or file names"
                     "--coverage[=<number>] ............ Generate coverage report with optional target percentage (default: 75%)"
                     "--verbosity=<verbosity> .......... Set verbosity level (None, Normal (Default), Detailed, Diagnostic)"
                     "--tag=<tag> ...................... Run only tests with specific tag"

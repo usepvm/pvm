@@ -118,7 +118,7 @@ Describe "Setup-PVM" {
         Mock Get-EnvVar-ByName -MockWith { return $null }
         Mock Set-EnvVar -MockWith { return 0 }
         Mock Is-Directory-Exists -MockWith { return $false }
-        Mock Make-Directory -MockWith { return $true }
+        Mock Make-Directory { return 0 }
         Mock Log-Data -MockWith { return 0 }
         Mock Optimize-SystemPath -MockWith {}
     }

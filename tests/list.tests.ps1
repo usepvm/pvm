@@ -6,16 +6,7 @@ BeforeAll {
     
     Mock Write-Host { }
     # Mock external functions that aren't defined in the provided code
-    Mock Make-Directory { param($path) 
-        if (-not (Test-Path -Path $path)) {
-            $parent = Split-Path -Parent $path
-            if ($parent -and -not (Test-Path -Path $parent)) {
-                Make-Directory -path $parent
-            }
-            New-Item -Path $path -ItemType Directory -Force | Out-Null
-        }
-        return 0
-    }
+    Mock Make-Directory { return 0 }
     Mock Log-Data { param($logPath, $message, $data) return 0 }
     Mock Get-Source-Urls { 
         return @{

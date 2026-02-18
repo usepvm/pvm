@@ -75,17 +75,17 @@ function Run-Test-File {
         $rawDuration = $testResult.Duration.TotalSeconds
         $duration = Format-Seconds -totalSeconds $rawDuration
         if ($duration -ne -1) {
-            $durationText = $duration
+            $durationText = '{0,5:0.0}' -f $duration
         }
         $message = (
-            'Passed : {0,-4} | Failed : {1,-4} | Duration : {2,-6}' -f
+            'Passed : {0,-4} | Failed : {1,-3} | Duration : {2,-5}' -f
             $testResult.PassedCount,
             $testResult.FailedCount,
             $durationText
         )
         if ($coverageRaw) {
             $message = (
-                'Passed : {0,-4} | Failed : {1,-4} | Duration : {2,-6} | Coverage : {3,-7}' -f
+                'Passed : {0,-4} | Failed : {1,-3} | Duration : {2,-5} | Coverage : {3,-7}' -f
                 $testResult.PassedCount,
                 $testResult.FailedCount,
                 $durationText,

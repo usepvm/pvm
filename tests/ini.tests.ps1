@@ -314,7 +314,7 @@ Describe "Set-IniSetting" {
 opcache.protect_memory=1
 "@ | Set-Content $testIniPath
 
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
         Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return "4G" }
         
         Set-IniSetting -iniPath $testIniPath -key "memory" | Should -Be 0
@@ -327,7 +327,7 @@ opcache.protect_memory=1
 opcache.protect_memory=1
 "@ | Set-Content $testIniPath
 
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
         
         Set-IniSetting -iniPath $testIniPath -key "memory=2G" | Should -Be 0
         (Get-Content $testIniPath) -match "^memory_limit\s*=\s*2G" | Should -Be $true
@@ -444,7 +444,7 @@ extension=sqlite3
                 @{ BaseName = "sqlite3"; Name = "sqlite3.dll"; FullName = "$extDirectory\sqlite3.dll" }
             )
         }
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
         
         Enable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
         
@@ -465,7 +465,7 @@ extension=sqlite3
             $script:callCount++
             if ($script:callCount -eq 1) { 'A' } 
             if ($script:callCount -eq 2) { -1 }
-            else { 4 }
+            else { 3 }
         }
         
         Mock Get-ChildItem {
@@ -552,7 +552,7 @@ extension=pgsql
                 @{ BaseName = "sqlite3"; Name = "sqlite3.dll"; FullName = "$extDirectory\sqlite3.dll" }
             )
         }
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
         
         Disable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
         
@@ -573,7 +573,7 @@ extension=pgsql
             $script:callCount++
             if ($script:callCount -eq 1) { 'A' } 
             if ($script:callCount -eq 2) { -1 }
-            else { 4 }
+            else { 3 }
         }
         
         Mock Get-ChildItem {

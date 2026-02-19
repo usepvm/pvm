@@ -363,7 +363,7 @@ function Set-IniSetting {
         foreach ($line in $lines) {
             if ($line -match $pattern) {
                 $matchesList += @{
-                    Index = $matchesList.Length + 1
+                    Index = $matchesList.Length
                     Key = $matches['key'].Trim()
                     Value = $matches['value'].Trim()
                     Enabled = -not ($line -match '^[#;]')
@@ -401,15 +401,15 @@ function Set-IniSetting {
                     continue
                 }
 
-                if ($choice -lt 1 -or $choice -gt $matchesList.Length) {
-                    Write-Host "Number must be between 1 and $($matchesList.Length)." -ForegroundColor Yellow
+                if ($choice -lt 0 -or $choice -gt $matchesList.Length - 1) {
+                    Write-Host "Number must be between 0 and $($matchesList.Length - 1)." -ForegroundColor Yellow
                     continue
                 }
 
                 break
             } while ($true)
 
-            $selected = $matchesList[$choice - 1]
+            $selected = $matchesList[$choice]
         } else {
             $selected = $($matchesList)
         }
@@ -467,7 +467,7 @@ function Enable-IniExtension {
             Write-Host "`nMultiple extensions match '$extName':`n" -ForegroundColor Cyan
 
             $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + 10
-            $index = 1
+            $index = 0
             $matchesListStatus | ForEach-Object {
                 $name = "$($_.name) ".PadRight($maxLineLength, '.')
                 Write-Host "[$index] $name " -NoNewline
@@ -484,15 +484,15 @@ function Enable-IniExtension {
                     continue
                 }
 
-                if ($choice -lt 1 -or $choice -gt $matchesListStatus.Length) {
-                    Write-Host "Number must be between 1 and $($matchesListStatus.Length)." -ForegroundColor Yellow
+                if ($choice -lt 0 -or $choice -gt $matchesListStatus.Length - 1) {
+                    Write-Host "Number must be between 0 and $($matchesListStatus.Length - 1)." -ForegroundColor Yellow
                     continue
                 }
 
                 break
             } while ($true)
 
-            $selected = $matchesListStatus[$choice - 1]
+            $selected = $matchesListStatus[$choice]
         } else {
             $selected = $($matchesListStatus)
         }
@@ -556,7 +556,7 @@ function Disable-IniExtension {
             Write-Host "`nMultiple extensions match '$extName':`n" -ForegroundColor Cyan
 
             $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + 10
-            $index = 1
+            $index = 0
             $matchesListStatus | ForEach-Object {
                 $name = "$($_.name) ".PadRight($maxLineLength, '.')
                 Write-Host "[$index] $name " -NoNewline
@@ -573,15 +573,15 @@ function Disable-IniExtension {
                     continue
                 }
 
-                if ($choice -lt 1 -or $choice -gt $matchesListStatus.Length) {
-                    Write-Host "Number must be between 1 and $($matchesListStatus.Length)." -ForegroundColor Yellow
+                if ($choice -lt 0 -or $choice -gt $matchesListStatus.Length - 1) {
+                    Write-Host "Number must be between 0 and $($matchesListStatus.Length - 1)." -ForegroundColor Yellow
                     continue
                 }
 
                 break
             } while ($true)
 
-            $selected = $matchesListStatus[$choice - 1]
+            $selected = $matchesListStatus[$choice]
         } else {
             $selected = $($matchesListStatus)
         }

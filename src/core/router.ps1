@@ -21,7 +21,14 @@ function Invoke-PVMCurrent {
         Write-Host "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
         return -1
     }
-    Write-Host "`nRunning version: PHP $($result.version)"
+    $text = "`nRunning version: PHP $($result.version)"
+    if ($result.buildType) {
+        $text += " $($result.buildType)"
+    }
+    if ($result.arch) {
+        $text += " $($result.arch)"
+    }
+    Write-Host $text
     
     if (-not $result.status) {
         Write-Host "No status information available for the current PHP version." -ForegroundColor Yellow
@@ -43,8 +50,11 @@ function Invoke-PVMCurrent {
 function Invoke-PVMList{
     param($arguments)
     
+    $arch = Resolve-Arch -arguments $arguments
+    $buildType = Resolve-BuildType -arguments $arguments
+    
     $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-    $result = Get-PHP-Versions-List -available ($arguments -contains "available") -term $term
+    $result = Get-PHP-Versions-List -available ($arguments -contains "available") -term $term -arch $arch -buildType $buildType
     
     return $result
 }
@@ -71,7 +81,10 @@ function Invoke-PVMInstall {
         return -1
     }
 
-    $result = Install-PHP -version $version
+    $arch = Resolve-Arch -arguments $arguments
+    $buildType = Resolve-BuildType -arguments $arguments
+
+    $result = Install-PHP -version $version -arch $arch -buildType $buildType
     Display-Msg-By-ExitCode -result $result
     return 0
 }
@@ -126,7 +139,10 @@ function Invoke-PVMIni {
         return -1
     }
     
-    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
+    $remainingArgs = if ($arguments.Count -gt 1) { 
+        $arguments[1..($arguments.Count - 1)] | Where-Object { $_ -ne $arch }
+    } else { @() }
+
 
     $exitCode = Invoke-PVMIniAction -action $action -params $remainingArgs
     return $exitCode
@@ -141,8 +157,13 @@ function Invoke-PVMTest {
         coverage = $false
         tag = $null
         target = 75
+        sortBy = $null
     }
     $files = $arguments | Where-Object {
+        if ($_ -match '^--sort=(.+)$') {
+            $options.sortBy = $Matches[1]
+            return $false
+        }
         if ($_ -match '^--tag=(.+)$') {
             $options.tag = $Matches[1]
             return $false
@@ -500,7 +521,7 @@ function Get-Actions {
             command = "pvm test";
             description = "Run tests.";
             usage = [ordered]@{
-                USAGE = "pvm test [files] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>]"
+                USAGE = "pvm test [files] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>] [--sort=[coverage|duration|file]]"
                 DESCRIPTION = @(
                     "Runs the PVM test suite to verify that the installation and configuration"
                     "are working correctly. This includes testing PHP version switching,"
@@ -513,11 +534,13 @@ function Get-Actions {
                     "pvm test --coverage .............. Runs all tests and generates coverage report (target: 75%)"
                     "pvm test --coverage=80 ........... Runs all tests and generates coverage report (target: 80%)"
                     "pvm test --tag=unit .............. Runs only tests with tag 'unit'"
+                    "pvm test --sort=coverage ......... Runs all tests and sort results by coverage"
                 )
                 ARGUMENTS = @(
                     "files ............................ Run only specific test files (e.g. use, install)"
                 )
                 OPTIONS = @(
+                    "--sort=[coverage|duration|file] .. Sort tests results by coverage, duration or file names"
                     "--coverage[=<number>] ............ Generate coverage report with optional target percentage (default: 75%)"
                     "--verbosity=<verbosity> .......... Set verbosity level (None, Normal (Default), Detailed, Diagnostic)"
                     "--tag=<tag> ...................... Run only tests with specific tag"

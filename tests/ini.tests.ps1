@@ -1,5 +1,3 @@
-# Load required modules and functions
-. "$PSScriptRoot\..\src\actions\ini.ps1"
 
 BeforeAll {
     $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
@@ -190,6 +188,239 @@ Describe "Get-XDebug-FROM-URL Tests" {
         $result | Should -Be @()
     }
 }
+
+Describe "Get-Extension-From-URL Tests" {
+    BeforeAll {
+        function Reset-MockState {
+            $global:MockRegistryThrowException = $false
+            $global:MockFileSystem.DownloadFails = $false
+            $global:MockFileSystem.WebResponses = @{}
+            $global:MockFileSystem.Files = @{}
+            $global:MockFileSystem.Directories = @()
+        }
+        function Set-MockWebResponse {
+            param($url, $content, $links = @())
+            $global:MockFileSystem.WebResponses[$url] = @{
+                Content = $content
+                Links = $links
+            }
+        }
+        function Read-Host {
+            param($Prompt)
+            if ($Prompt -eq "`nInsert the [number] you want to install") {
+                return "0"
+            }
+        }
+    }
+    BeforeEach {
+        Mock Write-Host { }
+        Reset-MockState
+    }
+    
+    It "Should parse extension versions correctly" {
+        
+        Set-MockWebResponse -url "$PECL_PACKAGE_ROOT_URL/memcache" -links @(
+            @{ href = "/package/memcache/3.4.0/windows" },
+            @{ href = "/package/memcache/3.3.0/windows" },
+            @{ href = "/package/memcache/3.2.0/windows" }
+        )
+        Set-MockWebResponse -url "$PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" -links @(
+            @{ href = "/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x64.zip" },
+            @{ href = "/php_random.dll" }
+        )
+        Set-MockWebResponse -url "$PECL_PACKAGE_ROOT_URL/memcache/3.3.0/windows" -links @(
+            @{ href = "/memcache/3.3.0/php_memcache-3.3.0-8.2-ts-vs16-x64.zip" },
+            @{ href = "/php_random.dll" }
+        )
+        Set-MockWebResponse -url "$PECL_PACKAGE_ROOT_URL/memcache/3.2.0/windows" -links @(
+            @{ href = "/memcache/3.2.0/php_memcache-3.2.0-8.2-ts-vs16-x64.zip" },
+            @{ href = "/php_random.dll" }
+        )
+        
+        $result = Get-Extension-From-URL -extName "memcache" -version "8.2"
+        
+        $result.Count | Should -Be 3
+        $result[0].extVersion | Should -Be "3.4.0"
+        $result[1].extVersion | Should -Be "3.3.0"
+        $result[2].extVersion | Should -Be "3.2.0"
+    }
+    
+    Context "When extension has no direct link" {
+        BeforeEach {
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/cache" } -MockWith { 
+                throw "Network error"
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+                return @{
+                    Content = "Mocked PHP extensions content"
+                    Links = @(
+                        @{ href = $null }
+                        @{ href = "random_link" }
+                        @{ href = "/packages.php?catpid=1&amp;catname=Authentication"; 
+                            outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>' }
+                        @{ href = "/packages.php?catpid=3&amp;catname=Caching"; 
+                            outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>' }
+                        @{ href = "/packages.php?catpid=7&amp;catname=EmptyCat"; 
+                            outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>' }
+                    )
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=1&amp;catname=Authentication" } -MockWith {
+                return @{
+                    Content = "Mocked PHP extension Auth content"
+                    Links = @(
+                        @{ href = $null }
+                        @{ href = "/package/courierauth" }
+                        @{ href = "/package/krb5" }
+                    )
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching" } -MockWith {
+                return @{
+                    Content = "Mocked PHP extension Caching content"
+                    Links = @(
+                        @{ href = "/package/APC" }
+                        @{ href = "/package/APCu" }
+                        @{ href = "/package/memcache" }
+                        @{ href = "/package/memcached" }
+                    )
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=7&amp;catname=EmptyCat" } -MockWith {
+                return @{
+                    Content = "Mocked PHP extension EmptyCat content"
+                    Links = @()
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcached" } -MockWith {
+                return @{
+                    Content = "Mocked memcache content"
+                    Links = @(
+                        @{ href = "/package/memcached/2.4.0/windows" },
+                        @{ href = "/package/memcached/2.3.0/windows" }
+                    )
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
+                return @{
+                    Content = "Mocked memcache content"
+                    Links = @(
+                        @{ href = "/package/memcache/3.4.0/windows" },
+                        @{ href = "/package/memcache/3.3.0/windows" }
+                    )
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" } -MockWith {
+                return @{
+                    Content = "Mocked PHP memcache 3.4.0 content"
+                    Links = @(
+                        @{ href = "other_link" },
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x86.zip" },
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x64.zip" }
+                    )
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x64.zip" } -MockWith {
+                $global:MockFileSystem.Files[$OutFile] = "Downloaded content"
+                return
+            }
+            Mock Get-ChildItem {
+                param($Path)
+                return @( @{ Name = "php_memcache.dll"; FullName = "TestDrive:\php_memcache-3.4.0-8.2-ts-vs16-x64\php_memcache.dll" } )
+            }
+            Mock Get-Current-PHP-Version { return @{ version = "8.2.0"; path = "TestDrive:\php\8.2.0"; arch = "x64"; buildType = "ts" }}
+        }
+        It "Falls back to matching links if extension direct link is not found" {
+            $result = Get-Extension-From-URL -extName "cache" -version "8.2"
+            
+            $result.Count | Should -Be 2
+        }
+        
+        It "Returns -1 when no matching link found" {
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+                return @{
+                    Content = "Mocked PHP extensions content"
+                    Links = @(
+                        @{ href = $null }
+                        @{ href = "random_link" }
+                    )
+                }
+            }
+            
+            $result = Get-Extension-From-URL -extName "cache" -version "8.2"
+            
+            $result | Should -Be $null
+            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+                $Object -eq "`nExtension 'cache' not found"
+            }
+        }
+        
+        It "Does not prompt when one matching link found" {
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching" } -MockWith {
+                return @{
+                    Content = "Mocked PHP extension Caching content"
+                    Links = @( @{ href = "/package/memcache" } )
+                }
+            }
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" } -MockWith {
+                return @{
+                    Content = "Mocked PHP memcache 3.4.0 content"
+                    Links = @(
+                        @{ href = "other_link" },
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x64.zip" }
+                    )
+                }
+            }
+            
+            $result = Get-Extension-From-URL -extName "cache" -version "8.2"
+            
+            $result.Length | Should -Be 1
+        }
+        
+        It "Returns -1 when user skip chosing a matching extension" {
+            Mock Read-Host {
+                return ""
+            }
+            
+            $result = Get-Extension-From-URL -extName "cache" -version "8.2"
+            
+            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+                $Object -eq "`nInstallation cancelled"
+            }
+            $result | Should -Be $null
+        }
+        
+        It "Returns -1 when user does not chose an invalid index" {
+            Mock Read-Host {
+                return "-3"
+            }
+            
+            $result = Get-Extension-From-URL -extName "cache" -version "8.2"
+            
+            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+                $Object -eq "`nYou chose the wrong index: -3"
+            }
+            $result | Should -Be $null
+        }
+        
+        It "Returns -1 when no version found for extension" {
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
+                return @{
+                    Content = "Mocked PHP memcache 3.4.0 content"
+                    Links = @()
+                }
+            }
+            
+            $result = Get-Extension-From-URL -extName "cache" -version "8.2"
+            
+            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+                $Object -eq "`nNo versions found for memcache"
+            }
+            $result | Should -Be $null
+        }
+    }
+}
+
 Describe "Backup-IniFile" {
     It "Creates a backup when none exists" {
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
@@ -316,7 +547,7 @@ Describe "Set-IniSetting" {
 opcache.protect_memory=1
 "@ | Set-Content $testIniPath
 
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
         Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return "4G" }
         
         Set-IniSetting -iniPath $testIniPath -key "memory" | Should -Be 0
@@ -329,7 +560,7 @@ opcache.protect_memory=1
 opcache.protect_memory=1
 "@ | Set-Content $testIniPath
 
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
         
         Set-IniSetting -iniPath $testIniPath -key "memory=2G" | Should -Be 0
         (Get-Content $testIniPath) -match "^memory_limit\s*=\s*2G" | Should -Be $true
@@ -446,7 +677,7 @@ extension=sqlite3
                 @{ BaseName = "sqlite3"; Name = "sqlite3.dll"; FullName = "$extDirectory\sqlite3.dll" }
             )
         }
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
         
         Enable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
         
@@ -467,7 +698,7 @@ extension=sqlite3
             $script:callCount++
             if ($script:callCount -eq 1) { 'A' } 
             if ($script:callCount -eq 2) { -1 }
-            else { 4 }
+            else { 3 }
         }
         
         Mock Get-ChildItem {
@@ -554,7 +785,7 @@ extension=pgsql
                 @{ BaseName = "sqlite3"; Name = "sqlite3.dll"; FullName = "$extDirectory\sqlite3.dll" }
             )
         }
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 1 }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
         
         Disable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
         
@@ -575,7 +806,7 @@ extension=pgsql
             $script:callCount++
             if ($script:callCount -eq 1) { 'A' } 
             if ($script:callCount -eq 2) { -1 }
-            else { 4 }
+            else { 3 }
         }
         
         Mock Get-ChildItem {
@@ -825,6 +1056,9 @@ Describe "Install-Extension" {
             "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" = @{
                 Content = "Mocked PHP curl 1.4.0 zip content"
             }
+            "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip" = @{
+                Content = "Mocked PHP courierauth 1.4.0 zip content"
+            }
             "$PECL_PACKAGE_ROOT_URL/curl/2.1.0/windows" = @{
                 Content = "Mocked PHP curl 2.1.0 content"
                 Links = @()
@@ -886,10 +1120,16 @@ Describe "Install-Extension" {
     }
     
     It "Installs extension successfully" {
-        Mock Test-Path { return $false }
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
-            return "y"
+        Mock Get-Current-PHP-Version { return @{ version = "8.2.0"; path = "TestDrive:\php\8.2.0"; arch = "x86"; buildType = "ts" }}
+        Mock Get-Extension-From-URL {
+            return @(
+                @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = "x86"; buildType = "ts" ; version = "8.2"; extVersion = "1.4.0"; fileName = "php_curl-1.4.0-8.2-ts-vs16-x86.zip"; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip'>8.2 Thread Safe (TS) x86</a>" }
+                @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x86.zip"; arch = "x86"; buildType = "nts" ; version = "8.2"; extVersion = "1.4.0"; fileName = "php_curl-1.4.0-8.2-nts-vs16-x86.zip"; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x86.zip'>8.2 Non Thread Safe (NTS) x86</a>" }
+                @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip"; arch = "x64"; buildType = "ts" ; version = "8.2"; extVersion = "1.4.0"; fileName = "php_curl-1.4.0-8.2-ts-vs16-x64.zip"; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip'>8.2 Thread Safe (TS) x64</a>" }
+                @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = "x64"; buildType = "nts" ; version = "8.2"; extVersion = "1.4.0"; fileName = "php_curl-1.4.0-8.2-nts-vs16-x64.zip"; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip'>8.2 Non Thread Safe (NTS) x64</a>" }
+            )
         }
+        Mock Test-Path { return $false }
         
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be 0
@@ -971,6 +1211,15 @@ Describe "Install-Extension" {
             }
         }
         It "Falls back to matching links if extension direct link is not found" {
+            Mock Get-Current-PHP-Version { return @{ version = "8.2.0"; path = "TestDrive:\php\8.2.0"; arch = "x64"; buildType = "ts" }}
+            Mock Get-Extension-From-URL {
+                return @(
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip"; arch = "x64"; buildType = "ts" ; version = "8.2"; extVersion = "1.4.0"; fileName = "php_courierauth-1.4.0-8.2-ts-vs16-x64.zip"; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip'>8.2 Thread Safe (TS) x64</a>" }
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x64.zip"; arch = "x64"; buildType = "nts" ; version = "8.2"; extVersion = "1.4.0"; fileName = "php_courierauth-1.4.0-8.2-nts-vs16-x64.zip"; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x64.zip'>8.2 Non Thread Safe (NTS) x64</a>" }
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip"; arch = "x86"; buildType = "ts" ; version = "8.2"; extVersion = "1.4.0"; fileName = "php_courierauth-1.4.0-8.2-ts-vs16-x86.zip"; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip'>8.2 Thread Safe (TS) x86</a>" }
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x86.zip"; arch = "x86"; buildType = "nts" ; version = "8.2"; extVersion = "1.4.0"; fileName = "php_courierauth-1.4.0-8.2-nts-vs16-x86.zip"; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x86.zip'>8.2 Non Thread Safe (NTS) x86</a>" }
+                )
+            }
             Mock Test-Path { return $false }
             Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
                 return "y"
@@ -1213,8 +1462,7 @@ Describe "List-PHP-Extensions" {
     }
     
     It "Handles thrown exception" {
-        Mock Test-Path { return $true }
-        Mock New-TimeSpan { throw "Access denied" }
+        Mock Can-Use-Cache { throw 'Error' }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be -1
     }
@@ -1451,40 +1699,40 @@ extension=php_curl.dll
                 Directories = @()
                 Files = @{}
                 WebResponses = @{
-                                "$PECL_PACKAGE_ROOT_URL/nonexistent_ext" = @{
-                                    Content = "Mocked PHP nonexistent_ext content"
-                                    Links = @()
-                                }
-                                "$PECL_PACKAGE_ROOT_URL/pdo_mysql" = @{
-                                    Content = "Mocked pdo_mysql content"
-                                    Links = @(
-                                        @{ href = "/package/pdo_mysql/1.4.0/windows" },
-                                        @{ href = "/package/pdo_mysql/2.1.0/windows" }
-                                    )
-                                }
-                                "$PECL_PACKAGE_ROOT_URL/curl" = @{
-                                    Content = "Mocked curl content"
-                                    Links = @(
-                                        @{ href = "/package/curl/1.4.0/windows" },
-                                        @{ href = "/package/curl/2.1.0/windows" }
-                                    )
-                                }
-                                "$PECL_PACKAGE_ROOT_URL/curl/1.4.0/windows" = @{
-                                    Content = "Mocked PHP curl 1.4.0 content"
-                                    Links = @(
-                                        @{ href = "other_link" },
-                                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" },
-                                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip" }
-                                    )
-                                }
-                                "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" = @{
-                                    Content = "Mocked PHP curl 1.4.0 zip content"
-                                }
-                                "$PECL_PACKAGE_ROOT_URL/curl/2.1.0/windows" = @{
-                                    Content = "Mocked PHP curl 2.1.0 content"
-                                    Links = @()
-                                }
-                            }
+                    "$PECL_PACKAGE_ROOT_URL/nonexistent_ext" = @{
+                        Content = "Mocked PHP nonexistent_ext content"
+                        Links = @()
+                    }
+                    "$PECL_PACKAGE_ROOT_URL/pdo_mysql" = @{
+                        Content = "Mocked pdo_mysql content"
+                        Links = @(
+                            @{ href = "/package/pdo_mysql/1.4.0/windows" },
+                            @{ href = "/package/pdo_mysql/2.1.0/windows" }
+                        )
+                    }
+                    "$PECL_PACKAGE_ROOT_URL/curl" = @{
+                        Content = "Mocked curl content"
+                        Links = @(
+                            @{ href = "/package/curl/1.4.0/windows" },
+                            @{ href = "/package/curl/2.1.0/windows" }
+                        )
+                    }
+                    "$PECL_PACKAGE_ROOT_URL/curl/1.4.0/windows" = @{
+                        Content = "Mocked PHP curl 1.4.0 content"
+                        Links = @(
+                            @{ href = "other_link" },
+                            @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" },
+                            @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip" }
+                        )
+                    }
+                    "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" = @{
+                        Content = "Mocked PHP curl 1.4.0 zip content"
+                    }
+                    "$PECL_PACKAGE_ROOT_URL/curl/2.1.0/windows" = @{
+                        Content = "Mocked PHP curl 2.1.0 content"
+                        Links = @()
+                    }
+                }
                 DownloadFails = $false
             }
             

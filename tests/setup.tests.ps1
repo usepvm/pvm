@@ -1,8 +1,6 @@
-# Load required modules and functions
-. "$PSScriptRoot\..\src\actions\setup.ps1"
 
 Describe "Setup-PVM" {
-     BeforeAll {
+    BeforeAll {
         Mock Write-Host {}
         # Mock global variables that the function depends on
         $global:PHP_CURRENT_VERSION_PATH = "C:\php\8.2"
@@ -21,7 +19,7 @@ Describe "Setup-PVM" {
         }
         
         # Mock Log-Data function
-        Mock Log-Data { return $true }
+        Mock Log-Data { return 0 }
         
         # Mock the System.Environment methods
         function Get-EnvironmentVariableWrapper {
@@ -120,8 +118,8 @@ Describe "Setup-PVM" {
         Mock Get-EnvVar-ByName -MockWith { return $null }
         Mock Set-EnvVar -MockWith { return 0 }
         Mock Is-Directory-Exists -MockWith { return $false }
-        Mock Make-Directory -MockWith { return $true }
-        Mock Log-Data -MockWith { return $true }
+        Mock Make-Directory { return 0 }
+        Mock Log-Data -MockWith { return 0 }
         Mock Optimize-SystemPath -MockWith {}
     }
 

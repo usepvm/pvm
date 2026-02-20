@@ -1,6 +1,4 @@
 
-. "$PSScriptRoot\..\src\actions\profile.ps1"
-
 BeforeAll {
     # Mock global variables
     $global:PROFILES_PATH = "TestDrive:\\profiles"
@@ -115,7 +113,7 @@ Describe "Save-PHP-Profile Tests" {
         }
         
         Mock Write-Host {}
-        Mock Log-Data { return $true }
+        Mock Log-Data { return 0 }
     }
     
     It "Returns -1 when php.ini file is missing" {
@@ -217,7 +215,7 @@ Describe "Load-PHP-Profile Tests" {
         Mock Enable-IniExtension-Direct { return 0 }
         Mock Disable-IniExtension-Direct { return 0 }
         Mock Write-Host {}
-        Mock Log-Data { return $true }
+        Mock Log-Data { return 0 }
     }
     
     It "Should return -1 when current PHP version cannot be determined" {
@@ -360,7 +358,7 @@ Describe "Get-Popular-PHP-Settings and Get-Popular-PHP-Extensions Tests" {
 Describe "Show-PHP-Profile Tests" {
     BeforeEach {
         Mock Write-Host {}
-        Mock Log-Data { return $true }
+        Mock Log-Data { return 0 }
         
         # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $global:PROFILES_PATH | Out-Null
@@ -821,7 +819,7 @@ Describe "Show-PHP-Profile Tests" {
 Describe "Delete-PHP-Profile Tests" {
     BeforeEach {
         Mock Write-Host {}
-        Mock Log-Data { return $true }
+        Mock Log-Data { return 0 }
         
         # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $global:PROFILES_PATH | Out-Null
@@ -1112,7 +1110,7 @@ Describe "Delete-PHP-Profile Tests" {
 Describe "Export-PHP-Profile Tests" {
     BeforeEach {
         Mock Write-Host {}
-        Mock Log-Data { return $true }
+        Mock Log-Data { return 0 }
         
         # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $global:PROFILES_PATH | Out-Null
@@ -1321,7 +1319,7 @@ Describe "Export-PHP-Profile Tests" {
 Describe "Import-PHP-Profile Tests" {
     BeforeEach {
         Mock Write-Host {}
-        Mock Log-Data { return $true }
+        Mock Log-Data { return 0 }
         Mock Make-Directory { return 0 }
         
         # Ensure profiles directory exists

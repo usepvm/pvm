@@ -1,6 +1,3 @@
-# PHP Version Management Tests
-# Load required modules and functions
-. "$PSScriptRoot\..\src\actions\list.ps1"
 
 BeforeAll {
     # Mock global variables that would be defined in the main script
@@ -9,17 +6,8 @@ BeforeAll {
     
     Mock Write-Host { }
     # Mock external functions that aren't defined in the provided code
-    Mock Make-Directory { param($path) 
-        if (-not (Test-Path -Path $path)) {
-            $parent = Split-Path -Parent $path
-            if ($parent -and -not (Test-Path -Path $parent)) {
-                Make-Directory -path $parent
-            }
-            New-Item -Path $path -ItemType Directory -Force | Out-Null
-        }
-        return 0
-    }
-    Mock Log-Data { param($logPath, $message, $data) return "Logged: $message - $data" }
+    Mock Make-Directory { return 0 }
+    Mock Log-Data { param($logPath, $message, $data) return 0 }
     Mock Get-Source-Urls { 
         return @{
             'releases' = $PHP_WIN_RELEASES_URL
@@ -77,27 +65,6 @@ Describe "Get-From-Source" {
         $allVersions | Should -Not -Contain 'php-8.2.0-Win32-x86.zip'
     }
     
-    It "Should handle x86 architecture" {
-        Mock Is-OS-64Bit { return $false }
-        
-        $mockLinks = @(
-            @{ href = 'php-8.2.0-Win32-x86.zip' },
-            @{ href = 'php-8.2.0-Win32-x64.zip' }
-        )
-        
-        Mock Invoke-WebRequest {
-            return @{ Links = $mockLinks }
-        }
-        
-        Mock Cache-Data { }
-        
-        $result = Get-From-Source
-        
-        $allVersions = $result['Archives'] + $result['Releases']
-        $allVersions | Should -Contain 'php-8.2.0-Win32-x86.zip'
-        $allVersions | Should -Not -Contain 'php-8.2.0-Win32-x64.zip'
-    }
-    
     It "Should return empty list" {
         Mock Invoke-WebRequest {
             return @{ Links = @() }
@@ -112,7 +79,7 @@ Describe "Get-From-Source" {
     
     It "Should handle web request failure" {
         Mock Invoke-WebRequest { throw "Network error" }
-        Mock Log-Data { return "Logged error" }
+        Mock Log-Data { return 0 }
         
         $result = Get-From-Source
         
@@ -122,6 +89,14 @@ Describe "Get-From-Source" {
 }
 
 Describe "Get-PHP-List-To-Install" {
+    
+    It "Returns empty object when cache and/or source not working" {
+        Mock Get-OrUpdateCache { return $null }
+        
+        $result = Get-PHP-List-To-Install
+        
+        $result.Count | Should -Be 0
+    }
     
     It "Should read from cache" {
         Mock Test-Path { return $true }
@@ -137,15 +112,13 @@ Describe "Get-PHP-List-To-Install" {
         $result = Get-PHP-List-To-Install
         
         $result | Should -Not -BeNullOrEmpty
-        $result.Keys | Should -Contain 'Archives'
-        $result.Keys | Should -Contain 'Releases'
+        $result.Archives | Should -Not -BeNullOrEmpty
+        $result.Releases | Should -Not -BeNullOrEmpty
         Assert-MockCalled Get-Data-From-Cache -Exactly 1
     }
     
     It "Should fetch from source when cache is empty" {
-        Mock Test-Path { $true }
-        $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK")
-        Mock Get-Item { @{ LastWriteTime = $timeWithinLastWeek } }
+        Mock Can-Use-Cache { return $true }
         Mock Get-Data-From-Cache { return @{} }
         Mock Get-From-Source {
             return @{
@@ -157,14 +130,14 @@ Describe "Get-PHP-List-To-Install" {
         $result = Get-PHP-List-To-Install
         
         $result | Should -Not -BeNullOrEmpty
-        $result.Keys | Should -Contain 'Archives'
-        $result.Keys | Should -Contain 'Releases'
+        $result.Archives | Should -Not -BeNullOrEmpty
+        $result.Releases | Should -Not -BeNullOrEmpty
         Assert-MockCalled Get-Data-From-Cache -Exactly 1
         Assert-MockCalled Get-From-Source -Exactly 1
     }
     
     It "Should fetch from source" {
-        Mock Test-Path { return $false }
+        Mock Can-Use-Cache { return $false }
         Mock Get-From-Source {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
@@ -175,13 +148,13 @@ Describe "Get-PHP-List-To-Install" {
         $result = Get-PHP-List-To-Install
         
         $result | Should -Not -BeNullOrEmpty
-        $result.Keys | Should -Contain 'Archives'
-        $result.Keys | Should -Contain 'Releases'
+        $result.Archives | Should -Not -BeNullOrEmpty
+        $result.Releases | Should -Not -BeNullOrEmpty
         Assert-MockCalled Get-From-Source -Exactly 1
     }
     
     It "Handles exceptions gracefully" {
-        Mock Test-Path { throw "Cache error" }
+        Mock Can-Use-Cache { throw "Cache error" }
         $result = Get-PHP-List-To-Install
         $result | Should -BeNullOrEmpty
     }
@@ -190,6 +163,74 @@ Describe "Get-PHP-List-To-Install" {
 Describe "Get-Available-PHP-Versions" {
     BeforeEach {
         Mock Write-Host { }
+    }
+    
+    It "Should handle x86 architecture" {
+        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+            'Archives' = @(@{
+                Link = "php-7.1.0-Win32-x64.zip"
+                BuildType = "TS"; Arch = "x64"; Version = "7.1.0";
+            })
+            'Releases' = @(@{
+                Link = "php-7.1.0-Win32-x86.zip"
+                BuildType = "TS"; Arch = "x86"; Version = "7.1.0"
+            })
+        }}
+        
+        $code = Get-Available-PHP-Versions -arch "x86"
+        
+        $code | Should -Be 0
+    }
+    
+    It "Should handle x64 architecture" {
+        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+            'Archives' = @(@{
+                Link = "php-7.1.0-Win32-x64.zip"
+                BuildType = "TS"; Arch = "x64"; Version = "7.1.0";
+            })
+            'Releases' = @(@{
+                Link = "php-7.1.0-Win32-x86.zip"
+                BuildType = "TS"; Arch = "x86"; Version = "7.1.0"
+            })
+        }}
+        
+        $code = Get-Available-PHP-Versions -arch "x64"
+        
+        $code | Should -Be 0
+    }
+    
+    It "Should handle TS build type" {
+        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+            'Archives' = @(@{
+                Link = "php-7.1.0-Win32-x64.zip"
+                BuildType = "TS"; Arch = "x64"; Version = "7.1.0";
+            })
+            'Releases' = @(@{
+                Link = "php-7.1.0-Win32-nts-x64.zip"
+                BuildType = "NTS"; Arch = "x64"; Version = "7.1.0"
+            })
+        }}
+        
+        $code = Get-Available-PHP-Versions -buildType "ts"
+        
+        $code | Should -Be 0
+    }
+    
+    It "Should handle NTS build type" {
+        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+            'Archives' = @(@{
+                Link = "php-7.1.0-Win32-x64.zip"
+                BuildType = "TS"; Arch = "x64"; Version = "7.1.0";
+            })
+            'Releases' = @(@{
+                Link = "php-7.1.0-Win32-nts-x64.zip"
+                BuildType = "NTS"; Arch = "x64"; Version = "7.1.0"
+            })
+        }}
+        
+        $code = Get-Available-PHP-Versions -buildType "nts"
+        
+        $code | Should -Be 0
     }
     
     It "Should read from cache by default" {
@@ -210,6 +251,20 @@ Describe "Get-Available-PHP-Versions" {
     }
     
     It "Display available versions matching filter" {
+        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+            'Archives' = @(@{
+                Link = "php-7.1.0-Win32-x64.zip"
+                BuildType = "TS"
+                Arch = "x64"
+                Version = "7.1.0"
+            })
+            'Releases' = @(@{
+                Link = "php-7.2.0-Win32-x64.zip"
+                BuildType = "TS"
+                Arch = "x64"
+                Version = "7.2.0"
+            })
+        }}
         $code = Get-Available-PHP-Versions -term "7.1"
         $code | Should -Be 0
     }
@@ -226,8 +281,7 @@ Describe "Get-Available-PHP-Versions" {
     }
     
     It "Should fetch from source when cache is empty" {
-        Mock Test-Path { $true }
-        Mock Get-Item { @{ LastWriteTime = (Get-Date) } }
+        Mock Can-Use-Cache { return $true }
         Mock Get-Data-From-Cache { return @{} }
         Mock Get-From-Source {
             return @{
@@ -263,8 +317,18 @@ Describe "Get-Available-PHP-Versions" {
     It "Should display versions in correct format" {
         Mock Get-Data-From-Cache {
             return @{
-                'Archives' = @('php-8.1.0-Win32-x64.zip')
-                'Releases' = @('php-8.2.0-Win32-x64.zip')
+                'Archives' = @(@{
+                    BuildType = "NTS";
+                    Version = "8.1.0";
+                    Link = "php-8.1.0-Win32-x64.zip";
+                    Arch = "x86"
+                })
+                'Releases' = @(@{
+                    BuildType = "NTS";
+                    Version = "8.2.0";
+                    Link = "php-8.2.0-Win32-x64.zip";
+                    Arch = "x64";
+                })
             }
         }
         Mock Test-Path { return $true }
@@ -296,7 +360,7 @@ Describe "Get-Available-PHP-Versions" {
             'Releases' = @('php-8.2.0-Win32-x64.zip')
         }}
         Mock ForEach-Object { throw "Cache error" }
-        Mock Log-Data { return "Logged error" }
+        Mock Log-Data { return 0 }
         
         $result = Get-Available-PHP-Versions
         
@@ -310,8 +374,16 @@ Describe "Display-Installed-PHP-Versions" {
     }
     
     It "Should display installed versions with current version marked" {
-        Mock Get-Current-PHP-Version { return @{ version = "8.2.0" } }
-        Mock Get-Installed-PHP-Versions { return @("8.2.0", "8.1.5", "7.4.33") }
+        Mock Get-Current-PHP-Version { return @{ 
+            version = "8.2.0"
+            arch = "x64"
+            buildType = "nts"
+        }}
+        Mock Get-Installed-PHP-Versions { return @(
+            @{Version = "8.2.0"; Arch = "x64"; BuildType = 'NTS'}
+            @{Version = "8.1.5"; Arch = "x64"; BuildType = 'NTS'}
+            @{Version = "7.4.33"; Arch = "x64"; BuildType = 'NTS'}
+        )}
         
         Display-Installed-PHP-Versions
         
@@ -322,7 +394,11 @@ Describe "Display-Installed-PHP-Versions" {
     }
     
     It "Display installed versions matching filter" {
-        Mock Get-Installed-PHP-Versions { return @("8.2.0", "8.2.0", "8.1.5") }
+        Mock Get-Installed-PHP-Versions { return @(
+            @{Version = "8.2.0"; Arch = "x64"; BuildType = 'NTS'}
+            @{Version = "8.2.0"; Arch = "x64"; BuildType = 'TS'}
+            @{Version = "8.1.5"; Arch = "x64"; BuildType = 'NTS'}
+        )}
         $code = Display-Installed-PHP-Versions -term "8.2"
         $code | Should -Be 0
     }
@@ -337,8 +413,16 @@ Describe "Display-Installed-PHP-Versions" {
     }
     
     It "Should handle duplicate versions" {
-        Mock Get-Current-PHP-Version { return @{ version = "8.2.0" } }
-        Mock Get-Installed-PHP-Versions { return @("php8.2.0", "php8.2.0", "php8.1.5") }
+        Mock Get-Current-PHP-Version { return @{ 
+            version = "8.2.0"
+            arch = "x64"
+            buildType = "NTS"
+        }}
+        Mock Get-Installed-PHP-Versions { return @(
+            @{Version = "8.2.0"; Arch = "x64"; BuildType = 'NTS'}
+            @{Version = "8.2.0"; Arch = "x64"; BuildType = 'NTS'}
+            @{Version = "8.1.5"; Arch = "x64"; BuildType = 'NTS'}
+        )}
         
         Display-Installed-PHP-Versions
         
@@ -348,7 +432,10 @@ Describe "Display-Installed-PHP-Versions" {
     
     It "Should handle no current version set" {
         Mock Get-Current-PHP-Version { return @{ version = "" } }
-        Mock Get-Installed-PHP-Versions { return @("php8.2.0", "php8.1.5") }
+        Mock Get-Installed-PHP-Versions { return @(
+            @{Version = "8.2.0"; Arch = "x64"; BuildType = 'NTS'}
+            @{Version = "8.1.5"; Arch = "x64"; BuildType = 'NTS'}
+        )}
         
         Display-Installed-PHP-Versions
         
@@ -358,7 +445,7 @@ Describe "Display-Installed-PHP-Versions" {
     
     It "Should handle exceptions gracefully" {
         Mock Get-Current-PHP-Version { throw "Error getting current version" }
-        Mock Log-Data { return "Logged error" }
+        Mock Log-Data { return 0 }
         
         { Display-Installed-PHP-Versions } | Should -Not -Throw
     }

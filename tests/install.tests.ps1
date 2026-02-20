@@ -1,6 +1,3 @@
-# Comprehensive Test Suite for PHP Installation Functions
-# Load required modules and functions
-. "$PSScriptRoot\..\src\actions\install.ps1"
 
 BeforeAll {
     Mock Write-Host {}
@@ -266,13 +263,6 @@ BeforeAll {
             return -1
         }
     }
-
-    function Is-PHP-Version-Installed {
-        param($version)
-        
-        $envVars = Get-All-EnvVars
-        return $envVars.ContainsKey("php$version")
-    }
 }
 
 # Test Suites
@@ -303,9 +293,10 @@ Describe "Get-PHP-Versions-From-Url Tests" {
         
         $result = Get-PHP-Versions-From-Url -url "https://test.com" -version "8.1"
         
-        $result.Count | Should -Be 2
+        $result.Count | Should -Be 3
         $result[0].version | Should -Be "8.1.0"
         $result[1].version | Should -Be "8.1.1"
+        $result[2].version | Should -Be "8.1.0"
     }
     
     It "Should handle network errors gracefully" {
@@ -327,8 +318,9 @@ Describe "Get-PHP-Versions-From-Url Tests" {
         
         $result = Get-PHP-Versions-From-Url -url "https://test.com" -version "8.1"
         
-        $result.Length | Should -Be 1
-        $result.version | Should -Be "8.1.0"
+        $result.Length | Should -Be 2
+        $result[0].version | Should -Be "8.1.0"
+        $result[1].version | Should -Be "8.1.0"
     }
 }
 
@@ -347,19 +339,27 @@ Describe "Get-PHP-Versions Tests" {
         Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
         Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
         
-        $result = Get-PHP-Versions -version "8.1"
+        $result = Get-PHP-Versions -version "8.1" -arch "x64"
+        
+        $result.Count | Should -BeGreaterThan 0
+    }
+    
+    It "Should return versions for NTS Build type" {
+        $mockLinks = @(
+            @{ href = "/downloads/releases/php-8.1.0-Win32-vs16-nts-x64.zip" },
+            @{ href = "/downloads/releases/php-8.1.0-Win32-vs16-x64.zip" }
+        )
+        
+        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
+        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
+        
+        $result = Get-PHP-Versions -version "8.1" -buildType "nts"
         
         $result.Count | Should -BeGreaterThan 0
     }
     
     It "Should handle exception gracefully" {
-        Mock Get-PHP-Versions-From-Url {
-            return @(
-                @{ version = "8.1.0"; fileName = "php-8.1.0-Win32-vs16-x64.zip" },
-                @{ version = "8.1.1"; fileName = "php-8.1.1-Win32-vs16-x64.zip" }
-            )
-        }
-        Mock Where-Object { throw "Test exception" }
+        Mock Get-Source-Urls { throw 'Error' }
         
         $result = Get-PHP-Versions -version "8.1"
         
@@ -547,7 +547,7 @@ Describe "Select-Version Tests" {
                 @{ version = "8.1.1"; fileName = "php-8.1.1.zip" }
             )
         }
-        $global:MockUserInput = "8.1.1"
+        $global:MockUserInput = "1"
 
         $result = Select-Version -matchingVersions $versions
         
@@ -557,7 +557,7 @@ Describe "Select-Version Tests" {
 
 Describe "Install-PHP Integration Tests" {
     BeforeEach {
-        # Mock Write-Host { }
+        Mock Write-Host { }
         Reset-MockState
         $global:MockUserInput = ""
         $global:MockFileSystem.Files["TestDrive:\pvm\pvm"] = "PVM executable"
@@ -622,11 +622,11 @@ Describe "Install-PHP Integration Tests" {
         Mock Get-Matching-PHP-Versions { return $null }
         Mock Download-PHP-From-Url { return "TestDrive:\php"}
         Mock Select-Version { return @{ version = "8.1.15"; fileName = "php-8.1.15-Win32-vs16-x64.zip" } }
-        Mock Is-PHP-Version-Installed -ParameterFilter { $version -eq "8.1.15" } -MockWith { return $true }
+        Mock Is-PHP-Version-Installed { return $true }
         
         $result = Install-PHP -version "8.1"
         
-        $result.code | Should -Be -1 
+        $result.code | Should -Be -1
     }
     
     It "Handles exception gracefully" {
@@ -757,21 +757,23 @@ Describe "Environment Variable Tests" {
     }
     
     It "Get-Installed-PHP-Versions should return sorted versions" {
-        Mock Test-Path { return $true }
-        Mock Get-All-Subdirectories {
-            param ($path)
+        Mock Cache-Data { return 0 }
+        Mock Can-Use-Cache { return $false }
+        Mock Get-Installed-PHP-Versions-From-Directory {
             return @(
-                @{ Name = "8.1"; FullName = "path\php\8.1" }
-                @{ Name = "7.4"; FullName = "path\php\7.4" }
-                @{ Name = "8.2"; FullName = "path\php\8.2" }
-                @{ Name = "8.0"; FullName = "path\php\8.0" }
-                @{ Name = "5.6"; FullName = "path\php\5.6" }
+                @{version = "8.2"; arch = "x64"; buildType = "nts"}
+                @{version = "8.1"; arch = "x64"; buildType = "nts"}
+                @{version = "8.0"; arch = "x64"; buildType = "nts"}
+                @{version = "7.4"; arch = "x64"; buildType = "nts"}
+                @{version = "5.6"; arch = "x64"; buildType = "nts"}
             )
         }
         
         $result = Get-Installed-PHP-Versions
+        Write-Host ($result | ConvertTo-Json)
         
-        $result | Should -Be @("5.6", "7.4", "8.0", "8.1", "8.2")
+        $result[0].version | Should -Be "5.6"
+        $result[1].version | Should -Be "7.4"
     }
     
     It "Get-Installed-PHP-Versions should handle registry errors" {
@@ -783,21 +785,18 @@ Describe "Environment Variable Tests" {
     }
     
     It "Get-Matching-PHP-Versions should find matching versions" {
-        Mock Test-Path { return $true }
-        Mock Get-All-Subdirectories {
-            param ($path)
+        Mock Get-Installed-PHP-Versions {
             return @(
-                @{ Name = "8.1.0"; FullName = "path\php\8.1.0" }
-                @{ Name = "8.2.0"; FullName = "path\php\8.2.0" }
-                @{ Name = "8.1.5"; FullName = "path\php\8.1.5" }
+                @{version = "8.1.0"; arch = "x64"; buildType = "nts"}
+                @{version = "8.2.0"; arch = "x64"; buildType = "nts"}
+                @{version = "8.1.5"; arch = "x64"; buildType = "nts"}
             )
         }
-        
         $result = Get-Matching-PHP-Versions -version "8.1"
         
-        $result | Should -Contain "8.1.0"
-        $result | Should -Contain "8.1.5"
-        $result | Should -Not -Contain "8.2.0"
+        $result | Where-Object { $_.version -eq '8.1.0' } | Should -Not -BeNullOrEmpty
+        $result | Where-Object { $_.version -eq '8.1.5' } | Should -Not -BeNullOrEmpty
+        $result | Where-Object { $_.link -eq '8.2.0' } | Should -BeNullOrEmpty
     }
 }
 

@@ -3,21 +3,35 @@ function Get-Zend-Extensions-List {
     return @('xdebug', 'opcache')
 }
 
+function Can-Use-Cache {
+    param ($cacheFileName)
+    
+    try {
+        $path = "$CACHE_PATH\$cacheFileName.json"
+        $useCache = $false
+
+        if (Test-Path $path) {
+            $fileAgeHours = (New-TimeSpan -Start (Get-Item $path).LastWriteTime -End (Get-Date)).TotalHours
+            $useCache = ($fileAgeHours -lt $CACHE_MAX_HOURS)
+        }
+        
+        return $useCache
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"
+            exception = $_
+        }
+        
+        return $false
+    }
+}
+
 function Get-Data-From-Cache {
     param ($cacheFileName)
     
-    $path = "$CACHE_PATH\$cacheFileName.json"
-    $list = @{}
     try {
-        $jsonData = Get-Content $path | ConvertFrom-Json
-        $jsonData.PSObject.Properties.GetEnumerator() | ForEach-Object {
-            $key = $_.Name
-            $value = $_.Value
-            
-            # Add the key-value pair to the hashtable
-            $list[$key] = $value
-        }
-        return $list
+        $jsonData = Get-Content "$CACHE_PATH\$cacheFileName.json" | ConvertFrom-Json
+        return $jsonData
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"
@@ -47,6 +61,27 @@ function Cache-Data {
         }
         return -1
     }
+}
+
+function Get-OrUpdateCache {
+    param ($cacheFileName, $compute, $depth = 3)
+    
+    $useCache = Can-Use-Cache -cacheFileName $cacheFileName
+    
+    if ($useCache) {
+        $data = Get-Data-From-Cache -cacheFileName $cacheFileName
+        if ($null -ne $data -and $data.Count -gt 0) {
+            return $data
+        }
+    }
+    
+    $data = & $compute
+    
+    if ($null -ne $data) {
+        $cached = Cache-Data -cacheFileName $cacheFileName -data $data -depth $depth
+    }
+    
+    return $data
 }
 
 function Get-All-Subdirectories {
@@ -123,22 +158,6 @@ function Set-EnvVar {
     }
 }
 
-function Get-PHP-Path-By-Version {
-    param ($version)
-    
-    if ([string]::IsNullOrWhiteSpace($version)) {
-        return $null
-    }
-    
-    $phpContainerPath = "$STORAGE_PATH\php"
-    $version = $version.Trim()
-
-    if (-not(Is-Directory-Exists -path $phpContainerPath) -or -not(Is-Directory-Exists -path "$phpContainerPath\$version")) {
-        return $null
-    }
-
-    return "$phpContainerPath\$version"
-}
 
 function Make-Symbolic-Link {
     param($link, $target)
@@ -353,6 +372,10 @@ function Format-Seconds {
     param ($totalSeconds)
     
     try {
+        if ($totalSeconds -ne $null) {
+            $totalSeconds = [Single] $totalSeconds
+        }
+
         if ($null -eq $totalSeconds -or $totalSeconds -lt 0) {
             $totalSeconds = 0
         }
@@ -382,4 +405,97 @@ function Format-Seconds {
 
 function Is-OS-64Bit {
     return [System.Environment]::Is64BitOperatingSystem
+}
+
+function Resolve-BuildType {
+    param ($arguments, $choseDefault = $false)
+    
+    $buildType = $arguments | Where-Object { @('ts', 'nts') -contains $_ } | Select-Object -First 1
+    
+    if ($null -eq $buildType -and $choseDefault) {
+        $buildType = "ts";
+    }
+
+    if ($buildType -ne $null) {
+        $buildType = $buildType.ToLower()
+    }
+    
+    return $buildType
+}
+
+function Resolve-Arch {
+    param ($arguments, $choseDefault = $false)
+    
+    $arch = $arguments | Where-Object { @('x86', 'x64') -contains $_ } | Select-Object -First 1
+    
+    if ($null -eq $arch -and $choseDefault) {
+        $arch = if (Is-OS-64Bit) { 'x64' } else { 'x86' }
+    }
+    
+    if ($arch -ne $null) {
+        $arch = $arch.ToLower()
+    }
+    
+    return $arch
+}
+
+function Get-PHPInstallInfo {
+    param ($path)
+
+    $tsDll = Get-ChildItem "$path\php*ts.dll" -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -notmatch 'nts\.dll$' } |
+        Select-Object -First 1
+
+    if ($tsDll) {
+        $buildType = 'TS'
+        $dll = $tsDll
+    }
+    else {
+        $dll = Get-ChildItem "$path\php*.dll" |
+            Where-Object { $_.Name -notmatch 'phpdbg' } |
+            Select-Object -First 1
+        $buildType = 'NTS'
+    }
+
+
+    if (-not $dll) {
+        return $null
+    }
+
+    return @{
+        Version      = $dll.VersionInfo.ProductVersion
+        Arch         = Get-BinaryArchitecture-From-DLL -path $dll.FullName
+        BuildType    = $buildType
+        Dll          = $dll.Name
+        InstallPath  = $path
+    }
+}
+
+
+function Get-BinaryArchitecture-From-DLL {
+    param ($path)
+
+    $bytes = [System.IO.File]::ReadAllBytes($path)
+
+    $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
+
+    $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
+
+    switch ($machine) {
+        0x8664 { "x64" }
+        0x014c { "x86" }
+        default { "Unknown" }
+    }
+}
+
+function Is-Two-PHP-Versions-Equal {
+    param ($version1, $version2)
+
+    if ($null -eq $version1 -or $null -eq $version2) {
+        return $false
+    }
+
+    return (($version1.version -eq $version2.version) -and
+            ($version1.arch -eq $version2.arch) -and
+            ($version1.buildType -eq $version2.buildType))
 }

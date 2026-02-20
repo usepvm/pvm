@@ -1,9 +1,8 @@
-# Comprehensive Tests for Get-PHP-Status and Get-Current-PHP-Version Functions
 
 BeforeAll {
     # Mock dependencies
     $global:LOG_ERROR_PATH = "TestDrive:\logs\error.log"
-    $global:PHP_CURRENT_VERSION_PATH = "C:\php\current"
+    $global:PHP_CURRENT_VERSION_PATH = "TestDrive:\php\current"
     
     # Mock Log-Data function
     Mock Write-Host {}
@@ -224,6 +223,21 @@ Describe "Get-PHP-Status Function Tests" {
             $result.opcache | Should -Be $false
             $result.xdebug | Should -Be $false
         }
+        
+        It "Should handle Test-Path exceptions gracefully" {
+            # Arrange
+            Mock Test-Path { throw "Access Denied" }
+            Mock Log-Data { return 0 }
+            $testPath = "TestDrive:\php"
+            
+            # Act
+            $result = Get-PHP-Status -phpPath $testPath
+            
+            # Assert
+            Assert-MockCalled Log-Data -Times 1
+            $result.opcache | Should -Be $false
+            $result.xdebug | Should -Be $false
+        }
     }
 }
 
@@ -245,6 +259,12 @@ Describe "Get-Current-PHP-Version Function Tests" {
         
         It "Should return correct version information when symlink is valid" {
             # Act
+            Mock Get-PHPInstallInfo {@{
+                Version = '8.2.0'
+                Arch = 'x64'
+                BuildType = 'ts'
+                InstallPath = 'C:\php\8.2.0'
+            }}
             Mock Is-Directory-Exists { return $true }
             $result = Get-Current-PHP-Version
             
@@ -256,8 +276,14 @@ Describe "Get-Current-PHP-Version Function Tests" {
         }
         
         It "Should call Get-PHP-Status with correct path" {
-            Mock Is-Directory-Exists { return $true }
             # Act
+            Mock Get-PHPInstallInfo {@{
+                Version = '8.2.0'
+                Arch = 'x64'
+                BuildType = 'ts'
+                InstallPath = 'C:\php\8.2.0'
+            }}
+            Mock Is-Directory-Exists { return $true }
             $result = Get-Current-PHP-Version
             
             # Assert
@@ -266,14 +292,26 @@ Describe "Get-Current-PHP-Version Function Tests" {
     }
     
     Context "When PHP current version path does not exist" {
-        BeforeEach {
-            # Mock Get-Item to throw an exception
-            Mock Get-Item {
-                throw "Path does not exist"
-            } -ParameterFilter { $Path -eq $PHP_CURRENT_VERSION_PATH }
+        
+        It "returns empty result when path does not exist" {
+            # Arrange
+            Mock Get-Item { return @{ Target = "C:\php\8.2.0" } }
+            Mock Is-Directory-Exists { return $false }
+            
+            # Act
+            $result = Get-Current-PHP-Version
+            
+            # Assert
+            $result.version | Should -Be $null
+            $result.path | Should -Be $null
+            $result.status.opcache | Should -Be $false
+            $result.status.xdebug | Should -Be $false
         }
         
         It "Should return null values when path does not exist" {
+            # Arrange
+            Mock Get-Item { throw "Path does not exist" }
+            
             # Act
             $result = Get-Current-PHP-Version
             
@@ -286,7 +324,8 @@ Describe "Get-Current-PHP-Version Function Tests" {
         
         It "Should call Log-Data when exception occurs" {
             # Arrange
-            Mock Log-Data { return $true }
+            Mock Get-Item { throw "Path does not exist" }
+            Mock Log-Data { return 0 }
             
             # Act
             $result = Get-Current-PHP-Version
@@ -330,6 +369,12 @@ Describe "Get-Current-PHP-Version Function Tests" {
         }
         
         It "Should handle Get-PHP-Status error gracefully" {
+            Mock Get-PHPInstallInfo {@{
+                Version = '8.1.0'
+                Arch = 'x64'
+                BuildType = 'ts'
+                InstallPath = 'C:\php\8.1.0'
+            }}
             Mock Is-Directory-Exists { return $true }
             # Act
             $result = Get-Current-PHP-Version
@@ -346,6 +391,12 @@ Describe "Get-Current-PHP-Version Function Tests" {
 Describe "Integration Tests" {
     Context "Real-world scenarios" {
         It "Should work end-to-end with actual file system" {
+            Mock Get-PHPInstallInfo {@{
+                Version = '8.2.0'
+                Arch = 'x64'
+                BuildType = 'ts'
+                InstallPath = 'TestDrive:\php\8.2.0'
+            }}
             # Arrange
             $testPhpPath = "TestDrive:\php\8.2.0"
             $testCurrentPath = "TestDrive:\php\current"

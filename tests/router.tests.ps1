@@ -1,8 +1,3 @@
-# Comprehensive Tests for PVM Actions
-
-# Load required modules and functions
-. "$PSScriptRoot\..\src\core\router.ps1"
-
 
 BeforeAll {
     Mock Write-Host {}
@@ -75,8 +70,14 @@ Describe "Invoke-PVMSetup Tests" {
 
 Describe "Invoke-PVMCurrent Tests" {
     BeforeEach {
-        Mock Get-Current-PHP-Version { @{ version = "8.2.0"; status = @{ "xdebug" = $true; "opcache" = $false }; path = "C:\PHP\8.2.0" } }
-        # Mock Write-Host { }
+        Mock Get-Current-PHP-Version { @{
+            version = "8.2.0"
+            arch = "x64"
+            buildType = "TS"
+            path = "C:\PHP\8.2.0"
+            status = @{ "xdebug" = $true; "opcache" = $false }
+        }}
+        Mock Write-Host { }
     }
 
     It "Should display current PHP version and extensions when version is set" {
@@ -139,7 +140,7 @@ Describe "Invoke-PVMList Tests" {
 Describe "Invoke-PVMInstall Tests" {
     BeforeEach {
         Mock Install-PHP { 0 }
-        # Mock Write-Host { }
+        Mock Write-Host { }
     }
 
     It "Should return -1 when no version is provided" {
@@ -165,6 +166,7 @@ Describe "Invoke-PVMInstall Tests" {
     It "Should install detected PHP version from the project" {
         $arguments = @("auto")
 
+        Mock Get-Matching-PHP-Versions { return @() }
         Mock Detect-PHP-VersionFromProject { return "8.1" }
         $result = Invoke-PVMInstall -arguments $arguments
         $result | Should -Be 0
@@ -173,6 +175,15 @@ Describe "Invoke-PVMInstall Tests" {
             $version -eq "8.1"
         }
     }
+    
+    It "Should return -1 when detected PHP version is already installed" {
+        $arguments = @("auto")
+        Mock Auto-Select-PHP-Version { return @{ code = 0; version = "8.2" } }
+
+        $result = Invoke-PVMInstall -arguments $arguments
+        
+        $result | Should -Be -1
+    }
 }
 
 Describe "Invoke-PVMUninstall Tests" {
@@ -180,7 +191,7 @@ Describe "Invoke-PVMUninstall Tests" {
         Mock Get-Current-PHP-Version { @{ version = "8.1.0" } }
         Mock Uninstall-PHP { @{ code = 0; message = "Uninstalled successfully" } }
         Mock Display-Msg-By-ExitCode { }
-        # Mock Write-Host { }
+        Mock Write-Host { }
         Mock Read-Host { }
     }
 
@@ -221,7 +232,7 @@ Describe "Invoke-PVMUse Tests" {
         Mock Auto-Select-PHP-Version { @{ code = 0; version = "8.2.0" } }
         Mock Update-PHP-Version { @{ code = 0; message = "Version updated" } }
         Mock Display-Msg-By-ExitCode { }
-        # Mock Write-Host { }
+        Mock Write-Host { }
     }
 
     It "Should return -1 when no version is provided" {
@@ -271,7 +282,7 @@ Describe "Invoke-PVMUse Tests" {
 Describe "Invoke-PVMIni Tests" {
     BeforeEach {
         Mock Invoke-PVMIniAction { 0 }
-        # Mock Write-Host { }
+        Mock Write-Host { }
     }
 
     It "Should return -1 when no action is provided" {
@@ -382,7 +393,10 @@ Describe "Invoke-PVMTest Tests" {
     }
     
     It "Should call Run-Tests with provided arguments" {
-        $result = Invoke-PVMTest -arguments @("TestFile.ps1", "TestFile2.ps1", "--coverage=80", "--verbosity=detailed", "--tag=unit")
+        $result = Invoke-PVMTest -arguments @(
+            "TestFile.ps1", "TestFile2.ps1",
+            "--coverage=80", "--verbosity=detailed", "--tag=unit", "--sort=coverage"
+        )
         $result | Should -Be 0
     }
     
@@ -395,6 +409,306 @@ Describe "Invoke-PVMTest Tests" {
         It "Should return -1 for negative coverage value" {
             $result = Invoke-PVMTest -arguments @("TestFile.ps1", "--coverage=-10")
             $result | Should -Be -1
+        }
+    }
+}
+
+Describe "Invoke-PVMProfile Tests" {
+    BeforeEach {
+        Mock Write-Host { }
+        Mock Save-PHP-Profile { 0 }
+        Mock Load-PHP-Profile { 0 }
+        Mock List-PHP-Profiles { 0 }
+        Mock Show-PHP-Profile { 0 }
+        Mock Delete-PHP-Profile { 0 }
+        Mock Export-PHP-Profile { 0 }
+        Mock Import-PHP-Profile { 0 }
+    }
+
+    Context "No action provided" {
+        It "Should return -1 when no action is provided" {
+            $arguments = @()
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be -1
+            
+            Assert-MockCalled Write-Host -ParameterFilter { 
+                $Object -like "*Please specify an action for 'pvm profile'*" -and 
+                $ForegroundColor -eq "Yellow" 
+            }
+        }
+    }
+
+    Context "Save action" {
+        It "Should return -1 when save action has no profile name" {
+            $arguments = @("save")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be -1
+            
+            Assert-MockCalled Write-Host -ParameterFilter { 
+                $Object -like "*Please provide a profile name: pvm profile save*" 
+            }
+        }
+
+        It "Should save profile with name only" {
+            $arguments = @("save", "myprofile")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Save-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile" -and $description -eq $null
+            }
+        }
+
+        It "Should save profile with name and description" {
+            $arguments = @("save", "myprofile", "This", "is", "my", "description")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Save-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile" -and 
+                $description -eq "This is my description"
+            }
+        }
+    }
+
+    Context "Load action" {
+        It "Should return -1 when load action has no profile name" {
+            $arguments = @("load")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be -1
+            
+            Assert-MockCalled Write-Host -ParameterFilter { 
+                $Object -like "*Please provide a profile name: pvm profile load*" 
+            }
+        }
+
+        It "Should load profile with provided name" {
+            $arguments = @("load", "myprofile")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Load-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile"
+            }
+        }
+        
+        It "Should take first and ignore extra arguments" {
+            $arguments = @("load", "myprofile", "to-be-ignored")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Load-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile"
+            }
+        }
+    }
+
+    Context "List action" {
+        It "Should list profiles without additional arguments" {
+            $arguments = @("list")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled List-PHP-Profiles -Times 1
+        }
+    }
+
+    Context "Show action" {
+        It "Should return -1 when show action has no profile name" {
+            $arguments = @("show")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be -1
+            
+            Assert-MockCalled Write-Host -ParameterFilter { 
+                $Object -like "*Please provide a profile name: pvm profile show*" 
+            }
+        }
+
+        It "Should show profile with provided name" {
+            $arguments = @("show", "myprofile")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Show-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile"
+            }
+        }
+        
+        It "Should take first and ignore extra arguments" {
+            $arguments = @("show", "myprofile", "to-be-ignored")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Show-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile"
+            }
+        }
+    }
+
+    Context "Delete action" {
+        It "Should return -1 when delete action has no profile name" {
+            $arguments = @("delete")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be -1
+            
+            Assert-MockCalled Write-Host -ParameterFilter { 
+                $Object -like "*Please provide a profile name: pvm profile delete*" 
+            }
+        }
+
+        It "Should delete profile with provided name" {
+            $arguments = @("delete", "myprofile")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Delete-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile"
+            }
+        }
+        
+        It "Should take first and ignore extra arguments" {
+            $arguments = @("delete", "myprofile", "to-be-ignored")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Delete-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile"
+            }
+        }
+    }
+
+    Context "Export action" {
+        It "Should return -1 when export action has no profile name" {
+            $arguments = @("export")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be -1
+            
+            Assert-MockCalled Write-Host -ParameterFilter { 
+                $Object -like "*Please provide a profile name: pvm profile export*" 
+            }
+        }
+
+        It "Should export profile with name only" {
+            $arguments = @("export", "myprofile")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Export-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile" -and $exportPath -eq $null
+            }
+        }
+
+        It "Should export profile with name and path" {
+            $arguments = @("export", "myprofile", "C:\exports\profile.json")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Export-PHP-Profile -Times 1 -ParameterFilter { 
+                $profileName -eq "myprofile" -and 
+                $exportPath -eq "C:\exports\profile.json"
+            }
+        }
+    }
+
+    Context "Import action" {
+        It "Should return -1 when import action has no file path" {
+            $arguments = @("import")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be -1
+            
+            Assert-MockCalled Write-Host -ParameterFilter { 
+                $Object -like "*Please provide a file path: pvm profile import*" 
+            }
+        }
+
+        It "Should import profile from file path only" {
+            $arguments = @("import", "C:\profiles\export.json")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Import-PHP-Profile -Times 1 -ParameterFilter { 
+                $importPath -eq "C:\profiles\export.json" -and $profileName -eq $null
+            }
+        }
+
+        It "Should import profile from file path with custom name" {
+            $arguments = @("import", "C:\profiles\export.json", "myimported")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Import-PHP-Profile -Times 1 -ParameterFilter { 
+                $importPath -eq "C:\profiles\export.json" -and 
+                $profileName -eq "myimported"
+            }
+        }
+    }
+
+    Context "Unknown action" {
+        It "Should return -1 for unknown action" {
+            $arguments = @("unknown")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be -1
+            
+            Assert-MockCalled Write-Host -ParameterFilter { 
+                $Object -like "*Unknown action 'unknown'*" -and 
+                $ForegroundColor -eq "Yellow" 
+            }
+        }
+
+        It "Should handle case-insensitive action names" {
+            $arguments = @("SAVE", "testprofile")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+            
+            Assert-MockCalled Save-PHP-Profile -Times 1
+        }
+    }
+
+    Context "Action success and failure returns" {
+        It "Should return 0 when Save-PHP-Profile succeeds" {
+            Mock Save-PHP-Profile { return 0 }
+            $arguments = @("save", "test")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 0
+        }
+
+        It "Should return -1 when Load-PHP-Profile fails" {
+            Mock Load-PHP-Profile { return -1 }
+            $arguments = @("load", "test")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be -1
+        }
+
+        It "Should return action result code from any profile action" {
+            Mock Delete-PHP-Profile { return 5 }
+            $arguments = @("delete", "test")
+            
+            $result = Invoke-PVMProfile -arguments $arguments
+            $result | Should -Be 5
         }
     }
 }
@@ -412,6 +726,7 @@ Describe "Get-Actions Tests" {
         Mock Invoke-PVMIni { }
         Mock Invoke-PVMLog { }
         Mock Invoke-PVMTest { }
+        Mock Invoke-PVMProfile { }
     }
 
     It "Should return ordered hashtable with all actions" {
@@ -518,6 +833,13 @@ Describe "Get-Actions Tests" {
             
             Assert-MockCalled Invoke-PVMTest -Times 1
         }
+        
+        It "Should execute profile action" {
+            $actions = Get-Actions -arguments @("save")
+            $actions["profile"].action.Invoke()
+            
+            Assert-MockCalled Invoke-PVMProfile -Times 1
+        }
     }
 }
 
@@ -532,7 +854,7 @@ Describe "Integration Tests" {
             Mock Get-Current-PHP-Version { @{ version = "8.2.0"; status = @{ "xdebug" = $true }; path = "C:\PHP\8.2.0" } }
             Mock Install-PHP { 0 }
             Mock Update-PHP-Version { @{ code = 0; message = "Version updated" } }
-            # Mock Write-Host { }
+            Mock Write-Host { }
         }
 
         It "Should handle complete workflow: setup -> install -> use -> current" {
@@ -566,7 +888,7 @@ Describe "Integration Tests" {
             Mock Setup-PVM { @{ code = 1; message = "Setup failed" } }
             Mock Optimize-SystemPath { 1 }
             Mock Display-Msg-By-ExitCode { }
-            # Mock Write-Host { }
+            Mock Write-Host { }
             
             $result = Invoke-PVMSetup
             $result | Should -Be 0

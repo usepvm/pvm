@@ -75,17 +75,17 @@ function Run-Test-File {
         $rawDuration = $testResult.Duration.TotalSeconds
         $duration = Format-Seconds -totalSeconds $rawDuration
         if ($duration -ne -1) {
-            $durationText = $duration
+            $durationText = '{0,5:0.0}' -f $duration
         }
         $message = (
-            'Passed : {0,-4} | Failed : {1,-4} | Duration : {2,-6}' -f
+            'Passed : {0,-4} | Failed : {1,-3} | Duration : {2,-5}' -f
             $testResult.PassedCount,
             $testResult.FailedCount,
             $durationText
         )
         if ($coverageRaw) {
             $message = (
-                'Passed : {0,-4} | Failed : {1,-4} | Duration : {2,-6} | Coverage : {3,-7}' -f
+                'Passed : {0,-4} | Failed : {1,-3} | Duration : {2,-5} | Coverage : {3,-7}' -f
                 $testResult.PassedCount,
                 $testResult.FailedCount,
                 $durationText,
@@ -160,6 +160,7 @@ function Run-Tests {
             $maxFileNameLength = ($testSummary.Name | Measure-Object -Maximum Length).Maximum
             $maxLineLength = $maxFileNameLength + 20  # padding
             
+            $testSummary = SortBy -data $testSummary -sortByColumn $options.sortBy
             $testSummary | ForEach-Object {
                 $label = "  - $($_.Name) "
                 $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
@@ -188,4 +189,40 @@ function Run-Tests {
     }
 }
 
+function SortBy {
+    param ($data, $sortByColumn = $null)
+    
+    if ($sortByColumn -ne $null) {
+        $direction = $sortByColumn -match "^-"
+        $sortByColumn = $sortByColumn -replace '-', ''
+    }
+    
+    switch ($sortByColumn) {
+        "duration" {
+            return $data | Sort-Object `
+                @{ Expression = {
+                        if ($null -eq $_.testResultData.duration) {
+                            [double]::PositiveInfinity
+                        } else {
+                            [double]$_.testResultData.duration
+                        }
+                }; Descending = $direction }
+        }
+        "coverage" {
+            return $data | Sort-Object `
+                @{ Expression = {
+                        if ($null -eq $_.testResultData.coverageRaw) {
+                            [double]::PositiveInfinity
+                        } else {
+                            [double]$_.testResultData.coverageRaw
+                        }
+                }; Descending = $direction }
+        }
+        "file" {
+            return $data | Sort-Object @{ Expression = { [string]$_.Name }; Descending = $direction }
+        }
+    }
+    
+    return $data;
+}
 

@@ -99,7 +99,7 @@ function Get-Extension-From-URL {
         
         if ($linksMatchnigExtName.Count -eq 0) {
             Write-Host "`nExtension '$extName' not found" -ForegroundColor DarkYellow
-            return -1
+            return $null
         }
         
         if ($linksMatchnigExtName.Count -eq 1) {
@@ -116,18 +116,18 @@ function Get-Extension-From-URL {
             $extIndex = $extIndex.Trim()
             if ([string]::IsNullOrWhiteSpace($extIndex)) {
                 Write-Host "`nInstallation cancelled"
-                return -1
+                return $null
             }
             
             if ($extIndex -lt 0 -or $extIndex -gt $linksMatchnigExtName.Length - 1) {
                 Write-Host "`nYou chose the wrong index: $extIndex" -ForegroundColor DarkYellow
-                return -1
+                return $null
             }
             
             $chosenItem = $linksMatchnigExtName[$extIndex]
             if (-not $chosenItem) {
                 Write-Host "`nYou chose the wrong index: $extIndex" -ForegroundColor DarkYellow
-                return -1
+                return $null
             }
         }
 
@@ -141,7 +141,7 @@ function Get-Extension-From-URL {
     
     if ($links.Count -eq 0) {
         Write-Host "`nNo versions found for $extName" -ForegroundColor DarkYellow
-        return -1
+        return $null
     }
     
     $formattedList = @()
@@ -158,11 +158,6 @@ function Get-Extension-From-URL {
 
                 # if ($fileName -notmatch "php_$extName-$version-") { return }
                 if ($fileName -notmatch "^php_$extName-[\d\.]+-$version-") { return }
-                
-                # $extVersion = $null
-                # if ($fileName -match "^php_$extName-[\d\.]+-$version-") {
-                #     $extVersion = $matches[1]
-                # }
                 
                 $formattedList += @{
                     href        = $_.href

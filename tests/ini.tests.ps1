@@ -349,7 +349,7 @@ Describe "Get-Extension-From-URL Tests" {
             
             $result = Get-Extension-From-URL -extName "cache" -version "8.2"
             
-            $result | Should -Be -1
+            $result | Should -Be $null
             Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
                 $Object -eq "`nExtension 'cache' not found"
             }
@@ -387,7 +387,7 @@ Describe "Get-Extension-From-URL Tests" {
             Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
                 $Object -eq "`nInstallation cancelled"
             }
-            $result | Should -Be -1
+            $result | Should -Be $null
         }
         
         It "Returns -1 when user does not chose an invalid index" {
@@ -400,7 +400,7 @@ Describe "Get-Extension-From-URL Tests" {
             Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
                 $Object -eq "`nYou chose the wrong index: -3"
             }
-            $result | Should -Be -1
+            $result | Should -Be $null
         }
         
         It "Returns -1 when no version found for extension" {
@@ -416,7 +416,7 @@ Describe "Get-Extension-From-URL Tests" {
             Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
                 $Object -eq "`nNo versions found for memcache"
             }
-            $result | Should -Be -1
+            $result | Should -Be $null
         }
     }
 }

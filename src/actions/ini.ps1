@@ -71,83 +71,122 @@ function Get-XDebug-FROM-URL {
 
 }
 
-function Get-Extension-From-URL {
+function Get-Extension-Matching-Categories {
+    param ($extName)
+    
+    $html_cat = Invoke-WebRequest -Uri $PECL_PACKAGES_URL
+    $linksMatchingExtName = @()
+    $resultCat = $html_cat.Links | Where-Object {
+        if (-not $_.href) { return $false }
+        
+        if ($_.href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+$') {
+            return $false
+        }
+        
+        $html = Invoke-WebRequest -Uri "$PECL_BASE_URL/$($_.href.TrimStart('/'))"
+        $resultLinks = $html.Links | Where-Object {
+            if (-not $_.href) { return $false }
+            return ($_.href -like "/package/*$extName*")
+        }
+        if ($resultLinks.Count -eq 0) {
+            return $false
+        }
+        $linksMatchingExtName += $resultLinks
+        return $true
+    }
+    
+    return $linksMatchingExtName
+}
+
+function Filter-Extension-Links-From-URL {
+    param ($extName)
+    
+    $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName"
+    $links = $html.Links | Where-Object {
+        $_.href -match "/package/$extName/([^/]+)/windows$"
+    }
+    
+    return $links 
+}
+
+function Get-Extension-Links-From-URL {
     param ($extName, $version)
     
     try {
-        $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName"
+        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version" -compute {
+            Filter-Extension-Links-From-URL -extName $extName
+        }
     } catch {
         Write-Host "`nExtension '$extName' not found, Loading matching extensions..."
-        # check by match
-        $html_cat = Invoke-WebRequest -Uri $PECL_PACKAGES_URL
-        $linksMatchnigExtName = @()
-        $resultCat = $html_cat.Links | Where-Object {
-            if (-not $_.href) { return $false }
-            if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+$') {
-                $html = Invoke-WebRequest -Uri "$PECL_BASE_URL/$($_.href.TrimStart('/'))"
-                $resultLinks = $html.Links | Where-Object {
-                    if (-not $_.href) { return $false }
-                    return ($_.href -like "/package/*$extName*")
-                }
-                if ($resultLinks.Count -eq 0) {
-                    return $false
-                }
-                $linksMatchnigExtName += $resultLinks
-                return $true
-            }
+        
+        $linksMatchingExtName = Get-OrUpdateCache -cacheFileName "matching_categories_for_$($extName)" -compute {
+            Get-Extension-Matching-Categories -extName $extName
         }
         
-        if ($linksMatchnigExtName.Count -eq 0) {
+        if ($linksMatchingExtName.Count -eq 0) {
             Write-Host "`nExtension '$extName' not found" -ForegroundColor DarkYellow
             return $null
         }
         
-        if ($linksMatchnigExtName.Count -eq 1) {
-            $chosenItem = $linksMatchnigExtName[0]
+        if ($linksMatchingExtName.Count -eq 1) {
+            $chosenItem = $($linksMatchingExtName)
         } else {
             Write-Host "`nMatching '$extName' extension:"
             $index = 0
-            $linksMatchnigExtName | ForEach-Object {
+            $linksMatchingExtName | ForEach-Object {
                 $extItem = $_.href -replace "/package/", ""
                 Write-Host "[$index] $extItem"
                 $index++
             }
-            $extIndex = Read-Host "`nInsert the [number] you want to install"
-            $extIndex = $extIndex.Trim()
-            if ([string]::IsNullOrWhiteSpace($extIndex)) {
-                Write-Host "`nInstallation cancelled"
-                return $null
-            }
             
-            if ($extIndex -lt 0 -or $extIndex -gt $linksMatchnigExtName.Length - 1) {
-                Write-Host "`nYou chose the wrong index: $extIndex" -ForegroundColor DarkYellow
-                return $null
-            }
+            do {
+                $choiceRaw = Read-Host "`nInsert the [number] you want to install"
+                $choiceRaw = $choiceRaw.Trim()
+                if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
+                    Write-Host "`nInstallation cancelled"
+                    return $null
+                }
+
+                $choice = $null
+                if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
+                    Write-Host "Please enter a valid positive number." -ForegroundColor Yellow
+                    continue
+                }
+
+                if ($choice -lt 0 -or $choice -gt $linksMatchingExtName.Length - 1) {
+                    Write-Host "Number must be between 0 and $($matchesListStatus.Length - 1)." -ForegroundColor Yellow
+                    continue
+                }
+
+                break
+            } while ($true)
             
-            $chosenItem = $linksMatchnigExtName[$extIndex]
+            $chosenItem = $linksMatchingExtName[$choice]
             if (-not $chosenItem) {
-                Write-Host "`nYou chose the wrong index: $extIndex" -ForegroundColor DarkYellow
+                Write-Host "`nYou chose the wrong index: $choice" -ForegroundColor DarkYellow
                 return $null
             }
         }
 
         $extName = $chosenItem.href -replace "/package/", ""
-        $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName"
+        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version" -compute {
+            Filter-Extension-Links-From-URL -extName $extName
+        }
     }
     
-    $links = $html.Links | Where-Object {
-        $_.href -match "/package/$extName/([^/]+)/windows$"
+    return @{
+        extName = $extName
+        links = $links
     }
-    
-    if ($links.Count -eq 0) {
-        Write-Host "`nNo versions found for $extName" -ForegroundColor DarkYellow
-        return $null
-    }
+}
+
+function Get-Packages-Links-From-Source {
+    param( $extName, $version)
     
     $formattedList = @()
-    $links | ForEach-Object {
-        $extVersion = $_.href -replace "/package/$extName/", "" -replace "/windows", ""
+    $linksObj.links | ForEach-Object {
         try {
+            $extVersion = $_.href -replace "/package/$extName/", "" -replace "/windows", ""
             $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName/$extVersion/windows"
             $html.Links | ForEach-Object {
                 if (-not $_.href) { return }
@@ -179,6 +218,26 @@ function Get-Extension-From-URL {
     }
     
     return $formattedList
+}
+
+function Get-Extension-From-URL {
+    param ($extName, $version)
+    
+    $linksObj = Get-Extension-Links-From-URL -extName $extName -version $version
+    
+    if (($linksObj.Count -eq 0) -or ($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
+        Write-Host "`nNo versions found for $extName" -ForegroundColor DarkYellow
+        return $null
+    }
+    
+    $formattedList = Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_$version" -compute {
+        Get-Packages-Links-From-Source -extName $linksObj.extName -version $version
+    }
+    
+    return @{
+        extName = $linksObj.extName
+        data = $formattedList
+    }
 }
 
 function Add-Missing-PHPExtension {
@@ -1048,6 +1107,8 @@ function Install-XDebug-Extension {
             Add-Content -Path $iniPath -Value $xDebugConfig
         }
         
+        Write-Host "`nXDebug installed successfully" -ForegroundColor DarkGreen
+        
         return 0
     } catch {
         $logged = Log-Data -data @{
@@ -1064,16 +1125,14 @@ function Install-Extension {
     try {
         $currentVersionObj = Get-Current-PHP-Version
         $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
-        $extensionLinks = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$currentVersion" -compute {
-            Get-Extension-From-URL -extName $extName -version $currentVersion
-        }
+        $extensionLinksObj = Get-Extension-From-URL -extName $extName -version $currentVersion
         
-        if ($null -eq $extensionLinks -or $extensionLinks.Count -eq 0) {
+        if ($null -eq $extensionLinksObj -or $extensionLinksObj.Count -eq 0) {
             Write-Host "`nNo packages found for $extName" -ForegroundColor DarkYellow
             return -1
         }
         
-        $extensionLinks = $extensionLinks | Where-Object {
+        $extensionLinks = $extensionLinksObj.data | Where-Object {
             if ($currentVersionObj.arch -ne $null) {
                 if ($_.arch -ne $currentVersionObj.arch) { return $false }
             }
@@ -1085,6 +1144,7 @@ function Install-Extension {
             return $true
         }
         
+        $extName = $extensionLinksObj.extName
         if ($extensionLinks.Length -eq 1) {
             $chosenItem = $($extensionLinks)
         } else {
@@ -1124,6 +1184,7 @@ function Install-Extension {
                     Write-Host " [$($_.index)] $text"
                 }
             }
+            Write-Host "`nThis is a partial list. For a complete list, visit: $PECL_PACKAGE_ROOT_URL/$extName"
 
             $packageIndex = Read-Host "`nInsert the [number] you want to install"
             $packageIndex = $packageIndex.Trim()
@@ -1169,6 +1230,8 @@ function Install-Extension {
             Write-Host "`nFailed to add $extName" -ForegroundColor DarkYellow
             return -1
         }
+        Write-Host "`n$extName installed successfully" -ForegroundColor DarkGreen
+        
         return 0
     } catch {
         $logged = Log-Data -data @{
@@ -1194,14 +1257,8 @@ function Install-IniExtension {
             $code = Install-Extension -iniPath $iniPath -extName $extName
         }
         
-        if ($code -ne 0) {
-            throw "`nFailed to install $extName"
-        }
-        
-        Write-Host "`n$extName installed successfully" -ForegroundColor DarkGreen
-        return 0
+        return $code
     } catch {
-        Write-Host "`nFailed to install $extName" -ForegroundColor DarkYellow
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to install '$extName'"
             exception = $_

@@ -51,10 +51,10 @@ function Get-PHP-Versions {
                 continue
             }
             if ($null -ne $arch) {
-                $fetched = $fetched | Where-Object { $_.href -match $arch }
+                $fetched = $fetched | Where-Object { $_.arch -eq $arch }
             }
             if ($null -ne $buildType) {
-                $fetched = $fetched | Where-Object { $_.href -match $buildType }
+                $fetched = $fetched | Where-Object { $_.buildType -eq $buildType }
             }
             if ($fetched.Count -eq 0) {
                 continue

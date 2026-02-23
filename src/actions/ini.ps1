@@ -119,9 +119,7 @@ function Get-Extension-Links-From-URL {
     } catch {
         Write-Host "`nExtension '$extName' not found, Loading matching extensions..."
         
-        $linksMatchingExtName = Get-OrUpdateCache -cacheFileName "matching_categories_for_$($extName)" -compute {
-            Get-Extension-Matching-Categories -extName $extName
-        }
+        $linksMatchingExtName = Get-Extension-Matching-Categories -extName $extName
         
         if ($linksMatchingExtName.Count -eq 0) {
             Write-Host "`nExtension '$extName' not found" -ForegroundColor DarkYellow

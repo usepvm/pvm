@@ -178,11 +178,11 @@ function Get-Extension-Links-From-URL {
     }
 }
 
-function Get-Packages-Links-From-Source {
-    param( $extName, $version)
+function Get-Packages-From-Source-Links {
+    param( $extName, $version, $links)
     
     $formattedList = @()
-    $linksObj.links | ForEach-Object {
+    $links | ForEach-Object {
         try {
             $extVersion = $_.href -replace "/package/$extName/", "" -replace "/windows", ""
             $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName/$extVersion/windows"
@@ -228,8 +228,8 @@ function Get-Extension-From-URL {
         return $null
     }
     
-    $formattedList = Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_$version" -compute {
-        Get-Packages-Links-From-Source -extName $linksObj.extName -version $version
+    $formattedList = Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_php_$version" -compute {
+        Get-Packages-From-Source-Links -extName $linksObj.extName -version $version -links $linksObj.links
     }
     
     return @{

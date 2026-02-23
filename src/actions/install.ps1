@@ -211,7 +211,7 @@ function Configure-Opcache {
 }
 
 function Select-Version {
-    param ($matchingVersions, $arch = $null)
+    param ($matchingVersions, $version, $arch = $null, $buildType = $null)
 
     $matchingVersionsPartialList = [ordered]@{}
     $matchingVersions.GetEnumerator() | ForEach-Object {
@@ -223,9 +223,12 @@ function Select-Version {
         # There is exactly one key with one item
         $selectedVersionObject = $matchingKeys
     } else {
-        $text = "`nMatching PHP versions:"
+        $text = "`nMatching PHP versions: $version"
         if ($null -ne $arch) {
-            $text += " ($arch)"
+            $text += " $arch"
+        }
+        if ($null -ne $buildType) {
+            $text += " $buildType"
         }
         Write-Host $text
         $index = 0
@@ -293,6 +296,7 @@ function Install-PHP {
                     if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
                         $isCurrent = "(Current)"
                     }
+                    $metaData = $metaData.Trim()
                     $versionNumber = "$versionNumber ".PadRight(15, '.')
                     Write-Host " $versionNumber $metaData $isCurrent"
                 }
@@ -317,7 +321,7 @@ function Install-PHP {
             return @{ code = -1; message = $msg }
         }
 
-        $selectedVersionObject = Select-Version -matchingVersions $matchingVersions -arch $arch
+        $selectedVersionObject = Select-Version -matchingVersions $matchingVersions -version $version -arch $arch -buildType $buildType
         if (-not $selectedVersionObject) {
             return @{ code = -1; message = "Installation cancelled" }
         }

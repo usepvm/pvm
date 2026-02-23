@@ -543,13 +543,13 @@ Describe "Select-Version Tests" {
         Mock Write-Host { }
         $versions = @{
             "Archives" = @(
-                @{ version = "8.1.0"; fileName = "php-8.1.0.zip" },
-                @{ version = "8.1.1"; fileName = "php-8.1.1.zip" }
+                @{ version = "8.1.0"; arch = "x64"; buildType = "TS"; fileName = "php-8.1.0.zip" },
+                @{ version = "8.1.1"; arch = "x64"; buildType = "TS"; fileName = "php-8.1.1.zip" }
             )
         }
         $global:MockUserInput = "1"
 
-        $result = Select-Version -matchingVersions $versions
+        $result = Select-Version -matchingVersions $versions -version "8.1" -arch "x64" -buildType "TS"
         
         $result.version | Should -Be "8.1.1"
     }
@@ -589,7 +589,12 @@ Describe "Install-PHP Integration Tests" {
     
     It "Returns -1 when user declines family version install" {
         Mock Get-Current-PHP-Version { return @{ version = "7.4.9" } }
-        Mock Get-Matching-PHP-Versions { return @("7.4.9", "8.0.9", "8.1.9", "8.1.12") }
+        Mock Get-Matching-PHP-Versions { return @(
+            @{ version = "7.4.9"; arch = "x64"; buildType = "TS"; fileName = "php-7.4.9-Win32-vs16-x64.zip" },
+            @{ version = "8.0.9"; arch = "x64"; buildType = "TS"; fileName = "php-8.0.9-Win32-vs16-x64.zip" },
+            @{ version = "8.1.9"; arch = "x64"; buildType = "TS"; fileName = "php-8.1.9-Win32-vs16-x64.zip" },
+            @{ version = "8.1.12"; arch = "x64"; buildType = "TS"; fileName = "php-8.1.12-Win32-vs16-x64.zip" }
+        ) }
         $global:MockUserInput = "n"
     
         $result = Install-PHP -version "8"

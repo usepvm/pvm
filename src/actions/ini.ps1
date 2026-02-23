@@ -222,7 +222,7 @@ function Get-Extension-From-URL {
     
     $linksObj = Get-Extension-Links-From-URL -extName $extName -version $version
     
-    if (($linksObj.Count -eq 0) -or ($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
+    if (($null -eq $linksObj) -or ($linksObj.Count -eq 0) -or ($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
         Write-Host "`nNo versions found for $extName" -ForegroundColor DarkYellow
         return $null
     }

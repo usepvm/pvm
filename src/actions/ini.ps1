@@ -152,7 +152,7 @@ function Get-Extension-Links-From-URL {
                 }
 
                 if ($choice -lt 0 -or $choice -gt $linksMatchingExtName.Length - 1) {
-                    Write-Host "Number must be between 0 and $($matchesListStatus.Length - 1)." -ForegroundColor Yellow
+                    Write-Host "Number must be between 0 and $($linksMatchingExtName.Length - 1)." -ForegroundColor Yellow
                     continue
                 }
 

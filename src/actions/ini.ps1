@@ -204,7 +204,6 @@ function Get-Packages-From-Source-Links {
                     buildType   = if ($fileName -match '(?i)(?:^|-)nts(?:-|\.zip$)') { 'NTS' } else { 'TS' }
                     compiler    = if ($fileName -match '(?i)\b(vs|vc)\d+\b') { $matches[0].ToUpper() } else { 'unknown' }
                     fileName    = $fileName
-                    outerHTML   = $_.outerHTML
                 }
             }
         } catch {

@@ -263,6 +263,49 @@ Describe "Get-Packages-From-Source-Links Tests" {
     }
 }
 
+Describe "Get-Extension-Matching-Categories-By-Page Tests" {
+    It "Returns matching categories links by page" {
+        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+            return @{
+                Content = "Mocked PHP extension Caching content"
+                Links = @(
+                    @{ href = "/package/APC" }
+                    @{ href = "/package/APCu" }
+                    @{ href = "/package/memcache" }
+                    @{ href = "/package/memcached" }
+                )
+            }
+        }
+        
+        $result = Get-Extension-Matching-Categories-By-Page -extName "mem" -link "/packages.php?catpid=3&amp;catname=Caching" -page 1
+        
+        $result.resultLinks.Count | Should -Be 2
+        $result.resultLinks[0].href | Should -Be "/package/memcache"
+        $result.resultLinks[1].href | Should -Be "/package/memcached"
+        $result.hasMore | Should -Be $false
+    }
+    
+    It "Sets hasMore to true when next page link exists" {
+        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+            return @{
+                Content = "Mocked PHP extension Caching content"
+                Links = @(
+                    @{ href = $null }
+                    @{ href = "/packages.php?catpid=3&amp;catname=Caching&pageID=2" }
+                    @{ href = "/package/APC" }
+                    @{ href = "/package/APCu" }
+                    @{ href = "/package/memcache" }
+                    @{ href = "/package/memcached" }
+                )
+            }
+        }
+        
+        $result = Get-Extension-Matching-Categories-By-Page -extName "mem" -link "/packages.php?catpid=3&amp;catname=Caching" -page 1
+        
+        $result.hasMore | Should -Be $true
+    }
+}
+
 Describe "Get-Extension-Matching-Categories Tests" {
     BeforeAll {
         Mock Invoke-WebRequest -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
@@ -306,6 +349,22 @@ Describe "Get-Extension-Matching-Categories Tests" {
         $result.Count | Should -Be 2
         $result[0].href | Should -Be "/package/memcache"
         $result[1].href | Should -Be "/package/memcached"
+    }
+    
+    It "Loops for next page when hasMore is true" {
+        Mock Get-Extension-Matching-Categories-By-Page {
+            if ($link -eq "/packages.php?catpid=3&amp;catname=Caching") {
+                if ($page -eq 1) {
+                    return @{ hasMore = $true; resultLinks = @( @{ href = "/package/memcache" } ) }
+                } else {
+                    return @{ hasMore = $false; resultLinks = @( @{ href = "/package/memcached" } ) }
+                }
+            }
+        }
+        
+        $result = Get-Extension-Matching-Categories -extName "mem"
+        
+        $result.Count | Should -Be 2
     }
 }
 

@@ -71,6 +71,27 @@ function Get-XDebug-FROM-URL {
 
 }
 
+function Get-Extension-Matching-Categories-By-Page {
+    param ($extName, $link, $page = 1)
+    
+    $html = Invoke-WebRequest -Uri "$PECL_BASE_URL/$($link.TrimStart('/'))&pageID=$page"
+    $hasMore = $false
+    $resultLinks = $html.Links | Where-Object {
+        if (-not $_.href) { return $false }
+        if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+&pageID=(\d+)$') {
+            $hasMore = ($page -eq ($matches[1] - 1))
+            return $false
+        }
+        
+        return ($_.href -like "/package/*$extName*")
+    }
+    
+    return @{
+        hasMore = $hasMore
+        resultLinks = $resultLinks
+    }
+}
+
 function Get-Extension-Matching-Categories {
     param ($extName)
     
@@ -79,20 +100,25 @@ function Get-Extension-Matching-Categories {
     $resultCat = $html_cat.Links | Where-Object {
         if (-not $_.href) { return $false }
         
-        if ($_.href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+$') {
+        if ($_.href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
             return $false
         }
         
-        $html = Invoke-WebRequest -Uri "$PECL_BASE_URL/$($_.href.TrimStart('/'))"
-        $resultLinks = $html.Links | Where-Object {
-            if (-not $_.href) { return $false }
-            return ($_.href -like "/package/*$extName*")
-        }
-        if ($resultLinks.Count -eq 0) {
-            return $false
-        }
-        $linksMatchingExtName += $resultLinks
-        return $true
+        $page = 1
+        $category = $matches[1] -replace '\+', ' '
+        Write-Host "- Checking category '$category'..." -ForegroundColor Gray
+        do {
+            $hasMore = $false
+            $result = Get-Extension-Matching-Categories-By-Page -extName $extName -link $_.href -page $page
+            $hasMore = $result.hasMore
+            $page++
+            
+            if ($result.resultLinks.Count -gt 0) {
+                $linksMatchingExtName += $result.resultLinks
+            }
+        } while ($hasMore)
+        
+        return $false
     }
     
     return $linksMatchingExtName

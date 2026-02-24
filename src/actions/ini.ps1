@@ -1297,34 +1297,59 @@ function Install-IniExtension {
     }
 }
 
+function Get-Extension-Categories-By-Page {
+    param ($extCategory, $link, $page = 1)
+    
+    $availableExtensions = @()
+    $html = Invoke-WebRequest -Uri "$PECL_BASE_URL/$($link.TrimStart('/'))&pageID=$page"
+    $hasMore = $false
+    $resultLinks = $html.Links | Where-Object {
+        if (-not $_.href) { return $false }
+        if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+&pageID=(\d+)$') {
+            $hasMore = ($page -eq ($matches[1] - 1))
+            return $false
+        }
+        if ($_.href -notmatch '^/package/[A-Za-z0-9_]+$') {
+            return $false
+        }
+        $extName = ($_.href -replace '/package/', '').Trim()
+        $_ | Add-Member -NotePropertyName "extName" -NotePropertyValue $extName -Force
+        $_ | Add-Member -NotePropertyName "extCategory" -NotePropertyValue $extCategory -Force
+        $availableExtensions += $_
+        return $true
+    }
+    
+    return @{
+        hasMore = $hasMore
+        availableExtensions = $availableExtensions
+    }
+}
+
 function Get-PHPExtensions-From-Source {
     $availableExtensions = @{}
     try {
         $html_cat = Invoke-WebRequest -Uri $PECL_PACKAGES_URL
         $resultCat = $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
-            if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+$') {
-                $extCategory = ($_.outerHTML -replace '<[^>]*>', '').Trim()
-                $availableExtensions[$extCategory] = @()
-                
-                # fetch the extensions from the category
-                $html = Invoke-WebRequest -Uri "$PECL_BASE_URL/$($_.href.TrimStart('/'))"
-                $resultLinks = $html.Links | Where-Object {
-                    if (-not $_.href) { return $false }
-                    if ($_.href -match '^/package/[A-Za-z0-9_]+$') {
-                        $extName = ($_.href -replace '/package/', '').Trim()
-                        $_ | Add-Member -NotePropertyName "extName" -NotePropertyValue $extName -Force
-                        $_ | Add-Member -NotePropertyName "extCategory" -NotePropertyValue $extCategory -Force
-                        $availableExtensions[$extCategory] += $_
-                        return $true
-                    }
-                }
-                if ($availableExtensions[$extCategory].Count -eq 0) {
-                    $availableExtensions.Remove($extCategory)
-                }
-                return $true
+            
+            if ($_.href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
+                return $false
             }
-            return $false
+            
+            $page = 1
+            $extCategory = $matches[1] -replace '\+', ' '
+            do {
+                $hasMore = $false
+                $result = Get-Extension-Categories-By-Page -extCategory $extCategory -link $_.href -page $page
+                $availableExtensions[$extCategory] += $result.availableExtensions
+                $hasMore = $result.hasMore
+                $page++
+            } while ($hasMore)
+            
+            if ($availableExtensions[$extCategory].Count -eq 0) {
+                $availableExtensions.Remove($extCategory)
+            }
+            return $true
         }
         $availableExtensions["XDebug"] = @(
             @{

@@ -280,31 +280,22 @@ Describe "Get-Extension-Matching-Categories Tests" {
                 )
             }
         }
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=1&amp;catname=Authentication" } -MockWith {
-            return @{
-                Content = "Mocked PHP extension Auth content"
-                Links = @(
-                    @{ href = $null }
-                    @{ href = "/package/courierauth" }
-                    @{ href = "/package/krb5" }
-                )
+        Mock Get-Extension-Matching-Categories-By-Page {
+            param ($link)
+            if ($link -eq "/packages.php?catpid=1&amp;catname=Authentication") {
+                return @{ hasMore = $false; resultLinks = @() }
             }
-        }
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching" } -MockWith {
-            return @{
-                Content = "Mocked PHP extension Caching content"
-                Links = @(
-                    @{ href = "/package/APC" }
-                    @{ href = "/package/APCu" }
-                    @{ href = "/package/memcache" }
-                    @{ href = "/package/memcached" }
-                )
+            if ($link -eq "/packages.php?catpid=3&amp;catname=Caching") {
+                return @{
+                    hasMore = $false
+                    resultLinks = @(
+                        @{ href = "/package/memcache" }
+                        @{ href = "/package/memcached" }
+                    )
+                }
             }
-        }
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=7&amp;catname=EmptyCat" } -MockWith {
-            return @{
-                Content = "Mocked PHP extension EmptyCat content"
-                Links = @()
+            if ($link -eq "/packages.php?catpid=7&amp;catname=EmptyCat") {
+                return @{ hasMore = $false; resultLinks = @() }
             }
         }
     }
@@ -450,7 +441,7 @@ Describe "Get-Extension-From-URL Tests" {
         Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
             $Object -eq "`nNo versions found for cache"
         }
-        $result | Should -Be $null
+        $result.data | Should -Be $null
     }
 }
 
@@ -1147,6 +1138,23 @@ Describe "Install-Extension" {
         }
         Mock Move-Item { }
         Mock Add-Missing-PHPExtension { return -1 }
+        
+        $code = Install-Extension -iniPath $testIniPath -extName "curl"
+        $code | Should -Be -1
+    }
+    
+    It "Returns -1 when no extension matching installed php version (arch & build type)" {
+        Mock Get-Current-PHP-Version { return @{ version = "8.2.0"; path = "TestDrive:\php\8.2.0"; arch = "x64"; buildType = "ts" }}
+        Mock Get-Extension-From-URL {
+            return @{
+                extName = "curl"
+                data = @(
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = "x86"; buildType = "ts" ; version = "8.2"; extVersion = "1.4.0" }
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = "x86"; buildType = "nts" ; version = "8.2"; extVersion = "1.4.0" }
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = "x64"; buildType = "nts" ; version = "8.2"; extVersion = "1.4.0" }
+                )
+            }
+        }
         
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1

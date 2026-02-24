@@ -223,8 +223,9 @@ function Get-Extension-From-URL {
     $linksObj = Get-Extension-Links-From-URL -extName $extName -version $version
     
     if (($null -eq $linksObj) -or ($linksObj.Count -eq 0) -or ($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
+        $extName = if ($linksObj -and $linksObj.extName) { $linksObj.extName } else { $extName }
         Write-Host "`nNo versions found for $extName" -ForegroundColor DarkYellow
-        return $null
+        return @{ extName = $extName; data = $null }
     }
     
     $formattedList = Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_php_$version" -compute {
@@ -1124,7 +1125,8 @@ function Install-Extension {
         $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
         $extensionLinksObj = Get-Extension-From-URL -extName $extName -version $currentVersion
         
-        if ($null -eq $extensionLinksObj -or $extensionLinksObj.Count -eq 0) {
+        if (($null -eq $extensionLinksObj) -or ($extensionLinksObj.Count -eq 0) -or ($null -eq $extensionLinksObj.data) -or ($extensionLinksObj.data.Count -eq 0)) {
+            $extName = if ($extensionLinksObj) { $extensionLinksObj.extName } else { $extName }
             Write-Host "`nNo packages found for $extName" -ForegroundColor DarkYellow
             return -1
         }

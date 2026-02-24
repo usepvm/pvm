@@ -1141,6 +1141,11 @@ function Install-Extension {
             return $true
         }
         
+        if ($null -eq $extensionLinks -or $extensionLinks.Count -eq 0) {
+            Write-Host "`nNo packages found for '$extName' matching current PHP architecture/build type" -ForegroundColor DarkYellow
+            return -1
+        }
+        
         $extName = $extensionLinksObj.extName
         if ($extensionLinks.Length -eq 1) {
             $chosenItem = $($extensionLinks)

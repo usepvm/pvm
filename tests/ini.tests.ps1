@@ -261,6 +261,14 @@ Describe "Get-Packages-From-Source-Links Tests" {
         $result[4].buildType | Should -Be "NTS"
         $result[5].compiler | Should -Be "unknown"
     }
+    
+    It "Handles exception gracefully" {
+        Mock Invoke-WebRequest { throw "Network error" }
+        
+        $result = Get-Packages-From-Source-Links -extName "memcache" -version "8.2" -links @( @{ href = "/package/memcache/3.4.0/windows" } )
+        
+        $result.Count | Should -Be 0
+    }
 }
 
 Describe "Get-Extension-Matching-Categories-By-Page Tests" {

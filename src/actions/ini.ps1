@@ -1429,7 +1429,7 @@ function List-PHP-Extensions {
                     }
                 }
                 if ($searchResult.Count -gt 0) {
-                    $availableExtensionsPartialList[$_.Name] = $searchResult | Select-Object -Last 10
+                    $availableExtensionsPartialList[$_.Name] = $searchResult # | Select-Object -Last 10
                 }
             }
             
@@ -1452,8 +1452,32 @@ function List-PHP-Extensions {
                 $key  = "$($_.Key) "
                 $vals = ($_.Value | ForEach-Object { $_.extName }) -join ", "
 
-                $line  = $key.PadRight($maxLineLength, '.') + " $vals"
-                Write-Host $line
+                $label = "  $key"
+                $maxDescLength = $Host.UI.RawUI.WindowSize.Width - ($maxLineLength + 20)
+                if ($maxDescLength -lt 100) { $maxDescLength = 100 }
+
+                $descLines = @()
+                $remaining = $vals
+                while ($remaining.Length -gt $maxDescLength) {
+                    $breakPos = $remaining.LastIndexOf(' ', $maxDescLength)
+                    if ($breakPos -lt 0) { $breakPos = $maxDescLength }
+                    $descLines += $remaining.Substring(0, $breakPos)
+                    $remaining = $remaining.Substring($breakPos).Trim()
+                }
+                if ($remaining) { $descLines += $remaining }
+
+                if ($descLines.Count -eq 0) {
+                    $line = $label.PadRight($maxLineLength, '.')
+                    Write-Host $line
+                } else {
+                    $line = $label.PadRight($maxLineLength, '.') + " $($descLines[0])"
+                    Write-Host $line
+
+                    $indent = ' ' * ($maxLineLength + 1)
+                    for ($i = 1; $i -lt $descLines.Count; $i++) {
+                        Write-Host "$indent$($descLines[$i])"
+                    }
+                }
             }
             
             $msg = "`nThis is a partial list. For a complete list, visit:"

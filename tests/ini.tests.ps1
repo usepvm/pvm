@@ -1386,22 +1386,57 @@ Describe "Install-IniExtension" {
     }
 }
 
+Describe "Get-Extension-Categories-By-Page Tests" {
+    It "Returns extensions links by page" {
+        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+            return @{
+                Content = "Mocked PHP extension Caching content"
+                Links = @(
+                    @{ href = "/package/APC" }
+                    @{ href = "/package/APCu" }
+                    @{ href = "/package/memcache" }
+                    @{ href = "/package/memcached" }
+                )
+            }
+        }
+        
+        $result = Get-Extension-Categories-By-Page -extCategory "Caching" -link "/packages.php?catpid=3&amp;catname=Caching" -page 1
+        
+        $result.availableExtensions.Count | Should -Be 4
+        $result.availableExtensions[0].href | Should -Be "/package/APC"
+        $result.availableExtensions[1].href | Should -Be "/package/APCu"
+        $result.availableExtensions[2].href | Should -Be "/package/memcache"
+        $result.availableExtensions[3].href | Should -Be "/package/memcached"
+        $result.hasMore | Should -Be $false
+    }
+    
+    It "Sets hasMore to true when more pages are available" {
+        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+            return @{
+                Content = "Mocked PHP extension Caching content"
+                Links = @(
+                    @{ href = $null }
+                    @{ href = "random_link.php" }
+                    @{ href = "/packages.php?catpid=3&amp;catname=Caching&pageID=2" }
+                    @{ href = "/package/APC" }
+                    @{ href = "/package/APCu" }
+                    @{ href = "/package/memcache" }
+                    @{ href = "/package/memcached" }
+                )
+            }
+        }
+        
+        $result = Get-Extension-Categories-By-Page -extCategory "Caching" -link "/packages.php?catpid=3&amp;catname=Caching" -page 1
+        
+        $result.hasMore | Should -Be $true
+    }
+}
+
 Describe "Get-PHPExtensions-From-Source" {
     BeforeAll {
         Mock Cache-Data { return 0 }
-        $global:MockFileSystem = @{
-            Directories = @()
-            Files = @{}
-            WebResponses = @{}
-            DownloadFails = $false
-        }
-    }
-    
-    BeforeEach {
-        $global:getRandomFile = $false
-        $global:MockFileSystem.DownloadFails = $false
-        $global:MockFileSystem.WebResponses = @{
-            $PECL_PACKAGES_URL = @{
+        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+            return @{
                 Content = "Mocked PHP extensions content"
                 Links = @(
                     @{ href = $null }
@@ -1414,24 +1449,29 @@ Describe "Get-PHPExtensions-From-Source" {
                         outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>' }
                 )
             }
-            "$($PECL_PACKAGES_URL)?catpid=1&amp;catname=Authentication" = @{
-                Content = "Mocked PHP extension Auth content"
-                Links = @(
-                    @{ href = $null }
-                    @{ href = "/package/courierauth" }
-                    @{ href = "/package/krb5" }
-                )
+        }
+        Mock Get-Extension-Categories-By-Page {
+            param ($link)
+            if ($link -eq "/packages.php?catpid=1&amp;catname=Authentication") {
+                return @{
+                    hasMore = $false
+                    availableExtensions = @(
+                        @{ href = "/package/courierauth" }
+                        @{ href = "/package/krb5" }
+                    )
+                }
             }
-            "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching" = @{
-                Content = "Mocked PHP extension Caching content"
-                Links = @(
-                    @{ href = "/package/APC" }
-                    @{ href = "/package/APCu" }
-                )
+            if ($link -eq "/packages.php?catpid=3&amp;catname=Caching") {
+                return @{
+                    hasMore = $false
+                    availableExtensions = @(
+                        @{ href = "/package/memcache" }
+                        @{ href = "/package/memcached" }
+                    )
+                }
             }
-            "$($PECL_PACKAGES_URL)?catpid=7&amp;catname=EmptyCat" = @{
-                Content = "Mocked PHP extension EmptyCat content"
-                Links = @()
+            if ($link -eq "/packages.php?catpid=7&amp;catname=EmptyCat") {
+                return @{ hasMore = $false; availableExtensions = @() }
             }
         }
     }
@@ -1442,7 +1482,7 @@ Describe "Get-PHPExtensions-From-Source" {
     }
     
     It "Handles thrown exception" {
-        $global:MockFileSystem.DownloadFails = $true
+        Mock Get-Extension-Categories-By-Page { throw "Network error" }
         $list = Get-PHPExtensions-From-Source
         $list.Count | Should -Be 0
     }

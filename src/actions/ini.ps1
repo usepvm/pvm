@@ -220,7 +220,7 @@ function Get-Packages-From-Source-Links {
                 if ($fileName -notmatch "^php_$extName-.*\.zip$") { return }
 
                 # if ($fileName -notmatch "php_$extName-$version-") { return }
-                if ($fileName -notmatch "^php_$extName-[\d\.]+-$version-") { return }
+                if ($fileName -notmatch "^php_$extName-[\d\.]+(?:[a-z]+\d+)?-$version-") { return }
                 
                 $formattedList += @{
                     href        = $_.href
@@ -1185,8 +1185,23 @@ function Install-Extension {
                 Group-Object extVersion |
                 Sort-Object `
                     @{ Expression = {
-                            # extract numeric version
-                            [version]($_.Name)
+                        # extract numeric version
+                        [version]($_.Name -replace '(alpha|beta|rc).*','')
+                    }; Descending = $true },
+                    @{ Expression = {
+                        # prerelease weight
+                        if ($_.Name -match 'alpha') { 1 }
+                        elseif ($_.Name -match 'beta') { 2 }
+                        elseif ($_.Name -match 'rc') { 3 }
+                        else { 4 } # stable
+                    }; Descending = $true },
+                    @{ Expression = {
+                        # prerelease number (alpha3, rc2, etc)
+                        if ($_.Name -match '(alpha|beta|rc)(\d+)') {
+                            [int]$matches[2]
+                        } else {
+                            [int]::MaxValue
+                        }
                     }; Descending = $true } |
                 ForEach-Object {
                     $sortedGroup = $_.Group | Sort-Object `

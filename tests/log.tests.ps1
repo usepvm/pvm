@@ -158,5 +158,14 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
             $Object -eq "`nLog file not found: $LOG_ERROR_PATH" 
         }
     }
+    
+    It "Handles exceptions gracefully" {
+        Mock Test-Path { return $true }
+        Mock Get-Content { throw "File read error" }
+        
+        $result = Show-Log -pageSize 1
+        
+        $result | Should -Be -1
+    }
 }
 

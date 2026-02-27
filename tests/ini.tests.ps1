@@ -76,7 +76,7 @@ max_execution_time = 30
     }
 }
 
-Describe "Add-Missing-PHPExtension" {
+Describe "Add-Missing-PHPExtension-To-Ini" {
     BeforeEach {
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
@@ -84,13 +84,17 @@ Describe "Add-Missing-PHPExtension" {
     
     It "Returns -1 when current PHP version is null" {
         Mock Get-Current-PHP-Version { return @{ version = $null; path = $null } }
-        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl"
+        $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "curl"
         $result | Should -Be -1
     }
     
     It "Adds and configures xdebug in ini file" {
-        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "xdebug"
+        Mock Test-Path { return $true }
+        $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "php_xdebug.dll"
         $result | Should -Be 0
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+            $Object -eq "- Extension 'php_xdebug.dll' already exists in php.ini"
+        }
     }
     
     It "Adds any extension to ini file" {
@@ -98,9 +102,14 @@ Describe "Add-Missing-PHPExtension" {
 zend_extension=php_opcache.dll
 extension=php_mbstring.dll
 "@ | Set-Content $testIniPath
-        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl"
+
+        Mock Test-Path { return $true }
+        $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "php_curl.dll"
         $result | Should -Be 0
         (Get-Content $testIniPath) -match "extension=php_curl.dll" | Should -Be $true
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+            $Object -eq "- 'php_curl.dll' added successfully."
+        }
     }
     
     It "Adds any extension in disabled state to ini file" {
@@ -108,7 +117,9 @@ extension=php_mbstring.dll
 zend_extension=php_opcache.dll
 ;extension=php_mbstring.dll
 "@ | Set-Content $testIniPath
-        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl" -enable $false
+
+        Mock Test-Path { return $true }
+        $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "php_curl.dll" -enable $false
         $result | Should -Be 0
         (Get-Content $testIniPath) -match ";extension=php_curl.dll" | Should -Be $true
     }
@@ -118,8 +129,10 @@ zend_extension=php_opcache.dll
 zend_extension=php_opcache.dll
 extension=php_mbstring.dll
 "@ | Set-Content $testIniPath
+
+        Mock Test-Path { return $true }
         Mock Get-Current-PHP-Version { return @{ version = "7.1.0"; path = "TestDrive:\php\7.1.0" } }
-        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl"
+        $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "php_curl.dll"
         $result | Should -Be 0
         (Get-Content $testIniPath) -match "extension=php_curl.dll" | Should -Be $true
     }
@@ -128,15 +141,52 @@ extension=php_mbstring.dll
         @"
 extension=php_mbstring.dll
 "@ | Set-Content $testIniPath
+
+        Mock Test-Path { return $true }
         Mock Get-Current-PHP-Version { return @{ version = "7.1.0"; path = "TestDrive:\php\7.1.0" } }
-        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "opcache"
+        $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "php_opcache.dll"
         $result | Should -Be 0
         (Get-Content $testIniPath) -match "zend_extension=php_opcache.dll" | Should -Be $true
     }
     
+    It "Returns -1 for non-existent ini file" {
+        Mock Test-Path { return $false }
+        $result = Add-Missing-PHPExtension-To-Ini -iniPath "nonexistent.ini" -extFileName "php_curl.dll"
+        $result | Should -Be -1
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+            $Object -eq "`nphp.ini file not found: nonexistent.ini"
+        }
+    }
+    
+    It "Returns -1 when extension directory doesn't exist" {
+        Mock Test-Path -ParameterFilter { $Path -eq $testIniPath } { return $true }
+        Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } { return $false }
+        
+        $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "php_curl.dll"
+        
+        $result | Should -Be -1
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+            $Object -eq "`nExtensions directory not found: $extDirectory"
+        }
+    }
+    
+    It "Returns -1 when extension file doesn't exist" {
+        Mock Test-Path -ParameterFilter { $Path -eq $testIniPath } { return $true }
+        Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } { return $true }
+        Mock Test-Path -ParameterFilter { $Path -eq "$extDirectory\php_curl.dll" } { return $false }
+        
+        $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "php_curl.dll"
+        
+        $result | Should -Be -1
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+            $Object -eq "`nExtension file not found: php_curl.dll"
+        }
+    }
+    
     It "Handles exception gracefully" {
-        Mock Get-Content { throw "Access denied" }
-        $result = Add-Missing-PHPExtension -iniPath $testIniPath -extName "curl"
+        Mock Log-Data { return 0 }
+        Mock Backup-IniFile { throw "Access denied" }
+        $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "curl"
         $result | Should -Be -1
     }
 }
@@ -1204,7 +1254,7 @@ Describe "Install-Extension" {
             return "y"
         }
         Mock Move-Item { }
-        Mock Add-Missing-PHPExtension { return -1 }
+        Mock Add-Missing-PHPExtension-To-Ini { return -1 }
         
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
@@ -1241,6 +1291,7 @@ Describe "Install-Extension" {
             }
         }
         Mock Test-Path { return $false }
+        Mock Add-Missing-PHPExtension-To-Ini { return 0 }
         
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be 0
@@ -1338,6 +1389,7 @@ Describe "Install-Extension" {
             Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
                 return "y"
             }
+            Mock Add-Missing-PHPExtension-To-Ini { return 0 }
             
             $code = Install-Extension -iniPath $testIniPath -extName "cour"
             $code | Should -Be 0        

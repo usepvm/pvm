@@ -264,36 +264,52 @@ function Get-Extension-From-URL {
     }
 }
 
-function Add-Missing-PHPExtension {
-    param ($iniPath, $extName, $enable = $true)
+function Add-Missing-PHPExtension-To-Ini {
+    param ($iniPath, $extFileName, $enable = $true)
     
     try {
-        $phpCurrentVersion = Get-Current-PHP-Version
-        if (-not $phpCurrentVersion -or -not $phpCurrentVersion.version) {
-            Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
+        if (-not (Test-Path $iniPath)) {
+            Write-Host "`nphp.ini file not found: $iniPath" -ForegroundColor DarkYellow
             return -1
         }
         
         Backup-IniFile $iniPath
         
-        $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
-        $extName = "php_$extName.dll"
+        $phpDirectory = Split-Path -Path $iniPath -Parent
+        $extDirectory = Join-Path -Path $phpDirectory -ChildPath "ext"
+        
+        if (-not (Test-Path $extDirectory)) {
+            Write-Host "`nExtensions directory not found: $extDirectory" -ForegroundColor DarkYellow
+            return -1
+        }
+        
+        if (-not (Test-Path "$extDirectory\$extFileName")) {
+            Write-Host "`nExtension file not found: $extFileName" -ForegroundColor DarkYellow
+            return -1
+        }
         
         $lines = Get-Content $iniPath
+        foreach ($line in $lines) {
+            if ($line -match "^(;)?\s*(zend_)?extension\s*=\s*$extFileName\s*") {
+                Write-Host "- Extension '$extFileName' already exists in php.ini" -ForegroundColor DarkGray
+                return 0
+            }
+        }
+        
         $commented = if ($enable) { '' } else { ';' }
-        $isZendExtension = Get-Zend-Extensions-List | Where-Object { $extName -like "*$_*" }
+        $isZendExtension = Get-Zend-Extensions-List | Where-Object { $extFileName -like "*$_*" }
         if ($isZendExtension) {
-            $lines += "`n$commented" + "zend_extension=$extName"
+            $lines += "`n$commented" + "zend_extension=$extFileName"
         } else {
-            $lines += "`n$commented" + "extension=$extName"
+            $lines += "`n$commented" + "extension=$extFileName"
         }
         Set-Content $iniPath $lines -Encoding UTF8
-        Write-Host "- '$extName' added successfully." -ForegroundColor DarkGreen
+        Write-Host "- '$extFileName' added successfully." -ForegroundColor DarkGreen
         
         return 0
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to add extension '$extName'"
+            header = "$($MyInvocation.MyCommand.Name) - Failed to add extension '$extFileName'"
             exception = $_
         }
         return -1
@@ -1270,7 +1286,7 @@ function Install-Extension {
         }
         Move-Item -Path $extFile.FullName -Destination "$phpPath\ext"
         Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath" -Force -Recurse
-        $code = Add-Missing-PHPExtension -iniPath $iniPath -extName $extName -enable $false
+        $code = Add-Missing-PHPExtension-To-Ini -iniPath $iniPath -extFileName $extFile.Name -enable $false
         if ($code -ne 0) {
             Write-Host "`nFailed to add $extName" -ForegroundColor DarkYellow
             return -1

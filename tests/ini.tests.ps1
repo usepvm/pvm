@@ -1436,6 +1436,13 @@ Describe "Install-IniExtension" {
         $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
+    
+    It "Handles thrown exception" {
+        Mock Log-Data { return 0 }
+        Mock Install-Extension { throw "Network error" }
+        $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
+        $code | Should -Be -1
+    }
 }
 
 Describe "Get-Extension-Categories-By-Page Tests" {

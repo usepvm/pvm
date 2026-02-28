@@ -1,4 +1,9 @@
 
+BeforeAll {
+    $global:CACHE_PATH = "TestDrive:\cache"
+    New-Item -ItemType Directory -Path $global:CACHE_PATH -Force | Out-Null
+}
+
 Describe "Get-Source-Urls" {
     It "Should return correct URL structure" {
         $result = Get-Source-Urls

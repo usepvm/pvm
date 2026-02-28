@@ -5,6 +5,9 @@ BeforeAll {
     $extDirectory = Join-Path $testDrivePath "ext"
     $testBackupPath = "$testIniPath.bak"
     
+    $global:CACHE_PATH = "TestDrive:\cache"
+    New-Item -ItemType Directory -Path $global:CACHE_PATH -Force | Out-Null
+    
     Mock Write-Host {}
     
     function Reset-Ini-Content {

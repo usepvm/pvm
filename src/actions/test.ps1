@@ -2,15 +2,16 @@
 function Get-Tests-Files {
     param ($tests = $null)
     
+    $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
     if ($tests) {
         $tests = $tests | ForEach-Object {
             return @{
                 Name = "$_.tests.ps1"
-                FullName = "$PVMRoot\tests\$_.tests.ps1"
+                FullName = "$PVMRootDirectory\tests\$_.tests.ps1"
             }
         }
     } else {
-        $tests = Get-ChildItem "$PVMRoot\tests\*.tests.ps1" | ForEach-Object {
+        $tests = Get-ChildItem "$PVMRootDirectory\tests\*.tests.ps1" | ForEach-Object {
             return @{
                 Name = $_.Name
                 FullName = $_.FullName

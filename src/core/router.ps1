@@ -350,24 +350,26 @@ function Get-Actions {
             };
             action = { return Invoke-PVMCurrent }}
         "list" = [PSCustomObject]@{
-            command = "pvm list [available]";
+            command = "pvm list [available] [x86|x64] [ts|nts]";
             description = "Lists the PHP installations. Type 'available' at the end to see what can be installed.";
             usage = [ordered]@{
-                USAGE = "pvm list [available] [--search=<term>] (alias: pvm ls [available] [--search=<term>])"
+                USAGE = "pvm list [available] [--search=<term>] [x86|x64] [ts|nts] (alias: ls for list)"
                 DESCRIPTION = @(
                     "shows installed PHP versions."
                     "With 'available' argument, shows available PHP versions for installation. (list is cashed for $CACHE_MAX_HOURS hours)"
                 )
                 EXAMPLES = @(
                     "pvm list ........................... Show installed versions"
+                    "pvm list x64 ts .................... Show installed versions matching x64 TS"
                     "pvm list available ................. Show versions available for installation instead of installed versions"
+                    "pvm list available x64 ts .......... Show versions available matching x64 TS"
                     "pvm list --search=8.2 .............. Show installed versions with 8.2 in the name"
                     "pvm list available --search=8.2 .... Show available versions with 8.2 in the name"
                 )
             };
             action = { return Invoke-PVMList -arguments $script:arguments }}
         "install" = [PSCustomObject]@{
-            command = "pvm install <version>|[auto]";
+            command = "pvm install <version>|[auto] [x86|x64] [ts|nts]";
             description = "The version must be a specific version. use 'auto' to install the version specified in the current directory's composer.json or .php-version file.";
             usage = [ordered]@{
                 USAGE = "pvm install <version> (alias: pvm i <version>) | pvm install auto"

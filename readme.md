@@ -48,8 +48,16 @@ pvm list # pvm ls
 pvm list --search=<version>
 # Example: pvm list --search=8.2
 
+# List installed versions matching x86 and nts
+pvm list [x86|x64] [ts|nts] 
+# Example: pvm list x86 nts
+
 # List installable PHP versions from remote source
 pvm list available # pvm ls available
+
+# List installable PHP versions from remote source matching x86 and nts
+pvm list available [x86|x64] [ts|nts] 
+# Example: pvm list available x86 nts
 
 # List available versions with 8.2 in the name
 pvm list available --search=<version>
@@ -58,6 +66,10 @@ pvm list available --search=<version>
 # Install a specific version.
 pvm install <version> # pvm i <version>
 # Example: pvm install 8.4 # pvm i 8.4
+
+# Install a specific version for a specific arch & build type
+pvm install <version> [x86|x64] [ts|nts]
+# Example: pvm install 8.4 x64 nts # pvm i 8.4 x64 nts
 
 # Install the php version specified on your project.
 pvm install auto # pvm i auto

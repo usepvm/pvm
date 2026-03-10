@@ -144,7 +144,7 @@ Describe "Start-PVM Function Tests" {
             }
         }
         Mock Is-PVM-Setup { $true }
-        Mock Log-Data { $true }
+        Mock Log-Data { 0 }
         Mock Alias-Handler {
             param($alias)
 
@@ -522,7 +522,7 @@ Describe "Start-PVM Function Tests" {
         }
 
         It "Should handle exception when Log-Data fails" {
-            Mock Log-Data { $false }
+            Mock Log-Data { -1 }
             Mock Get-Actions {
                 [ordered]@{
                     "install" = [PSCustomObject]@{ 
@@ -688,7 +688,7 @@ Describe "Start-PVM Function Tests" {
             }
             Mock Alias-Handler { param($alias) return $alias }
             Mock Is-PVM-Setup { $true }
-            Mock Log-Data { $true }
+            Mock Log-Data { 0 }
             
             $result = Start-PVM -operation "install" -arguments @("8.2.0")
             

@@ -48,8 +48,16 @@ pvm list # pvm ls
 pvm list --search=<version>
 # Example: pvm list --search=8.2
 
+# List installed versions matching x86 and nts
+pvm list [x86|x64] [ts|nts] 
+# Example: pvm list x86 nts
+
 # List installable PHP versions from remote source
 pvm list available # pvm ls available
+
+# List installable PHP versions from remote source matching x86 and nts
+pvm list available [x86|x64] [ts|nts] 
+# Example: pvm list available x86 nts
 
 # List available versions with 8.2 in the name
 pvm list available --search=<version>
@@ -58,6 +66,10 @@ pvm list available --search=<version>
 # Install a specific version.
 pvm install <version> # pvm i <version>
 # Example: pvm install 8.4 # pvm i 8.4
+
+# Install a specific version for a specific arch & build type
+pvm install <version> [x86|x64] [ts|nts]
+# Example: pvm install 8.4 x64 nts # pvm i 8.4 x64 nts
 
 # Install the php version specified on your project.
 pvm install auto # pvm i auto
@@ -192,7 +204,7 @@ Get-Module -ListAvailable Pester
 ### Run the tests
 
 ```sh
-pvm test [files = (files inside the tests/ directory)] [--coverage[=<number>]] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=<tag>]
+pvm test [files = (files inside the tests/ directory)] [--coverage[=<number>]] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=<tag>] [--sort=[coverage|duration|file]]
 
 # Examples:
 pvm test # .............................. Runs all tests with Normal (default) verbosity.
@@ -200,6 +212,7 @@ pvm test use install # .................. Runs only 'use.tests.ps1' and 'install
 pvm test --verbosity=Detailed # ......... Runs all tests with Detailed verbosity.
 pvm test --coverage # ................... Runs all tests and generates coverage report (target: 75%)
 pvm test --coverage=80.5 # .............. Runs all tests and generates coverage report (target: 80.5%)
+pvm test --sort=duration # .............. Runs all tests and sort results by duration
 pvm test --tag=myTag #................... Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity and only runs tests with tag "myTag".
 ```
 

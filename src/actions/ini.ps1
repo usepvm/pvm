@@ -1046,7 +1046,7 @@ function Install-XDebug-Extension {
         $xDebugListGrouped = [ordered]@{}
         $index = 0
         $xDebugList | 
-            Select-Object -First $LATEST_VERSION_COUNT | 
+            Select-Object -First $MIN_COUNT | 
             Group-Object xDebugVersion | 
             Sort-Object `
                 @{ Expression = {
@@ -1197,7 +1197,7 @@ function Install-Extension {
             $extensionLinksGrouped = [ordered]@{}
             $index = 0
             $extensionLinks |
-                Select-Object -First $LATEST_VERSION_COUNT |
+                Select-Object -First $MIN_COUNT |
                 Group-Object extVersion |
                 Sort-Object `
                     @{ Expression = {
@@ -1460,7 +1460,7 @@ function List-PHP-Extensions {
                     }
                 }
                 if ($searchResult.Count -gt 0) {
-                    $availableExtensionsPartialList[$_.Name] = $searchResult # | Select-Object -Last 10
+                    $availableExtensionsPartialList[$_.Name] = $searchResult
                 }
             }
             

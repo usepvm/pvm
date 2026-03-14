@@ -215,7 +215,7 @@ function Select-Version {
 
     $matchingVersionsPartialList = [ordered]@{}
     $matchingVersions.GetEnumerator() | ForEach-Object {
-        $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $LATEST_VERSION_COUNT
+        $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $MIN_COUNT
     }
     $matchingKeys = $matchingVersions.Values | Where-Object { $_.Count -gt 0 }
     

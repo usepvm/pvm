@@ -1430,17 +1430,8 @@ function List-PHP-Extensions {
         } else {
             Write-Host "`nLoading available extensions..."
             
-            $useCache = Can-Use-Cache -cacheFileName 'available_extensions'
-            
-            if ($useCache) {
-                $availableExtensions = Get-Data-From-Cache -cacheFileName "available_extensions"
-                if ($availableExtensions.Count -eq 0) {
-                    $availableExtensions = Get-PHPExtensions-From-Source
-                    $availableExtensions = [pscustomobject] $availableExtensions
-                }
-            } else {
-                $availableExtensions = Get-PHPExtensions-From-Source
-                $availableExtensions = [pscustomobject] $availableExtensions
+            $availableExtensions = Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
+                return [pscustomobject] (Get-PHPExtensions-From-Source)
             }
 
             if ($availableExtensions.Count -eq 0) {

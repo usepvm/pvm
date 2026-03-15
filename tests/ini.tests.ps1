@@ -1642,9 +1642,20 @@ Describe "List-PHP-Extensions" {
     }
     
     It "Displays available extensions from cache" {
-        Mock Test-Path { return $true }
-        $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK")
-        Mock Get-Item { return @{ LastWriteTime = $timeWithinLastWeek } }
+        Mock Can-Use-Cache { return $true }
+        Mock Get-Data-From-Cache {
+            return @{
+                GUI = @(
+                    @{href = "/package/php_xcb"; extName = "php_xcb"; extCategory = "GUI"}
+                    @{href = "/package/tk"; extName = "tk"; extCategory = "GUI"}
+                    @{href = "/package/php_xcb"; extName = "php_xcb"; extCategory = "GUI"}
+                );
+                Images = @(
+                    @{href = "/package/cairo"; extName = "cairo"; extCategory = "Images"}
+                    @{href = "/package/cairo_wrapper"; extName = "cairo_wrapper"; extCategory = "Images"}
+                )
+            }
+        }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be 0
         Assert-MockCalled Get-Data-From-Cache -Exactly 1
@@ -1652,9 +1663,7 @@ Describe "List-PHP-Extensions" {
     }
     
     It "Displays available extensions from source when cache is empty" {
-        Mock Test-Path { return $true }
-        $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK")
-        Mock Get-Item { return @{ LastWriteTime = $timeWithinLastWeek } }
+        Mock Can-Use-Cache { return $true }
         Mock Get-Data-From-Cache { return @{} }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be 0

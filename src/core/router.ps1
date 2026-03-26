@@ -381,6 +381,11 @@ function Get-Actions {
                     "<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)"
                     "auto ......... Auto-detect version from project files"
                 )
+                EXAMPLES = @(
+                    "pvm install 8.2 .............. Install specific version"
+                    "pvm install auto ............. Install detected version from project files (.php-version or composer.json)"
+                    "pvm install 8.2 x64 ts ....... Install specific version matching x64 TS"
+                )
             }
             action = { return Invoke-PVMInstall -arguments $script:arguments }}
         "uninstall" = [PSCustomObject]@{

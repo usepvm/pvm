@@ -1,9 +1,8 @@
 
 function Get-From-Source {
-
     try {
         $urls = Get-Source-Urls
-        $fetchedVersions = @()
+        $fetchedVersionsGrouped = @{}
         foreach ($key in $urls.Keys) {
             $html = Invoke-WebRequest -Uri $urls[$key]
             $links = $html.Links
@@ -19,20 +18,15 @@ function Get-From-Source {
                     $fileName = $fileName[$fileName.Count - 1]
                     
                     $filteredLinks += @{
-                        Version = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
-                        Arch    = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                        Version   = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
+                        Arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
                         BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
-                        Link    = $_.href
+                        Link      = $_.href
                     }
                 }
             }
             # Return the filtered links (PHP version names)
-            $fetchedVersions = $fetchedVersions + $filteredLinks # ($filteredLinks | ForEach-Object { $_.href })
-        }
-        
-        $fetchedVersionsGrouped = @{
-            'Archives' = $fetchedVersions | Where-Object { $_.Link -match "archives" }
-            'Releases' = $fetchedVersions | Where-Object { $_.Link -notmatch "archives" }
+            $fetchedVersionsGrouped[$key] = $filteredLinks
         }
         
         if ($fetchedVersionsGrouped.Count -eq 0 -or 
@@ -44,7 +38,7 @@ function Get-From-Source {
         return $fetchedVersionsGrouped
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to fetch PHP versions from source"
+            header    = "$($MyInvocation.MyCommand.Name) - Failed to fetch PHP versions from source"
             exception = $_
         }
         return @{}
@@ -66,7 +60,7 @@ function Get-PHP-List-To-Install {
         return $fetchedVersionsGrouped
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to get fetch PHP versions"
+            header    = "$($MyInvocation.MyCommand.Name) - Failed to get fetch PHP versions"
             exception = $_
         }
         return @{}
@@ -131,7 +125,7 @@ function Get-Available-PHP-Versions {
         return 0
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"
+            header    = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"
             exception = $_
         }
         return -1
@@ -184,7 +178,7 @@ function Display-Installed-PHP-Versions {
         return 0
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to display installed PHP versions"
+            header    = "$($MyInvocation.MyCommand.Name) - Failed to display installed PHP versions"
             exception = $_
         }
         return -1

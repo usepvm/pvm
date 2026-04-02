@@ -384,7 +384,7 @@ Describe "Invoke-PVMHelp Tests" {
 
 Describe "Invoke-PVMTest Tests" {
     BeforeAll {
-        Mock Run-Tests { 0 }
+        Mock Prepare-Tests { 0 }
     }
     
     It "Should call Run-Tests with no arguments" {
@@ -395,7 +395,7 @@ Describe "Invoke-PVMTest Tests" {
     It "Should call Run-Tests with provided arguments" {
         $result = Invoke-PVMTest -arguments @(
             "TestFile.ps1", "TestFile2.ps1",
-            "--coverage=80", "--verbosity=detailed", "--tag=unit", "--sort=coverage"
+            "--coverage=80", "--verbosity=detailed", "--tag=unit", "--sort=coverage", "--exclude=TestFile3.ps1"
         )
         $result | Should -Be 0
     }

@@ -6,14 +6,14 @@ function Get-Tests-Files {
     if ($tests) {
         $tests = $tests | ForEach-Object {
             return @{
-                Name = "$_.tests.ps1"
+                Name     = "$_.tests.ps1"
                 FullName = "$PVMRootDirectory\tests\$_.tests.ps1"
             }
         }
     } else {
         $tests = Get-ChildItem "$PVMRootDirectory\tests\*.tests.ps1" | ForEach-Object {
             return @{
-                Name = $_.Name
+                Name     = $_.Name
                 FullName = $_.FullName
             }
         }
@@ -29,7 +29,7 @@ function Run-Test-File {
         $testResultData = @{
             passedCount = 0
             failedCount = 0
-            duration = 0
+            duration    = 0
             coverageRaw = $null
         }
         
@@ -46,7 +46,7 @@ function Run-Test-File {
             $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
             $covered = Get-ChildItem -Path "$PVMRootDirectory\src" -Recurse -Filter "*.ps1"
             $covered = $covered | Where-Object {
-                return ($_.Name -replace '.ps1','') -eq ($file.Name -replace '.tests.ps1','')
+                return ($_.Name -replace '.ps1', '') -eq ($file.Name -replace '.tests.ps1', '')
             }
                 
             $config.CodeCoverage.Enabled = $true
@@ -106,11 +106,29 @@ function Run-Test-File {
         return @{ code = 0; Name = $file.Name; Message = $message; testResultData = $testResultData }
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"
+            header    = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"
             exception = $_
         }
         return @{ code = -1; Name = $file.Name; Message = "Failed to run test, check log."; testResultData = $testResultData }
     }
+}
+
+function Prepare-Tests {
+    param ($files = $null, $options = $null, $exclude = $null)
+    
+    if ($exclude -ne $null) {
+        $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
+        
+        $tests = Get-ChildItem "$PVMRootDirectory\tests\*.tests.ps1" | Where-Object {
+            return -not ($exclude -contains ($_.Name -replace '.tests.ps1', ''))
+        } | ForEach-Object {
+            return $_.Name -replace '.tests.ps1', ''
+        }
+    }
+    
+    $tests = Get-Tests-Files -tests $tests
+    
+    return Run-Tests -tests $tests -options $options
 }
 
 function Run-Tests {
@@ -129,8 +147,6 @@ function Run-Tests {
 
         $config = New-PesterConfiguration
         $config.Output.Verbosity = $options.verbosity
-        
-        $tests = Get-Tests-Files -tests $tests
         
         if ($null -ne $options.tag) {
             $config.Filter.Tag = $options.tag
@@ -181,7 +197,7 @@ function Run-Tests {
         return $code
     } catch {
         $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"
+            header    = "$($MyInvocation.MyCommand.Name) - Failed to run tests"
             exception = $_
         }
         Write-Host "`nFailed to run tests, check log: $LOG_ERROR_PATH" -ForegroundColor DarkYellow
@@ -201,23 +217,25 @@ function SortBy {
     switch ($sortByColumn) {
         "duration" {
             return $data | Sort-Object `
-                @{ Expression = {
-                        if ($null -eq $_.testResultData.duration) {
-                            [double]::PositiveInfinity
-                        } else {
-                            [double]$_.testResultData.duration
-                        }
-                }; Descending = $direction }
+            @{ Expression     = {
+                    if ($null -eq $_.testResultData.duration) {
+                        [double]::PositiveInfinity
+                    } else {
+                        [double]$_.testResultData.duration
+                    }
+                }; Descending = $direction 
+            }
         }
         "coverage" {
             return $data | Sort-Object `
-                @{ Expression = {
-                        if ($null -eq $_.testResultData.coverageRaw) {
-                            [double]::PositiveInfinity
-                        } else {
-                            [double]$_.testResultData.coverageRaw
-                        }
-                }; Descending = $direction }
+            @{ Expression     = {
+                    if ($null -eq $_.testResultData.coverageRaw) {
+                        [double]::PositiveInfinity
+                    } else {
+                        [double]$_.testResultData.coverageRaw
+                    }
+                }; Descending = $direction 
+            }
         }
         "file" {
             return $data | Sort-Object @{ Expression = { [string]$_.Name }; Descending = $direction }

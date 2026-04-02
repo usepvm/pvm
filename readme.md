@@ -204,11 +204,12 @@ Get-Module -ListAvailable Pester
 ### Run the tests
 
 ```sh
-pvm test [files = (files inside the tests/ directory)] [--coverage[=<number>]] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=<tag>] [--sort=[coverage|duration|file]]
+pvm test [files = (files inside the tests/ directory)] [--exclude=files] [--coverage[=<number>]] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=<tag>] [--sort=[coverage|duration|file]]
 
 # Examples:
 pvm test # .............................. Runs all tests with Normal (default) verbosity.
 pvm test use install # .................. Runs only 'use.tests.ps1' and 'install.tests.ps1' files with Normal verbosity.
+pvm test --exclude=use,install # ........ Runs all tests except use.tests.ps1 and install.tests.ps1 with Normal verbosity.
 pvm test --verbosity=Detailed # ......... Runs all tests with Detailed verbosity.
 pvm test --coverage # ................... Runs all tests and generates coverage report (target: 75%)
 pvm test --coverage=80.5 # .............. Runs all tests and generates coverage report (target: 80.5%)

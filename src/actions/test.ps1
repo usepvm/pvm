@@ -126,7 +126,7 @@ function Prepare-Tests {
         }
     }
     
-    $tests = Get-Tests-Files -tests $tests
+    $tests = Get-Tests-Files -tests $files
     
     return Run-Tests -tests $tests -options $options
 }

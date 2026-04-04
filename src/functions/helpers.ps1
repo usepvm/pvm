@@ -212,7 +212,7 @@ function Make-Symbolic-Link {
 function Run-Command {
     param($command)
     
-    $process = Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -Command `"$command`"" -Verb RunAs -WindowStyle Hidden -PassThru -Wait
+    $process = Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command `"$command`"" -Verb RunAs -WindowStyle Hidden -PassThru -Wait
     $process.WaitForExit()
     return $process.ExitCode
 }

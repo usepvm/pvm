@@ -10,9 +10,9 @@ set "ARGS=%ARGS:-- =%"
 
 where pwsh >nul 2>&1
 if %ERRORLEVEL%==0 (
-    pwsh -ExecutionPolicy Bypass -File "%FILE_TARGET%" %ARGS%
+    pwsh -NoProfile -ExecutionPolicy Bypass -File "%FILE_TARGET%" %ARGS%
 ) else (
-    powershell -ExecutionPolicy Bypass -File "%FILE_TARGET%" %ARGS%
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%FILE_TARGET%" %ARGS%
 )
 
 endlocal

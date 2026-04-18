@@ -1350,3 +1350,19 @@ Describe "Get-BinaryArchitecture-From-DLL" {
         }
     }
 }
+
+Describe "Run-Command" {
+    Context "When executing elevated commands" {
+        It "Passes -NoProfile to prevent user profile from loading" {
+            $mockProcess = [PSCustomObject]@{ ExitCode = 0 }
+            $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
+            Mock Start-Process { return $mockProcess }
+
+            $result = Run-Command -command "echo test"
+
+            Should -Invoke Start-Process -Times 1 -ParameterFilter {
+                $ArgumentList -like "*-NoProfile*"
+            }
+        }
+    }
+}

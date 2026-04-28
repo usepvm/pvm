@@ -80,7 +80,7 @@ function Get-Available-PHP-Versions {
             return -1
         }
         
-        $fetchedVersionsGroupedPartialList = [ordered]@{}
+        $fetchedVersionsGroupedPartialList = @{}
         $fetchedVersionsGrouped.PSObject.Properties | ForEach-Object {
             $searchResult = $_.Value
             if ($null -ne $arch) {
@@ -105,18 +105,20 @@ function Get-Available-PHP-Versions {
         Write-Host "`nAvailable Versions"
         Write-Host "------------------"
 
-        $fetchedVersionsGroupedPartialList.GetEnumerator() | ForEach-Object {
-            $key = $_.Key
-            $fetchedVersionsGroupe = $_.Value
-            if ($fetchedVersionsGroupe.Length -eq 0) {
-                return
+        $fetchedVersionsGroupedPartialList.GetEnumerator()
+            | Sort-Object Key
+            | ForEach-Object {
+                $key = $_.Key
+                $fetchedVersionsGroupe = $_.Value
+                if ($fetchedVersionsGroupe.Length -eq 0) {
+                    return
+                }
+                Write-Host "`n$key`n"
+                $fetchedVersionsGroupe | ForEach-Object {
+                    $versionNumber = "$($_.Version) ".PadRight(15, '.')
+                    Write-Host "  $versionNumber $($_.Arch) $($_.BuildType)"
+                }
             }
-            Write-Host "`n$key`n"
-            $fetchedVersionsGroupe | ForEach-Object {
-                $versionNumber = "$($_.Version) ".PadRight(15, '.')
-                Write-Host "  $versionNumber $($_.Arch) $($_.BuildType)"
-            }
-        }
         
         $msg = "`nThis is a partial list. For a complete list, visit:"
         $msg += "`n Releases : $PHP_WIN_RELEASES_URL"

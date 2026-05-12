@@ -529,14 +529,15 @@ function Get-Actions {
             command     = "pvm log";
             description = "Display the log file.";
             usage       = [ordered]@{
-                USAGE       = "pvm log --pageSize=[number] (default is $DEFAULT_LOG_PAGE_SIZE)"
+                USAGE       = "pvm log --pageSize=[number] [--search=<term>] (default is $DEFAULT_LOG_PAGE_SIZE)"
                 DESCRIPTION = @(
                     "Displays the PVM log file contents, showing recent errors,"
                     "and system messages. Useful for troubleshooting issues."
                 )
                 EXAMPLES    = @(
-                    "pvm log .................. Shows the last $DEFAULT_LOG_PAGE_SIZE entries of the log file"
-                    "pvm log --pageSize=50 .... Shows the last 50 entries of the log file"
+                    "pvm log ................... Shows the last $DEFAULT_LOG_PAGE_SIZE entries of the log file"
+                    "pvm log --pageSize=50 ..... Shows the last 50 entries of the log file"
+                    "pvm log --search=error .... Shows entries matching 'error' term"
                 )
             }
             action      = { return Invoke-PVMLog -arguments $script:arguments }

@@ -135,8 +135,8 @@ pvm ini list available --search=<extension>
 pvm ini restore
 
 # Check logs
-pvm log --pageSize=[number] # Default value is 5
-# Example: pvm log --pageSize=3
+pvm log --pageSize=[number] --search=<term> # Default value is 5
+# Example: pvm log --pageSize=3 --search=error
 ```
 
 ### Manage PHP Configuration Profiles

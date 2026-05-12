@@ -570,6 +570,7 @@ function Get-Actions {
                     "--coverage[=<number>] ............ Generate coverage report with optional target percentage (default: 75%)"
                     "--verbosity=<verbosity> .......... Set verbosity level (None, Normal (Default), Detailed, Diagnostic)"
                     "--tag=<tag> ...................... Run only tests with specific tag"
+                    "--exclude=[files] ................ Run all tests except selected files"
                 )
             }
             action      = { return Invoke-PVMTest -arguments $script:arguments }

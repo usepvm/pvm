@@ -224,7 +224,7 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 ## Credits
 
 - [Driss](https://github.com/drissboumlik)
-- [All Contributors](https://github.com/drissboumlik/pvm/contributors)
+- [All Contributors](https://github.com/usepvm/pvm/graphs/contributors?all=1)
 
 ## License
 

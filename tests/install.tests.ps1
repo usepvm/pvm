@@ -276,6 +276,67 @@ Describe "Get-Source-Urls Tests" {
     }
 }
 
+Describe "Get-Latest-PHP-Version Tests" -tag i {
+    BeforeEach {
+        Reset-MockState
+        Mock Write-Host {}
+    }
+
+    It "Should return the latest available version" {
+        $mockLinks = @(
+            @{ href = "/downloads/releases/php-8.0.10-Win32-vs16-x64.zip" },
+            @{ href = "/downloads/releases/php-8.1.12-Win32-vs16-x64.zip" },
+            @{ href = "/downloads/releases/php-8.2.1-Win32-vs16-x64.zip" },
+            @{ href = "/downloads/releases/php-8.1.15-nts-Win32-vs16-x64.zip" }
+        )
+
+        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
+        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
+
+        $result = Get-Latest-PHP-Version
+
+        $result | Should -Not -BeNullOrEmpty
+        $result.version | Should -Be "8.2.1"
+        $result.arch | Should -Be "x64"
+        $result.BuildType | Should -Be "TS"
+    }
+
+    It "Should filter by architecture and build type" {
+        $mockLinks = @(
+            @{ href = "/downloads/releases/php-8.3.0-Win32-vs16-x64.zip" },
+            @{ href = "/downloads/releases/php-8.3.1-nts-Win32-vs16-x64.zip" },
+            @{ href = "/downloads/releases/php-8.3.2-Win32-vs16-x86.zip" },
+            @{ href = "/downloads/releases/php-8.3.3-nts-Win32-vs16-x86.zip" }
+        )
+
+        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
+        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
+
+        $result = Get-Latest-PHP-Version -arch "x86" -buildType "NTS"
+
+        $result | Should -Not -BeNullOrEmpty
+        $result.version | Should -Be "8.3.3"
+        $result.arch | Should -Be "x86"
+        $result.BuildType | Should -Be "NTS"
+    }
+
+    It "Should return null when no versions are available" {
+        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links @()
+        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links @()
+
+        $result = Get-Latest-PHP-Version
+
+        $result | Should -BeNullOrEmpty
+    }
+    
+    It "Should handle exception gracefully" {
+        Mock Get-Source-Urls { throw 'Error' }
+        
+        $result = Get-Latest-PHP-Version
+        
+        $result | Should -BeNullOrEmpty
+    }
+}
 
 Describe "Get-PHP-Versions-From-Url Tests" {
     BeforeEach {

@@ -63,6 +63,8 @@ function Invoke-PVMInstall {
     param($arguments)
     
     $version = $arguments[0]
+    $arch = Resolve-Arch -arguments $arguments
+    $buildType = Resolve-BuildType -arguments $arguments
 
     if ($version -eq 'auto') {
         $result = Auto-Select-PHP-Version
@@ -74,15 +76,21 @@ function Invoke-PVMInstall {
         }
 
         $version = $result.version
+    } elseif ($version -eq 'latest') {
+        $latestVersion = Get-Latest-PHP-Version -arch $arch -buildType $buildType
+        if (-not $latestVersion) {
+            Write-Host "`nFailed to find the latest PHP version"
+            return -1
+        }
+        
+        $version = $latestVersion.version
+        Write-Host "`nLatest available PHP version is $version"
     }
 
     if (-not $version) {
         Write-Host "`nPlease provide a PHP version to install"
         return -1
     }
-
-    $arch = Resolve-Arch -arguments $arguments
-    $buildType = Resolve-BuildType -arguments $arguments
 
     $result = Install-PHP -version $version -arch $arch -buildType $buildType
     Display-Msg-By-ExitCode -result $result

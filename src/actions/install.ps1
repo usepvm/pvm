@@ -1,4 +1,59 @@
 
+function Get-Latest-PHP-Version {
+    param ($arch = $null, $buildType = $null)
+
+    try {
+        $urls = Get-Source-Urls
+        $allVersions = @()
+        
+        foreach ($key in $urls.Keys) {
+            $url = $urls[$key]
+            try {
+                $html = Invoke-WebRequest -Uri $url
+                $links = $html.Links
+                
+                $filteredLinks = $links | Where-Object {
+                    $_.href -match "php-\d+(\.\d+)*-(?:nts-)?win.*\.zip$" -and
+                    $_.href -notmatch "php-debug" -and
+                    $_.href -notmatch "php-devel"
+                }
+
+                $filteredLinks | ForEach-Object {
+                    $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
+                    $fileName = $_.href -split "/"
+                    $fileName = $fileName[$fileName.Count - 1]
+                    $allVersions += @{
+                        href = $_.href
+                        version = $version
+                        fileName = $fileName
+                        BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
+                        arch = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                    }
+                }
+            } catch {
+                continue
+            }
+        }
+        
+        if ($arch) {
+            $allVersions = $allVersions | Where-Object { $_.arch -eq $arch }
+        }
+        if ($buildType) {
+            $allVersions = $allVersions | Where-Object { $_.BuildType -eq $buildType }
+        }
+        
+        # Sort by version number (descending) and return the first one
+        $latest = $allVersions | Sort-Object { [version]$_.version } -Descending | Select-Object -First 1
+        
+        return $latest
+    } catch {
+        $logged = Log-Data -data @{
+            header = "$($MyInvocation.MyCommand.Name) - Failed to get latest PHP version"
+            exception = $_
+        }
+        return $null
+    }
+}
 function Get-PHP-Versions-From-Url {
     param ($url, $version)
 

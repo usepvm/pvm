@@ -390,7 +390,7 @@ function Get-Actions {
             command     = "pvm install <version>|[auto] [x86|x64] [ts|nts]";
             description = "The version must be a specific version. use 'auto' to install the version specified in the current directory's composer.json or .php-version file.";
             usage       = [ordered]@{
-                USAGE       = "pvm install <version> (alias: pvm i <version>) | pvm install auto"
+                USAGE       = "pvm install <version> (alias: pvm i <version>) | pvm install auto | pvm install latest"
                 DESCRIPTION = @(
                     "Downloads and installs the PHP version, including opcache and xdebug."
                     "or use 'auto' to automatically select the version based on project configuration files."
@@ -398,11 +398,13 @@ function Get-Actions {
                 ARGUMENTS   = @(
                     "<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)"
                     "auto ......... Auto-detect version from project files"
+                    "latest ....... Install the latest available PHP version"
                 )
                 EXAMPLES    = @(
                     "pvm install 8.2 .............. Install specific version"
                     "pvm install auto ............. Install detected version from project files (.php-version or composer.json)"
                     "pvm install 8.2 x64 ts ....... Install specific version matching x64 TS"
+                    "pvm install latest ........... Install the latest available PHP version"
                 )
             }
             action      = { return Invoke-PVMInstall -arguments $script:arguments }

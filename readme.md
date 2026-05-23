@@ -74,6 +74,9 @@ pvm install <version> [x86|x64] [ts|nts]
 # Install the php version specified on your project.
 pvm install auto # pvm i auto
 
+# Install the latest available php version.
+pvm install latest # pvm i latest
+
 # Uninstall a specific version
 pvm uninstall <version> # pvm rm <version>
 # Example: pvm uninstall 8.4 # pvm rm 8.4

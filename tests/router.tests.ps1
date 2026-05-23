@@ -176,6 +176,27 @@ Describe "Invoke-PVMInstall Tests" {
         }
     }
     
+    It "Should install latest PHP version when 'latest' argument is provided" {
+        $arguments = @("latest")
+        Mock Get-Latest-PHP-Version { return @{version = "8.6.0"} }
+
+        $result = Invoke-PVMInstall -arguments $arguments
+        $result | Should -Be 0
+
+        Assert-MockCalled Install-PHP -Times 1 -ParameterFilter { 
+            $version -eq "8.6.0"
+        }
+    }
+    
+    It "Should return -1 when no latest PHP version was found" {
+        $arguments = @("latest")
+        Mock Get-Latest-PHP-Version { return $null }
+
+        $result = Invoke-PVMInstall -arguments $arguments
+        
+        $result | Should -Be -1
+    }
+    
     It "Should return -1 when detected PHP version is already installed" {
         $arguments = @("auto")
         Mock Auto-Select-PHP-Version { return @{ code = 0; version = "8.2" } }

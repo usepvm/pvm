@@ -1,13 +1,13 @@
-
+﻿
 function Set-IniSetting-Direct {
     param ($iniPath, $settingName, $value, $enabled = $true)
-    
+
     try {
         $lines = [string[]](Get-Content $iniPath)
         $modified = $false
         $escapedName = [regex]::Escape($settingName)
         $exactPattern = "^[#;]?\s*$escapedName\s*=\s*(.*)$"
-        
+
         for ($i = 0; $i -lt $lines.Count; $i++) {
             if ($lines[$i] -match $exactPattern) {
                 $newLine = if ($enabled) {
@@ -20,7 +20,7 @@ function Set-IniSetting-Direct {
                 break
             }
         }
-        
+
         if (-not $modified) {
             # Setting doesn't exist, add it at the end
             $newLine = if ($enabled) {
@@ -30,7 +30,7 @@ function Set-IniSetting-Direct {
             }
             $lines += $newLine
         }
-        
+
         Set-Content $iniPath $lines -Encoding UTF8
         return 0
     } catch {
@@ -40,45 +40,45 @@ function Set-IniSetting-Direct {
 
 function Enable-IniExtension-Direct {
     param ($iniPath, $extName, $extType = "extension")
-    
+
     try {
         # Normalize extension name - remove php_ prefix and .dll suffix if present
         $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
         $extFileName = "php_$extName.dll"
-        
+
         $lines = [string[]](Get-Content $iniPath)
         $modified = $false
-        
+
         # Check for extension in multiple formats:
         # 1. extension=php_openssl.dll (full filename, may have path)
         # 2. extension=openssl (just the name without php_ prefix and .dll suffix)
         for ($i = 0; $i -lt $lines.Count; $i++) {
             $line = $lines[$i]
             $isMatch = $false
-            
+
             # Match extension or zend_extension lines (commented or not)
             $pattern = if ($extType -eq "zend_extension") {
                 "^[#;]?\s*zend_extension\s*=\s*([`"']?)([^\s`"';]*)\1\s*(;.*)?$"
             } else {
                 "^[#;]?\s*extension\s*=\s*([`"']?)([^\s`"';]*)\1\s*(;.*)?$"
             }
-            
+
             if ($line -match $pattern) {
                 $foundExt = $matches[2].Trim()
                 # Extract just the filename if there's a path
                 $foundExtFileName = [System.IO.Path]::GetFileName($foundExt)
                 # Normalize: remove php_ prefix and .dll suffix to get base name
                 $foundExtBaseName = $foundExtFileName -replace '^php_', '' -replace '\.dll$', ''
-                
+
                 # Also check the original value (for cases like extension=openssl)
                 $foundExtBaseNameOriginal = $foundExt -replace '^php_', '' -replace '\.dll$', ''
-                
+
                 # Match if the normalized base name matches (handles both formats)
                 if ($foundExtBaseName -eq $extName -or $foundExtBaseNameOriginal -eq $extName) {
                     $isMatch = $true
                 }
             }
-            
+
             if ($isMatch) {
                 # Uncomment the line (remove leading ; or #)
                 $lines[$i] = $line -replace '^[#;]\s*', ''
@@ -86,7 +86,7 @@ function Enable-IniExtension-Direct {
                 break
             }
         }
-        
+
         if (-not $modified) {
             # Extension doesn't exist, add it at the end
             $newLine = if ($extType -eq "zend_extension") {
@@ -96,7 +96,7 @@ function Enable-IniExtension-Direct {
             }
             $lines += $newLine
         }
-        
+
         Set-Content $iniPath $lines -Encoding UTF8
         return 0
     } catch {
@@ -106,15 +106,15 @@ function Enable-IniExtension-Direct {
 
 function Disable-IniExtension-Direct {
     param ($iniPath, $extName, $extType = "extension")
-    
+
     try {
         # Normalize extension name - remove php_ prefix and .dll suffix if present
         $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
         $extFileName = "php_$extName.dll"
-        
+
         $lines = [string[]](Get-Content $iniPath)
         $modified = $false
-        
+
         # Check for extension in multiple formats (only enabled/not commented lines):
         # 1. extension=php_openssl.dll (full filename, may have path)
         # 2. extension=openssl (just the name without php_ prefix and .dll suffix)
@@ -124,32 +124,32 @@ function Disable-IniExtension-Direct {
             if ($line -match '^\s*[#;]') {
                 continue
             }
-            
+
             $isMatch = $false
-            
+
             # Match extension or zend_extension lines (must be enabled/not commented)
             $pattern = if ($extType -eq "zend_extension") {
                 "^\s*zend_extension\s*=\s*([`"']?)([^\s`"';]*)\1\s*(;.*)?$"
             } else {
                 "^\s*extension\s*=\s*([`"']?)([^\s`"';]*)\1\s*(;.*)?$"
             }
-            
+
             if ($line -match $pattern) {
                 $foundExt = $matches[2].Trim()
                 # Extract just the filename if there's a path
                 $foundExtFileName = [System.IO.Path]::GetFileName($foundExt)
                 # Normalize: remove php_ prefix and .dll suffix to get base name
                 $foundExtBaseName = $foundExtFileName -replace '^php_', '' -replace '\.dll$', ''
-                
+
                 # Also check the original value (for cases like extension=openssl)
                 $foundExtBaseNameOriginal = $foundExt -replace '^php_', '' -replace '\.dll$', ''
-                
+
                 # Match if the normalized base name matches (handles both formats)
                 if ($foundExtBaseName -eq $extName -or $foundExtBaseNameOriginal -eq $extName) {
                     $isMatch = $true
                 }
             }
-            
+
             if ($isMatch) {
                 # Comment out the line
                 $lines[$i] = ";$line"
@@ -157,7 +157,7 @@ function Disable-IniExtension-Direct {
                 break
             }
         }
-        
+
         Set-Content $iniPath $lines -Encoding UTF8
         return 0
     } catch {
@@ -180,30 +180,30 @@ function Get-Popular-PHP-Extensions {
     return @(
         "curl", "fileinfo", "gd", "gettext", "intl", "mbstring", "exif", "openssl",
         "mysqli", "pdo_mysql", "pdo_pgsql", "pdo_sqlite", "pgsql",
-        "sodium", "sqlite3", "zip", "opcache", "xdebug"  
+        "sodium", "sqlite3", "zip", "opcache", "xdebug"
     )
 }
 
 function Save-PHP-Profile {
     param($profileName, $description = $null)
-    
+
     try {
         $currentPhpVersion = Get-Current-PHP-Version
-        
+
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
             Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
             return -1
         }
-        
+
         $iniPath = "$($currentPhpVersion.path)\php.ini"
         if (-not (Test-Path $iniPath)) {
             Write-Host "`nphp.ini not found at: $($currentPhpVersion.path)" -ForegroundColor DarkYellow
             return -1
         }
-        
+
         # Get current PHP configuration
         $phpIniData = Get-PHP-Data -PhpIniPath $iniPath
-        
+
         # Build profile structure
         $userProfile = [ordered]@{
             name = $profileName
@@ -213,11 +213,11 @@ function Save-PHP-Profile {
             settings = [ordered]@{}
             extensions = [ordered]@{}
         }
-        
+
         # Get popular settings and extensions lists
         $popularSettings = Get-Popular-PHP-Settings
         $popularExtensions = Get-Popular-PHP-Extensions
-        
+
         # Extract only popular settings
         foreach ($setting in $phpIniData.settings) {
             if ($popularSettings -contains $setting.Name) {
@@ -227,7 +227,7 @@ function Save-PHP-Profile {
                 }
             }
         }
-        
+
         # Extract only popular extensions
         foreach ($ext in $phpIniData.extensions) {
             $extName = $ext.Extension -replace '^php_', '' -replace '\.dll$', ''
@@ -238,25 +238,25 @@ function Save-PHP-Profile {
                 }
             }
         }
-        
+
         # Save to JSON file
         $created = Make-Directory -path $PROFILES_PATH
         if ($created -ne 0) {
             Write-Host "`nFailed to create profiles directory." -ForegroundColor DarkYellow
             return -1
         }
-        
+
         $profilePath = "$PROFILES_PATH\$profileName.json"
         $jsonContent = $userProfile | ConvertTo-Json -Depth 10
         Set-Content -Path $profilePath -Value $jsonContent -Encoding UTF8
-        
+
         Write-Host "`nProfile '$profileName' saved successfully." -ForegroundColor DarkGreen
         Write-Host "  Settings: $($userProfile.settings.Count) (popular/common only)" -ForegroundColor Gray
         Write-Host "  Extensions: $($userProfile.extensions.Count) (popular/common only)" -ForegroundColor Gray
         Write-Host "  Location: $profilePath" -ForegroundColor Gray
         Write-Host "`nNote: Only popular/common settings and extensions are saved." -ForegroundColor DarkCyan
         Write-Host "      You can manually add other settings/extensions using 'pvm ini' commands." -ForegroundColor DarkCyan
-        
+
         return 0
     } catch {
         $logged = Log-Data -data @{
@@ -270,21 +270,21 @@ function Save-PHP-Profile {
 
 function Load-PHP-Profile {
     param($profileName)
-    
+
     try {
         $currentPhpVersion = Get-Current-PHP-Version
-        
+
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
             Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
             return -1
         }
-        
+
         $iniPath = "$($currentPhpVersion.path)\php.ini"
         if (-not (Test-Path $iniPath)) {
             Write-Host "`nphp.ini not found at: $($currentPhpVersion.path)" -ForegroundColor DarkYellow
             return -1
         }
-        
+
         # Load profile JSON
         $profilePath = "$PROFILES_PATH\$profileName.json"
         if (-not (Test-Path $profilePath)) {
@@ -292,22 +292,22 @@ function Load-PHP-Profile {
             Write-Host "  Use 'pvm profile list' to see available profiles." -ForegroundColor Gray
             return -1
         }
-        
+
         $jsonContent = Get-Content $profilePath -Raw | ConvertFrom-Json
-        
+
         Write-Host "`nLoading profile '$($jsonContent.name)'..." -ForegroundColor Cyan
         if ($jsonContent.description) {
             Write-Host "  Description: $($jsonContent.description)" -ForegroundColor Gray
         }
         Write-Host "  Created: $($jsonContent.created)" -ForegroundColor Gray
-        
+
         # Backup ini file before applying changes
         Backup-IniFile $iniPath
-        
+
         # Get popular lists to validate profile contents
         $popularSettings = Get-Popular-PHP-Settings
         $popularExtensions = Get-Popular-PHP-Extensions
-        
+
         # Apply only popular settings (filter out any non-popular ones that might be in old profiles)
         # Use direct functions for exact name matching (no fuzzy matching or user interaction)
         $settingsApplied = 0
@@ -326,7 +326,7 @@ function Load-PHP-Profile {
                 $settingsIgnored++
             }
         }
-        
+
         # Apply only popular extensions (filter out any non-popular ones that might be in old profiles)
         # Use direct functions for exact name matching (no fuzzy matching or user interaction)
         $extensionsEnabled = 0
@@ -356,7 +356,7 @@ function Load-PHP-Profile {
                 $extensionsIgnored++
             }
         }
-        
+
         Write-Host "`nProfile applied successfully:" -ForegroundColor DarkGreen
         Write-Host "  Settings applied: $settingsApplied" -ForegroundColor Gray
         if ($settingsSkipped -gt 0) {
@@ -373,7 +373,7 @@ function Load-PHP-Profile {
         if ($extensionsIgnored -gt 0) {
             Write-Host "  Extensions ignored (not popular): $extensionsIgnored" -ForegroundColor DarkCyan
         }
-        
+
         return 0
     } catch {
         $logged = Log-Data -data @{
@@ -391,17 +391,17 @@ function List-PHP-Profiles {
             Write-Host "`nNo profiles directory found. Create a profile with 'pvm profile save <name>'." -ForegroundColor DarkYellow
             return -1
         }
-        
+
         $profileFiles = Get-ChildItem -Path $PROFILES_PATH -Filter "*.json" -ErrorAction SilentlyContinue
-        
+
         if ($profileFiles.Count -eq 0) {
             Write-Host "`nNo profiles found. Create a profile with 'pvm profile save <name>'." -ForegroundColor DarkYellow
             return -1
         }
-        
+
         Write-Host "`nAvailable Profiles:" -ForegroundColor Cyan
         Write-Host "-------------------"
-        
+
         $profiles = @()
         foreach ($file in $profileFiles) {
             try {
@@ -421,7 +421,7 @@ function List-PHP-Profiles {
                 Write-Host "  Warning: Failed to parse $($file.Name)" -ForegroundColor DarkYellow
             }
         }
-        
+
         $maxNameLength = ($profiles.Name | Measure-Object -Maximum Length).Maximum + 10
 
         foreach ($userProfile in $profiles) {
@@ -433,7 +433,7 @@ function List-PHP-Profiles {
             Write-Host "   Extensions ".PadRight($maxNameLength, '.')  $($userProfile.Extensions)
             Write-Host "   Path ".PadRight($maxNameLength, '.')  "$PROFILES_PATH\$($userProfile.File)`n"
         }
-        
+
         return 0
     } catch {
         $logged = Log-Data -data @{
@@ -447,7 +447,7 @@ function List-PHP-Profiles {
 
 function Show-PHP-Profile {
     param($profileName)
-    
+
     try {
         $profilePath = "$PROFILES_PATH\$profileName.json"
         if (-not (Test-Path $profilePath)) {
@@ -455,9 +455,9 @@ function Show-PHP-Profile {
             Write-Host "  Use 'pvm profile list' to see available profiles." -ForegroundColor Gray
             return -1
         }
-        
+
         $userProfile = Get-Content $profilePath -Raw | ConvertFrom-Json
-        
+
         $dt = [datetime]$userProfile.Created
         $utc = $dt.ToUniversalTime()
         $createdAtFormatted = $utc.ToString("dd/MM/yyyy HH:mm:ss")
@@ -468,7 +468,7 @@ function Show-PHP-Profile {
         Write-Host "Created: $createdAtFormatted" -ForegroundColor White
         Write-Host "PHP Version: $($userProfile.phpVersion)" -ForegroundColor White
         Write-Host "PATH: $profilePath" -ForegroundColor White
-        
+
         $settingsCount = if ($userProfile.settings) { ($userProfile.settings.PSObject.Properties | Measure-Object).Count } else { 0 }
         Write-Host "`nSettings ($settingsCount):" -ForegroundColor Cyan
         if ($settingsCount -eq 0) {
@@ -484,7 +484,7 @@ function Show-PHP-Profile {
                 Write-Host $status -ForegroundColor $color
             }
         }
-        
+
         $extensionsCount = if ($userProfile.extensions) { ($userProfile.extensions.PSObject.Properties | Measure-Object).Count } else { 0 }
         Write-Host "`nExtensions ($extensionsCount):" -ForegroundColor Cyan
         if ($extensionsCount -eq 0) {
@@ -501,7 +501,7 @@ function Show-PHP-Profile {
                 Write-Host $status -ForegroundColor $color
             }
         }
-        
+
         return 0
     } catch {
         $logged = Log-Data -data @{
@@ -515,26 +515,26 @@ function Show-PHP-Profile {
 
 function Delete-PHP-Profile {
     param($profileName)
-    
+
     try {
         $profilePath = "$PROFILES_PATH\$profileName.json"
-        
+
         if (-not (Test-Path $profilePath)) {
             Write-Host "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
             return -1
         }
-        
+
         $response = Read-Host "`nAre you sure you want to delete profile '$profileName'? (y/n)"
         $response = $response.Trim()
-        
+
         if ($response -ne "y" -and $response -ne "Y") {
             Write-Host "`nDeletion cancelled." -ForegroundColor Gray
             return -1
         }
-        
+
         Remove-Item -Path $profilePath -Force
         Write-Host "`nProfile '$profileName' deleted successfully." -ForegroundColor DarkGreen
-        
+
         return 0
     } catch {
         $logged = Log-Data -data @{
@@ -548,22 +548,22 @@ function Delete-PHP-Profile {
 
 function Export-PHP-Profile {
     param($profileName, $exportPath = $null)
-    
+
     try {
         $profilePath = "$PROFILES_PATH\$profileName.json"
-        
+
         if (-not (Test-Path $profilePath)) {
             Write-Host "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
             return -1
         }
-        
+
         if (-not $exportPath) {
             $exportPath = "$(Get-Location)\$profileName.json"
         }
-        
+
         Copy-Item -Path $profilePath -Destination $exportPath -Force
         Write-Host "`nProfile '$profileName' exported to: $exportPath" -ForegroundColor DarkGreen
-        
+
         return 0
     } catch {
         $logged = Log-Data -data @{
@@ -577,13 +577,13 @@ function Export-PHP-Profile {
 
 function Import-PHP-Profile {
     param($importPath, $profileName = $null)
-    
+
     try {
         if (-not (Test-Path $importPath)) {
             Write-Host "`nFile not found: $importPath" -ForegroundColor DarkYellow
             return -1
         }
-        
+
         # Validate JSON structure
         try {
             $userProfile = Get-Content $importPath -Raw | ConvertFrom-Json
@@ -595,18 +595,18 @@ function Import-PHP-Profile {
             Write-Host "`nInvalid JSON file: $($_.Exception.Message)" -ForegroundColor DarkYellow
             return -1
         }
-        
+
         # Use provided name or name from profile
         $finalName = if ($profileName) { $profileName } else { $userProfile.name }
-        
+
         $created = Make-Directory -path $PROFILES_PATH
         if ($created -ne 0) {
             Write-Host "`nFailed to create profiles directory." -ForegroundColor DarkYellow
             return -1
         }
-        
+
         $targetPath = "$PROFILES_PATH\$finalName.json"
-        
+
         # Update profile name if different
         if ($finalName -ne $userProfile.name) {
             $userProfile.name = $finalName
@@ -615,10 +615,10 @@ function Import-PHP-Profile {
         } else {
             Copy-Item -Path $importPath -Destination $targetPath -Force
         }
-        
+
         Write-Host "`nProfile imported successfully as '$finalName'." -ForegroundColor DarkGreen
         Write-Host "  Use 'pvm profile load $finalName' to apply it." -ForegroundColor Gray
-        
+
         return 0
     } catch {
         $logged = Log-Data -data @{

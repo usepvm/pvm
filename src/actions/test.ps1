@@ -1,7 +1,7 @@
-
+﻿
 function Get-Tests-Files {
     param ($tests = $null)
-    
+
     $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
     if ($tests) {
         $tests = $tests | ForEach-Object {
@@ -18,13 +18,13 @@ function Get-Tests-Files {
             }
         }
     }
-    
+
     return $tests
-} 
+}
 
 function Run-Test-File {
     param ($config, $file, $options = $null)
-    
+
     try {
         $testResultData = @{
             passedCount = 0
@@ -32,11 +32,11 @@ function Run-Test-File {
             duration    = 0
             coverageRaw = $null
         }
-        
+
         if (-not (Test-Path $file.FullName)) {
             return @{ code = -1; Name = $file.Name; Message = "File not found!"; testResultData = $testResultData }
         }
-        
+
         if (-not $options) {
             $options = @{ coverage = $false; target = 75 }
         }
@@ -48,7 +48,7 @@ function Run-Test-File {
             $covered = $covered | Where-Object {
                 return ($_.Name -replace '.ps1', '') -eq ($file.Name -replace '.tests.ps1', '')
             }
-                
+
             $config.CodeCoverage.Enabled = $true
             $config.CodeCoverage.Path = $covered.FullName
             $config.CodeCoverage.OutputPath = "$PVMRootDirectory\storage\coverage\$($file.Name).xml"
@@ -57,7 +57,7 @@ function Run-Test-File {
             $config.CodeCoverage.CoveragePercentTarget = $options.target
             $coveredFile = "(covers: $($covered.Name))"
         }
-        
+
         Write-Host "`n----------------------------------------------------------------"
         Write-Host "- Running test: $($file.Name) $coveredFile"
         Write-Host "----------------------------------------------------------------"
@@ -102,7 +102,7 @@ function Run-Test-File {
         if ($LASTEXITCODE -ne 0) {
             return @{ code = -1; Name = $file.Name; Message = $message; testResultData = $testResultData }
         }
-        
+
         return @{ code = 0; Name = $file.Name; Message = $message; testResultData = $testResultData }
     } catch {
         $logged = Log-Data -data @{
@@ -115,30 +115,30 @@ function Run-Test-File {
 
 function Prepare-Tests {
     param ($files = $null, $options = $null, $exclude = $null)
-    
-    if ($exclude -ne $null) {
+
+    if ($null -ne $exclude) {
         $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
-        
+
         $tests = Get-ChildItem "$PVMRootDirectory\tests\*.tests.ps1" | Where-Object {
             return -not ($exclude -contains ($_.Name -replace '.tests.ps1', ''))
         } | ForEach-Object {
             return $_.Name -replace '.tests.ps1', ''
         }
     }
-    
+
     $tests = Get-Tests-Files -tests $files
-    
+
     return Run-Tests -tests $tests -options $options
 }
 
 function Run-Tests {
     param ($tests = $null, $options = $null)
-    
+
     try {
         if (-not $options) {
             $options = @{ verbosity = "Normal"; coverage = $false; tag = $null; target = 75 }
         }
-        
+
         $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
         if ($verbosityOptions -notcontains $options.verbosity) {
             Write-Host "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')" -ForegroundColor DarkYellow
@@ -147,18 +147,18 @@ function Run-Tests {
 
         $config = New-PesterConfiguration
         $config.Output.Verbosity = $options.verbosity
-        
+
         if ($null -ne $options.tag) {
             $config.Filter.Tag = $options.tag
         }
-        
+
         $testSummary = @()
         Write-Host "`nRunning tests with verbosity: $($options.verbosity)" -ForegroundColor Cyan
-        $tests | ForEach-Object { 
+        $tests | ForEach-Object {
             $testResult = Run-Test-File -config $config -file $_ -options $options
             $testSummary += $testResult
         }
-        
+
         Write-Host "`n----------------------------------------------------------------"
         Write-Host "`n`nTest Results Summary: (Coverage : $($options.target)%)`n"
         $code = 0
@@ -173,10 +173,10 @@ function Run-Tests {
             }
             $content += "`n"
             Write-Host $content -ForegroundColor $color
-            
+
             $maxFileNameLength = ($testSummary.Name | Measure-Object -Maximum Length).Maximum
             $maxLineLength = $maxFileNameLength + 20  # padding
-            
+
             $testSummary = SortBy -data $testSummary -sortByColumn $options.sortBy
             $testSummary | ForEach-Object {
                 $label = "  - $($_.Name) "
@@ -208,12 +208,12 @@ function Run-Tests {
 
 function SortBy {
     param ($data, $sortByColumn = $null)
-    
-    if ($sortByColumn -ne $null) {
+
+    if ($null -ne $sortByColumn) {
         $direction = $sortByColumn -match "^-"
         $sortByColumn = $sortByColumn -replace '-', ''
     }
-    
+
     switch ($sortByColumn) {
         "duration" {
             return $data | Sort-Object `
@@ -223,7 +223,7 @@ function SortBy {
                     } else {
                         [double]$_.testResultData.duration
                     }
-                }; Descending = $direction 
+                }; Descending = $direction
             }
         }
         "coverage" {
@@ -234,14 +234,14 @@ function SortBy {
                     } else {
                         [double]$_.testResultData.coverageRaw
                     }
-                }; Descending = $direction 
+                }; Descending = $direction
             }
         }
         "file" {
             return $data | Sort-Object @{ Expression = { [string]$_.Name }; Descending = $direction }
         }
     }
-    
+
     return $data;
 }
 

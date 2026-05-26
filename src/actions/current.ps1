@@ -1,7 +1,7 @@
-
+﻿
 function Get-PHP-Status {
     param($phpPath)
-    
+
     $status = @{ opcache = $false; xdebug = $false }
     try {
         $phpIniPath = "$phpPath\php.ini"
@@ -10,7 +10,7 @@ function Get-PHP-Status {
         }
 
         $iniContent = Get-Content $phpIniPath
-        
+
         foreach ($line in $iniContent) {
             $trimmed = $line.Trim()
             if ($trimmed -match '^(;)?\s*zend_extension\s*=.*opcache.*$') {
@@ -28,7 +28,7 @@ function Get-PHP-Status {
         }
         Write-Host "An error occurred while checking PHP status: $_"
     }
-    
+
     return $status
 }
 
@@ -46,7 +46,7 @@ function Get-Current-PHP-Version {
             return $emptyResult
         }
         $phpInfo = Get-PHPInstallInfo -path $currentPhpVersionPath
-        
+
         return @{
             version = $phpInfo.Version
             arch = $phpInfo.Arch

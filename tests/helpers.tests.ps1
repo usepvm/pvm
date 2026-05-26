@@ -1,6 +1,6 @@
-
+﻿
 BeforeAll {
-    
+
     Mock Write-Host {}
     # Create a mock registry to simulate environment variables
     $global:MockRegistry = @{
@@ -16,16 +16,16 @@ BeforeAll {
         Process = @{}
         User = @{}
     }
-    
+
     # Setup test environment
     $global:LOG_ERROR_PATH = "TestDrive:\logs\error.log"
     $global:STORAGE_PATH = "TestDrive:\storage"
     $global:PATH_VAR_BACKUP_PATH = "TestDrive:\logs\path_backup.log"
-    
+
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
-    
-    
+
+
     # Mock file system for logging tests
     $global:MockFileSystem = @{
         Directories = @("$($STORAGE_PATH)\php\8.1", "$($STORAGE_PATH)\php\8.2")
@@ -34,27 +34,27 @@ BeforeAll {
             "$($PATH_VAR_BACKUP_PATH)" = @()
         }
     }
-    
+
     # Create wrapper functions that use our mock registry
     function Get-EnvironmentVariablesWrapper {
         param($target)
-        
+
         if ($global:MockRegistryThrowException) {
             throw $global:MockRegistryException
         }
-        
+
         switch ($target) {
-            ([System.EnvironmentVariableTarget]::Machine) { 
+            ([System.EnvironmentVariableTarget]::Machine) {
                 $result = @{}
                 $global:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
                 return $result
             }
-            ([System.EnvironmentVariableTarget]::Process) { 
+            ([System.EnvironmentVariableTarget]::Process) {
                 $result = @{}
                 $global:MockRegistry.Process.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
                 return $result
             }
-            ([System.EnvironmentVariableTarget]::User) { 
+            ([System.EnvironmentVariableTarget]::User) {
                 $result = @{}
                 $global:MockRegistry.User.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
                 return $result
@@ -74,14 +74,14 @@ BeforeAll {
             return $null
         }
     }
-    
+
     function Get-EnvironmentVariableWrapper {
         param($name, $target)
-        
+
         if ($global:MockRegistryThrowException) {
             throw $global:MockRegistryException
         }
-        
+
         switch ($target) {
             ([System.EnvironmentVariableTarget]::Machine) { return $global:MockRegistry.Machine[$name] }
             ([System.EnvironmentVariableTarget]::Process) { return $global:MockRegistry.Process[$name] }
@@ -106,31 +106,31 @@ BeforeAll {
             return $null
         }
     }
-    
+
     function Set-EnvironmentVariableWrapper {
         param($name, $value, $target)
-        
+
         if ($global:MockRegistryThrowException) {
             throw $global:MockRegistryException
         }
-        
+
         switch ($target) {
-            ([System.EnvironmentVariableTarget]::Machine) { 
-                if ($value -eq $null) {
+            ([System.EnvironmentVariableTarget]::Machine) {
+                if ($null -eq $value) {
                     $global:MockRegistry.Machine.Remove($name)
                 } else {
                     $global:MockRegistry.Machine[$name] = $value
                 }
             }
-            ([System.EnvironmentVariableTarget]::Process) { 
-                if ($value -eq $null) {
+            ([System.EnvironmentVariableTarget]::Process) {
+                if ($null -eq $value) {
                     $global:MockRegistry.Process.Remove($name)
                 } else {
                     $global:MockRegistry.Process[$name] = $value
                 }
             }
-            ([System.EnvironmentVariableTarget]::User) { 
-                if ($value -eq $null) {
+            ([System.EnvironmentVariableTarget]::User) {
+                if ($null -eq $value) {
                     $global:MockRegistry.User.Remove($name)
                 } else {
                     $global:MockRegistry.User[$name] = $value
@@ -138,7 +138,7 @@ BeforeAll {
             }
         }
     }
-    
+
     function Set-EnvVar {
         param ($name, $value)
         try {
@@ -156,10 +156,10 @@ BeforeAll {
             return -1
         }
     }
-    
+
 }
 
-Describe "Get-Data-From-Cache" {    
+Describe "Get-Data-From-Cache" {
     It "Returns data from cache file" {
         Mock Get-Content { return @'
             {
@@ -179,7 +179,7 @@ Describe "Get-Data-From-Cache" {
         $list.Releases[0] | Should -Be "/downloads/releases/php-7.4.33-Win32-vc15-x64.zip"
         $list.Archives[0] | Should -Be "/downloads/releases/archives/php-5.5.0-Win32-VC11-x64.zip"
     }
-    
+
     It "Handles exceptions gracefully" {
         Mock Get-Content { throw "Simulated exception" }
         $list = Get-Data-From-Cache -cacheFileName "test.json"
@@ -195,7 +195,7 @@ Describe "Cache-Data" {
         $code = Cache-Data -cacheFileName "test" -data @{"Releases" = @("php-8.4.12.zip"); "Archives" = @("php-5.5.0.zip")}
         $code | Should -Be 0
     }
-    
+
     It "Fails to creade cache directory" {
         Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
         Mock Make-Directory { return -1 }
@@ -203,7 +203,7 @@ Describe "Cache-Data" {
         $code = Cache-Data -cacheFileName "test" -data @{"Releases" = @("php-8.4.12.zip"); "Archives" = @("php-5.5.0.zip")}
         $code | Should -Be -1
     }
-    
+
     It "Handles exceptions gracefully" {
         Mock ConvertTo-Json { throw "Simulated exception" }
         $code = Cache-Data -cacheFileName "test" -data @{"Releases" = @("php-8.4.12.zip"); "Archives" = @("php-5.5.0.zip")}
@@ -235,7 +235,7 @@ Describe "Get-All-Subdirectories" {
             $result = Get-All-Subdirectories -path "C:\Nonexistent\Path"
             $result | Should -Be $null
         }
-        
+
         It "Returns null when an exception occurs" {
             # Simulate an exception by passing a path that causes an error
             Mock Get-ChildItem { throw "Simulated exception" }
@@ -260,10 +260,10 @@ Describe "Get-EnvVar-ByName" {
         It "Returns the variable value" {
             # Set a test variable
             Set-EnvVar -name "TEST_VAR" -value "TEST_VALUE"
-            
+
             $result = Get-EnvVar-ByName -name "TEST_VAR"
             $result | Should -Be "TEST_VALUE"
-            
+
             # Cleanup
             Set-EnvVar -name "TEST_VAR" -value $null
         }
@@ -292,10 +292,10 @@ Describe "Set-EnvVar" {
         It "Sets a new variable successfully (admin required)" {
             $result = Set-EnvVar -name "TEST_VAR_SET" -value "TEST_VALUE"
             $result | Should -Be 0
-            
+
             $value = Get-EnvVar-ByName -name "TEST_VAR_SET"
             $value | Should -Be "TEST_VALUE"
-            
+
             # Cleanup
             Set-EnvVar -name "TEST_VAR_SET" -value $null
         }
@@ -313,9 +313,9 @@ Describe "Make-Symbolic-Link" {
         It "Creates a symbolic link successfully when running as admin" {
             # Mock Is-Admin to return true
             Mock Is-Admin { return $true }
-            
+
             # Mock New-Item to simulate successful symbolic link creation
-            Mock New-Item { 
+            Mock New-Item {
                 param($ItemType, $Path, $Target)
                 if ($ItemType -eq "SymbolicLink") {
                     # Create a dummy file to simulate the link
@@ -323,23 +323,23 @@ Describe "Make-Symbolic-Link" {
                     return @{ FullName = $Path }
                 }
             } -ParameterFilter { $ItemType -eq "SymbolicLink" }
-            
+
             $linkPath = "TestDrive:\test_link"
             $targetPath = "$STORAGE_PATH\php\8.1"
-            
+
             $result = Make-Symbolic-Link -link $linkPath -target $targetPath
             $result.code | Should -Be 0
             $result.message | Should -Match "Created symbolic link"
             $result.color | Should -Be "DarkGreen"
-            
+
             # Verify New-Item was called with correct parameters
-            Assert-MockCalled New-Item -ParameterFilter { 
-                $ItemType -eq "SymbolicLink" -and 
-                $Path -eq $linkPath -and 
-                $Target -eq $targetPath 
+            Assert-MockCalled New-Item -ParameterFilter {
+                $ItemType -eq "SymbolicLink" -and
+                $Path -eq $linkPath -and
+                $Target -eq $targetPath
             }
         }
-        
+
         It "Returns -1 if fails to create symbolic link" {
             Mock Is-Admin { return $false }
             Mock Run-Command { return -1 }
@@ -350,52 +350,52 @@ Describe "Make-Symbolic-Link" {
             $result.message | Should -Be "Failed to make symbolic link '$linkPath' -> '$targetPath'"
             $result.color | Should -Be "DarkYellow"
         }
-        
+
         It "Creates a symbolic link successfully using elevated command" {
             # Mock Is-Admin to return false
             Mock Is-Admin { return $false }
-            
+
             # Mock Run-Command to simulate successful elevation
             Mock Run-Command { return 0 }
-            
+
             $linkPath = "TestDrive:\test_link_2"
             $targetPath = "$STORAGE_PATH\php\8.1"
-            
+
             $result = Make-Symbolic-Link -link $linkPath -target $targetPath
-            
+
             $result.code | Should -Be 0
             $result.message | Should -Match "Created symbolic link"
             $result.color | Should -Be "DarkGreen"
-            
+
             # Verify Run-Command was called with the symbolic link command
-            Assert-MockCalled Run-Command -ParameterFilter { 
+            Assert-MockCalled Run-Command -ParameterFilter {
                 $command -like "*New-Item -ItemType SymbolicLink*" -and
                 $command -like "*$linkPath*" -and
                 $command -like "*$targetPath*"
             }
         }
-        
+
         It "Returns -1 if target directory does not exist" {
             $result = Make-Symbolic-Link -link "TestDrive:\link" -target "C:\Nonexistent\Target"
             $result.code | Should -Be -1
             $result.message | Should -Match "Target directory 'C:\\Nonexistent\\Target' does not exist!"
             $result.color | Should -Be "DarkYellow"
         }
-        
+
         It "Returns -1 if link already exists and is not a symbolic link" {
             # Create a regular file to simulate existing non-link
             $existingPath = "TestDrive:\existing_file"
             New-Item -Path $existingPath -ItemType File -Force | Out-Null
-            
+
             $result = Make-Symbolic-Link -link $existingPath -target "$STORAGE_PATH\php\8.1"
             $result.code | Should -Be -1
             $result.message | Should -Be "Link '$existingPath' is not a symbolic link!"
             $result.color | Should -Be "DarkYellow"
-            
+
             # Cleanup
             Remove-Item -Path $existingPath -Force
         }
-        
+
         It "Handles exceptions gracefully" {
             Mock Is-Directory-Exists { throw "Simulated exception" }
             $result = Make-Symbolic-Link -link "TestDrive:\link" -target "TestDrive:\target"
@@ -478,7 +478,7 @@ Describe "Display-Msg-By-ExitCode" {
             }
             { Display-Msg-By-ExitCode -result $testResult } | Should -Not -Throw
         }
-        
+
         It "Displays custom message if provided" {
             Mock Write-Host {}
             $testResult = @{
@@ -487,7 +487,7 @@ Describe "Display-Msg-By-ExitCode" {
             $customMessage = "Custom message"
             { Display-Msg-By-ExitCode -result $testResult -message $customMessage } | Should -Not -Throw
         }
-        
+
         It "Displays list of messages if provided" {
             Mock Write-Host { }
             $testResults = @{
@@ -500,7 +500,7 @@ Describe "Display-Msg-By-ExitCode" {
             }
             { Display-Msg-By-ExitCode -result $testResults } | Should -Not -Throw
         }
-        
+
         It "Handles exceptions gracefully" {
             Mock Write-Host { throw "Simulated Write-Host failure" }
             $testResult = @{
@@ -531,10 +531,10 @@ Describe "Log-Data" {
             Test-Path $LOG_ERROR_PATH | Should -Be $true
             # Get the actual content
             $content = Get-Content $LOG_ERROR_PATH -Raw
-            
+
             # Verify the complete log format
             $content | Should -Match "\[.*\] Test message(.|\s)*Message: Test data"
-            
+
             # Alternatively, you could check parts separately
             $content | Should -Match "Test message"
             $content | Should -Match "Test data"
@@ -572,7 +572,7 @@ Describe "Optimize-SystemPath" {
         It "Optimizes PATH by replacing paths with variables" {
             $result = Optimize-SystemPath
             $result | Should -Be 0
-            
+
             $newPath = Get-EnvVar-ByName -name "Path"
             $newPath | Should -Match "%TEST_PATH1%"
             $newPath | Should -Match "%TEST_PATH2%"
@@ -584,16 +584,16 @@ Describe "Optimize-SystemPath" {
         It "Creates a backup log file" {
             $result = Optimize-SystemPath
             $result | Should -Be 0
-            
+
             Test-Path $PATH_VAR_BACKUP_PATH | Should -Be $true
             Get-Content $PATH_VAR_BACKUP_PATH -Raw | Should -Match "Original PATH"
         }
-        
+
         It "Handles exceptions gracefully" {
             Mock Get-All-EnvVars { throw "Simulated exception" }
             $result = Optimize-SystemPath
             $result | Should -Be -1
-            
+
             # Check that an error was logged
             Test-Path $LOG_ERROR_PATH | Should -Be $true
             Get-Content $LOG_ERROR_PATH -Raw | Should -Match "Optimize-SystemPath - Failed to optimize system PATH variable"
@@ -606,68 +606,68 @@ Describe "Format-Seconds" {
         It "Formats seconds less than 60 with decimal precision" {
             $result = Format-Seconds -totalSeconds 30.5
             $result | Should -Be "30.5s"
-            
+
             $result = Format-Seconds -totalSeconds 45.123
             $result | Should -Be "45.1s"
-            
+
             $result = Format-Seconds -totalSeconds 0
             $result | Should -Be "0s"
         }
-        
+
         It "Formats minutes and seconds without hours" {
             $result = Format-Seconds -totalSeconds 90
             $result | Should -Be "01:30"
-            
+
             $result = Format-Seconds -totalSeconds 125
             $result | Should -Be "02:05"
-            
+
             $result = Format-Seconds -totalSeconds 3599
             $result | Should -Be "59:59"
         }
-        
+
         It "Formats hours, minutes, and seconds" {
             $result = Format-Seconds -totalSeconds 3600
             $result | Should -Be "01:00:00"
-            
+
             $result = Format-Seconds -totalSeconds 3661
             $result | Should -Be "01:01:01"
-            
+
             $result = Format-Seconds -totalSeconds 7325
             $result | Should -Be "02:02:05"
-            
+
             $result = Format-Seconds -totalSeconds 86400
             $result | Should -Be "24:00:00"
         }
-        
+
         It "Handles negative values by converting to zero" {
             $result = Format-Seconds -totalSeconds -10
             $result | Should -Be "0s"
-            
+
             $result = Format-Seconds -totalSeconds -100.5
             $result | Should -Be "0s"
         }
-        
+
         It "Handles decimal values in minute ranges" {
             $result = Format-Seconds -totalSeconds 90.7
             $result | Should -Be "01:30"
-            
+
             $result = Format-Seconds -totalSeconds 125.9
             $result | Should -Be "02:05"
         }
-        
+
         It "Handles decimal values in hour ranges" {
             $result = Format-Seconds -totalSeconds 3600.5
             $result | Should -Be "01:00:00"
-            
+
             $result = Format-Seconds -totalSeconds 3661.8
             $result | Should -Be "01:01:01"
         }
-        
+
         It "Handles null input" {
             $result = Format-Seconds -totalSeconds $null
             $result | Should -Be "0s"
         }
-        
+
         It "Handles string input that can be converted" {
             $result = Format-Seconds -totalSeconds "90"
             $result | Should -Be "01:30"
@@ -679,76 +679,76 @@ Describe "Can-Use-Cache" {
     BeforeAll {
         $global:CACHE_PATH = "TestDrive:\cache"
         $global:CACHE_MAX_HOURS = 168
-    
+
         New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
     }
     Context "When cache file exists" {
         It "Returns true when cache file is within max age" {
             $cacheFileName = "test_cache"
             $cacheFile = "$cacheFileName.json"
-            
+
             # Create a cache file with recent timestamp
             New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
             Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
-            
+
             $result = Can-Use-Cache -cacheFileName $cacheFileName
             $result | Should -Be $true
         }
-        
+
         It "Returns false when cache file is older than max age" {
             $cacheFileName = "old_cache"
             $cacheFile = "$cacheFileName.json"
-            
+
             # Create a cache file with old timestamp (older than CACHE_MAX_HOURS)
             New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
             Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
-            
+
             # Set file modification time to be older than CACHE_MAX_HOURS (168 hours)
             $oldTime = (Get-Date).AddHours(-200)
             (Get-Item "$CACHE_PATH\$cacheFile").LastWriteTime = $oldTime
-            
+
             $result = Can-Use-Cache -cacheFileName $cacheFileName
             $result | Should -Be $false
         }
-        
+
         It "Returns false when cache file is exactly at max age boundary" {
             $cacheFileName = "boundary_cache"
             $cacheFile = "$cacheFileName.json"
-            
+
             # Create a cache file
             New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
             Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
-            
+
             # Set file modification time to be exactly at CACHE_MAX_HOURS
             $boundaryTime = (Get-Date).AddHours(-$CACHE_MAX_HOURS)
             (Get-Item "$CACHE_PATH\$cacheFile").LastWriteTime = $boundaryTime
-            
+
             $result = Can-Use-Cache -cacheFileName $cacheFileName
             # Since the function uses -lt (less than), equality should return false
             $result | Should -Be $false
         }
     }
-    
+
     Context "When cache file does not exist" {
         It "Returns false when cache file does not exist" {
             $cacheFileName = "nonexistent_cache"
-            
+
             $result = Can-Use-Cache -cacheFileName $cacheFileName
             $result | Should -Be $false
         }
     }
-    
+
     Context "With edge cases" {
         It "Returns false for empty cache file name" {
             $result = Can-Use-Cache -cacheFileName ""
             $result | Should -Be $false
         }
-        
+
         It "Returns false for null cache file name" {
             $result = Can-Use-Cache -cacheFileName $null
             $result | Should -Be $false
         }
-        
+
         It "Handles exceptions gracefully" {
             Mock Test-Path { throw "Simulated exception" }
             { Can-Use-Cache -cacheFileName "test" } | Should -Not -Throw
@@ -756,26 +756,26 @@ Describe "Can-Use-Cache" {
             $result | Should -Be $false
         }
     }
-    
+
     Context "With special file names" {
         It "Works with file names containing special characters" {
             $cacheFileName = "cache-with_special.chars"
             $cacheFile = "$cacheFileName.json"
-            
+
             New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
             Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
-            
+
             $result = Can-Use-Cache -cacheFileName $cacheFileName
             $result | Should -Be $true
         }
-        
+
         It "Works with file names containing numbers" {
             $cacheFileName = "cache123available_versions456"
             $cacheFile = "$cacheFileName.json"
-            
+
             New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
             Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
-            
+
             $result = Can-Use-Cache -cacheFileName $cacheFileName
             $result | Should -Be $true
         }
@@ -794,16 +794,16 @@ Describe "Get-OrUpdateCache" {
                 'Releases' = @('php-8.2.0-Win32-x64.zip')
             }
         }
-        
+
         $result = Get-OrUpdateCache -cacheFileName "file.json" -compute {
             Example
         }
-        
+
         Assert-MockCalled Get-Data-From-Cache -Exactly 1
         Assert-MockCalled Example -Exactly 0
         Assert-MockCalled Cache-Data -Exactly 0
     }
-    
+
     It "Runs the passed command when can't read from cache" {
         function Example { return @{} }
         Mock Example {
@@ -814,11 +814,11 @@ Describe "Get-OrUpdateCache" {
         }
         Mock Cache-Data { return 0 }
         Mock Can-Use-Cache { return $false }
-        
+
         $result = Get-OrUpdateCache -cacheFileName "file.json" -compute {
             Example
         }
-        
+
         Assert-MockCalled Example -Exactly 1
         Assert-MockCalled Cache-Data -Exactly 1
     }
@@ -831,81 +831,81 @@ Describe "Resolve-Arch" {
             $result = Resolve-Arch -arguments $arguments
             $result | Should -Be "x86"
         }
-        
+
         It "Returns x64 when x64 is in arguments" {
             $arguments = @("some_arg", "x64", "another_arg")
             $result = Resolve-Arch -arguments $arguments
             $result | Should -Be "x64"
         }
-        
+
         It "Returns first matching architecture when multiple are present" {
             $arguments = @("x86", "x64", "other")
             $result = Resolve-Arch -arguments $arguments
             $result | Should -Be "x86"
         }
-        
+
         It "Returns null when no matching architecture in arguments" {
             $arguments = @("some_arg", "another_arg", "third_arg")
             $result = Resolve-Arch -arguments $arguments
             $result | Should -BeNullOrEmpty
         }
     }
-    
+
     Context "Case insensitivity" {
         It "Returns lowercase x86 when uppercase X86 provided" {
             $arguments = @("X86")
             $result = Resolve-Arch -arguments $arguments
             $result | Should -Be "x86"
         }
-        
+
         It "Returns lowercase x64 when mixed case X64 provided" {
             $arguments = @("X64")
             $result = Resolve-Arch -arguments $arguments
             $result | Should -Be "x64"
         }
     }
-    
+
     Context "With default choice" {
         It "Returns x64 as default when 64-bit OS and choseDefault is true" {
             Mock Is-OS-64Bit { return $true }
             $arguments = @("some_arg", "other_arg")
-            
+
             $result = Resolve-Arch -arguments $arguments -choseDefault $true
             $result | Should -Be "x64"
         }
-        
+
         It "Returns x86 as default when 32-bit OS and choseDefault is true" {
             Mock Is-OS-64Bit { return $false }
             $arguments = @("some_arg", "other_arg")
-            
+
             $result = Resolve-Arch -arguments $arguments -choseDefault $true
             $result | Should -Be "x86"
         }
-        
+
         It "Returns argument arch even when choseDefault is true" {
             Mock Is-OS-64Bit { return $true }
             $arguments = @("x86", "some_arg")
-            
+
             $result = Resolve-Arch -arguments $arguments -choseDefault $true
             $result | Should -Be "x86"
         }
     }
-    
+
     Context "With empty or null inputs" {
         It "Returns null when arguments array is empty and choseDefault is false" {
             $arguments = @()
             $result = Resolve-Arch -arguments $arguments -choseDefault $false
             $result | Should -BeNullOrEmpty
         }
-        
+
         It "Returns default when arguments array is empty and choseDefault is true" {
             Mock Is-OS-64Bit { return $true }
             $arguments = @()
-            
+
             $result = Resolve-Arch -arguments $arguments -choseDefault $true
             $result | Should -Be "x64"
         }
-        
+
         It "Returns null when arguments is null" {
             $result = Resolve-Arch -arguments $null
             $result | Should -BeNullOrEmpty
@@ -920,70 +920,70 @@ Describe "Resolve-BuildType" {
             $result = Resolve-BuildType -arguments $arguments
             $result | Should -Be "nts"
         }
-        
+
         It "Returns ts when ts is in arguments" {
             $arguments = @("some_arg", "ts", "another_arg")
             $result = Resolve-BuildType -arguments $arguments
             $result | Should -Be "ts"
         }
-        
+
         It "Returns first matching architecture when multiple are present" {
             $arguments = @("ts", "nts", "other")
             $result = Resolve-BuildType -arguments $arguments
             $result | Should -Be "ts"
         }
-        
+
         It "Returns null when no matching architecture in arguments" {
             $arguments = @("some_arg", "another_arg", "third_arg")
             $result = Resolve-BuildType -arguments $arguments
             $result | Should -BeNullOrEmpty
         }
     }
-    
+
     Context "Case insensitivity" {
         It "Returns lowercase nts when uppercase NTS provided" {
             $arguments = @("NTS")
             $result = Resolve-BuildType -arguments $arguments
             $result | Should -Be "nts"
         }
-        
+
         It "Returns lowercase TS when mixed case TS provided" {
             $arguments = @("TS")
             $result = Resolve-BuildType -arguments $arguments
             $result | Should -Be "TS"
         }
     }
-    
+
     Context "With default choice" {
         It "Returns ts as default when choseDefault is true" {
             $arguments = @("some_arg", "other_arg")
-            
+
             $result = Resolve-BuildType -arguments $arguments -choseDefault $true
             $result | Should -Be "ts"
         }
-        
+
         It "Returns argument arch even when choseDefault is true" {
             $arguments = @("nts", "some_arg")
-            
+
             $result = Resolve-BuildType -arguments $arguments -choseDefault $true
             $result | Should -Be "nts"
         }
     }
-    
+
     Context "With empty or null inputs" {
         It "Returns null when arguments array is empty and choseDefault is false" {
             $arguments = @()
             $result = Resolve-BuildType -arguments $arguments -choseDefault $false
             $result | Should -BeNullOrEmpty
         }
-        
+
         It "Returns default when arguments array is empty and choseDefault is true" {
             $arguments = @()
-            
+
             $result = Resolve-BuildType -arguments $arguments -choseDefault $true
             $result | Should -Be "ts"
         }
-        
+
         It "Returns null when arguments is null" {
             $result = Resolve-BuildType -arguments $null
             $result | Should -BeNullOrEmpty
@@ -996,10 +996,10 @@ Describe "Get-PHPInstallInfo" {
         It "Returns PHP install info with NTS build type" {
             $testPath = "TestDrive:\php\8.3"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
-            
+
             # Create a mock NTS DLL file
             New-Item -Path "$testPath\php8nts.dll" -ItemType File -Force | Out-Null
-            
+
             Mock Get-ChildItem {
                 return @{
                     VersionInfo = @{ ProductVersion = "8.3.0" }
@@ -1007,11 +1007,11 @@ Describe "Get-PHPInstallInfo" {
                     FullName = "$testPath\php8nts.dll"
                 }
             }
-            
+
             Mock Get-BinaryArchitecture-From-DLL { return "x64" }
-            
+
             $result = Get-PHPInstallInfo -path $testPath
-            
+
             $result | Should -Not -BeNullOrEmpty
             $result.Version | Should -Be "8.3.0"
             $result.Arch | Should -Be "x64"
@@ -1019,11 +1019,11 @@ Describe "Get-PHPInstallInfo" {
             $result.Dll | Should -Be "php8nts.dll"
             $result.InstallPath | Should -Be $testPath
         }
-        
+
         It "Returns PHP install info with TS build type" {
             $testPath = "TestDrive:\php\8.2"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
-            
+
             Mock Get-ChildItem {
                 return @{
                     VersionInfo = @{ ProductVersion = "8.2.5" }
@@ -1031,19 +1031,19 @@ Describe "Get-PHPInstallInfo" {
                     FullName = "$testPath\php8ts.dll"
                 }
             }
-            
+
             Mock Get-BinaryArchitecture-From-DLL { return "x86" }
-            
+
             $result = Get-PHPInstallInfo -path $testPath
-            
+
             $result.BuildType | Should -Be "TS"
             $result.Arch | Should -Be "x86"
             $result.Version | Should -Be "8.2.5"
         }
-        
+
         It "Returns first DLL when multiple match" {
             $testPath = "TestDrive:\php\8.1"
-            
+
             Mock Get-ChildItem {
                 return @(
                     @{
@@ -1058,21 +1058,21 @@ Describe "Get-PHPInstallInfo" {
                     }
                 ) | Select-Object -First 1
             }
-            
+
             Mock Get-BinaryArchitecture-From-DLL { return "x64" }
-            
+
             $result = Get-PHPInstallInfo -path $testPath
             $result.Dll | Should -Be "php81nts.dll"
         }
     }
-    
+
     Context "When PHP DLL does not exist" {
         It "Returns null when no DLL found" {
             $testPath = "TestDrive:\php\empty"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
-            
+
             Mock Get-ChildItem { return $null }
-            
+
             $result = Get-PHPInstallInfo -path $testPath
             $result | Should -BeNullOrEmpty
         }
@@ -1092,11 +1092,11 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 arch = "x64"
                 buildType = "NTS"
             }
-            
+
             $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $true
         }
-        
+
         It "Returns true for x86 TS build versions" {
             $version1 = @{
                 version = "8.1.5"
@@ -1108,12 +1108,12 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 arch = "x86"
                 buildType = "TS"
             }
-            
+
             $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $true
         }
     }
-    
+
     Context "When versions differ" {
         It "Returns false when version numbers differ" {
             $version1 = @{
@@ -1126,11 +1126,11 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 arch = "x64"
                 buildType = "NTS"
             }
-            
+
             $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $false
         }
-        
+
         It "Returns false when architecture differs" {
             $version1 = @{
                 version = "8.3.0"
@@ -1142,11 +1142,11 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 arch = "x86"
                 buildType = "NTS"
             }
-            
+
             $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $false
         }
-        
+
         It "Returns false when build type differs" {
             $version1 = @{
                 version = "8.3.0"
@@ -1158,12 +1158,12 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 arch = "x64"
                 buildType = "TS"
             }
-            
+
             $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $false
         }
     }
-    
+
     Context "With null or incomplete versions" {
         It "Returns false when first version is null" {
             $version2 = @{
@@ -1171,27 +1171,27 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 arch = "x64"
                 buildType = "NTS"
             }
-            
+
             $result = Is-Two-PHP-Versions-Equal -version1 $null -version2 $version2
             $result | Should -Be $false
         }
-        
+
         It "Returns false when second version is null" {
             $version1 = @{
                 version = "8.3.0"
                 arch = "x64"
                 buildType = "NTS"
             }
-            
+
             $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $null
             $result | Should -Be $false
         }
-        
+
         It "Returns false when both versions are null" {
             $result = Is-Two-PHP-Versions-Equal -version1 $null -version2 $null
             $result | Should -Be $false
         }
-        
+
         It "Returns false when a property value is missing (null)" {
             $version1 = @{
                 version = "8.3.0"
@@ -1203,12 +1203,12 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 arch = "x64"
                 buildType = "NTS"
             }
-            
+
             $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $false
         }
     }
-    
+
     Context "With edge cases" {
         It "Returns true for versions with additional properties" {
             $version1 = @{
@@ -1223,11 +1223,11 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 arch = "x64"
                 buildType = "NTS"
             }
-            
+
             $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $true
         }
-        
+
         It "Returns false when version is empty string vs null" {
             $version1 = @{
                 version = ""
@@ -1239,7 +1239,7 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 arch = "x64"
                 buildType = "NTS"
             }
-            
+
             $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $false
         }
@@ -1252,99 +1252,99 @@ Describe "Get-BinaryArchitecture-From-DLL" {
         It "Returns x64 architecture when machine type is 0x8664" {
             $dllPath = "TestDrive:\php\php8_x64.dll"
             New-Item -Path $dllPath -ItemType File -Force | Out-Null
-            
+
             # Convert TestDrive path to actual filesystem path
             $actualPath = (Resolve-Path -Path $dllPath).ProviderPath
-            
+
             # Create a minimal PE file structure for x64
             # PE Header starts at offset 0x3C
             $bytes = [byte[]]::new(1024)
-            
+
             # Write MZ header
             $bytes[0] = 0x4D  # 'M'
             $bytes[1] = 0x5A  # 'Z'
-            
+
             # PE offset is at 0x3C (60 decimal)
             $peOffset = 0x80
             [BitConverter]::GetBytes($peOffset) | `
                 ForEach-Object -Begin { $i = 0 } -Process { $bytes[0x3C + $i] = $_; $i++ }
-            
+
             # At PE offset, write "PE\0\0"
             $bytes[$peOffset] = 0x50      # 'P'
             $bytes[$peOffset + 1] = 0x45  # 'E'
-            
+
             # Machine type at PE offset + 4 (0x8664 for x64)
             [BitConverter]::GetBytes([uint16]0x8664) | `
                 ForEach-Object -Begin { $i = 0 } -Process { $bytes[$peOffset + 4 + $i] = $_; $i++ }
-            
+
             [System.IO.File]::WriteAllBytes($actualPath, $bytes)
-            
+
             $result = Get-BinaryArchitecture-From-DLL -path $actualPath
             $result | Should -Be "x64"
         }
-        
+
         It "Returns x86 architecture when machine type is 0x014c" {
             $dllPath = "TestDrive:\php\php8_x86.dll"
             New-Item -Path $dllPath -ItemType File -Force | Out-Null
-            
+
             # Convert TestDrive path to actual filesystem path
             $actualPath = (Resolve-Path -Path $dllPath).ProviderPath
-            
+
             # Create a minimal PE file structure for x86
             $bytes = [byte[]]::new(1024)
-            
+
             # Write MZ header
             $bytes[0] = 0x4D  # 'M'
             $bytes[1] = 0x5A  # 'Z'
-            
+
             # PE offset is at 0x3C (60 decimal)
             $peOffset = 0x80
             [BitConverter]::GetBytes($peOffset) | `
                 ForEach-Object -Begin { $i = 0 } -Process { $bytes[0x3C + $i] = $_; $i++ }
-            
+
             # At PE offset, write "PE\0\0"
             $bytes[$peOffset] = 0x50      # 'P'
             $bytes[$peOffset + 1] = 0x45  # 'E'
-            
+
             # Machine type at PE offset + 4 (0x014c for x86)
             [BitConverter]::GetBytes([uint16]0x014c) | `
                 ForEach-Object -Begin { $i = 0 } -Process { $bytes[$peOffset + 4 + $i] = $_; $i++ }
-            
+
             [System.IO.File]::WriteAllBytes($actualPath, $bytes)
-            
+
             $result = Get-BinaryArchitecture-From-DLL -path $actualPath
             $result | Should -Be "x86"
         }
-        
+
         It "Returns Unknown for unknown machine type" {
             $dllPath = "TestDrive:\php\php8_unknown.dll"
             New-Item -Path $dllPath -ItemType File -Force | Out-Null
-            
+
             # Convert TestDrive path to actual filesystem path
             $actualPath = (Resolve-Path -Path $dllPath).ProviderPath
-            
+
             # Create a minimal PE file structure with unknown type
             $bytes = [byte[]]::new(1024)
-            
+
             # Write MZ header
             $bytes[0] = 0x4D  # 'M'
             $bytes[1] = 0x5A  # 'Z'
-            
+
             # PE offset is at 0x3C (60 decimal)
             $peOffset = 0x80
             [BitConverter]::GetBytes($peOffset) | `
                 ForEach-Object -Begin { $i = 0 } -Process { $bytes[0x3C + $i] = $_; $i++ }
-            
+
             # At PE offset, write "PE\0\0"
             $bytes[$peOffset] = 0x50      # 'P'
             $bytes[$peOffset + 1] = 0x45  # 'E'
-            
+
             # Machine type at PE offset + 4 (0x0000 for unknown)
             [BitConverter]::GetBytes([uint16]0x0000) | `
                 ForEach-Object -Begin { $i = 0 } -Process { $bytes[$peOffset + 4 + $i] = $_; $i++ }
-            
+
             [System.IO.File]::WriteAllBytes($actualPath, $bytes)
-            
+
             $result = Get-BinaryArchitecture-From-DLL -path $actualPath
             $result | Should -Be "Unknown"
         }

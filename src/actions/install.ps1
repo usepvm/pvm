@@ -1,17 +1,17 @@
-
+﻿
 function Get-Latest-PHP-Version {
     param ($arch = $null, $buildType = $null)
 
     try {
         $urls = Get-Source-Urls
         $allVersions = @()
-        
+
         foreach ($key in $urls.Keys) {
             $url = $urls[$key]
             try {
                 $html = Invoke-WebRequest -Uri $url
                 $links = $html.Links
-                
+
                 $filteredLinks = $links | Where-Object {
                     $_.href -match "php-\d+(\.\d+)*-(?:nts-)?win.*\.zip$" -and
                     $_.href -notmatch "php-debug" -and
@@ -34,17 +34,17 @@ function Get-Latest-PHP-Version {
                 continue
             }
         }
-        
+
         if ($arch) {
             $allVersions = $allVersions | Where-Object { $_.arch -eq $arch }
         }
         if ($buildType) {
             $allVersions = $allVersions | Where-Object { $_.BuildType -eq $buildType }
         }
-        
+
         # Sort by version number (descending) and return the first one
         $latest = $allVersions | Sort-Object { [version]$_.version } -Descending | Select-Object -First 1
-        
+
         return $latest
     } catch {
         $logged = Log-Data -data @{
@@ -253,7 +253,7 @@ function Configure-Opcache {
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
         Write-Host "`nOpcache configured successfully for PHP version $version"
-        
+
         return 0
     } catch {
         $logged = Log-Data -data @{
@@ -273,7 +273,7 @@ function Select-Version {
         $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $MIN_COUNT
     }
     $matchingKeys = $matchingVersions.Values | Where-Object { $_.Count -gt 0 }
-    
+
     if ($matchingKeys.Length -eq 1) {
         # There is exactly one key with one item
         $selectedVersionObject = $matchingKeys

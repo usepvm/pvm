@@ -1,6 +1,6 @@
-
+﻿
 BeforeAll {
-    
+
     # Mock data and helper functions for testing
     $PHP_CURRENT_VERSION_PATH = "C:\pvm\php"
     $LOG_ERROR_PATH = "C:\logs\error.log"
@@ -29,7 +29,7 @@ BeforeAll {
                 return @{code=0; version=$selected.version; path=$selected.path}
             }
         }
-        
+
         # Default behavior - select first version
         if ($installedVersions -and $installedVersions.Count -gt 0) {
             return @{code=0; version=$installedVersions[0].version; path=$installedVersions[0].path}
@@ -58,7 +58,7 @@ Describe "Detect-PHP-VersionFromProject" {
         $result = Detect-PHP-VersionFromProject
         $result | Should -Be "7.4"
     }
-    
+
     It "Should detect PHP version from composer.json" {
         Mock Test-Path {
             param($path)
@@ -69,7 +69,7 @@ Describe "Detect-PHP-VersionFromProject" {
         $result = Detect-PHP-VersionFromProject
         $result | Should -Be "8.4"
     }
-    
+
     It "Handles parser exceptions gracefully" {
         Mock Test-Path {
             param($path)
@@ -106,7 +106,7 @@ Describe "Update-PHP-Version" {
         $result.code | Should -Be -1
         $result.message | Should -BeExactly "PHP version 5.6 was not found!"
     }
-    
+
     It "Should return when switching to same current version" {
         Mock Get-UserSelected-PHP-Version { return @{
             code=0; version="8.2.0"; arch = 'x64';
@@ -114,7 +114,7 @@ Describe "Update-PHP-Version" {
         }}
         Mock Get-Current-PHP-Version { return @{
             version = "8.2.0";
-            path = "TestDrive:\php\8.2.0" 
+            path = "TestDrive:\php\8.2.0"
             arch = 'x64'
             buildType = 'TS'
         }}
@@ -122,7 +122,7 @@ Describe "Update-PHP-Version" {
         $result.code | Should -Be 0
         $result.message | Should -BeExactly "Already using PHP 8.2.0"
     }
-    
+
     It "Should handle when Make-Symbolic-Link fails" {
         Mock Make-Symbolic-Link { return @{ code = -1; message = "Failed to create link"; color = "DarkYellow" } }
         $result = Update-PHP-Version -version "8.1"

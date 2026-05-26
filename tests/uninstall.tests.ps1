@@ -1,4 +1,4 @@
-
+﻿
 BeforeAll {
     # Create a test directory for PHP installations
     $script:PHP_CURRENT_VERSION_PATH = "TestDrive:\php\current"
@@ -6,7 +6,7 @@ BeforeAll {
     $testPhpPath = "TestDrive:\PHP"
     New-Item -Path "$testPhpPath\7.4" -ItemType Directory -Force
     New-Item -Path "$testPhpPath\8.0" -ItemType Directory -Force
-    
+
     function Log-Data { param($logPath, $message, $data) }
     # Mock Log-Data globally - this will be available for all tests
     Mock Log-Data -MockWith {
@@ -29,16 +29,16 @@ Describe "Uninstall-PHP" {
                 return @{ code = 0; version = '7.4'; arch = 'x86'; buildType = 'nts'; path = "$testPhpPath\7.4" }
             }
             $result = Uninstall-PHP -version "7.4"
-            
+
             $result.code | Should -Be 0
             $result.message | Should -BeLike "*PHP version 7.4 has been uninstalled successfully*"
             $result.color | Should -Be "DarkGreen"
-            
+
             Should -Invoke Remove-Item -Exactly 1 -ParameterFilter {
                 $Path -eq "$testPhpPath\7.4" -and $Recurse -eq $true -and $Force -eq $true
             }
         }
-        
+
         It "Should prompt user when trying to uninstall current version" {
             Mock Get-UserSelected-PHP-Version -MockWith {
                 return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\7.4" }
@@ -47,10 +47,10 @@ Describe "Uninstall-PHP" {
             Mock Read-Host { }
             $result = Uninstall-PHP -version "7.4"
             $result.code | Should -Be -1
-            
+
             Assert-MockCalled Read-Host -ParameterFilter { $Prompt -like "*You are trying to uninstall the currently active PHP version*" }
         }
-        
+
         It "Should prompt user when trying to uninstall current version and handle 'n' response" {
             Mock Get-UserSelected-PHP-Version -MockWith {
                 return @{ code = 0; version = '8.0'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\8.0" }
@@ -60,10 +60,10 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version "8.0"
             $result.code | Should -Be -1
             $result.message | Should -Be "Uninstallation cancelled"
-            
+
             Assert-MockCalled Read-Host -Times 1
         }
-        
+
         It "Should prompt user when trying to uninstall current version and handle 'y' response" {
             Mock Get-UserSelected-PHP-Version -MockWith {
                 return @{ code = 0; version = '8.0'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\8.0" }
@@ -72,7 +72,7 @@ Describe "Uninstall-PHP" {
             Mock Read-Host { "y" }
             $result = Uninstall-PHP -version "8.0"
             $result.code | Should -Be 0
-            
+
             Assert-MockCalled Read-Host -Times 1
         }
     }
@@ -91,11 +91,11 @@ Describe "Uninstall-PHP" {
 
         It "Should successfully uninstall after user selection" {
             $result = Uninstall-PHP -version "8.*"
-            
+
             $result.code | Should -Be 0
             $result.message | Should -BeLike "*PHP version 8.* has been uninstalled successfully*"
             $result.color | Should -Be "DarkGreen"
-            
+
             Should -Invoke Get-Matching-PHP-Versions -Exactly 1
             Should -Invoke Get-UserSelected-PHP-Version -Exactly 1
             Should -Invoke Remove-Item -Exactly 1 -ParameterFilter {
@@ -116,11 +116,11 @@ Describe "Uninstall-PHP" {
 
         It "Should return version not found message" {
             $result = Uninstall-PHP -version "5.6"
-            
+
             $result.code | Should -Be -1
             $result.message | Should -BeExactly "PHP version 5.6 was not found!"
             $result.color | Should -Be "DarkYellow"
-            
+
             Should -Invoke Get-Matching-PHP-Versions -Exactly 1
             Should -Invoke Remove-Item -Exactly 0
         }
@@ -140,11 +140,11 @@ Describe "Uninstall-PHP" {
 
         It "Should return the user selection error" {
             $result = Uninstall-PHP -version "8.*"
-            
+
             $result.code | Should -Be -1
             $result.message | Should -Be "User cancelled the selection"
             $result.color | Should -Be "DarkYellow"
-            
+
             Should -Invoke Get-Matching-PHP-Versions -Exactly 1
             Should -Invoke Get-UserSelected-PHP-Version -Exactly 1
             Should -Invoke Remove-Item -Exactly 0
@@ -167,11 +167,11 @@ Describe "Uninstall-PHP" {
             Mock Get-Matching-PHP-Versions { return $null }
             Mock Get-UserSelected-PHP-Version { return $null }
             $result = Uninstall-PHP -version "8.2"
-            
+
             $result.code | Should -Be -1
             $result.message | Should -BeExactly "PHP version 8.2 was not found!"
             $result.color | Should -Be "DarkYellow"
-            
+
             Should -Invoke Get-Matching-PHP-Versions -Exactly 1
             Should -Invoke Get-UserSelected-PHP-Version -Exactly 1
             Should -Invoke Remove-Item -Exactly 0
@@ -192,11 +192,11 @@ Describe "Uninstall-PHP" {
             }
             Mock Refresh-Installed-PHP-Versions-Cache { throw 'Error' }
             $result = Uninstall-PHP -version "7.4"
-            
+
             $result.code | Should -Be -1
             $result.message | Should -Be "Failed to uninstall PHP version '7.4'"
             $result.color | Should -Be "DarkYellow"
-            
+
             Should -Invoke Remove-Item -Exactly 1
             Should -Invoke Log-Data -Exactly 1
         }

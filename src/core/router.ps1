@@ -1,4 +1,4 @@
-
+﻿
 function Invoke-PVMSetup {
 
     $result = @{ code = 0; message = "PVM is already setup" }
@@ -9,7 +9,7 @@ function Invoke-PVMSetup {
     if ($optimized -ne 0) {
         Write-Host "`nFailed to optimize system path." -ForegroundColor DarkYellow
     }
-    
+
     Display-Msg-By-ExitCode -result $result
     return 0
 }
@@ -29,12 +29,12 @@ function Invoke-PVMCurrent {
         $text += " $($result.arch)"
     }
     Write-Host $text
-    
+
     if (-not $result.status) {
         Write-Host "No status information available for the current PHP version." -ForegroundColor Yellow
         return -1
     }
-    
+
     foreach ($ext in $result.status.Keys) {
         if ($result.status[$ext]) {
             Write-Host "- $ext is enabled" -ForegroundColor DarkGreen
@@ -42,26 +42,26 @@ function Invoke-PVMCurrent {
             Write-Host "- $ext is disabled" -ForegroundColor DarkYellow
         }
     }
-    
+
     Write-Host "`nPath: $($result.path)" -ForegroundColor Gray
     return 0
 }
 
 function Invoke-PVMList {
     param($arguments)
-    
+
     $arch = Resolve-Arch -arguments $arguments
     $buildType = Resolve-BuildType -arguments $arguments
-    
+
     $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
     $result = Get-PHP-Versions-List -available ($arguments -contains "available") -term $term -arch $arch -buildType $buildType
-    
+
     return $result
 }
 
 function Invoke-PVMInstall {
     param($arguments)
-    
+
     $version = $arguments[0]
     $arch = Resolve-Arch -arguments $arguments
     $buildType = Resolve-BuildType -arguments $arguments
@@ -82,7 +82,7 @@ function Invoke-PVMInstall {
             Write-Host "`nFailed to find the latest PHP version"
             return -1
         }
-        
+
         $version = $latestVersion.version
         Write-Host "`nLatest available PHP version is $version"
     }
@@ -99,7 +99,7 @@ function Invoke-PVMInstall {
 
 function Invoke-PVMUninstall {
     param($arguments)
-    
+
     $version = $arguments[0]
 
     if (-not $version) {
@@ -115,7 +115,7 @@ function Invoke-PVMUninstall {
 
 function Invoke-PVMUse {
     param($arguments)
-    
+
     $version = $arguments[0]
 
     if (-not $version) {
@@ -131,7 +131,7 @@ function Invoke-PVMUse {
         }
         $version = $result.version
     }
-    
+
     $result = Update-PHP-Version -version $version
 
     Display-Msg-By-ExitCode -result $result
@@ -140,14 +140,14 @@ function Invoke-PVMUse {
 
 function Invoke-PVMIni {
     param($arguments)
-    
+
     $action = $arguments[0]
     if (-not $action) {
         Write-Host "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable', 'install', 'list' or 'restore'."
         return -1
     }
-    
-    $remainingArgs = if ($arguments.Count -gt 1) { 
+
+    $remainingArgs = if ($arguments.Count -gt 1) {
         $arguments[1..($arguments.Count - 1)] | Where-Object { $_ -ne $arch }
     } else { @() }
 
@@ -195,18 +195,18 @@ function Invoke-PVMTest {
         }
         return $true
     }
-    
+
     if ($options.target -lt 0 -or $options.target -gt 100) {
         Write-Host "`nInvalid coverage value : $($options.target) | Min: 0, Max: 100" -ForegroundColor Yellow
         return -1
     }
-    
+
     return Prepare-Tests -files $files -options $options -exclude $exclude
 }
 
 function Invoke-PVMLog {
     param($arguments)
-    
+
     $pageSizeArg = $arguments | Where-Object { $_ -match '^--pageSize=(.+)$' }
     if ($pageSizeArg) {
         $pageSize = $pageSizeArg -replace '^--pageSize=', ''
@@ -221,7 +221,7 @@ function Invoke-PVMLog {
 
 function Invoke-PVMHelp {
     param($arguments)
-    
+
     $command = $arguments[0]
     if ($command) {
         $usage = $actions[$command].usage
@@ -240,22 +240,22 @@ function Invoke-PVMHelp {
     } else {
         Show-Usage
     }
-    
+
     return 0
 }
 
 function Invoke-PVMProfile {
     param($arguments)
-    
+
     $action = $arguments[0]
-    
+
     if (-not $action) {
         Write-Host "`nPlease specify an action for 'pvm profile'. Use 'save', 'load', 'list', 'show', 'delete', 'export', or 'import'." -ForegroundColor Yellow
         return -1
     }
-    
+
     $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
-    
+
     switch ($action.ToLower()) {
         "save" {
             if ($remainingArgs.Count -eq 0) {
@@ -283,7 +283,7 @@ function Invoke-PVMProfile {
                 return -1
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
-            
+
             return (Show-PHP-Profile -profileName $profileName)
         }
         "delete" {
@@ -291,9 +291,9 @@ function Invoke-PVMProfile {
                 Write-Host "`nPlease provide a profile name: pvm profile delete <name>" -ForegroundColor Yellow
                 return -1
             }
-            
+
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
-            
+
             return (Delete-PHP-Profile -profileName $profileName)
         }
         "export" {
@@ -301,10 +301,10 @@ function Invoke-PVMProfile {
                 Write-Host "`nPlease provide a profile name: pvm profile export <name> [path]" -ForegroundColor Yellow
                 return -1
             }
-            
+
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
             $exportPath = if ($remainingArgs.Count -gt 1) { $remainingArgs[1] } else { $null }
-            
+
             return (Export-PHP-Profile -profileName $profileName -exportPath $exportPath)
         }
         "import" {
@@ -314,7 +314,7 @@ function Invoke-PVMProfile {
             }
             $importPath = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[1] } else { $null }
-            
+
             return (Import-PHP-Profile -importPath $importPath -profileName $profileName)
         }
         default {
@@ -328,7 +328,7 @@ function Get-Actions {
     param( $arguments )
 
     $script:arguments = $arguments
-    
+
     return [ordered]@{
         "help"      = [PSCustomObject]@{
             command     = "pvm help [command]";

@@ -1,4 +1,4 @@
-
+﻿
 function Show-Usage {
     Write-Host "`nRunning version : $PVM_VERSION"
     Write-Host "`nUsage:`n"
@@ -63,28 +63,28 @@ function Allowed-Operations {
 function Start-PVM {
     param ($operation, $arguments)
     try {
-        
+
         if ($arguments -match '^(--version|-v)$' -or $operation -eq 'version') {
             Show-PVM-Version
             return 0
         }
-        
+
         $actions = Get-Actions -arguments $arguments
-        
+
         $operation = Alias-Handler -alias $operation
-        
+
         if (-not ($operation -and $actions.Contains($operation))) {
             Show-Usage
             return 0
         }
-        
+
         $allowedOperations = Allowed-Operations
 
         if (($allowedOperations -notcontains $operation) -and (-not (Is-PVM-Setup))) {
             Write-Host "`nPVM is not setup. Please run 'pvm setup' first."
             return -1
         }
-        
+
         return $($actions[$operation].action.Invoke())
     } catch {
         $logged = Log-Data -data @{

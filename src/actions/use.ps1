@@ -1,4 +1,4 @@
-function Detect-PHP-VersionFromProject {
+﻿function Detect-PHP-VersionFromProject {
 
     try {
         # 1. Check .php-version
@@ -60,7 +60,7 @@ function Update-PHP-Version {
             return $linkCreated
         }
         $text = ("Now using PHP $($pathVersionObject.version) $($pathVersionObject.buildType) $($pathVersionObject.arch)").Trim()
-        
+
         return @{ code = 0; message = $text; color = "DarkGreen"}
     } catch {
         $logged = Log-Data -data @{

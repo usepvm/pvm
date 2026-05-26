@@ -1,11 +1,11 @@
-
+﻿
 function Get-Zend-Extensions-List {
     return @('xdebug', 'opcache')
 }
 
 function Can-Use-Cache {
     param ($cacheFileName)
-    
+
     try {
         $path = "$CACHE_PATH\$cacheFileName.json"
         $useCache = $false
@@ -14,21 +14,21 @@ function Can-Use-Cache {
             $fileAgeHours = (New-TimeSpan -Start (Get-Item $path).LastWriteTime -End (Get-Date)).TotalHours
             $useCache = ($fileAgeHours -lt $CACHE_MAX_HOURS)
         }
-        
+
         return $useCache
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"
             exception = $_
         }
-        
+
         return $false
     }
 }
 
 function Get-Data-From-Cache {
     param ($cacheFileName)
-    
+
     try {
         $jsonData = Get-Content "$CACHE_PATH\$cacheFileName.json" | ConvertFrom-Json
         return $jsonData
@@ -43,7 +43,7 @@ function Get-Data-From-Cache {
 
 function Cache-Data {
     param ($cacheFileName, $data, $depth = 3)
-    
+
     try {
         $jsonString = $data | ConvertTo-Json -Depth $depth
         $path = "$CACHE_PATH\$cacheFileName.json"
@@ -65,22 +65,22 @@ function Cache-Data {
 
 function Get-OrUpdateCache {
     param ($cacheFileName, $compute, $depth = 3)
-    
+
     $useCache = Can-Use-Cache -cacheFileName $cacheFileName
-    
+
     if ($useCache) {
         $data = Get-Data-From-Cache -cacheFileName $cacheFileName
         if ($null -ne $data -and $data.Count -gt 0) {
             return $data
         }
     }
-    
+
     $data = & $compute
-    
+
     if ($null -ne $data) {
         $cached = Cache-Data -cacheFileName $cacheFileName -data $data -depth $depth
     }
-    
+
     return $data
 }
 
@@ -161,19 +161,19 @@ function Set-EnvVar {
 
 function Make-Symbolic-Link {
     param($link, $target)
-    
+
     try {
         if ([string]::IsNullOrWhiteSpace($link) -or [string]::IsNullOrWhiteSpace($target)) {
             return @{ code = -1; message = "Link and target cannot be empty!"; color = "DarkYellow" }
         }
-        
+
         $link = $link.Trim()
-        $target = $target.Trim()        
-        
+        $target = $target.Trim()
+
         if (-not (Is-Directory-Exists -path $target)) {
             return @{ code = -1; message = "Target directory '$target' does not exist!"; color = "DarkYellow" }
         }
-        
+
         # Make sure parent directory exists
         $parent = Split-Path $link
         if (-not (Test-Path $parent)) {
@@ -188,7 +188,7 @@ function Make-Symbolic-Link {
                 return @{ code = -1; message = "Link '$link' is not a symbolic link!"; color = "DarkYellow" }
             }
         }
-        
+
         if (-not (Is-Admin)) {
             $command = "New-Item -ItemType SymbolicLink -Path '$link' -Target '$target'"
             $exitCode = (Run-Command -command $command)
@@ -211,7 +211,7 @@ function Make-Symbolic-Link {
 
 function Run-Command {
     param($command)
-    
+
     $process = Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command `"$command`"" -Verb RunAs -WindowStyle Hidden -PassThru -Wait
     $process.WaitForExit()
     return $process.ExitCode
@@ -220,7 +220,7 @@ function Run-Command {
 
 function Is-Directory-Exists {
     param ($path)
-    
+
     try {
         if ([string]::IsNullOrWhiteSpace($path)) {
             return $false
@@ -263,7 +263,7 @@ function Is-Admin {
 
 function Display-Msg-By-ExitCode {
     param($result, $message = $null)
-    
+
     try {
         if ($result.messages -and $result.messages.Count -gt 1) {
             foreach ($msg in $result.messages) {
@@ -279,7 +279,7 @@ function Display-Msg-By-ExitCode {
             if (-not $result.color) {
                 $result.color = "Gray"
             }
-            
+
             Write-Host "`n$($result.message)" -ForegroundColor $result.color
         }
     } catch {
@@ -294,7 +294,7 @@ function Display-Msg-By-ExitCode {
 
 function Log-Data {
     param ($data)
-    
+
     try {
         $logPath = if ($data.logPath) { $data.logPath } else { $LOG_ERROR_PATH }
         $created = Make-Directory -path (Split-Path $logPath)
@@ -316,19 +316,19 @@ function Log-Data {
 }
 
 function Optimize-SystemPath {
-    
+
     try {
         $path = Get-EnvVar-ByName -name "Path"
         if ($null -eq $path) {
             $path = ''
         }
-        $oldPath = $path 
+        $oldPath = $path
         $envVars = Get-All-EnvVars
-        
+
         $envVars.Keys | ForEach-Object {
             $envName = $_
             $envValue = $envVars[$envName]
-            
+
             if (
                 ($null -ne $envValue) -and
                 ($path.ToLower() -like "*$($envValue.ToLower())*") -and
@@ -340,7 +340,7 @@ function Optimize-SystemPath {
                 $path = [regex]::Replace($path, $pattern, "%$envName%")
             }
         }
-        
+
         $output = 0
         if ($path -ne $oldPath) {
             # Saving Path to log
@@ -351,13 +351,13 @@ function Optimize-SystemPath {
             if ($outputLog -eq 0) {
                 Write-Host "`nOriginal Path saved to '$PATH_VAR_BACKUP_PATH'"
             }
-            
+
             $output = Set-EnvVar -name "Path" -value $path
             if ($output -eq 0) {
                 Write-Host "`nPath optimized successfully" -ForegroundColor DarkGreen
             }
         }
-        
+
         return $output
     } catch {
         $logged = Log-Data -data @{
@@ -370,29 +370,29 @@ function Optimize-SystemPath {
 
 function Format-Seconds {
     param ($totalSeconds)
-    
+
     try {
-        if ($totalSeconds -ne $null) {
+        if ($null -ne $totalSeconds) {
             $totalSeconds = [Single] $totalSeconds
         }
 
         if ($null -eq $totalSeconds -or $totalSeconds -lt 0) {
             $totalSeconds = 0
         }
-        
+
         if ($totalSeconds -lt 60) {
             $rounded = [math]::Round($totalSeconds, 1)
             return "{0}s" -f $rounded
         }
-        
+
         $hours = [int][math]::Floor($totalSeconds / 3600)
         $minutes = [int][math]::Floor(($totalSeconds % 3600) / 60)
         $seconds = [int][math]::Floor($totalSeconds % 60)
-        
+
         if ($hours -gt 0) {
             return "{0:D2}:{1:D2}:{2:D2}" -f $hours, $minutes, $seconds
         }
-        
+
         return "{0:D2}:{1:D2}" -f $minutes, $seconds
     } catch {
         $logged = Log-Data -data @{
@@ -409,33 +409,33 @@ function Is-OS-64Bit {
 
 function Resolve-BuildType {
     param ($arguments, $choseDefault = $false)
-    
+
     $buildType = $arguments | Where-Object { @('ts', 'nts') -contains $_ } | Select-Object -First 1
-    
+
     if ($null -eq $buildType -and $choseDefault) {
         $buildType = "ts";
     }
 
-    if ($buildType -ne $null) {
+    if ($null -ne $buildType) {
         $buildType = $buildType.ToLower()
     }
-    
+
     return $buildType
 }
 
 function Resolve-Arch {
     param ($arguments, $choseDefault = $false)
-    
+
     $arch = $arguments | Where-Object { @('x86', 'x64') -contains $_ } | Select-Object -First 1
-    
+
     if ($null -eq $arch -and $choseDefault) {
         $arch = if (Is-OS-64Bit) { 'x64' } else { 'x86' }
     }
-    
-    if ($arch -ne $null) {
+
+    if ($null -ne $arch) {
         $arch = $arch.ToLower()
     }
-    
+
     return $arch
 }
 

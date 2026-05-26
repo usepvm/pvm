@@ -1,4 +1,4 @@
-
+﻿
 
 function Get-Source-Urls {
 
@@ -41,14 +41,14 @@ function Refresh-Installed-PHP-Versions-Cache {
     try {
         $installedVersions = Get-Installed-PHP-Versions-From-Directory
         $cached = Cache-Data -cacheFileName "installed_php_versions" -data $installedVersions -depth 1
-        
+
         return 0
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to refresh installed PHP versions cache"
             exception = $_
         }
-        
+
         return -1
     }
 }
@@ -58,7 +58,7 @@ function Get-Installed-PHP-Versions-From-Directory {
     $installedVersions = $directories | ForEach-Object {
         if (Test-Path "$($_.FullName)\php.exe"){
             $phpInfo = Get-PHPInstallInfo -path $_.FullName
-            
+
             return $phpInfo
         }
         return $null
@@ -77,21 +77,21 @@ function Get-Installed-PHP-Versions {
         $installedVersions = Get-OrUpdateCache -cacheFileName "installed_php_versions" -depth 1 -compute {
             Get-Installed-PHP-Versions-From-Directory
         }
-        
+
         if ($null -eq $installedVersions) {
             return @()
         }
-        
+
         if ($arch) {
             $installedVersions = $installedVersions | Where-Object { $_.Arch -eq $arch }
         }
-        
+
         if ($buildType) {
             $installedVersions = $installedVersions | Where-Object { $_.BuildType -eq $buildType }
         }
-        
+
         $installedVersions = $installedVersions | Sort-Object { [version]$_.Version }
-        
+
         return $installedVersions
     } catch {
         $logged = Log-Data -data @{
@@ -139,7 +139,7 @@ function Get-UserSelected-PHP-Version {
         }
         $versionObj = $installedVersions | Where-Object { $_.index -eq $response }
     }
-    
+
     return @{ code = 0; version = $versionObj.version; arch = $versionObj.arch; buildType = $versionObj.BuildType; path = $versionObj.InstallPath }
 }
 
@@ -150,7 +150,7 @@ function Get-Matching-PHP-Versions {
         $installedVersions = Get-Installed-PHP-Versions
 
         $matchingVersions = $installedVersions | Where-Object { $_.Version -like "$version*" }
-        
+
         return $matchingVersions
     } catch {
         $logged = Log-Data -data @{

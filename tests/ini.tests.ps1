@@ -1,15 +1,15 @@
-
+﻿
 BeforeAll {
     $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
     $testIniPath = Join-Path $testDrivePath "php.ini"
     $extDirectory = Join-Path $testDrivePath "ext"
     $testBackupPath = "$testIniPath.bak"
-    
+
     $global:CACHE_PATH = "TestDrive:\cache"
     New-Item -ItemType Directory -Path $global:CACHE_PATH -Force | Out-Null
-    
+
     Mock Write-Host {}
-    
+
     function Reset-Ini-Content {
     # Create a test php.ini file
     @"
@@ -22,26 +22,26 @@ max_execution_time = 30
 ;upload_max_filesize = 2M
 "@ | Set-Content -Path $testIniPath -Encoding UTF8
     }
-    
+
     # Create initial ini content first
     Reset-Ini-Content
-    
+
     # Mock global variables
     $script:LOG_ERROR_PATH = Join-Path $testDrivePath "error.log"
     $script:PHP_CURRENT_VERSION_PATH = Join-Path $testDrivePath "php"
-    
+
     # Create directory and symlink for current PHP version
     $phpVersionPath = Join-Path $testDrivePath "php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
     New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
     Copy-Item $testIniPath (Join-Path $phpVersionPath "php.ini") -Force
-    
+
     # Mock Log-Data function
     function script:Log-Data {
         param($logPath, $message, $data)
         return $true
     }
-    
+
     # Mock Get-Current-PHP-Version function
     function script:Get-Current-PHP-Version {
         return @{
@@ -49,7 +49,7 @@ max_execution_time = 30
             path = $phpVersionPath
         }
     }
-    
+
     $global:MockFileSystem = @{
         Directories = @()
         Files = @{}
@@ -58,11 +58,11 @@ max_execution_time = 30
     }
     function Invoke-WebRequest {
         param($Uri, $OutFile = $null)
-        
+
         if ($global:MockFileSystem.DownloadFails) {
             throw "Network error"
         }
-        
+
         if ($global:MockFileSystem.WebResponses.ContainsKey($Uri)) {
             $response = $global:MockFileSystem.WebResponses[$Uri]
             if ($OutFile) {
@@ -74,7 +74,7 @@ max_execution_time = 30
                 Links = $response.Links
             }
         }
-        
+
         throw "URL not mocked: $Uri"
     }
 }
@@ -84,22 +84,22 @@ Describe "Add-Missing-PHPExtension-To-Ini" {
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
     }
-    
+
     It "Returns -1 when current PHP version is null" {
         Mock Get-Current-PHP-Version { return @{ version = $null; path = $null } }
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "curl"
         $result | Should -Be -1
     }
-    
+
     It "Adds and configures xdebug in ini file" {
         Mock Test-Path { return $true }
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "php_xdebug.dll"
         $result | Should -Be 0
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
             $Object -eq "- Extension 'php_xdebug.dll' already exists in php.ini"
         }
     }
-    
+
     It "Adds any extension to ini file" {
         @"
 zend_extension=php_opcache.dll
@@ -110,11 +110,11 @@ extension=php_mbstring.dll
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "php_curl.dll"
         $result | Should -Be 0
         (Get-Content $testIniPath) -match "extension=php_curl.dll" | Should -Be $true
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
             $Object -eq "- 'php_curl.dll' added successfully."
         }
     }
-    
+
     It "Adds any extension in disabled state to ini file" {
         @"
 zend_extension=php_opcache.dll
@@ -126,7 +126,7 @@ zend_extension=php_opcache.dll
         $result | Should -Be 0
         (Get-Content $testIniPath) -match ";extension=php_curl.dll" | Should -Be $true
     }
-    
+
     It "Adds extensions correctly for older PHP versions" {
         @"
 zend_extension=php_opcache.dll
@@ -139,7 +139,7 @@ extension=php_mbstring.dll
         $result | Should -Be 0
         (Get-Content $testIniPath) -match "extension=php_curl.dll" | Should -Be $true
     }
-    
+
     It "Adds zend_extensions correctly" {
         @"
 extension=php_mbstring.dll
@@ -151,41 +151,41 @@ extension=php_mbstring.dll
         $result | Should -Be 0
         (Get-Content $testIniPath) -match "zend_extension=php_opcache.dll" | Should -Be $true
     }
-    
+
     It "Returns -1 for non-existent ini file" {
         Mock Test-Path { return $false }
         $result = Add-Missing-PHPExtension-To-Ini -iniPath "nonexistent.ini" -extFileName "php_curl.dll"
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nphp.ini file not found: nonexistent.ini"
         }
     }
-    
+
     It "Returns -1 when extension directory doesn't exist" {
         Mock Test-Path -ParameterFilter { $Path -eq $testIniPath } { return $true }
         Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } { return $false }
-        
+
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "php_curl.dll"
-        
+
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nExtensions directory not found: $extDirectory"
         }
     }
-    
+
     It "Returns -1 when extension file doesn't exist" {
         Mock Test-Path -ParameterFilter { $Path -eq $testIniPath } { return $true }
         Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } { return $true }
         Mock Test-Path -ParameterFilter { $Path -eq "$extDirectory\php_curl.dll" } { return $false }
-        
+
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName "php_curl.dll"
-        
+
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nExtension file not found: php_curl.dll"
         }
     }
-    
+
     It "Handles exception gracefully" {
         Mock Log-Data { return 0 }
         Mock Backup-IniFile { throw "Access denied" }
@@ -215,7 +215,7 @@ Describe "Get-XDebug-FROM-URL Tests" {
         Mock Write-Host { }
         Reset-MockState
     }
-    
+
     It "Should parse XDebug versions correctly" {
         $mockLinks = @(
             @{ href = "/download/php_xdebug-3.1.0-8.1-vs16-x86_64.dll" },
@@ -225,19 +225,19 @@ Describe "Get-XDebug-FROM-URL Tests" {
             @{ href = "/download/php_random.dll" }
         )
         Set-MockWebResponse -url "https://test.com" -links $mockLinks
-        
+
         $result = Get-XDebug-FROM-URL -url "https://test.com" -version "8.1"
-        
+
         $result.Count | Should -Be 4
         $result[0].xDebugVersion | Should -Be "3.1.0"
         $result[1].xDebugVersion | Should -Be "2.9.0"
     }
-    
+
     It "Should handle network errors" {
         $global:MockFileSystem.DownloadFails = $true
-        
+
         $result = Get-XDebug-FROM-URL -url "https://test.com" -version "8.1"
-        
+
         $result | Should -Be @()
     }
 }
@@ -256,9 +256,9 @@ Describe "Filter-Extension-Links-From-URL" {
                 )
             }
         }
-        
+
         $result = Filter-Extension-Links-From-URL -extName "memcache"
-        
+
         $result.Count | Should -Be 3
         $result[0].href | Should -Be "/package/memcache/3.4.0/windows"
         $result[1].href | Should -Be "/package/memcache/3.3.0/windows"
@@ -299,13 +299,13 @@ Describe "Get-Packages-From-Source-Links Tests" {
                 )
             }
         }
-        
+
         $result = Get-Packages-From-Source-Links -extName "memcache" -version "8.2" -links @(
             @{ href = "/package/memcache/3.4.0/windows" },
             @{ href = "/package/memcache/3.3.0/windows" },
             @{ href = "/package/memcache/3.2.0/windows" }
         )
-        
+
         $result.Count | Should -Be 6
         $result[0].extVersion | Should -Be "3.4.0"
         $result[1].arch | Should -Be "x64"
@@ -314,12 +314,12 @@ Describe "Get-Packages-From-Source-Links Tests" {
         $result[4].buildType | Should -Be "NTS"
         $result[5].compiler | Should -Be "unknown"
     }
-    
+
     It "Handles exception gracefully" {
         Mock Invoke-WebRequest { throw "Network error" }
-        
+
         $result = Get-Packages-From-Source-Links -extName "memcache" -version "8.2" -links @( @{ href = "/package/memcache/3.4.0/windows" } )
-        
+
         $result.Count | Should -Be 0
     }
 }
@@ -337,15 +337,15 @@ Describe "Get-Extension-Matching-Categories-By-Page Tests" {
                 )
             }
         }
-        
+
         $result = Get-Extension-Matching-Categories-By-Page -extName "mem" -link "/packages.php?catpid=3&amp;catname=Caching" -page 1
-        
+
         $result.resultLinks.Count | Should -Be 2
         $result.resultLinks[0].href | Should -Be "/package/memcache"
         $result.resultLinks[1].href | Should -Be "/package/memcached"
         $result.hasMore | Should -Be $false
     }
-    
+
     It "Sets hasMore to true when next page link exists" {
         Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
@@ -360,9 +360,9 @@ Describe "Get-Extension-Matching-Categories-By-Page Tests" {
                 )
             }
         }
-        
+
         $result = Get-Extension-Matching-Categories-By-Page -extName "mem" -link "/packages.php?catpid=3&amp;catname=Caching" -page 1
-        
+
         $result.hasMore | Should -Be $true
     }
 }
@@ -375,11 +375,11 @@ Describe "Get-Extension-Matching-Categories Tests" {
                 Links = @(
                     @{ href = $null }
                     @{ href = "random_link" }
-                    @{ href = "/packages.php?catpid=1&amp;catname=Authentication"; 
+                    @{ href = "/packages.php?catpid=1&amp;catname=Authentication";
                         outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>' }
-                    @{ href = "/packages.php?catpid=3&amp;catname=Caching"; 
+                    @{ href = "/packages.php?catpid=3&amp;catname=Caching";
                         outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>' }
-                    @{ href = "/packages.php?catpid=7&amp;catname=EmptyCat"; 
+                    @{ href = "/packages.php?catpid=7&amp;catname=EmptyCat";
                         outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>' }
                 )
             }
@@ -403,15 +403,15 @@ Describe "Get-Extension-Matching-Categories Tests" {
             }
         }
     }
-    
+
     It "Returns matching categories links" {
         $result = Get-Extension-Matching-Categories -extName "mem"
-        
+
         $result.Count | Should -Be 2
         $result[0].href | Should -Be "/package/memcache"
         $result[1].href | Should -Be "/package/memcached"
     }
-    
+
     It "Loops for next page when hasMore is true" {
         Mock Get-Extension-Matching-Categories-By-Page {
             if ($link -eq "/packages.php?catpid=3&amp;catname=Caching") {
@@ -422,9 +422,9 @@ Describe "Get-Extension-Matching-Categories Tests" {
                 }
             }
         }
-        
+
         $result = Get-Extension-Matching-Categories -extName "mem"
-        
+
         $result.Count | Should -Be 2
     }
 }
@@ -438,13 +438,13 @@ Describe "Get-Extension-Links-From-URL Tests" {
                 @{ href = "/package/memcache/3.2.0/windows" }
             )
         }
-        
+
         $result = Get-Extension-Links-From-URL -extName "memcache" -version "8.2"
-        
+
         $result.extName | Should -Be "memcache"
         $result.links.Count | Should -Be 3
     }
-    
+
     Context "When extension has no direct link" {
         BeforeEach {
             Mock Can-Use-Cache { return $false }
@@ -455,20 +455,20 @@ Describe "Get-Extension-Links-From-URL Tests" {
                 @{ href = "/package/memcache/3.2.0/windows" }
             }
         }
-        
+
         It "Returns null when no matching categories links found" {
             Mock Get-Extension-Matching-Categories { return @() }
-            
+
             $result = Get-Extension-Links-From-URL -extName "mem" -version "8.2"
-            
+
             $result | Should -Be $null
         }
-        
+
         It "Takes the only link found" {
             Mock Get-Extension-Matching-Categories { return @( @{ href = "/package/memcache" } ) }
-            
+
             $result = Get-Extension-Links-From-URL -extName "mem" -version "8.2"
-            
+
             $result.extName | Should -Be "memcache"
             $result.links.Count | Should -Be 3
         }
@@ -480,27 +480,27 @@ Describe "Get-Extension-Links-From-URL Tests" {
                 @{ href = "/package/memcached" }
             ) }
         }
-        
+
         It "Prompts user to select link when multiple found and returns selected" {
             Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return "0" }
-            
+
             $result = Get-Extension-Links-From-URL -extName "mem" -version "8.2"
-            
+
             $result.extName | Should -Be "memcache"
             $result.links.Count | Should -Be 3
         }
-        
+
         It "Returns null when user skips selection" {
             Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return "" }
-            
+
             $result = Get-Extension-Links-From-URL -extName "mem" -version "8.2"
-            
+
             $result | Should -Be $null
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+            Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
                 $Object -eq "`nInstallation cancelled"
             }
         }
-        
+
         It "Reprompts user when typing invalid choice" {
             $script:callCount = 0
             Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith {
@@ -509,9 +509,9 @@ Describe "Get-Extension-Links-From-URL Tests" {
                 if ($script:callCount -eq 2) { return "-1" }
                 else { return "0" }
             }
-            
+
             $result = Get-Extension-Links-From-URL -extName "mem" -version "8.2"
-            
+
             $result.extName | Should -Be "memcache"
             $result.links.Count | Should -Be 3
         }
@@ -520,12 +520,12 @@ Describe "Get-Extension-Links-From-URL Tests" {
 
 Describe "Get-Extension-From-URL Tests" {
     BeforeAll {
-        
+
     }
     BeforeEach {
         Mock Write-Host { }
     }
-    
+
     It "Should parse extension versions correctly" {
         Mock Can-Use-Cache { return $false }
         Mock Get-Extension-Links-From-URL {
@@ -546,19 +546,19 @@ Describe "Get-Extension-From-URL Tests" {
             )
         }
         $result = Get-Extension-From-URL -extName "memcache" -version "8.2"
-        
+
         $result.data.Count | Should -Be 3
         $result.data[0].extVersion | Should -Be "3.4.0"
         $result.data[1].extVersion | Should -Be "3.3.0"
         $result.data[2].extVersion | Should -Be "3.2.0"
     }
-    
+
     It "Returns null when no version found for extension" {
         Mock Get-Extension-Links-From-URL { return $null }
-        
+
         $result = Get-Extension-From-URL -extName "cache" -version "8.2"
-        
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter { 
+
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nNo versions found for cache"
         }
         $result.data | Should -Be $null
@@ -572,7 +572,7 @@ Describe "Backup-IniFile" {
         Test-Path $testBackupPath | Should -Be $true
         (Get-Content $testBackupPath) | Should -Be (Get-Content $testIniPath)
     }
-    
+
     It "Does not overwrite existing backup" {
         $originalContent = Get-Content $testIniPath
         Backup-IniFile -iniPath $testIniPath
@@ -581,7 +581,7 @@ Describe "Backup-IniFile" {
         Backup-IniFile -iniPath $testIniPath
         (Get-Content $testBackupPath) | Should -Be $originalContent
     }
-    
+
     It "Returns -1 on error" {
         Mock Copy-Item { throw "Access denied" }
         Backup-IniFile -iniPath "invalidpath" | Should -Be -1
@@ -593,18 +593,18 @@ Describe "Restore-IniBackup" {
         Reset-Ini-Content
         # Create backup first
         Backup-IniFile -iniPath $testIniPath
-        
+
         # Modify original
         "modified content" | Set-Content $testIniPath
         Restore-IniBackup -iniPath $testIniPath | Should -Be 0
         (Get-Content $testIniPath) | Should -Not -Be "modified content"
     }
-    
+
     It "Fails when backup doesn't exist" {
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
         Restore-IniBackup -iniPath $testIniPath | Should -Be -1
     }
-    
+
     It "Returns -1 on error" {
         Mock Test-Path { return $true }
         Mock Copy-Item { throw "Access denied" }
@@ -617,28 +617,28 @@ Describe "Get-IniSetting" {
     It "Gets existing setting" {
         Get-IniSetting -iniPath $testIniPath -key "upload_max_filesize" | Should -Be 0
     }
-    
+
     It "Gets setting with spaces in value" {
         Get-IniSetting -iniPath $testIniPath -key "display_errors" | Should -Be 0
     }
-    
+
     It "Returns -1 for commented settings" {
         Get-IniSetting -iniPath $testIniPath -key "xdebug" | Should -Be -1
     }
-    
+
     It "Returns -1 for non-existent setting" {
         Get-IniSetting -iniPath $testIniPath -key "nonexistent_setting" | Should -Be -1
     }
-    
+
     It "Requires key parameter" {
         Get-IniSetting -iniPath $testIniPath -key "" | Should -Be -1
         Get-IniSetting -iniPath $testIniPath -key $null | Should -Be -1
     }
-    
+
     It "Handles regex special characters in key names" {
         Get-IniSetting -iniPath $testIniPath -key "memory_limit" | Should -Be 0
     }
-    
+
     It "Returns -1 on error" {
         Mock Get-Content { throw "Access denied" }
         Get-IniSetting -iniPath $testIniPath -key "memory_limit" | Should -Be -1
@@ -650,41 +650,41 @@ Describe "Set-IniSetting" {
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
     }
-    
+
     It "Accepts key parameter without value" {
         Mock Read-Host { return "256M" }
         $result = Set-IniSetting -iniPath $testIniPath -key "memory_limit"
         $result | Should -Be 0
     }
-    
+
     It "Accepts key parameter with value" {
         $result = Set-IniSetting -iniPath $testIniPath -key "memory_limit=1G"
         $result | Should -Be 0
     }
-    
+
     It "Handles null key" {
         $result = Set-IniSetting -iniPath $testIniPath -key $null
         $result | Should -Be -1
     }
-    
+
     It "Updates existing setting" {
         Mock Read-Host { return "256M" }
         Set-IniSetting -iniPath $testIniPath -key "memory_limit" | Should -Be 0
         (Get-Content $testIniPath) -match "^memory_limit\s*=\s*256M" | Should -Be $true
     }
-    
+
     It "Updates setting with spaces" {
         Mock Read-Host { return "Off" }
         Set-IniSetting -iniPath $testIniPath -key "display_errors" | Should -Be 0
         (Get-Content $testIniPath) -match "^display_errors\s*=\s*Off" | Should -Be $true
     }
-    
+
     It "Updates setting and disables" {
         Mock Read-Host { return "60" }
         Set-IniSetting -iniPath $testIniPath -key "max_execution_time" -enable $false | Should -Be 0
         (Get-Content $testIniPath) -match "^;max_execution_time\s*=\s*60" | Should -Be $true
     }
-    
+
     It "Prompts user when multiple matches found and requires input" {
         @"
 ;memory_limit=2G
@@ -693,11 +693,11 @@ opcache.protect_memory=1
 
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
         Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return "4G" }
-        
+
         Set-IniSetting -iniPath $testIniPath -key "memory" | Should -Be 0
         (Get-Content $testIniPath) -match "^memory_limit\s*=\s*4G" | Should -Be $true
     }
-    
+
     It "Prompts user when multiple matches found and does not require input" {
         @"
 ;memory_limit=2G
@@ -705,21 +705,21 @@ opcache.protect_memory=1
 "@ | Set-Content $testIniPath
 
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
-        
+
         Set-IniSetting -iniPath $testIniPath -key "memory=2G" | Should -Be 0
         (Get-Content $testIniPath) -match "^memory_limit\s*=\s*2G" | Should -Be $true
     }
-    
+
     It "Creates backup before modifying" {
         Mock Read-Host { return "256M" }
         Set-IniSetting -iniPath $testIniPath -key "memory_limit"
         Test-Path $testBackupPath | Should -Be $true
     }
-    
+
     It "Fails for non-existent setting" {
         Set-IniSetting -iniPath $testIniPath -key "nonexistent_setting=value" | Should -Be -1
     }
-    
+
     It "Prints error message for non-valid number" {
         @"
 ;memory_limit=2G
@@ -729,26 +729,26 @@ opcache.protect_memory=1
         $script:callCount = 0
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
             $script:callCount++
-            if ($script:callCount -eq 1) { 'A' } 
+            if ($script:callCount -eq 1) { 'A' }
             if ($script:callCount -eq 2) { -1 }
             else { '1' }
         }
 
         Set-IniSetting -iniPath $testIniPath -key "memory=1G" | Should -Be 0
     }
-    
+
     It "Validates key=value format" {
         Set-IniSetting -iniPath $testIniPath -key "invalidformat" | Should -Be -1
         Set-IniSetting -iniPath $testIniPath -key "novalue=" | Should -Be -1
         Set-IniSetting -iniPath $testIniPath -key "=nokey" | Should -Be -1
     }
-    
+
     It "Handles values with special characters" {
         Mock Read-Host { return "10M" }
         Set-IniSetting -iniPath $testIniPath -key "upload_max_filesize" | Should -Be 0
         (Get-Content $testIniPath) -match "^upload_max_filesize\s*=\s*10M" | Should -Be $true
     }
-    
+
     It "Returns -1 on error" {
         Mock Get-Content { throw "Access denied" }
         Set-IniSetting -iniPath $testIniPath -key "memory_limit=256M" | Should -Be -1
@@ -761,7 +761,7 @@ Describe "Enable-IniExtension" {
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
     }
-    
+
     It "Enables commented extension" {
         Mock Get-ChildItem {
             param($Path)
@@ -770,26 +770,26 @@ Describe "Enable-IniExtension" {
         Enable-IniExtension -iniPath $testIniPath -extName "xdebug" | Should -Be 0
         (Get-Content $testIniPath) -match "^extension=php_xdebug.dll" | Should -Be $true
     }
-    
+
     It "Returns 0 for already enabled extension" {
         Mock Get-ChildItem {
             param($Path)
             return @( @{ BaseName = "php_curl"; Name = "php_curl.dll"; FullName = "$extDirectory\php_curl.dll" } )
         }
-        
+
         Enable-IniExtension -iniPath $testIniPath -extName "curl" | Should -Be 0
     }
-    
+
     It "Returns -1 for non-existent extension" {
         Mock Get-ChildItem { return @() }
         Enable-IniExtension -iniPath $testIniPath -extName "nonexistent_ext" | Should -Be -1
     }
-    
+
     It "Requires extension name" {
         Enable-IniExtension -iniPath $testIniPath -extName "" | Should -Be -1
         Enable-IniExtension -iniPath $testIniPath -extName $null | Should -Be -1
     }
-    
+
     It "Handles zend_extension" {
         @"
 ;zend_extension=php_opcache.dll
@@ -802,7 +802,7 @@ extension=php_curl.dll
         Enable-IniExtension -iniPath $testIniPath -extName "opcache" | Should -Be 0
         (Get-Content $testIniPath) -match "^zend_extension=php_opcache.dll" | Should -Be $true
     }
-    
+
     It "Prompts user to select extension if multiple matches found" {
         @"
 ;extension=pdo_mysql
@@ -822,12 +822,12 @@ extension=sqlite3
             )
         }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
-        
+
         Enable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
-        
+
         (Get-Content $testIniPath) -match "^extension\s*=\s*pdo_mysql" | Should -Be $true
     }
-    
+
     It "Prints error message for non-valid number" {
         @"
 ;extension=pdo_mysql
@@ -840,11 +840,11 @@ extension=sqlite3
         $script:callCount = 0
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
             $script:callCount++
-            if ($script:callCount -eq 1) { 'A' } 
+            if ($script:callCount -eq 1) { 'A' }
             if ($script:callCount -eq 2) { -1 }
             else { 3 }
         }
-        
+
         Mock Get-ChildItem {
             param($Path)
             return @(
@@ -857,15 +857,15 @@ extension=sqlite3
         }
 
         Enable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
-        
+
         (Get-Content $testIniPath) -match "^extension\s*=\s*pgsql" | Should -Be $true
     }
-    
+
     It "Creates backup before modifying" {
         Enable-IniExtension -iniPath $testIniPath -extName "xdebug"
         Test-Path $testBackupPath | Should -Be $true
     }
-    
+
     It "Returns -1 on error" {
         Mock Get-Content { throw "Access denied" }
         Enable-IniExtension -iniPath $testIniPath -extName "xdebug" | Should -Be -1
@@ -878,7 +878,7 @@ Describe "Disable-IniExtension" {
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
     }
-    
+
     It "Disables enabled extension" {
         Mock Get-ChildItem {
             param($Path)
@@ -887,20 +887,20 @@ Describe "Disable-IniExtension" {
         Disable-IniExtension -iniPath $testIniPath -extName "curl" | Should -Be 0
         (Get-Content $testIniPath) -match "^;extension=php_curl.dll" | Should -Be $true
     }
-    
+
     It "Returns -1 for already disabled extension" {
         Disable-IniExtension -iniPath $testIniPath -extName "xdebug" | Should -Be -1
     }
-    
+
     It "Returns -1 for non-existent extension" {
         Disable-IniExtension -iniPath $testIniPath -extName "nonexistent_ext" | Should -Be -1
     }
-    
+
     It "Requires extension name" {
         Disable-IniExtension -iniPath $testIniPath -extName "" | Should -Be -1
         Disable-IniExtension -iniPath $testIniPath -extName $null | Should -Be -1
     }
-    
+
     It "Handles zend_extension" {
         Mock Get-ChildItem {
             param($Path)
@@ -909,8 +909,8 @@ Describe "Disable-IniExtension" {
         Disable-IniExtension -iniPath $testIniPath -extName "opcache" | Should -Be 0
         (Get-Content $testIniPath) -match "^;zend_extension=php_opcache.dll" | Should -Be $true
     }
-    
-    
+
+
     It "Prompts user to select extension if multiple matches found" {
         @"
 extension=pdo_mysql
@@ -930,12 +930,12 @@ extension=pgsql
             )
         }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
-        
+
         Disable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
-        
+
         (Get-Content $testIniPath) -match "^;extension\s*=\s*pdo_mysql" | Should -Be $true
     }
-    
+
     It "Prints error message for non-valid number" {
         @"
 extension=pdo_mysql
@@ -948,11 +948,11 @@ extension=pgsql
         $script:callCount = 0
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
             $script:callCount++
-            if ($script:callCount -eq 1) { 'A' } 
+            if ($script:callCount -eq 1) { 'A' }
             if ($script:callCount -eq 2) { -1 }
             else { 3 }
         }
-        
+
         Mock Get-ChildItem {
             param($Path)
             return @(
@@ -964,15 +964,15 @@ extension=pgsql
             )
         }
         Disable-IniExtension -iniPath $testIniPath -extName "sql" | Should -Be 0
-        
+
         (Get-Content $testIniPath) -match "^;extension\s*=\s*pgsql" | Should -Be $true
     }
-    
+
     It "Creates backup before modifying" {
         Disable-IniExtension -iniPath $testIniPath -extName "curl"
         Test-Path $testBackupPath | Should -Be $true
     }
-    
+
     It "Returns -1 on error" {
         Mock Get-Content { throw "Access denied" }
         Disable-IniExtension -iniPath $testIniPath -extName "curl" | Should -Be -1
@@ -983,7 +983,7 @@ Describe "Get-IniExtensionStatus" {
     BeforeEach {
         Reset-Ini-Content
     }
-    
+
     It "Detects enabled extension" {
         Mock Get-Matching-PHPExtensionsStatus {
             return @(
@@ -992,7 +992,7 @@ Describe "Get-IniExtensionStatus" {
         }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "curl" | Should -Be 0
     }
-    
+
     It "Detects disabled extension" {
         Mock Get-Matching-PHPExtensionsStatus {
             return @(
@@ -1001,7 +1001,7 @@ Describe "Get-IniExtensionStatus" {
         }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "xdebug" | Should -Be 0
     }
-    
+
     It "Detects enabled zend_extension" {
         Mock Get-Matching-PHPExtensionsStatus {
             return @(
@@ -1010,17 +1010,17 @@ Describe "Get-IniExtensionStatus" {
         }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "opcache" | Should -Be 0
     }
-    
+
     It "Returns -1 for non-existent extension" {
         Mock Read-Host { return "n" }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "nonexistent_ext" | Should -Be -1
     }
-    
+
     It "Requires extension name" {
         Get-IniExtensionStatus -iniPath $testIniPath -extName "" | Should -Be -1
         Get-IniExtensionStatus -iniPath $testIniPath -extName $null | Should -Be -1
     }
-    
+
     It "Returns -1 on error" {
         Mock Get-Content { throw "Access denied" }
         Get-IniExtensionStatus -iniPath $testIniPath -extName "curl" | Should -Be -1
@@ -1031,7 +1031,7 @@ Describe "Get-PHP-Info" {
     BeforeEach {
         Reset-Ini-Content
     }
-    
+
     It "Returns PHP version info successfully" {
         Mock Get-PHP-Data {
             return @{
@@ -1048,7 +1048,7 @@ Describe "Get-PHP-Info" {
         $result = Get-PHP-Info
         $result | Should -Be 0
     }
-    
+
     It "Handles missing PHP version gracefully" {
         Mock Get-Current-PHP-Version { return @{ version = $null; path = $null } }
         $result = Get-PHP-Info
@@ -1060,19 +1060,19 @@ Describe "Get-PHP-Data" {
     BeforeEach {
         Reset-Ini-Content
     }
-    
+
     It "Returns extensions with correct status" {
         $extensions = (Get-PHP-Data -PhpIniPath $testIniPath).extensions
         $extensions | Should -Not -Be $null
         $extensions.Count | Should -BeGreaterThan 0
-        
+
         $curlExt = $extensions | Where-Object { $_.Extension -like "*curl*" }
         $curlExt.Enabled | Should -Be $true
-        
+
         $xdebugExt = $extensions | Where-Object { $_.Extension -like "*xdebug*" }
         $xdebugExt.Enabled | Should -Be $false
     }
-    
+
     It "Handles empty ini file" {
         "" | Set-Content $testIniPath
         $extensions = (Get-PHP-Data -PhpIniPath $testIniPath).extensions
@@ -1146,7 +1146,7 @@ Describe "Install-Extension" {
             WebResponses = @{}
             DownloadFails = $false
         }
-        
+
         function Read-Host {
             param($Prompt)
             if ($Prompt -eq "`nInsert the [number] you want to install") {
@@ -1164,9 +1164,9 @@ Describe "Install-Extension" {
         Mock Remove-Item { }
         Mock Move-Item { }
         Mock Test-Path { return $true }
-        
+
     }
-    
+
     BeforeEach {
         $global:getRandomFile = $false
         $global:MockFileSystem.DownloadFails = $false
@@ -1209,25 +1209,25 @@ Describe "Install-Extension" {
             }
         }
     }
-    
+
     It "Returns -1 when gets empty list from extension" {
         $code = Install-Extension -iniPath $testIniPath -extName "nonexistent_ext"
         $code | Should -Be -1
     }
-    
+
     It "Returns -1 when No package is found" {
         Mock Add-Member { throw "error" }
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
-    
+
     It "Returns -1 when user does not choose a zip extension version to install" {
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { '' }
 
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
-    
+
     It "Returns -1 when user does choose a non valid zip extension version to install" {
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith {
             return '5'
@@ -1236,33 +1236,33 @@ Describe "Install-Extension" {
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
-    
+
     It "Returns -1 when downloaded zip extension has no dll" {
-        $global:getRandomFile = $true        
+        $global:getRandomFile = $true
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
-    
+
     It "Returns -1 when user answers no to replace existing extension" {
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
             return "n"
         }
-        
+
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
-    
+
     It "Returns -1 when user answers yes to replace existing extension" {
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
             return "y"
         }
         Mock Move-Item { }
         Mock Add-Missing-PHPExtension-To-Ini { return -1 }
-        
+
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
-    
+
     It "Returns -1 when no extension matching installed php version (arch & build type)" {
         Mock Get-Current-PHP-Version { return @{ version = "8.2.0"; path = "TestDrive:\php\8.2.0"; arch = "x64"; buildType = "ts" }}
         Mock Get-Extension-From-URL {
@@ -1275,11 +1275,11 @@ Describe "Install-Extension" {
                 )
             }
         }
-        
+
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
-    
+
     It "Installs extension successfully" {
         Mock Get-Current-PHP-Version { return @{ version = "8.2.0"; path = "TestDrive:\php\8.2.0"; arch = "x86"; buildType = "ts" }}
         Mock Get-Extension-From-URL {
@@ -1295,14 +1295,14 @@ Describe "Install-Extension" {
         }
         Mock Test-Path { return $false }
         Mock Add-Missing-PHPExtension-To-Ini { return 0 }
-        
+
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
         $code | Should -Be 0
     }
-    
+
     Context "When extension has no direct link" {
         BeforeEach {
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/nonexistent_ext" } -MockWith { 
+            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/nonexistent_ext" } -MockWith {
                 throw "Network error"
             }
             Mock Invoke-WebRequest -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
@@ -1311,11 +1311,11 @@ Describe "Install-Extension" {
                     Links = @(
                         @{ href = $null }
                         @{ href = "random_link" }
-                        @{ href = "/packages.php?catpid=1&amp;catname=Authentication"; 
+                        @{ href = "/packages.php?catpid=1&amp;catname=Authentication";
                             outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>' }
-                        @{ href = "/packages.php?catpid=3&amp;catname=Caching"; 
+                        @{ href = "/packages.php?catpid=3&amp;catname=Caching";
                             outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>' }
-                        @{ href = "/packages.php?catpid=7&amp;catname=EmptyCat"; 
+                        @{ href = "/packages.php?catpid=7&amp;catname=EmptyCat";
                             outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>' }
                     )
                 }
@@ -1389,13 +1389,13 @@ Describe "Install-Extension" {
                 }
             }
             Mock Test-Path { return $false }
-            Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
+            Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
                 return "y"
             }
             Mock Add-Missing-PHPExtension-To-Ini { return 0 }
-            
+
             $code = Install-Extension -iniPath $testIniPath -extName "cour"
-            $code | Should -Be 0        
+            $code | Should -Be 0
         }
         It "Returns -1 when no extension is found" {
             $code = Install-Extension -iniPath $testIniPath -extName "nonexistent_ext"
@@ -1407,7 +1407,7 @@ Describe "Install-Extension" {
             $code | Should -Be -1
         }
     }
-    
+
     It "Handles thrown exception" {
         $global:MockFileSystem.DownloadFails = $true
         $code = Install-Extension -iniPath $testIniPath -extName "curl"
@@ -1416,30 +1416,30 @@ Describe "Install-Extension" {
 }
 
 Describe "Install-IniExtension" {
-    
+
     It "Handles null extension name" {
         $code = Install-IniExtension -iniPath $testIniPath -extName $null
         $code | Should -Be -1
     }
-    
+
     It "Installs xdebug" {
         Mock Install-XDebug-Extension { return 0 }
         $code = Install-IniExtension -iniPath $testIniPath -extName "xdebug"
         $code | Should -Be 0
     }
-    
+
     It "Installs extension" {
         Mock Install-Extension { return 0 }
         $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
         $code | Should -Be 0
     }
-    
+
     It "Returns -1 on error" {
         Mock Install-Extension { return -1 }
         $code = Install-IniExtension -iniPath $testIniPath -extName "curl"
         $code | Should -Be -1
     }
-    
+
     It "Handles thrown exception" {
         Mock Log-Data { return 0 }
         Mock Install-Extension { throw "Network error" }
@@ -1461,9 +1461,9 @@ Describe "Get-Extension-Categories-By-Page Tests" {
                 )
             }
         }
-        
+
         $result = Get-Extension-Categories-By-Page -extCategory "Caching" -link "/packages.php?catpid=3&amp;catname=Caching" -page 1
-        
+
         $result.availableExtensions.Count | Should -Be 4
         $result.availableExtensions[0].href | Should -Be "/package/APC"
         $result.availableExtensions[1].href | Should -Be "/package/APCu"
@@ -1471,7 +1471,7 @@ Describe "Get-Extension-Categories-By-Page Tests" {
         $result.availableExtensions[3].href | Should -Be "/package/memcached"
         $result.hasMore | Should -Be $false
     }
-    
+
     It "Sets hasMore to true when more pages are available" {
         Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
@@ -1487,9 +1487,9 @@ Describe "Get-Extension-Categories-By-Page Tests" {
                 )
             }
         }
-        
+
         $result = Get-Extension-Categories-By-Page -extCategory "Caching" -link "/packages.php?catpid=3&amp;catname=Caching" -page 1
-        
+
         $result.hasMore | Should -Be $true
     }
 }
@@ -1503,11 +1503,11 @@ Describe "Get-PHPExtensions-From-Source" {
                 Links = @(
                     @{ href = $null }
                     @{ href = "random_link" }
-                    @{ href = "/packages.php?catpid=1&amp;catname=Authentication"; 
+                    @{ href = "/packages.php?catpid=1&amp;catname=Authentication";
                         outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>' }
-                    @{ href = "/packages.php?catpid=3&amp;catname=Caching"; 
+                    @{ href = "/packages.php?catpid=3&amp;catname=Caching";
                         outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>' }
-                    @{ href = "/packages.php?catpid=7&amp;catname=EmptyCat"; 
+                    @{ href = "/packages.php?catpid=7&amp;catname=EmptyCat";
                         outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>' }
                 )
             }
@@ -1537,12 +1537,12 @@ Describe "Get-PHPExtensions-From-Source" {
             }
         }
     }
-    
+
     It "Returns list of available extensions" {
         $list = Get-PHPExtensions-From-Source
         $list.Count | Should -Be 3 # include xdebug category
     }
-    
+
     It "Handles thrown exception" {
         Mock Get-Extension-Categories-By-Page { throw "Network error" }
         $list = Get-PHPExtensions-From-Source
@@ -1601,13 +1601,13 @@ Describe "List-PHP-Extensions" {
         Mock Display-Extensions-States {}
         Mock Display-Installed-Extensions {}
     }
-    
+
     It "Returns -1 when no extensions are installed" {
         Mock Get-PHP-Data { return @{ extensions = @() } }
         $code = List-PHP-Extensions -iniPath $testIniPath
         $code | Should -Be -1
     }
-    
+
     It "Displays installed extensions" {
         $code = List-PHP-Extensions -iniPath $testIniPath
         $code | Should -Be 0
@@ -1615,7 +1615,7 @@ Describe "List-PHP-Extensions" {
         Assert-MockCalled Display-Extensions-States -Exactly 1
         Assert-MockCalled Display-Installed-Extensions -Exactly 1
     }
-    
+
     It "Displays local extensions matching the filter" {
         $code = List-PHP-Extensions -iniPath $testIniPath -term "pc"
         $code | Should -Be 0
@@ -1623,7 +1623,7 @@ Describe "List-PHP-Extensions" {
         Assert-MockCalled Display-Extensions-States -Exactly 1
         Assert-MockCalled Display-Installed-Extensions -Exactly 1
     }
-    
+
     It "Returns -1 when no local extensions matchs the filter" {
         $code = List-PHP-Extensions -iniPath $testIniPath -term "nonexistent"
         $code | Should -Be -1
@@ -1631,7 +1631,7 @@ Describe "List-PHP-Extensions" {
         Assert-MockCalled Display-Extensions-States -Exactly 0
         Assert-MockCalled Display-Installed-Extensions -Exactly 0
     }
-    
+
     It "Returns -1 when no extensions are found" {
         Mock Test-Path { return $false }
         Mock Get-PHPExtensions-From-Source { return @{} }
@@ -1640,7 +1640,7 @@ Describe "List-PHP-Extensions" {
         Assert-MockCalled Get-PHPExtensions-From-Source -Exactly 1
         Assert-MockCalled Get-Data-From-Cache -Exactly 0
     }
-    
+
     It "Displays available extensions from cache" {
         Mock Can-Use-Cache { return $true }
         Mock Get-Data-From-Cache {
@@ -1661,7 +1661,7 @@ Describe "List-PHP-Extensions" {
         Assert-MockCalled Get-Data-From-Cache -Exactly 1
         Assert-MockCalled Get-PHPExtensions-From-Source -Exactly 0
     }
-    
+
     It "Displays available extensions from source when cache is empty" {
         Mock Can-Use-Cache { return $true }
         Mock Get-Data-From-Cache { return @{} }
@@ -1670,17 +1670,17 @@ Describe "List-PHP-Extensions" {
         Assert-MockCalled Get-Data-From-Cache -Exactly 1
         Assert-MockCalled Get-PHPExtensions-From-Source -Exactly 1
     }
-    
+
     It "Displays available extensions matching the filter" {
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true -term "pc"
         $code | Should -Be 0
     }
-    
+
     It "Returns -1 when no available extensions matchs the filter" {
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true -term "nonexistent"
         $code | Should -Be -1
     }
-    
+
     It "Handles thrown exception" {
         Mock Can-Use-Cache { throw 'Error' }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
@@ -1728,7 +1728,7 @@ Describe "Install-XDebug-Extension" {
             }
         }
     }
-    
+
     BeforeEach {
         $global:MockFileSystem.Directories += "TestDrive:\php"
         $global:MockFileSystem.Directories += "TestDrive:\php\ext"
@@ -1743,29 +1743,29 @@ opcache.enable = 1
         )
         Set-MockWebResponse -url $XDEBUG_HISTORICAL_URL -links $mockLinks
     }
-    
+
     It "Returns -1 when user does not choose a dll extension version to install" {
         $code = Install-XDebug-Extension -iniPath $testIniPath
         $code | Should -Be -1
     }
-    
+
     It "Returns -1 when user does choose a non valid dll extension version to install" {
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return "-10" }
         $code = Install-XDebug-Extension -iniPath $testIniPath
         $code | Should -Be -1
     }
-    
+
     It "Returns -1 when user does not want to overwrite existing dll extension version" {
         # $global:MockFileSystem.DownloadFails = $false
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
         Mock Test-Path { return $true }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return "0" }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_xdebug-3.1.0-8.1-vs16-x64.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { return "n" }
-        
+
         $code = Install-XDebug-Extension -iniPath $testIniPath
         $code | Should -Be -1
     }
-    
+
     It "Returns 0 when user wants to overwrite existing dll extension version" {
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content "XDebug DLL content"
         Mock Test-Path { return $false }
@@ -1775,13 +1775,13 @@ opcache.enable = 1
         $code = Install-XDebug-Extension -iniPath $testIniPath
         $code | Should -Be 0
     }
-    
+
     It "Handles exception gracefully" {
         Mock Sort-Object { throw "Error" }
         $code = Install-XDebug-Extension -iniPath $testIniPath
         $code | Should -Be -1
     }
-    
+
     It "Returns -1 when no compatible extension version is found" {
         Mock Can-Use-Cache { return $false }
         Mock Get-XDebug-FROM-URL { return @() }
@@ -1796,39 +1796,39 @@ Describe "Invoke-PVMIniAction" {
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
     }
-    
+
     Context "info action" {
         It "Executes info action successfully" {
             $result = Invoke-PVMIniAction -action "info" -params @("--search=cache")
             $result | Should -Be 0
         }
     }
-    
+
     Context "get action" {
         It "Gets single setting" {
             $result = Invoke-PVMIniAction -action "get" -params @("memory_limit")
 
             $result | Should -Be 0
         }
-        
+
         It "Gets multiple settings" {
             $result = Invoke-PVMIniAction -action "get" -params @("memory_limit", "display_errors")
             $result | Should -Be 0
         }
-        
+
         It "Requires at least one parameter" {
             $result = Invoke-PVMIniAction -action "get" -params @()
             $result | Should -Be -1
         }
     }
-    
+
     Context "set action" {
         It "Sets single setting" {
             Mock Read-Host { return "256M" }
             $result = Invoke-PVMIniAction -action "set" -params @("memory_limit")
             $result | Should -Be 0
         }
-        
+
         It "Sets multiple settings" {
             Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { '512M' }
             Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'max_execution_time'" } -MockWith { '60' }
@@ -1836,13 +1836,13 @@ Describe "Invoke-PVMIniAction" {
             $result = Invoke-PVMIniAction -action "set" -params @("memory_limit", "max_execution_time")
             $result | Should -Be 0
         }
-        
+
         It "Requires at least one parameter" {
             $result = Invoke-PVMIniAction -action "set" -params @()
             $result | Should -Be -1
         }
     }
-    
+
     Context "enable action" {
         It "Enables single extension" {
             Mock Get-ChildItem {
@@ -1852,7 +1852,7 @@ Describe "Invoke-PVMIniAction" {
             $result = Invoke-PVMIniAction -action "enable" -params @("xdebug")
             $result | Should -Be 0
         }
-        
+
         It "Enables multiple extensions" {
             @"
 ;extension=php_xdebug.dll
@@ -1864,20 +1864,20 @@ extension=php_curl.dll
             Mock Get-ChildItem {
                 param($Path)
                 $script:callCount++
-                if ($script:callCount -eq 1) { return @(@{ BaseName = "php_xdebug"; Name = "php_xdebug.dll"; FullName = "$extDirectory\php_xdebug.dll" }) } 
+                if ($script:callCount -eq 1) { return @(@{ BaseName = "php_xdebug"; Name = "php_xdebug.dll"; FullName = "$extDirectory\php_xdebug.dll" }) }
                 if ($script:callCount -eq 2) { return @(@{ BaseName = "php_gd"; Name = "php_gd.dll"; FullName = "$extDirectory\php_gd.dll" }) }
             }
 
             $result = Invoke-PVMIniAction -action "enable" -params @("xdebug", "gd")
             $result | Should -Be 0
         }
-        
+
         It "Requires at least one parameter" {
             $result = Invoke-PVMIniAction -action "enable" -params @()
             $result | Should -Be -1
         }
     }
-    
+
     Context "disable action" {
         It "Disables single extension" {
             Mock Get-ChildItem {
@@ -1887,13 +1887,13 @@ extension=php_curl.dll
             $result = Invoke-PVMIniAction -action "disable" -params @("curl")
             $result | Should -Be 0
         }
-        
+
         It "Requires at least one parameter" {
             $result = Invoke-PVMIniAction -action "disable" -params @()
             $result | Should -Be -1
         }
     }
-    
+
     Context "status action" {
         It "Checks single extension status" {
             Mock Get-ChildItem {
@@ -1903,13 +1903,13 @@ extension=php_curl.dll
             $result = Invoke-PVMIniAction -action "status" -params @("curl")
             $result | Should -Be 0
         }
-        
+
         It "Requires at least one parameter" {
             $result = Invoke-PVMIniAction -action "status" -params @()
             $result | Should -Be -1
         }
     }
-    
+
     Context "restore action" {
         It "Restores from backup" {
             # Create a backup first
@@ -1918,7 +1918,7 @@ extension=php_curl.dll
             $result | Should -Be 0
         }
     }
-    
+
     Context "install action" {
         BeforeAll {
             $global:getRandomFile = $false
@@ -1962,7 +1962,7 @@ extension=php_curl.dll
                 }
                 DownloadFails = $false
             }
-            
+
             function Read-Host {
                 param($Prompt)
                 if ($Prompt -eq "`nInsert the [number] you want to install") {
@@ -1979,7 +1979,7 @@ extension=php_curl.dll
             Mock Extract-Zip { }
             Mock Remove-Item { }
             Mock Move-Item { }
-            Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { 
+            Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
                 return "y"
             }
             Mock Install-Extension { return 0 }
@@ -1988,13 +1988,13 @@ extension=php_curl.dll
             $result = Invoke-PVMIniAction -action "install" -params @("curl")
             $result | Should -Be 0
         }
-        
+
         It "Requires at least one parameter" {
             $result = Invoke-PVMIniAction -action "install" -params @()
             $result | Should -Be -1
         }
     }
-    
+
     Context "list action" {
         It "Lists extensions" {
             Mock Get-PHP-Data {
@@ -2013,25 +2013,25 @@ extension=php_curl.dll
             $result | Should -Be 0
         }
     }
-    
+
     Context "error handling" {
         It "Handles invalid action" {
             $result = Invoke-PVMIniAction -action "invalid" -params @()
             $result | Should -Be 1
         }
-        
+
         It "Handles missing PHP current version" {
             Mock Get-Current-PHP-Version { return $null }
             $result = Invoke-PVMIniAction -action "info" -params @()
             $result | Should -Be -1
         }
-        
+
         It "Handles missing php.ini file" {
             Remove-Item (Join-Path $phpVersionPath "php.ini") -Force
             $result = Invoke-PVMIniAction -action "info" -params @()
             $result | Should -Be -1
         }
-        
+
         It "Returns -1 on unexpected error" {
             Mock Get-Current-PHP-Version { throw "Unexpected error" }
             $result = Invoke-PVMIniAction -action "info" -params @()

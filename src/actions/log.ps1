@@ -1,4 +1,4 @@
-
+﻿
 function Get-ConsoleKey {
     param([bool]$intercept = $true)
     return [System.Console]::ReadKey($intercept)
@@ -6,16 +6,16 @@ function Get-ConsoleKey {
 
 function Format-NiceTimestamp {
     param($timestamp)
-    
+
     try {
         $dateTime = [DateTime]::Parse($timestamp)
         $now = Get-Date
         $timeSpan = $now - $dateTime
-        
+
         # Format the date part
         $dateStr = $dateTime.ToString("dd MMMM")
         $timeStr = $dateTime.ToString("HH:mm:ss")
-        
+
         # Calculate relative time
         $relativeTime = ""
         if ($timeSpan.Days -eq 0) {
@@ -51,7 +51,7 @@ function Format-NiceTimestamp {
                 $relativeTime = "$months months ago"
             }
         }
-        
+
         return @{
             Date = $dateStr
             Time = $timeStr
@@ -70,7 +70,7 @@ function Format-NiceTimestamp {
 
 function Show-Log {
     param($pageSize = $DEFAULT_LOG_PAGE_SIZE, $term = $null)
-    
+
     try {
         if ($pageSize -notmatch '^-?\d+$') {
             Write-Host "`nInvalid page size: $pageSize" -ForegroundColor Red
@@ -82,7 +82,7 @@ function Show-Log {
             Write-Host "`nPage size must be a positive integer." -ForegroundColor Red
             return -1
         }
-        
+
         # Check if log file exists
         if (-not (Test-Path $LOG_ERROR_PATH)) {
             Write-Host "`nLog file not found: $LOG_ERROR_PATH" -ForegroundColor Red
@@ -91,10 +91,10 @@ function Show-Log {
 
         # Read the entire log file
         $logContent = Get-Content $LOG_ERROR_PATH -Raw
-        
+
         # Split by the separator and filter out empty entries
         $logEntries = $logContent -split '-{26}' | Where-Object { $_.Trim() -ne '' }
-        
+
         # Parse each entry into objects
         $parsedEntries = @()
         foreach ($entry in $logEntries) {
@@ -108,31 +108,31 @@ function Show-Log {
                 if ($firstLine -match '^\[(.+?)\]\s*(.+?)$') {
                     $timestamp = $matches[1]
                     $firstMessage = $matches[2]
-                    
+
                     # Get remaining content
                     $remainingContent = @()
                     if ($lines.Count -gt 1) {
                         $remainingContent = $lines[1..($lines.Count-1)] | Where-Object { $_.Trim() -ne '' }
                     }
-                    
+
                     # Combine first message with remaining content
                     $fullMessage = @($firstMessage) + $remainingContent | Where-Object { $_.Trim() -ne '' }
                     $fullMessageText = ($fullMessage -join "`n").Trim()
-                    
+
                     # Parse structured error information if present
                     $errorMessage = $null
                     $positionDetail = $null
                     $header = $null
-                    
+
                     if ($fullMessageText -match '(?s)Message:\s*(.+?)\s*\nPosition:\s*(.*)') {
                         $errorMessage = $matches[1].Trim()
                         $positionDetail = $matches[2].Trim()
                         $header = $firstMessage.Trim()
                     }
-                    
+
                     # Format the timestamp nicely
                     $niceTime = Format-NiceTimestamp $timestamp
-                    
+
                     $parsedEntries += [PSCustomObject]@{
                         Timestamp = $timestamp
                         Message = $fullMessageText
@@ -145,38 +145,38 @@ function Show-Log {
                 }
             }
         }
-        
+
         # Reverse the order to show most recent first
         $reversedEntries = $parsedEntries[-1..-($parsedEntries.Length)]
-        
+
         if ($reversedEntries.Count -eq 0) {
             Write-Host "`nNo log entries found." -ForegroundColor Yellow
             return -1
         }
-        
+
         # Display entries with pagination
         $currentIndex = 0
         $totalEntries = $reversedEntries.Count
-        
+
         while ($currentIndex -lt $totalEntries) {
             # Clear screen for cleaner display
             Clear-Host
-            
+
             # Show header
             Write-Host "`n=== PVM Log Viewer ===" -ForegroundColor Cyan
             Write-Host "`nShowing entries $($currentIndex + 1)-$([Math]::Min($currentIndex + $PageSize, $totalEntries)) of $totalEntries (most recent first)`n" -ForegroundColor Green
-            
+
             # Display current page of entries
             $endIndex = [Math]::Min($currentIndex + $PageSize - 1, $totalEntries - 1)
-            
+
             Write-Host ("-" * 80) -ForegroundColor DarkGray
             for ($i = $currentIndex; $i -le $endIndex; $i++) {
                 $entry = $reversedEntries[$i]
-                
+
                 # Display structured error format
                 Write-Host "Header  : " -NoNewline -ForegroundColor Gray
                 Write-Host "$($entry.Header)" -ForegroundColor White
-                
+
                 Write-Host "Message : " -NoNewline -ForegroundColor Gray
                 # Handle multi-line error messages with proper indentation (23 spaces to align with "Message :")
                 $errorLines = $entry.ErrorMessage -split "`n"
@@ -185,25 +185,25 @@ function Show-Log {
                         Write-Host "$($errorLine)" -ForegroundColor White
                     }
                 }
-                
+
                 # Display entry with nice formatting
                 Write-Host "When    : " -NoNewline -ForegroundColor Gray
                 Write-Host "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -NoNewline -ForegroundColor White
                 Write-Host "($($entry.NiceTime.Relative))" -ForegroundColor DarkGray
-                
+
                 Write-Host "Where   : " -NoNewline -ForegroundColor Gray
                 Write-Host "$($entry.PositionDetail)" -ForegroundColor White
-                
+
                 Write-Host ("-" * 80) -ForegroundColor DarkGray
             }
-            
+
             $currentIndex += $PageSize
             # Show navigation prompt if there are more entries
             if ($currentIndex -lt $totalEntries) {
                 Write-Host "`nPress Left/Up arrow for previous page, Right/Down arrow, [Enter] or [Space] for next page, [Q] to quit: " -NoNewline -ForegroundColor Yellow
-                
+
                 $key = Get-ConsoleKey
-                
+
                 switch ($key.Key) {
                     { $_ -in @("LeftArrow", "UpArrow") } { $currentIndex = [Math]::Max(0, $currentIndex - (2 * $PageSize)) }
                     { $_ -in @("RightArrow", "DownArrow", "Enter", "Spacebar") } { continue }
@@ -219,7 +219,7 @@ function Show-Log {
                 }
             }
         }
-        
+
         Clear-Host
         return 0
     } catch {

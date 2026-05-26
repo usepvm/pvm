@@ -220,6 +220,27 @@ pvm test --sort=duration # .............. Runs all tests and sort results by dur
 pvm test --tag=myTag #................... Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity and only runs tests with tag "myTag".
 ```
 
+## Format Code
+
+### Requirements
+
+Open PowerShell as Administrator and run:
+
+```sh
+Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+```
+> 💡 If prompted to trust the repository, type A and press Enter.
+
+You can verify the installation with:
+```powershell
+Get-ScriptAnalyzerRule
+```
+
+### Run the formatter
+```sh
+format.bat
+```
+
 ## Contributing
 
 Please see [CONTRIBUTING](CONTRIBUTING.md) for details.

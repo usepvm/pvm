@@ -160,6 +160,11 @@ function Invoke-PVMIni {
 function Invoke-PVMTest {
     param($arguments)
 
+    if (-not (Get-Module -ListAvailable Pester)) {
+        Write-Host "`nInstalling Pester..." -ForegroundColor Yellow
+        Install-Module -Name Pester -Force -SkipPublisherCheck
+    }
+
     $options = @{
         exclude   = $null
         verbosity = 'Normal'

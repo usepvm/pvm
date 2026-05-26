@@ -9,7 +9,7 @@ $formatted = 0
 # Ensure PSScriptAnalyzer is installed
 if (-not (Get-Module PSScriptAnalyzer -ListAvailable)) {
     Write-Host "Installing PSScriptAnalyzer..." -ForegroundColor Yellow
-    Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+    Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck
 }
 
 

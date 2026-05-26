@@ -227,7 +227,7 @@ pvm test --tag=myTag #................... Runs helpers.tests.ps1 and list.tests.
 Open PowerShell as Administrator and run:
 
 ```sh
-Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck
 ```
 > 💡 If prompted to trust the repository, type A and press Enter.
 

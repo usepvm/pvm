@@ -58,8 +58,18 @@ Describe "Is-PVM-Setup" {
             $result | Should -Be $true
         }
 
+        It "Should return false when the PVM var is null" {
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "PVM" } -MockWith { return $null }
+
+            $result = Is-PVM-Setup
+            $result | Should -Be $false
+        }
+
         It "Should return false when the path var is null" {
-            Mock Get-EnvVar-ByName { return $null }
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "PVM" } -MockWith {
+                return "C:\PVM;C:\php\8.1"
+            }
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith { return $null }
             Mock Test-Path { return $true}
 
             $result = Is-PVM-Setup

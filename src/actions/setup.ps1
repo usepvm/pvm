@@ -16,9 +16,9 @@ function Setup-PVM {
         if ($created -ne 0) {
             return @{ code = -1; message = "Failed to create directory for PHP version."; color = "DarkYellow"}
         }
-        
+
         $pvmEnvVarContent = Get-EnvVar-ByName -name "PVM"
-        
+
         if (($null -eq $pvmEnvVarContent) -or ($pvmEnvVarContent -ne "$PVMRoot;$PHP_CURRENT_VERSION_PATH")) {
             $pvmEnvVarContent = "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
             $output = Set-EnvVar -name $PVM_ENV_VAR_NAME -value $pvmEnvVarContent

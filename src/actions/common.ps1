@@ -14,11 +14,11 @@ function Is-PVM-Setup {
     try {
         $pvmEnvVarContent = Get-EnvVar-ByName -name "PVM"
         $pvmEnvEntries = $pvmEnvVarContent -split ';'
-        
+
         if ($null -eq $pvmEnvVarContent) {
             return $false
         }
-        
+
         if ($pvmEnvEntries -notcontains $PVMRoot -or $pvmEnvEntries -notcontains $PHP_CURRENT_VERSION_PATH) {
             return $false
         }

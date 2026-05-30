@@ -9,19 +9,23 @@ function Setup-PVM {
             $path = ''
         }
         $newPath = $path
-        $pathItems = $path.ToLower() -split ';'
+        $pathEntries = $path.ToLower() -split ';'
 
         $parent = Split-Path $PHP_CURRENT_VERSION_PATH
-        if (-not (Is-Directory-Exists -path $parent)) {
-            $created = Make-Directory -path $parent
+        $created = Make-Directory -path $parent
+        if ($created -ne 0) {
+            return @{ code = -1; message = "Failed to create directory for PHP version."; color = "DarkYellow"}
+        }
+        
+        $pvmEnvVarContent = Get-EnvVar-ByName -name "PVM"
+        
+        if (($null -eq $pvmEnvVarContent) -or ($pvmEnvVarContent -ne "$PVMRoot;$PHP_CURRENT_VERSION_PATH")) {
+            $pvmEnvVarContent = "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
+            $output = Set-EnvVar -name $PVM_ENV_VAR_NAME -value $pvmEnvVarContent
         }
 
-        if ($pathItems -notcontains $PHP_CURRENT_VERSION_PATH.ToLower()) {
-            $newPath += ";$PHP_CURRENT_VERSION_PATH"
-        }
-
-        if ($pathItems -notcontains $PVMRoot.ToLower()) {
-            $newPath += ";$PVMRoot"
+        if ($pathEntries -notcontains "%$PVM_ENV_VAR_NAME%") {
+            $newPath += ";%$PVM_ENV_VAR_NAME%"
         }
 
         $result = @{ code = 0; message = "PVM environment has been set up."; color = "DarkGreen"}

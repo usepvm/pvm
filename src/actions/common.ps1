@@ -31,7 +31,10 @@ function Is-PVM-Setup {
         $parent = Split-Path $PHP_CURRENT_VERSION_PATH
         $pathEntries = $path -split ';'
         if (
-            ($pathEntries -notcontains "%$PVM_ENV_VAR_NAME%") -or
+            (
+                ($path -notlike "*$pvmEnvVarContent*") -and
+                ($pathEntries -notcontains "%$PVM_ENV_VAR_NAME%")
+            ) -or
             (-not (Test-Path $parent))
         ) {
             return $false

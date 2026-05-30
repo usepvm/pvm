@@ -33,8 +33,11 @@ Describe "Is-PVM-Setup" {
 
     Context "When PVM is properly set up" {
         It "Should return true when all environment variables are correctly configured" {
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "PVM" } -MockWith {
+                return "C:\pvm;C:\php\8.1"
+            }
             Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith {
-                return "C:\pvm;C:\php\8.1;C:\other\paths"
+                return "C:\other\paths;%PVM%;C:\other2\paths"
             }
             Mock Test-Path { return $true}
 
@@ -43,8 +46,11 @@ Describe "Is-PVM-Setup" {
         }
 
         It "Should return true when pvm is in path with different casing" {
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "PVM" } -MockWith {
+                return "C:\PVM;C:\php\8.1"
+            }
             Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith {
-                return "C:\PVM;C:\php\8.1;C:\other\paths"
+                return "C:\other\paths;%PVM%;C:\other2\paths"
             }
             Mock Test-Path { return $true}
 
@@ -63,8 +69,8 @@ Describe "Is-PVM-Setup" {
 
     Context "When PVM is not properly set up" {
         It "Should return false when pvm is not in PATH" {
-            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith {
-                return "C:\php\8.1;C:\other\paths"
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "PVM" } -MockWith {
+                return "C:\php\8.1"
             }
 
             $result = Is-PVM-Setup
@@ -72,8 +78,8 @@ Describe "Is-PVM-Setup" {
         }
 
         It "Should return false when PHP value is not in PATH" {
-            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith {
-                return "C:\pvm;C:\other\paths"
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "PVM" } -MockWith {
+                return "C:\pvm"
             }
 
             $result = Is-PVM-Setup

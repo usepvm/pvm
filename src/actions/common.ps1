@@ -12,16 +12,26 @@ function Get-Source-Urls {
 function Is-PVM-Setup {
 
     try {
+        $pvmEnvVarContent = Get-EnvVar-ByName -name "PVM"
+        $pvmEnvEntries = $pvmEnvVarContent -split ';'
+        
+        if ($null -eq $pvmEnvVarContent) {
+            return $false
+        }
+        
+        if ($pvmEnvEntries -notcontains $PVMRoot -or $pvmEnvEntries -notcontains $PHP_CURRENT_VERSION_PATH) {
+            return $false
+        }
+
         $path = Get-EnvVar-ByName -name "Path"
         if ($null -eq $path) {
             $path = ''
         }
 
         $parent = Split-Path $PHP_CURRENT_VERSION_PATH
-        $pathItems = $path -split ';'
+        $pathEntries = $path -split ';'
         if (
-            ($pathItems -notcontains $PVMRoot) -or
-            ($pathItems -notcontains $PHP_CURRENT_VERSION_PATH) -or
+            ($pathEntries -notcontains "%$PVM_ENV_VAR_NAME%") -or
             (-not (Test-Path $parent))
         ) {
             return $false

@@ -220,7 +220,7 @@ Describe "Setup-PVM" {
             $result.message | Should -Be "Failed to set up PVM environment."
             Should -Invoke Log-Data -Exactly 1
         }
-        
+
         It "Returns error code when Make-Directory fails" {
             Mock Get-EnvVar-ByName -MockWith { return $null }
             Mock Make-Directory -MockWith { return -1 }

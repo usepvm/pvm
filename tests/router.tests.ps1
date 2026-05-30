@@ -411,7 +411,7 @@ Describe "Invoke-PVMTest Tests" {
     It "Installs Pester module when not already installed" {
         Mock Get-Module -ParameterFilter { $ListAvailable -and $Name -eq 'Pester' } -MockWith { return $null }
         Mock Install-Module -ParameterFilter { $Name -eq 'Pester' } -MockWith { }
-        
+
         $result = Invoke-PVMTest -arguments @()
         $result | Should -Be 0
     }

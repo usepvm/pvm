@@ -408,6 +408,14 @@ Describe "Invoke-PVMTest Tests" {
         Mock Prepare-Tests { 0 }
     }
 
+    It "Installs Pester module when not already installed" {
+        Mock Get-Module -ParameterFilter { $ListAvailable -and $Name -eq 'Pester' } -MockWith { return $null }
+        Mock Install-Module -ParameterFilter { $Name -eq 'Pester' } -MockWith { }
+        
+        $result = Invoke-PVMTest -arguments @()
+        $result | Should -Be 0
+    }
+
     It "Should call Run-Tests with no arguments" {
         $result = Invoke-PVMTest -arguments @()
         $result | Should -Be 0

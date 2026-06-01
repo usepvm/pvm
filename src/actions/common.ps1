@@ -13,7 +13,7 @@ function Is-PVM-Setup {
 
     try {
         $pvmEnvVarContent = Get-EnvVar-ByName -name "PVM"
-        $pvmEnvEntries = $pvmEnvVarContent -split ';'
+        $pvmEnvEntries = $pvmEnvVarContent -split ';' | Where-Object { $_ -ne '' }
 
         if ($null -eq $pvmEnvVarContent) {
             return $false
@@ -29,7 +29,7 @@ function Is-PVM-Setup {
         }
 
         $parent = Split-Path $PHP_CURRENT_VERSION_PATH
-        $pathEntries = $path -split ';'
+        $pathEntries = $path -split ';' | Where-Object { $_ -ne '' }
         if (
             (
                 ($path -notlike "*$pvmEnvVarContent*") -and

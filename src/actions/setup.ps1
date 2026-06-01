@@ -9,7 +9,7 @@ function Setup-PVM {
             $path = ''
         }
         $newPath = $path
-        $pathEntries = $path.ToLower() -split ';'
+        $pathEntries = $path -split ';' | Where-Object { $_ -ne '' }
 
         $parent = Split-Path $PHP_CURRENT_VERSION_PATH
         $created = Make-Directory -path $parent

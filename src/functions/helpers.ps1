@@ -115,14 +115,20 @@ function Get-All-EnvVars {
 }
 
 function Get-EnvVar-ByName {
-    param ($name)
+    param ($name, $optimized = $false)
 
     try {
         if ([string]::IsNullOrWhiteSpace($name)) {
             return $null
         }
         $name = $name.Trim()
-        return [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
+        $value = [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
+
+        if ($optimized -eq $true) {
+            $value = Get-Optimized-Env -name $name -value $value
+        }
+
+        return $value
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to get environment variable '$name'"
@@ -345,42 +351,26 @@ function Log-Data {
 }
 
 function Optimize-SystemPath {
-
     try {
-        $path = Get-EnvVar-ByName -name "Path"
+        $path = Get-EnvVar-ByName -name "Path" -optimized $true
         if ($null -eq $path) {
             $path = ''
         }
+
         $oldPath = $path
-        $envVars = Get-All-EnvVars
+        $path = Remove-PathDuplicates -path $path
 
-        $envVars.Keys | ForEach-Object {
-            $envName = $_
-            $envValue = $envVars[$envName]
-
-            if (
-                ($null -ne $envValue) -and
-                ($path.ToLower() -like "*$($envValue.ToLower())*") -and
-                -not($envValue -match '(?i)\\Windows') -and
-                -not($envValue -match '(?i)\\System32')
-            ) {
-                $envValue = [regex]::Escape($envValue.TrimEnd(';'))
-                $pattern = "(?i)(?<=^|;){0}(?=;|$)" -f $envValue
-                $path = [regex]::Replace($path, $pattern, "%$envName%")
-            }
+        # Saving Path to log
+        $outputLog = Log-Data -data @{
+            logPath = $PATH_VAR_BACKUP_PATH
+            header = "Original PATH`n$oldPath"
         }
-
+        if ($outputLog -eq 0) {
+            Write-Host "`nOriginal Path saved to '$PATH_VAR_BACKUP_PATH'"
+        }
+        
         $output = 0
         if ($path -ne $oldPath) {
-            # Saving Path to log
-            $outputLog = Log-Data -data @{
-                logPath = $PATH_VAR_BACKUP_PATH
-                header = "Original PATH`n$oldPath"
-            }
-            if ($outputLog -eq 0) {
-                Write-Host "`nOriginal Path saved to '$PATH_VAR_BACKUP_PATH'"
-            }
-
             $output = Set-EnvVar -name "Path" -value $path
             if ($output -eq 0) {
                 Write-Host "`nPath optimized successfully" -ForegroundColor DarkGreen
@@ -395,6 +385,41 @@ function Optimize-SystemPath {
         }
         return -1
     }
+}
+
+function Remove-PathDuplicates {
+    param($path)
+
+    $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+    $entries = $Path -split ';' |
+        ForEach-Object { $_.Trim() } |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+        Where-Object { $seen.Add($_) }
+
+    return ($entries -join ';')
+}
+
+function Get-Optimized-Env {
+    param($name, $value)
+
+    $envVars = Get-All-EnvVars
+
+    $envVars.Keys | ForEach-Object {
+        $envName = $_
+        $envValue = $envVars[$envName]
+
+        if ($name.ToLower() -eq $envName.ToLower()) { return }
+        if (-not $envValue) { return }
+        if ($value.ToLower() -notlike "*$($envValue.ToLower())*") { return }
+        if ($envValue -match '(?i)\\Windows|\\System32') { return }
+
+        $envValue = [regex]::Escape($envValue.TrimEnd(';'))
+        $pattern = "(?i)(?<=^|;){0}(?=;|$)" -f $envValue
+        $value = [regex]::Replace($value, $pattern, "%$envName%")
+    }
+
+    return $value
 }
 
 function Format-Seconds {

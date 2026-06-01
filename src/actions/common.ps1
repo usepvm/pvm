@@ -23,7 +23,7 @@ function Is-PVM-Setup {
             return $false
         }
 
-        $path = Get-EnvVar-ByName -name "Path"
+        $path = Get-EnvVar-ByName -name "Path" -optimized $true
         if ($null -eq $path) {
             $path = ''
         }

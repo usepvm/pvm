@@ -91,13 +91,17 @@ BeforeAll {
     }
 
     function Get-EnvVar-ByName {
-        param ($name)
+        param ($name, $optimized = $false)
         try {
             if ([string]::IsNullOrWhiteSpace($name)) {
                 return $null
             }
             $name = $name.Trim()
-            return Get-EnvironmentVariableWrapper -name $name -target ([System.EnvironmentVariableTarget]::Machine)
+            $value = Get-EnvironmentVariableWrapper -name $name -target ([System.EnvironmentVariableTarget]::Machine)
+            if ($optimized -eq $true) {
+                $value = Get-Optimized-Env -name $name -value $value
+            }
+            return $value
         } catch {
             $logged = Log-Data -data @{
                 header = "Get-EnvVar-ByName: Failed to get environment variable '$name'"
@@ -648,7 +652,7 @@ Describe "Optimize-SystemPath" {
             $result = Optimize-SystemPath
             $result | Should -Be 0
 
-            $newPath = Get-EnvVar-ByName -name "Path"
+            $newPath = Get-EnvVar-ByName -name "Path" -optimized $true
             $newPath | Should -Match "%TEST_PATH1%"
             $newPath | Should -Match "%TEST_PATH2%"
             $newPath | Should -Not -Match "C:\\Test1"
@@ -665,7 +669,7 @@ Describe "Optimize-SystemPath" {
         }
 
         It "Handles exceptions gracefully" {
-            Mock Get-All-EnvVars { throw "Simulated exception" }
+            Mock Get-EnvVar-ByName { throw "Simulated exception" }
             $result = Optimize-SystemPath
             $result | Should -Be -1
 

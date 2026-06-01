@@ -288,6 +288,11 @@ Describe "Get-EnvVar-ByName" {
             $result = Get-EnvVar-ByName -name "   "
             $result | Should -Be $null
         }
+
+        It "Returns null for null name" {
+            $result = Get-EnvVar-ByName -name $null
+            $result | Should -Be $null
+        }
     }
 }
 

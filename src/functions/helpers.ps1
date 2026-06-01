@@ -10,7 +10,7 @@ function Can-Use-Cache {
         $path = "$CACHE_PATH\$cacheFileName.json"
         $useCache = $false
 
-        if (Test-Path $path) {
+        if (Is-File-Exists -path $path) {
             $fileAgeHours = (New-TimeSpan -Start (Get-Item $path).LastWriteTime -End (Get-Date)).TotalHours
             $useCache = ($fileAgeHours -lt $CACHE_MAX_HOURS)
         }
@@ -141,7 +141,7 @@ function Set-EnvVar {
         }
         $name = $name.Trim()
 
-        if (-not (Is-Admin)) {
+        if (Is-Not-Admin) {
             $command = "[System.Environment]::SetEnvironmentVariable('$name', '$value', [System.EnvironmentVariableTarget]::Machine)"
             return (Run-Command -command $command)
         }
@@ -170,13 +170,13 @@ function Make-Symbolic-Link {
         $link = $link.Trim()
         $target = $target.Trim()
 
-        if (-not (Is-Directory-Exists -path $target)) {
+        if (Is-Directory-Not-Exists -path $target) {
             return @{ code = -1; message = "Target directory '$target' does not exist!"; color = "DarkYellow" }
         }
 
         # Make sure parent directory exists
         $parent = Split-Path $link
-        if (-not (Test-Path $parent)) {
+        if (Is-Directory-Not-Exists -path $parent) {
             $created = Make-Directory -path $parent
         }
         # Remove old link if it exists
@@ -189,7 +189,7 @@ function Make-Symbolic-Link {
             }
         }
 
-        if (-not (Is-Admin)) {
+        if (Is-Not-Admin) {
             $command = "New-Item -ItemType SymbolicLink -Path '$link' -Target '$target'"
             $exitCode = (Run-Command -command $command)
             if ($exitCode -ne 0) {
@@ -217,7 +217,6 @@ function Run-Command {
     return $process.ExitCode
 }
 
-
 function Is-Directory-Exists {
     param ($path)
 
@@ -232,6 +231,32 @@ function Is-Directory-Exists {
     }
 }
 
+function Is-Directory-Not-Exists {
+    param ($path)
+
+    return -not (Is-Directory-Exists -path $path)
+}
+
+function Is-File-Exists {
+    param ($path)
+
+    try {
+        if ([string]::IsNullOrWhiteSpace($path)) {
+            return $false
+        }
+        $path = $path.Trim()
+        return (Test-Path -Path $path -PathType Leaf)
+    } catch {
+        return $false
+    }
+}
+
+function Is-File-Not-Exists {
+    param ($path)
+
+    return -not (Is-File-Exists -path $path)
+}
+
 function Make-Directory {
     param ( [string]$path )
 
@@ -241,7 +266,7 @@ function Make-Directory {
         }
 
         $path = $path.Trim()
-        if (-not (Is-Directory-Exists -path $path)) {
+        if (Is-Directory-Not-Exists -path $path) {
             New-Item -ItemType Directory -Path $path -Force | Out-Null
         }
 
@@ -259,6 +284,10 @@ function Is-Admin {
     $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
     return $isAdmin
+}
+
+function Is-Not-Admin {
+    return -not (Is-Admin)
 }
 
 function Display-Msg-By-ExitCode {

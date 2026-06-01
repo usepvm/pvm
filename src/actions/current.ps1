@@ -5,7 +5,7 @@ function Get-PHP-Status {
     $status = @{ opcache = $false; xdebug = $false }
     try {
         $phpIniPath = "$phpPath\php.ini"
-        if (-not (Test-Path $phpIniPath)) {
+        if (Is-File-Not-Exists -path $phpIniPath) {
             return $status
         }
 
@@ -42,7 +42,7 @@ function Get-Current-PHP-Version {
         }
 
         $currentPhpVersionPath = $currentPhpVersionPath.Target
-        if (-not (Is-Directory-Exists -path $currentPhpVersionPath)) {
+        if (Is-Directory-Not-Exists -path $currentPhpVersionPath) {
             return $emptyResult
         }
         $phpInfo = Get-PHPInstallInfo -path $currentPhpVersionPath

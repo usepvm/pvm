@@ -84,7 +84,7 @@ function Show-Log {
         }
 
         # Check if log file exists
-        if (-not (Test-Path $LOG_ERROR_PATH)) {
+        if (Is-File-Not-Exists -path $LOG_ERROR_PATH) {
             Write-Host "`nLog file not found: $LOG_ERROR_PATH" -ForegroundColor Red
             return -1
         }

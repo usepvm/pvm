@@ -435,6 +435,81 @@ Describe "Is-Directory-Exists" {
             $result = Is-Directory-Exists -path "   "
             $result | Should -Be $false
         }
+
+        It "Handles exceptions gracefully" {
+            Mock Test-Path { throw "Error" }
+
+            $result = Is-Directory-Exists -path "C:\Nonexistent\Path"
+            $result | Should -Be $false
+        }
+    }
+}
+
+Describe "Is-Directory-Not-Exists" {
+    It "Returns true for non-existent directory" {
+        Mock Is-Directory-Exists { return $false }
+
+        $result = Is-Directory-Not-Exists -path "C:\Nonexistent\Path"
+        $result | Should -Be $true
+    }
+
+    It "Returns false for existing directory" {
+        Mock Is-Directory-Exists { return $true }
+
+        $result = Is-Directory-Not-Exists -path "C:\Directory\Exists"
+        $result | Should -Be $false
+    }
+}
+
+Describe "Is-File-Exists" {
+    Context "When checking file existence" {
+        It "Returns true for an existing file" {
+            $filePath = "TestDrive:\existing_file_exists.txt"
+            New-Item -Path $filePath -ItemType File -Force | Out-Null
+
+            $result = Is-File-Exists -path $filePath
+            $result | Should -Be $true
+
+            Remove-Item -Path $filePath -Force
+        }
+
+        It "Returns false for non-existent file" {
+            $result = Is-File-Exists -path "C:\Nonexistent\file.txt"
+            $result | Should -Be $false
+        }
+
+        It "Returns false for empty path" {
+            $result = Is-File-Exists -path ""
+            $result | Should -Be $false
+        }
+
+        It "Returns false for whitespace path" {
+            $result = Is-File-Exists -path "   "
+            $result | Should -Be $false
+        }
+
+        It "Handles exceptions gracefully" {
+            Mock Test-Path { throw "Error" }
+
+            $result = Is-File-Exists -path "C:\Nonexistent\file.txt"
+            $result | Should -Be $false
+        }
+    }
+}
+
+Describe "Is-File-Not-Exists" {
+    It "Returns true for non-existent file" {
+        Mock Is-File-Exists { return $false }
+
+        $result = Is-File-Not-Exists -path "C:\Nonexistent\file.txt"
+        $result | Should -Be $true
+    }
+
+    It "Returns false for existing file" {
+        Mock Is-File-Exists { return $true }
+
+        $result = Is-File-Not-Exists -path "C:\File\Exists.txt"
+        $result | Should -Be $false
     }
 }
 
@@ -750,7 +825,8 @@ Describe "Can-Use-Cache" {
         }
 
         It "Handles exceptions gracefully" {
-            Mock Test-Path { throw "Simulated exception" }
+            Mock Is-File-Exists { return $true }
+            Mock New-TimeSpan { throw "Error" }
             { Can-Use-Cache -cacheFileName "test" } | Should -Not -Throw
             $result = Can-Use-Cache -cacheFileName "test"
             $result | Should -Be $false

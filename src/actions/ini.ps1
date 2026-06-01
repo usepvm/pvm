@@ -268,7 +268,7 @@ function Add-Missing-PHPExtension-To-Ini {
     param ($iniPath, $extFileName, $enable = $true)
 
     try {
-        if (-not (Test-Path $iniPath)) {
+        if (Is-File-Not-Exists -path $iniPath) {
             Write-Host "`nphp.ini file not found: $iniPath" -ForegroundColor DarkYellow
             return -1
         }
@@ -276,14 +276,14 @@ function Add-Missing-PHPExtension-To-Ini {
         Backup-IniFile $iniPath
 
         $phpDirectory = Split-Path -Path $iniPath -Parent
-        $extDirectory = Join-Path -Path $phpDirectory -ChildPath "ext"
+        $extDirectory = "$phpDirectory\ext"
 
-        if (-not (Test-Path $extDirectory)) {
+        if (Is-Directory-Not-Exists -path $extDirectory) {
             Write-Host "`nExtensions directory not found: $extDirectory" -ForegroundColor DarkYellow
             return -1
         }
 
-        if (-not (Test-Path "$extDirectory\$extFileName")) {
+        if (Is-File-Not-Exists -path "$extDirectory\$extFileName") {
             Write-Host "`nExtension file not found: $extFileName" -ForegroundColor DarkYellow
             return -1
         }
@@ -344,9 +344,9 @@ function Get-Matching-PHPExtensionsStatus {
 
     # Step 1: Check ext directory first for matches
     $phpDirectory = Split-Path -Path $iniPath -Parent
-    $extDirectory = Join-Path -Path $phpDirectory -ChildPath "ext"
+    $extDirectory = "$phpDirectory\ext"
 
-    if (Test-Path $extDirectory) {
+    if (Is-Directory-Exists -path $extDirectory) {
         $dllPattern = if ($searchId) { "*$searchId*.dll" } else { "*.dll" }
         $dllFiles = Get-ChildItem -Path $extDirectory -Filter $dllPattern -File -ErrorAction SilentlyContinue
         foreach ($file in $dllFiles) {
@@ -460,7 +460,7 @@ function Restore-IniBackup {
     try {
         $backupPath = "$iniPath.bak"
 
-        if (-not (Test-Path $backupPath)) {
+        if (Is-File-Not-Exists -path $backupPath) {
             Write-Host "`nBackup file not found: $backupPath"
             return -1
         }
@@ -484,7 +484,7 @@ function Backup-IniFile {
 
     try {
         $backup = "$iniPath.bak"
-        if (-not (Test-Path $backup)) {
+        if (Is-File-Not-Exists -path $backup) {
             Copy-Item $iniPath $backup
         }
     } catch {
@@ -1116,7 +1116,7 @@ function Install-XDebug-Extension {
 
         Invoke-WebRequest -Uri "$XDEBUG_BASE_URL/$($chosenItem.href.TrimStart('/'))" -OutFile "$STORAGE_PATH\php"
         $phpPath = ($iniPath | Split-Path -Parent)
-        if (Test-Path "$phpPath\ext\$($chosenItem.fileName)") {
+        if (Is-File-Exists -path "$phpPath\ext\$($chosenItem.fileName)") {
             $response = Read-Host "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
             $response = $response.Trim()
             if ($response -ne "y" -and $response -ne "Y") {
@@ -1275,7 +1275,7 @@ function Install-Extension {
             return -1
         }
         $phpPath = ($iniPath | Split-Path -Parent)
-        if (Test-Path "$phpPath\ext\$($extFile.Name)") {
+        if (Is-File-Exists -path "$phpPath\ext\$($extFile.Name)") {
             $response = Read-Host "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
             $response = $response.Trim()
             if ($response -ne "y" -and $response -ne "Y") {
@@ -1533,7 +1533,7 @@ function Invoke-PVMIniAction {
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
-        if (-not (Test-Path $iniPath)) {
+        if (Is-File-Not-Exists -path $iniPath) {
             Write-Host "php.ini not found at: $($currentPhpVersion.path)"
             return -1
         }

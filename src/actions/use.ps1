@@ -2,13 +2,13 @@
 
     try {
         # 1. Check .php-version
-        if (Test-Path ".php-version") {
+        if (Is-File-Exists -path ".php-version") {
             $version = Get-Content ".php-version" | Select-Object -First 1
             return $version.Trim()
         }
 
         # 2. Check composer.json
-        if (Test-Path "composer.json") {
+        if (Is-File-Exists -path "composer.json") {
             try {
                 $json = Get-Content "composer.json" -Raw | ConvertFrom-Json
                 if ($json.require.php) {

@@ -33,7 +33,7 @@ function Run-Test-File {
             coverageRaw = $null
         }
 
-        if (-not (Test-Path $file.FullName)) {
+        if (Is-File-Not-Exists -path $file.FullName) {
             return @{ code = -1; Name = $file.Name; Message = "File not found!"; testResultData = $testResultData }
         }
 

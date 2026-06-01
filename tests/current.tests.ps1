@@ -226,7 +226,7 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should handle Test-Path exceptions gracefully" {
             # Arrange
-            Mock Test-Path { throw "Access Denied" }
+            Mock Is-File-Not-Exists { throw "Access Denied" }
             Mock Log-Data { return 0 }
             $testPath = "TestDrive:\php"
 

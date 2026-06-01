@@ -35,7 +35,7 @@ function Is-PVM-Setup {
                 ($path -notlike "*$pvmEnvVarContent*") -and
                 ($pathEntries -notcontains "%$PVM_ENV_VAR_NAME%")
             ) -or
-            (-not (Test-Path $parent))
+            (Is-Directory-Not-Exists -path $parent)
         ) {
             return $false
         }
@@ -69,7 +69,7 @@ function Refresh-Installed-PHP-Versions-Cache {
 function Get-Installed-PHP-Versions-From-Directory {
     $directories = Get-All-Subdirectories -path "$STORAGE_PATH\php"
     $installedVersions = $directories | ForEach-Object {
-        if (Test-Path "$($_.FullName)\php.exe"){
+        if (Is-File-Exists -path "$($_.FullName)\php.exe") {
             $phpInfo = Get-PHPInstallInfo -path $_.FullName
 
             return $phpInfo

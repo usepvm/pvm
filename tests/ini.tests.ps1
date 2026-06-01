@@ -1,8 +1,8 @@
 ﻿
 BeforeAll {
     $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
-    $testIniPath = Join-Path $testDrivePath "php.ini"
-    $extDirectory = Join-Path $testDrivePath "ext"
+    $testIniPath = "$testDrivePath\php.ini"
+    $extDirectory = "$testDrivePath\ext"
     $testBackupPath = "$testIniPath.bak"
 
     $global:CACHE_PATH = "TestDrive:\cache"
@@ -27,14 +27,14 @@ max_execution_time = 30
     Reset-Ini-Content
 
     # Mock global variables
-    $script:LOG_ERROR_PATH = Join-Path $testDrivePath "error.log"
-    $script:PHP_CURRENT_VERSION_PATH = Join-Path $testDrivePath "php"
+    $script:LOG_ERROR_PATH = "$testDrivePath\error.log"
+    $script:PHP_CURRENT_VERSION_PATH = "$testDrivePath\php"
 
     # Create directory and symlink for current PHP version
-    $phpVersionPath = Join-Path $testDrivePath "php-8.2"
+    $phpVersionPath = "$testDrivePath\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
     New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
-    Copy-Item $testIniPath (Join-Path $phpVersionPath "php.ini") -Force
+    Copy-Item $testIniPath "$phpVersionPath\php.ini" -Force
 
     # Mock Log-Data function
     function script:Log-Data {
@@ -1093,7 +1093,7 @@ Describe "Get-Matching-PHPExtensionsStatus" {
     }
 
     It "Returns empty when ext directory missing" {
-        Remove-Item -Recurse -Force (Join-Path (Split-Path -Parent $testIniPath) "ext") -ErrorAction SilentlyContinue
+        Remove-Item -Recurse -Force ("$testIniPath\..\ext") -ErrorAction SilentlyContinue
         $res = Get-Matching-PHPExtensionsStatus -iniPath $testIniPath -extName "testext"
         $res | Should -Be @()
     }
@@ -1858,7 +1858,7 @@ Describe "Invoke-PVMIniAction" {
 ;extension=php_xdebug.dll
 ;extension=php_gd.dll
 extension=php_curl.dll
-"@ | Set-Content (Join-Path $phpVersionPath "php.ini")
+"@ | Set-Content "$phpVersionPath\php.ini"
 
             $script:callCount = 0
             Mock Get-ChildItem {
@@ -1913,7 +1913,7 @@ extension=php_curl.dll
     Context "restore action" {
         It "Restores from backup" {
             # Create a backup first
-            Backup-IniFile -iniPath (Join-Path $phpVersionPath "php.ini")
+            Backup-IniFile -iniPath "$phpVersionPath\php.ini"
             $result = Invoke-PVMIniAction -action "restore" -params @()
             $result | Should -Be 0
         }
@@ -2027,7 +2027,7 @@ extension=php_curl.dll
         }
 
         It "Handles missing php.ini file" {
-            Remove-Item (Join-Path $phpVersionPath "php.ini") -Force
+            Remove-Item "$phpVersionPath\php.ini" -Force
             $result = Invoke-PVMIniAction -action "info" -params @()
             $result | Should -Be -1
         }

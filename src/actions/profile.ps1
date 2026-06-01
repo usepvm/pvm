@@ -196,7 +196,7 @@ function Save-PHP-Profile {
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
-        if (-not (Test-Path $iniPath)) {
+        if (Is-File-Not-Exists -path $iniPath) {
             Write-Host "`nphp.ini not found at: $($currentPhpVersion.path)" -ForegroundColor DarkYellow
             return -1
         }
@@ -280,14 +280,14 @@ function Load-PHP-Profile {
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
-        if (-not (Test-Path $iniPath)) {
+        if (Is-File-Not-Exists -path $iniPath) {
             Write-Host "`nphp.ini not found at: $($currentPhpVersion.path)" -ForegroundColor DarkYellow
             return -1
         }
 
         # Load profile JSON
         $profilePath = "$PROFILES_PATH\$profileName.json"
-        if (-not (Test-Path $profilePath)) {
+        if (Is-File-Not-Exists -path $profilePath) {
             Write-Host "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
             Write-Host "  Use 'pvm profile list' to see available profiles." -ForegroundColor Gray
             return -1
@@ -387,7 +387,7 @@ function Load-PHP-Profile {
 
 function List-PHP-Profiles {
     try {
-        if (-not (Test-Path $PROFILES_PATH)) {
+        if (Is-Directory-Not-Exists -path $PROFILES_PATH) {
             Write-Host "`nNo profiles directory found. Create a profile with 'pvm profile save <name>'." -ForegroundColor DarkYellow
             return -1
         }
@@ -450,7 +450,7 @@ function Show-PHP-Profile {
 
     try {
         $profilePath = "$PROFILES_PATH\$profileName.json"
-        if (-not (Test-Path $profilePath)) {
+        if (Is-File-Not-Exists -path $profilePath) {
             Write-Host "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
             Write-Host "  Use 'pvm profile list' to see available profiles." -ForegroundColor Gray
             return -1
@@ -519,7 +519,7 @@ function Delete-PHP-Profile {
     try {
         $profilePath = "$PROFILES_PATH\$profileName.json"
 
-        if (-not (Test-Path $profilePath)) {
+        if (Is-File-Not-Exists -path $profilePath) {
             Write-Host "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
             return -1
         }
@@ -552,7 +552,7 @@ function Export-PHP-Profile {
     try {
         $profilePath = "$PROFILES_PATH\$profileName.json"
 
-        if (-not (Test-Path $profilePath)) {
+        if (Is-File-Not-Exists -path $profilePath) {
             Write-Host "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
             return -1
         }
@@ -579,7 +579,7 @@ function Import-PHP-Profile {
     param($importPath, $profileName = $null)
 
     try {
-        if (-not (Test-Path $importPath)) {
+        if (Is-File-Not-Exists -path $importPath) {
             Write-Host "`nFile not found: $importPath" -ForegroundColor DarkYellow
             return -1
         }

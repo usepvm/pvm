@@ -218,7 +218,7 @@ function Extract-And-Configure {
             "php.ini-dist"
         )
         foreach ($candidate in $iniCandidates) {
-            if (Test-Path "$fileNamePath\$candidate") {
+            if (Is-File-Exists -path "$fileNamePath\$candidate") {
                 Copy-Item -Path "$fileNamePath\$candidate" -Destination "$fileNamePath\php.ini"
                 break
             }
@@ -240,7 +240,7 @@ function Configure-Opcache {
         Write-Host "`nConfiguring Opcache..."
 
         $phpIniPath = "$phpPath\php.ini"
-        if (-not (Test-Path $phpIniPath)) {
+        if (Is-File-Not-Exists -path $phpIniPath) {
             Write-Host "php.ini not found at: $phpIniPath"
             return -1
         }

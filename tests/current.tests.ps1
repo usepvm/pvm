@@ -1,8 +1,8 @@
 ﻿
 BeforeAll {
     # Mock dependencies
-    $global:LOG_ERROR_PATH = "TestDrive:\logs\error.log"
-    $global:PHP_CURRENT_VERSION_PATH = "TestDrive:\php\current"
+    $global:LOG_ERROR_PATH = 'TestDrive:\logs\error.log'
+    $global:PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
 
     # Mock Log-Data function
     Mock Write-Host {}
@@ -16,12 +16,12 @@ Describe "Get-PHP-Status Function Tests" {
     Context "When php.ini file exists and is valid" {
         It "Should detect enabled opcache extension" {
             # Arrange
-            $testPath = "TestDrive:\php"
+            $testPath = 'TestDrive:\php'
             New-Item -Path $testPath -ItemType Directory -Force
             $phpIniContent = @(
-                "# PHP Configuration",
-                "zend_extension=opcache.dll",
-                "zend_extension=some_other.dll"
+                '# PHP Configuration',
+                'zend_extension=opcache.dll',
+                'zend_extension=some_other.dll'
             )
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
@@ -35,12 +35,12 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should detect enabled xdebug extension" {
             # Arrange
-            $testPath = "TestDrive:\php"
+            $testPath = 'TestDrive:\php'
             New-Item -Path $testPath -ItemType Directory -Force
             $phpIniContent = @(
-                "# PHP Configuration",
-                "zend_extension=xdebug.dll",
-                "extension=mysqli.dll"
+                '# PHP Configuration',
+                'zend_extension=xdebug.dll',
+                'extension=mysqli.dll'
             )
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
@@ -54,11 +54,11 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should detect both opcache and xdebug when enabled" {
             # Arrange
-            $testPath = "TestDrive:\php"
+            $testPath = 'TestDrive:\php'
             New-Item -Path $testPath -ItemType Directory -Force
             $phpIniContent = @(
-                "zend_extension=opcache.dll",
-                "zend_extension=xdebug.dll"
+                'zend_extension=opcache.dll',
+                'zend_extension=xdebug.dll'
             )
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
@@ -72,12 +72,12 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should detect disabled (commented) opcache extension" {
             # Arrange
-            $testPath = "TestDrive:\php"
+            $testPath = 'TestDrive:\php'
             New-Item -Path $testPath -ItemType Directory -Force
             $phpIniContent = @(
-                "; Disabled opcache",
-                ";zend_extension=opcache.dll",
-                "extension=mysqli.dll"
+                '; Disabled opcache',
+                ';zend_extension=opcache.dll',
+                'extension=mysqli.dll'
             )
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
@@ -91,11 +91,11 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should detect disabled (commented) xdebug extension" {
             # Arrange
-            $testPath = "TestDrive:\php"
+            $testPath = 'TestDrive:\php'
             New-Item -Path $testPath -ItemType Directory -Force
             $phpIniContent = @(
-                "; Disabled xdebug",
-                ";zend_extension=xdebug.dll"
+                '; Disabled xdebug',
+                ';zend_extension=xdebug.dll'
             )
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
@@ -109,11 +109,11 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should handle mixed enabled/disabled extensions" {
             # Arrange
-            $testPath = "TestDrive:\php"
+            $testPath = 'TestDrive:\php'
             New-Item -Path $testPath -ItemType Directory -Force
             $phpIniContent = @(
-                "zend_extension=opcache.dll",
-                ";zend_extension=xdebug.dll"
+                'zend_extension=opcache.dll',
+                ';zend_extension=xdebug.dll'
             )
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
@@ -127,7 +127,7 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should handle extensions with full paths" {
             # Arrange
-            $testPath = "TestDrive:\php"
+            $testPath = 'TestDrive:\php'
             New-Item -Path $testPath -ItemType Directory -Force
             $phpIniContent = @(
                 'zend_extension="C:\php\ext\opcache.dll"',
@@ -145,11 +145,11 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should handle extensions with spaces in configuration" {
             # Arrange
-            $testPath = "TestDrive:\php"
+            $testPath = 'TestDrive:\php'
             New-Item -Path $testPath -ItemType Directory -Force
             $phpIniContent = @(
-                "  zend_extension  =  opcache.dll  ",
-                "  ;  zend_extension  =  xdebug.dll  "
+                '  zend_extension  =  opcache.dll  ',
+                '  ;  zend_extension  =  xdebug.dll  '
             )
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
@@ -163,12 +163,12 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should return false for both when no zend_extensions found" {
             # Arrange
-            $testPath = "TestDrive:\php"
+            $testPath = 'TestDrive:\php'
             New-Item -Path $testPath -ItemType Directory -Force
             $phpIniContent = @(
-                "# PHP Configuration",
-                "extension=mysqli.dll",
-                "memory_limit=128M"
+                '# PHP Configuration',
+                'extension=mysqli.dll',
+                'memory_limit=128M'
             )
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
@@ -182,9 +182,9 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should handle empty php.ini file" {
             # Arrange
-            $testPath = "TestDrive:\php"
+            $testPath = 'TestDrive:\php'
             New-Item -Path $testPath -ItemType Directory -Force
-            "" | Out-File -FilePath "$testPath\php.ini"
+            '' | Out-File -FilePath "$testPath\php.ini"
 
             # Act
             $result = Get-PHP-Status -phpPath $testPath
@@ -198,7 +198,7 @@ Describe "Get-PHP-Status Function Tests" {
     Context "When php.ini file does not exist" {
         It "Should return -1 when php.ini is missing" {
             # Arrange
-            $testPath = "TestDrive:\nonexistent"
+            $testPath = 'TestDrive:\nonexistent'
 
             # Act
             $result = Get-PHP-Status -phpPath $testPath
@@ -212,7 +212,7 @@ Describe "Get-PHP-Status Function Tests" {
     Context "When exceptions occur" {
         It "Should handle Get-Content exceptions gracefully" {
             # Arrange - Create a directory instead of a file to cause Get-Content to fail
-            $testPath = "TestDrive:\php"
+            $testPath = 'TestDrive:\php'
             New-Item -Path $testPath -ItemType Directory -Force
             New-Item -Path "$testPath\php.ini" -ItemType Directory -Force
 
@@ -226,9 +226,9 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should handle Test-Path exceptions gracefully" {
             # Arrange
-            Mock Is-File-Not-Exists { throw "Access Denied" }
+            Mock Is-File-Not-Exists { throw 'Access Denied' }
             Mock Log-Data { return 0 }
-            $testPath = "TestDrive:\php"
+            $testPath = 'TestDrive:\php'
 
             # Act
             $result = Get-PHP-Status -phpPath $testPath
@@ -247,7 +247,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
             # Mock Get-Item to return a symlink object
             Mock Get-Item {
                 return @{
-                    Target = "C:\php\8.2.0"
+                    Target = 'C:\php\8.2.0'
                 }
             } -ParameterFilter { $Path -eq $PHP_CURRENT_VERSION_PATH }
 
@@ -269,8 +269,8 @@ Describe "Get-Current-PHP-Version Function Tests" {
             $result = Get-Current-PHP-Version
 
             # Assert
-            $result.version | Should -Be "8.2.0"
-            $result.path | Should -Be "C:\php\8.2.0"
+            $result.version | Should -Be '8.2.0'
+            $result.path | Should -Be 'C:\php\8.2.0'
             $result.status.opcache | Should -Be $true
             $result.status.xdebug | Should -Be $false
         }
@@ -287,7 +287,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
             $result = Get-Current-PHP-Version
 
             # Assert
-            Assert-MockCalled Get-PHP-Status -Times 1 -ParameterFilter { $phpPath -eq "C:\php\8.2.0" }
+            Assert-MockCalled Get-PHP-Status -Times 1 -ParameterFilter { $phpPath -eq 'C:\php\8.2.0' }
         }
     }
 
@@ -295,7 +295,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
 
         It "returns empty result when path does not exist" {
             # Arrange
-            Mock Get-Item { return @{ Target = "C:\php\8.2.0" } }
+            Mock Get-Item { return @{ Target = 'C:\php\8.2.0' } }
             Mock Is-Directory-Exists { return $false }
 
             # Act
@@ -310,7 +310,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
 
         It "Should return null values when path does not exist" {
             # Arrange
-            Mock Get-Item { throw "Path does not exist" }
+            Mock Get-Item { throw 'Path does not exist' }
 
             # Act
             $result = Get-Current-PHP-Version
@@ -324,7 +324,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
 
         It "Should call Log-Data when exception occurs" {
             # Arrange
-            Mock Get-Item { throw "Path does not exist" }
+            Mock Get-Item { throw 'Path does not exist' }
             Mock Log-Data { return 0 }
 
             # Act
@@ -358,7 +358,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
         BeforeEach {
             Mock Get-Item {
                 return @{
-                    Target = "C:\php\8.1.0"
+                    Target = 'C:\php\8.1.0'
                 }
             } -ParameterFilter { $Path -eq $PHP_CURRENT_VERSION_PATH }
 
@@ -380,8 +380,8 @@ Describe "Get-Current-PHP-Version Function Tests" {
             $result = Get-Current-PHP-Version
 
             # Assert
-            $result.version | Should -Be "8.1.0"
-            $result.path | Should -Be "C:\php\8.1.0"
+            $result.version | Should -Be '8.1.0'
+            $result.path | Should -Be 'C:\php\8.1.0'
             $result.status.opcache | Should -Be $false
             $result.status.xdebug | Should -Be $false
         }
@@ -398,15 +398,15 @@ Describe "Integration Tests" {
                 InstallPath = 'TestDrive:\php\8.2.0'
             }}
             # Arrange
-            $testPhpPath = "TestDrive:\php\8.2.0"
-            $testCurrentPath = "TestDrive:\php\current"
+            $testPhpPath = 'TestDrive:\php\8.2.0'
+            $testCurrentPath = 'TestDrive:\php\current'
 
             New-Item -Path $testPhpPath -ItemType Directory -Force
 
             $phpIniContent = @(
-                "zend_extension=opcache.dll",
-                ";zend_extension=xdebug.dll",
-                "memory_limit=256M"
+                'zend_extension=opcache.dll',
+                ';zend_extension=xdebug.dll',
+                'memory_limit=256M'
             )
             $phpIniContent | Out-File -FilePath "$testPhpPath\php.ini"
 
@@ -423,7 +423,7 @@ Describe "Integration Tests" {
             $result = Get-Current-PHP-Version
 
             # Assert
-            $result.version | Should -Be "8.2.0"
+            $result.version | Should -Be '8.2.0'
             $result.path | Should -Be $testPhpPath
             $result.status.opcache | Should -Be $true
             $result.status.xdebug | Should -Be $false

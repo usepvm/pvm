@@ -149,7 +149,7 @@ function Set-EnvVar {
 
         if (Is-Not-Admin) {
             $command = "[System.Environment]::SetEnvironmentVariable('$name', '$value', [System.EnvironmentVariableTarget]::Machine)"
-            return (Run-Command -command $command)
+            return (Run-PS-Command -command $command)
         }
 
         # We already have admin rights, proceed normally
@@ -197,7 +197,7 @@ function Make-Symbolic-Link {
 
         if (Is-Not-Admin) {
             $command = "New-Item -ItemType SymbolicLink -Path '$link' -Target '$target'"
-            $exitCode = (Run-Command -command $command)
+            $exitCode = (Run-Ps-Command -command $command)
             if ($exitCode -ne 0) {
                 return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = 'DarkYellow' }
             }
@@ -215,11 +215,21 @@ function Make-Symbolic-Link {
     }
 }
 
-function Run-Command {
+function Run-PS-Command {
     param($command)
 
-    $process = Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command `"$command`"" -Verb RunAs -WindowStyle Hidden -PassThru -Wait
-    $process.WaitForExit()
+    $process = Start-Process `
+        -FilePath "powershell.exe" `
+        -ArgumentList @(
+            "-NoProfile",
+            "-ExecutionPolicy", "Bypass",
+            "-Command", $command
+        ) `
+        -Verb RunAs `
+        -PassThru `
+        -Wait `
+        -WindowStyle Hidden
+
     return $process.ExitCode
 }
 

@@ -350,8 +350,8 @@ Describe "Make-Symbolic-Link" {
         }
 
         It "Returns -1 if fails to create symbolic link" {
-            Mock Is-Admin { return $false }
-            Mock Run-Command { return -1 }
+            Mock Is-Not-Admin { return $true }
+            Mock Run-Ps-Command { return -1 }
             $linkPath = "TestDrive:\test_link_fail"
             $targetPath = "$STORAGE_PATH\php\8.1"
             $result = Make-Symbolic-Link -link $linkPath -target $targetPath
@@ -361,11 +361,8 @@ Describe "Make-Symbolic-Link" {
         }
 
         It "Creates a symbolic link successfully using elevated command" {
-            # Mock Is-Admin to return false
-            Mock Is-Admin { return $false }
-
-            # Mock Run-Command to simulate successful elevation
-            Mock Run-Command { return 0 }
+            Mock Is-Not-Admin { return $true }
+            Mock Run-Ps-Command { return 0 }
 
             $linkPath = "TestDrive:\test_link_2"
             $targetPath = "$STORAGE_PATH\php\8.1"
@@ -376,8 +373,7 @@ Describe "Make-Symbolic-Link" {
             $result.message | Should -Match "Created symbolic link"
             $result.color | Should -Be "DarkGreen"
 
-            # Verify Run-Command was called with the symbolic link command
-            Assert-MockCalled Run-Command -ParameterFilter {
+            Assert-MockCalled Run-Ps-Command -ParameterFilter {
                 $command -like "*New-Item -ItemType SymbolicLink*" -and
                 $command -like "*$linkPath*" -and
                 $command -like "*$targetPath*"
@@ -1436,18 +1432,32 @@ Describe "Get-BinaryArchitecture-From-DLL" {
     }
 }
 
-Describe "Run-Command" {
-    Context "When executing elevated commands" {
-        It "Passes -NoProfile to prevent user profile from loading" {
+Describe "Run-Ps-Command" {
+    Context "When executing PowerShell commands" {
+        It "Passes -NoProfile and Bypass execution policy" {
             $mockProcess = [PSCustomObject]@{ ExitCode = 0 }
             $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
             Mock Start-Process { return $mockProcess }
 
-            $result = Run-Command -command "echo test"
+            $result = Run-Ps-Command -command "Write-Host 'hello'"
 
             Should -Invoke Start-Process -Times 1 -ParameterFilter {
-                $ArgumentList -like "*-NoProfile*"
+                $FilePath -eq "powershell.exe" -and
+                $ArgumentList -contains "-NoProfile" -and
+                $ArgumentList -contains "-ExecutionPolicy" -and
+                $ArgumentList -contains "Bypass"
             }
+            $result | Should -Be 0
+        }
+
+        It "Returns the process exit code" {
+            $mockProcess = [PSCustomObject]@{ ExitCode = 42 }
+            $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
+            Mock Start-Process { return $mockProcess }
+
+            $result = Run-Ps-Command -command "Write-Error 'fail'"
+
+            $result | Should -Be 42
         }
     }
 }

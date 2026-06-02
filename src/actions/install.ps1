@@ -13,14 +13,14 @@ function Get-Latest-PHP-Version {
                 $links = $html.Links
 
                 $filteredLinks = $links | Where-Object {
-                    $_.href -match "php-\d+(\.\d+)*-(?:nts-)?win.*\.zip$" -and
-                    $_.href -notmatch "php-debug" -and
-                    $_.href -notmatch "php-devel"
+                    $_.href -match 'php-\d+(\.\d+)*-(?:nts-)?win.*\.zip$' -and
+                    $_.href -notmatch 'php-debug' -and
+                    $_.href -notmatch 'php-devel'
                 }
 
                 $filteredLinks | ForEach-Object {
                     $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
-                    $fileName = $_.href -split "/"
+                    $fileName = $_.href -split '/'
                     $fileName = $fileName[$fileName.Count - 1]
                     $allVersions += @{
                         href = $_.href
@@ -64,15 +64,15 @@ function Get-PHP-Versions-From-Url {
         # Filter the links to find versions that match the given version
         $filteredLinks = $links | Where-Object {
             $_.href -match "php-$version(\.\d+)*-(?:nts-)?win.*\.zip$" -and
-            $_.href -notmatch "php-debug" -and
-            $_.href -notmatch "php-devel" # -and $_.href -notmatch "nts"
+            $_.href -notmatch 'php-debug' -and
+            $_.href -notmatch 'php-devel' # -and $_.href -notmatch "nts"
         }
 
         # Return the filtered links (PHP version names)
         $formattedList = @()
         $filteredLinks = $filteredLinks | ForEach-Object {
             $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
-            $fileName = $_.href -split "/"
+            $fileName = $_.href -split '/'
             $fileName = $fileName[$fileName.Count - 1]
             $formattedList += @{
                 href = $_.href
@@ -212,10 +212,10 @@ function Extract-And-Configure {
         Remove-Item -Path $fileNamePath -Recurse -Force
         Extract-Zip -zipPath $path -extractPath $fileNamePath
         $iniCandidates = @(
-            "php.ini-development",
-            "php.ini-production",
-            "php.ini-recommended",
-            "php.ini-dist"
+            'php.ini-development',
+            'php.ini-production',
+            'php.ini-recommended',
+            'php.ini-dist'
         )
         foreach ($candidate in $iniCandidates) {
             if (Is-File-Exists -path "$fileNamePath\$candidate") {
@@ -295,7 +295,7 @@ function Select-Version {
             }
             Write-Host "`n$key versions:`n"
             $versionsList | ForEach-Object {
-                $_ | Add-Member -NotePropertyName "index" -NotePropertyValue $index -Force
+                $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
                 Write-Host " [$index] $($_.version) $($_.arch) $($_.BuildType)"
                 $index++
             }
@@ -340,16 +340,16 @@ function Install-PHP {
                 Write-Host "`nOther versions from the $familyVersion.x family are available:"
                 $foundInstalledVersions | ForEach-Object {
                     $versionNumber = $_.Version
-                    $isCurrent = ""
-                    $metaData = ""
+                    $isCurrent = ''
+                    $metaData = ''
                     if ($_.Arch) {
-                        $metaData += $_.Arch + " "
+                        $metaData += $_.Arch + ' '
                     }
                     if ($_.BuildType) {
                         $metaData += $_.BuildType
                     }
                     if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
-                        $isCurrent = "(Current)"
+                        $isCurrent = '(Current)'
                     }
                     $metaData = $metaData.Trim()
                     $versionNumber = "$versionNumber ".PadRight(15, '.')
@@ -357,8 +357,8 @@ function Install-PHP {
                 }
                 $response = Read-Host "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 $response = $response.Trim()
-                if ($response -ne "y" -and $response -ne "Y") {
-                    return @{ code = -1; message = "Installation cancelled" }
+                if ($response -ne 'y' -and $response -ne 'Y') {
+                    return @{ code = -1; message = 'Installation cancelled' }
                 }
                 $version = $familyVersion
             }
@@ -378,7 +378,7 @@ function Install-PHP {
 
         $selectedVersionObject = Select-Version -matchingVersions $matchingVersions -version $version -arch $arch -buildType $buildType
         if (-not $selectedVersionObject) {
-            return @{ code = -1; message = "Installation cancelled" }
+            return @{ code = -1; message = 'Installation cancelled' }
         }
 
         if (Is-PHP-Version-Installed -version $selectedVersionObject) {
@@ -390,7 +390,7 @@ function Install-PHP {
         $destination = Download-PHP -version $selectedVersionObject
 
         if (-not $destination) {
-            return @{ code = -1; message = "Failed to download PHP version $version"; color = "DarkYellow" }
+            return @{ code = -1; message = "Failed to download PHP version $version"; color = 'DarkYellow' }
         }
 
         Write-Host "`nExtracting the downloaded zip ..."
@@ -404,12 +404,12 @@ function Install-PHP {
 
         $cacheRefreshed = Refresh-Installed-PHP-Versions-Cache
 
-        return @{ code = 0; message = $message; color = "DarkGreen" }
+        return @{ code = 0; message = $message; color = 'DarkGreen' }
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to install PHP version $version"
             exception = $_
         }
-        return @{ code = -1; message = "Failed to install PHP version $version"; color = "DarkYellow" }
+        return @{ code = -1; message = "Failed to install PHP version $version"; color = 'DarkYellow' }
     }
 }

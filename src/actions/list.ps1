@@ -11,10 +11,10 @@ function Get-From-Source {
             $filteredLinks = @()
             $links | ForEach-Object {
                 if ($_.href -match "php-\d+\.\d+\.\d+(?:-\d+)?-(?:nts-)?Win32.*\.zip$" -and
-                    $_.href -notmatch "php-debug" -and
-                    $_.href -notmatch "php-devel" # -and $_.href -notmatch "nts"
+                    $_.href -notmatch 'php-debug' -and
+                    $_.href -notmatch 'php-devel' # -and $_.href -notmatch "nts"
                 ) {
-                    $fileName = $_.href -split "/"
+                    $fileName = $_.href -split '/'
                     $fileName = $fileName[$fileName.Count - 1]
 
                     $filteredLinks += @{
@@ -47,7 +47,7 @@ function Get-From-Source {
 
 function Get-PHP-List-To-Install {
     try {
-        $fetchedVersionsGrouped = Get-OrUpdateCache -cacheFileName "available_php_versions" -compute {
+        $fetchedVersionsGrouped = Get-OrUpdateCache -cacheFileName 'available_php_versions' -compute {
             Get-From-Source
         }
 
@@ -103,7 +103,7 @@ function Get-Available-PHP-Versions {
         }
 
         Write-Host "`nAvailable Versions"
-        Write-Host "------------------"
+        Write-Host '------------------'
 
         $fetchedVersionsGroupedPartialList.GetEnumerator()
             | Sort-Object Key
@@ -155,23 +155,23 @@ function Display-Installed-PHP-Versions {
         }
 
         Write-Host "`nInstalled Versions"
-        Write-Host "------------------"
+        Write-Host '------------------'
         $duplicates = @()
         $installedPhp | ForEach-Object {
             $versionNumber = $_.Version
             $versionID = "$($_.Version)_$($_.buildType)_$($_.Arch)"
             if ($duplicates -notcontains $versionID) {
                 $duplicates += $versionID
-                $isCurrent = ""
-                $metaData = ""
+                $isCurrent = ''
+                $metaData = ''
                 if ($_.Arch) {
-                    $metaData += $_.Arch + " "
+                    $metaData += $_.Arch + ' '
                 }
                 if ($_.BuildType) {
                     $metaData += $_.BuildType
                 }
                 if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
-                    $isCurrent = "(Current)"
+                    $isCurrent = '(Current)'
                 }
                 $versionNumber = "$versionNumber ".PadRight(15, '.')
                 Write-Host " $versionNumber $metaData $isCurrent"

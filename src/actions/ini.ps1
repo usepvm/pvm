@@ -43,8 +43,8 @@ function Get-XDebug-FROM-URL {
 
             if ($fileName -notmatch "php_xdebug-[\d\.a-zA-Z]+-$version-") { return }
 
-            $xDebugVersion = "2.0"
-            if ($fileName -match "php_xdebug-([^-]+)") {
+            $xDebugVersion = '2.0'
+            if ($fileName -match 'php_xdebug-([^-]+)') {
                 $xDebugVersion = $matches[1]
             }
 
@@ -158,7 +158,7 @@ function Get-Extension-Links-From-URL {
             Write-Host "`nMatching '$extName' extension:"
             $index = 0
             $linksMatchingExtName | ForEach-Object {
-                $extItem = $_.href -replace "/package/", ""
+                $extItem = $_.href -replace '/package/', ''
                 Write-Host "[$index] $extItem"
                 $index++
             }
@@ -173,7 +173,7 @@ function Get-Extension-Links-From-URL {
 
                 $choice = $null
                 if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Write-Host "Please enter a valid positive number." -ForegroundColor Yellow
+                    Write-Host 'Please enter a valid positive number.' -ForegroundColor Yellow
                     continue
                 }
 
@@ -192,7 +192,7 @@ function Get-Extension-Links-From-URL {
             }
         }
 
-        $extName = $chosenItem.href -replace "/package/", ""
+        $extName = $chosenItem.href -replace '/package/', ''
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version" -compute {
             Filter-Extension-Links-From-URL -extName $extName
         }
@@ -210,7 +210,7 @@ function Get-Packages-From-Source-Links {
     $formattedList = @()
     $links | ForEach-Object {
         try {
-            $extVersion = $_.href -replace "/package/$extName/", "" -replace "/windows", ""
+            $extVersion = $_.href -replace "/package/$extName/", '' -replace '/windows', ''
             $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName/$extVersion/windows"
             $html.Links | ForEach-Object {
                 if (-not $_.href) { return }
@@ -347,7 +347,7 @@ function Get-Matching-PHPExtensionsStatus {
     $extDirectory = "$phpDirectory\ext"
 
     if (Is-Directory-Exists -path $extDirectory) {
-        $dllPattern = if ($searchId) { "*$searchId*.dll" } else { "*.dll" }
+        $dllPattern = if ($searchId) { "*$searchId*.dll" } else { '*.dll' }
         $dllFiles = Get-ChildItem -Path $extDirectory -Filter $dllPattern -File -ErrorAction SilentlyContinue
         foreach ($file in $dllFiles) {
             $fileId = & $normalizeId $file.BaseName
@@ -379,11 +379,11 @@ function Get-Matching-PHPExtensionsStatus {
             # track ini matches by normalized id
             $iniMatches[$id] = @{
                 name = $displayName
-                status = "Enabled"
-                color = "DarkGreen"
+                status = 'Enabled'
+                color = 'DarkGreen'
                 line = $line
                 lineNumber = $lineNumber
-                source = "ini"
+                source = 'ini'
             }
         }
         if ($line -match $disabledPattern) {
@@ -394,11 +394,11 @@ function Get-Matching-PHPExtensionsStatus {
 
             $iniMatches[$id] = @{
                 name = $displayName
-                status = "Disabled"
-                color = "DarkYellow"
+                status = 'Disabled'
+                color = 'DarkYellow'
                 line = $line
                 lineNumber = $lineNumber
-                source = "ini"
+                source = 'ini'
             }
         }
         $lineNumber++
@@ -416,7 +416,7 @@ function Get-Matching-PHPExtensionsStatus {
                 color = $iniMatches[$id].color
                 line = $iniMatches[$id].line
                 lineNumber = $iniMatches[$id].lineNumber
-                source = "ext,ini"
+                source = 'ext,ini'
             }
         } else {
             # Extension exists in ext but not configured in ini - add it as disabled
@@ -430,22 +430,22 @@ function Get-Matching-PHPExtensionsStatus {
                 $matchesList += @{
                     name = $extMatch.name
                     id = $id
-                    status = "Disabled"
-                    color = "DarkYellow"
+                    status = 'Disabled'
+                    color = 'DarkYellow'
                     line = $extensionLine
                     lineNumber = $lines.Count
-                    source = "ext,ini"
+                    source = 'ext,ini'
                 }
             } catch {
                 # If adding fails, still return it as available
                 $matchesList += @{
                     name = $extMatch.name
                     id = $id
-                    status = "Available (not configured)"
-                    color = "DarkCyan"
-                    line = "Found in ext directory: $($extMatch.fullPath)"
+                    status = 'Available (not configured)'
+                    color = 'DarkCyan'
+                    line = 'Found in ext directory: $($extMatch.fullPath)'
                     lineNumber = 0
-                    source = "ext"
+                    source = 'ext'
                 }
             }
         }
@@ -505,7 +505,7 @@ function Get-IniSetting {
             return -1
         }
 
-        $pattern = "^[#;]?\s*([^=\s]*{0}[^=\s]*)\s*=\s*(.*)" -f [regex]::Escape($key)
+        $pattern = '^[#;]?\s*([^=\s]*{0}[^=\s]*)\s*=\s*(.*)' -f [regex]::Escape($key)
         $lines = Get-Content $iniPath
 
         $result = @()
@@ -559,11 +559,11 @@ function Set-IniSetting {
             $searchKey = $matches.k.Trim()
             $inputValue = if ($null -ne $matches.v) { $matches.v.Trim() } else { $null }
         } else {
-            Write-Host "Invalid input." -ForegroundColor DarkGray
+            Write-Host 'Invalid input.' -ForegroundColor DarkGray
             return -1
         }
 
-        $pattern = "^[#;]?\s*(?<key>[^=\s]*{0}[^=\s]*)\s*=\s*(?<value>.*)$" -f [regex]::Escape($searchKey)
+        $pattern = '^[#;]?\s*(?<key>[^=\s]*{0}[^=\s]*)\s*=\s*(?<value>.*)$' -f [regex]::Escape($searchKey)
 
         $matchesList = @()
         $lines = Get-Content $iniPath
@@ -606,12 +606,12 @@ function Set-IniSetting {
                 $choice = $null
 
                 if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Write-Host "Please enter a valid positive number." -ForegroundColor Yellow
+                    Write-Host 'Please enter a valid positive number.' -ForegroundColor Yellow
                     continue
                 }
 
                 if ($choice -lt 0 -or $choice -gt $matchesList.Length - 1) {
-                    Write-Host "Number must be between 0 and $($matchesList.Length - 1)." -ForegroundColor Yellow
+                    Write-Host 'Number must be between 0 and $($matchesList.Length - 1).' -ForegroundColor Yellow
                     continue
                 }
 
@@ -689,7 +689,7 @@ function Enable-IniExtension {
                 $choice = $null
 
                 if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Write-Host "Please enter a valid positive number." -ForegroundColor Yellow
+                    Write-Host 'Please enter a valid positive number.' -ForegroundColor Yellow
                     continue
                 }
 
@@ -706,7 +706,7 @@ function Enable-IniExtension {
             $selected = $($matchesListStatus)
         }
 
-        if ($selected.status -eq "Enabled") {
+        if ($selected.status -eq 'Enabled') {
             Write-Host "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
             return 0
         }
@@ -719,7 +719,7 @@ function Enable-IniExtension {
             $lineNumber++
             if ($_ -eq $selected.line -and $selected.lineNumber -eq $lineNumber -and -not $modified) {
                 $modified = $true
-                return $_ -replace "^[#;]\s*", ""
+                return $_ -replace '^[#;]\s*', ''
             }
             return $_
         }
@@ -778,7 +778,7 @@ function Disable-IniExtension {
                 $choice = $null
 
                 if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Write-Host "Please enter a valid positive number." -ForegroundColor Yellow
+                    Write-Host 'Please enter a valid positive number.' -ForegroundColor Yellow
                     continue
                 }
 
@@ -795,7 +795,7 @@ function Disable-IniExtension {
             $selected = $($matchesListStatus)
         }
 
-        if ($selected.status -eq "Disabled") {
+        if ($selected.status -eq 'Disabled') {
             Write-Host "- '$($selected.name)' disabled successfully." -ForegroundColor DarkGreen
             return 0
         }
@@ -914,6 +914,11 @@ function Display-Extensions-States {
 function Display-Installed-Extensions {
     param ($extensions)
 
+    if ($extensions.Count -eq 0) {
+        Write-Host '  No extensions found matching the search term.' -ForegroundColor DarkGray
+        return
+    }
+
     # Calculate max length dynamically
     $MIN_LINE_LENGTH = 60
     $maxNameLength = ($extensions.Extension | Measure-Object -Maximum Length).Maximum
@@ -928,11 +933,11 @@ function Display-Installed-Extensions {
         $label = $label.PadRight($maxLineLength, '.')
 
         if ($_.Enabled) {
-            $status = "Enabled "
-            $color = "DarkGreen"
+            $status = 'Enabled'
+            $color = 'DarkGreen'
         } else {
-            $status = "Disabled"
-            $color = "DarkGray"
+            $status = 'Disabled'
+            $color = 'DarkGray'
         }
 
         Write-Host "$label " -NoNewline
@@ -954,6 +959,11 @@ function Display-Settings-States {
 function Display-Settings {
     param ($settings)
 
+    if ($settings.Count -eq 0) {
+        Write-Host '  No settings found matching the search term.' -ForegroundColor DarkGray
+        return
+    }
+
     $MIN_LINE_LENGTH = 57
     $maxLineLength = (($settings.Name + $settings.Value) | Measure-Object -Maximum Length).Maximum
     $maxLineLength = [Math]::Max($MIN_LINE_LENGTH, $maxLineLength + 40)
@@ -969,11 +979,11 @@ function Display-Settings {
         $line  = $label.PadRight($maxLineLength - $value.Length, '.') + $value
 
         if ($_.Enabled) {
-            $status = "Enabled "
-            $color = "DarkGreen"
+            $status = 'Enabled'
+            $color = 'DarkGreen'
         } else {
-            $status = "Disabled"
-            $color = "DarkGray"
+            $status = 'Disabled'
+            $color = 'DarkGray'
         }
 
         Write-Host $line -NoNewline
@@ -997,16 +1007,16 @@ function Get-PHP-Data {
             $rawPath = $matches[3]
             $extensionName = [System.IO.Path]::GetFileName($rawPath)
             $phpIniData.extensions += [PSCustomObject]@{
-                Section   = "extension"
+                Section   = 'extension'
                 Extension = $extensionName
                 Type      = $matches[2] # extension or zend_extension
                 Enabled   = -not $matches[1]
             }
         } elseif ($line -match '^\s*(;)?([A-Za-z0-9_.]+)\s*=\s*("?[^";]+?"?)\s*(?:;.*)?$') {
             $phpIniData.settings += [PSCustomObject]@{
-                Section   = "setting"
+                Section   = 'setting'
                 Name      = $matches[2]   # e.g. memory_limit
-                Type      = "setting"
+                Type      = 'setting'
                 Value     = $matches[3].Trim('"') # strip quotes if present
                 Enabled   = -not $matches[1]      # false if line starts with ;
             }
@@ -1081,7 +1091,7 @@ function Install-XDebug-Extension {
                     }; Descending = $true }
 
                 $sortedGroup | ForEach-Object {
-                    $_ | Add-Member -NotePropertyName "index" -NotePropertyValue $index -Force
+                    $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
                     $index++
                 }
 
@@ -1119,7 +1129,7 @@ function Install-XDebug-Extension {
         if (Is-File-Exists -path "$phpPath\ext\$($chosenItem.fileName)") {
             $response = Read-Host "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
             $response = $response.Trim()
-            if ($response -ne "y" -and $response -ne "Y") {
+            if ($response -ne 'y' -and $response -ne 'Y') {
                 Remove-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)"
                 Write-Host "`nInstallation cancelled"
                 return -1
@@ -1128,7 +1138,7 @@ function Install-XDebug-Extension {
         Move-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)" -Destination "$phpPath\ext"
         Remove-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)"
         $xDebugConfig = getXdebugConfigV2 -XDebugPath $($chosenItem.fileName)
-        if ($chosenItem.xDebugVersion -like "3.*") {
+        if ($chosenItem.xDebugVersion -like '3.*') {
             $xDebugConfig = getXdebugConfigV3 -XDebugPath $($chosenItem.fileName)
         }
         # check existence of previous xdebug
@@ -1143,7 +1153,7 @@ function Install-XDebug-Extension {
         if ($dllXDebugExists) {
             Set-Content -Path $iniPath -Value $iniContent -Encoding UTF8
         } else {
-            $xDebugConfig = $xDebugConfig -replace "\ +"
+            $xDebugConfig = $xDebugConfig -replace '\ +'
             Add-Content -Path $iniPath -Value $xDebugConfig
         }
 
@@ -1231,7 +1241,7 @@ function Install-Extension {
                             }
                         }; Descending = $true }
                     $sortedGroup | ForEach-Object {
-                        $_ | Add-Member -NotePropertyName "index" -NotePropertyValue $index -Force
+                        $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
                         $index++
                     }
 
@@ -1278,7 +1288,7 @@ function Install-Extension {
         if (Is-File-Exists -path "$phpPath\ext\$($extFile.Name)") {
             $response = Read-Host "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
             $response = $response.Trim()
-            if ($response -ne "y" -and $response -ne "Y") {
+            if ($response -ne 'y' -and $response -ne 'Y') {
                 Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath" -Force -Recurse
                 Write-Host "`nInstallation cancelled"
                 return -1
@@ -1312,7 +1322,7 @@ function Install-IniExtension {
             return -1
         }
 
-        if ($extName -like "*xdebug*") {
+        if ($extName -like '*xdebug*') {
             $code = Install-XDebug-Extension -iniPath $iniPath
         } else {
             $code = Install-Extension -iniPath $iniPath -extName $extName
@@ -1344,8 +1354,8 @@ function Get-Extension-Categories-By-Page {
             return $false
         }
         $extName = ($_.href -replace '/package/', '').Trim()
-        $_ | Add-Member -NotePropertyName "extName" -NotePropertyValue $extName -Force
-        $_ | Add-Member -NotePropertyName "extCategory" -NotePropertyValue $extCategory -Force
+        $_ | Add-Member -NotePropertyName 'extName' -NotePropertyValue $extName -Force
+        $_ | Add-Member -NotePropertyName 'extCategory' -NotePropertyValue $extCategory -Force
         $availableExtensions += $_
         return $true
     }
@@ -1382,16 +1392,16 @@ function Get-PHPExtensions-From-Source {
             }
             return $true
         }
-        $availableExtensions["XDebug"] = @(
+        $availableExtensions['XDebug'] = @(
             @{
                 href = $XDEBUG_HISTORICAL_URL
-                extName = "xdebug"
-                extCategory = "XDebug"
+                extName = 'xdebug'
+                extCategory = 'XDebug'
             }
         )
         $dataToCache = [ordered] @{}
         $availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object { $dataToCache[$_.Key] = $_.Value }
-        $cached = Cache-Data -cacheFileName "available_extensions" -data $dataToCache -depth 3
+        $cached = Cache-Data -cacheFileName 'available_extensions' -data $dataToCache -depth 3
 
         return $availableExtensions
     } catch {
@@ -1469,10 +1479,10 @@ function List-PHP-Extensions {
             $maxLineLength = [Math]::Max($MIN_LINE_LENGTH, $maxKeyLength + 30)
 
             Write-Host "`nAvailable Extensions by Category:"
-            Write-Host    "--------------------------------"
+            Write-Host    '--------------------------------'
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
                 $key  = "$($_.Key) "
-                $vals = ($_.Value | ForEach-Object { $_.extName }) -join ", "
+                $vals = ($_.Value | ForEach-Object { $_.extName }) -join ', '
 
                 $label = "  $key"
                 $maxDescLength = $Host.UI.RawUI.WindowSize.Width - ($maxLineLength + 20)
@@ -1539,11 +1549,11 @@ function Invoke-PVMIniAction {
         }
 
         switch ($action) {
-            "info" {
+            'info' {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-                $exitCode = Get-PHP-Info -term $term -extensions ($params -contains "extensions") -settings ($params -contains "settings")
+                $exitCode = Get-PHP-Info -term $term -extensions ($params -contains 'extensions') -settings ($params -contains 'settings')
             }
-            "get" {
+            'get' {
                 if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one setting name ('pvm ini get memory_limit)."
                     return -1
@@ -1554,7 +1564,7 @@ function Invoke-PVMIniAction {
                     $exitCode = Get-IniSetting -iniPath $iniPath -key $extName
                 }
             }
-            "set" {
+            'set' {
                 if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
                     return -1
@@ -1567,7 +1577,7 @@ function Invoke-PVMIniAction {
                     $exitCode = Set-IniSetting -iniPath $iniPath -key $key -enable $enable
                 }
             }
-            "enable" {
+            'enable' {
                 if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one extension (pvm ini enable curl)."
                     return -1
@@ -1578,7 +1588,7 @@ function Invoke-PVMIniAction {
                     $exitCode = Enable-IniExtension -iniPath $iniPath -extName $extName
                 }
             }
-            "disable" {
+            'disable' {
                 if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one extension (pvm ini disable xdebug)."
                     return -1
@@ -1589,7 +1599,7 @@ function Invoke-PVMIniAction {
                     $exitCode = Disable-IniExtension -iniPath $iniPath -extName $extName
                 }
             }
-            "status" {
+            'status' {
                 if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one extension (pvm ini status opcache)."
                     return -1
@@ -1600,10 +1610,10 @@ function Invoke-PVMIniAction {
                     $exitCode = Get-IniExtensionStatus -iniPath $iniPath -extName $extName
                 }
             }
-            "restore" {
+            'restore' {
                 $exitCode = Restore-IniBackup -iniPath $iniPath
             }
-            "install" {
+            'install' {
                 if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one extension (pvm ini install xdebug)."
                     return -1
@@ -1614,9 +1624,9 @@ function Invoke-PVMIniAction {
                     $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName
                 }
             }
-            "list" {
+            'list' {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-                $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains "available") -term $term
+                $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains 'available') -term $term
             }
             default {
                 Write-Host "`nUnknown action '$action' use one of following: 'info', 'get', 'set', 'enable', 'disable', 'status', 'install', 'list' or 'restore'."

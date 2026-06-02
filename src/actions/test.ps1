@@ -34,17 +34,17 @@ function Run-Test-File {
         }
 
         if (Is-File-Not-Exists -path $file.FullName) {
-            return @{ code = -1; Name = $file.Name; Message = "File not found!"; testResultData = $testResultData }
+            return @{ code = -1; Name = $file.Name; Message = 'File not found!'; testResultData = $testResultData }
         }
 
         if (-not $options) {
             $options = @{ coverage = $false; target = 75 }
         }
 
-        $coveredFile = ""
+        $coveredFile = ''
         if ($options.coverage) {
             $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
-            $covered = Get-ChildItem -Path "$PVMRootDirectory\src" -Recurse -Filter "*.ps1"
+            $covered = Get-ChildItem -Path "$PVMRootDirectory\src" -Recurse -Filter '*.ps1'
             $covered = $covered | Where-Object {
                 return ($_.Name -replace '.ps1', '') -eq ($file.Name -replace '.tests.ps1', '')
             }
@@ -60,19 +60,19 @@ function Run-Test-File {
 
         Write-Host "`n----------------------------------------------------------------"
         Write-Host "- Running test: $($file.Name) $coveredFile"
-        Write-Host "----------------------------------------------------------------"
+        Write-Host '----------------------------------------------------------------'
 
 
         $config.Run.Path = $file.FullName
         $config.Run.PassThru = $true
         $testResult = Invoke-Pester -Configuration $config
         $coverageRaw = $null
-        $coverageText = "-"
+        $coverageText = '-'
         if ($testResult.CodeCoverage.CoveragePercent) {
             $coverageRaw = [double]$testResult.CodeCoverage.CoveragePercent
             $coverageText = '{0,6:00.00}%' -f $coverageRaw
         }
-        $durationText = "-"
+        $durationText = '-'
         $rawDuration = $testResult.Duration.TotalSeconds
         $duration = Format-Seconds -totalSeconds $rawDuration
         if ($duration -ne -1) {
@@ -109,7 +109,7 @@ function Run-Test-File {
             header    = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"
             exception = $_
         }
-        return @{ code = -1; Name = $file.Name; Message = "Failed to run test, check log."; testResultData = $testResultData }
+        return @{ code = -1; Name = $file.Name; Message = 'Failed to run test, check log.'; testResultData = $testResultData }
     }
 }
 
@@ -136,7 +136,7 @@ function Run-Tests {
 
     try {
         if (-not $options) {
-            $options = @{ verbosity = "Normal"; coverage = $false; tag = $null; target = 75 }
+            $options = @{ verbosity = 'Normal'; coverage = $false; tag = $null; target = 75 }
         }
 
         $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
@@ -166,7 +166,7 @@ function Run-Tests {
             $totalFailedTests = $testSummary | Where-Object { $_.code -ne 0 } | ForEach-Object { $_.testResultData.failedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
             $totalDuration = $testSummary | ForEach-Object { $_.testResultData.duration } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
             $totalDurationFormatted = Format-Seconds -totalSeconds $totalDuration
-            if ($totalFailedTests -gt 0) { $code = -1; $color = "DarkYellow" } else { $code = 0; $color = "DarkGreen" }
+            if ($totalFailedTests -gt 0) { $code = -1; $color = 'DarkYellow' } else { $code = 0; $color = 'DarkGreen' }
             $content = " Files tested : $($testSummary.Count) | Total failed tests: $totalFailedTests"
             if ($totalDurationFormatted -ne -1) {
                 $content += " | Total duration: $totalDurationFormatted"
@@ -181,18 +181,18 @@ function Run-Tests {
             $testSummary | ForEach-Object {
                 $label = "  - $($_.Name) "
                 $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
-                $color = "DarkYellow"
+                $color = 'DarkYellow'
                 if ($_.code -eq 0) {
-                    $color = "DarkGreen"
+                    $color = 'DarkGreen'
                     if ($null -ne $_.testResultData.coverageRaw -and $_.testResultData.coverageRaw -lt $options.target) {
-                        $color = "DarkGray"
+                        $color = 'DarkGray'
                     }
                 }
                 Write-Host $line -ForegroundColor $color
             }
         } else {
             $code = -1
-            Write-Host "No tests found." -ForegroundColor DarkYellow
+            Write-Host 'No tests found.' -ForegroundColor DarkYellow
         }
         return $code
     } catch {
@@ -210,12 +210,12 @@ function SortBy {
     param ($data, $sortByColumn = $null)
 
     if ($null -ne $sortByColumn) {
-        $direction = $sortByColumn -match "^-"
+        $direction = $sortByColumn -match '^-'
         $sortByColumn = $sortByColumn -replace '-', ''
     }
 
     switch ($sortByColumn) {
-        "duration" {
+        'duration' {
             return $data | Sort-Object `
             @{ Expression     = {
                     if ($null -eq $_.testResultData.duration) {
@@ -226,7 +226,7 @@ function SortBy {
                 }; Descending = $direction
             }
         }
-        "coverage" {
+        'coverage' {
             return $data | Sort-Object `
             @{ Expression     = {
                     if ($null -eq $_.testResultData.coverageRaw) {
@@ -237,7 +237,7 @@ function SortBy {
                 }; Descending = $direction
             }
         }
-        "file" {
+        'file' {
             return $data | Sort-Object @{ Expression = { [string]$_.Name }; Descending = $direction }
         }
     }

@@ -13,40 +13,40 @@ function Format-NiceTimestamp {
         $timeSpan = $now - $dateTime
 
         # Format the date part
-        $dateStr = $dateTime.ToString("dd MMMM")
-        $timeStr = $dateTime.ToString("HH:mm:ss")
+        $dateStr = $dateTime.ToString('dd MMMM')
+        $timeStr = $dateTime.ToString('HH:mm:ss')
 
         # Calculate relative time
-        $relativeTime = ""
+        $relativeTime = ''
         if ($timeSpan.Days -eq 0) {
             if ($timeSpan.Hours -eq 0) {
                 if ($timeSpan.Minutes -eq 0) {
-                    $relativeTime = "just now"
+                    $relativeTime = 'just now'
                 } elseif ($timeSpan.Minutes -eq 1) {
-                    $relativeTime = "1 minute ago"
+                    $relativeTime = '1 minute ago'
                 } else {
                     $relativeTime = "$($timeSpan.Minutes) minutes ago"
                 }
             } elseif ($timeSpan.Hours -eq 1) {
-                $relativeTime = "1 hour ago"
+                $relativeTime = '1 hour ago'
             } else {
                 $relativeTime = "$($timeSpan.Hours) hours ago"
             }
         } elseif ($timeSpan.Days -eq 1) {
-            $relativeTime = "yesterday"
+            $relativeTime = 'yesterday'
         } elseif ($timeSpan.Days -lt 7) {
             $relativeTime = "$($timeSpan.Days) days ago"
         } elseif ($timeSpan.Days -lt 30) {
             $weeks = [Math]::Floor($timeSpan.Days / 7)
             if ($weeks -eq 1) {
-                $relativeTime = "1 week ago"
+                $relativeTime = '1 week ago'
             } else {
                 $relativeTime = "$weeks weeks ago"
             }
         } else {
             $months = [Math]::Floor($timeSpan.Days / 30)
             if ($months -eq 1) {
-                $relativeTime = "1 month ago"
+                $relativeTime = '1 month ago'
             } else {
                 $relativeTime = "$months months ago"
             }
@@ -61,8 +61,8 @@ function Format-NiceTimestamp {
     } catch {
         return @{
             Date = $timestamp
-            Time = ""
-            Relative = ""
+            Time = ''
+            Relative = ''
             DateTime = Get-Date
         }
     }
@@ -169,15 +169,15 @@ function Show-Log {
             # Display current page of entries
             $endIndex = [Math]::Min($currentIndex + $PageSize - 1, $totalEntries - 1)
 
-            Write-Host ("-" * 80) -ForegroundColor DarkGray
+            Write-Host ('-' * 80) -ForegroundColor DarkGray
             for ($i = $currentIndex; $i -le $endIndex; $i++) {
                 $entry = $reversedEntries[$i]
 
                 # Display structured error format
-                Write-Host "Header  : " -NoNewline -ForegroundColor Gray
+                Write-Host 'Header  : ' -NoNewline -ForegroundColor Gray
                 Write-Host "$($entry.Header)" -ForegroundColor White
 
-                Write-Host "Message : " -NoNewline -ForegroundColor Gray
+                Write-Host 'Message : ' -NoNewline -ForegroundColor Gray
                 # Handle multi-line error messages with proper indentation (23 spaces to align with "Message :")
                 $errorLines = $entry.ErrorMessage -split "`n"
                 foreach ($errorLine in $errorLines) {
@@ -187,14 +187,14 @@ function Show-Log {
                 }
 
                 # Display entry with nice formatting
-                Write-Host "When    : " -NoNewline -ForegroundColor Gray
+                Write-Host 'When    : ' -NoNewline -ForegroundColor Gray
                 Write-Host "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -NoNewline -ForegroundColor White
                 Write-Host "($($entry.NiceTime.Relative))" -ForegroundColor DarkGray
 
-                Write-Host "Where   : " -NoNewline -ForegroundColor Gray
+                Write-Host 'Where   : ' -NoNewline -ForegroundColor Gray
                 Write-Host "$($entry.PositionDetail)" -ForegroundColor White
 
-                Write-Host ("-" * 80) -ForegroundColor DarkGray
+                Write-Host ('-' * 80) -ForegroundColor DarkGray
             }
 
             $currentIndex += $PageSize
@@ -205,15 +205,15 @@ function Show-Log {
                 $key = Get-ConsoleKey
 
                 switch ($key.Key) {
-                    { $_ -in @("LeftArrow", "UpArrow") } { $currentIndex = [Math]::Max(0, $currentIndex - (2 * $PageSize)) }
-                    { $_ -in @("RightArrow", "DownArrow", "Enter", "Spacebar") } { continue }
+                    { $_ -in @('LeftArrow', 'UpArrow') } { $currentIndex = [Math]::Max(0, $currentIndex - (2 * $PageSize)) }
+                    { $_ -in @('RightArrow', 'DownArrow', 'Enter', 'Spacebar') } { continue }
                     { $_ -in @('q', 'Q') } { return 0 }
                     default { $currentIndex -= $PageSize }
                 }
             } else {
-                Write-Host "End of log reached. Press Left/Up arrow to go back or any other key to exit..." -ForegroundColor Green
+                Write-Host 'End of log reached. Press Left/Up arrow to go back or any other key to exit...' -ForegroundColor Green
                 $key = Get-ConsoleKey
-                if ($key.Key -in @("LeftArrow", "UpArrow")) {
+                if ($key.Key -in @('LeftArrow', 'UpArrow')) {
                     # Go back one page from the end
                     $currentIndex = [Math]::Max(0, $currentIndex - (2 * $PageSize))
                 }

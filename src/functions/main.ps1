@@ -48,16 +48,16 @@ function Alias-Handler {
 
     $alias = $alias.Trim().ToLower()
     switch ($alias) {
-        "ls" { return "list" }
-        "rm" { return "uninstall" }
-        "i"  { return "install" }
-        "h"  { return "help" }
+        'ls' { return 'list' }
+        'rm' { return 'uninstall' }
+        'i'  { return 'install' }
+        'h'  { return 'help' }
         Default { return $alias }
     }
 }
 
 function Allowed-Operations {
-    return @("help", "setup", "log")
+    return @('help', 'setup', 'log')
 }
 
 function Start-PVM {

@@ -39,7 +39,7 @@ function Set-IniSetting-Direct {
 }
 
 function Enable-IniExtension-Direct {
-    param ($iniPath, $extName, $extType = "extension")
+    param ($iniPath, $extName, $extType = 'extension')
 
     try {
         # Normalize extension name - remove php_ prefix and .dll suffix if present
@@ -57,7 +57,7 @@ function Enable-IniExtension-Direct {
             $isMatch = $false
 
             # Match extension or zend_extension lines (commented or not)
-            $pattern = if ($extType -eq "zend_extension") {
+            $pattern = if ($extType -eq 'zend_extension') {
                 "^[#;]?\s*zend_extension\s*=\s*([`"']?)([^\s`"';]*)\1\s*(;.*)?$"
             } else {
                 "^[#;]?\s*extension\s*=\s*([`"']?)([^\s`"';]*)\1\s*(;.*)?$"
@@ -89,7 +89,7 @@ function Enable-IniExtension-Direct {
 
         if (-not $modified) {
             # Extension doesn't exist, add it at the end
-            $newLine = if ($extType -eq "zend_extension") {
+            $newLine = if ($extType -eq 'zend_extension') {
                 "zend_extension=$extFileName"
             } else {
                 "extension=$extFileName"
@@ -105,7 +105,7 @@ function Enable-IniExtension-Direct {
 }
 
 function Disable-IniExtension-Direct {
-    param ($iniPath, $extName, $extType = "extension")
+    param ($iniPath, $extName, $extType = 'extension')
 
     try {
         # Normalize extension name - remove php_ prefix and .dll suffix if present
@@ -128,7 +128,7 @@ function Disable-IniExtension-Direct {
             $isMatch = $false
 
             # Match extension or zend_extension lines (must be enabled/not commented)
-            $pattern = if ($extType -eq "zend_extension") {
+            $pattern = if ($extType -eq 'zend_extension') {
                 "^\s*zend_extension\s*=\s*([`"']?)([^\s`"';]*)\1\s*(;.*)?$"
             } else {
                 "^\s*extension\s*=\s*([`"']?)([^\s`"';]*)\1\s*(;.*)?$"
@@ -168,19 +168,19 @@ function Disable-IniExtension-Direct {
 function Get-Popular-PHP-Settings {
     # Return list of popular/common PHP settings that should be included in profiles
     return @(
-        "memory_limit", "max_execution_time", "max_input_time",
-        "post_max_size", "upload_max_filesize", "max_file_uploads",
-        "display_errors", "error_reporting", "log_errors",
-        "opcache.enable", "opcache.enable_cli", "opcache.memory_consumption", "opcache.max_accelerated_files"
+        'memory_limit', 'max_execution_time', 'max_input_time',
+        'post_max_size', 'upload_max_filesize', 'max_file_uploads',
+        'display_errors', 'error_reporting', 'log_errors',
+        'opcache.enable', 'opcache.enable_cli', 'opcache.memory_consumption', 'opcache.max_accelerated_files'
     )
 }
 
 function Get-Popular-PHP-Extensions {
     # Return list of popular/common PHP extensions that should be included in profiles
     return @(
-        "curl", "fileinfo", "gd", "gettext", "intl", "mbstring", "exif", "openssl",
-        "mysqli", "pdo_mysql", "pdo_pgsql", "pdo_sqlite", "pgsql",
-        "sodium", "sqlite3", "zip", "opcache", "xdebug"
+        'curl', 'fileinfo', 'gd', 'gettext', 'intl', 'mbstring', 'exif', 'openssl',
+        'mysqli', 'pdo_mysql', 'pdo_pgsql', 'pdo_sqlite', 'pgsql',
+        'sodium', 'sqlite3', 'zip', 'opcache', 'xdebug'
     )
 }
 
@@ -255,7 +255,7 @@ function Save-PHP-Profile {
         Write-Host "  Extensions: $($userProfile.extensions.Count) (popular/common only)" -ForegroundColor Gray
         Write-Host "  Location: $profilePath" -ForegroundColor Gray
         Write-Host "`nNote: Only popular/common settings and extensions are saved." -ForegroundColor DarkCyan
-        Write-Host "      You can manually add other settings/extensions using 'pvm ini' commands." -ForegroundColor DarkCyan
+        Write-Host '      You can manually add other settings/extensions using 'pvm ini' commands.' -ForegroundColor DarkCyan
 
         return 0
     } catch {
@@ -289,7 +289,7 @@ function Load-PHP-Profile {
         $profilePath = "$PROFILES_PATH\$profileName.json"
         if (Is-File-Not-Exists -path $profilePath) {
             Write-Host "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
-            Write-Host "  Use 'pvm profile list' to see available profiles." -ForegroundColor Gray
+            Write-Host '  Use 'pvm profile list' to see available profiles.' -ForegroundColor Gray
             return -1
         }
 
@@ -336,7 +336,7 @@ function Load-PHP-Profile {
         foreach ($extName in $jsonContent.extensions.PSObject.Properties.Name) {
             if ($popularExtensions -contains $extName) {
                 $ext = $jsonContent.extensions.$extName
-                $extType = if ($ext.type) { $ext.type } else { "extension" }
+                $extType = if ($ext.type) { $ext.type } else { 'extension' }
                 if ($ext.enabled) {
                     $result = Enable-IniExtension-Direct -iniPath $iniPath -extName $extName -extType $extType
                     if ($result -eq 0) {
@@ -392,7 +392,7 @@ function List-PHP-Profiles {
             return -1
         }
 
-        $profileFiles = Get-ChildItem -Path $PROFILES_PATH -Filter "*.json" -ErrorAction SilentlyContinue
+        $profileFiles = Get-ChildItem -Path $PROFILES_PATH -Filter '*.json' -ErrorAction SilentlyContinue
 
         if ($profileFiles.Count -eq 0) {
             Write-Host "`nNo profiles found. Create a profile with 'pvm profile save <name>'." -ForegroundColor DarkYellow
@@ -400,7 +400,7 @@ function List-PHP-Profiles {
         }
 
         Write-Host "`nAvailable Profiles:" -ForegroundColor Cyan
-        Write-Host "-------------------"
+        Write-Host '-------------------'
 
         $profiles = @()
         foreach ($file in $profileFiles) {
@@ -410,7 +410,7 @@ function List-PHP-Profiles {
                 $extensionsCount = if ($userProfile.extensions) { ($userProfile.extensions.PSObject.Properties | Measure-Object).Count } else { 0 }
                 $profiles += [PSCustomObject]@{
                     Name = $userProfile.name
-                    Description = if ($userProfile.description) { $userProfile.description } else { "(no description)" }
+                    Description = if ($userProfile.description) { $userProfile.description } else { '(no description)' }
                     Created = $userProfile.created
                     PHPVersion = $userProfile.phpVersion
                     Settings = $settingsCount
@@ -425,13 +425,13 @@ function List-PHP-Profiles {
         $maxNameLength = ($profiles.Name | Measure-Object -Maximum Length).Maximum + 10
 
         foreach ($userProfile in $profiles) {
-            Write-Host " Name ".PadRight($maxNameLength, '.')  $($userProfile.Name)
-            Write-Host "   Description ".PadRight($maxNameLength, '.')  $($userProfile.Description)
-            Write-Host "   Created ".PadRight($maxNameLength, '.')  $($userProfile.Created)
-            Write-Host "   PHP ".PadRight($maxNameLength, '.')  $($userProfile.PHPVersion)
-            Write-Host "   Settings ".PadRight($maxNameLength, '.')  $($userProfile.Settings)
-            Write-Host "   Extensions ".PadRight($maxNameLength, '.')  $($userProfile.Extensions)
-            Write-Host "   Path ".PadRight($maxNameLength, '.')  "$PROFILES_PATH\$($userProfile.File)`n"
+            Write-Host ' Name '.PadRight($maxNameLength, '.')  $($userProfile.Name)
+            Write-Host '   Description '.PadRight($maxNameLength, '.')  $($userProfile.Description)
+            Write-Host '   Created '.PadRight($maxNameLength, '.')  $($userProfile.Created)
+            Write-Host '   PHP '.PadRight($maxNameLength, '.')  $($userProfile.PHPVersion)
+            Write-Host '   Settings '.PadRight($maxNameLength, '.')  $($userProfile.Settings)
+            Write-Host '   Extensions '.PadRight($maxNameLength, '.')  $($userProfile.Extensions)
+            Write-Host '   Path '.PadRight($maxNameLength, '.')  "$PROFILES_PATH\$($userProfile.File)`n"
         }
 
         return 0
@@ -460,10 +460,10 @@ function Show-PHP-Profile {
 
         $dt = [datetime]$userProfile.Created
         $utc = $dt.ToUniversalTime()
-        $createdAtFormatted = $utc.ToString("dd/MM/yyyy HH:mm:ss")
+        $createdAtFormatted = $utc.ToString('dd/MM/yyyy HH:mm:ss')
 
         Write-Host "`nProfile: $($userProfile.name)" -ForegroundColor Cyan
-        Write-Host "========================="
+        Write-Host '========================='
         Write-Host "Description: $($userProfile.description)" -ForegroundColor White
         Write-Host "Created: $createdAtFormatted" -ForegroundColor White
         Write-Host "PHP Version: $($userProfile.phpVersion)" -ForegroundColor White
@@ -472,14 +472,14 @@ function Show-PHP-Profile {
         $settingsCount = if ($userProfile.settings) { ($userProfile.settings.PSObject.Properties | Measure-Object).Count } else { 0 }
         Write-Host "`nSettings ($settingsCount):" -ForegroundColor Cyan
         if ($settingsCount -eq 0) {
-            Write-Host "  (none)" -ForegroundColor Gray
+            Write-Host '  (none)' -ForegroundColor Gray
         } else {
             $maxNameLength = ($userProfile.settings.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + 10
             foreach ($settingName in ($userProfile.settings.PSObject.Properties.Name | Sort-Object)) {
                 $setting = $userProfile.settings.$settingName
                 $name = "$settingName ".PadRight($maxNameLength, '.')
-                $status = if ($setting.enabled) { "Enabled" } else { "Disabled" }
-                $color = if ($setting.enabled) { "DarkGreen" } else { "DarkYellow" }
+                $status = if ($setting.enabled) { 'Enabled' } else { 'Disabled' }
+                $color = if ($setting.enabled) { 'DarkGreen' } else { 'DarkYellow' }
                 Write-Host "  $name $($setting.value) " -NoNewline
                 Write-Host $status -ForegroundColor $color
             }
@@ -488,14 +488,14 @@ function Show-PHP-Profile {
         $extensionsCount = if ($userProfile.extensions) { ($userProfile.extensions.PSObject.Properties | Measure-Object).Count } else { 0 }
         Write-Host "`nExtensions ($extensionsCount):" -ForegroundColor Cyan
         if ($extensionsCount -eq 0) {
-            Write-Host "  (none)" -ForegroundColor Gray
+            Write-Host '  (none)' -ForegroundColor Gray
         } else {
             $maxNameLength = ($userProfile.extensions.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + 21
             foreach ($extName in ($userProfile.extensions.PSObject.Properties.Name | Sort-Object)) {
                 $ext = $userProfile.extensions.$extName
                 $name = "$extName ".PadRight($maxNameLength, '.')
-                $status = if ($ext.enabled) { "Enabled" } else { "Disabled" }
-                $color = if ($ext.enabled) { "DarkGreen" } else { "DarkYellow" }
+                $status = if ($ext.enabled) { 'Enabled' } else { 'Disabled' }
+                $color = if ($ext.enabled) { 'DarkGreen' } else { 'DarkYellow' }
                 $type = $ext.type
                 Write-Host "  $name $type " -NoNewline
                 Write-Host $status -ForegroundColor $color
@@ -527,7 +527,7 @@ function Delete-PHP-Profile {
         $response = Read-Host "`nAre you sure you want to delete profile '$profileName'? (y/n)"
         $response = $response.Trim()
 
-        if ($response -ne "y" -and $response -ne "Y") {
+        if ($response -ne 'y' -and $response -ne 'Y') {
             Write-Host "`nDeletion cancelled." -ForegroundColor Gray
             return -1
         }

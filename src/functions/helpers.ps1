@@ -170,14 +170,14 @@ function Make-Symbolic-Link {
 
     try {
         if ([string]::IsNullOrWhiteSpace($link) -or [string]::IsNullOrWhiteSpace($target)) {
-            return @{ code = -1; message = "Link and target cannot be empty!"; color = "DarkYellow" }
+            return @{ code = -1; message = 'Link and target cannot be empty!'; color = 'DarkYellow' }
         }
 
         $link = $link.Trim()
         $target = $target.Trim()
 
         if (Is-Directory-Not-Exists -path $target) {
-            return @{ code = -1; message = "Target directory '$target' does not exist!"; color = "DarkYellow" }
+            return @{ code = -1; message = "Target directory '$target' does not exist!"; color = 'DarkYellow' }
         }
 
         # Make sure parent directory exists
@@ -191,7 +191,7 @@ function Make-Symbolic-Link {
             if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
                 [System.IO.Directory]::Delete($link)
             } else {
-                return @{ code = -1; message = "Link '$link' is not a symbolic link!"; color = "DarkYellow" }
+                return @{ code = -1; message = "Link '$link' is not a symbolic link!"; color = 'DarkYellow' }
             }
         }
 
@@ -199,19 +199,19 @@ function Make-Symbolic-Link {
             $command = "New-Item -ItemType SymbolicLink -Path '$link' -Target '$target'"
             $exitCode = (Run-Command -command $command)
             if ($exitCode -ne 0) {
-                return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = "DarkYellow" }
+                return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = 'DarkYellow' }
             }
-            return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = "DarkGreen" }
+            return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = 'DarkGreen' }
         }
 
         New-Item -ItemType SymbolicLink -Path $link -Target $target | Out-Null
-        return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = "DarkGreen" }
+        return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = 'DarkGreen' }
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to make symbolic link"
             exception = $_
         }
-        return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = "DarkYellow" }
+        return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = 'DarkYellow' }
     }
 }
 
@@ -303,7 +303,7 @@ function Display-Msg-By-ExitCode {
         if ($result.messages -and $result.messages.Count -gt 1) {
             foreach ($msg in $result.messages) {
                 if (-not $msg.color) {
-                    $msg.color = "White"
+                    $msg.color = 'White'
                 }
                 Write-Host $($msg.content) -ForegroundColor $msg.color
             }
@@ -312,7 +312,7 @@ function Display-Msg-By-ExitCode {
                 $result.message = $message
             }
             if (-not $result.color) {
-                $result.color = "Gray"
+                $result.color = 'Gray'
             }
 
             Write-Host "`n$($result.message)" -ForegroundColor $result.color
@@ -352,7 +352,7 @@ function Log-Data {
 
 function Optimize-SystemPath {
     try {
-        $path = Get-EnvVar-ByName -name "Path" -optimized $true
+        $path = Get-EnvVar-ByName -name 'Path' -optimized $true
         if ($null -eq $path) {
             $path = ''
         }
@@ -371,7 +371,7 @@ function Optimize-SystemPath {
         
         $output = 0
         if ($path -ne $oldPath) {
-            $output = Set-EnvVar -name "Path" -value $path
+            $output = Set-EnvVar -name 'Path' -value $path
             if ($output -eq 0) {
                 Write-Host "`nPath optimized successfully" -ForegroundColor DarkGreen
             }
@@ -436,7 +436,7 @@ function Format-Seconds {
 
         if ($totalSeconds -lt 60) {
             $rounded = [math]::Round($totalSeconds, 1)
-            return "{0}s" -f $rounded
+            return '{0}s' -f $rounded
         }
 
         $hours = [int][math]::Floor($totalSeconds / 3600)
@@ -444,10 +444,10 @@ function Format-Seconds {
         $seconds = [int][math]::Floor($totalSeconds % 60)
 
         if ($hours -gt 0) {
-            return "{0:D2}:{1:D2}:{2:D2}" -f $hours, $minutes, $seconds
+            return '{0:D2}:{1:D2}:{2:D2}' -f $hours, $minutes, $seconds
         }
 
-        return "{0:D2}:{1:D2}" -f $minutes, $seconds
+        return '{0:D2}:{1:D2}' -f $minutes, $seconds
     } catch {
         $logged = Log-Data -data @{
             header = "$($MyInvocation.MyCommand.Name) - Failed to format seconds"
@@ -467,7 +467,7 @@ function Resolve-BuildType {
     $buildType = $arguments | Where-Object { @('ts', 'nts') -contains $_ } | Select-Object -First 1
 
     if ($null -eq $buildType -and $choseDefault) {
-        $buildType = "ts";
+        $buildType = 'ts';
     }
 
     if ($null -ne $buildType) {
@@ -536,9 +536,9 @@ function Get-BinaryArchitecture-From-DLL {
     $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
 
     switch ($machine) {
-        0x8664 { "x64" }
-        0x014c { "x86" }
-        default { "Unknown" }
+        0x8664 { 'x64' }
+        0x014c { 'x86' }
+        default { 'Unknown' }
     }
 }
 

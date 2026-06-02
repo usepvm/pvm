@@ -3,8 +3,8 @@
 function Get-Source-Urls {
 
     return [ordered]@{
-        "Archives" = $PHP_WIN_ARCHIVES_URL
-        "Releases" = $PHP_WIN_RELEASES_URL
+        'Archives' = $PHP_WIN_ARCHIVES_URL
+        'Releases' = $PHP_WIN_RELEASES_URL
     }
 }
 
@@ -12,7 +12,7 @@ function Get-Source-Urls {
 function Is-PVM-Setup {
 
     try {
-        $pvmEnvVarContent = Get-EnvVar-ByName -name "PVM"
+        $pvmEnvVarContent = Get-EnvVar-ByName -name 'PVM'
         $pvmEnvEntries = $pvmEnvVarContent -split ';' | Where-Object { $_ -ne '' }
 
         if ($null -eq $pvmEnvVarContent) {
@@ -23,7 +23,7 @@ function Is-PVM-Setup {
             return $false
         }
 
-        $path = Get-EnvVar-ByName -name "Path" -optimized $true
+        $path = Get-EnvVar-ByName -name 'Path' -optimized $true
         if ($null -eq $path) {
             $path = ''
         }
@@ -53,7 +53,7 @@ function Is-PVM-Setup {
 function Refresh-Installed-PHP-Versions-Cache {
     try {
         $installedVersions = Get-Installed-PHP-Versions-From-Directory
-        $cached = Cache-Data -cacheFileName "installed_php_versions" -data $installedVersions -depth 1
+        $cached = Cache-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
 
         return 0
     } catch {
@@ -79,7 +79,7 @@ function Get-Installed-PHP-Versions-From-Directory {
 
     $installedVersions = ($installedVersions | Sort-Object { [version]$_.Version })
 
-    $cached = Cache-Data -cacheFileName "installed_php_versions" -data $installedVersions -depth 1
+    $cached = Cache-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
 
     return $installedVersions
 }
@@ -87,7 +87,7 @@ function Get-Installed-PHP-Versions-From-Directory {
 function Get-Installed-PHP-Versions {
     param ($arch = $null, $buildType = $null)
     try {
-        $installedVersions = Get-OrUpdateCache -cacheFileName "installed_php_versions" -depth 1 -compute {
+        $installedVersions = Get-OrUpdateCache -cacheFileName 'installed_php_versions' -depth 1 -compute {
             Get-Installed-PHP-Versions-From-Directory
         }
 
@@ -129,14 +129,14 @@ function Get-UserSelected-PHP-Version {
         $index = 0
         Write-Host "`nInstalled versions :"
         $installedVersions | ForEach-Object {
-            $_ | Add-Member -NotePropertyName "index" -NotePropertyValue $index -Force
-            $isCurrent = ""
+            $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
+            $isCurrent = ''
             if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
-                $isCurrent = "(Current)"
+                $isCurrent = '(Current)'
             }
-            $metaData = ""
+            $metaData = ''
             if ($_.Arch) {
-                $metaData += $_.Arch + " "
+                $metaData += $_.Arch + ' '
             }
             if ($_.BuildType) {
                 $metaData += $_.BuildType
@@ -148,7 +148,7 @@ function Get-UserSelected-PHP-Version {
         $response = Read-Host "`nInsert the [number] matching the version to uninstall (or press Enter to cancel)"
         $response = $response.Trim()
         if (-not $response) {
-            return @{ code = -1; message = "Operation cancelled."; color = "DarkYellow"}
+            return @{ code = -1; message = 'Operation cancelled.'; color = 'DarkYellow'}
         }
         $versionObj = $installedVersions | Where-Object { $_.index -eq $response }
     }

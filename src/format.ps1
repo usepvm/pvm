@@ -8,7 +8,7 @@ $formatted = 0
 
 # Ensure PSScriptAnalyzer is installed
 if (-not (Get-Module PSScriptAnalyzer -ListAvailable)) {
-    Write-Host "Installing PSScriptAnalyzer..." -ForegroundColor Yellow
+    Write-Host 'Installing PSScriptAnalyzer...' -ForegroundColor Yellow
     Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck
 }
 
@@ -64,6 +64,6 @@ $settings = @{
 
 Write-Host "`nFormatted $formatted files" -ForegroundColor Green
 if ($errors.Count -gt 0) {
-    Write-Host "Errors encountered:" -ForegroundColor Red
+    Write-Host 'Errors encountered:' -ForegroundColor Red
     $errors | ForEach-Object { Write-Host $_ -ForegroundColor Red }
 }

@@ -2,87 +2,87 @@
 Describe "Format-NiceTimestamp" {
     It "returns 'just now' for current timestamp" {
         $now = Get-Date
-        $result = Format-NiceTimestamp $now.ToString("yyyy-MM-dd HH:mm:ss")
+        $result = Format-NiceTimestamp $now.ToString('yyyy-MM-dd HH:mm:ss')
 
-        $result.Relative | Should -Be "just now"
+        $result.Relative | Should -Be 'just now'
     }
 
     It "returns '1 minute ago' for 1 minute old timestamp" {
         $ts = (Get-Date).AddMinutes(-1)
-        $result = Format-NiceTimestamp $ts.ToString("yyyy-MM-dd HH:mm:ss")
+        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
-        $result.Relative | Should -Be "1 minute ago"
+        $result.Relative | Should -Be '1 minute ago'
     }
 
     It "returns 'X minutes ago for more than 1 minute old timestamp" {
         $ts = (Get-Date).AddMinutes(-30)
-        $result = Format-NiceTimestamp $ts.ToString("yyyy-MM-dd HH:mm:ss")
+        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
-        $result.Relative | Should -Be "30 minutes ago"
+        $result.Relative | Should -Be '30 minutes ago'
     }
 
     It "returns '1 hour ago for 1 hour old timestamp" {
         $ts = (Get-Date).AddHours(-1)
-        $result = Format-NiceTimestamp $ts.ToString("yyyy-MM-dd HH:mm:ss")
+        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
-        $result.Relative | Should -Be "1 hour ago"
+        $result.Relative | Should -Be '1 hour ago'
     }
 
     It "returns 'X hours ago for more than 1 hour old timestamp" {
         $ts = (Get-Date).AddHours(-5)
-        $result = Format-NiceTimestamp $ts.ToString("yyyy-MM-dd HH:mm:ss")
+        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
-        $result.Relative | Should -Be "5 hours ago"
+        $result.Relative | Should -Be '5 hours ago'
     }
 
     It "returns 'yesterday' for 1 day old timestamp" {
         $ts = (Get-Date).AddDays(-1)
-        $result = Format-NiceTimestamp $ts.ToString("yyyy-MM-dd HH:mm:ss")
+        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
-        $result.Relative | Should -Be "yesterday"
+        $result.Relative | Should -Be 'yesterday'
     }
 
     It "returns 'X days ago for more than 1 day old timestamp" {
         $ts = (Get-Date).AddDays(-5)
-        $result = Format-NiceTimestamp $ts.ToString("yyyy-MM-dd HH:mm:ss")
+        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
-        $result.Relative | Should -Be "5 days ago"
+        $result.Relative | Should -Be '5 days ago'
     }
 
     It "returns '1 week ago' for 7 days old timestamp" {
         $ts = (Get-Date).AddDays(-7)
-        $result = Format-NiceTimestamp $ts.ToString("yyyy-MM-dd HH:mm:ss")
+        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
-        $result.Relative | Should -Be "1 week ago"
+        $result.Relative | Should -Be '1 week ago'
     }
 
     It "returns '2 weeks ago' for 15 days old timestamp" {
         $ts = (Get-Date).AddDays(-15)
-        $result = Format-NiceTimestamp $ts.ToString("yyyy-MM-dd HH:mm:ss")
+        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
-        $result.Relative | Should -Be "2 weeks ago"
+        $result.Relative | Should -Be '2 weeks ago'
     }
 
     It "returns '1 month ago' for ~35 days old timestamp" {
         $ts = (Get-Date).AddDays(-35)
-        $result = Format-NiceTimestamp $ts.ToString("yyyy-MM-dd HH:mm:ss")
+        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
-        $result.Relative | Should -Be "1 month ago"
+        $result.Relative | Should -Be '1 month ago'
     }
 
     It "handles invalid timestamp input gracefully" {
-        $result = Format-NiceTimestamp "not-a-date"
+        $result = Format-NiceTimestamp 'not-a-date'
 
-        $result.Date | Should -Be "not-a-date"
-        $result.Time | Should -Be ""
-        $result.Relative | Should -Be ""
+        $result.Date | Should -Be 'not-a-date'
+        $result.Time | Should -Be ''
+        $result.Relative | Should -Be ''
     }
 }
 
 Describe "Show-Log" {
     BeforeAll {
         $global:DEFAULT_LOG_PAGE_SIZE = 3
-        $global:LOG_ERROR_PATH = "TestDrive:\logs\error.log"
+        $global:LOG_ERROR_PATH = 'TestDrive:\logs\error.log'
         New-Item -ItemType Directory -Path (Split-Path $LOG_ERROR_PATH) -Force | Out-Null
         Mock Write-Host {}
 
@@ -104,7 +104,7 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
     }
 
     It "returns -1 for invalid page size (non-numeric)" {
-        $result = Show-Log -pageSize "abc"
+        $result = Show-Log -pageSize 'abc'
 
         $result | Should -Be -1
         Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
@@ -133,7 +133,7 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
     It "parses log file and returns 0 for valid page size" {
         # Suppress screen clearing and key reading
         Mock Clear-Host {}
-        Mock Get-ConsoleKey { [PSCustomObject]@{ Key = "Q" } }
+        Mock Get-ConsoleKey { [PSCustomObject]@{ Key = 'Q' } }
 
         $result = Show-Log -pageSize 1
 
@@ -141,7 +141,7 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
     }
 
     It "returns -1 if no entries found" {
-        "" | Set-Content $LOG_ERROR_PATH
+        '' | Set-Content $LOG_ERROR_PATH
 
         $result = Show-Log -pageSize 1
 
@@ -161,7 +161,7 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 
     It "Handles exceptions gracefully" {
         Mock Test-Path { return $true }
-        Mock Get-Content { throw "File read error" }
+        Mock Get-Content { throw 'File read error' }
 
         $result = Show-Log -pageSize 1
 

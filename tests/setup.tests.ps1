@@ -3,17 +3,17 @@ Describe "Setup-PVM" {
     BeforeAll {
         Mock Write-Host {}
         # Mock global variables that the function depends on
-        $global:PHP_CURRENT_VERSION_PATH = "C:\php\8.2"
-        $global:PVMRoot = "C:\PVM"
-        $global:PVM_ENV_VAR_NAME = "PVM"
-        $global:LOG_ERROR_PATH = "TestDrive:\logs\error.log"
+        $global:PHP_CURRENT_VERSION_PATH = 'C:\php\8.2'
+        $global:PVMRoot = 'C:\PVM'
+        $global:PVM_ENV_VAR_NAME = 'PVM'
+        $global:LOG_ERROR_PATH = 'TestDrive:\logs\error.log'
 
         # Initialize mock registry
         $global:MockRegistry = @{
             Machine = @{
-                "Path" = "C:\Windows\System32"
-                "PHP" = $null
-                "pvm" = $null
+                'Path' = 'C:\Windows\System32'
+                'PHP' = $null
+                'pvm' = $null
             }
             Process = @{}
             User = @{}
@@ -108,9 +108,9 @@ Describe "Setup-PVM" {
         # Reset mock registry before each test
         $global:MockRegistry = @{
             Machine = @{
-                "Path" = "C:\Windows\System32"
-                "PHP" = $null
-                "pvm" = $null
+                'Path' = 'C:\Windows\System32'
+                'PHP' = $null
+                'pvm' = $null
             }
             Process = @{}
             User = @{}
@@ -126,69 +126,69 @@ Describe "Setup-PVM" {
 
     Context "When Path environment variable is empty" {
         It "Should add both PVM and PHP paths when neither exists" {
-            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith { return $null }
-            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "PVM" } -MockWith {
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'Path' } -MockWith { return $null }
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
                 return "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
             }
 
             $result = Setup-PVM
 
             $result.code | Should -Be 0
-            $result.message | Should -Be "PVM environment has been set up."
-            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq "Path" -and $value -like "*$PVM_ENV_VAR_NAME*" } -Exactly 1
+            $result.message | Should -Be 'PVM environment has been set up.'
+            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq 'Path' -and $value -like "*$PVM_ENV_VAR_NAME*" } -Exactly 1
         }
     }
 
     Context "When Path environment variable has existing entries" {
         It "Should only add missing paths" {
-            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith {
-                return "C:\Windows\System32;C:\Program Files\PowerShell"
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'Path' } -MockWith {
+                return 'C:\Windows\System32;C:\Program Files\PowerShell'
             }
-            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "PVM" } -MockWith {
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
                 return "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
             }
 
             $result = Setup-PVM
 
             $result.code | Should -Be 0
-            $result.message | Should -Be "PVM environment has been set up."
-            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq "Path" -and $value -like "*$PVM_ENV_VAR_NAME*" } -Exactly 1
+            $result.message | Should -Be 'PVM environment has been set up.'
+            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq 'Path' -and $value -like "*$PVM_ENV_VAR_NAME*" } -Exactly 1
         }
 
         It "Should not add paths that already exist" {
-            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith {
-                return "C:\Windows\System32;%PVM%"
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'Path' } -MockWith {
+                return 'C:\Windows\System32;%PVM%'
             }
-            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "PVM" } -MockWith {
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
                 return "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
             }
 
             $result = Setup-PVM
 
             $result.code | Should -Be 0
-            $result.message | Should -Be "PVM environment has been set up."
-            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq "Path" } -Exactly 0
+            $result.message | Should -Be 'PVM environment has been set up.'
+            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq 'Path' } -Exactly 0
         }
 
         It "Should recognize existing paths in different cases" {
-            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "Path" } -MockWith {
-                return "C:\Windows\System32;%pvm%"
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'Path' } -MockWith {
+                return 'C:\Windows\System32;%pvm%'
             }
-            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq "PVM" } -MockWith {
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
                 return "$($PVMRoot.ToLower());$($PHP_CURRENT_VERSION_PATH.ToLower())"
             }
 
             $result = Setup-PVM
 
             $result.code | Should -Be 0
-            $result.message | Should -Be "PVM environment has been set up."
-            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq "Path" } -Exactly 0
+            $result.message | Should -Be 'PVM environment has been set up.'
+            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq 'Path' } -Exactly 0
         }
     }
 
     Context "When directory creation is needed" {
         It "Should create parent directory if it doesn't exist" {
-            Mock Get-EnvVar-ByName -MockWith { return "" }
+            Mock Get-EnvVar-ByName -MockWith { return '' }
             Mock Is-Directory-Exists -ParameterFilter { $path -eq (Split-Path $PHP_CURRENT_VERSION_PATH) } -MockWith { return $false }
 
             $result = Setup-PVM
@@ -198,7 +198,7 @@ Describe "Setup-PVM" {
         }
 
         It "Should not create directory if it already exists" {
-            Mock Get-EnvVar-ByName -MockWith { return "" }
+            Mock Get-EnvVar-ByName -MockWith { return '' }
             Mock Is-Directory-Exists -ParameterFilter { $path -eq (Split-Path $PHP_CURRENT_VERSION_PATH) } -MockWith { return $true }
             Mock New-Item { }
 
@@ -212,12 +212,12 @@ Describe "Setup-PVM" {
 
     Context "When errors occur" {
         It "Should handle exceptions and log them" {
-            Mock Get-EnvVar-ByName -MockWith { throw "Test exception" }
+            Mock Get-EnvVar-ByName -MockWith { throw 'Test exception' }
 
             $result = Setup-PVM
 
             $result.code | Should -Be -1
-            $result.message | Should -Be "Failed to set up PVM environment."
+            $result.message | Should -Be 'Failed to set up PVM environment.'
             Should -Invoke Log-Data -Exactly 1
         }
 
@@ -228,7 +228,7 @@ Describe "Setup-PVM" {
             $result = Setup-PVM
 
             $result.code | Should -Be -1
-            $result.message | Should -Be "Failed to create directory for PHP version."
+            $result.message | Should -Be 'Failed to create directory for PHP version.'
         }
     }
 

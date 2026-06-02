@@ -219,11 +219,11 @@ function Run-PS-Command {
     param($command)
 
     $process = Start-Process `
-        -FilePath "powershell.exe" `
+        -FilePath 'powershell.exe' `
         -ArgumentList @(
-            "-NoProfile",
-            "-ExecutionPolicy", "Bypass",
-            "-Command", $command
+            '-NoProfile',
+            '-ExecutionPolicy', 'Bypass',
+            '-Command', $command
         ) `
         -Verb RunAs `
         -PassThru `
@@ -378,7 +378,7 @@ function Optimize-SystemPath {
         if ($outputLog -eq 0) {
             Write-Host "`nOriginal Path saved to '$PATH_VAR_BACKUP_PATH'"
         }
-        
+
         $output = 0
         if ($path -ne $oldPath) {
             $output = Set-EnvVar -name 'Path' -value $path

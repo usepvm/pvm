@@ -1006,14 +1006,14 @@ function Get-PHP-Data {
         if ($line -match '^\s*(;)?(zend_extension|extension)\s*=\s*"?([^";]+?)"?\s*(?:;.*)?$') {
             $rawPath = $matches[3]
             $extensionName = [System.IO.Path]::GetFileName($rawPath)
-            $phpIniData.extensions += [PSCustomObject]@{
+            $phpIniData.extensions += @{
                 Section   = 'extension'
                 Extension = $extensionName
                 Type      = $matches[2] # extension or zend_extension
                 Enabled   = -not $matches[1]
             }
         } elseif ($line -match '^\s*(;)?([A-Za-z0-9_.]+)\s*=\s*("?[^";]+?"?)\s*(?:;.*)?$') {
-            $phpIniData.settings += [PSCustomObject]@{
+            $phpIniData.settings += @{
                 Section   = 'setting'
                 Name      = $matches[2]   # e.g. memory_limit
                 Type      = 'setting'

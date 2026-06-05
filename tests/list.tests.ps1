@@ -166,7 +166,7 @@ Describe "Get-Available-PHP-Versions" {
     }
 
     It "Should handle x86 architecture" {
-        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+        Mock Get-PHP-List-To-Install { return @{
             'Archives' = @(@{
                 Link = 'php-7.1.0-Win32-x64.zip'
                 BuildType = 'TS'; Arch = 'x64'; Version = '7.1.0';
@@ -183,7 +183,7 @@ Describe "Get-Available-PHP-Versions" {
     }
 
     It "Should handle x64 architecture" {
-        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+        Mock Get-PHP-List-To-Install { return @{
             'Archives' = @(@{
                 Link = 'php-7.1.0-Win32-x64.zip'
                 BuildType = 'TS'; Arch = 'x64'; Version = '7.1.0';
@@ -200,7 +200,7 @@ Describe "Get-Available-PHP-Versions" {
     }
 
     It "Should handle TS build type" {
-        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+        Mock Get-PHP-List-To-Install { return @{
             'Archives' = @(@{
                 Link = 'php-7.1.0-Win32-x64.zip'
                 BuildType = 'TS'; Arch = 'x64'; Version = '7.1.0';
@@ -217,7 +217,7 @@ Describe "Get-Available-PHP-Versions" {
     }
 
     It "Should handle NTS build type" {
-        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+        Mock Get-PHP-List-To-Install { return @{
             'Archives' = @(@{
                 Link = 'php-7.1.0-Win32-x64.zip'
                 BuildType = 'TS'; Arch = 'x64'; Version = '7.1.0';
@@ -251,7 +251,7 @@ Describe "Get-Available-PHP-Versions" {
     }
 
     It "Display available versions matching filter" {
-        Mock Get-PHP-List-To-Install { return [pscustomobject]@{
+        Mock Get-PHP-List-To-Install { return @{
             'Archives' = @(@{
                 Link = 'php-7.1.0-Win32-x64.zip'
                 BuildType = 'TS'

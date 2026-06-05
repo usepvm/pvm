@@ -408,7 +408,7 @@ function List-PHP-Profiles {
                 $userProfile = Get-Content $file.FullName -Raw | ConvertFrom-Json
                 $settingsCount = if ($userProfile.settings) { ($userProfile.settings.PSObject.Properties | Measure-Object).Count } else { 0 }
                 $extensionsCount = if ($userProfile.extensions) { ($userProfile.extensions.PSObject.Properties | Measure-Object).Count } else { 0 }
-                $profiles += [PSCustomObject]@{
+                $profiles += @{
                     Name = $userProfile.name
                     Description = if ($userProfile.description) { $userProfile.description } else { '(no description)' }
                     Created = $userProfile.created

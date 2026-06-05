@@ -12,11 +12,11 @@ Describe "Show-Usage Tests" {
         # Mock the Get-Actions function to return a predictable set
         Mock Get-Actions {
             [ordered]@{
-                'setup' = [PSCustomObject]@{
+                'setup' = @{
                     command = 'pvm setup'
                     description = 'Setup the environment variables and paths for PHP.'
                 }
-                'current' = [PSCustomObject]@{
+                'current' = @{
                     command = 'pvm current'
                     description = 'Display active version.'
                 }
@@ -137,10 +137,10 @@ Describe "Start-PVM Function Tests" {
         Mock Show-PVM-Version { }
         Mock Get-Actions {
             [ordered]@{
-                'setup' = [PSCustomObject]@{ action = { return 0 } }
-                'install' = [PSCustomObject]@{ action = { return 0 } }
-                'use' = [PSCustomObject]@{ action = { return 0 } }
-                'list' = [PSCustomObject]@{ action = { return 0 } }
+                'setup' = @{ action = { return 0 } }
+                'install' = @{ action = { return 0 } }
+                'use' = @{ action = { return 0 } }
+                'list' = @{ action = { return 0 } }
             }
         }
         Mock Is-PVM-Setup { $true }
@@ -341,7 +341,7 @@ Describe "Start-PVM Function Tests" {
             foreach ($op in $operationsRequiringSetup) {
                 Mock Get-Actions {
                     [ordered]@{
-                        $op = [PSCustomObject]@{ action = { return 0 } }
+                        $op = @{ action = { return 0 } }
                     }
                 }
 
@@ -359,7 +359,7 @@ Describe "Start-PVM Function Tests" {
         It "Should execute action and return 0" {
             Mock Get-Actions {
                 [ordered]@{
-                    'install' = [PSCustomObject]@{ action = { return 0 } }
+                    'install' = @{ action = { return 0 } }
                 }
             }
 
@@ -371,7 +371,7 @@ Describe "Start-PVM Function Tests" {
         It "Should execute action and return non-zero exit code" {
             Mock Get-Actions {
                 [ordered]@{
-                    'install' = [PSCustomObject]@{ action = { return -1 } }
+                    'install' = @{ action = { return -1 } }
                 }
             }
 
@@ -383,7 +383,7 @@ Describe "Start-PVM Function Tests" {
         It "Should execute action and return custom exit code" {
             Mock Get-Actions {
                 [ordered]@{
-                    'use' = [PSCustomObject]@{ action = { return 42 } }
+                    'use' = @{ action = { return 42 } }
                 }
             }
 
@@ -409,7 +409,7 @@ Describe "Start-PVM Function Tests" {
             Mock Test-Path { $true }
             Mock Get-Actions {
                 [ordered]@{
-                    'test' = [PSCustomObject]@{
+                    'test' = @{
                         action = {
                             if (Test-Path 'C:\Test') { return 0 } else { return -1 }
                         }
@@ -428,7 +428,7 @@ Describe "Start-PVM Function Tests" {
         It "Should catch exception and return -1" {
             Mock Get-Actions {
                 [ordered]@{
-                    'install' = [PSCustomObject]@{
+                    'install' = @{
                         action = { throw 'Test exception' }
                     }
                 }
@@ -447,7 +447,7 @@ Describe "Start-PVM Function Tests" {
         It "Should handle exception with proper logging data" {
             Mock Get-Actions {
                 [ordered]@{
-                    'install' = [PSCustomObject]@{
+                    'install' = @{
                         action = { throw 'Detailed test exception' }
                     }
                 }
@@ -473,7 +473,7 @@ Describe "Start-PVM Function Tests" {
             foreach ($exception in $exceptions) {
                 Mock Get-Actions {
                     [ordered]@{
-                        'test' = [PSCustomObject]@{
+                        'test' = @{
                             action = { throw $exception }
                         }
                     }
@@ -525,7 +525,7 @@ Describe "Start-PVM Function Tests" {
             Mock Log-Data { -1 }
             Mock Get-Actions {
                 [ordered]@{
-                    'install' = [PSCustomObject]@{
+                    'install' = @{
                         action = { throw 'Test exception' }
                     }
                 }
@@ -605,9 +605,9 @@ Describe "Start-PVM Function Tests" {
             foreach ($case in $testCases) {
                 Mock Get-Actions {
                     [ordered]@{
-                        'install' = [PSCustomObject]@{ action = { return 10 } }
-                        'use' = [PSCustomObject]@{ action = { return 20 } }
-                        'list' = [PSCustomObject]@{ action = { return 30 } }
+                        'install' = @{ action = { return 10 } }
+                        'use' = @{ action = { return 20 } }
+                        'list' = @{ action = { return 30 } }
                     }
                 }
 
@@ -644,7 +644,7 @@ Describe "Start-PVM Function Tests" {
         It "Should execute complete happy path" {
             Mock Get-Actions {
                 [ordered]@{
-                    'install' = [PSCustomObject]@{ action = { return 0 } }
+                    'install' = @{ action = { return 0 } }
                 }
             }
             Mock Is-PVM-Setup { $true }
@@ -663,7 +663,7 @@ Describe "Start-PVM Function Tests" {
         It "Should handle complete setup workflow" {
             Mock Get-Actions {
                 [ordered]@{
-                    'setup' = [PSCustomObject]@{ action = { return 0 } }
+                    'setup' = @{ action = { return 0 } }
                 }
             }
             Mock Alias-Handler { param($alias) return $alias }
@@ -681,7 +681,7 @@ Describe "Start-PVM Function Tests" {
         It "Should handle complete error workflow" {
             Mock Get-Actions {
                 [ordered]@{
-                    'install' = [PSCustomObject]@{
+                    'install' = @{
                         action = { throw [System.UnauthorizedAccessException]::new('Access denied') }
                     }
                 }

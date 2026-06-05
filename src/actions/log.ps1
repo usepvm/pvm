@@ -133,7 +133,7 @@ function Show-Log {
                     # Format the timestamp nicely
                     $niceTime = Format-NiceTimestamp $timestamp
 
-                    $parsedEntries += [PSCustomObject]@{
+                    $parsedEntries += @{
                         Timestamp = $timestamp
                         Message = $fullMessageText
                         ErrorMessage = $errorMessage

@@ -335,7 +335,7 @@ function Get-Actions {
     $script:arguments = $arguments
 
     return [ordered]@{
-        'help'      = [PSCustomObject]@{
+        'help'      = @{
             command     = 'pvm help [command]';
             description = 'Display help for a command.';
             usage       = [ordered]@{
@@ -347,7 +347,7 @@ function Get-Actions {
             };
             action      = { return Invoke-PVMHelp -arguments $script:arguments }
         }
-        'setup'     = [PSCustomObject]@{
+        'setup'     = @{
             command     = 'pvm setup';
             description = 'Setup the environment variables and paths for PHP.';
             usage       = [ordered]@{
@@ -359,7 +359,7 @@ function Get-Actions {
             };
             action      = { return Invoke-PVMSetup }
         }
-        'current'   = [PSCustomObject]@{
+        'current'   = @{
             command     = 'pvm current';
             description = 'Display active version.';
             usage       = [ordered]@{
@@ -371,7 +371,7 @@ function Get-Actions {
             };
             action      = { return Invoke-PVMCurrent }
         }
-        'list'      = [PSCustomObject]@{
+        'list'      = @{
             command     = 'pvm list [available] [x86|x64] [ts|nts]';
             description = "Lists the PHP installations. Type 'available' at the end to see what can be installed.";
             usage       = [ordered]@{
@@ -391,7 +391,7 @@ function Get-Actions {
             };
             action      = { return Invoke-PVMList -arguments $script:arguments }
         }
-        'install'   = [PSCustomObject]@{
+        'install'   = @{
             command     = 'pvm install <version>|[auto] [x86|x64] [ts|nts]';
             description = "The version must be a specific version. use 'auto' to install the version specified in the current directory's composer.json or .php-version file.";
             usage       = [ordered]@{
@@ -414,7 +414,7 @@ function Get-Actions {
             }
             action      = { return Invoke-PVMInstall -arguments $script:arguments }
         }
-        'uninstall' = [PSCustomObject]@{
+        'uninstall' = @{
             command     = 'pvm uninstall <version>';
             description = 'The version must be a specific version.';
             usage       = [ordered]@{
@@ -429,7 +429,7 @@ function Get-Actions {
             }
             action      = { return Invoke-PVMUninstall -arguments $script:arguments }
         }
-        'use'       = [PSCustomObject]@{
+        'use'       = @{
             command     = 'pvm use <version>|[auto]';
             description = "Switch to use the specified version. use 'auto' to switch to the version specified in the current directory's composer.json or .php-version file.";
             usage       = [ordered]@{
@@ -449,7 +449,7 @@ function Get-Actions {
             }
             action      = { return Invoke-PVMUse -arguments $script:arguments }
         }
-        'info'      = [PSCustomObject]@{
+        'info'      = @{
             command     = 'pvm info';
             description = 'Display information about the environment.';
             usage       = [ordered]@{
@@ -461,7 +461,7 @@ function Get-Actions {
             }
             action      = { $script:arguments = @('info') + $script:arguments; return Invoke-PVMIni -arguments $script:arguments }
         }
-        'ini'       = [PSCustomObject]@{
+        'ini'       = @{
             command     = 'pvm ini <action> [<args>]';
             description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'install', 'list [available]', 'enable' or 'disable' for an extension, 'info' for a summary or 'restore' the original ini file from backup.";
             usage       = [ordered]@{
@@ -506,7 +506,7 @@ function Get-Actions {
             }
             action      = { return Invoke-PVMIni -arguments $script:arguments }
         }
-        'profile'   = [PSCustomObject]@{
+        'profile'   = @{
             command     = 'pvm profile <action> [<args>]';
             description = 'Manage PHP configuration profiles. Save, load, and share popular PHP settings and extensions.';
             usage       = [ordered]@{
@@ -540,7 +540,7 @@ function Get-Actions {
             }
             action      = { return Invoke-PVMProfile -arguments $script:arguments }
         }
-        'log'       = [PSCustomObject]@{
+        'log'       = @{
             command     = 'pvm log';
             description = 'Display the log file.';
             usage       = [ordered]@{
@@ -557,7 +557,7 @@ function Get-Actions {
             }
             action      = { return Invoke-PVMLog -arguments $script:arguments }
         }
-        'test'      = [PSCustomObject]@{
+        'test'      = @{
             command     = 'pvm test';
             description = 'Run tests.';
             usage       = [ordered]@{

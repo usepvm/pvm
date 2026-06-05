@@ -1435,7 +1435,7 @@ Describe "Get-BinaryArchitecture-From-DLL" {
 Describe "Run-Ps-Command" {
     Context "When executing PowerShell commands" {
         It "Passes -NoProfile and Bypass execution policy" {
-            $mockProcess = [PSCustomObject]@{ ExitCode = 0 }
+            $mockProcess = @{ ExitCode = 0 }
             $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
             Mock Start-Process { return $mockProcess }
 

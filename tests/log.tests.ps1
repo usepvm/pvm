@@ -133,7 +133,7 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
     It "parses log file and returns 0 for valid page size" {
         # Suppress screen clearing and key reading
         Mock Clear-Host {}
-        Mock Get-ConsoleKey { [PSCustomObject]@{ Key = 'Q' } }
+        Mock Get-ConsoleKey { @{ Key = 'Q' } }
 
         $result = Show-Log -pageSize 1
 

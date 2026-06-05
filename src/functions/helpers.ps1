@@ -166,7 +166,7 @@ function Set-EnvVar {
 
 
 function Make-Symbolic-Link {
-    param($link, $target)
+    param ($link, $target)
 
     try {
         if ([string]::IsNullOrWhiteSpace($link) -or [string]::IsNullOrWhiteSpace($target)) {
@@ -216,7 +216,7 @@ function Make-Symbolic-Link {
 }
 
 function Run-PS-Command {
-    param($command)
+    param ($command)
 
     $process = Start-Process `
         -FilePath 'powershell.exe' `
@@ -274,7 +274,7 @@ function Is-File-Not-Exists {
 }
 
 function Make-Directory {
-    param ( [string]$path )
+    param ($path)
 
     try {
         if ([string]::IsNullOrWhiteSpace($path)) {
@@ -307,7 +307,7 @@ function Is-Not-Admin {
 }
 
 function Display-Msg-By-ExitCode {
-    param($result, $message = $null)
+    param ($result, $message = $null)
 
     try {
         if ($result.messages -and $result.messages.Count -gt 1) {
@@ -398,7 +398,7 @@ function Optimize-SystemPath {
 }
 
 function Remove-PathDuplicates {
-    param($path)
+    param ($path)
 
     $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 
@@ -411,7 +411,7 @@ function Remove-PathDuplicates {
 }
 
 function Get-Optimized-Env {
-    param($name, $value)
+    param ($name, $value)
 
     $envVars = Get-All-EnvVars
 

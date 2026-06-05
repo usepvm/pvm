@@ -1,6 +1,6 @@
 ﻿
 function getXdebugConfigV2 {
-    param($XDebugPath)
+    param ($XDebugPath)
 
     return @"
 
@@ -13,7 +13,7 @@ function getXdebugConfigV2 {
 }
 
 function getXdebugConfigV3 {
-    param($XDebugPath)
+    param ($XDebugPath)
 
     return @"
 
@@ -205,7 +205,7 @@ function Get-Extension-Links-From-URL {
 }
 
 function Get-Packages-From-Source-Links {
-    param( $extName, $version, $links)
+    param ($extName, $version, $links)
 
     $formattedList = @()
     $links | ForEach-Object {
@@ -330,7 +330,7 @@ function Get-Matching-PHPExtensionsStatus {
 
     # helper to normalize extension identifiers for comparison
     $normalizeId = {
-        param($n)
+        param ($n)
         if (-not $n) { return '' }
         $s = $n.ToString()
         $s = $s.Trim('"', "'") # remove surrounding quotes (single or double)
@@ -992,7 +992,7 @@ function Display-Settings {
 }
 
 function Get-PHP-Data {
-    param($PhpIniPath)
+    param ($PhpIniPath)
 
     $iniContent = Get-Content $PhpIniPath
 
@@ -1530,7 +1530,7 @@ function List-PHP-Extensions {
 }
 
 function Invoke-PVMIniAction {
-    param ( $action, $params )
+    param ($action, $params)
 
     try {
         $exitCode = 1

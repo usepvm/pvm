@@ -68,7 +68,7 @@ function Get-PHP-List-To-Install {
 }
 
 function Get-Available-PHP-Versions {
-    param($term = $null, $arch = $null, $buildType = $null)
+    param ($term = $null, $arch = $null, $buildType = $null)
 
     try {
         Write-Host "`nLoading available PHP versions..."
@@ -190,7 +190,7 @@ function Display-Installed-PHP-Versions {
 
 
 function Get-PHP-Versions-List {
-    param($available = $false, $term = $null, $arch = $null, $buildType = $null)
+    param ($available = $false, $term = $null, $arch = $null, $buildType = $null)
 
     if ($available) {
         $result = Get-Available-PHP-Versions -term $term -arch $arch -buildType $buildType

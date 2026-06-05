@@ -7,7 +7,7 @@ BeforeAll {
     # Mock Log-Data function
     Mock Write-Host {}
     function Log-Data {
-        param($logPath, $message, $data)
+        param ($logPath, $message, $data)
         return $true
     }
 }

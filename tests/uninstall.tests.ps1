@@ -7,10 +7,10 @@ BeforeAll {
     New-Item -Path "$testPhpPath\7.4" -ItemType Directory -Force
     New-Item -Path "$testPhpPath\8.0" -ItemType Directory -Force
 
-    function Log-Data { param($logPath, $message, $data) }
+    function Log-Data { param ($logPath, $message, $data) }
     # Mock Log-Data globally - this will be available for all tests
     Mock Log-Data -MockWith {
-        param($logPath, $message, $data)
+        param ($logPath, $message, $data)
         return 0
     }
 }

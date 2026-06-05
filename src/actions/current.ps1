@@ -1,6 +1,6 @@
 ﻿
 function Get-PHP-Status {
-    param($phpPath)
+    param ($phpPath)
 
     $status = @{ opcache = $false; xdebug = $false }
     try {

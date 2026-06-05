@@ -13,7 +13,7 @@ BeforeAll {
     }
 
     function Get-PHP-Data {
-        param($PhpIniPath)
+        param ($PhpIniPath)
         return @{
             settings = @(
                 @{ Name = 'memory_limit'; Value = '128M'; Enabled = $true },
@@ -28,9 +28,8 @@ BeforeAll {
         }
     }
 
-    # function Backup-IniFile { param($path) {}}
-    function Make-Directory { param($path) return 0 }
-    function Log-Data { param($data) return $true }
+    function Make-Directory { param ($path) return 0 }
+    function Log-Data { param ($data) return $true }
 
     # Create test profile directory
     New-Item -ItemType Directory -Path $global:PROFILES_PATH -Force | Out-Null

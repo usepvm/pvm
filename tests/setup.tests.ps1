@@ -24,7 +24,7 @@ Describe "Setup-PVM" {
 
         # Mock the System.Environment methods
         function Get-EnvironmentVariableWrapper {
-            param($name, $target)
+            param ($name, $target)
 
             if ($global:MockRegistryThrowException) {
                 throw $global:MockRegistryException
@@ -54,7 +54,7 @@ Describe "Setup-PVM" {
             }
         }
         function Set-EnvironmentVariableWrapper {
-            param($name, $value, $target)
+            param ($name, $value, $target)
 
             if ($global:MockRegistryThrowException) {
                 throw $global:MockRegistryException

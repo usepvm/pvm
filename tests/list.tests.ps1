@@ -7,7 +7,7 @@ BeforeAll {
     Mock Write-Host { }
     # Mock external functions that aren't defined in the provided code
     Mock Make-Directory { return 0 }
-    Mock Log-Data { param($logPath, $message, $data) return 0 }
+    Mock Log-Data { param ($logPath, $message, $data) return 0 }
     Mock Get-Source-Urls {
         return @{
             'releases' = $PHP_WIN_RELEASES_URL

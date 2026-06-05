@@ -38,7 +38,7 @@ max_execution_time = 30
 
     # Mock Log-Data function
     function script:Log-Data {
-        param($logPath, $message, $data)
+        param ($logPath, $message, $data)
         return $true
     }
 
@@ -57,7 +57,7 @@ max_execution_time = 30
         DownloadFails = $false
     }
     function Invoke-WebRequest {
-        param($Uri, $OutFile = $null)
+        param ($Uri, $OutFile = $null)
 
         if ($global:MockFileSystem.DownloadFails) {
             throw 'Network error'
@@ -204,7 +204,7 @@ Describe "Get-XDebug-FROM-URL Tests" {
             $global:MockFileSystem.Directories = @()
         }
         function Set-MockWebResponse {
-            param($url, $content, $links = @())
+            param ($url, $content, $links = @())
             $global:MockFileSystem.WebResponses[$url] = @{
                 Content = $content
                 Links = $links
@@ -761,7 +761,7 @@ Describe "Enable-IniExtension" {
 
     It "Enables commented extension" {
         Mock Get-ChildItem {
-            param($Path)
+            param ($Path)
             return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" } )
         }
         Enable-IniExtension -iniPath $testIniPath -extName 'xdebug' | Should -Be 0
@@ -770,7 +770,7 @@ Describe "Enable-IniExtension" {
 
     It "Returns 0 for already enabled extension" {
         Mock Get-ChildItem {
-            param($Path)
+            param ($Path)
             return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
         }
 
@@ -793,7 +793,7 @@ Describe "Enable-IniExtension" {
 extension=php_curl.dll
 "@ | Set-Content $testIniPath
         Mock Get-ChildItem {
-            param($Path)
+            param ($Path)
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
         }
         Enable-IniExtension -iniPath $testIniPath -extName 'opcache' | Should -Be 0
@@ -809,7 +809,7 @@ extension=pdo_pgsql
 extension=sqlite3
 "@ | Set-Content $testIniPath
         Mock Get-ChildItem {
-            param($Path)
+            param ($Path)
             return @(
                 @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
                 @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$extDirectory\pdo_pgsql.dll" }
@@ -843,7 +843,7 @@ extension=sqlite3
         }
 
         Mock Get-ChildItem {
-            param($Path)
+            param ($Path)
             return @(
                 @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
                 @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$extDirectory\pdo_pgsql.dll" }
@@ -878,7 +878,7 @@ Describe "Disable-IniExtension" {
 
     It "Disables enabled extension" {
         Mock Get-ChildItem {
-            param($Path)
+            param ($Path)
             return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
         }
         Disable-IniExtension -iniPath $testIniPath -extName 'curl' | Should -Be 0
@@ -900,7 +900,7 @@ Describe "Disable-IniExtension" {
 
     It "Handles zend_extension" {
         Mock Get-ChildItem {
-            param($Path)
+            param ($Path)
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
         }
         Disable-IniExtension -iniPath $testIniPath -extName 'opcache' | Should -Be 0
@@ -917,7 +917,7 @@ extension=pgsql
 ;extension=sqlite3
 "@ | Set-Content $testIniPath
         Mock Get-ChildItem {
-            param($Path)
+            param ($Path)
             return @(
                 @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
                 @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$extDirectory\pdo_pgsql.dll" }
@@ -951,7 +951,7 @@ extension=pgsql
         }
 
         Mock Get-ChildItem {
-            param($Path)
+            param ($Path)
             return @(
                 @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
                 @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$extDirectory\pdo_pgsql.dll" }
@@ -1091,7 +1091,7 @@ Describe "Get-Matching-PHPExtensionsStatus" {
 
     It "Finds extensions in ext directory and marks them Disabled when not in ini" {
         Mock Get-ChildItem {
-            param($Path)
+            param ($Path)
             return @(
                 @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
                 @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$extDirectory\pdo_pgsql.dll" }
@@ -1113,7 +1113,7 @@ Describe "Get-Matching-PHPExtensionsStatus" {
 extension=pdo_mysql
 "@ | Set-Content $testIniPath
         Mock Get-ChildItem {
-            param($Path)
+            param ($Path)
             return @(
                 @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
                 @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$extDirectory\pdo_pgsql.dll" }
@@ -1139,13 +1139,13 @@ Describe "Install-Extension" {
         }
 
         function Read-Host {
-            param($Prompt)
+            param ($Prompt)
             if ($Prompt -eq "`nInsert the [number] you want to install") {
                 return '0'
             }
         }
         function Get-ChildItem {
-            param($Path)
+            param ($Path)
             if ($global:getRandomFile) {
                 return @( @{ Name = 'random_file' } )
             }
@@ -1362,7 +1362,7 @@ Describe "Install-Extension" {
                 return
             }
             Mock Get-ChildItem {
-                param($Path)
+                param ($Path)
                 return @( @{ Name = 'php_courierauth.dll'; FullName = 'TestDrive:\php_courierauth-1.4.0-7.4-ts-vc15-x86\php_courierauth.dll' } )
             }
         }
@@ -1691,7 +1691,7 @@ Describe "Install-XDebug-Extension" {
             )
         }
         Mock Read-Host {
-            param($Prompt)
+            param ($Prompt)
             if ($Prompt -eq "`nInsert the [number] you want to install") {
                 return ''
             }
@@ -1704,7 +1704,7 @@ Describe "Install-XDebug-Extension" {
             $global:MockFileSystem.Directories = @()
         }
         function Add-Content {
-            param($Path, $Value)
+            param ($Path, $Value)
             if ($global:MockFileSystem.Files.ContainsKey($Path)) {
                 $global:MockFileSystem.Files[$Path] += "`n$Value"
             } else {
@@ -1712,7 +1712,7 @@ Describe "Install-XDebug-Extension" {
             }
         }
         function Set-MockWebResponse {
-            param($url, $content, $links = @())
+            param ($url, $content, $links = @())
             $global:MockFileSystem.WebResponses[$url] = @{
                 Content = $content
                 Links = $links
@@ -1837,7 +1837,7 @@ Describe "Invoke-PVMIniAction" {
     Context "enable action" {
         It "Enables single extension" {
             Mock Get-ChildItem {
-                param($Path)
+                param ($Path)
                 return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" } )
             }
             $result = Invoke-PVMIniAction -action 'enable' -params @('xdebug')
@@ -1853,7 +1853,7 @@ extension=php_curl.dll
 
             $script:callCount = 0
             Mock Get-ChildItem {
-                param($Path)
+                param ($Path)
                 $script:callCount++
                 if ($script:callCount -eq 1) { return @(@{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" }) }
                 if ($script:callCount -eq 2) { return @(@{ BaseName = 'php_gd'; Name = 'php_gd.dll'; FullName = "$extDirectory\php_gd.dll" }) }
@@ -1872,7 +1872,7 @@ extension=php_curl.dll
     Context "disable action" {
         It "Disables single extension" {
             Mock Get-ChildItem {
-                param($Path)
+                param ($Path)
                 return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
             }
             $result = Invoke-PVMIniAction -action 'disable' -params @('curl')
@@ -1888,7 +1888,7 @@ extension=php_curl.dll
     Context "status action" {
         It "Checks single extension status" {
             Mock Get-ChildItem {
-                param($Path)
+                param ($Path)
                 return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
             }
             $result = Invoke-PVMIniAction -action 'status' -params @('curl')
@@ -1955,13 +1955,13 @@ extension=php_curl.dll
             }
 
             function Read-Host {
-                param($Prompt)
+                param ($Prompt)
                 if ($Prompt -eq "`nInsert the [number] you want to install") {
                     return 0
                 }
             }
             function Get-ChildItem {
-                param($Path)
+                param ($Path)
                 if ($global:getRandomFile) {
                     return @( @{ Name = 'random_file' } )
                 }

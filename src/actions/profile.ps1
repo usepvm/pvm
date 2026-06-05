@@ -185,7 +185,7 @@ function Get-Popular-PHP-Extensions {
 }
 
 function Save-PHP-Profile {
-    param($profileName, $description = $null)
+    param ($profileName, $description = $null)
 
     try {
         $currentPhpVersion = Get-Current-PHP-Version
@@ -269,7 +269,7 @@ function Save-PHP-Profile {
 }
 
 function Load-PHP-Profile {
-    param($profileName)
+    param ($profileName)
 
     try {
         $currentPhpVersion = Get-Current-PHP-Version
@@ -446,7 +446,7 @@ function List-PHP-Profiles {
 }
 
 function Show-PHP-Profile {
-    param($profileName)
+    param ($profileName)
 
     try {
         $profilePath = "$PROFILES_PATH\$profileName.json"
@@ -514,7 +514,7 @@ function Show-PHP-Profile {
 }
 
 function Delete-PHP-Profile {
-    param($profileName)
+    param ($profileName)
 
     try {
         $profilePath = "$PROFILES_PATH\$profileName.json"
@@ -547,7 +547,7 @@ function Delete-PHP-Profile {
 }
 
 function Export-PHP-Profile {
-    param($profileName, $exportPath = $null)
+    param ($profileName, $exportPath = $null)
 
     try {
         $profilePath = "$PROFILES_PATH\$profileName.json"
@@ -576,7 +576,7 @@ function Export-PHP-Profile {
 }
 
 function Import-PHP-Profile {
-    param($importPath, $profileName = $null)
+    param ($importPath, $profileName = $null)
 
     try {
         if (Is-File-Not-Exists -path $importPath) {

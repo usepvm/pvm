@@ -1,11 +1,11 @@
 ﻿
 function Get-ConsoleKey {
-    param([bool]$intercept = $true)
+    param ($intercept = $true)
     return [System.Console]::ReadKey($intercept)
 }
 
 function Format-NiceTimestamp {
-    param($timestamp)
+    param ($timestamp)
 
     try {
         $dateTime = [DateTime]::Parse($timestamp)
@@ -69,7 +69,7 @@ function Format-NiceTimestamp {
 }
 
 function Show-Log {
-    param($pageSize = $DEFAULT_LOG_PAGE_SIZE, $term = $null)
+    param ($pageSize = $DEFAULT_LOG_PAGE_SIZE, $term = $null)
 
     try {
         if ($pageSize -notmatch '^-?\d+$') {

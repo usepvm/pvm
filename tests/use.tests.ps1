@@ -8,7 +8,7 @@ BeforeAll {
     Mock Write-Host {}
 
     function Get-Matching-PHP-Versions {
-        param($version)
+        param ($version)
         # Mock implementation
         if ($version -like '8.*') {
             return @(
@@ -20,7 +20,7 @@ BeforeAll {
     }
 
     Mock Get-UserSelected-PHP-Version {
-        param($installedVersions)
+        param ($installedVersions)
         # If we're in the Auto-Select test and a specific version was detected
         if ($global:TestScenario -eq 'composer' -or $global:TestScenario -eq '.php-version' -and $installedVersions) {
             # Find the version that matches what we detected (8.2)
@@ -38,13 +38,13 @@ BeforeAll {
     }
 
     function Make-Symbolic-Link {
-        param($link, $target)
+        param ($link, $target)
         # Mock implementation
         return @{ code = 0 }
     }
 
     function Log-Data {
-        param($logPath, $message, $data)
+        param ($logPath, $message, $data)
         # Mock implementation
         return $true
     }
@@ -61,7 +61,7 @@ Describe "Detect-PHP-VersionFromProject" {
 
     It "Should detect PHP version from composer.json" {
         Mock Test-Path {
-            param($path)
+            param ($path)
             if ($path -eq 'composer.json') { return $true }
             return $false
         }
@@ -72,7 +72,7 @@ Describe "Detect-PHP-VersionFromProject" {
 
     It "Handles parser exceptions gracefully" {
         Mock Test-Path {
-            param($path)
+            param ($path)
             if ($path -eq 'composer.json') { return $true }
             return $false
         }

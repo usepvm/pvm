@@ -117,7 +117,7 @@ function Get-Installed-PHP-Versions {
 
 
 function Get-UserSelected-PHP-Version {
-    param($installedVersions)
+    param ($installedVersions)
 
     if (-not $installedVersions -or $installedVersions.Count -eq 0) {
         return $null

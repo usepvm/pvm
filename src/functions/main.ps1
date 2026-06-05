@@ -40,7 +40,7 @@ function Show-PVM-Version {
 }
 
 function Alias-Handler {
-    param($alias)
+    param ($alias)
 
     if ([string]::IsNullOrWhiteSpace($alias)) {
         return $null

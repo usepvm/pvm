@@ -124,7 +124,7 @@ Describe "Alias-Handler Tests" {
     )
 
     It "Returns '<Expected>' when '<Operation>' is passed" -TestCases $testCases {
-        param($Operation, $Expected)
+        param ($Operation, $Expected)
         $result = Alias-Handler $Operation
         $result | Should -Be $Expected
     }
@@ -146,7 +146,7 @@ Describe "Start-PVM Function Tests" {
         Mock Is-PVM-Setup { $true }
         Mock Log-Data { 0 }
         Mock Alias-Handler {
-            param($alias)
+            param ($alias)
 
 
             if ([string]::IsNullOrWhiteSpace($alias)) {
@@ -586,7 +586,7 @@ Describe "Start-PVM Function Tests" {
         }
 
         It "Should handle multiple operations through alias handler" {
-            Mock Alias-Handler { param($alias)
+            Mock Alias-Handler { param ($alias)
                 switch ($alias) {
                     'i' { return 'install' }
                     'u' { return 'use' }
@@ -666,7 +666,7 @@ Describe "Start-PVM Function Tests" {
                     'setup' = @{ action = { return 0 } }
                 }
             }
-            Mock Alias-Handler { param($alias) return $alias }
+            Mock Alias-Handler { param ($alias) return $alias }
             # Is-PVM-Setup should not be called for setup operation
 
             $result = Start-PVM -operation 'setup' -arguments @()
@@ -686,7 +686,7 @@ Describe "Start-PVM Function Tests" {
                     }
                 }
             }
-            Mock Alias-Handler { param($alias) return $alias }
+            Mock Alias-Handler { param ($alias) return $alias }
             Mock Is-PVM-Setup { $true }
             Mock Log-Data { 0 }
 

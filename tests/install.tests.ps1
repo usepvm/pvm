@@ -49,7 +49,7 @@ BeforeAll {
     }
 
     function Set-MockWebResponse {
-        param($url, $content, $links = @())
+        param ($url, $content, $links = @())
         $global:MockFileSystem.WebResponses[$url] = @{
             Content = $content
             Links = $links
@@ -58,13 +58,13 @@ BeforeAll {
 
     # Mock functions for testing
     function Log-Data {
-        param($logPath, $message, $data)
+        param ($logPath, $message, $data)
         Write-Host "LOG: $message - $data"
         return $true
     }
 
     function Invoke-WebRequest {
-        param($Uri, $OutFile = $null)
+        param ($Uri, $OutFile = $null)
 
         if ($global:MockFileSystem.DownloadFails) {
             throw 'Network error'
@@ -86,7 +86,7 @@ BeforeAll {
     }
 
     function Test-Path {
-        param($Path, $PathType = $null)
+        param ($Path, $PathType = $null)
 
         if ($PathType -eq 'Container') {
             return $global:MockFileSystem.Directories -contains $Path
@@ -95,19 +95,19 @@ BeforeAll {
     }
 
     function Remove-Item {
-        param($Path)
+        param ($Path)
         if ($global:MockFileSystem.Files.ContainsKey($Path)) {
             $global:MockFileSystem.Files.Remove($Path)
         }
     }
 
     function Copy-Item {
-        param($Path, $Destination)
+        param ($Path, $Destination)
         $global:MockFileSystem.Files[$Destination] = 'Copied content'
     }
 
     function Get-Content {
-        param($Path)
+        param ($Path)
         if ($global:MockFileSystem.Files.ContainsKey($Path)) {
             $content = $global:MockFileSystem.Files[$Path]
             return $content -split "`n"
@@ -116,12 +116,12 @@ BeforeAll {
     }
 
     function Set-Content {
-        param($Path, $Value, $Encoding = $null)
+        param ($Path, $Value, $Encoding = $null)
         $global:MockFileSystem.Files[$Path] = $Value -join "`n"
     }
 
     function Add-Content {
-        param($Path, $Value)
+        param ($Path, $Value)
         if ($global:MockFileSystem.Files.ContainsKey($Path)) {
             $global:MockFileSystem.Files[$Path] += "`n$Value"
         } else {
@@ -130,19 +130,19 @@ BeforeAll {
     }
 
     function Add-Type {
-        param($AssemblyName)
+        param ($AssemblyName)
         # Mock for System.IO.Compression.FileSystem
     }
 
 
     function Read-Host {
-        param($Prompt)
+        param ($Prompt)
         return $global:MockUserInput
     }
 
     # Environment variable wrapper functions
     function Get-EnvironmentVariablesWrapper {
-        param($target)
+        param ($target)
 
         if ($global:MockRegistryThrowException) {
             throw $global:MockRegistryException
@@ -169,7 +169,7 @@ BeforeAll {
     }
 
     function Get-EnvironmentVariableWrapper {
-        param($name, $target)
+        param ($name, $target)
 
         if ($global:MockRegistryThrowException) {
             throw $global:MockRegistryException
@@ -184,7 +184,7 @@ BeforeAll {
     }
 
     function Set-EnvironmentVariableWrapper {
-        param($name, $value, $target)
+        param ($name, $value, $target)
 
         if ($global:MockRegistryThrowException) {
             throw $global:MockRegistryException

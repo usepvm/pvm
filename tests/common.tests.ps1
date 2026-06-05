@@ -349,7 +349,7 @@ Describe "Is-PHP-Version-Installed" {
     Context "When version exists" {
         It "Should return true for installed version" {
             Mock Get-Matching-PHP-Versions {
-                param($version)
+                param ($version)
                 return @(
                     @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
                     @{Version = '8.1.1'; Arch = 'x64'; BuildType = 'NTS'}
@@ -363,7 +363,7 @@ Describe "Is-PHP-Version-Installed" {
 
         It "Should return false for non-installed version" {
             Mock Get-Matching-PHP-Versions {
-                param($version)
+                param ($version)
                 return @(
                     @{Version = '8.1.1'; Arch = 'x64'; BuildType = 'NTS'}
                     @{Version = '8.1.2'; Arch = 'x64'; BuildType = 'NTS'}
@@ -506,7 +506,7 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
             }
             Mock Test-Path { return $true }
             Mock Get-PHPInstallInfo {
-                param($path)
+                param ($path)
                 if ($path -eq 'C:\test\storage\php\8.1') {
                     return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = 'C:\test\storage\php\8.1'}
                 } else {
@@ -527,11 +527,11 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
                 )
             }
             Mock Test-Path {
-                param($path)
+                param ($path)
                 return $path -notmatch 'invalid'
             }
             Mock Get-PHPInstallInfo {
-                param($path)
+                param ($path)
                 if ($path -eq 'C:\test\storage\php\8.1') {
                     return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
                 } elseif ($path -eq 'C:\test\storage\php\8.2') {
@@ -553,7 +553,7 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
             }
             Mock Test-Path { return $true }
             Mock Get-PHPInstallInfo {
-                param($path)
+                param ($path)
                 if ($path -eq 'C:\test\storage\php\8.2') {
                     return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
                 } elseif ($path -eq 'C:\test\storage\php\7.4') {

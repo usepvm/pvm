@@ -37,7 +37,7 @@ BeforeAll {
 
     # Create wrapper functions that use our mock registry
     function Get-EnvironmentVariablesWrapper {
-        param($target)
+        param ($target)
 
         if ($global:MockRegistryThrowException) {
             throw $global:MockRegistryException
@@ -76,7 +76,7 @@ BeforeAll {
     }
 
     function Get-EnvironmentVariableWrapper {
-        param($name, $target)
+        param ($name, $target)
 
         if ($global:MockRegistryThrowException) {
             throw $global:MockRegistryException
@@ -112,7 +112,7 @@ BeforeAll {
     }
 
     function Set-EnvironmentVariableWrapper {
-        param($name, $value, $target)
+        param ($name, $value, $target)
 
         if ($global:MockRegistryThrowException) {
             throw $global:MockRegistryException
@@ -325,7 +325,7 @@ Describe "Make-Symbolic-Link" {
 
             # Mock New-Item to simulate successful symbolic link creation
             Mock New-Item {
-                param($ItemType, $Path, $Target)
+                param ($ItemType, $Path, $Target)
                 if ($ItemType -eq 'SymbolicLink') {
                     # Create a dummy file to simulate the link
                     New-Item -Path $Path -ItemType File -Force | Out-Null

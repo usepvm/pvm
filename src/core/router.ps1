@@ -48,7 +48,7 @@ function Invoke-PVMCurrent {
 }
 
 function Invoke-PVMList {
-    param($arguments)
+    param ($arguments)
 
     $arch = Resolve-Arch -arguments $arguments
     $buildType = Resolve-BuildType -arguments $arguments
@@ -60,7 +60,7 @@ function Invoke-PVMList {
 }
 
 function Invoke-PVMInstall {
-    param($arguments)
+    param ($arguments)
 
     $version = $arguments[0]
     $arch = Resolve-Arch -arguments $arguments
@@ -98,7 +98,7 @@ function Invoke-PVMInstall {
 }
 
 function Invoke-PVMUninstall {
-    param($arguments)
+    param ($arguments)
 
     $version = $arguments[0]
 
@@ -114,7 +114,7 @@ function Invoke-PVMUninstall {
 }
 
 function Invoke-PVMUse {
-    param($arguments)
+    param ($arguments)
 
     $version = $arguments[0]
 
@@ -139,7 +139,7 @@ function Invoke-PVMUse {
 }
 
 function Invoke-PVMIni {
-    param($arguments)
+    param ($arguments)
 
     $action = $arguments[0]
     if (-not $action) {
@@ -158,7 +158,7 @@ function Invoke-PVMIni {
 
 
 function Invoke-PVMTest {
-    param($arguments)
+    param ($arguments)
 
     if (-not (Get-Module -ListAvailable Pester)) {
         Write-Host "`nInstalling Pester..." -ForegroundColor Yellow
@@ -210,7 +210,7 @@ function Invoke-PVMTest {
 }
 
 function Invoke-PVMLog {
-    param($arguments)
+    param ($arguments)
 
     $pageSizeArg = $arguments | Where-Object { $_ -match '^--pageSize=(.+)$' }
     if ($pageSizeArg) {
@@ -225,7 +225,7 @@ function Invoke-PVMLog {
 }
 
 function Invoke-PVMHelp {
-    param($arguments)
+    param ($arguments)
 
     $command = $arguments[0]
     if ($command) {
@@ -250,7 +250,7 @@ function Invoke-PVMHelp {
 }
 
 function Invoke-PVMProfile {
-    param($arguments)
+    param ($arguments)
 
     $action = $arguments[0]
 
@@ -330,7 +330,7 @@ function Invoke-PVMProfile {
 }
 
 function Get-Actions {
-    param( $arguments )
+    param ($arguments)
 
     $script:arguments = $arguments
 

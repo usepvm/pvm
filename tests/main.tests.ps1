@@ -280,15 +280,6 @@ Describe "Start-PVM Function Tests" {
             Assert-MockCalled Show-Usage -Times 0
         }
 
-        # It "Should handle case where Get-Actions returns null" {
-        #     Mock Get-Actions { $null }
-
-        #     $result = Start-PVM -operation "install" -arguments @()
-
-        #     $result | Should -Be 0
-        #     Assert-MockCalled Show-Usage -Times 1
-        # }
-
         It "Should handle case where Get-Actions returns empty hashtable" {
             Mock Get-Actions { @{} }
 
@@ -391,19 +382,6 @@ Describe "Start-PVM Function Tests" {
 
             $result | Should -Be 42
         }
-
-        # It "Should handle action that returns null" {
-        #     Mock Get-Actions {
-        #         [ordered]@{
-        #             "test" = [PSCustomObject]@{ action = { return $null } }
-        #         }
-        #     }
-
-        #     $result = Start-PVM -operation "test" -arguments @()
-
-        #     # $null should be treated as 0 in PowerShell context
-        #     $result | Should -Be 0
-        # }
 
         It "Should execute complex action logic" {
             Mock Test-Path { $true }

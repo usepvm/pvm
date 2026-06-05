@@ -1124,8 +1124,7 @@ extension=pdo_mysql
         }
         $res = Get-Matching-PHPExtensionsStatus -iniPath $testIniPath -extName 'sql'
         $res | Should -Not -Be @()
-        Write-Host ($res | ConvertTo-Json)
-        # $res[0].status | Should -Be 'Enabled'
+        $res[0].status | Should -Be 'Enabled'
     }
 }
 

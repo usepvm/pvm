@@ -1270,6 +1270,14 @@ Describe "Install-Extension" {
         $code | Should -Be -1
     }
 
+    It "Returns -1 when no matching extension is found" {
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x64'; buildType = 'ts' }}
+        Mock Get-Extension-From-URL { return $null }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+        $code | Should -Be -1
+    }
+
     It "Installs extension successfully" {
         Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' }}
         Mock Get-Extension-From-URL {

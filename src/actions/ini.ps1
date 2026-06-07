@@ -923,7 +923,6 @@ function Display-Installed-Extensions {
     $MIN_LINE_LENGTH = 60
     $maxNameLength = ($extensions.Extension | Measure-Object -Maximum Length).Maximum
     $maxLineLength = [Math]::Max($MIN_LINE_LENGTH, $maxNameLength + 40)
-    if ($maxLineLength -lt $MIN_LINE_LENGTH) { $maxLineLength = $MIN_LINE_LENGTH }
 
     $extensions |
     Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true },
@@ -1485,7 +1484,14 @@ function List-PHP-Extensions {
                 $vals = ($_.Value | ForEach-Object { $_.extName }) -join ', '
 
                 $label = "  $key"
-                $maxDescLength = $Host.UI.RawUI.WindowSize.Width - ($maxLineLength + 20)
+                # Read Host via Get-Variable so tests can mock it
+                $hostVar = Get-Variable -Name Host -ValueOnly -ErrorAction SilentlyContinue
+                $hostWidth = 0
+                if ($hostVar -and $hostVar.UI -and $hostVar.UI.RawUI -and $hostVar.UI.RawUI.WindowSize) {
+                    $hostWidth = $hostVar.UI.RawUI.WindowSize.Width
+                }
+
+                $maxDescLength = $hostWidth - ($maxLineLength + 20)
                 if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
                 $descLines = @()

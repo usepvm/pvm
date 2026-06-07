@@ -489,6 +489,7 @@ Describe "Get-Extension-Links-From-URL Tests" {
             $result.links.Count | Should -Be 3
         }
     }
+
     Context "When multiple matching categories links found" {
         BeforeEach {
             Mock Get-Extension-Matching-Categories { return @(
@@ -1561,6 +1562,7 @@ Describe "Install-Extension" {
                 return @( @{ Name = 'php_courierauth.dll'; FullName = 'TestDrive:\php_courierauth-1.4.0-7.4-ts-vc15-x86\php_courierauth.dll' } )
             }
         }
+
         It "Falls back to matching links if extension direct link is not found" {
             Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x64'; buildType = 'ts' }}
             Mock Get-Extension-From-URL {
@@ -1583,10 +1585,12 @@ Describe "Install-Extension" {
             $code = Install-Extension -iniPath $testIniPath -extName 'cour'
             $code | Should -Be 0
         }
+
         It "Returns -1 when no extension is found" {
             $code = Install-Extension -iniPath $testIniPath -extName 'nonexistent_ext'
             $code | Should -Be -1
         }
+
         It "Returns -1 when user does not choose a dll extension version to install" {
             Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { '' }
             $code = Install-Extension -iniPath $testIniPath -extName 'cache'
@@ -1748,7 +1752,6 @@ Describe "Install-Extension" {
 }
 
 Describe "Install-IniExtension" {
-
     It "Handles null extension name" {
         $code = Install-IniExtension -iniPath $testIniPath -extName $null
         $code | Should -Be -1
@@ -2555,6 +2558,7 @@ extension=php_curl.dll
             }
             Mock Install-Extension { return 0 }
         }
+
         It "Installs extension" {
             $result = Invoke-PVMIniAction -action 'install' -params @('curl')
             $result | Should -Be 0

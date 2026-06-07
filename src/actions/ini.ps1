@@ -466,7 +466,6 @@ function Restore-IniBackup {
     }
 }
 
-
 function Backup-IniFile {
     param ($iniPath)
 
@@ -531,7 +530,6 @@ function Get-IniSetting {
         return -1
     }
 }
-
 
 function Set-IniSetting {
     param ($iniPath, $key, $enable = $true)
@@ -836,7 +834,6 @@ function Get-IniExtensionStatus {
     }
 }
 
-
 function Get-PHP-Info {
     param ($term = $null, $extensions = $false, $settings = $false)
 
@@ -913,7 +910,6 @@ function Display-Installed-Extensions {
         Write-Host $status -ForegroundColor $color
     }
 }
-
 
 function Display-Settings-States {
     param ($settings)

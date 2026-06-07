@@ -1,5 +1,4 @@
 ﻿
-
 function Get-Source-Urls {
 
     return [ordered]@{
@@ -7,7 +6,6 @@ function Get-Source-Urls {
         'Releases' = $PHP_WIN_RELEASES_URL
     }
 }
-
 
 function Is-PVM-Setup {
 
@@ -105,7 +103,6 @@ function Get-Installed-PHP-Versions {
         return @()
     }
 }
-
 
 function Get-UserSelected-PHP-Version {
     param ($installedVersions)

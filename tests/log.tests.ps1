@@ -215,4 +215,3 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
         $result | Should -Be -1
     }
 }
-

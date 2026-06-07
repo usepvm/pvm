@@ -1,4 +1,5 @@
-﻿function Detect-PHP-VersionFromProject {
+﻿
+function Detect-PHP-VersionFromProject {
 
     try {
         # 1. Check .php-version

@@ -292,7 +292,6 @@ Describe "Get-Current-PHP-Version Function Tests" {
     }
 
     Context "When PHP current version path does not exist" {
-
         It "returns empty result when path does not exist" {
             # Arrange
             Mock Get-Item { return @{ Target = 'C:\php\8.2.0' } }

@@ -1,6 +1,5 @@
 ﻿
 BeforeAll {
-
     Mock Write-Host {}
     # Create a mock registry to simulate environment variables
     $global:MockRegistry = @{
@@ -24,7 +23,6 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
-
 
     # Mock file system for logging tests
     $global:MockFileSystem = @{
@@ -315,7 +313,6 @@ Describe "Set-EnvVar" {
         }
     }
 }
-
 
 Describe "Make-Symbolic-Link" {
     Context "When creating symbolic links" {
@@ -762,6 +759,7 @@ Describe "Can-Use-Cache" {
 
         New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
     }
+
     Context "When cache file exists" {
         It "Returns true when cache file is within max age" {
             $cacheFileName = 'test_cache'
@@ -1326,7 +1324,6 @@ Describe "Is-Two-PHP-Versions-Equal" {
         }
     }
 }
-
 
 Describe "Get-BinaryArchitecture-From-DLL" {
     Context "Reading PE format from binary files" {

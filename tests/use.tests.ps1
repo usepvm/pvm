@@ -1,6 +1,5 @@
 ﻿
 BeforeAll {
-
     # Mock data and helper functions for testing
     $PHP_CURRENT_VERSION_PATH = 'C:\pvm\php'
     $LOG_ERROR_PATH = 'C:\logs\error.log'
@@ -81,7 +80,6 @@ Describe "Detect-PHP-VersionFromProject" {
     }
 
 }
-
 
 # Test Cases for Update-PHP-Version
 Describe "Update-PHP-Version" {

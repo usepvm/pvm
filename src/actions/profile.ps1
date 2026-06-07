@@ -608,6 +608,3 @@ function Import-PHP-Profile {
         return -1
     }
 }
-
-
-

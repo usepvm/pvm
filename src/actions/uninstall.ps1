@@ -1,5 +1,4 @@
 ﻿
-
 function Uninstall-PHP {
     param ($version)
 

@@ -176,7 +176,6 @@ function Display-Installed-PHP-Versions {
 
 }
 
-
 function Get-PHP-Versions-List {
     param ($available = $false, $term = $null, $arch = $null, $buildType = $null)
 

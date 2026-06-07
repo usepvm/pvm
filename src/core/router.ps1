@@ -151,11 +151,9 @@ function Invoke-PVMIni {
         $arguments[1..($arguments.Count - 1)] | Where-Object { $_ -ne $arch }
     } else { @() }
 
-
     $exitCode = Invoke-PVMIniAction -action $action -params $remainingArgs
     return $exitCode
 }
-
 
 function Invoke-PVMTest {
     param ($arguments)
@@ -592,5 +590,3 @@ function Get-Actions {
         }
     }
 }
-
-

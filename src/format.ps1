@@ -1,5 +1,4 @@
 ﻿
-
 # Load configuration
 . $PSScriptRoot\core\config.ps1
 
@@ -11,7 +10,6 @@ if (-not (Get-Module PSScriptAnalyzer -ListAvailable)) {
     Write-Host 'Installing PSScriptAnalyzer...' -ForegroundColor Yellow
     Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck
 }
-
 
 # Import the module
 Import-Module PSScriptAnalyzer -Force

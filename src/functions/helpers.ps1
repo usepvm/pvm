@@ -143,7 +143,6 @@ function Set-EnvVar {
     }
 }
 
-
 function Make-Symbolic-Link {
     param ($link, $target)
 
@@ -268,7 +267,6 @@ function Make-Directory {
     }
 }
 
-
 function Is-Admin {
 
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -307,8 +305,6 @@ function Display-Msg-By-ExitCode {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
     }
 }
-
-
 
 function Log-Data {
     param ($data)
@@ -488,7 +484,6 @@ function Get-PHPInstallInfo {
         $buildType = 'NTS'
     }
 
-
     if (-not $dll) {
         return $null
     }
@@ -501,7 +496,6 @@ function Get-PHPInstallInfo {
         InstallPath  = $path
     }
 }
-
 
 function Get-BinaryArchitecture-From-DLL {
     param ($path)

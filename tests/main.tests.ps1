@@ -94,7 +94,6 @@ Describe "Show-Usage Tests" {
     }
 }
 
-
 Describe "Show-PVM-Version Function Tests" {
     BeforeEach {
         Mock Write-Host { }
@@ -193,7 +192,6 @@ Describe "Start-PVM Function Tests" {
         Mock Log-Data { 0 }
         Mock Alias-Handler {
             param ($alias)
-
 
             if ([string]::IsNullOrWhiteSpace($alias)) {
                 return $null

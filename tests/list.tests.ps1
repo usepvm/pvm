@@ -22,7 +22,6 @@ AfterAll {
     Remove-Item -Path "$PSScriptRoot\storage" -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-
 Describe "Get-From-Source" {
     BeforeEach {
         # Clean test directory
@@ -89,7 +88,6 @@ Describe "Get-From-Source" {
 }
 
 Describe "Get-PHP-List-To-Install" {
-
     It "Returns empty object when cache and/or source not working" {
         Mock Get-OrUpdateCache { return $null }
 
@@ -334,7 +332,6 @@ Describe "Get-Available-PHP-Versions" {
         Mock Test-Path { return $true }
         $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString('yyyy-MM-ddTHH:mm:ss.fffffffK')
         Mock Get-Item { @{ LastWriteTime = $timeWithinLastWeek } }
-
 
         $code = Get-Available-PHP-Versions
 

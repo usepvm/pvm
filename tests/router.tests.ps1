@@ -23,7 +23,6 @@ BeforeAll {
     }
 }
 
-
 Describe "Invoke-PVMSetup Tests" {
     BeforeEach {
         Mock Is-PVM-Setup { $true }
@@ -235,7 +234,6 @@ Describe "Invoke-PVMUninstall Tests" {
         Assert-MockCalled Display-Msg-By-ExitCode -Times 1
     }
 
-
     It "Should not prompt when uninstalling different version than current" {
         Mock Get-Current-PHP-Version { @{ version = '8.1.0' } }
         $arguments = @('8.2.0')
@@ -386,7 +384,6 @@ Describe "Invoke-PVMLog Tests" {
 }
 
 Describe "Invoke-PVMHelp Tests" {
-
     It "Should display help for setup command" {
         $result = Invoke-PVMHelp -arguments @('setup')
         $result | Should -Be 0
@@ -741,7 +738,6 @@ Describe "Invoke-PVMProfile Tests" {
         }
     }
 }
-
 
 Describe "Get-Actions Tests" {
     BeforeEach {

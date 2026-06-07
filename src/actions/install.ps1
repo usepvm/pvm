@@ -125,8 +125,6 @@ function Get-PHP-Versions {
     }
 }
 
-
-
 function Download-PHP-From-Url {
     param ($destination, $url, $versionObject)
 
@@ -210,7 +208,6 @@ function Extract-And-Configure {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to extract and configure PHP from $path"; exception = $_ }
     }
 }
-
 
 function Configure-Opcache {
     param ($version, $phpPath)

@@ -134,7 +134,6 @@ BeforeAll {
         # Mock for System.IO.Compression.FileSystem
     }
 
-
     function Read-Host {
         param ($Prompt)
         return $global:MockUserInput
@@ -215,7 +214,6 @@ BeforeAll {
         }
     }
 
-
     # Override the original environment functions to use wrappers
     function Get-All-EnvVars {
         try {
@@ -267,7 +265,6 @@ BeforeAll {
 
 # Test Suites
 Describe "Get-Source-Urls Tests" {
-    Mock Write-Host {}
     It "Should return ordered hashtable with correct URLs" {
         $urls = Get-Source-Urls
         $urls | Should -BeOfType [System.Collections.Specialized.OrderedDictionary]
@@ -514,7 +511,6 @@ Describe "Extract-And-Configure Tests" {
     }
 }
 
-
 Describe "Configure-Opcache Tests" {
     BeforeEach {
         Mock Write-Host { }
@@ -750,7 +746,6 @@ Describe "Install-PHP Integration Tests" {
             }
         }
 
-
         Set-EnvVar -name 'php8.1' -value $null
         $global:MockRegistry.Machine['php8.1.0'] = 'C:\PHP\php-8.1.0'
         $global:MockUserInput = 'y'
@@ -865,5 +860,3 @@ Describe "Environment Variable Tests" {
         $result | Where-Object { $_.link -eq '8.2.0' } | Should -BeNullOrEmpty
     }
 }
-
-

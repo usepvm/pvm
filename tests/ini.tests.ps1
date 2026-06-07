@@ -2018,6 +2018,76 @@ Describe "List-PHP-Extensions" {
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be -1
     }
+
+    It "Returns -1 when available extensions count is 0" {
+        Mock Can-Use-Cache { return $false }
+        Mock Get-OrUpdateCache -ParameterFilter { $cacheFileName -eq 'available_extensions' } { return @{} }
+        Mock Write-Host {}
+        $code = List-PHP-Extensions -iniPath $testIniPath -available $true
+        $code | Should -Be -1
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            $Object -eq "`nNo extensions found"
+        }
+    }
+
+    It "Displays available extensions with long descriptions that require wrapping" {
+        Mock Can-Use-Cache { return $false }
+        Mock Get-OrUpdateCache -ParameterFilter { $cacheFileName -eq 'available_extensions' } {
+            return @{
+                TestCategory = @(
+                    @{ extName = 'verylongextensionnameone'; extCategory = 'TestCategory' },
+                    @{ extName = 'verylongextensionnametwo'; extCategory = 'TestCategory' },
+                    @{ extName = 'verylongextensionnamethree'; extCategory = 'TestCategory' },
+                    @{ extName = 'verylongextensionnamefour'; extCategory = 'TestCategory' },
+                    @{ extName = 'verylongextensionnamefive'; extCategory = 'TestCategory' }
+                )
+            }
+        }
+        # Mock $Host.UI.RawUI.WindowSize to trigger the maxDescLength < 100 condition
+        Mock -CommandName Get-Variable -ParameterFilter { $Name -eq 'Host' } -MockWith {
+            return @{ Value = @{
+                UI = @{
+                    RawUI = @{
+                        WindowSize = @{ Width = 50 }
+                    }
+                }
+            }}
+        }
+        $code = List-PHP-Extensions -iniPath $testIniPath -available $true
+        $code | Should -Be 0
+    }
+
+    It "Displays available extensions with very long word without spaces to trigger breakPos fallback" {
+        Mock Can-Use-Cache { return $false }
+        Mock Get-OrUpdateCache -ParameterFilter { $cacheFileName -eq 'available_extensions' } {
+            return @{
+                TestCategory = @(
+                    @{ extName = 'a' * 150; extCategory = 'TestCategory' }
+                )
+            }
+        }
+        $code = List-PHP-Extensions -iniPath $testIniPath -available $true
+        $code | Should -Be 0
+    }
+}
+
+Describe "Display-Installed-Extensions" {
+    It "Displays message when extensions array is empty" {
+        $extensions = @()
+        Display-Installed-Extensions -extensions $extensions
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            $Object -eq '  No extensions found matching the search term.'
+        }
+    }
+
+    It "Displays extensions when array is not empty" {
+        $extensions = @(
+            @{Extension = 'curl'; Enabled = $true}
+            @{Extension = 'opcache'; Enabled = $false}
+        )
+        Display-Installed-Extensions -extensions $extensions
+        Assert-MockCalled Write-Host -Times 2
+    }
 }
 
 Describe "Install-XDebug-Extension" {

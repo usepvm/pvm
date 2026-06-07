@@ -31,10 +31,7 @@ function Uninstall-PHP {
 
         return @{ code = 0; message = "PHP version $($pathVersionObject.version) has been uninstalled successfully"; color = 'DarkGreen' }
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to uninstall PHP version '$version'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to uninstall PHP version '$version'"; exception = $_ }
         return @{ code = -1; message = "Failed to uninstall PHP version '$version'"; color = 'DarkYellow' }
     }
 }

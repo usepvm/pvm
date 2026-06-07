@@ -42,10 +42,7 @@ function Is-PVM-Setup {
 
         return $true
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to check if PVM is set up"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PVM is set up"; exception = $_ }
         return $false
     }
 }
@@ -57,10 +54,7 @@ function Refresh-Installed-PHP-Versions-Cache {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to refresh installed PHP versions cache"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to refresh installed PHP versions cache"; exception = $_ }
 
         return -1
     }
@@ -107,10 +101,7 @@ function Get-Installed-PHP-Versions {
 
         return $installedVersions
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve installed PHP versions"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve installed PHP versions"; exception = $_ }
         return @()
     }
 }
@@ -166,10 +157,7 @@ function Get-Matching-PHP-Versions {
 
         return $matchingVersions
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
     }
 
     return $null
@@ -186,10 +174,7 @@ function Is-PHP-Version-Installed {
             $_.BuildType -eq $version.BuildType
         })
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
     }
 
     return $false

@@ -105,10 +105,7 @@ function Run-Test-File {
 
         return @{ code = 0; Name = $file.Name; Message = $message; testResultData = $testResultData }
     } catch {
-        $logged = Log-Data -data @{
-            header    = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"; exception = $_ }
         return @{ code = -1; Name = $file.Name; Message = 'Failed to run test, check log.'; testResultData = $testResultData }
     }
 }
@@ -196,10 +193,7 @@ function Run-Tests {
         }
         return $code
     } catch {
-        $logged = Log-Data -data @{
-            header    = "$($MyInvocation.MyCommand.Name) - Failed to run tests"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
         Write-Host "`nFailed to run tests, check log: $LOG_ERROR_PATH" -ForegroundColor DarkYellow
 
         return -1

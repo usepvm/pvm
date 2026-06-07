@@ -62,10 +62,7 @@ function Get-XDebug-FROM-URL {
 
         return $formattedList
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to fetch xdebug versions from $url"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch xdebug versions from $url"; exception = $_ }
         return @()
     }
 
@@ -233,10 +230,7 @@ function Get-Packages-From-Source-Links {
                 }
             }
         } catch {
-            $logged = Log-Data -data @{
-                header = "$($MyInvocation.MyCommand.Name) - Failed to find packages for $extName v$extVersion"
-                exception = $_
-            }
+            $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to find packages for $extName v$extVersion"; exception = $_ }
         }
     }
 
@@ -308,10 +302,7 @@ function Add-Missing-PHPExtension-To-Ini {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to add extension '$extFileName'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to add extension '$extFileName'"; exception = $_ }
         return -1
     }
 
@@ -469,10 +460,7 @@ function Restore-IniBackup {
         Write-Host "`nRestored php.ini from backup: $backupPath"
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Restore-IniBackup: Failed to restore ini backup"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Restore-IniBackup: Failed to restore ini backup"; exception = $_ }
         Write-Host "`nFailed to restore backup: $($_.Exception.Message)"
         return -1
     }
@@ -488,10 +476,7 @@ function Backup-IniFile {
             Copy-Item $iniPath $backup
         }
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to backup ini file"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to backup ini file"; exception = $_ }
         return -1
     }
 }
@@ -542,10 +527,7 @@ function Get-IniSetting {
         }
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to get ini setting '$key'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get ini setting '$key'"; exception = $_ }
         return -1
     }
 }
@@ -646,10 +628,7 @@ function Set-IniSetting {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to set ini setting '$key'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set ini setting '$key'"; exception = $_ }
         return -1
     }
 }
@@ -735,10 +714,7 @@ function Enable-IniExtension {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to enable extension '$extName'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable extension '$extName'"; exception = $_ }
         return -1
     }
 }
@@ -824,10 +800,7 @@ function Disable-IniExtension {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to disable extension '$extName'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to disable extension '$extName'"; exception = $_ }
         return -1
     }
 }
@@ -858,10 +831,7 @@ function Get-IniExtensionStatus {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to check status for '$extName'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check status for '$extName'"; exception = $_ }
         return -1
     }
 }
@@ -1160,10 +1130,7 @@ function Install-XDebug-Extension {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to install extension 'xdebug'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install extension 'xdebug'"; exception = $_ }
         return -1
     }
 }
@@ -1304,10 +1271,7 @@ function Install-Extension {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to install extension '$extName'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install extension '$extName'"; exception = $_ }
         return -1
     }
 }
@@ -1329,10 +1293,7 @@ function Install-IniExtension {
 
         return $code
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to install '$extName'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install '$extName'"; exception = $_ }
         return -1
     }
 }
@@ -1404,10 +1365,7 @@ function Get-PHPExtensions-From-Source {
 
         return $availableExtensions
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"; exception = $_ }
         return @{}
     }
 }
@@ -1527,10 +1485,7 @@ function List-PHP-Extensions {
         return 0
     } catch {
         Write-Host "`nFailed to list extensions"
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"; exception = $_ }
         return -1
     }
 }
@@ -1641,10 +1596,7 @@ function Invoke-PVMIniAction {
 
         return $exitCode
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to invoke ini action '$action'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to invoke ini action '$action'"; exception = $_ }
         Write-Host "`nFailed to perform action '$action' on ini settings." -ForegroundColor Red
         return -1
     }

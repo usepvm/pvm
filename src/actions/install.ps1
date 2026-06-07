@@ -47,10 +47,7 @@ function Get-Latest-PHP-Version {
 
         return $latest
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to get latest PHP version"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get latest PHP version"; exception = $_ }
         return $null
     }
 }
@@ -85,10 +82,7 @@ function Get-PHP-Versions-From-Url {
 
         return $formattedList
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to fetch versions from $url"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch versions from $url"; exception = $_ }
         return @()
     }
 }
@@ -126,10 +120,7 @@ function Get-PHP-Versions {
 
         return $fetchedVersions
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP versions"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP versions"; exception = $_ }
         return @{}
     }
 }
@@ -145,10 +136,7 @@ function Download-PHP-From-Url {
         Invoke-WebRequest -Uri $url -OutFile "$destination\$fileName"
         return $destination
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP from $url"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP from $url"; exception = $_ }
         return $null
     }
 }
@@ -183,10 +171,7 @@ function Download-PHP {
             }
         }
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP version $($versionObject.version)"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP version $($versionObject.version)"; exception = $_ }
     }
     return $null
 }
@@ -198,10 +183,7 @@ function Extract-Zip {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to extract zip file from $zipPath"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to extract zip file from $zipPath"; exception = $_ }
     }
 }
 
@@ -225,10 +207,7 @@ function Extract-And-Configure {
         }
         Remove-Item -Path $path
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to extract and configure PHP from $path"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to extract and configure PHP from $path"; exception = $_ }
     }
 }
 
@@ -256,10 +235,7 @@ function Configure-Opcache {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to enable opcache for PHP at $phpPath"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable opcache for PHP at $phpPath"; exception = $_ }
         Write-Host "`nFailed to enable opcache for PHP version $version"
         return -1
     }
@@ -406,10 +382,7 @@ function Install-PHP {
 
         return @{ code = 0; message = $message; color = 'DarkGreen' }
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to install PHP version $version"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install PHP version $version"; exception = $_ }
         return @{ code = -1; message = "Failed to install PHP version $version"; color = 'DarkYellow' }
     }
 }

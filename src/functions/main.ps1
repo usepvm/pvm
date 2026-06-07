@@ -87,10 +87,7 @@ function Start-PVM {
 
         return $($actions[$operation].action.Invoke())
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - An error occurred during operation '$operation'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during operation '$operation'"; exception = $_ }
         Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
         return -1
     }

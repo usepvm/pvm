@@ -17,10 +17,7 @@ function Can-Use-Cache {
 
         return $useCache
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"; exception = $_ }
 
         return $false
     }
@@ -33,10 +30,7 @@ function Get-Data-From-Cache {
         $jsonData = Get-Content "$CACHE_PATH\$cacheFileName.json" | ConvertFrom-Json
         return $jsonData
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"; exception = $_ }
         return @{}
     }
 }
@@ -55,10 +49,7 @@ function Cache-Data {
         Set-Content -Path $path -Value $jsonString
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to cache data"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to cache data"; exception = $_ }
         return -1
     }
 }
@@ -93,10 +84,7 @@ function Get-All-Subdirectories {
         $path = $path.Trim()
         return Get-ChildItem -Path $path -Directory
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to get all subdirectories of '$path'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get all subdirectories of '$path'"; exception = $_ }
         return $null
     }
 }
@@ -106,10 +94,7 @@ function Get-All-EnvVars {
     try {
         return [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to get all environment variables"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get all environment variables"; exception = $_ }
         return $null
     }
 }
@@ -130,10 +115,7 @@ function Get-EnvVar-ByName {
 
         return $value
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to get environment variable '$name'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get environment variable '$name'"; exception = $_ }
         return $null
     }
 }
@@ -156,10 +138,7 @@ function Set-EnvVar {
         [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine)
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to set environment variable '$name'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set environment variable '$name'"; exception = $_ }
         return -1
     }
 }
@@ -207,10 +186,7 @@ function Make-Symbolic-Link {
         New-Item -ItemType SymbolicLink -Path $link -Target $target | Out-Null
         return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = 'DarkGreen' }
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to make symbolic link"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to make symbolic link"; exception = $_ }
         return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = 'DarkYellow' }
     }
 }
@@ -328,10 +304,7 @@ function Display-Msg-By-ExitCode {
             Write-Host "`n$($result.message)" -ForegroundColor $result.color
         }
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
     }
 }
 
@@ -389,10 +362,7 @@ function Optimize-SystemPath {
 
         return $output
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to optimize system PATH variable"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to optimize system PATH variable"; exception = $_ }
         return -1
     }
 }
@@ -459,10 +429,7 @@ function Format-Seconds {
 
         return '{0:D2}:{1:D2}' -f $minutes, $seconds
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to format seconds"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to format seconds"; exception = $_ }
         return -1
     }
 }

@@ -259,10 +259,7 @@ function Save-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to save profile '$profileName'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to save profile '$profileName'"; exception = $_ }
         Write-Host "`nFailed to save profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -376,10 +373,7 @@ function Load-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to load profile '$profileName'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to load profile '$profileName'"; exception = $_ }
         Write-Host "`nFailed to load profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -436,10 +430,7 @@ function List-PHP-Profiles {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to list profiles"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list profiles"; exception = $_ }
         Write-Host "`nFailed to list profiles: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -504,10 +495,7 @@ function Show-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to show profile '$profileName'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show profile '$profileName'"; exception = $_ }
         Write-Host "`nFailed to show profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -537,10 +525,7 @@ function Delete-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to delete profile '$profileName'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete profile '$profileName'"; exception = $_ }
         Write-Host "`nFailed to delete profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -566,10 +551,7 @@ function Export-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to export profile '$profileName'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to export profile '$profileName'"; exception = $_ }
         Write-Host "`nFailed to export profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -621,10 +603,7 @@ function Import-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{
-            header = "$($MyInvocation.MyCommand.Name) - Failed to import profile from '$importPath'"
-            exception = $_
-        }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to import profile from '$importPath'"; exception = $_ }
         Write-Host "`nFailed to import profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }

@@ -145,7 +145,7 @@ function Get-UserSelected-PHP-Version {
             Write-Host " [$index] $versionNumber $metaData $isCurrent"
             $index++
         }
-        $response = Read-Host "`nInsert the [number] matching the version to uninstall (or press Enter to cancel)"
+        $response = Read-Host "`nInsert the [number] of the version you want to use (or press Enter to cancel)"
         $response = $response.Trim()
         if (-not $response) {
             return @{ code = -1; message = 'Operation cancelled.'; color = 'DarkYellow'}

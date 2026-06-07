@@ -140,6 +140,53 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
         $result | Should -Be 0
     }
 
+    It "pages back with LeftArrow during paging and returns 0" {
+        Mock Clear-Host {}
+
+        Set-Variable -Name logNavigationKeys -Scope Script -Value @(
+            @{ Key = 'LeftArrow' },
+            @{ Key = 'Q' }
+        )
+        Set-Variable -Name logNavigationIndex -Scope Script -Value 0
+        Mock Get-ConsoleKey { $script:logNavigationKeys[$script:logNavigationIndex++] }
+
+        $result = Show-Log -pageSize 1
+
+        $result | Should -Be 0
+    }
+
+    It "pages back with an unknown key and returns 0" {
+        Mock Clear-Host {}
+
+        Set-Variable -Name logNavigationKeys -Scope Script -Value @(
+            @{ Key = 'A' },
+            @{ Key = 'Q' }
+        )
+        Set-Variable -Name logNavigationIndex -Scope Script -Value 0
+        Mock Get-ConsoleKey { $script:logNavigationKeys[$script:logNavigationIndex++] }
+
+        $result = Show-Log -pageSize 1
+
+        $result | Should -Be 0
+    }
+
+    It "navigates back from end-of-log then exits naturally" {
+        Mock Clear-Host {}
+
+        Set-Variable -Name logNavigationKeys -Scope Script -Value @(
+            @{ Key = 'RightArrow' },
+            @{ Key = 'LeftArrow' },
+            @{ Key = 'Enter' },
+            @{ Key = 'A' }
+        )
+        Set-Variable -Name logNavigationIndex -Scope Script -Value 0
+        Mock Get-ConsoleKey { $script:logNavigationKeys[$script:logNavigationIndex++] }
+
+        $result = Show-Log -pageSize 1
+
+        $result | Should -Be 0
+    }
+
     It "returns -1 if no entries found" {
         '' | Set-Content $LOG_ERROR_PATH
 

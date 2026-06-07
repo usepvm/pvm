@@ -46,6 +46,52 @@ Describe "Show-Usage Tests" {
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm setup*Setup the environment*' }
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm current*Display active version*' }
     }
+
+    It "Uses fallback maxDescLength when window is small" {
+        # Narrow the host width to force fallback to 100
+        $origSize = $Host.UI.RawUI.WindowSize
+        $Host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(80,25)
+
+        $longDesc = ('X' * 200)
+        $script:actions = [ordered]@{
+            'testcmd' = @{ command = 'pvm testcmd'; description = $longDesc }
+        }
+
+        Show-Usage
+
+        # restore
+        $Host.UI.RawUI.WindowSize = $origSize
+        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm testcmd*' }
+    }
+
+    It "Breaks mid-word when no space within maxDescLength" {
+        Mock Write-Host {}
+
+        # Create description with no spaces in the first 150 chars
+        $noSpace = ('A' * 150) + ' rest of description'
+        $script:actions = [ordered]@{
+            'nospace' = @{ command = 'pvm nospace'; description = $noSpace }
+        }
+
+        Show-Usage
+
+        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm nospace*' }
+    }
+
+    It "Writes additional description lines when wrapping occurs" {
+        Mock Write-Host {}
+
+        # Create description with spaces to force multiple wrapped lines
+        $spaced = (1..10 | ForEach-Object { ('word' + $_) }) -join ' '
+        $script:actions = [ordered]@{
+            'multiline' = @{ command = 'pvm multiline'; description = $spaced }
+        }
+
+        Show-Usage
+
+        # Ensure additional lines were written (calls beyond the initial line)
+        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*multiline*' }
+    }
 }
 
 

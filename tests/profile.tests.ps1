@@ -60,6 +60,21 @@ Describe "Set-IniSetting-Direct Tests" {
         $result | Should -Be 0
         (Get-Content 'TestDrive:\\test.ini') | Should -Be ';setting1 = newvalue'
     }
+
+    It "Should add new disabled setting at end when not exists" {
+        $result = Set-IniSetting-Direct -iniPath 'TestDrive:\\test.ini' -settingName 'newsetting' -value 'newvalue' -enabled $false
+        $result | Should -Be 0
+        $content = (Get-Content 'TestDrive:\\test.ini')
+        $content | Should -Contain 'setting1 = value1'
+        $content | Should -Contain ';newsetting = newvalue'
+    }
+
+    It "Should return -1 on exception in Set-IniSetting-Direct" {
+        Mock Get-Content { throw 'File read error' }
+
+        $result = Set-IniSetting-Direct -iniPath 'TestDrive:\\test.ini' -settingName 'setting1' -value 'value'
+        $result | Should -Be -1
+    }
 }
 
 Describe "Enable/Disable-IniExtension-Direct Tests" {
@@ -81,6 +96,68 @@ Describe "Enable/Disable-IniExtension-Direct Tests" {
         $result = Disable-IniExtension-Direct -iniPath 'TestDrive:\\extensions.ini' -extName 'opcache' -extType 'zend_extension'
         $result | Should -Be 0
         (Get-Content 'TestDrive:\\extensions.ini') | Should -Contain ';zend_extension=php_opcache.dll'
+    }
+
+    It "Should enable a commented zend_extension" {
+        $testIniPath = 'TestDrive:\\extensions2.ini'
+        @(
+            ';zend_extension=php_opcache.dll',
+            'extension=php_curl.dll'
+        ) | Set-Content -Path $testIniPath
+
+        $result = Enable-IniExtension-Direct -iniPath $testIniPath -extName 'opcache' -extType 'zend_extension'
+        $result | Should -Be 0
+        (Get-Content $testIniPath) | Should -Contain 'zend_extension=php_opcache.dll'
+        (Get-Content $testIniPath) | Should -Not -Contain ';zend_extension=php_opcache.dll'
+    }
+
+    It "Should add new zend_extension when it doesn't exist" {
+        $testIniPath = 'TestDrive:\\extensions3.ini'
+        @(
+            'extension=php_curl.dll'
+        ) | Set-Content -Path $testIniPath
+
+        $result = Enable-IniExtension-Direct -iniPath $testIniPath -extName 'xdebug' -extType 'zend_extension'
+        $result | Should -Be 0
+        (Get-Content $testIniPath) | Should -Contain 'zend_extension=php_xdebug.dll'
+    }
+
+    It "Should add new regular extension when it doesn't exist" {
+        $testIniPath = 'TestDrive:\\extensions4.ini'
+        @(
+            'extension=php_curl.dll'
+        ) | Set-Content -Path $testIniPath
+
+        $result = Enable-IniExtension-Direct -iniPath $testIniPath -extName 'gd'
+        $result | Should -Be 0
+        (Get-Content $testIniPath) | Should -Contain 'extension=php_gd.dll'
+    }
+
+    It "Should handle exception and return -1" {
+        Mock Get-Content { throw 'File read error' }
+
+        $result = Enable-IniExtension-Direct -iniPath 'TestDrive:\\extensions.ini' -extName 'curl'
+        $result | Should -Be -1
+    }
+
+    It "Should disable an enabled regular extension" {
+        $testIniPath = 'TestDrive:\\extensions5.ini'
+        @(
+            'extension=php_curl.dll',
+            'extension=php_gd.dll'
+        ) | Set-Content -Path $testIniPath
+
+        $result = Disable-IniExtension-Direct -iniPath $testIniPath -extName 'curl'
+        $result | Should -Be 0
+        (Get-Content $testIniPath) | Should -Contain ';extension=php_curl.dll'
+        (Get-Content $testIniPath) | Should -Contain 'extension=php_gd.dll'
+    }
+
+    It "Should return -1 on exception in Disable-IniExtension-Direct" {
+        Mock Get-Content { throw 'File read error' }
+
+        $result = Disable-IniExtension-Direct -iniPath 'TestDrive:\\extensions.ini' -extName 'curl'
+        $result | Should -Be -1
     }
 }
 
@@ -165,6 +242,13 @@ Describe "Save-PHP-Profile Tests" {
 
     It "Should handle errors when PHP version cannot be determined" {
         Mock Get-Current-PHP-Version { return $null }
+
+        $result = Save-PHP-Profile -profileName 'testprofile'
+        $result | Should -Be -1
+    }
+
+    It "Should handle exceptions gracefully when PHP version cannot be determined" {
+        Mock Get-Current-PHP-Version { throw 'Failed to determine PHP version' }
 
         $result = Save-PHP-Profile -profileName 'testprofile'
         $result | Should -Be -1
@@ -281,6 +365,37 @@ Describe "Load-PHP-Profile Tests" {
         $result = Load-PHP-Profile -profileName 'nonexistent'
         $result | Should -Be -1
     }
+
+    It "Should handle exceptions gracefully when PHP version cannot be determined" {
+        Mock Get-Current-PHP-Version { throw 'Failed to determine PHP version' }
+
+        $result = Load-PHP-Profile -profileName 'testprofile'
+        $result | Should -Be -1
+    }
+
+    It "Should default extension type to 'extension' when type is not specified" {
+        # Create test profile with extension missing 'type' property
+        $testProfileNoType = @{
+            name = 'notypefile'
+            description = 'Profile without type'
+            created = '2023-01-01T00:00:00Z'
+            phpVersion = '8.2.0'
+            settings = @{}
+            extensions = @{
+                curl = @{ enabled = $true }
+            }
+        }
+
+        New-Item -ItemType Directory -Force -Path $global:PROFILES_PATH | Out-Null
+        $testProfileNoType | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\notypefile.json"
+
+        $result = Load-PHP-Profile -profileName 'notypefile'
+        $result | Should -Be 0
+
+        Assert-MockCalled Enable-IniExtension-Direct -ParameterFilter {
+            $extName -eq 'curl' -and $extType -eq 'extension'
+        } -Exactly 1
+    }
 }
 
 Describe "List-PHP-Profiles Tests" {
@@ -331,6 +446,44 @@ Describe "List-PHP-Profiles Tests" {
         Remove-Item "$global:PROFILES_PATH\*" -Force
 
         $result = List-PHP-Profiles
+        $result | Should -Be -1
+    }
+
+    It "Should handle exceptions gracefully when profile content cannot be read" {
+        Mock Get-ChildItem {
+            return @(
+                @{ Name = 'profile1.json'; FullName = "$global:PROFILES_PATH\profile1.json" }
+                @{ Name = 'profile2.json'; FullName = "$global:PROFILES_PATH\profile2.json" }
+            )
+        }
+        Mock Get-Content { throw 'Error' }
+
+        $result = List-PHP-Profiles -profileName 'testprofile'
+        $result | Should -Be 0
+    }
+
+    It "Should fallback to count 0 when settings or extensions cannot be parsed" -tag ii {
+        Mock Get-ChildItem {
+            return @(
+                @{ Name = 'profile1.json'; FullName = "$global:PROFILES_PATH\profile1.json" }
+                @{ Name = 'profile2.json'; FullName = "$global:PROFILES_PATH\profile2.json" }
+            )
+        }
+        Mock Get-Content -ParameterFilter {$Path -eq "$global:PROFILES_PATH\profile1.json"} -MockWith {
+            return '{}'
+        }
+        Mock Get-Content -ParameterFilter {$Path -eq "$global:PROFILES_PATH\profile2.json"} -MockWith {
+            throw 'Error'
+        }
+
+        $result = List-PHP-Profiles -profileName 'testprofile'
+        $result | Should -Be 0
+    }
+
+    It "Should handle exceptions gracefully when profiles cannot be listed" {
+        Mock Get-ChildItem { throw 'Error' }
+
+        $result = List-PHP-Profiles -profileName 'testprofile'
         $result | Should -Be -1
     }
 }

@@ -524,7 +524,7 @@ function Is-Two-PHP-Versions-Equal {
 function Get-Zend-Extensions-List {
     $envConfig = Get-EnvConfig -rootPath $PVMRoot
     $extensions = $envConfig['ZEND_EXTENSIONS_LIST'] -split ','
-    
+
     return $extensions
 }
 

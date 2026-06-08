@@ -27,19 +27,27 @@ Describe "Get-Source-Urls" {
 
 Describe "Is-PVM-Setup" {
     BeforeAll {
-        $global:PHP_CURRENT_VERSION_PATH = 'C:\php\8.1'
-        $global:PVMRoot = 'C:\PVM'
+        $script:originalPVMRoot = $global:PVMRoot
+        $script:originalPHPCurrentVersionPath = $global:PHP_CURRENT_VERSION_PATH
+        $global:PVMRoot = 'TestDrive:\pvm'
+        $global:PHP_CURRENT_VERSION_PATH = 'TestDrive:\pvm\php'
+        New-Item -ItemType Directory -Path $global:PVMRoot -Force | Out-Null
+    }
+
+    AfterAll {
+        $global:PVMRoot = $script:originalPVMRoot
+        $global:PHP_CURRENT_VERSION_PATH = $script:originalPHPCurrentVersionPath
     }
 
     Context "When PVM is properly set up" {
         It "Should return true when all environment variables are correctly configured" {
             Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return 'C:\pvm;C:\php\8.1'
+                return "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
             }
             Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'Path' } -MockWith {
-                return 'C:\other\paths;%PVM%;C:\other2\paths'
+                return "C:\other\paths;%$PVM_ENV_VAR_NAME%;C:\other2\paths"
             }
-            Mock Test-Path { return $true}
+            Mock Is-Directory-Not-Exists { return $false }
 
             $result = Is-PVM-Setup
             $result | Should -Be $true
@@ -47,12 +55,12 @@ Describe "Is-PVM-Setup" {
 
         It "Should return true when pvm is in path with different casing" {
             Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return 'C:\PVM;C:\php\8.1'
+                return "$($PVMRoot.ToLower());$($PHP_CURRENT_VERSION_PATH.ToLower())"
             }
             Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'Path' } -MockWith {
-                return 'C:\other\paths;%PVM%;C:\other2\paths'
+                return "C:\other\paths;%$PVM_ENV_VAR_NAME%;C:\other2\paths"
             }
-            Mock Test-Path { return $true}
+            Mock Is-Directory-Not-Exists { return $false }
 
             $result = Is-PVM-Setup
             $result | Should -Be $true
@@ -67,10 +75,10 @@ Describe "Is-PVM-Setup" {
 
         It "Should return false when the path var is null" {
             Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return 'C:\PVM;C:\php\8.1'
+                return "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
             }
             Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'Path' } -MockWith { return $null }
-            Mock Test-Path { return $true}
+            Mock Is-Directory-Not-Exists { return $false }
 
             $result = Is-PVM-Setup
             $result | Should -Be $false
@@ -80,7 +88,7 @@ Describe "Is-PVM-Setup" {
     Context "When PVM is not properly set up" {
         It "Should return false when pvm is not in PATH" {
             Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return 'C:\php\8.1'
+                return $PHP_CURRENT_VERSION_PATH
             }
 
             $result = Is-PVM-Setup
@@ -89,7 +97,7 @@ Describe "Is-PVM-Setup" {
 
         It "Should return false when PHP value is not in PATH" {
             Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return 'C:\pvm'
+                return $PVMRoot
             }
 
             $result = Is-PVM-Setup

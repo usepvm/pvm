@@ -47,6 +47,10 @@ jobs:
         Write-Host "Pester version: $($pesterVersion.Version)" -ForegroundColor Green
       shell: pwsh
       
+    - name: Copy .env.example
+      run:
+        Copy-Item -Path .env.example -Destination .env
+      
     - name: Setup PVM
       run: |
         Write-Host "Setting up PVM..." -ForegroundColor Yellow

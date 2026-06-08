@@ -83,6 +83,7 @@ Describe "Add-Missing-PHPExtension-To-Ini" {
     BeforeEach {
         Reset-Ini-Content
         Remove-Item $testBackupPath -ErrorAction SilentlyContinue
+        Mock Get-Zend-Extensions-List { return @('xdebug', 'opcache') }
     }
 
     It "Returns -1 when current PHP version is null" {
@@ -1190,6 +1191,7 @@ Describe "Get-Matching-PHPExtensionsStatus" {
     BeforeEach {
         Reset-Ini-Content
         Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
+        Mock Get-Zend-Extensions-List { return @('xdebug', 'opcache') }
     }
 
     It "Returns empty when ext directory missing" {

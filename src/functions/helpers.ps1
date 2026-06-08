@@ -1,8 +1,4 @@
 ﻿
-function Get-Zend-Extensions-List {
-    return @('xdebug', 'opcache')
-}
-
 function Can-Use-Cache {
     param ($cacheFileName)
 
@@ -523,6 +519,13 @@ function Is-Two-PHP-Versions-Equal {
     return (($version1.version -eq $version2.version) -and
             ($version1.arch -eq $version2.arch) -and
             ($version1.buildType -eq $version2.buildType))
+}
+
+function Get-Zend-Extensions-List {
+    $envConfig = Get-EnvConfig -rootPath $PVMRoot
+    $extensions = $envConfig['ZEND_EXTENSIONS_LIST'] -split ','
+    
+    return $extensions
 }
 
 function Get-EnvConfig {

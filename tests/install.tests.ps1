@@ -4,7 +4,6 @@ BeforeAll {
     # Global test variables
     $global:LOG_ERROR_PATH = 'TestDrive:\error.log'
     $global:STORAGE_PATH = 'TestDrive:\storage'
-    $global:PVMRoot = 'TestDrive:\pvm'
 
     # Mock registry for testing environment variables
     $global:MockRegistry = @{

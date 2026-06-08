@@ -1477,6 +1477,14 @@ Describe "Run-Ps-Command" {
     }
 }
 
+Describe "Get-Zend-Extensions-List" {
+    It "Returns the zend_extensions.json content as a hashtable" {
+        Mock Get-EnvConfig { return @{ ZEND_EXTENSIONS_LIST = 'a,b' } }
+        $result = Get-Zend-Extensions-List
+        $result.Count | Should -Be 2
+    }
+}
+
 Describe "Get-EnvConfig" {
     BeforeEach {
         $script:envRoot = 'TestDrive:\envconfig'

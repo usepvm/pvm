@@ -4,7 +4,7 @@ Describe "Setup-PVM" {
         Mock Write-Host {}
         # Mock global variables that the function depends on
         $global:PHP_CURRENT_VERSION_PATH = 'C:\php\8.2'
-        $global:PVMRoot = 'C:\PVM'
+        $global:PVMRoot = 'TestDrive:\PVM'
         $global:PVM_ENV_VAR_NAME = 'PVM'
         $global:LOG_ERROR_PATH = 'TestDrive:\logs\error.log'
 

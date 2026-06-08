@@ -675,6 +675,24 @@ Describe "Optimize-SystemPath" {
             Test-Path $LOG_ERROR_PATH | Should -Be $true
             Get-Content $LOG_ERROR_PATH -Raw | Should -Match 'Optimize-SystemPath - Failed to optimize system PATH variable'
         }
+
+        It "Sets Path variable successfully after optimization" {
+            Mock Get-EnvVar-ByName { return 'C:\Test1;C:\Test2;%var1%;C:\Windows\System32;%var1%' }
+            Mock Set-EnvVar { return 0 }
+
+            $result = Optimize-SystemPath
+
+            $result | Should -Be 0
+        }
+
+        It "Handles missing Path variable gracefully" {
+            Mock Get-EnvVar-ByName { return $null }
+            Mock Remove-PathDuplicates { return '' }
+
+            $result = Optimize-SystemPath
+
+            $result | Should -Be 0
+        }
     }
 }
 

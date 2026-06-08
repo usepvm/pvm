@@ -462,7 +462,7 @@ Describe "List-PHP-Profiles Tests" {
         $result | Should -Be 0
     }
 
-    It "Should fallback to count 0 when settings or extensions cannot be parsed" -tag ii {
+    It "Should fallback to count 0 when settings or extensions cannot be parsed" {
         Mock Get-ChildItem {
             return @(
                 @{ Name = 'profile1.json'; FullName = "$global:PROFILES_PATH\profile1.json" }

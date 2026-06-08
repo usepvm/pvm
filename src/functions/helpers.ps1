@@ -27,7 +27,7 @@ function Get-Data-From-Cache {
     param ($cacheFileName)
 
     try {
-        $jsonData = Get-Content "$CACHE_PATH\$cacheFileName.json" | ConvertFrom-Json
+        $jsonData = Get-Content "$CACHE_PATH\$cacheFileName.json" -Raw | ConvertFrom-Json
         return $jsonData
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"; exception = $_ }

@@ -333,6 +333,50 @@ Describe "Get-Latest-PHP-Version Tests" {
 
         $result | Should -BeNullOrEmpty
     }
+
+    It "Should read from cache if available" {
+        Mock Get-OrUpdateCache {
+            return @(
+                @{version = '5.6'; arch = 'x64'; buildType = 'nts'}
+                @{version = '5.6'; arch = 'x86'; buildType = 'nts'}
+                @{version = '7.4'; arch = 'x64'; buildType = 'nts'}
+                @{version = '8.0'; arch = 'x64'; buildType = 'nts'}
+                @{version = '8.0'; arch = 'x86'; buildType = 'nts'}
+            )
+        }
+
+        $result = Get-Latest-PHP-Version
+
+        $result.version | Should -Be '8.0'
+        $result.arch | Should -Be 'x64'
+        $result.BuildType | Should -Be 'nts'
+    }
+
+    It "Should read from source if cache is empty" {
+        Mock Get-Data-From-Cache { return @() }
+
+        $mockLinks = @(
+            @{ href = '/downloads/releases/php-8.3.0-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-8.3.1-nts-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-8.3.2-Win32-vs16-x86.zip' },
+            @{ href = '/downloads/releases/php-8.3.3-nts-Win32-vs16-x86.zip' }
+        )
+
+        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
+        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
+
+        $result = Get-Latest-PHP-Version
+
+        $result | Should -Not -BeNullOrEmpty
+    }
+
+    It "Should return empty array when exceptions occur" {
+        Mock Get-OrUpdateCache { throw 'Test exception' }
+
+        $result = Get-Latest-PHP-Version
+
+        $result | Should -BeNullOrEmpty
+    }
 }
 
 Describe "Get-PHP-Versions-From-Url Tests" {

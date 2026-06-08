@@ -3,47 +3,51 @@ function Get-Latest-PHP-Version {
     param ($arch = $null, $buildType = $null)
 
     try {
-        $urls = Get-Source-Urls
-        $allVersions = @()
+        $versionsList = Get-OrUpdateCache -cacheFileName 'latest_php_versions' -compute {
+            $urls = Get-Source-Urls
+            $allVersions = @()
 
-        foreach ($key in $urls.Keys) {
-            $url = $urls[$key]
-            try {
-                $html = Invoke-WebRequest -Uri $url
-                $links = $html.Links
+            foreach ($key in $urls.Keys) {
+                $url = $urls[$key]
+                try {
+                    $html = Invoke-WebRequest -Uri $url
+                    $links = $html.Links
 
-                $filteredLinks = $links | Where-Object {
-                    $_.href -match 'php-\d+(\.\d+)*-(?:nts-)?win.*\.zip$' -and
-                    $_.href -notmatch 'php-debug' -and
-                    $_.href -notmatch 'php-devel'
-                }
-
-                $filteredLinks | ForEach-Object {
-                    $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
-                    $fileName = $_.href -split '/'
-                    $fileName = $fileName[$fileName.Count - 1]
-                    $allVersions += @{
-                        href = $_.href
-                        version = $version
-                        fileName = $fileName
-                        BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
-                        arch = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                    $filteredLinks = $links | Where-Object {
+                        $_.href -match 'php-\d+(\.\d+)*-(?:nts-)?win.*\.zip$' -and
+                        $_.href -notmatch 'php-debug' -and
+                        $_.href -notmatch 'php-devel'
                     }
+
+                    $filteredLinks | ForEach-Object {
+                        $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
+                        $fileName = $_.href -split '/'
+                        $fileName = $fileName[$fileName.Count - 1]
+                        $allVersions += @{
+                            href = $_.href
+                            version = $version
+                            fileName = $fileName
+                            BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
+                            arch = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                        }
+                    }
+                } catch {
+                    continue
                 }
-            } catch {
-                continue
             }
+
+            return $allVersions
         }
 
         if ($arch) {
-            $allVersions = $allVersions | Where-Object { $_.arch -eq $arch }
+            $versionsList = $versionsList | Where-Object { $_.arch -eq $arch }
         }
         if ($buildType) {
-            $allVersions = $allVersions | Where-Object { $_.BuildType -eq $buildType }
+            $versionsList = $versionsList | Where-Object { $_.BuildType -eq $buildType }
         }
 
         # Sort by version number (descending) and return the first one
-        $latest = $allVersions | Sort-Object { [version]$_.version } -Descending | Select-Object -First 1
+        $latest = $versionsList | Sort-Object { [version]$_.version } -Descending | Select-Object -First 1
 
         return $latest
     } catch {
@@ -243,7 +247,7 @@ function Select-Version {
 
     $matchingVersionsPartialList = [ordered]@{}
     $matchingVersions.GetEnumerator() | ForEach-Object {
-        $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $MIN_COUNT
+        $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $DEFAULT_PARTIAL_LIST_SIZE
     }
     $matchingKeys = $matchingVersions.Values | Where-Object { $_.Count -gt 0 }
 

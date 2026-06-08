@@ -1476,3 +1476,148 @@ Describe "Run-Ps-Command" {
         }
     }
 }
+
+Describe "Get-EnvConfig" {
+    BeforeEach {
+        $script:envRoot = 'TestDrive:\envconfig'
+        New-Item -ItemType Directory -Path $script:envRoot -Force | Out-Null
+    }
+
+    Context "When .env file is missing" {
+        It "Throws an error with the root path" {
+            $missingRoot = 'TestDrive:\envconfig_missing'
+
+            { Get-EnvConfig -rootPath $missingRoot } | Should -Throw ".env file not found in: $missingRoot"
+        }
+    }
+
+    Context "When .env file exists" {
+        It "Writes a verbose message with the env file path" {
+            Set-Content -Path "$envRoot\.env" -Value 'KEY=value'
+            Mock Write-Verbose {}
+
+            Get-EnvConfig -rootPath $envRoot -Verbose
+
+            Assert-MockCalled Write-Verbose -ParameterFilter {
+                $Message -eq "Using .env from: $envRoot\.env"
+            } -Times 1 -Exactly
+        }
+
+        It "Returns a hashtable of parsed key=value pairs" {
+            @'
+PHP_CURRENT_VERSION_PATH=C:\pvm\php
+CACHE_MAX_HOURS=168
+DEFAULT_LOG_PAGE_SIZE=5
+'@ | Set-Content -Path "$envRoot\.env"
+
+            $result = Get-EnvConfig -rootPath $envRoot
+
+            $result | Should -BeOfType [hashtable]
+            $result.Count | Should -Be 3
+            $result['PHP_CURRENT_VERSION_PATH'] | Should -Be 'C:\pvm\php'
+            $result['CACHE_MAX_HOURS'] | Should -Be '168'
+            $result['DEFAULT_LOG_PAGE_SIZE'] | Should -Be '5'
+        }
+
+        It "Skips empty lines and comment lines" {
+            @'
+
+# Top-level comment
+   # Indented comment
+
+KEY=value
+
+'@ | Set-Content -Path "$envRoot\.env"
+
+            $result = Get-EnvConfig -rootPath $envRoot
+
+            $result.Count | Should -Be 1
+            $result['KEY'] | Should -Be 'value'
+        }
+
+        It "Trims whitespace around keys and values" {
+            '  KEY  =  value  ' | Set-Content -Path "$envRoot\.env"
+
+            $result = Get-EnvConfig -rootPath $envRoot
+
+            $result['KEY'] | Should -Be 'value'
+        }
+
+        It "Removes matching double quotes from values" {
+            'QUOTED="hello world"' | Set-Content -Path "$envRoot\.env"
+
+            $result = Get-EnvConfig -rootPath $envRoot
+
+            $result['QUOTED'] | Should -Be 'hello world'
+        }
+
+        It "Removes matching single quotes from values" {
+            "QUOTED='hello world'" | Set-Content -Path "$envRoot\.env"
+
+            $result = Get-EnvConfig -rootPath $envRoot
+
+            $result['QUOTED'] | Should -Be 'hello world'
+        }
+
+        It "Keeps unquoted values unchanged" {
+            'PLAIN=hello world' | Set-Content -Path "$envRoot\.env"
+
+            $result = Get-EnvConfig -rootPath $envRoot
+
+            $result['PLAIN'] | Should -Be 'hello world'
+        }
+
+        It "Keeps values with mismatched or unclosed quotes unchanged" {
+            @'
+MISMATCHED="value'
+UNCLOSED="value
+'@ | Set-Content -Path "$envRoot\.env"
+
+            $result = Get-EnvConfig -rootPath $envRoot
+
+            $result['MISMATCHED'] | Should -Be '"value'''
+            $result['UNCLOSED'] | Should -Be '"value'
+        }
+
+        It "Ignores lines that are not key=value pairs" {
+            @'
+NOT_A_PAIR
+ALSO NOT VALID
+VALID=yes
+'@ | Set-Content -Path "$envRoot\.env"
+
+            $result = Get-EnvConfig -rootPath $envRoot
+
+            $result.Count | Should -Be 1
+            $result['VALID'] | Should -Be 'yes'
+        }
+
+        It "Parses empty values" {
+            'EMPTY=' | Set-Content -Path "$envRoot\.env"
+
+            $result = Get-EnvConfig -rootPath $envRoot
+
+            $result['EMPTY'] | Should -Be ''
+        }
+
+        It "Preserves inline comments as part of the value" {
+            'CACHE_MAX_HOURS=168 # Cached available versions expiration in hours' | Set-Content -Path "$envRoot\.env"
+
+            $result = Get-EnvConfig -rootPath $envRoot
+
+            $result['CACHE_MAX_HOURS'] | Should -Be '168 # Cached available versions expiration in hours'
+        }
+
+        It "Returns an empty hashtable when the file has only comments and blank lines" {
+            @'
+# comment only
+
+'@ | Set-Content -Path "$envRoot\.env"
+
+            $result = Get-EnvConfig -rootPath $envRoot
+
+            $result | Should -BeOfType [hashtable]
+            $result.Count | Should -Be 0
+        }
+    }
+}

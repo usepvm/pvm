@@ -87,7 +87,7 @@ function Get-Available-PHP-Versions {
                 $searchResult = $searchResult | Where-Object { $_.Version -like "$term*" }
             }
             if ($searchResult.Count -ne 0) {
-                $fetchedVersionsGroupedPartialList[$_.Name] = $searchResult | Select-Object -Last $MIN_COUNT
+                $fetchedVersionsGroupedPartialList[$_.Name] = $searchResult | Select-Object -Last $DEFAULT_PARTIAL_LIST_SIZE
             }
         }
 

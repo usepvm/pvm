@@ -9,6 +9,7 @@ Clone the repo and add the directory to your PATH variable.
 ```sh
 git clone https://github.com/drissboumlik/pvm
 cd pvm
+cp .env.example .env
 
 # Run this command to setup pvm
 pvm setup

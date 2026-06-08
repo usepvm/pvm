@@ -5,7 +5,6 @@ $Global:PVM_VERSION = '2.5'
 
 # Root path of the PVM script
 $Global:PVMRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
-$Global:PVMEntryPoint = "$PVMRoot\src\pvm.ps1"
 
 # Storage paths
 $Global:STORAGE_PATH = "$PVMRoot\storage"
@@ -18,12 +17,7 @@ $Global:CACHE_PATH = "$DATA_PATH\cache"
 $Global:PROFILES_PATH = "$DATA_PATH\profiles"
 
 # Environment variable names
-$Global:PATH_VAR_BACKUP_NAME = 'Path.bak'
-$Global:PHP_CURRENT_VERSION_PATH = 'C:\pvm\php'
 $Global:PVM_ENV_VAR_NAME = 'PVM'
-$Global:CACHE_MAX_HOURS = 168 # Cached available versions expiration in hours (default 1 week)
-$Global:DEFAULT_LOG_PAGE_SIZE = 5 # Default page size for log display
-$Global:MIN_COUNT = 10
 
 # Links
 $Global:XDEBUG_BASE_URL = 'http://xdebug.org'
@@ -36,3 +30,10 @@ $Global:PECL_BASE_URL = 'https://pecl.php.net'
 $Global:PECL_PACKAGE_ROOT_URL = "$PECL_BASE_URL/package"
 $Global:PECL_PACKAGES_URL = "$PECL_BASE_URL/packages.php"
 $Global:PECL_WIN_EXT_DOWNLOAD_URL = 'https://downloads.php.net/~windows/pecl/releases'
+
+$envConfig = Get-EnvConfig -rootPath $PVMRoot
+
+$Global:PHP_CURRENT_VERSION_PATH = $envConfig['PHP_CURRENT_VERSION_PATH']
+$Global:CACHE_MAX_HOURS = [int] $envConfig['CACHE_MAX_HOURS']
+$Global:DEFAULT_LOG_PAGE_SIZE = [int] $envConfig['DEFAULT_LOG_PAGE_SIZE']
+$Global:DEFAULT_PARTIAL_LIST_SIZE = [int] $envConfig['DEFAULT_PARTIAL_LIST_SIZE']

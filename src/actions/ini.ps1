@@ -1021,7 +1021,7 @@ function Install-XDebug-Extension {
         $xDebugListGrouped = [ordered]@{}
         $index = 0
         $xDebugList |
-            Select-Object -First $MIN_COUNT |
+            Select-Object -First $DEFAULT_PARTIAL_LIST_SIZE |
             Group-Object xDebugVersion |
             Sort-Object `
                 @{ Expression = {
@@ -1169,7 +1169,7 @@ function Install-Extension {
             $extensionLinksGrouped = [ordered]@{}
             $index = 0
             $extensionLinks |
-                Select-Object -First $MIN_COUNT |
+                Select-Object -First $DEFAULT_PARTIAL_LIST_SIZE |
                 Group-Object extVersion |
                 Sort-Object `
                     @{ Expression = {

@@ -16,9 +16,6 @@ $Global:PATH_VAR_BACKUP_PATH = "$STORAGE_PATH\logs\path.bak.log"
 $Global:CACHE_PATH = "$DATA_PATH\cache"
 $Global:PROFILES_PATH = "$DATA_PATH\profiles"
 
-# Environment variable names
-$Global:PVM_ENV_VAR_NAME = 'PVM'
-
 # Links
 $Global:XDEBUG_BASE_URL = 'http://xdebug.org'
 $Global:XDEBUG_DOWNLOAD_URL = "$XDEBUG_BASE_URL/download"
@@ -34,6 +31,7 @@ $Global:PECL_WIN_EXT_DOWNLOAD_URL = 'https://downloads.php.net/~windows/pecl/rel
 $envConfig = Get-EnvConfig -rootPath $PVMRoot
 
 $Global:PHP_CURRENT_VERSION_PATH = $envConfig['PHP_CURRENT_VERSION_PATH']
+$Global:PVM_ENV_VAR_NAME = $envConfig['PVM_ENV_VAR_NAME']
 $Global:CACHE_MAX_HOURS = [int] $envConfig['CACHE_MAX_HOURS']
 $Global:DEFAULT_LOG_PAGE_SIZE = [int] $envConfig['DEFAULT_LOG_PAGE_SIZE']
 $Global:DEFAULT_PARTIAL_LIST_SIZE = [int] $envConfig['DEFAULT_PARTIAL_LIST_SIZE']

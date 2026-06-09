@@ -644,40 +644,40 @@ Describe "Restore-IniBackup" {
 
 Describe "Get-IniSetting" {
     It "Gets existing setting" {
-        Get-IniSetting -iniPath $testIniPath -key 'upload_max_filesize' | Should -Be 0
+        Get-IniSetting -iniPath $testIniPath -keys @('upload_max_filesize') | Should -Be 0
     }
 
     It "Gets setting with spaces in value" {
-        Get-IniSetting -iniPath $testIniPath -key 'display_errors' | Should -Be 0
+        Get-IniSetting -iniPath $testIniPath -keys @('display_errors') | Should -Be 0
     }
 
     It "Returns -1 for commented settings" {
-        Get-IniSetting -iniPath $testIniPath -key 'xdebug' | Should -Be -1
+        Get-IniSetting -iniPath $testIniPath -keys @('xdebug') | Should -Be -1
     }
 
     It "Returns -1 for non-existent setting" {
-        Get-IniSetting -iniPath $testIniPath -key 'nonexistent_setting' | Should -Be -1
+        Get-IniSetting -iniPath $testIniPath -keys @('nonexistent_setting') | Should -Be -1
     }
 
     It "Requires key parameter" {
-        Get-IniSetting -iniPath $testIniPath -key '' | Should -Be -1
-        Get-IniSetting -iniPath $testIniPath -key $null | Should -Be -1
+        Get-IniSetting -iniPath $testIniPath -keys '' | Should -Be -1
+        Get-IniSetting -iniPath $testIniPath -keys $null | Should -Be -1
     }
 
     It "Handles regex special characters in key names" {
-        Get-IniSetting -iniPath $testIniPath -key 'memory_limit' | Should -Be 0
+        Get-IniSetting -iniPath $testIniPath -keys @('memory_limit') | Should -Be 0
     }
 
     It "Displays '(not set)' for empty value entries" {
         @"
 memory_limit =
 "@ | Set-Content -Path $testIniPath -Encoding UTF8
-        Get-IniSetting -iniPath $testIniPath -key 'memory_limit' | Should -Be 0
+        Get-IniSetting -iniPath $testIniPath -keys @('memory_limit') | Should -Be 0
     }
 
     It "Returns -1 on error" {
         Mock Get-Content { throw 'Access denied' }
-        Get-IniSetting -iniPath $testIniPath -key 'memory_limit' | Should -Be -1
+        Get-IniSetting -iniPath $testIniPath -keys @('memory_limit') | Should -Be -1
     }
 }
 
@@ -689,35 +689,35 @@ Describe "Set-IniSetting" {
 
     It "Accepts key parameter without value" {
         Mock Read-Host { return '256M' }
-        $result = Set-IniSetting -iniPath $testIniPath -key 'memory_limit'
+        $result = Set-IniSetting -iniPath $testIniPath -keys @('memory_limit')
         $result | Should -Be 0
     }
 
     It "Accepts key parameter with value" {
-        $result = Set-IniSetting -iniPath $testIniPath -key 'memory_limit=1G'
+        $result = Set-IniSetting -iniPath $testIniPath -keys @('memory_limit=1G')
         $result | Should -Be 0
     }
 
     It "Handles null key" {
-        $result = Set-IniSetting -iniPath $testIniPath -key $null
+        $result = Set-IniSetting -iniPath $testIniPath -keys $null
         $result | Should -Be -1
     }
 
     It "Updates existing setting" {
         Mock Read-Host { return '256M' }
-        Set-IniSetting -iniPath $testIniPath -key 'memory_limit' | Should -Be 0
+        Set-IniSetting -iniPath $testIniPath -keys @('memory_limit') | Should -Be 0
         (Get-Content $testIniPath) -match '^memory_limit\s*=\s*256M' | Should -Be $true
     }
 
     It "Updates setting with spaces" {
         Mock Read-Host { return 'Off' }
-        Set-IniSetting -iniPath $testIniPath -key 'display_errors' | Should -Be 0
+        Set-IniSetting -iniPath $testIniPath -keys @('display_errors') | Should -Be 0
         (Get-Content $testIniPath) -match '^display_errors\s*=\s*Off' | Should -Be $true
     }
 
     It "Updates setting and disables" {
         Mock Read-Host { return '60' }
-        Set-IniSetting -iniPath $testIniPath -key 'max_execution_time' -enable $false | Should -Be 0
+        Set-IniSetting -iniPath $testIniPath -keys @('max_execution_time') -enable $false | Should -Be 0
         (Get-Content $testIniPath) -match '^;max_execution_time\s*=\s*60' | Should -Be $true
     }
 
@@ -730,7 +730,7 @@ opcache.protect_memory=1
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
         Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '4G' }
 
-        Set-IniSetting -iniPath $testIniPath -key 'memory' | Should -Be 0
+        Set-IniSetting -iniPath $testIniPath -keys @('memory') | Should -Be 0
         (Get-Content $testIniPath) -match '^memory_limit\s*=\s*4G' | Should -Be $true
     }
 
@@ -742,18 +742,18 @@ opcache.protect_memory=1
 
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
 
-        Set-IniSetting -iniPath $testIniPath -key 'memory=2G' | Should -Be 0
+        Set-IniSetting -iniPath $testIniPath -keys @('memory=2G') | Should -Be 0
         (Get-Content $testIniPath) -match '^memory_limit\s*=\s*2G' | Should -Be $true
     }
 
     It "Creates backup before modifying" {
         Mock Read-Host { return '256M' }
-        Set-IniSetting -iniPath $testIniPath -key 'memory_limit'
+        Set-IniSetting -iniPath $testIniPath -keys @('memory_limit')
         Test-Path $testBackupPath | Should -Be $true
     }
 
     It "Fails for non-existent setting" {
-        Set-IniSetting -iniPath $testIniPath -key 'nonexistent_setting=value' | Should -Be -1
+        Set-IniSetting -iniPath $testIniPath -keys @('nonexistent_setting=value') | Should -Be -1
     }
 
     It "Prints error message for non-valid number" {
@@ -770,7 +770,7 @@ opcache.protect_memory=1
             else { '1' }
         }
 
-        Set-IniSetting -iniPath $testIniPath -key 'memory=1G' | Should -Be 0
+        Set-IniSetting -iniPath $testIniPath -keys @('memory=1G') | Should -Be 0
     }
 
     It "Displays '(not set)' when multiple matching settings include blank values" {
@@ -782,25 +782,25 @@ memory_limit=2G
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
         Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '3G' }
 
-        Set-IniSetting -iniPath $testIniPath -key 'memory' | Should -Be 0
+        Set-IniSetting -iniPath $testIniPath -keys @('memory') | Should -Be 0
         (Get-Content $testIniPath) -match '^memory_limit\s*=\s*3G' | Should -Be $true
     }
 
     It "Validates key=value format" {
-        Set-IniSetting -iniPath $testIniPath -key 'invalidformat' | Should -Be -1
-        Set-IniSetting -iniPath $testIniPath -key 'novalue=' | Should -Be -1
-        Set-IniSetting -iniPath $testIniPath -key '=nokey' | Should -Be -1
+        Set-IniSetting -iniPath $testIniPath -keys @('invalidformat') | Should -Be -1
+        Set-IniSetting -iniPath $testIniPath -keys @('novalue=') | Should -Be -1
+        Set-IniSetting -iniPath $testIniPath -keys @('=nokey') | Should -Be -1
     }
 
     It "Handles values with special characters" {
         Mock Read-Host { return '10M' }
-        Set-IniSetting -iniPath $testIniPath -key 'upload_max_filesize' | Should -Be 0
+        Set-IniSetting -iniPath $testIniPath -keys @('upload_max_filesize') | Should -Be 0
         (Get-Content $testIniPath) -match '^upload_max_filesize\s*=\s*10M' | Should -Be $true
     }
 
     It "Returns -1 on error" {
         Mock Get-Content { throw 'Access denied' }
-        Set-IniSetting -iniPath $testIniPath -key 'memory_limit=256M' | Should -Be -1
+        Set-IniSetting -iniPath $testIniPath -keys @('memory_limit=256M') | Should -Be -1
     }
 }
 
@@ -816,7 +816,7 @@ Describe "Enable-IniExtension" {
             param ($Path)
             return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" } )
         }
-        Enable-IniExtension -iniPath $testIniPath -extName 'xdebug' | Should -Be 0
+        Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
         (Get-Content $testIniPath) -match '^extension=php_xdebug.dll' | Should -Be $true
     }
 
@@ -826,7 +826,7 @@ Describe "Enable-IniExtension" {
             return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
         }
 
-        Enable-IniExtension -iniPath $testIniPath -extName 'curl' | Should -Be 0
+        Enable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
     }
 
     It "Returns 0 immediately when extension is already enabled" {
@@ -837,7 +837,7 @@ Describe "Enable-IniExtension" {
         }
         Mock Set-Content { }
 
-        Enable-IniExtension -iniPath $testIniPath -extName 'curl' | Should -Be 0
+        Enable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
         Assert-MockCalled Set-Content -Times 0
     }
 
@@ -858,19 +858,19 @@ extension=php_curl.dll
             )
         }
 
-        Enable-IniExtension -iniPath $testIniPath -extName 'xdebug' | Should -Be 0
+        Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
         # File should remain unchanged since line didn't match
         (Get-Content $testIniPath) | Should -Contain 'extension=php_xdebug.dll'
     }
 
     It "Returns -1 for non-existent extension" {
         Mock Get-ChildItem { return @() }
-        Enable-IniExtension -iniPath $testIniPath -extName 'nonexistent_ext' | Should -Be -1
+        Enable-IniExtension -iniPath $testIniPath -extNames @('nonexistent_ext') | Should -Be -1
     }
 
     It "Requires extension name" {
-        Enable-IniExtension -iniPath $testIniPath -extName '' | Should -Be -1
-        Enable-IniExtension -iniPath $testIniPath -extName $null | Should -Be -1
+        Enable-IniExtension -iniPath $testIniPath -extNames '' | Should -Be -1
+        Enable-IniExtension -iniPath $testIniPath -extNames $null | Should -Be -1
     }
 
     It "Handles zend_extension" {
@@ -882,7 +882,7 @@ extension=php_curl.dll
             param ($Path)
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
         }
-        Enable-IniExtension -iniPath $testIniPath -extName 'opcache' | Should -Be 0
+        Enable-IniExtension -iniPath $testIniPath -extNames @('opcache') | Should -Be 0
         (Get-Content $testIniPath) -match '^zend_extension=php_opcache.dll' | Should -Be $true
     }
 
@@ -906,7 +906,7 @@ extension=sqlite3
         }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
 
-        Enable-IniExtension -iniPath $testIniPath -extName 'sql' | Should -Be 0
+        Enable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
         (Get-Content $testIniPath) -match '^extension\s*=\s*pdo_mysql' | Should -Be $true
     }
@@ -939,19 +939,19 @@ extension=sqlite3
             )
         }
 
-        Enable-IniExtension -iniPath $testIniPath -extName 'sql' | Should -Be 0
+        Enable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
         (Get-Content $testIniPath) -match '^extension\s*=\s*pgsql' | Should -Be $true
     }
 
     It "Creates backup before modifying" {
-        Enable-IniExtension -iniPath $testIniPath -extName 'xdebug'
+        Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug')
         Test-Path $testBackupPath | Should -Be $true
     }
 
     It "Returns -1 on error" {
         Mock Get-Content { throw 'Access denied' }
-        Enable-IniExtension -iniPath $testIniPath -extName 'xdebug' | Should -Be -1
+        Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be -1
     }
 }
 
@@ -967,12 +967,12 @@ Describe "Disable-IniExtension" {
             param ($Path)
             return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
         }
-        Disable-IniExtension -iniPath $testIniPath -extName 'curl' | Should -Be 0
+        Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
         (Get-Content $testIniPath) -match '^;extension=php_curl.dll' | Should -Be $true
     }
 
     It "Returns -1 for already disabled extension" {
-        Disable-IniExtension -iniPath $testIniPath -extName 'xdebug' | Should -Be -1
+        Disable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be -1
     }
 
     It "Returns 0 immediately when extension is already disabled" {
@@ -983,17 +983,17 @@ Describe "Disable-IniExtension" {
         }
         Mock Set-Content { }
 
-        Disable-IniExtension -iniPath $testIniPath -extName 'xdebug' | Should -Be 0
+        Disable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
         Assert-MockCalled Set-Content -Times 0
     }
 
     It "Returns -1 for non-existent extension" {
-        Disable-IniExtension -iniPath $testIniPath -extName 'nonexistent_ext' | Should -Be -1
+        Disable-IniExtension -iniPath $testIniPath -extNames @('nonexistent_ext') | Should -Be -1
     }
 
     It "Requires extension name" {
-        Disable-IniExtension -iniPath $testIniPath -extName '' | Should -Be -1
-        Disable-IniExtension -iniPath $testIniPath -extName $null | Should -Be -1
+        Disable-IniExtension -iniPath $testIniPath -extNames '' | Should -Be -1
+        Disable-IniExtension -iniPath $testIniPath -extNames $null | Should -Be -1
     }
 
     It "Handles zend_extension" {
@@ -1001,7 +1001,7 @@ Describe "Disable-IniExtension" {
             param ($Path)
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
         }
-        Disable-IniExtension -iniPath $testIniPath -extName 'opcache' | Should -Be 0
+        Disable-IniExtension -iniPath $testIniPath -extNames @('opcache') | Should -Be 0
         (Get-Content $testIniPath) -match '^;zend_extension=php_opcache.dll' | Should -Be $true
     }
 
@@ -1014,7 +1014,7 @@ Describe "Disable-IniExtension" {
         Mock Get-Content { return @('extension=php_curl.dll') }
         Mock Set-Content { }
 
-        Disable-IniExtension -iniPath $testIniPath -extName 'curl' | Should -Be 0
+        Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
         Assert-MockCalled Set-Content -Times 0
     }
 
@@ -1038,7 +1038,7 @@ extension=pgsql
         }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
 
-        Disable-IniExtension -iniPath $testIniPath -extName 'sql' | Should -Be 0
+        Disable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
         (Get-Content $testIniPath) -match '^;extension\s*=\s*pdo_mysql' | Should -Be $true
     }
@@ -1070,19 +1070,19 @@ extension=pgsql
                 @{ BaseName = 'sqlite3'; Name = 'sqlite3.dll'; FullName = "$extDirectory\sqlite3.dll" }
             )
         }
-        Disable-IniExtension -iniPath $testIniPath -extName 'sql' | Should -Be 0
+        Disable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
         (Get-Content $testIniPath) -match '^;extension\s*=\s*pgsql' | Should -Be $true
     }
 
     It "Creates backup before modifying" {
-        Disable-IniExtension -iniPath $testIniPath -extName 'curl'
+        Disable-IniExtension -iniPath $testIniPath -extNames @('curl')
         Test-Path $testBackupPath | Should -Be $true
     }
 
     It "Returns -1 on error" {
         Mock Get-Content { throw 'Access denied' }
-        Disable-IniExtension -iniPath $testIniPath -extName 'curl' | Should -Be -1
+        Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be -1
     }
 }
 
@@ -1097,7 +1097,7 @@ Describe "Get-IniExtensionStatus" {
                 @{ name = 'curl'; id='curl'; status='Enabled'; color='DarkGreen'; line=0; lineNamber=0; source='ext,ini' }
             )
         }
-        Get-IniExtensionStatus -iniPath $testIniPath -extName 'curl' | Should -Be 0
+        Get-IniExtensionStatus -iniPath $testIniPath -extNames @('curl') | Should -Be 0
     }
 
     It "Detects disabled extension" {
@@ -1106,7 +1106,7 @@ Describe "Get-IniExtensionStatus" {
                 @{ name = 'xdebug'; id='xdebug'; status='Disabled'; color='DarkYellow'; line=0; lineNamber=0; source='ext,ini' }
             )
         }
-        Get-IniExtensionStatus -iniPath $testIniPath -extName 'xdebug' | Should -Be 0
+        Get-IniExtensionStatus -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
     }
 
     It "Detects enabled zend_extension" {
@@ -1115,22 +1115,22 @@ Describe "Get-IniExtensionStatus" {
                 @{ name = 'opcache'; id='opcache'; status='Enabled'; color='DarkGreen'; line=0; lineNamber=0; source='ext,ini' }
             )
         }
-        Get-IniExtensionStatus -iniPath $testIniPath -extName 'opcache' | Should -Be 0
+        Get-IniExtensionStatus -iniPath $testIniPath -extNames @('opcache') | Should -Be 0
     }
 
     It "Returns -1 for non-existent extension" {
         Mock Read-Host { return 'n' }
-        Get-IniExtensionStatus -iniPath $testIniPath -extName 'nonexistent_ext' | Should -Be -1
+        Get-IniExtensionStatus -iniPath $testIniPath -extNames @('nonexistent_ext') | Should -Be -1
     }
 
     It "Requires extension name" {
-        Get-IniExtensionStatus -iniPath $testIniPath -extName '' | Should -Be -1
-        Get-IniExtensionStatus -iniPath $testIniPath -extName $null | Should -Be -1
+        Get-IniExtensionStatus -iniPath $testIniPath -extNames '' | Should -Be -1
+        Get-IniExtensionStatus -iniPath $testIniPath -extNames $null | Should -Be -1
     }
 
     It "Returns -1 on error" {
         Mock Get-Content { throw 'Access denied' }
-        Get-IniExtensionStatus -iniPath $testIniPath -extName 'curl' | Should -Be -1
+        Get-IniExtensionStatus -iniPath $testIniPath -extNames @('curl') | Should -Be -1
     }
 }
 

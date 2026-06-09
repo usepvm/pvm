@@ -481,50 +481,71 @@ function Backup-IniFile {
 }
 
 function Get-IniSetting {
-    param ($iniPath, $key)
+    param ($iniPath, $keys)
 
     try {
-        if (-not $key) {
-            Write-Host "`nKey is required. Usage: pvm ini get <key>"
+        if ($keys -isnot [array] -or $keys.Count -eq 0) {
+            Write-Host "`nPlease specify at least one setting name ('pvm ini get memory_limit')."
             return -1
         }
 
-        $pattern = '^[#;]?\s*([^=\s]*{0}[^=\s]*)\s*=\s*(.*)' -f [regex]::Escape($key)
         $lines = Get-Content $iniPath
 
-        $result = @()
-        foreach ($line in $lines) {
-            if ($line -match $pattern) {
-                $item = @{
-                    extensionName = $matches[1].Trim()
-                    value = $matches[2].Trim()
-                    enabled = 'Enabled'
-                    color = 'DarkGreen'
-                }
+        $overallCode = 0
+        $results = [ordered]@{}
+        $notFound = [ordered]@{}
+        foreach ($key in $keys) {
+            $pattern = '^[#;]?\s*([^=\s]*{0}[^=\s]*)\s*=\s*(.*)' -f [regex]::Escape($key)
 
-                if ($matches[0] -match '^[#;]') {
-                    $item.enabled = 'Disabled'
-                    $item.color = 'DarkYellow'
-                }
+            $result = @()
+            foreach ($line in $lines) {
+                if ($line -match $pattern) {
+                    $item = @{
+                        extensionName = $matches[1].Trim()
+                        value = $matches[2].Trim()
+                        enabled = 'Enabled'
+                        color = 'DarkGreen'
+                    }
 
-                $result += $item
+                    if ($matches[0] -match '^[#;]') {
+                        $item.enabled = 'Disabled'
+                        $item.color = 'DarkYellow'
+                    }
+
+                    $result += $item
+                }
+            }
+
+            if ($result.Count -eq 0) {
+                $notFound[$key] = @(@{
+                    extensionName = $key
+                    value = $null
+                    enabled = 'Not Found'
+                    color = 'Gray'
+                })
+                $overallCode = -1
+                continue
+            }
+
+            $results[$key] = $result
+        }
+
+        $results = $notFound + $results
+
+        $maxLineLength = ($results.Values | ForEach-Object { $_ } | ForEach-Object { $_.extensionName } | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
+        foreach ($key in $results.Keys) {
+            Write-Host "`nMatches for '$key'" -ForegroundColor Cyan
+
+            foreach ($item in $results[$key]) {
+                $extensionName = "$($item.extensionName) ".PadRight($maxLineLength, '.')
+                $value = if ($item.value -eq '') { '(not set) ' } elseif ($null -eq $item.value) { '' } else { "$($item.value) " }
+
+                Write-Host "- $extensionName $value" -NoNewline
+                Write-Host "$($item.enabled)" -ForegroundColor $item.color
             }
         }
 
-        if ($result.Count -eq 0) {
-            Write-Host "- The setting key '$key' is not found." -ForegroundColor DarkGray
-            return -1
-        }
-
-        $maxLineLength = ($result.extensionName | Measure-Object -Maximum Length).Maximum + 10
-        $result | ForEach-Object {
-            $extensionName = "$($_.extensionName) ".PadRight($maxLineLength, '.')
-            $value = if ($_.value -eq '') { '(not set)' } else { $_.value }
-
-            Write-Host "- $extensionName $value " -NoNewline
-            Write-Host "$($_.enabled)" -ForegroundColor $_.color
-        }
-        return 0
+        return $overallCode
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get ini setting '$key'"; exception = $_ }
         return -1
@@ -532,99 +553,126 @@ function Get-IniSetting {
 }
 
 function Set-IniSetting {
-    param ($iniPath, $key, $enable = $true)
+    param ($iniPath, $keys, $enable = $true)
+
     try {
-        # Accept: key OR key=value
-        if ($key -match '^(?<k>[^=]+)(=(?<v>.*))?$') {
-            $searchKey = $matches.k.Trim()
-            $inputValue = if ($null -ne $matches.v) { $matches.v.Trim() } else { $null }
-        } else {
-            Write-Host 'Invalid input.' -ForegroundColor DarkGray
+        if ($keys -isnot [array] -or $keys.Count -eq 0) {
+            Write-Host "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
             return -1
         }
 
-        $pattern = '^[#;]?\s*(?<key>[^=\s]*{0}[^=\s]*)\s*=\s*(?<value>.*)$' -f [regex]::Escape($searchKey)
-
-        $matchesList = @()
-        $lines = Get-Content $iniPath
-
-        $index = 0
-        foreach ($line in $lines) {
-            if ($line -match $pattern) {
-                $matchesList += @{
-                    Index = $matchesList.Length
-                    Key = $matches['key'].Trim()
-                    Value = $matches['value'].Trim()
-                    Enabled = -not ($line -match '^[#;]')
-                    Line = $line
-                    LineNo  = $index
-                    Color   = if ($line -match '^[#;]') { 'DarkYellow' } else { 'DarkGreen' }
-                }
-            }
-            $index++
-        }
-
-        if ($matchesList.Length -eq 0) {
-            Write-Host "- No settings match '$searchKey'" -ForegroundColor DarkGray
-            return -1
-        }
-
-        if ($matchesList.Length -gt 1) {
-            Write-Host "`nMultiple settings match '$searchKey':`n" -ForegroundColor Cyan
-
-            $maxLineLength = ($matchesList.Key | Measure-Object -Maximum Length).Maximum + 10
-            $matchesList | ForEach-Object {
-                $state = if ($_.Enabled) { 'Enabled' } else { 'Disabled' }
-                $key = "$($_.Key) ".PadRight($maxLineLength, '.')
-                $value = if ($_.value -eq '') { '(not set)' } else { $_.value }
-                Write-Host "[$($_.Index)] $key $value " -NoNewline
-                Write-Host $state -ForegroundColor $_.Color
+        $updatedSettings = [ordered]@{}
+        $notFound = [ordered]@{}
+        $overallCode = 0
+        foreach ($key in $keys) {
+            # Accept: key OR key=value
+            if ($key -match '^(?<k>[^=]+)(=(?<v>.*))?$') {
+                $searchKey = $matches.k.Trim()
+                $inputValue = if ($null -ne $matches.v) { $matches.v.Trim() } else { $null }
+            } else {
+                Write-Host 'Invalid input.' -ForegroundColor DarkGray
+                $overallCode = -1
+                continue
             }
 
-            do {
-                $choiceRaw = Read-Host "`nSelect a number"
-                $choice = $null
+            $pattern = '^[#;]?\s*(?<key>[^=\s]*{0}[^=\s]*)\s*=\s*(?<value>.*)$' -f [regex]::Escape($searchKey)
 
-                if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Write-Host 'Please enter a valid positive number.' -ForegroundColor Yellow
-                    continue
+            $matchesList = @()
+            $lines = Get-Content $iniPath
+
+            $index = 0
+            foreach ($line in $lines) {
+                if ($line -match $pattern) {
+                    $matchesList += @{
+                        Index = $matchesList.Length
+                        Key = $matches['key'].Trim()
+                        Value = $matches['value'].Trim()
+                        Enabled = -not ($line -match '^[#;]')
+                        Line = $line
+                        LineNo  = $index
+                        Color   = if ($line -match '^[#;]') { 'DarkYellow' } else { 'DarkGreen' }
+                    }
+                }
+                $index++
+            }
+
+            if ($matchesList.Length -eq 0) {
+                # Write-Host "- No settings match '$searchKey'" -ForegroundColor DarkGray
+                if ($notFound.Keys -notcontains $key) {
+                    $notFound[$key] += @{ key = $searchKey; value = $null; status = 'Not Found'; color = 'Gray' }
                 }
 
-                if ($choice -lt 0 -or $choice -gt $matchesList.Length - 1) {
-                    Write-Host 'Number must be between 0 and $($matchesList.Length - 1).' -ForegroundColor Yellow
-                    continue
+                $overallCode = -1
+                continue
+            }
+
+            if ($matchesList.Length -gt 1) {
+                Write-Host "`nMultiple settings match '$searchKey':`n" -ForegroundColor Cyan
+
+                $maxLineLength = ($matchesList.Key | Measure-Object -Maximum Length).Maximum + $MIN_PAD_RIGHT_LENGTH
+                $matchesList | ForEach-Object {
+                    $state = if ($_.Enabled) { 'Enabled' } else { 'Disabled' }
+                    $key = "$($_.Key) ".PadRight($maxLineLength, '.')
+                    $value = if ($_.value -eq '') { '(not set)' } else { $_.value }
+                    Write-Host "[$($_.Index)] $key $value " -NoNewline
+                    Write-Host $state -ForegroundColor $_.Color
                 }
 
-                break
-            } while ($true)
+                do {
+                    $choiceRaw = Read-Host "`nSelect a number"
+                    $choice = $null
 
-            $selected = $matchesList[$choice]
-        } else {
-            $selected = $($matchesList)
+                    if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
+                        Write-Host 'Please enter a valid positive number.' -ForegroundColor Yellow
+                        continue
+                    }
+
+                    if ($choice -lt 0 -or $choice -gt $matchesList.Length - 1) {
+                        Write-Host "Number must be between 0 and $($matchesList.Length - 1)." -ForegroundColor Yellow
+                        continue
+                    }
+
+                    break
+                } while ($true)
+
+                $selected = $matchesList[$choice]
+            } else {
+                $selected = $($matchesList)
+            }
+
+            if (-not $inputValue) {
+                $inputValue = Read-Host "Enter new value for '$($selected.Key)'"
+            }
+
+            $newLine = if ($enable) {
+                "$($selected.Key) = $inputValue"
+            } else {
+                ";$($selected.Key) = $inputValue"
+            }
+
+            Backup-IniFile $iniPath
+
+            $lines[$selected.LineNo] = $newLine
+            Set-Content $iniPath $lines -Encoding UTF8
+
+            $status = if ($enable) {'Enabled'} else {'Disabled'}
+            $color = if ($enable) {'DarkGreen'} else {'DarkYellow'}
+
+            $updatedSettings[$selected.Key] = @{ key = $selected.Key; value = $inputValue; status = $status; color = $color }
         }
 
-        if (-not $inputValue) {
-            $inputValue = Read-Host "Enter new value for '$($selected.Key)'"
+        $updatedSettings = $notFound + $updatedSettings
+
+        $maxLineLength = ($updatedSettings.Values | ForEach-Object { $_ } | ForEach-Object { $_.key } | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
+        Write-Host "`n" -NoNewline
+        foreach ($key in $updatedSettings.Keys) {
+            $item = $updatedSettings[$key]
+            $name = "$($item.key) ".PadRight($maxLineLength, '.')
+            Write-Host "- $name $($item.value) " -NoNewline
+            Write-Host $item.status -ForegroundColor $item.color
         }
 
-        $newLine = if ($enable) {
-            "$($selected.Key) = $inputValue"
-        } else {
-            ";$($selected.Key) = $inputValue"
-        }
-
-        Backup-IniFile $iniPath
-
-        $lines[$selected.LineNo] = $newLine
-        Set-Content $iniPath $lines -Encoding UTF8
-
-        $status = if ($enable) {'Enabled'} else {'Disabled'}
-        $color = if ($enable) {'DarkGreen'} else {'DarkYellow'}
-
-        Write-Host "`n- $($selected.Key) set to '$inputValue' successfully | " -NoNewline -ForegroundColor DarkGreen
-        Write-Host $status -ForegroundColor $color
-
-        return 0
+        return $overallCode
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set ini setting '$key'"; exception = $_ }
         return -1
@@ -632,85 +680,100 @@ function Set-IniSetting {
 }
 
 function Enable-IniExtension {
-    param ($iniPath, $extName)
+    param ($iniPath, $extNames)
 
     try {
-
-        if (-not $extName) {
-            Write-Host "`nPlease provide an extension name to enable"
+        if ($extNames -isnot [array] -or $extNames.Count -eq 0) {
+            Write-Host "`nPlease provide at least one extension name to enable"
             return -1
         }
 
-        $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
+        $results = @()
+        $overallCode = 0
+        foreach ($extName in $extNames) {
+            $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
 
-        if ($matchesListStatus.Length -eq 0) {
-            Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
-
-            return -1
-        }
-
-        if ($matchesListStatus.Length -gt 1) {
-            Write-Host "`nMultiple extensions match '$extName':`n" -ForegroundColor Cyan
-
-            $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + 10
-            $index = 0
-            $matchesListStatus | ForEach-Object {
-                $name = "$($_.name) ".PadRight($maxLineLength, '.')
-                Write-Host "[$index] $name " -NoNewline
-                Write-Host "$($_.status)" -ForegroundColor $_.color
-                $index++
+            if ($matchesListStatus.Length -eq 0) {
+                # Write-Host "- '$extName': extension not found" -ForegroundColor DarkGray
+                $results += @{ name = $extName; status = 'Not found'; color = 'Gray' }
+                $overallCode = -1
+                continue
             }
 
-            do {
-                $choiceRaw = Read-Host "`nSelect a number"
-                $choice = $null
+            if ($matchesListStatus.Length -gt 1) {
+                Write-Host "`nMultiple extensions match '$extName':`n" -ForegroundColor Cyan
 
-                if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Write-Host 'Please enter a valid positive number.' -ForegroundColor Yellow
-                    continue
+                $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + $MIN_PAD_RIGHT_LENGTH
+                $index = 0
+                $matchesListStatus | ForEach-Object {
+                    $name = "$($_.name) ".PadRight($maxLineLength, '.')
+                    Write-Host "[$index] $name " -NoNewline
+                    Write-Host "$($_.status)" -ForegroundColor $_.color
+                    $index++
                 }
 
-                if ($choice -lt 0 -or $choice -gt $matchesListStatus.Length - 1) {
-                    Write-Host "Number must be between 0 and $($matchesListStatus.Length - 1)." -ForegroundColor Yellow
-                    continue
-                }
+                do {
+                    $choiceRaw = Read-Host "`nSelect a number"
+                    $choice = $null
 
-                break
-            } while ($true)
+                    if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
+                        Write-Host 'Please enter a valid positive number.' -ForegroundColor Yellow
+                        continue
+                    }
 
-            $selected = $matchesListStatus[$choice]
-        } else {
-            $selected = $($matchesListStatus)
-        }
+                    if ($choice -lt 0 -or $choice -gt $matchesListStatus.Length - 1) {
+                        Write-Host "Number must be between 0 and $($matchesListStatus.Length - 1)." -ForegroundColor Yellow
+                        continue
+                    }
 
-        if ($selected.status -eq 'Enabled') {
-            Write-Host "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
-            return 0
-        }
+                    break
+                } while ($true)
 
-        $lines = Get-Content $iniPath
-
-        $modified = $false
-        $lineNumber = 0
-        $newLines = $lines | ForEach-Object {
-            $lineNumber++
-            if ($_ -eq $selected.line -and $selected.lineNumber -eq $lineNumber -and -not $modified) {
-                $modified = $true
-                return $_ -replace '^[#;]\s*', ''
+                $selected = $matchesListStatus[$choice]
+            } else {
+                $selected = $($matchesListStatus)
             }
-            return $_
+
+            if ($selected.status -eq 'Enabled') {
+                # Write-Host "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
+                $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
+                continue
+            }
+
+            $lines = Get-Content $iniPath
+
+            $modified = $false
+            $lineNumber = 0
+            $newLines = $lines | ForEach-Object {
+                $lineNumber++
+                if ($_ -eq $selected.line -and $selected.lineNumber -eq $lineNumber -and -not $modified) {
+                    $modified = $true
+                    return $_ -replace '^[#;]\s*', ''
+                }
+                return $_
+            }
+
+            if (-not $modified) {
+                # Write-Host "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
+                $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
+                continue
+            }
+
+            Backup-IniFile $iniPath
+            Set-Content $iniPath $newLines -Encoding UTF8
+
+            $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
+            # Write-Host "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
         }
 
-        if (-not $modified) {
-            Write-Host "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
-            return 0
+        $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
+        Write-Host "`nResults:"
+        foreach ($item in $results) {
+            Write-Host "- $($item.name) ".PadRight($maxLineLength, '.') -NoNewline
+            Write-Host " $($item.status)" -ForegroundColor $item.color
         }
 
-        Backup-IniFile $iniPath
-        Set-Content $iniPath $newLines -Encoding UTF8
-        Write-Host "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
-
-        return 0
+        return $overallCode
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable extension '$extName'"; exception = $_ }
         return -1
@@ -718,85 +781,99 @@ function Enable-IniExtension {
 }
 
 function Disable-IniExtension {
-    param ($iniPath, $extName)
+    param ($iniPath, $extNames)
 
     try {
-
-        if (-not $extName) {
-            Write-Host "`nPlease provide an extension name to disable"
+        if ($extNames -isnot [array] -or $extNames.Count -eq 0) {
+            Write-Host "`nPlease provide at least one extension name to disable"
             return -1
         }
 
-        $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
+        $results = @()
+        $overallCode = 0
+        foreach ($extName in $extNames) {
+            $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
 
-        if ($matchesListStatus.Length -eq 0) {
-            Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
-
-            return -1
-        }
-
-        if ($matchesListStatus.Length -gt 1) {
-            Write-Host "`nMultiple extensions match '$extName':`n" -ForegroundColor Cyan
-
-            $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + 10
-            $index = 0
-            $matchesListStatus | ForEach-Object {
-                $name = "$($_.name) ".PadRight($maxLineLength, '.')
-                Write-Host "[$index] $name " -NoNewline
-                Write-Host "$($_.status)" -ForegroundColor $_.color
-                $index++
+            if ($matchesListStatus.Length -eq 0) {
+                # Write-Host "- '$extName'`: extension not found" -ForegroundColor DarkGray
+                $results += @{ name = $extName; status = 'Not found'; color = 'Gray' }
+                $overallCode = -1
+                continue
             }
 
-            do {
-                $choiceRaw = Read-Host "`nSelect a number"
-                $choice = $null
+            if ($matchesListStatus.Length -gt 1) {
+                Write-Host "`nMultiple extensions match '$extName':`n" -ForegroundColor Cyan
 
-                if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Write-Host 'Please enter a valid positive number.' -ForegroundColor Yellow
-                    continue
+                $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + $MIN_PAD_RIGHT_LENGTH
+                $index = 0
+                $matchesListStatus | ForEach-Object {
+                    $name = "$($_.name) ".PadRight($maxLineLength, '.')
+                    Write-Host "[$index] $name " -NoNewline
+                    Write-Host "$($_.status)" -ForegroundColor $_.color
+                    $index++
                 }
 
-                if ($choice -lt 0 -or $choice -gt $matchesListStatus.Length - 1) {
-                    Write-Host "Number must be between 0 and $($matchesListStatus.Length - 1)." -ForegroundColor Yellow
-                    continue
-                }
+                do {
+                    $choiceRaw = Read-Host "`nSelect a number"
+                    $choice = $null
 
-                break
-            } while ($true)
+                    if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
+                        Write-Host 'Please enter a valid positive number.' -ForegroundColor Yellow
+                        continue
+                    }
 
-            $selected = $matchesListStatus[$choice]
-        } else {
-            $selected = $($matchesListStatus)
-        }
+                    if ($choice -lt 0 -or $choice -gt $matchesListStatus.Length - 1) {
+                        Write-Host "Number must be between 0 and $($matchesListStatus.Length - 1)." -ForegroundColor Yellow
+                        continue
+                    }
 
-        if ($selected.status -eq 'Disabled') {
-            Write-Host "- '$($selected.name)' disabled successfully." -ForegroundColor DarkGreen
-            return 0
-        }
+                    break
+                } while ($true)
 
-        $lines = Get-Content $iniPath
-
-        $modified = $false
-        $lineNumber = 0
-        $updatedLines = $lines | ForEach-Object {
-            $lineNumber++
-            if ($_ -eq $selected.line -and $selected.lineNumber -eq $lineNumber -and -not $modified -and ($_ -notmatch '^\s*;')) {
-                $modified = $true
-                return ";$_"
+                $selected = $matchesListStatus[$choice]
+            } else {
+                $selected = $($matchesListStatus)
             }
-            return $_
+
+            if ($selected.status -eq 'Disabled') {
+                # Write-Host "- '$($selected.name)' disabled successfully." -ForegroundColor DarkGreen
+                $results += @{ name = $selected.name; status = 'Disabled'; color = 'DarkYellow' }
+                continue
+            }
+
+            $lines = Get-Content $iniPath
+
+            $modified = $false
+            $lineNumber = 0
+            $updatedLines = $lines | ForEach-Object {
+                $lineNumber++
+                if ($_ -eq $selected.line -and $selected.lineNumber -eq $lineNumber -and -not $modified -and ($_ -notmatch '^\s*;')) {
+                    $modified = $true
+                    return ";$_"
+                }
+                return $_
+            }
+
+            if (-not $modified) {
+                # Write-Host "- '$($selected.name)' disabled successfully." -ForegroundColor DarkGreen
+                $results += @{ name = $selected.name; status = 'Disabled'; color = 'DarkYellow' }
+                continue
+            }
+
+            Backup-IniFile $iniPath
+            Set-Content $iniPath $updatedLines -Encoding UTF8
+            # Write-Host "- '$($selected.name)' disabled successfully." -ForegroundColor DarkGreen
+            $results += @{ name = $selected.name; status = 'Disabled'; color = 'DarkYellow' }
         }
 
-        if (-not $modified) {
-            Write-Host "- '$($selected.name)' disabled successfully." -ForegroundColor DarkGreen
-            return 0
+        $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
+        Write-Host "`nResults:"
+        foreach ($item in $results) {
+            Write-Host "- $($item.name) ".PadRight($maxLineLength, '.') -NoNewline
+            Write-Host " $($item.status)" -ForegroundColor $item.color
         }
 
-        Backup-IniFile $iniPath
-        Set-Content $iniPath $updatedLines -Encoding UTF8
-        Write-Host "- '$($selected.name)' disabled successfully." -ForegroundColor DarkGreen
-
-        return 0
+        return $overallCode
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to disable extension '$extName'"; exception = $_ }
         return -1
@@ -804,30 +881,50 @@ function Disable-IniExtension {
 }
 
 function Get-IniExtensionStatus {
-    param ($iniPath, $extName)
+    param ($iniPath, $extNames)
 
     try {
-        if (-not $extName) {
-            Write-Host "`nPlease provide an extension name to check status"
+        if ($extNames -isnot [array] -or $extNames.Count -eq 0) {
+            Write-Host "`nPlease provide at least one extension name to check status"
             return -1
         }
 
-        $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
+        $allMatchesListStatus = @()
+        $notFound = @()
+        $overallCode = 0
+        foreach ($extName in $extNames) {
+            $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
+            if ($matchesListStatus.Length -eq 0) {
+                $notFound += (@{
+                    name = $extName
+                    status = 'Not found'
+                    color = 'Gray'
+                })
+                $overallCode = -1
+                continue
+            }
 
-        if ($matchesListStatus.Length -eq 0) {
-            Write-Host "- $extName`: extension not found" -ForegroundColor DarkGray
+            $allMatchesListStatus += $matchesListStatus
+        }
 
+        $maxLineLength = ($allMatchesListStatus.name | Measure-Object -Maximum Length).Maximum + $MIN_PAD_RIGHT_LENGTH
+        $notFound | ForEach-Object {
+            $name = "$($_.name) ".PadRight($maxLineLength, '.')
+            Write-Host "- $name $($_.status)" -ForegroundColor $_.color
+        }
+
+        if ($allMatchesListStatus.Count -eq 0) {
+            Write-Host "`nNo extensions found matching the search term."
             return -1
         }
 
-        $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + 10
-        $matchesListStatus | ForEach-Object {
+        $allMatchesListStatus | ForEach-Object {
             $name = "$($_.name) ".PadRight($maxLineLength, '.')
             Write-Host "- $name " -NoNewline
             Write-Host "$($_.status)" -ForegroundColor $_.color
         }
 
-        return 0
+        return $overallCode
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check status for '$extName'"; exception = $_ }
         return -1
@@ -1273,21 +1370,24 @@ function Install-Extension {
 }
 
 function Install-IniExtension {
-    param ($iniPath, $extName)
+    param ($iniPath, $extNames)
 
     try {
-        if (-not $extName) {
-            Write-Host "`nPlease provide an extension name to check status"
+        if ($extNames.Count -eq 0) {
+            Write-Host "`nPlease provide at least one extension name to install"
             return -1
         }
 
-        if ($extName -like '*xdebug*') {
-            $code = Install-XDebug-Extension -iniPath $iniPath
-        } else {
-            $code = Install-Extension -iniPath $iniPath -extName $extName
+        $overallCode = 0
+        foreach ($extName in $extNames) {
+            if ($extName -like '*xdebug*') {
+                $overallCode = Install-XDebug-Extension -iniPath $iniPath
+            } else {
+                $overallCode = Install-Extension -iniPath $iniPath -extName $extName
+            }
         }
 
-        return $code
+        return $overallCode
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install '$extName'"; exception = $_ }
         return -1
@@ -1427,9 +1527,8 @@ function List-PHP-Extensions {
                 return -1
             }
 
-            $MIN_LINE_LENGTH = 50
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
-            $maxLineLength = [Math]::Max($MIN_LINE_LENGTH, $maxKeyLength + 30)
+            $maxLineLength = [Math]::Max($MIN_LINE_LENGTH, $maxKeyLength + ($MIN_PAD_RIGHT_LENGTH * 3))
 
             Write-Host "`nAvailable Extensions by Category:"
             Write-Host    '--------------------------------'
@@ -1445,7 +1544,7 @@ function List-PHP-Extensions {
                     $hostWidth = $hostVar.UI.RawUI.WindowSize.Width
                 }
 
-                $maxDescLength = $hostWidth - ($maxLineLength + 20)
+                $maxDescLength = $hostWidth - ($maxLineLength + ($MIN_PAD_RIGHT_LENGTH * 2))
                 if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
                 $descLines = @()
@@ -1517,9 +1616,8 @@ function Invoke-PVMIniAction {
                 }
 
                 Write-Host "`nRetrieving ini setting..."
-                foreach ($extName in $params) {
-                    $exitCode = Get-IniSetting -iniPath $iniPath -key $extName
-                }
+
+                $exitCode = Get-IniSetting -iniPath $iniPath -keys @($params)
             }
             'set' {
                 if ($params.Count -eq 0) {
@@ -1530,9 +1628,8 @@ function Invoke-PVMIniAction {
                 Write-Host "`nSetting ini value..."
                 $enable = (-not ($params -contains '--disable'))
                 $params = $params | Where-Object { $_ -notmatch '^--disable$' }
-                foreach ($key in $params) {
-                    $exitCode = Set-IniSetting -iniPath $iniPath -key $key -enable $enable
-                }
+
+                $exitCode = Set-IniSetting -iniPath $iniPath -key @($params) -enable $enable
             }
             'enable' {
                 if ($params.Count -eq 0) {
@@ -1541,9 +1638,8 @@ function Invoke-PVMIniAction {
                 }
 
                 Write-Host "`nEnabling extension(s): $($params -join ', ')"
-                foreach ($extName in $params) {
-                    $exitCode = Enable-IniExtension -iniPath $iniPath -extName $extName
-                }
+
+                $exitCode = Enable-IniExtension -iniPath $iniPath -extNames @($params)
             }
             'disable' {
                 if ($params.Count -eq 0) {
@@ -1552,9 +1648,8 @@ function Invoke-PVMIniAction {
                 }
 
                 Write-Host "`nDisabling extension(s): $($params -join ', ')"
-                foreach ($extName in $params) {
-                    $exitCode = Disable-IniExtension -iniPath $iniPath -extName $extName
-                }
+
+                $exitCode = Disable-IniExtension -iniPath $iniPath -extNames @($params)
             }
             'status' {
                 if ($params.Count -eq 0) {
@@ -1563,9 +1658,8 @@ function Invoke-PVMIniAction {
                 }
 
                 Write-Host "`nChecking status of extension(s): $($params -join ', ')"
-                foreach ($extName in $params) {
-                    $exitCode = Get-IniExtensionStatus -iniPath $iniPath -extName $extName
-                }
+
+                $exitCode = Get-IniExtensionStatus -iniPath $iniPath -extNames @($params)
             }
             'restore' {
                 $exitCode = Restore-IniBackup -iniPath $iniPath
@@ -1577,9 +1671,8 @@ function Invoke-PVMIniAction {
                 }
 
                 Write-Host "`nInstalling extension(s): $($params -join ', ')"
-                foreach ($extName in $params) {
-                    $exitCode = Install-IniExtension -iniPath $iniPath -extName $extName
-                }
+
+                $exitCode = Install-IniExtension -iniPath $iniPath -extNames @($params)
             }
             'list' {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''

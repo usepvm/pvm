@@ -171,8 +171,7 @@ function Run-Tests {
             $content += "`n"
             Write-Host $content -ForegroundColor $color
 
-            $maxFileNameLength = ($testSummary.Name | Measure-Object -Maximum Length).Maximum
-            $maxLineLength = $maxFileNameLength + 20  # padding
+            $maxLineLength = ($testSummary.Name | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 3)
 
             $testSummary = SortBy -data $testSummary -sortByColumn $options.sortBy
             $testSummary | ForEach-Object {

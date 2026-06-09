@@ -3,8 +3,8 @@ function Show-Usage {
     Write-Host "`nRunning version : $PVM_VERSION"
     Write-Host "`nUsage:`n"
 
-    $maxLineLength = ($actions.GetEnumerator() | ForEach-Object { $_.Value.command.Length } | Measure-Object -Maximum).Maximum + 10   # Length for command + dots
-    $maxDescLength = $Host.UI.RawUI.WindowSize.Width - ($maxLineLength + 20) # Max length per description line
+    $maxLineLength = ($actions.GetEnumerator() | ForEach-Object { $_.Value.command.Length } | Measure-Object -Maximum).Maximum + $MIN_PAD_RIGHT_LENGTH
+    $maxDescLength = $Host.UI.RawUI.WindowSize.Width - ($maxLineLength + ($MIN_PAD_RIGHT_LENGTH * 2)) # Max length per description line
     if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
     $actions.GetEnumerator() | ForEach-Object {

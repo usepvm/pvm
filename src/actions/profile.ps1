@@ -416,7 +416,7 @@ function List-PHP-Profiles {
             }
         }
 
-        $maxNameLength = ($profiles.Name | Measure-Object -Maximum Length).Maximum + 10
+        $maxNameLength = ($profiles.Name | Measure-Object -Maximum Length).Maximum + $MIN_PAD_RIGHT_LENGTH
 
         foreach ($userProfile in $profiles) {
             Write-Host ' Name '.PadRight($maxNameLength, '.')  $($userProfile.Name)
@@ -465,7 +465,7 @@ function Show-PHP-Profile {
         if ($settingsCount -eq 0) {
             Write-Host '  (none)' -ForegroundColor Gray
         } else {
-            $maxNameLength = ($userProfile.settings.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + 10
+            $maxNameLength = ($userProfile.settings.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + $MIN_PAD_RIGHT_LENGTH
             foreach ($settingName in ($userProfile.settings.PSObject.Properties.Name | Sort-Object)) {
                 $setting = $userProfile.settings.$settingName
                 $name = "$settingName ".PadRight($maxNameLength, '.')
@@ -481,7 +481,7 @@ function Show-PHP-Profile {
         if ($extensionsCount -eq 0) {
             Write-Host '  (none)' -ForegroundColor Gray
         } else {
-            $maxNameLength = ($userProfile.extensions.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + 21
+            $maxNameLength = ($userProfile.extensions.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 3)
             foreach ($extName in ($userProfile.extensions.PSObject.Properties.Name | Sort-Object)) {
                 $ext = $userProfile.extensions.$extName
                 $name = "$extName ".PadRight($maxNameLength, '.')

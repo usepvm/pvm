@@ -47,7 +47,6 @@ BeforeAll {
         # Mock implementation
         return $true
     }
-
 }
 
 Describe "Detect-PHP-VersionFromProject" {
@@ -78,7 +77,6 @@ Describe "Detect-PHP-VersionFromProject" {
         Mock Get-Content { throw 'Simulated parse error' }
         { Detect-PHP-VersionFromProject } | Should -Not -Throw
     }
-
 }
 
 # Test Cases for Update-PHP-Version

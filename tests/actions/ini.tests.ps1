@@ -56,6 +56,7 @@ max_execution_time = 30
         WebResponses = @{}
         DownloadFails = $false
     }
+
     function Invoke-WebRequest {
         param ($Uri, $OutFile = $null)
 
@@ -204,6 +205,7 @@ Describe "Get-XDebug-FROM-URL Tests" {
             $global:MockFileSystem.Files = @{}
             $global:MockFileSystem.Directories = @()
         }
+
         function Set-MockWebResponse {
             param ($url, $content, $links = @())
             $global:MockFileSystem.WebResponses[$url] = @{
@@ -1301,6 +1303,7 @@ Describe "Install-Extension" {
                 return '0'
             }
         }
+
         function Get-ChildItem {
             param ($Path)
             if ($global:getRandomFile) {
@@ -1872,6 +1875,7 @@ Describe "List-PHP-Extensions" {
                 )
             }
         }
+
         function Get-Extension-List {
             return @{
                 Authentication = @(
@@ -2087,6 +2091,7 @@ Describe "Install-XDebug-Extension" {
                 return ''
             }
         }
+
         function Reset-MockState {
             $global:MockRegistryThrowException = $false
             $global:MockFileSystem.DownloadFails = $false
@@ -2094,6 +2099,7 @@ Describe "Install-XDebug-Extension" {
             $global:MockFileSystem.Files = @{}
             $global:MockFileSystem.Directories = @()
         }
+
         function Add-Content {
             param ($Path, $Value)
             if ($global:MockFileSystem.Files.ContainsKey($Path)) {
@@ -2102,6 +2108,7 @@ Describe "Install-XDebug-Extension" {
                 $global:MockFileSystem.Files[$Path] = $Value
             }
         }
+
         function Set-MockWebResponse {
             param ($url, $content, $links = @())
             $global:MockFileSystem.WebResponses[$url] = @{
@@ -2520,6 +2527,7 @@ extension=php_curl.dll
                     return 0
                 }
             }
+
             function Get-ChildItem {
                 param ($Path)
                 if ($global:getRandomFile) {

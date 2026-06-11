@@ -23,7 +23,6 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
-
 }
 
 Describe "Get-All-Subdirectories" {

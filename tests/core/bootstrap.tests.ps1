@@ -1,4 +1,5 @@
-﻿BeforeAll {
+﻿
+BeforeAll {
     # Mock global variables that would be loaded from config
     $global:PVM_VERSION = '1.0.0'
     $global:LOG_ERROR_PATH = 'TestDrive:\logs\error.log'
@@ -316,7 +317,6 @@ Describe "Start-PVM Function Tests" {
         }
 
         It "Should handle alias conversion correctly" {
-
             $result = Start-PVM -operation 'i' -arguments @()
 
             $result | Should -Be 0

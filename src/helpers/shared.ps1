@@ -1,6 +1,5 @@
 ﻿
 function Is-PVM-Setup {
-
     try {
         $pvmEnvVarContent = Get-EnvVar-ByName -name 'PVM'
         $pvmEnvEntries = $pvmEnvVarContent -split ';' | Where-Object { $_ -ne '' }
@@ -56,7 +55,6 @@ function Run-PS-Command {
 }
 
 function Is-Admin {
-
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
     $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)

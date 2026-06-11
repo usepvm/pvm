@@ -228,6 +228,7 @@ BeforeAll {
 
     function Get-EnvVar-ByName {
         param ($name)
+
         try {
             if ([string]::IsNullOrWhiteSpace($name)) {
                 return $null
@@ -245,6 +246,7 @@ BeforeAll {
 
     function Set-EnvVar {
         param ($name, $value)
+
         try {
             if ([string]::IsNullOrWhiteSpace($name)) {
                 return -1
@@ -672,6 +674,7 @@ Describe "Install-PHP Integration Tests" {
 
     It "Should install PHP successfully" {
         function Get-Matching-PHP-Versions { return $null }
+
         function Download-PHP-From-Url { return 'TestDrive:\php'}
 
         $result = Install-PHP -version '8.1'

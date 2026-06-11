@@ -37,8 +37,10 @@ Describe "Setup-PVM" {
                 default { return $null }
             }
         }
+
         function Get-EnvVar-ByName {
             param ($name)
+
             try {
                 if ([string]::IsNullOrWhiteSpace($name)) {
                     return $null
@@ -53,6 +55,7 @@ Describe "Setup-PVM" {
                 return $null
             }
         }
+
         function Set-EnvironmentVariableWrapper {
             param ($name, $value, $target)
 
@@ -84,8 +87,10 @@ Describe "Setup-PVM" {
                 }
             }
         }
+
         function Set-EnvVar {
             param ($name, $value)
+
             try {
                 if ([string]::IsNullOrWhiteSpace($name)) {
                     return -1
@@ -101,7 +106,6 @@ Describe "Setup-PVM" {
                 return -1
             }
         }
-
     }
 
     BeforeEach {

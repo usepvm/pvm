@@ -29,6 +29,7 @@ BeforeAll {
     }
 
     function Make-Directory { param ($path) return 0 }
+
     function Log-Data { param ($data) return $true }
 
     # Create test profile directory

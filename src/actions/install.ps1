@@ -55,6 +55,7 @@ function Get-Latest-PHP-Version {
         return $null
     }
 }
+
 function Get-PHP-Versions-From-Url {
     param ($url, $version)
 

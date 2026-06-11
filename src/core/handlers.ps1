@@ -1,6 +1,5 @@
 
 function Invoke-PVMSetup {
-
     $result = @{ code = 0; message = 'PVM is already setup' }
     if (-not (Is-PVM-Setup)) {
         $result = Setup-PVM
@@ -15,7 +14,6 @@ function Invoke-PVMSetup {
 }
 
 function Invoke-PVMCurrent {
-
     $result = Get-Current-PHP-Version
     if (-not $result.version) {
         Write-Host "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."

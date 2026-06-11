@@ -65,7 +65,6 @@ function Get-XDebug-FROM-URL {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch xdebug versions from $url"; exception = $_ }
         return @()
     }
-
 }
 
 function Get-Extension-Matching-Categories-By-Page {
@@ -305,7 +304,6 @@ function Add-Missing-PHPExtension-To-Ini {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to add extension '$extFileName'"; exception = $_ }
         return -1
     }
-
 }
 
 function Get-Matching-PHPExtensionsStatus {

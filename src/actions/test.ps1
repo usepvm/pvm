@@ -28,8 +28,11 @@ function Run-Test-File {
             coverageRaw = $null
         }
 
+        $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
+        $relativeFilePath = $file.FullName -replace [regex]::Escape("$PVMRootDirectory\tests\"), ''
+
         if (Is-File-Not-Exists -path $file.FullName) {
-            return @{ code = -1; Name = $file.Name; Message = 'File not found!'; testResultData = $testResultData }
+            return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; Message = 'File not found!'; testResultData = $testResultData }
         }
 
         if (-not $options) {
@@ -58,12 +61,14 @@ function Run-Test-File {
             $coveredFile = "$($covered.Name) | $($covered.FullName)"
         }
 
-        Write-Host "`n-----------------------------------------------------------------------------------"
-        Write-Host "- Running test: $($file.Name) | $($file.FullName)"
+        $separatorWidth = [Math]::Max($file.Name.Length + $file.FullName.Length, $coveredFile.Length) + ($MIN_PAD_RIGHT_LENGTH * 5/2)
+
+        Write-Host "`n`n$('-' * $separatorWidth)" -ForegroundColor Cyan
+        Write-Host "- Running test: $($file.Name) | $($file.FullName)" -ForegroundColor Cyan
         if ($coveredFile) {
-            Write-Host "- Covered file: $coveredFile"
+            Write-Host "- Covered file: $coveredFile" -ForegroundColor Cyan
         }
-        Write-Host '-----------------------------------------------------------------------------------'
+        Write-Host ('-' * $separatorWidth) -ForegroundColor Cyan
 
 
         $config.Run.Path = $file.FullName
@@ -103,13 +108,13 @@ function Run-Test-File {
         $testResultData.coverageRaw = $coverageRaw
 
         if ($LASTEXITCODE -ne 0) {
-            return @{ code = -1; Name = $file.Name; Message = $message; testResultData = $testResultData }
+            return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; Message = $message; testResultData = $testResultData }
         }
 
-        return @{ code = 0; Name = $file.Name; Message = $message; testResultData = $testResultData }
+        return @{ code = 0; Name = $file.Name; relativeFilePath = $relativeFilePath; Message = $message; testResultData = $testResultData }
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"; exception = $_ }
-        return @{ code = -1; Name = $file.Name; Message = 'Failed to run test, check log.'; testResultData = $testResultData }
+        return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; Message = 'Failed to run test, check log.'; testResultData = $testResultData }
     }
 }
 
@@ -177,7 +182,7 @@ function Run-Tests {
 
             $testSummary = SortBy -data $testSummary -sortByColumn $options.sortBy
             $testSummary | ForEach-Object {
-                $label = "  - $($_.Name) "
+                $label = "  - $($_.relativeFilePath) "
                 $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
                 $color = 'DarkYellow'
                 if ($_.code -eq 0) {

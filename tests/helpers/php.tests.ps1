@@ -1,7 +1,7 @@
-
+﻿
 BeforeAll {
     Mock Write-Host {}
-    
+
     $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
     $testIniPath = "$testDrivePath\php.ini"
     function Reset-Ini-Content {

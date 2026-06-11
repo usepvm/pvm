@@ -1,21 +1,16 @@
 ﻿
 function Get-Tests-Files {
-    param ($tests = $null)
+    param ($testsNames = $null)
 
     $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
-    if ($tests) {
-        $tests = $tests | ForEach-Object {
-            return @{
-                Name     = "$_.tests.ps1"
-                FullName = "$PVMRootDirectory\tests\$_.tests.ps1"
-            }
-        }
-    } else {
-        $tests = Get-ChildItem "$PVMRootDirectory\tests\*.tests.ps1" | ForEach-Object {
-            return @{
-                Name     = $_.Name
-                FullName = $_.FullName
-            }
+    
+    $allTests = Get-ChildItem "$PVMRootDirectory\tests\*.tests.ps1" -Recurse -File
+    $tests = $allTests
+    
+    if ($testsNames) {
+        $tests = $allTests | Where-Object {
+            $fileTestName = $_.Name -replace '.tests.ps1', ''
+            return ($testsNames -contains $fileTestName)
         }
     }
 
@@ -111,19 +106,19 @@ function Run-Test-File {
 }
 
 function Prepare-Tests {
-    param ($files = $null, $options = $null, $exclude = $null)
+    param ($testsNames = $null, $options = $null, $exclude = $null)
 
     if ($null -ne $exclude) {
         $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
 
-        $tests = Get-ChildItem "$PVMRootDirectory\tests\*.tests.ps1" | Where-Object {
+        $testsNames = Get-ChildItem "$PVMRootDirectory\tests\*.tests.ps1" -Recurse -File | Where-Object {
             return -not ($exclude -contains ($_.Name -replace '.tests.ps1', ''))
         } | ForEach-Object {
             return $_.Name -replace '.tests.ps1', ''
         }
     }
 
-    $tests = Get-Tests-Files -tests $files
+    $tests = Get-Tests-Files -testsNames $testsNames
 
     return Run-Tests -tests $tests -options $options
 }

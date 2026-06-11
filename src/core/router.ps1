@@ -172,7 +172,7 @@ function Invoke-PVMTest {
         sortBy    = $null
     }
     $exclude = $null
-    $files = $arguments | Where-Object {
+    $testsNames = $arguments | Where-Object {
         if (($_ -join (',') -match '^--exclude=(.+)$')) {
             $exclude = $Matches[1] -split ','
             return $false
@@ -204,7 +204,7 @@ function Invoke-PVMTest {
         return -1
     }
 
-    return Prepare-Tests -files $files -options $options -exclude $exclude
+    return Prepare-Tests -testsNames $testsNames -options $options -exclude $exclude
 }
 
 function Invoke-PVMLog {

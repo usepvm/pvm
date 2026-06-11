@@ -233,14 +233,6 @@ Describe "Setup-PVM" {
     }
 
     AfterAll {
-        Remove-Item function:Get-EnvVar-ByName
-        Remove-Item function:Set-EnvVar
-        Remove-Item function:Is-Directory-Exists
-        Remove-Item function:Make-Directory
-        Remove-Item function:Log-Data
-        Remove-Item function:Optimize-SystemPath
-        Remove-Item function:Setup-PVM
-
         Remove-Variable PHP_CURRENT_VERSION_PATH -Scope Global -ErrorAction SilentlyContinue
         Remove-Variable PVMRoot -Scope Global -ErrorAction SilentlyContinue
         Remove-Variable LOG_ERROR_PATH -Scope Global -ErrorAction SilentlyContinue

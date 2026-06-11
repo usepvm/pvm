@@ -1,6 +1,24 @@
 
 BeforeAll {
     Mock Write-Host {}
+    
+    $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
+    $testIniPath = "$testDrivePath\php.ini"
+    function Reset-Ini-Content {
+    # Create a test php.ini file
+    @"
+memory_limit = 128M
+;extension=php_xdebug.dll
+extension=php_curl.dll
+zend_extension=php_opcache.dll
+display_errors = On
+max_execution_time = 30
+;upload_max_filesize = 2M
+"@ | Set-Content -Path $testIniPath -Encoding UTF8
+    }
+
+    # Create initial ini content first
+    Reset-Ini-Content
 }
 
 Describe "Get-PHPInstallInfo" {

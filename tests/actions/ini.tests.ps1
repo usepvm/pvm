@@ -1312,7 +1312,6 @@ Describe "Install-Extension" {
         Mock Remove-Item { }
         Mock Move-Item { }
         Mock Test-Path { return $true }
-
     }
 
     BeforeEach {

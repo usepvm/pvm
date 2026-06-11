@@ -70,7 +70,6 @@ function Run-Test-File {
         }
         Write-Host ('-' * $separatorWidth) -ForegroundColor Cyan
 
-
         $config.Run.Path = $file.FullName
         $config.Run.PassThru = $true
         $testResult = Invoke-Pester -Configuration $config

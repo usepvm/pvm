@@ -3,7 +3,6 @@ function Uninstall-PHP {
     param ($version)
 
     try {
-
         $installedVersions = Get-Matching-PHP-Versions -version $version
         $pathVersionObject = Get-UserSelected-PHP-Version -installedVersions $installedVersions
 

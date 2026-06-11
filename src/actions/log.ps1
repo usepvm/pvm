@@ -1,6 +1,7 @@
 ﻿
 function Get-ConsoleKey {
     param ($intercept = $true)
+
     return [System.Console]::ReadKey($intercept)
 }
 

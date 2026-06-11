@@ -173,7 +173,6 @@ function Display-Installed-PHP-Versions {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display installed PHP versions"; exception = $_ }
         return -1
     }
-
 }
 
 function Get-PHP-Versions-List {

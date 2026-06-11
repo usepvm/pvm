@@ -1,6 +1,5 @@
 ﻿
 function Setup-PVM {
-
     try {
         $path = Get-EnvVar-ByName -name 'Path' -optimized $true
         if ($null -eq $path) {

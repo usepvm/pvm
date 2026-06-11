@@ -3,9 +3,7 @@
 
 param ($operation)
 
-
 $ProgressPreference = 'SilentlyContinue'
-
 
 # Load functions scripts
 Get-ChildItem "$PSScriptRoot\helpers\*.ps1" -Recurse -File | ForEach-Object { . $_.FullName }

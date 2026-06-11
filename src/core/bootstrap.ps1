@@ -64,7 +64,6 @@ function Start-PVM {
     param ($operation, $arguments)
 
     try {
-
         if ($arguments -match '^(--version|-v)$' -or $operation -eq 'version') {
             Show-PVM-Version
             return 0

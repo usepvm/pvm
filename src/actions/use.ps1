@@ -1,6 +1,5 @@
 ﻿
 function Detect-PHP-VersionFromProject {
-
     try {
         # 1. Check .php-version
         if (Is-File-Exists -path '.php-version') {
@@ -67,7 +66,6 @@ function Update-PHP-Version {
 }
 
 function Auto-Select-PHP-Version {
-
     $version = Detect-PHP-VersionFromProject
 
     if (-not $version) {

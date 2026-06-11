@@ -30,7 +30,6 @@ function Get-PHP-Status {
 }
 
 function Get-Current-PHP-Version {
-
     try {
         $emptyResult = @{ version = $null; path = $null; status = @{ opcache = $false; xdebug = $false } }
         $currentPhpVersionPath = Get-Item $PHP_CURRENT_VERSION_PATH

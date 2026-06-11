@@ -36,7 +36,7 @@ function Run-Test-File {
             $options = @{ coverage = $false; target = 75 }
         }
 
-        $coveredFile = ''
+        $coveredFile = $null
         if ($options.coverage) {
             $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
             $covered = Get-ChildItem -Path "$PVMRootDirectory\src" -Recurse -Filter '*.ps1'
@@ -50,11 +50,14 @@ function Run-Test-File {
             $config.CodeCoverage.OutputFormat = 'JaCoCo' # 'CoverageGutters'
             $config.CodeCoverage.OutputEncoding = 'UTF8'
             $config.CodeCoverage.CoveragePercentTarget = $options.target
-            $coveredFile = "(covers: $($covered.Name))"
+            $coveredFile = $covered.Name
         }
 
         Write-Host "`n----------------------------------------------------------------"
-        Write-Host "- Running test: $($file.Name) $coveredFile"
+        Write-Host "- Running test: $($file.Name) "
+        if ($coveredFile) {
+            Write-Host "- Covered file: $coveredFile"
+        }
         Write-Host '----------------------------------------------------------------'
 
 
@@ -63,7 +66,7 @@ function Run-Test-File {
         $testResult = Invoke-Pester -Configuration $config
         $coverageRaw = $null
         $coverageText = '-'
-        if ($testResult.CodeCoverage.CoveragePercent) {
+        if ($options.coverage) {
             $coverageRaw = [double]$testResult.CodeCoverage.CoveragePercent
             $coverageText = '{0,6:00.00}%' -f $coverageRaw
         }
@@ -79,7 +82,7 @@ function Run-Test-File {
             $testResult.FailedCount,
             $durationText
         )
-        if ($coverageRaw) {
+        if ($null -ne $coverageRaw) {
             $message = (
                 'Passed : {0,-4} | Failed : {1,-3} | Duration : {2,-5} | Coverage : {3,-7}' -f
                 $testResult.PassedCount,
@@ -147,8 +150,7 @@ function Run-Tests {
         $testSummary = @()
         Write-Host "`nRunning tests with verbosity: $($options.verbosity)" -ForegroundColor Cyan
         $tests | ForEach-Object {
-            $testResult = Run-Test-File -config $config -file $_ -options $options
-            $testSummary += $testResult
+            $testSummary += Run-Test-File -config $config -file $_ -options $options
         }
 
         Write-Host "`n----------------------------------------------------------------"

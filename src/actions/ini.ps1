@@ -1,5 +1,5 @@
 ﻿
-function getXdebugConfigV2 {
+function Get-Xdebug-Config-V2 {
     param ($XDebugPath)
 
     return @"
@@ -12,7 +12,7 @@ function getXdebugConfigV2 {
 "@
 }
 
-function getXdebugConfigV3 {
+function Get-Xdebug-Config-V3 {
     param ($XDebugPath)
 
     return @"
@@ -1199,9 +1199,9 @@ function Install-XDebug-Extension {
         }
         Move-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)" -Destination "$phpPath\ext"
         Remove-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)"
-        $xDebugConfig = getXdebugConfigV2 -XDebugPath $($chosenItem.fileName)
+        $xDebugConfig = Get-Xdebug-Config-V2 -XDebugPath $($chosenItem.fileName)
         if ($chosenItem.xDebugVersion -like '3.*') {
-            $xDebugConfig = getXdebugConfigV3 -XDebugPath $($chosenItem.fileName)
+            $xDebugConfig = Get-Xdebug-Config-V3 -XDebugPath $($chosenItem.fileName)
         }
         # check existence of previous xdebug
         $iniContent = Get-Content $iniPath

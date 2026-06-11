@@ -1,4 +1,4 @@
-
+﻿
 BeforeAll {
     Mock Write-Host {}
     # Create a mock registry to simulate environment variables
@@ -284,11 +284,15 @@ Describe "Make-Symbolic-Link" {
 
     Context "When link directory does not exist" {
         It "Creates a symbolic link successfully" {
-            Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq 'TestDrive:\test_parent' } -MockWith { return $true }
-            Mock Is-Not-Admin { return $false }
-            Mock Make-Directory -MockWith { return 0 }
             $linkPath = 'TestDrive:\test_parent\test_link'
             $targetPath = "$STORAGE_PATH\php\8.1"
+            $parent = Split-Path $linkPath
+
+            Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
+            Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq $parent } -MockWith { return $true }
+            Mock Is-Not-Admin { return $false }
+            Mock Make-Directory -MockWith { return 0 }
+
             $result = Make-Symbolic-Link -link $linkPath -target $targetPath
             $result.code | Should -Be 0
         }

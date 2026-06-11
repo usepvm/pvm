@@ -461,11 +461,15 @@ function Show-PHP-Profile {
         Write-Host "PATH: $profilePath" -ForegroundColor White
 
         $settingsCount = if ($userProfile.settings) { ($userProfile.settings.PSObject.Properties | Measure-Object).Count } else { 0 }
+        $maxNameLength = [Math]::Max(
+            ($userProfile.settings.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2),
+            ($userProfile.extensions.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 3)
+        )
+
         Write-Host "`nSettings ($settingsCount):" -ForegroundColor Cyan
         if ($settingsCount -eq 0) {
             Write-Host '  (none)' -ForegroundColor Gray
         } else {
-            $maxNameLength = ($userProfile.settings.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + $MIN_PAD_RIGHT_LENGTH
             foreach ($settingName in ($userProfile.settings.PSObject.Properties.Name | Sort-Object)) {
                 $setting = $userProfile.settings.$settingName
                 $name = "$settingName ".PadRight($maxNameLength, '.')
@@ -481,7 +485,6 @@ function Show-PHP-Profile {
         if ($extensionsCount -eq 0) {
             Write-Host '  (none)' -ForegroundColor Gray
         } else {
-            $maxNameLength = ($userProfile.extensions.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 3)
             foreach ($extName in ($userProfile.extensions.PSObject.Properties.Name | Sort-Object)) {
                 $ext = $userProfile.extensions.$extName
                 $name = "$extName ".PadRight($maxNameLength, '.')

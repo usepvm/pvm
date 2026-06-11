@@ -54,7 +54,7 @@ jobs:
     - name: Setup PVM
       run: |
         Write-Host "Setting up PVM..." -ForegroundColor Yellow
-        .\src\pvm.ps1 setup
+        .\pvm.bat setup
         if ($LASTEXITCODE -ne 0) {
           Write-Error "PVM setup failed with exit code: $LASTEXITCODE"
           exit $LASTEXITCODE
@@ -67,7 +67,7 @@ jobs:
         Write-Host "Running PVM tests..." -ForegroundColor Yellow
         
         # Run pvm.ps1 directly and capture exit code
-        .\src\pvm.ps1 test --coverage
+        .\pvm.bat test --coverage=85 --sort=coverage
         $exitCode = $LASTEXITCODE
         
         Write-Host "Test execution completed with exit code: $exitCode"

@@ -1,48 +1,68 @@
-﻿
-function Get-Source-Urls {
 
-    return [ordered]@{
-        'Archives' = $PHP_WIN_ARCHIVES_URL
-        'Releases' = $PHP_WIN_RELEASES_URL
+function Get-PHPInstallInfo {
+    param ($path)
+
+    $tsDll = Get-ChildItem "$path\php*ts.dll" -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -notmatch 'nts\.dll$' } |
+        Select-Object -First 1
+
+    if ($tsDll) {
+        $buildType = 'TS'
+        $dll = $tsDll
+    }
+    else {
+        $dll = Get-ChildItem "$path\php*.dll" |
+            Where-Object { $_.Name -notmatch 'phpdbg' } |
+            Select-Object -First 1
+        $buildType = 'NTS'
+    }
+
+    if (-not $dll) {
+        return $null
+    }
+
+    return @{
+        Version      = $dll.VersionInfo.ProductVersion
+        Arch         = Get-BinaryArchitecture-From-DLL -path $dll.FullName
+        BuildType    = $buildType
+        Dll          = $dll.Name
+        InstallPath  = $path
     }
 }
 
-function Is-PVM-Setup {
+function Get-BinaryArchitecture-From-DLL {
+    param ($path)
 
-    try {
-        $pvmEnvVarContent = Get-EnvVar-ByName -name 'PVM'
-        $pvmEnvEntries = $pvmEnvVarContent -split ';' | Where-Object { $_ -ne '' }
+    $bytes = [System.IO.File]::ReadAllBytes($path)
 
-        if ($null -eq $pvmEnvVarContent) {
-            return $false
-        }
+    $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
 
-        if ($pvmEnvEntries -notcontains $PVMRoot -or $pvmEnvEntries -notcontains $PHP_CURRENT_VERSION_PATH) {
-            return $false
-        }
+    $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
 
-        $path = Get-EnvVar-ByName -name 'Path' -optimized $true
-        if ($null -eq $path) {
-            $path = ''
-        }
+    switch ($machine) {
+        0x8664 { 'x64' }
+        0x014c { 'x86' }
+        default { 'Unknown' }
+    }
+}
 
-        $parent = Split-Path $PHP_CURRENT_VERSION_PATH
-        $pathEntries = $path -split ';' | Where-Object { $_ -ne '' }
-        if (
-            (
-                ($path -notlike "*$pvmEnvVarContent*") -and
-                ($pathEntries -notcontains "%$PVM_ENV_VAR_NAME%")
-            ) -or
-            (Is-Directory-Not-Exists -path $parent)
-        ) {
-            return $false
-        }
+function Is-Two-PHP-Versions-Equal {
+    param ($version1, $version2)
 
-        return $true
-    } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PVM is set up"; exception = $_ }
+    if ($null -eq $version1 -or $null -eq $version2) {
         return $false
     }
+
+    return (($version1.version -eq $version2.version) -and
+            ($version1.arch -eq $version2.arch) -and
+            ($version1.buildType -eq $version2.buildType))
+}
+
+function Get-Zend-Extensions-List {
+    $envConfig = Get-EnvConfig -rootPath $PVMRoot
+    $extensions = $envConfig['ZEND_EXTENSIONS_LIST'] -split ','
+
+    return $extensions
 }
 
 function Refresh-Installed-PHP-Versions-Cache {
@@ -78,6 +98,7 @@ function Get-Installed-PHP-Versions-From-Directory {
 
 function Get-Installed-PHP-Versions {
     param ($arch = $null, $buildType = $null)
+
     try {
         $installedVersions = Get-OrUpdateCache -cacheFileName 'installed_php_versions' -depth 1 -compute {
             Get-Installed-PHP-Versions-From-Directory
@@ -175,4 +196,46 @@ function Is-PHP-Version-Installed {
     }
 
     return $false
+}
+
+function Get-Source-Urls {
+    return [ordered]@{
+        'Archives' = $PHP_WIN_ARCHIVES_URL
+        'Releases' = $PHP_WIN_RELEASES_URL
+    }
+}
+
+function Get-PHP-Data {
+    param ($PhpIniPath)
+
+    $iniContent = Get-Content $PhpIniPath
+
+    $phpIniData = @{
+        extensions = @()
+        settings   = @()
+    }
+
+    foreach ($line in $iniContent) {
+        # Match both enabled and commented lines
+        if ($line -match '^\s*(;)?(zend_extension|extension)\s*=\s*"?([^";]+?)"?\s*(?:;.*)?$') {
+            $rawPath = $matches[3]
+            $extensionName = [System.IO.Path]::GetFileName($rawPath)
+            $phpIniData.extensions += @{
+                Section   = 'extension'
+                Extension = $extensionName
+                Type      = $matches[2] # extension or zend_extension
+                Enabled   = -not $matches[1]
+            }
+        } elseif ($line -match '^\s*(;)?([A-Za-z0-9_.]+)\s*=\s*("?[^";]+?"?)\s*(?:;.*)?$') {
+            $phpIniData.settings += @{
+                Section   = 'setting'
+                Name      = $matches[2]   # e.g. memory_limit
+                Type      = 'setting'
+                Value     = $matches[3].Trim('"') # strip quotes if present
+                Enabled   = -not $matches[1]      # false if line starts with ;
+            }
+        }
+    }
+
+    return $phpIniData
 }

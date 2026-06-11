@@ -1053,41 +1053,6 @@ function Display-Settings {
     }
 }
 
-function Get-PHP-Data {
-    param ($PhpIniPath)
-
-    $iniContent = Get-Content $PhpIniPath
-
-    $phpIniData = @{
-        extensions = @()
-        settings   = @()
-    }
-
-    foreach ($line in $iniContent) {
-        # Match both enabled and commented lines
-        if ($line -match '^\s*(;)?(zend_extension|extension)\s*=\s*"?([^";]+?)"?\s*(?:;.*)?$') {
-            $rawPath = $matches[3]
-            $extensionName = [System.IO.Path]::GetFileName($rawPath)
-            $phpIniData.extensions += @{
-                Section   = 'extension'
-                Extension = $extensionName
-                Type      = $matches[2] # extension or zend_extension
-                Enabled   = -not $matches[1]
-            }
-        } elseif ($line -match '^\s*(;)?([A-Za-z0-9_.]+)\s*=\s*("?[^";]+?"?)\s*(?:;.*)?$') {
-            $phpIniData.settings += @{
-                Section   = 'setting'
-                Name      = $matches[2]   # e.g. memory_limit
-                Type      = 'setting'
-                Value     = $matches[3].Trim('"') # strip quotes if present
-                Enabled   = -not $matches[1]      # false if line starts with ;
-            }
-        }
-    }
-
-    return $phpIniData
-}
-
 function Install-XDebug-Extension {
     param ($iniPath)
 

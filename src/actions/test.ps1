@@ -3,10 +3,10 @@ function Get-Tests-Files {
     param ($testsNames = $null)
 
     $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
-    
+
     $allTests = Get-ChildItem "$PVMRootDirectory\tests\*.tests.ps1" -Recurse -File
     $tests = $allTests
-    
+
     if ($testsNames) {
         $tests = $allTests | Where-Object {
             $fileTestName = $_.Name -replace '.tests.ps1', ''
@@ -40,8 +40,13 @@ function Run-Test-File {
         if ($options.coverage) {
             $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
             $covered = Get-ChildItem -Path "$PVMRootDirectory\src" -Recurse -Filter '*.ps1'
-            $covered = $covered | Where-Object {
-                return ($_.Name -replace '.ps1', '') -eq ($file.Name -replace '.tests.ps1', '')
+            $covered = Get-ChildItem -Path "$PVMRootDirectory\src" -Recurse -Filter '*.ps1' | Where-Object {
+                $testFile = $file.FullName -replace [regex]::Escape("$PVMRootDirectory\tests"), ''
+                $testFile = $testFile -replace '.tests.ps1', ''
+                $fileToCover = $_.FullName -replace [regex]::Escape("$PVMRootDirectory\src"), ''
+                $fileToCover = $fileToCover -replace '.ps1', ''
+
+                return $fileToCover -eq $testFile
             }
 
             $config.CodeCoverage.Enabled = $true
@@ -50,15 +55,15 @@ function Run-Test-File {
             $config.CodeCoverage.OutputFormat = 'JaCoCo' # 'CoverageGutters'
             $config.CodeCoverage.OutputEncoding = 'UTF8'
             $config.CodeCoverage.CoveragePercentTarget = $options.target
-            $coveredFile = $covered.Name
+            $coveredFile = "$($covered.Name) | $($covered.FullName)"
         }
 
-        Write-Host "`n----------------------------------------------------------------"
-        Write-Host "- Running test: $($file.Name) "
+        Write-Host "`n-----------------------------------------------------------------------------------"
+        Write-Host "- Running test: $($file.Name) | $($file.FullName)"
         if ($coveredFile) {
             Write-Host "- Covered file: $coveredFile"
         }
-        Write-Host '----------------------------------------------------------------'
+        Write-Host '-----------------------------------------------------------------------------------'
 
 
         $config.Run.Path = $file.FullName

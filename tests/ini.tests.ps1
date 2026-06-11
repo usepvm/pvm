@@ -1163,30 +1163,6 @@ Describe "Get-PHP-Info" {
     }
 }
 
-Describe "Get-PHP-Data" {
-    BeforeEach {
-        Reset-Ini-Content
-    }
-
-    It "Returns extensions with correct status" {
-        $extensions = (Get-PHP-Data -PhpIniPath $testIniPath).extensions
-        $extensions | Should -Not -Be $null
-        $extensions.Count | Should -BeGreaterThan 0
-
-        $curlExt = $extensions | Where-Object { $_.Extension -like '*curl*' }
-        $curlExt.Enabled | Should -Be $true
-
-        $xdebugExt = $extensions | Where-Object { $_.Extension -like '*xdebug*' }
-        $xdebugExt.Enabled | Should -Be $false
-    }
-
-    It "Handles empty ini file" {
-        '' | Set-Content $testIniPath
-        $extensions = (Get-PHP-Data -PhpIniPath $testIniPath).extensions
-        $extensions.Count | Should -Be 0
-    }
-}
-
 Describe "Get-Matching-PHPExtensionsStatus" {
     BeforeEach {
         Reset-Ini-Content

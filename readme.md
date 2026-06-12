@@ -99,16 +99,16 @@ pvm ini status <extension> # It shows all matching extensions
 # Example: pvm ini status sql
 
 # Enable or disable multiple extensions
-pvm ini enable <extension> # It shows all matching extensions
+pvm ini enable <extension> # It shows all matching extensions then enables the selected on
 # Example: pvm ini enable xdebug opcache
 # Example: pvm ini enable sql
-pvm ini disable <extension> # It shows all matching extensions
+pvm ini disable <extension> # It shows all matching extensions then enables the selected one
 # Example: pvm ini disable xdebug opcache
 # Example: pvm ini disable sql
 
 # Set or Get multiple settings values and change the status
 pvm ini set <setting>=<value> [--disable] # Default is enabling the setting
-pvm ini set <setting> [--disable] # It shows all matching settings
+pvm ini set <setting> [--disable] # It shows all matching settings then enables the selected one
 # Example: pvm ini set memory_limit=512M max_file_uploads=20
 # Example: pvm ini set max_input_time=60 --disable
 # Example: pvm ini set memory=1G
@@ -118,8 +118,14 @@ pvm ini get <setting> # It shows all matching settings
 # Example: pvm ini get memory
 
 # Install extensions from remote source
-pvm ini install <extension>
-# Example: pvm ini install opcache
+pvm ini add <extension> # It shows all matching extensions then adds the selected one
+# Example: pvm ini add opcache
+# Example: pvm ini add sql
+
+# Remove extensions from extensions directory and ini file
+pvm ini remove <extension> # It shows all matching extensions then removes the selected one
+# Example: pvm ini remove opcache
+# Example: pvm ini remove sql
 
 # List installed extensions
 pvm ini list

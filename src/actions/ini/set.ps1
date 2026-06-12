@@ -121,7 +121,7 @@ function Set-IniSetting {
 
         return $overallCode
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set ini setting '$key'"; exception = $_ }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set ini setting '$($keys -join ', ')'"; exception = $_ }
         return -1
     }
 }

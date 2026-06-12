@@ -45,7 +45,7 @@ function Get-IniExtensionStatus {
 
         return $overallCode
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check status for '$extName'"; exception = $_ }
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check status for '$($extNames -join ', ')'"; exception = $_ }
         return -1
     }
 }

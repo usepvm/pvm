@@ -137,9 +137,9 @@ extension=pgsql
         $script:callCount = 0
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
             $script:callCount++
-            if ($script:callCount -eq 1) { 'A' }
-            if ($script:callCount -eq 2) { -1 }
-            else { 3 }
+            if ($script:callCount -eq 1) { return 'A' }
+            if ($script:callCount -eq 2) { return -1 }
+            else { return 3 }
         }
 
         Mock Get-ChildItem {

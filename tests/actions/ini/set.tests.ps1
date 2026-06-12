@@ -121,9 +121,9 @@ opcache.protect_memory=1
         $script:callCount = 0
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
             $script:callCount++
-            if ($script:callCount -eq 1) { 'A' }
-            if ($script:callCount -eq 2) { -1 }
-            else { '1' }
+            if ($script:callCount -eq 1) { return 'A' }
+            if ($script:callCount -eq 2) { return -1 }
+            else { return '1' }
         }
 
         Set-IniSetting -iniPath $testIniPath -keys @('memory=1G') | Should -Be 0

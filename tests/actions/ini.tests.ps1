@@ -277,12 +277,12 @@ extension=php_curl.dll
         }
 
         It "Installs extension" {
-            $result = Invoke-IniAction -action 'install' -params @('curl')
+            $result = Invoke-IniAction -action 'add' -params @('curl')
             $result | Should -Be 0
         }
 
         It "Requires at least one parameter" {
-            $result = Invoke-IniAction -action 'install' -params @()
+            $result = Invoke-IniAction -action 'add' -params @()
             $result | Should -Be -1
         }
     }

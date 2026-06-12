@@ -78,7 +78,7 @@ function Invoke-IniAction {
             'restore' {
                 $exitCode = Restore-IniBackup -iniPath $iniPath
             }
-            'install' {
+            'add' {
                 if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one extension (pvm ini install xdebug)."
                     return -1

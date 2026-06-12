@@ -88,6 +88,16 @@ function Invoke-PVMIniAction {
 
                 $exitCode = Install-IniExtension -iniPath $iniPath -extNames @($params)
             }
+            'uninstall' {
+                if ($params.Count -eq 0) {
+                    Write-Host "`nPlease specify at least one extension (pvm ini uninstall xdebug)."
+                    return -1
+                }
+
+                Write-Host "`nUninstalling extension(s): $($params -join ', ')"
+
+                $exitCode = Uninstall-Extension -iniPath $iniPath -extNames @($params)
+            }
             'list' {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
                 $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains 'available') -term $term

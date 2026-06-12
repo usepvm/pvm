@@ -287,6 +287,33 @@ extension=php_curl.dll
         }
     }
 
+    Context "uninstall action" {
+        It "Uninstalls extension" {
+            Mock Uninstall-Extension { return 0 }
+
+            $result = Invoke-PVMIniAction -action 'uninstall' -params @('curl', 'xdebug')
+
+            $result | Should -Be 0
+
+            Assert-MockCalled Uninstall-Extension -Times 1 -ParameterFilter {
+                $iniPath -eq "$phpVersionPath\php.ini" -and
+                $extNames.Count -eq 2 -and
+                $extNames[0] -eq 'curl' -and
+                $extNames[1] -eq 'xdebug'
+            }
+        }
+
+        It "Requires at least one parameter" {
+            Mock Uninstall-Extension { return 0 }
+
+            $result = Invoke-PVMIniAction -action 'uninstall' -params @()
+
+            $result | Should -Be -1
+
+            Assert-MockCalled Uninstall-Extension -Times 0
+        }
+    }
+
     Context "list action" {
         It "Lists extensions" {
             Mock Get-PHP-Data {

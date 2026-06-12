@@ -150,7 +150,7 @@ Describe "Show-PVM-Version Function Tests" {
     }
 }
 
-Describe "Alias-Handler Tests" {
+Describe "Resolve-Alias Tests" {
     $testCases = @(
         @{ Operation = 'h'; Expected = 'help' }
         @{ Operation = 'H'; Expected = 'help' }
@@ -171,7 +171,7 @@ Describe "Alias-Handler Tests" {
 
     It "Returns '<Expected>' when '<Operation>' is passed" -TestCases $testCases {
         param ($Operation, $Expected)
-        $result = Alias-Handler $Operation
+        $result = Resolve-Alias $Operation
         $result | Should -Be $Expected
     }
 }
@@ -191,7 +191,7 @@ Describe "Start-PVM Function Tests" {
         }
         Mock Is-PVM-Setup { $true }
         Mock Log-Data { 0 }
-        Mock Alias-Handler {
+        Mock Resolve-Alias {
             param ($alias)
 
             if ([string]::IsNullOrWhiteSpace($alias)) {
@@ -278,7 +278,7 @@ Describe "Start-PVM Function Tests" {
             $result | Should -Be 0
             Assert-MockCalled Show-Usage -Times 1
             Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Alias-Handler -Times 1
+            Assert-MockCalled Resolve-Alias -Times 1
         }
 
         It "Should show usage and return 0 when operation is empty string" {
@@ -287,7 +287,7 @@ Describe "Start-PVM Function Tests" {
             $result | Should -Be 0
             Assert-MockCalled Show-Usage -Times 1
             Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Alias-Handler -Times 1
+            Assert-MockCalled Resolve-Alias -Times 1
         }
 
         It "Should show usage and return 0 when operation is whitespace" {
@@ -304,7 +304,7 @@ Describe "Start-PVM Function Tests" {
             $result | Should -Be 0
             Assert-MockCalled Show-Usage -Times 1
             Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Alias-Handler -Times 1
+            Assert-MockCalled Resolve-Alias -Times 1
         }
 
         It "Should proceed when operation exists in actions" {
@@ -313,14 +313,14 @@ Describe "Start-PVM Function Tests" {
             $result | Should -Be 0
             Assert-MockCalled Show-Usage -Times 0
             Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Alias-Handler -Times 1
+            Assert-MockCalled Resolve-Alias -Times 1
         }
 
         It "Should handle alias conversion correctly" {
             $result = Start-PVM -operation 'i' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Alias-Handler -Times 1 -ParameterFilter { $alias -eq 'i' }
+            Assert-MockCalled Resolve-Alias -Times 1 -ParameterFilter { $alias -eq 'i' }
             Assert-MockCalled Show-Usage -Times 0
         }
 
@@ -521,8 +521,8 @@ Describe "Start-PVM Function Tests" {
             }
         }
 
-        It "Should handle exception during Alias-Handler call" {
-            Mock Alias-Handler { throw 'Alias handler failed' }
+        It "Should handle exception during Resolve-Alias call" {
+            Mock Resolve-Alias { throw 'Alias handler failed' }
 
             $result = Start-PVM -operation 'install' -arguments @()
 
@@ -608,7 +608,7 @@ Describe "Start-PVM Function Tests" {
         }
 
         It "Should handle multiple operations through alias handler" {
-            Mock Alias-Handler { param ($alias)
+            Mock Resolve-Alias { param ($alias)
                 switch ($alias) {
                     'i' { return 'install' }
                     'u' { return 'use' }
@@ -635,7 +635,7 @@ Describe "Start-PVM Function Tests" {
 
                 $result = Start-PVM -operation $case.input -arguments @()
 
-                Assert-MockCalled Alias-Handler -ParameterFilter { $alias -eq $case.input }
+                Assert-MockCalled Resolve-Alias -ParameterFilter { $alias -eq $case.input }
 
                 if ($case.expected -in @('install', 'use', 'list')) {
                     $result | Should -BeGreaterThan 0
@@ -675,7 +675,7 @@ Describe "Start-PVM Function Tests" {
 
             $result | Should -Be 0
             Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Alias-Handler -Times 1
+            Assert-MockCalled Resolve-Alias -Times 1
             Assert-MockCalled Is-PVM-Setup -Times 1
             Assert-MockCalled Show-Usage -Times 0
             Assert-MockCalled Show-PVM-Version -Times 0
@@ -688,14 +688,14 @@ Describe "Start-PVM Function Tests" {
                     'setup' = @{ action = { return 0 } }
                 }
             }
-            Mock Alias-Handler { param ($alias) return $alias }
+            Mock Resolve-Alias { param ($alias) return $alias }
             # Is-PVM-Setup should not be called for setup operation
 
             $result = Start-PVM -operation 'setup' -arguments @()
 
             $result | Should -Be 0
             Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Alias-Handler -Times 1
+            Assert-MockCalled Resolve-Alias -Times 1
             Assert-MockCalled Is-PVM-Setup -Times 0
             Assert-MockCalled Show-Usage -Times 0
         }
@@ -708,7 +708,7 @@ Describe "Start-PVM Function Tests" {
                     }
                 }
             }
-            Mock Alias-Handler { param ($alias) return $alias }
+            Mock Resolve-Alias { param ($alias) return $alias }
             Mock Is-PVM-Setup { $true }
             Mock Log-Data { 0 }
 
@@ -716,7 +716,7 @@ Describe "Start-PVM Function Tests" {
 
             $result | Should -Be -1
             Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Alias-Handler -Times 1
+            Assert-MockCalled Resolve-Alias -Times 1
             Assert-MockCalled Is-PVM-Setup -Times 1
             Assert-MockCalled Log-Data -Times 1
             Assert-MockCalled Write-Host -Times 1 -ParameterFilter {

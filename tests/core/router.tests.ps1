@@ -5,17 +5,17 @@ BeforeAll {
 
 Describe "Get-Actions Tests" {
     BeforeEach {
-        Mock Invoke-PVMHelp { }
-        Mock Invoke-PVMSetup { }
-        Mock Invoke-PVMCurrent { }
-        Mock Invoke-PVMList { }
-        Mock Invoke-PVMInstall { }
-        Mock Invoke-PVMUninstall { }
-        Mock Invoke-PVMUse { }
-        Mock Invoke-PVMIni { }
-        Mock Invoke-PVMLog { }
-        Mock Invoke-PVMTest { }
-        Mock Invoke-PVMProfile { }
+        Mock Invoke-Help { }
+        Mock Invoke-Setup { }
+        Mock Invoke-Current { }
+        Mock Invoke-List { }
+        Mock Invoke-Install { }
+        Mock Invoke-Uninstall { }
+        Mock Invoke-Use { }
+        Mock Invoke-Ini { }
+        Mock Invoke-Log { }
+        Mock Invoke-Test { }
+        Mock Invoke-Profile { }
     }
 
     It "Should return ordered hashtable with all actions" {
@@ -48,21 +48,21 @@ Describe "Get-Actions Tests" {
             $actions = Get-Actions -arguments @()
             $actions['help'].action.Invoke()
 
-            Assert-MockCalled Invoke-PVMHelp -Times 1
+            Assert-MockCalled Invoke-Help -Times 1
         }
 
         It "Should execute setup action correctly" {
             $actions = Get-Actions -arguments @()
             $actions['setup'].action.Invoke()
 
-            Assert-MockCalled Invoke-PVMSetup -Times 1
+            Assert-MockCalled Invoke-Setup -Times 1
         }
 
         It "Should execute current action correctly" {
             $actions = Get-Actions -arguments @()
             $actions['current'].action.Invoke()
 
-            Assert-MockCalled Invoke-PVMCurrent -Times 1
+            Assert-MockCalled Invoke-Current -Times 1
         }
 
         It "Should execute list action with arguments" {
@@ -70,49 +70,49 @@ Describe "Get-Actions Tests" {
             $actions = Get-Actions -arguments $testArgs
             $actions['list'].action.Invoke()
 
-            Assert-MockCalled Invoke-PVMList -Times 1
+            Assert-MockCalled Invoke-List -Times 1
         }
 
         It "Should execute install action correctly" {
             $actions = Get-Actions -arguments @('8.2.0')
             $actions['install'].action.Invoke()
 
-            Assert-MockCalled Invoke-PVMInstall -Times 1
+            Assert-MockCalled Invoke-Install -Times 1
         }
 
         It "Should execute uninstall action correctly" {
             $actions = Get-Actions -arguments @('8.2.0')
             $actions['uninstall'].action.Invoke()
 
-            Assert-MockCalled Invoke-PVMUninstall -Times 1
+            Assert-MockCalled Invoke-Uninstall -Times 1
         }
 
         It "Should execute use action correctly" {
             $actions = Get-Actions -arguments @('8.2.0')
             $actions['use'].action.Invoke()
 
-            Assert-MockCalled Invoke-PVMUse -Times 1
+            Assert-MockCalled Invoke-Use -Times 1
         }
 
         It "Should execute ini action correctly" {
             $actions = Get-Actions -arguments @('set', 'memory_limit=256M')
             $actions['ini'].action.Invoke()
 
-            Assert-MockCalled Invoke-PVMIni -Times 1
+            Assert-MockCalled Invoke-Ini -Times 1
         }
 
         It "Should execute info action" {
             $actions = Get-Actions -arguments @()
             $actions['info'].action.Invoke()
 
-            Assert-MockCalled Invoke-PVMIni -Times 1
+            Assert-MockCalled Invoke-Ini -Times 1
         }
 
         It "Should execute log action" {
             $actions = Get-Actions -arguments @("--pageSize=10")
             $actions['log'].action.Invoke()
 
-            Assert-MockCalled Invoke-PVMLog -Times 1
+            Assert-MockCalled Invoke-Log -Times 1
         }
 
         It "Should execute test action with verbosity" {
@@ -120,14 +120,14 @@ Describe "Get-Actions Tests" {
             $actions = Get-Actions -arguments $testArgs
             $actions['test'].action.Invoke()
 
-            Assert-MockCalled Invoke-PVMTest -Times 1
+            Assert-MockCalled Invoke-Test -Times 1
         }
 
         It "Should execute profile action" {
             $actions = Get-Actions -arguments @('save')
             $actions['profile'].action.Invoke()
 
-            Assert-MockCalled Invoke-PVMProfile -Times 1
+            Assert-MockCalled Invoke-Profile -Times 1
         }
     }
 }
@@ -148,19 +148,19 @@ Describe "Integration Tests" {
 
         It "Should handle complete workflow: setup -> install -> use -> current" {
             # Setup
-            $result = Invoke-PVMSetup
+            $result = Invoke-Setup
             $result | Should -Be 0
 
             # Install
-            $result = Invoke-PVMInstall -arguments @('8.2.0')
+            $result = Invoke-Install -arguments @('8.2.0')
             $result | Should -Be 0
 
             # Use
-            $result = Invoke-PVMUse -arguments @('8.2.0')
+            $result = Invoke-Use -arguments @('8.2.0')
             $result | Should -Be 0
 
             # Current
-            $result = Invoke-PVMCurrent
+            $result = Invoke-Current
             $result | Should -Be 0
 
             # Verify all functions were called
@@ -179,7 +179,7 @@ Describe "Integration Tests" {
             Mock Display-Msg-By-ExitCode { }
             Mock Write-Host { }
 
-            $result = Invoke-PVMSetup
+            $result = Invoke-Setup
             $result | Should -Be 0
 
             Assert-MockCalled Setup-PVM -Times 1

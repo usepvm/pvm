@@ -80,7 +80,7 @@ max_execution_time = 30
     }
 }
 
-Describe "Invoke-PVMIniAction" {
+Describe "Invoke-IniAction" {
     BeforeEach {
         Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
         Reset-Ini-Content
@@ -89,25 +89,25 @@ Describe "Invoke-PVMIniAction" {
 
     Context "info action" {
         It "Executes info action successfully" {
-            $result = Invoke-PVMIniAction -action 'info' -params @('--search=cache')
+            $result = Invoke-IniAction -action 'info' -params @('--search=cache')
             $result | Should -Be 0
         }
     }
 
     Context "get action" {
         It "Gets single setting" {
-            $result = Invoke-PVMIniAction -action 'get' -params @('memory_limit')
+            $result = Invoke-IniAction -action 'get' -params @('memory_limit')
 
             $result | Should -Be 0
         }
 
         It "Gets multiple settings" {
-            $result = Invoke-PVMIniAction -action 'get' -params @('memory_limit', 'display_errors')
+            $result = Invoke-IniAction -action 'get' -params @('memory_limit', 'display_errors')
             $result | Should -Be 0
         }
 
         It "Requires at least one parameter" {
-            $result = Invoke-PVMIniAction -action 'get' -params @()
+            $result = Invoke-IniAction -action 'get' -params @()
             $result | Should -Be -1
         }
     }
@@ -115,7 +115,7 @@ Describe "Invoke-PVMIniAction" {
     Context "set action" {
         It "Sets single setting" {
             Mock Read-Host { return '256M' }
-            $result = Invoke-PVMIniAction -action 'set' -params @('memory_limit')
+            $result = Invoke-IniAction -action 'set' -params @('memory_limit')
             $result | Should -Be 0
         }
 
@@ -123,12 +123,12 @@ Describe "Invoke-PVMIniAction" {
             Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { '512M' }
             Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'max_execution_time'" } -MockWith { '60' }
 
-            $result = Invoke-PVMIniAction -action 'set' -params @('memory_limit', 'max_execution_time')
+            $result = Invoke-IniAction -action 'set' -params @('memory_limit', 'max_execution_time')
             $result | Should -Be 0
         }
 
         It "Requires at least one parameter" {
-            $result = Invoke-PVMIniAction -action 'set' -params @()
+            $result = Invoke-IniAction -action 'set' -params @()
             $result | Should -Be -1
         }
     }
@@ -139,7 +139,7 @@ Describe "Invoke-PVMIniAction" {
                 param ($Path)
                 return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" } )
             }
-            $result = Invoke-PVMIniAction -action 'enable' -params @('xdebug')
+            $result = Invoke-IniAction -action 'enable' -params @('xdebug')
             $result | Should -Be 0
         }
 
@@ -158,12 +158,12 @@ extension=php_curl.dll
                 if ($script:callCount -eq 2) { return @(@{ BaseName = 'php_gd'; Name = 'php_gd.dll'; FullName = "$extDirectory\php_gd.dll" }) }
             }
 
-            $result = Invoke-PVMIniAction -action 'enable' -params @('xdebug', 'gd')
+            $result = Invoke-IniAction -action 'enable' -params @('xdebug', 'gd')
             $result | Should -Be 0
         }
 
         It "Requires at least one parameter" {
-            $result = Invoke-PVMIniAction -action 'enable' -params @()
+            $result = Invoke-IniAction -action 'enable' -params @()
             $result | Should -Be -1
         }
     }
@@ -174,12 +174,12 @@ extension=php_curl.dll
                 param ($Path)
                 return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
             }
-            $result = Invoke-PVMIniAction -action 'disable' -params @('curl')
+            $result = Invoke-IniAction -action 'disable' -params @('curl')
             $result | Should -Be 0
         }
 
         It "Requires at least one parameter" {
-            $result = Invoke-PVMIniAction -action 'disable' -params @()
+            $result = Invoke-IniAction -action 'disable' -params @()
             $result | Should -Be -1
         }
     }
@@ -190,12 +190,12 @@ extension=php_curl.dll
                 param ($Path)
                 return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
             }
-            $result = Invoke-PVMIniAction -action 'status' -params @('curl')
+            $result = Invoke-IniAction -action 'status' -params @('curl')
             $result | Should -Be 0
         }
 
         It "Requires at least one parameter" {
-            $result = Invoke-PVMIniAction -action 'status' -params @()
+            $result = Invoke-IniAction -action 'status' -params @()
             $result | Should -Be -1
         }
     }
@@ -204,7 +204,7 @@ extension=php_curl.dll
         It "Restores from backup" {
             # Create a backup first
             Backup-IniFile -iniPath "$phpVersionPath\php.ini"
-            $result = Invoke-PVMIniAction -action 'restore' -params @()
+            $result = Invoke-IniAction -action 'restore' -params @()
             $result | Should -Be 0
         }
     }
@@ -277,12 +277,12 @@ extension=php_curl.dll
         }
 
         It "Installs extension" {
-            $result = Invoke-PVMIniAction -action 'install' -params @('curl')
+            $result = Invoke-IniAction -action 'install' -params @('curl')
             $result | Should -Be 0
         }
 
         It "Requires at least one parameter" {
-            $result = Invoke-PVMIniAction -action 'install' -params @()
+            $result = Invoke-IniAction -action 'install' -params @()
             $result | Should -Be -1
         }
     }
@@ -291,7 +291,7 @@ extension=php_curl.dll
         It "Uninstalls extension" {
             Mock Uninstall-Extension { return 0 }
 
-            $result = Invoke-PVMIniAction -action 'uninstall' -params @('curl', 'xdebug')
+            $result = Invoke-IniAction -action 'uninstall' -params @('curl', 'xdebug')
 
             $result | Should -Be 0
 
@@ -306,7 +306,7 @@ extension=php_curl.dll
         It "Requires at least one parameter" {
             Mock Uninstall-Extension { return 0 }
 
-            $result = Invoke-PVMIniAction -action 'uninstall' -params @()
+            $result = Invoke-IniAction -action 'uninstall' -params @()
 
             $result | Should -Be -1
 
@@ -328,32 +328,32 @@ extension=php_curl.dll
                     )
                 }
             }
-            $result = Invoke-PVMIniAction -action 'list' -params @('--search=pc')
+            $result = Invoke-IniAction -action 'list' -params @('--search=pc')
             $result | Should -Be 0
         }
     }
 
     Context "error handling" {
         It "Handles invalid action" {
-            $result = Invoke-PVMIniAction -action 'invalid' -params @()
+            $result = Invoke-IniAction -action 'invalid' -params @()
             $result | Should -Be 1
         }
 
         It "Handles missing PHP current version" {
             Mock Get-Current-PHP-Version { return $null }
-            $result = Invoke-PVMIniAction -action 'info' -params @()
+            $result = Invoke-IniAction -action 'info' -params @()
             $result | Should -Be -1
         }
 
         It "Handles missing php.ini file" {
             Remove-Item "$phpVersionPath\php.ini" -Force
-            $result = Invoke-PVMIniAction -action 'info' -params @()
+            $result = Invoke-IniAction -action 'info' -params @()
             $result | Should -Be -1
         }
 
         It "Returns -1 on unexpected error" {
             Mock Get-Current-PHP-Version { throw 'Unexpected error' }
-            $result = Invoke-PVMIniAction -action 'info' -params @()
+            $result = Invoke-IniAction -action 'info' -params @()
             $result | Should -Be -1
         }
     }

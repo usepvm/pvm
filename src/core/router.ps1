@@ -15,7 +15,7 @@ function Get-Actions {
                     'If no command is provided, displays help for all commands.'
                 );
             };
-            action      = { return Invoke-PVMHelp -arguments $script:arguments }
+            action      = { return Invoke-Help -arguments $script:arguments }
         }
         'setup'     = @{
             command     = 'pvm setup';
@@ -27,7 +27,7 @@ function Get-Actions {
                     'This command should be run once after installation to configure PVM for first use.'
                 )
             };
-            action      = { return Invoke-PVMSetup }
+            action      = { return Invoke-Setup }
         }
         'current'   = @{
             command     = 'pvm current';
@@ -39,7 +39,7 @@ function Get-Actions {
                     'It also shows the status of xdebug and opcache.'
                 )
             };
-            action      = { return Invoke-PVMCurrent }
+            action      = { return Invoke-Current }
         }
         'list'      = @{
             command     = 'pvm list [available] [x86|x64] [ts|nts]';
@@ -59,7 +59,7 @@ function Get-Actions {
                     'pvm list available --search=8.2 .... Show available versions with 8.2 in the name'
                 )
             };
-            action      = { return Invoke-PVMList -arguments $script:arguments }
+            action      = { return Invoke-List -arguments $script:arguments }
         }
         'install'   = @{
             command     = 'pvm install <version>|[auto] [x86|x64] [ts|nts]';
@@ -82,7 +82,7 @@ function Get-Actions {
                     'pvm install latest ........... Install the latest available PHP version'
                 )
             }
-            action      = { return Invoke-PVMInstall -arguments $script:arguments }
+            action      = { return Invoke-Install -arguments $script:arguments }
         }
         'uninstall' = @{
             command     = 'pvm uninstall <version>';
@@ -97,7 +97,7 @@ function Get-Actions {
                     '<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)'
                 )
             }
-            action      = { return Invoke-PVMUninstall -arguments $script:arguments }
+            action      = { return Invoke-Uninstall -arguments $script:arguments }
         }
         'use'       = @{
             command     = 'pvm use <version>|[auto]';
@@ -117,7 +117,7 @@ function Get-Actions {
                     'auto ............. Auto-detect version from project files'
                 )
             }
-            action      = { return Invoke-PVMUse -arguments $script:arguments }
+            action      = { return Invoke-Use -arguments $script:arguments }
         }
         'info'      = @{
             command     = 'pvm info';
@@ -129,7 +129,7 @@ function Get-Actions {
                     'including active PHP version, PHP paths, and extensions.'
                 )
             }
-            action      = { $script:arguments = @('info') + $script:arguments; return Invoke-PVMIni -arguments $script:arguments }
+            action      = { $script:arguments = @('info') + $script:arguments; return Invoke-Ini -arguments $script:arguments }
         }
         'ini'       = @{
             command     = 'pvm ini <action> [<args>]';
@@ -174,7 +174,7 @@ function Get-Actions {
                     "pvm ini list available --search=zip ............... Lists available PHP extensions with 'zip' in their name"
                 )
             }
-            action      = { return Invoke-PVMIni -arguments $script:arguments }
+            action      = { return Invoke-Ini -arguments $script:arguments }
         }
         'profile'   = @{
             command     = 'pvm profile <action> [<args>]';
@@ -208,7 +208,7 @@ function Get-Actions {
                     'pvm profile import ./profile.json custom ..... Imports with custom name'
                 )
             }
-            action      = { return Invoke-PVMProfile -arguments $script:arguments }
+            action      = { return Invoke-Profile -arguments $script:arguments }
         }
         'log'       = @{
             command     = 'pvm log';
@@ -225,7 +225,7 @@ function Get-Actions {
                     "pvm log --search=error .... Shows entries matching 'error' term"
                 )
             }
-            action      = { return Invoke-PVMLog -arguments $script:arguments }
+            action      = { return Invoke-Log -arguments $script:arguments }
         }
         'test'      = @{
             command     = 'pvm test';
@@ -258,7 +258,7 @@ function Get-Actions {
                     '--exclude=[files] ................ Run all tests except selected files'
                 )
             }
-            action      = { return Invoke-PVMTest -arguments $script:arguments }
+            action      = { return Invoke-Test -arguments $script:arguments }
         }
     }
 }

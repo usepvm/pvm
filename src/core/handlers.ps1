@@ -1,5 +1,5 @@
 
-function Invoke-PVMSetup {
+function Invoke-Setup {
     $result = @{ code = 0; message = 'PVM is already setup' }
     if (-not (Is-PVM-Setup)) {
         $result = Setup-PVM
@@ -13,7 +13,7 @@ function Invoke-PVMSetup {
     return 0
 }
 
-function Invoke-PVMCurrent {
+function Invoke-Current {
     $result = Get-Current-PHP-Version
     if (-not $result.version) {
         Write-Host "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
@@ -45,7 +45,7 @@ function Invoke-PVMCurrent {
     return 0
 }
 
-function Invoke-PVMList {
+function Invoke-List {
     param ($arguments)
 
     $arch = Resolve-Arch -arguments $arguments
@@ -57,7 +57,7 @@ function Invoke-PVMList {
     return $result
 }
 
-function Invoke-PVMInstall {
+function Invoke-Install {
     param ($arguments)
 
     $version = $arguments[0]
@@ -95,7 +95,7 @@ function Invoke-PVMInstall {
     return 0
 }
 
-function Invoke-PVMUninstall {
+function Invoke-Uninstall {
     param ($arguments)
 
     $version = $arguments[0]
@@ -111,7 +111,7 @@ function Invoke-PVMUninstall {
     return 0
 }
 
-function Invoke-PVMUse {
+function Invoke-Use {
     param ($arguments)
 
     $version = $arguments[0]
@@ -136,7 +136,7 @@ function Invoke-PVMUse {
     return 0
 }
 
-function Invoke-PVMIni {
+function Invoke-Ini {
     param ($arguments)
 
     $action = $arguments[0]
@@ -149,11 +149,11 @@ function Invoke-PVMIni {
         $arguments[1..($arguments.Count - 1)] | Where-Object { $_ -ne $arch }
     } else { @() }
 
-    $exitCode = Invoke-PVMIniAction -action $action -params $remainingArgs
+    $exitCode = Invoke-IniAction -action $action -params $remainingArgs
     return $exitCode
 }
 
-function Invoke-PVMTest {
+function Invoke-Test {
     param ($arguments)
 
     if (-not (Get-Module -ListAvailable Pester)) {
@@ -205,7 +205,7 @@ function Invoke-PVMTest {
     return Prepare-Tests -testsNames $testsNames -options $options -exclude $exclude
 }
 
-function Invoke-PVMLog {
+function Invoke-Log {
     param ($arguments)
 
     $pageSizeArg = $arguments | Where-Object { $_ -match '^--pageSize=(.+)$' }
@@ -220,7 +220,7 @@ function Invoke-PVMLog {
     return $code
 }
 
-function Invoke-PVMHelp {
+function Invoke-Help {
     param ($arguments)
 
     $command = $arguments[0]
@@ -245,7 +245,7 @@ function Invoke-PVMHelp {
     return 0
 }
 
-function Invoke-PVMProfile {
+function Invoke-Profile {
     param ($arguments)
 
     $action = $arguments[0]

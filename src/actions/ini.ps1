@@ -1,5 +1,5 @@
 ﻿
-function Invoke-PVMIniAction {
+function Invoke-IniAction {
     param ($action, $params)
 
     try {

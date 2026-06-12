@@ -39,7 +39,7 @@ function Show-PVM-Version {
     Write-Host "`nPVM version $PVM_VERSION"
 }
 
-function Alias-Handler {
+function Resolve-Alias {
     param ($alias)
 
     if ([string]::IsNullOrWhiteSpace($alias)) {
@@ -56,7 +56,7 @@ function Alias-Handler {
     }
 }
 
-function Allowed-Operations {
+function Get-AllowedOperations {
     return @('help', 'setup', 'log')
 }
 
@@ -71,14 +71,14 @@ function Start-PVM {
 
         $actions = Get-Actions -arguments $arguments
 
-        $operation = Alias-Handler -alias $operation
+        $operation = Resolve-Alias -alias $operation
 
         if (-not ($operation -and $actions.Contains($operation))) {
             Show-Usage
             return 0
         }
 
-        $allowedOperations = Allowed-Operations
+        $allowedOperations = Get-AllowedOperations
 
         if (($allowedOperations -notcontains $operation) -and (-not (Is-PVM-Setup))) {
             Write-Host "`nPVM is not setup. Please run 'pvm setup' first."

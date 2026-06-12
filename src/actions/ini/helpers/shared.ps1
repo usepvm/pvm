@@ -53,6 +53,7 @@ function Get-Matching-PHPExtensionsStatus {
                 name = $file.BaseName
                 id = $fileId
                 fullPath = $file.FullName
+                fileName = $file.Name
             }
         }
     }
@@ -113,6 +114,8 @@ function Get-Matching-PHPExtensionsStatus {
                 line = $iniMatches[$id].line
                 lineNumber = $iniMatches[$id].lineNumber
                 source = 'ext,ini'
+                fullPath = $extMatch.fullPath
+                fileName = $extMatch.fileName
             }
         } else {
             # Extension exists in ext but not configured in ini - add it as disabled
@@ -131,6 +134,8 @@ function Get-Matching-PHPExtensionsStatus {
                     line = $extensionLine
                     lineNumber = $lines.Count
                     source = 'ext,ini'
+                    fullPath = $extMatch.fullPath
+                    fileName = $extMatch.fileName
                 }
             } catch {
                 # If adding fails, still return it as available
@@ -142,6 +147,8 @@ function Get-Matching-PHPExtensionsStatus {
                     line = 'Found in ext directory: $($extMatch.fullPath)'
                     lineNumber = 0
                     source = 'ext'
+                    fullPath = $extMatch.fullPath
+                    fileName = $extMatch.fileName
                 }
             }
         }

@@ -88,7 +88,7 @@ function Invoke-IniAction {
 
                 $exitCode = Install-IniExtension -iniPath $iniPath -extNames @($params)
             }
-            'uninstall' {
+            'remove' {
                 if ($params.Count -eq 0) {
                     Write-Host "`nPlease specify at least one extension (pvm ini uninstall xdebug)."
                     return -1

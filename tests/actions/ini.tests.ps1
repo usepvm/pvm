@@ -291,7 +291,7 @@ extension=php_curl.dll
         It "Uninstalls extension" {
             Mock Uninstall-Extension { return 0 }
 
-            $result = Invoke-IniAction -action 'uninstall' -params @('curl', 'xdebug')
+            $result = Invoke-IniAction -action 'remove' -params @('curl', 'xdebug')
 
             $result | Should -Be 0
 
@@ -306,7 +306,7 @@ extension=php_curl.dll
         It "Requires at least one parameter" {
             Mock Uninstall-Extension { return 0 }
 
-            $result = Invoke-IniAction -action 'uninstall' -params @()
+            $result = Invoke-IniAction -action 'remove' -params @()
 
             $result | Should -Be -1
 

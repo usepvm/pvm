@@ -237,7 +237,7 @@ function SortBy {
             }
         }
         'file' {
-            return $data | Sort-Object @{ Expression = { [string]$_.Name }; Descending = $direction }
+            return $data | Sort-Object @{ Expression = { [string]$_.relativeFilePath }; Descending = $direction }
         }
     }
 

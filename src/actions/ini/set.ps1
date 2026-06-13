@@ -97,7 +97,7 @@ function Set-IniSetting {
                 ";$($selected.Key) = $inputValue"
             }
 
-            Backup-IniFile $iniPath
+            Backup-IniFile -iniPath $iniPath
 
             $lines[$selected.LineNo] = $newLine
             Set-Content -Path $iniPath $lines -Encoding UTF8

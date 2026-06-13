@@ -299,7 +299,7 @@ function Load-PHP-Profile {
         Write-Host -Object "  Created: $($jsonContent.created)" -ForegroundColor Gray
 
         # Backup ini file before applying changes
-        Backup-IniFile $iniPath
+        Backup-IniFile -iniPath $iniPath
 
         # Get popular lists to validate profile contents
         $popularSettings = Get-Popular-PHP-Settings

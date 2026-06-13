@@ -36,7 +36,7 @@ BeforeAll {
     Mock Is-Not-Admin { return $false }
 
     # Create wrapper functions that use our mock registry
-    Mock Get-All-EnvVars-Wrapper {
+    Mock Get-All-EnvVars-Core {
         if ($global:MockRegistryThrowException) {
             throw $global:MockRegistryException
         }
@@ -46,7 +46,7 @@ BeforeAll {
         return $result
     }
 
-    Mock Get-EnvVar-ByName-Wrapper {
+    Mock Get-EnvVar-ByName-Core {
         param ($name)
 
         if ($global:MockRegistryThrowException) {
@@ -56,7 +56,7 @@ BeforeAll {
         return $global:MockRegistry.Machine[$name]
     }
 
-    Mock Set-EnvVar-Wrapper {
+    Mock Set-EnvVar-Core {
         param ($name, $value)
 
         if ($global:MockRegistryThrowException) {
@@ -82,7 +82,7 @@ Describe "Get-All-EnvVars" {
 
     Context "When an exception occurs" {
         It "Returns null" {
-            Mock Get-All-EnvVars-Wrapper { throw $global:MockRegistryException }
+            Mock Get-All-EnvVars-Core { throw $global:MockRegistryException }
             $result = Get-All-EnvVars
             $result | Should -BeNullOrEmpty
         }
@@ -127,7 +127,7 @@ Describe "Get-EnvVar-ByName" {
 
     Context "When an exception occurs" {
         It "Returns null when an exception occurs" {
-            Mock Get-EnvVar-ByName-Wrapper { throw 'Simulated exception' }
+            Mock Get-EnvVar-ByName-Core { throw 'Simulated exception' }
             $result = Get-EnvVar-ByName -name 'SIMULATED_EXCEPTION'
             $result | Should -Be $null
         }
@@ -164,7 +164,7 @@ Describe "Set-EnvVar" {
 
     Context "When an exception occurs" {
         It "Returns -1 when an exception occurs" {
-            Mock Set-EnvVar-Wrapper { throw 'Simulated exception' }
+            Mock Set-EnvVar-Core { throw 'Simulated exception' }
             $result = Set-EnvVar -name 'SIMULATED_EXCEPTION' -value 'TEST_VALUE'
             $result | Should -Be -1
         }

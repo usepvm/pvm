@@ -81,7 +81,6 @@ function Disable-IniExtension {
 
             Backup-IniFile -iniPath $iniPath
             Set-Content -Path $iniPath $updatedLines -Encoding UTF8
-            # Write-Host -Object "- '$($selected.name)' disabled successfully." -ForegroundColor DarkGreen
             $results += @{ name = $selected.name; status = 'Disabled'; color = 'DarkYellow' }
         }
 

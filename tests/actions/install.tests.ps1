@@ -525,18 +525,6 @@ Describe "Download-PHP-From-Url Tests" {
     }
 }
 
-Describe "Extract-Zip Tests" {
-    BeforeEach {
-        Mock Write-Host { }
-        Reset-MockState
-    }
-
-    It "Should extract zip without errors" {
-        # This is a basic test since we're mocking the zip extraction
-        { Extract-Zip -zipPath 'test.zip' -extractPath 'testdir' } | Should -Not -Throw
-    }
-}
-
 Describe "Extract-And-Configure Tests" {
     BeforeEach {
         Mock Write-Host { }

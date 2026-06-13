@@ -179,23 +179,12 @@ function Download-PHP {
     return $null
 }
 
-function Extract-Zip {
-    param ($zipPath, $extractPath)
-
-    try {
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
-    } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to extract zip file from $zipPath"; exception = $_ }
-    }
-}
-
 function Extract-And-Configure {
     param ($path, $fileNamePath)
 
     try {
         Remove-Item -Path $fileNamePath -Recurse -Force
-        Extract-Zip -zipPath $path -extractPath $fileNamePath
+        Extract-Zip -zipPath $path -extractPath $fileNamePath -deleteZipAfter $true
         $iniCandidates = @(
             'php.ini-development',
             'php.ini-production',
@@ -208,7 +197,6 @@ function Extract-And-Configure {
                 break
             }
         }
-        Remove-Item -Path $path
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to extract and configure PHP from $path"; exception = $_ }
     }
@@ -365,7 +353,7 @@ function Install-PHP {
             return @{ code = -1; message = $message }
         }
 
-        $destination = Download-PHP -version $selectedVersionObject
+        $destination = Download-PHP -versionObject $selectedVersionObject
 
         if (-not $destination) {
             return @{ code = -1; message = "Failed to download PHP version $version"; color = 'DarkYellow' }

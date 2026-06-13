@@ -3,20 +3,20 @@ function Is-OS-64Bit {
     return [System.Environment]::Is64BitOperatingSystem
 }
 
-function Get-All-EnvVars-Wrapper {
+function Get-All-EnvVars-Core {
     return [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
 }
 
 function Get-All-EnvVars {
     try {
-        return Get-All-EnvVars-Wrapper
+        return Get-All-EnvVars-Core
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get all environment variables"; exception = $_ }
         return $null
     }
 }
 
-function Get-EnvVar-ByName-Wrapper {
+function Get-EnvVar-ByName-Core {
     param ($name)
 
     return [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
@@ -30,7 +30,7 @@ function Get-EnvVar-ByName {
             return $null
         }
         $name = $name.Trim()
-        $value = Get-EnvVar-ByName-Wrapper -name $name
+        $value = Get-EnvVar-ByName-Core -name $name
 
         if ($optimized -eq $true) {
             $value = Get-Optimized-Env -name $name -value $value
@@ -43,7 +43,7 @@ function Get-EnvVar-ByName {
     }
 }
 
-function Set-EnvVar-Wrapper {
+function Set-EnvVar-Core {
     param ($name, $value)
 
     [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine)
@@ -59,12 +59,12 @@ function Set-EnvVar {
         $name = $name.Trim()
 
         if (Is-Not-Admin) {
-            $command = "Set-EnvVar-Wrapper -name '$name' -value '$value'"
+            $command = "Set-EnvVar-Core -name '$name' -value '$value'"
             return (Run-PS-Command -command $command)
         }
 
         # We already have admin rights, proceed normally
-        Set-EnvVar-Wrapper -name $name -value $value
+        Set-EnvVar-Core -name $name -value $value
         return 0
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set environment variable '$name'"; exception = $_ }

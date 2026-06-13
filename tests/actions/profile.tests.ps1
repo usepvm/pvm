@@ -459,7 +459,7 @@ Describe "List-PHP-Profiles Tests" {
         }
         Mock Get-Content { throw 'Error' }
 
-        $result = List-PHP-Profiles -profileName 'testprofile'
+        $result = List-PHP-Profiles
         $result | Should -Be 0
     }
 
@@ -477,14 +477,14 @@ Describe "List-PHP-Profiles Tests" {
             throw 'Error'
         }
 
-        $result = List-PHP-Profiles -profileName 'testprofile'
+        $result = List-PHP-Profiles
         $result | Should -Be 0
     }
 
     It "Should handle exceptions gracefully when profiles cannot be listed" {
         Mock Get-ChildItem { throw 'Error' }
 
-        $result = List-PHP-Profiles -profileName 'testprofile'
+        $result = List-PHP-Profiles
         $result | Should -Be -1
     }
 }

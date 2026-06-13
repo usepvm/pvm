@@ -367,7 +367,7 @@ Describe "Log-Data" {
         It "Returns -1 when unable to create directory" {
             Mock Make-Directory { throw 'Failed to create directory' }
             # Try to log to a protected location
-            $result = Log-Data @{
+            $result = Log-Data -data @{
                 header = 'Test message'
                 exception = 'Test data'
             }
@@ -387,7 +387,7 @@ Describe "Log-Data" {
         It "Returns -1 when unable to create log file" {
             Mock Make-Directory { return -1 }
             # Try to log to a protected location
-            $result = Log-Data @{
+            $result = Log-Data -data @{
                 header = 'Test message'
                 exception = 'Test data'
             }

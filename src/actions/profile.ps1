@@ -167,7 +167,7 @@ function Disable-IniExtension-Direct {
 
 function Get-Popular-PHP-Settings {
     # Return list of popular/common PHP settings that should be included in profiles
-    $path = "$STORAGE_PATH\extensions.json"
+    $path = "$DATA_PATH\php.json"
     if (Is-File-Exists -path $path) {
         $data = (Get-Content -Path $path -Raw | ConvertFrom-Json)
         if ($null -ne $data.profile -and $null -ne $data.profile.settings) {
@@ -180,7 +180,7 @@ function Get-Popular-PHP-Settings {
 
 function Get-Popular-PHP-Extensions {
     # Return list of popular/common PHP extensions that should be included in profiles
-    $path = "$STORAGE_PATH\extensions.json"
+    $path = "$DATA_PATH\php.json"
     if (Is-File-Exists -path $path) {
         $data = (Get-Content -Path $path -Raw | ConvertFrom-Json)
         if ($null -ne $data.profile -and $null -ne $data.profile.extensions) {

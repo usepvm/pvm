@@ -15,6 +15,24 @@ cp .env.example .env
 pvm setup
 ```
 
+Create storage\data\php.json file with the following structure:
+
+```json
+{
+	"zend_extensions": [
+		// List of zend extensions for php.ini operations
+	],
+	"profile": {
+		"extensions": [
+			// List of extensions you want to save states for in profiles
+		],
+		"settings": [
+            // List of settings you want to save states for in profiles
+		]
+	}
+}
+```
+
 ## Usage
 
 

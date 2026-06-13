@@ -905,15 +905,15 @@ Describe "Get-BinaryArchitecture-From-DLL" {
 
 Describe "Get-Zend-Extensions-List" {
     BeforeAll {
-        $global:STORAGE_PATH = 'TestDrive:\\storage'
-        New-Item -ItemType Directory -Path $global:STORAGE_PATH | Out-Null
+        $global:DATA_PATH = 'TestDrive:\\storage\data'
+        New-Item -ItemType Directory -Path $global:DATA_PATH | Out-Null
         $testContent = @{
             'zend_extensions' = @('opcache', 'xdebug', 'swoole')
         }
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:STORAGE_PATH\extensions.json"
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:DATA_PATH\php.json"
     }
 
-    It "Returns the zend_extensions.json content as a hashtable" {
+    It "Returns the php.json content as a hashtable" {
         $result = Get-Zend-Extensions-List
         $result.Count | Should -Be 3
         $result | Should -Contain 'opcache'
@@ -921,8 +921,8 @@ Describe "Get-Zend-Extensions-List" {
         $result | Should -Contain 'swoole'
     }
 
-    It "Falls back to default zend_extensions.json content" {
-        Remove-Item -Path "$global:STORAGE_PATH\extensions.json"
+    It "Falls back to default php.json content" {
+        Remove-Item -Path "$global:DATA_PATH\php.json"
         $result = Get-Zend-Extensions-List
         $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
     }

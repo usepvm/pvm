@@ -893,6 +893,14 @@ Describe "Get-BinaryArchitecture-From-DLL" {
             $result | Should -Be 'Unknown'
         }
     }
+
+    It "Returns Unknown when file does not exist" {
+        Mock Is-File-Not-Exists { return $true }
+
+        $result = Get-BinaryArchitecture-From-DLL -path 'TestDrive:\php\php8.dll'
+
+        $result | Should -Be 'Unknown'
+    }
 }
 
 Describe "Get-Zend-Extensions-List" {

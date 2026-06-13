@@ -33,6 +33,10 @@ function Get-PHPInstallInfo {
 function Get-BinaryArchitecture-From-DLL {
     param ($path)
 
+    if (Is-File-Not-Exists -path $path) {
+        return 'Unknown'
+    }
+
     $bytes = [System.IO.File]::ReadAllBytes($path)
 
     $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)

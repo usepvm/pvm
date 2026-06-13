@@ -1,4 +1,4 @@
-
+﻿
 BeforeAll {
     $global:CACHE_PATH = 'TestDrive:\cache'
     New-Item -ItemType Directory -Path $global:CACHE_PATH -Force | Out-Null
@@ -24,6 +24,26 @@ Describe "Get-Data-From-Cache" {
         $list = Get-Data-From-Cache -cacheFileName 'test.json'
         $list.Releases[0] | Should -Be '/downloads/releases/php-7.4.33-Win32-vc15-x64.zip'
         $list.Archives[0] | Should -Be '/downloads/releases/archives/php-5.5.0-Win32-VC11-x64.zip'
+    }
+
+    It "Returns empty list when cache file name is null or empty" {
+        $list = Get-Data-From-Cache -cacheFileName ''
+        $list.Count | Should -Be 0
+
+        $list = Get-Data-From-Cache -cacheFileName $null
+        $list.Count | Should -Be 0
+    }
+
+    It "Returns empty list when cache file does not exist" {
+        Mock Get-Content { return $null }
+        $list = Get-Data-From-Cache -cacheFileName 'test.json'
+        $list.Count | Should -Be 0
+    }
+
+    It "Returns empty list when cache file is empty" {
+        Mock Get-Content { return '' }
+        $list = Get-Data-From-Cache -cacheFileName 'test.json'
+        $list.Count | Should -Be 0
     }
 
     It "Handles exceptions gracefully" {
@@ -139,6 +159,12 @@ Describe "Can-Use-Cache" {
             $result = Can-Use-Cache -cacheFileName $cacheFileName
             $result | Should -Be $true
         }
+    }
+
+    It "Handles exceptions gracefully" {
+        Mock Get-Cache-FilePath { throw 'Error' }
+        $result = Can-Use-Cache -cacheFileName 'test'
+        $result | Should -Be $false
     }
 }
 

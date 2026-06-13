@@ -184,7 +184,7 @@ function Extract-And-Configure {
 
     try {
         Remove-Item -Path $fileNamePath -Recurse -Force
-        Extract-Zip -zipPath $path -extractPath $fileNamePath
+        Extract-Zip -zipPath $path -extractPath $fileNamePath -deleteZipAfter $true
         $iniCandidates = @(
             'php.ini-development',
             'php.ini-production',
@@ -197,7 +197,6 @@ function Extract-And-Configure {
                 break
             }
         }
-        Remove-Item -Path $path
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to extract and configure PHP from $path"; exception = $_ }
     }

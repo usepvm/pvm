@@ -137,7 +137,7 @@ function Extract-Zip {
         Extract-Zip-Core -zipPath $zipPath -extractPath $extractPath
 
         if ($deleteZipAfter) {
-            Remove-Item -Path $zipPath -ErrorAction SilentlyContinue
+            Remove-Item -Path $zipPath -Force
         }
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to extract zip file from $zipPath"; exception = $_ }

@@ -177,7 +177,6 @@ function Install-XDebug-Extension {
             }
         }
         Move-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)" -Destination "$phpPath\ext"
-        Remove-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)"
         $xDebugConfig = Get-Xdebug-Config-V2 -XDebugPath $($chosenItem.fileName)
         if ($chosenItem.xDebugVersion -like '3.*') {
             $xDebugConfig = Get-Xdebug-Config-V3 -XDebugPath $($chosenItem.fileName)
@@ -361,9 +360,9 @@ function Install-Extension {
 
         Invoke-WebRequest -Uri $chosenItem.href -OutFile "$STORAGE_PATH\php"
         $fileNamePath = ($chosenItem.href -replace "$PECL_WIN_EXT_DOWNLOAD_URL/$extName/$($chosenItem.extVersion)/|.zip",'').Trim()
-        Extract-Zip -zipPath "$STORAGE_PATH\php\$fileNamePath.zip" -extractPath "$STORAGE_PATH\php\$fileNamePath"
-        Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath.zip"
-        $files = Get-ChildItem -Path "$STORAGE_PATH\php\$fileNamePath"
+        $extractPath = "$STORAGE_PATH\php\$fileNamePath"
+        Extract-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
+        $files = Get-ChildItem -Path $extractPath
         $extFile = $files | Where-Object {
             ($_.Name -match "^php_$extName.*\.dll$")
         }
@@ -376,13 +375,13 @@ function Install-Extension {
             $response = Read-Host "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
-                Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath" -Force -Recurse
+                Remove-Item -Path $extractPath -Force -Recurse -ErrorAction SilentlyContinue
                 Write-Host "`nInstallation cancelled"
                 return -1
             }
         }
         Move-Item -Path $extFile.FullName -Destination "$phpPath\ext"
-        Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath" -Force -Recurse
+        Remove-Item -Path $extractPath -Force -Recurse
         $code = Add-Missing-PHPExtension-To-Ini -iniPath $iniPath -extFileName $extFile.Name -enable $false
         if ($code -ne 0) {
             Write-Host "`nFailed to add $extName" -ForegroundColor DarkYellow

@@ -912,7 +912,7 @@ Describe "Get-Zend-Extensions-List" {
         }
         $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:STORAGE_PATH\extensions.json"
     }
-    
+
     It "Returns the zend_extensions.json content as a hashtable" {
         $result = Get-Zend-Extensions-List
         $result.Count | Should -Be 3
@@ -920,7 +920,7 @@ Describe "Get-Zend-Extensions-List" {
         $result | Should -Contain 'xdebug'
         $result | Should -Contain 'swoole'
     }
-    
+
     It "Falls back to default zend_extensions.json content" {
         Remove-Item -Path "$global:STORAGE_PATH\extensions.json"
         $result = Get-Zend-Extensions-List

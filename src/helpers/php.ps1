@@ -1,4 +1,4 @@
-
+﻿
 function Get-PHPInstallInfo {
     param ($path)
 
@@ -63,7 +63,6 @@ function Is-Two-PHP-Versions-Equal {
 }
 
 function Get-Zend-Extensions-List {
-    
     $path = "$STORAGE_PATH\extensions.json"
     if (Is-File-Exists -path $path) {
         $data = (Get-Content -Path $path -Raw | ConvertFrom-Json)
@@ -71,7 +70,7 @@ function Get-Zend-Extensions-List {
             return $data.zend_extensions
         }
     }
-    
+
     return $DEFAULT_ZEND_EXTENSIONS
 }
 

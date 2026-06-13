@@ -174,7 +174,7 @@ function Get-Popular-PHP-Settings {
             return $data.profile.settings
         }
     }
-    
+
     return $DEFAULT_SETTINGS
 }
 

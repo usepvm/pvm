@@ -507,7 +507,7 @@ Describe "Get-Popular-PHP-Settings Tests" {
         $settings | Should -Contain 'memory_limit'
         $settings | Should -Contain 'display_errors'
     }
-    
+
     It "Should fallback to default popular PHP settings" {
         Remove-Item -Path "$global:STORAGE_PATH\extensions.json"
         $settings = Get-Popular-PHP-Settings
@@ -535,7 +535,7 @@ Describe "Get-Popular-PHP-Extensions Tests" {
         $extensions | Should -Contain 'mbstring'
         $extensions | Should -Contain 'opcache'
     }
-    
+
     It "Should fallback to default popular PHP extensions" {
         Remove-Item -Path "$global:STORAGE_PATH\extensions.json"
         $extensions = Get-Popular-PHP-Extensions

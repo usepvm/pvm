@@ -58,7 +58,7 @@ BeforeAll {
     # Mock functions for testing
     function Log-Data {
         param ($logPath, $message, $data)
-        Write-Host "LOG: $message - $data"
+        Write-Host -Object "LOG: $message - $data"
         return $true
     }
 

@@ -6,14 +6,14 @@ function Display-Extensions-States {
     $enabledCount = @($extensions | Where-Object Enabled).Count
     $disabledCount = $extensions.Count - $enabledCount
 
-    Write-Host "`n- Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
+    Write-Host -Object "`n- Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
 }
 
 function Display-Installed-Extensions {
     param ($extensions)
 
     if ($extensions.Count -eq 0) {
-        Write-Host '  No extensions found matching the search term.' -ForegroundColor DarkGray
+        Write-Host -Object '  No extensions found matching the search term.' -ForegroundColor DarkGray
         return
     }
 
@@ -37,8 +37,8 @@ function Display-Installed-Extensions {
             $color = 'DarkGray'
         }
 
-        Write-Host "$label " -NoNewline
-        Write-Host $status -ForegroundColor $color
+        Write-Host -Object "$label " -NoNewline
+        Write-Host -Object $status -ForegroundColor $color
     }
 }
 
@@ -49,14 +49,14 @@ function Display-Settings-States {
     $enabledCount = @($settings | Where-Object Enabled).Count
     $disabledCount = $settings.Count - $enabledCount
 
-    Write-Host "`n- Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
+    Write-Host -Object "`n- Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
 }
 
 function Display-Settings {
     param ($settings)
 
     if ($settings.Count -eq 0) {
-        Write-Host '  No settings found matching the search term.' -ForegroundColor DarkGray
+        Write-Host -Object '  No settings found matching the search term.' -ForegroundColor DarkGray
         return
     }
 
@@ -82,7 +82,7 @@ function Display-Settings {
             $color = 'DarkGray'
         }
 
-        Write-Host $line -NoNewline
-        Write-Host $status -ForegroundColor $color
+        Write-Host -Object $line -NoNewline
+        Write-Host -Object $status -ForegroundColor $color
     }
 }

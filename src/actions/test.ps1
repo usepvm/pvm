@@ -2,9 +2,9 @@
 function Get-Tests-Files {
     param ($testsNames = $null)
 
-    $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
+    $PVMRootDirectory = (Resolve-Path -Path "$PSScriptRoot\..\..").Path
 
-    $allTests = Get-ChildItem "$PVMRootDirectory\tests\*.tests.ps1" -Recurse -File
+    $allTests = Get-ChildItem -Path "$PVMRootDirectory\tests\*.tests.ps1" -Recurse -File
     $tests = $allTests
 
     if ($testsNames) {
@@ -28,7 +28,7 @@ function Run-Test-File {
             coverageRaw = $null
         }
 
-        $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
+        $PVMRootDirectory = (Resolve-Path -Path "$PSScriptRoot\..\..").Path
         $relativeFilePath = $file.FullName -replace [regex]::Escape("$PVMRootDirectory\tests\"), ''
 
         if (Is-File-Not-Exists -path $file.FullName) {
@@ -41,7 +41,7 @@ function Run-Test-File {
 
         $coveredFile = $null
         if ($options.coverage) {
-            $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
+            $PVMRootDirectory = (Resolve-Path -Path "$PSScriptRoot\..\..").Path
             $covered = Get-ChildItem -Path "$PVMRootDirectory\src" -Recurse -Filter '*.ps1'
             $covered = Get-ChildItem -Path "$PVMRootDirectory\src" -Recurse -Filter '*.ps1' | Where-Object {
                 $testFile = $file.FullName -replace [regex]::Escape("$PVMRootDirectory\tests"), ''
@@ -63,10 +63,10 @@ function Run-Test-File {
 
         $separatorWidth = [Math]::Max($file.Name.Length + $file.FullName.Length, $coveredFile.Length) + ($MIN_PAD_RIGHT_LENGTH * 5/2)
 
-        Write-Host "`n`n$('-' * $separatorWidth)" -ForegroundColor Cyan
-        Write-Host "- Running test: $($file.Name) | $($file.FullName)" -ForegroundColor Cyan
+        Write-Host -Object "`n`n$('-' * $separatorWidth)" -ForegroundColor Cyan
+        Write-Host -Object "- Running test: $($file.Name) | $($file.FullName)" -ForegroundColor Cyan
         if ($coveredFile) {
-            Write-Host "- Covered file: $coveredFile" -ForegroundColor Cyan
+            Write-Host -Object "- Covered file: $coveredFile" -ForegroundColor Cyan
         }
         Write-Host ('-' * $separatorWidth) -ForegroundColor Cyan
 
@@ -121,9 +121,9 @@ function Prepare-Tests {
     param ($testsNames = $null, $options = $null, $exclude = $null)
 
     if ($null -ne $exclude) {
-        $PVMRootDirectory = (Resolve-Path "$PSScriptRoot\..\..").Path
+        $PVMRootDirectory = (Resolve-Path -Path "$PSScriptRoot\..\..").Path
 
-        $testsNames = Get-ChildItem "$PVMRootDirectory\tests\*.tests.ps1" -Recurse -File | Where-Object {
+        $testsNames = Get-ChildItem -Path "$PVMRootDirectory\tests\*.tests.ps1" -Recurse -File | Where-Object {
             return -not ($exclude -contains ($_.Name -replace '.tests.ps1', ''))
         } | ForEach-Object {
             return $_.Name -replace '.tests.ps1', ''
@@ -145,7 +145,7 @@ function Run-Tests {
 
         $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
         if ($verbosityOptions -notcontains $options.verbosity) {
-            Write-Host "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')" -ForegroundColor DarkYellow
+            Write-Host -Object "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')" -ForegroundColor DarkYellow
             return -1
         }
 
@@ -157,13 +157,13 @@ function Run-Tests {
         }
 
         $testSummary = @()
-        Write-Host "`nRunning tests with verbosity: $($options.verbosity)" -ForegroundColor Cyan
+        Write-Host -Object "`nRunning tests with verbosity: $($options.verbosity)" -ForegroundColor Cyan
         $tests | ForEach-Object {
             $testSummary += Run-Test-File -config $config -file $_ -options $options
         }
 
-        Write-Host "`n----------------------------------------------------------------"
-        Write-Host "`n`nTest Results Summary: (Coverage : $($options.target)%)`n"
+        Write-Host -Object "`n----------------------------------------------------------------"
+        Write-Host -Object "`n`nTest Results Summary: (Coverage : $($options.target)%)`n"
         $code = 0
         if ($testSummary.Count -gt 0) {
             $totalFailedTests = $testSummary | Where-Object { $_.code -ne 0 } | ForEach-Object { $_.testResultData.failedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
@@ -175,7 +175,7 @@ function Run-Tests {
                 $content += " | Total duration: $totalDurationFormatted"
             }
             $content += "`n"
-            Write-Host $content -ForegroundColor $color
+            Write-Host -Object $content -ForegroundColor $color
 
             $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 3)
 
@@ -190,16 +190,16 @@ function Run-Tests {
                         $color = 'DarkGray'
                     }
                 }
-                Write-Host $line -ForegroundColor $color
+                Write-Host -Object $line -ForegroundColor $color
             }
         } else {
             $code = -1
-            Write-Host 'No tests found.' -ForegroundColor DarkYellow
+            Write-Host -Object 'No tests found.' -ForegroundColor DarkYellow
         }
         return $code
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
-        Write-Host "`nFailed to run tests, check log: $LOG_ERROR_PATH" -ForegroundColor DarkYellow
+        Write-Host -Object "`nFailed to run tests, check log: $LOG_ERROR_PATH" -ForegroundColor DarkYellow
 
         return -1
     }

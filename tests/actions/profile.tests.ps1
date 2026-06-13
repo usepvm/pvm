@@ -45,13 +45,13 @@ Describe "Set-IniSetting-Direct Tests" {
     It "Should update existing setting" {
         $result = Set-IniSetting-Direct -iniPath 'TestDrive:\\test.ini' -settingName 'setting1' -value 'newvalue'
         $result | Should -Be 0
-        (Get-Content 'TestDrive:\\test.ini') | Should -Be 'setting1 = newvalue'
+        (Get-Content -Path 'TestDrive:\\test.ini') | Should -Be 'setting1 = newvalue'
     }
 
     It "Should add new setting if not exists" {
         $result = Set-IniSetting-Direct -iniPath 'TestDrive:\\test.ini' -settingName 'setting2' -value 'value2'
         $result | Should -Be 0
-        $content = (Get-Content 'TestDrive:\\test.ini')
+        $content = (Get-Content -Path 'TestDrive:\\test.ini')
         $content | Should -Contain 'setting1 = value1'
         $content | Should -Contain 'setting2 = value2'
     }
@@ -59,13 +59,13 @@ Describe "Set-IniSetting-Direct Tests" {
     It "Should handle disabled settings" {
         $result = Set-IniSetting-Direct -iniPath 'TestDrive:\\test.ini' -settingName 'setting1' -value 'newvalue' -enabled $false
         $result | Should -Be 0
-        (Get-Content 'TestDrive:\\test.ini') | Should -Be ';setting1 = newvalue'
+        (Get-Content -Path 'TestDrive:\\test.ini') | Should -Be ';setting1 = newvalue'
     }
 
     It "Should add new disabled setting at end when not exists" {
         $result = Set-IniSetting-Direct -iniPath 'TestDrive:\\test.ini' -settingName 'newsetting' -value 'newvalue' -enabled $false
         $result | Should -Be 0
-        $content = (Get-Content 'TestDrive:\\test.ini')
+        $content = (Get-Content -Path 'TestDrive:\\test.ini')
         $content | Should -Contain 'setting1 = value1'
         $content | Should -Contain ';newsetting = newvalue'
     }
@@ -90,13 +90,13 @@ Describe "Enable/Disable-IniExtension-Direct Tests" {
     It "Should enable an extension" {
         $result = Enable-IniExtension-Direct -iniPath 'TestDrive:\\extensions.ini' -extName 'curl'
         $result | Should -Be 0
-        (Get-Content 'TestDrive:\\extensions.ini') | Should -Contain 'extension=php_curl.dll'
+        (Get-Content -Path 'TestDrive:\\extensions.ini') | Should -Contain 'extension=php_curl.dll'
     }
 
     It "Should disable an extension" {
         $result = Disable-IniExtension-Direct -iniPath 'TestDrive:\\extensions.ini' -extName 'opcache' -extType 'zend_extension'
         $result | Should -Be 0
-        (Get-Content 'TestDrive:\\extensions.ini') | Should -Contain ';zend_extension=php_opcache.dll'
+        (Get-Content -Path 'TestDrive:\\extensions.ini') | Should -Contain ';zend_extension=php_opcache.dll'
     }
 
     It "Should enable a commented zend_extension" {
@@ -108,8 +108,8 @@ Describe "Enable/Disable-IniExtension-Direct Tests" {
 
         $result = Enable-IniExtension-Direct -iniPath $testIniPath -extName 'opcache' -extType 'zend_extension'
         $result | Should -Be 0
-        (Get-Content $testIniPath) | Should -Contain 'zend_extension=php_opcache.dll'
-        (Get-Content $testIniPath) | Should -Not -Contain ';zend_extension=php_opcache.dll'
+        (Get-Content -Path $testIniPath) | Should -Contain 'zend_extension=php_opcache.dll'
+        (Get-Content -Path $testIniPath) | Should -Not -Contain ';zend_extension=php_opcache.dll'
     }
 
     It "Should add new zend_extension when it doesn't exist" {
@@ -120,7 +120,7 @@ Describe "Enable/Disable-IniExtension-Direct Tests" {
 
         $result = Enable-IniExtension-Direct -iniPath $testIniPath -extName 'xdebug' -extType 'zend_extension'
         $result | Should -Be 0
-        (Get-Content $testIniPath) | Should -Contain 'zend_extension=php_xdebug.dll'
+        (Get-Content -Path $testIniPath) | Should -Contain 'zend_extension=php_xdebug.dll'
     }
 
     It "Should add new regular extension when it doesn't exist" {
@@ -131,7 +131,7 @@ Describe "Enable/Disable-IniExtension-Direct Tests" {
 
         $result = Enable-IniExtension-Direct -iniPath $testIniPath -extName 'gd'
         $result | Should -Be 0
-        (Get-Content $testIniPath) | Should -Contain 'extension=php_gd.dll'
+        (Get-Content -Path $testIniPath) | Should -Contain 'extension=php_gd.dll'
     }
 
     It "Should handle exception and return -1" {
@@ -150,8 +150,8 @@ Describe "Enable/Disable-IniExtension-Direct Tests" {
 
         $result = Disable-IniExtension-Direct -iniPath $testIniPath -extName 'curl'
         $result | Should -Be 0
-        (Get-Content $testIniPath) | Should -Contain ';extension=php_curl.dll'
-        (Get-Content $testIniPath) | Should -Contain 'extension=php_gd.dll'
+        (Get-Content -Path $testIniPath) | Should -Contain ';extension=php_curl.dll'
+        (Get-Content -Path $testIniPath) | Should -Contain 'extension=php_gd.dll'
     }
 
     It "Should return -1 on exception in Disable-IniExtension-Direct" {
@@ -210,7 +210,7 @@ Describe "Save-PHP-Profile Tests" {
         $profilePath = "$global:PROFILES_PATH\testprofile.json"
         Test-Path $profilePath | Should -Be $true
 
-        $profileContent = Get-Content $profilePath -Raw | ConvertFrom-Json
+        $profileContent = Get-Content -Path $profilePath -Raw | ConvertFrom-Json
         $profileContent.description | Should -Be "Profile saved on $mockDate"
     }
 
@@ -231,7 +231,7 @@ Describe "Save-PHP-Profile Tests" {
         $profilePath = "$global:PROFILES_PATH\testprofile.json"
         Test-Path $profilePath | Should -Be $true
 
-        $profileContent = Get-Content $profilePath -Raw | ConvertFrom-Json
+        $profileContent = Get-Content -Path $profilePath -Raw | ConvertFrom-Json
         $profileContent.name | Should -Be 'testprofile'
         $profileContent.description | Should -Be 'Test profile'
         $profileContent.phpVersion | Should -Be '8.2.0'
@@ -434,7 +434,7 @@ Describe "List-PHP-Profiles Tests" {
         $result | Should -Be -1
     }
 
-    It "Should list all available profiles" {
+    It "Should list all available profiles" -Tag i {
         $result = List-PHP-Profiles
         $result | Should -Be 0
 
@@ -444,7 +444,7 @@ Describe "List-PHP-Profiles Tests" {
 
     It "Should handle empty profiles directory" {
         # Remove all profiles
-        Remove-Item "$global:PROFILES_PATH\*" -Force
+        Remove-Item -Path "$global:PROFILES_PATH\*" -Force
 
         $result = List-PHP-Profiles
         $result | Should -Be -1
@@ -1307,7 +1307,7 @@ Describe "Export-PHP-Profile Tests" {
 
         # Verify content matches
         $exportPath = 'TestDrive:\export\testprofile.json'
-        $exportedContent = Get-Content $exportPath -Raw | ConvertFrom-Json
+        $exportedContent = Get-Content -Path $exportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
         $exportedContent.settings.memory_limit.value | Should -Be '256M'
 
@@ -1340,7 +1340,7 @@ Describe "Export-PHP-Profile Tests" {
         Test-Path $customExportPath | Should -Be $true
 
         # Verify content matches
-        $exportedContent = Get-Content $customExportPath -Raw | ConvertFrom-Json
+        $exportedContent = Get-Content -Path $customExportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
 
         Assert-MockCalled Write-Host -ParameterFilter {
@@ -1369,7 +1369,7 @@ Describe "Export-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify file was overwritten with new content
-        $exportedContent = Get-Content $exportPath -Raw | ConvertFrom-Json
+        $exportedContent = Get-Content -Path $exportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
         $exportedContent.settings.memory_limit.value | Should -Be '256M'
     }
@@ -1444,7 +1444,7 @@ Describe "Export-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify all fields are preserved
-        $exportedContent = Get-Content $exportPath -Raw | ConvertFrom-Json
+        $exportedContent = Get-Content -Path $exportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'fullprofile'
         $exportedContent.description | Should -Be 'Full profile description'
         # Normalize date format (PowerShell adds microseconds when converting DateTime to string)
@@ -1568,7 +1568,7 @@ Describe "Import-PHP-Profile Tests" {
         $importedPath = "$global:PROFILES_PATH\originalname.json"
         Test-Path $importedPath | Should -Be $true
 
-        $importedContent = Get-Content $importedPath -Raw | ConvertFrom-Json
+        $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'originalname'
 
         Assert-MockCalled Write-Host -ParameterFilter {
@@ -1594,7 +1594,7 @@ Describe "Import-PHP-Profile Tests" {
         $importedPath = "$global:PROFILES_PATH\customname.json"
         Test-Path $importedPath | Should -Be $true
 
-        $importedContent = Get-Content $importedPath -Raw | ConvertFrom-Json
+        $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'customname'
 
         Assert-MockCalled Write-Host -ParameterFilter {
@@ -1620,7 +1620,7 @@ Describe "Import-PHP-Profile Tests" {
 
         # Verify profile name was updated
         $importedPath = "$global:PROFILES_PATH\newname.json"
-        $importedContent = Get-Content $importedPath -Raw | ConvertFrom-Json
+        $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'newname'
         # Verify other fields are preserved
         $importedContent.settings.memory_limit.value | Should -Be '256M'
@@ -1688,7 +1688,7 @@ Describe "Import-PHP-Profile Tests" {
 
         # Verify all fields are preserved
         $importedPath = "$global:PROFILES_PATH\fullprofile.json"
-        $importedContent = Get-Content $importedPath -Raw | ConvertFrom-Json
+        $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'fullprofile'
         $importedContent.description | Should -Be 'Full profile description'
         # Normalize date format (PowerShell adds microseconds when converting DateTime to string)
@@ -1769,7 +1769,7 @@ Describe "Import-PHP-Profile Tests" {
         $importedPath = "$global:PROFILES_PATH\emptyprofile.json"
         Test-Path $importedPath | Should -Be $true
 
-        $importedContent = Get-Content $importedPath -Raw | ConvertFrom-Json
+        $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.settings | Should -Not -Be $null
         $importedContent.extensions | Should -Not -Be $null
     }
@@ -1791,7 +1791,7 @@ Describe "Import-PHP-Profile Tests" {
         $importedPath = "$global:PROFILES_PATH\new-complex_456.json"
         Test-Path $importedPath | Should -Be $true
 
-        $importedContent = Get-Content $importedPath -Raw | ConvertFrom-Json
+        $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'new-complex_456'
     }
 }

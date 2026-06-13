@@ -26,19 +26,19 @@ max_execution_time = 30
 
 Describe "Backup-IniFile" {
     It "Creates a backup when none exists" {
-        Remove-Item $testBackupPath -ErrorAction SilentlyContinue
+        Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
         Backup-IniFile -iniPath $testIniPath
         Test-Path $testBackupPath | Should -Be $true
-        (Get-Content $testBackupPath) | Should -Be (Get-Content $testIniPath)
+        (Get-Content -Path $testBackupPath) | Should -Be (Get-Content -Path $testIniPath)
     }
 
     It "Does not overwrite existing backup" {
-        $originalContent = Get-Content $testIniPath
+        $originalContent = Get-Content -Path $testIniPath
         Backup-IniFile -iniPath $testIniPath
         $newContent = 'modified content'
-        $newContent | Set-Content $testIniPath
+        $newContent | Set-Content -Path $testIniPath
         Backup-IniFile -iniPath $testIniPath
-        (Get-Content $testBackupPath) | Should -Be $originalContent
+        (Get-Content -Path $testBackupPath) | Should -Be $originalContent
     }
 
     It "Returns -1 on error" {
@@ -81,7 +81,7 @@ Describe "Get-Matching-PHPExtensionsStatus" {
         @"
 zend_extension=php_opcache.dll
 extension=php_mbstring.dll
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
         Mock Get-ChildItem {
             param ($Path)
             return @(
@@ -95,7 +95,7 @@ extension=php_mbstring.dll
         $res.Length | Should -Be 1
         $res.status | Should -Be 'Disabled'
         $res.line | Should -Be ';zend_extension=php_xdebug.dll'
-        (Get-Content $testIniPath) | Should -Contain ';zend_extension=php_xdebug.dll'
+        (Get-Content -Path $testIniPath) | Should -Contain ';zend_extension=php_xdebug.dll'
     }
 
     It "Uses wildcard '*.dll' search when extName is empty" {
@@ -124,7 +124,7 @@ extension=php_mbstring.dll
         @"
 extension=.dll
 ;extension=.dll
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
 
         $res = Get-Matching-PHPExtensionsStatus -iniPath $testIniPath -extName ''
         $res.Length | Should -Be 1
@@ -153,7 +153,7 @@ extension=.dll
         # Add-Content -Path $testIniPath -Value "extension=php_testext.dll"
         @"
 extension=pdo_mysql
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
         Mock Get-ChildItem {
             param ($Path)
             return @(

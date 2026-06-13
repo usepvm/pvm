@@ -4,11 +4,11 @@ function Get-IniSetting {
 
     try {
         if ($keys -isnot [array] -or $keys.Count -eq 0) {
-            Write-Host "`nPlease specify at least one setting name ('pvm ini get memory_limit')."
+            Write-Host -Object "`nPlease specify at least one setting name ('pvm ini get memory_limit')."
             return -1
         }
 
-        $lines = Get-Content $iniPath
+        $lines = Get-Content -Path $iniPath
 
         $overallCode = 0
         $results = [ordered]@{}
@@ -53,14 +53,14 @@ function Get-IniSetting {
 
         $maxLineLength = ($results.Values | ForEach-Object { $_ } | ForEach-Object { $_.extensionName } | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
         foreach ($key in $results.Keys) {
-            Write-Host "`nMatches for '$key'" -ForegroundColor Cyan
+            Write-Host -Object "`nMatches for '$key'" -ForegroundColor Cyan
 
             foreach ($item in $results[$key]) {
                 $extensionName = "$($item.extensionName) ".PadRight($maxLineLength, '.')
                 $value = if ($item.value -eq '') { '(not set) ' } elseif ($null -eq $item.value) { '' } else { "$($item.value) " }
 
-                Write-Host "- $extensionName $value" -NoNewline
-                Write-Host "$($item.enabled)" -ForegroundColor $item.color
+                Write-Host -Object "- $extensionName $value" -NoNewline
+                Write-Host -Object "$($item.enabled)" -ForegroundColor $item.color
             }
         }
 

@@ -2,7 +2,7 @@
 function Get-PHPInstallInfo {
     param ($path)
 
-    $tsDll = Get-ChildItem "$path\php*ts.dll" -ErrorAction SilentlyContinue |
+    $tsDll = Get-ChildItem -Path "$path\php*ts.dll" -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -notmatch 'nts\.dll$' } |
         Select-Object -First 1
 
@@ -11,7 +11,7 @@ function Get-PHPInstallInfo {
         $dll = $tsDll
     }
     else {
-        $dll = Get-ChildItem "$path\php*.dll" |
+        $dll = Get-ChildItem -Path "$path\php*.dll" |
             Where-Object { $_.Name -notmatch 'phpdbg' } |
             Select-Object -First 1
         $buildType = 'NTS'
@@ -136,7 +136,7 @@ function Get-UserSelected-PHP-Version {
     } else {
         $currentVersion = Get-Current-PHP-Version
         $index = 0
-        Write-Host "`nInstalled versions :"
+        Write-Host -Object "`nInstalled versions :"
         $installedVersions | ForEach-Object {
             $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
             $isCurrent = ''
@@ -151,10 +151,10 @@ function Get-UserSelected-PHP-Version {
                 $metaData += $_.BuildType
             }
             $versionNumber = "$($_.version) ".PadRight(15, '.')
-            Write-Host " [$index] $versionNumber $metaData $isCurrent"
+            Write-Host -Object " [$index] $versionNumber $metaData $isCurrent"
             $index++
         }
-        $response = Read-Host "`nInsert the [number] of the version you want to use (or press Enter to cancel)"
+        $response = Read-Host -Prompt "`nInsert the [number] of the version you want to use (or press Enter to cancel)"
         $response = $response.Trim()
         if (-not $response) {
             return @{ code = -1; message = 'Operation cancelled.'; color = 'DarkYellow'}
@@ -208,7 +208,7 @@ function Get-Source-Urls {
 function Get-PHP-Data {
     param ($PhpIniPath)
 
-    $iniContent = Get-Content $PhpIniPath
+    $iniContent = Get-Content -Path $PhpIniPath
 
     $phpIniData = @{
         extensions = @()

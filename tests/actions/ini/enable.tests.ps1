@@ -34,14 +34,14 @@ max_execution_time = 30
     $phpVersionPath = "$testDrivePath\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
     New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
-    Copy-Item $testIniPath "$phpVersionPath\php.ini" -Force
+    Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
 }
 
 Describe "Enable-IniExtension" {
     BeforeEach {
         Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
         Reset-Ini-Content
-        Remove-Item $testBackupPath -ErrorAction SilentlyContinue
+        Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
     }
 
     It "Enables commented extension" {
@@ -50,7 +50,7 @@ Describe "Enable-IniExtension" {
             return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" } )
         }
         Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
-        (Get-Content $testIniPath) -match '^extension=php_xdebug.dll' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^extension=php_xdebug.dll' | Should -Be $true
     }
 
     It "Returns 0 for already enabled extension" {
@@ -79,7 +79,7 @@ Describe "Enable-IniExtension" {
         @"
 extension=php_xdebug.dll
 extension=php_curl.dll
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
 
         Mock Get-ChildItem {
             param ($Path)
@@ -93,7 +93,7 @@ extension=php_curl.dll
 
         Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
         # File should remain unchanged since line didn't match
-        (Get-Content $testIniPath) | Should -Contain 'extension=php_xdebug.dll'
+        (Get-Content -Path $testIniPath) | Should -Contain 'extension=php_xdebug.dll'
     }
 
     It "Returns -1 for non-existent extension" {
@@ -110,13 +110,13 @@ extension=php_curl.dll
         @"
 ;zend_extension=php_opcache.dll
 extension=php_curl.dll
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
         Mock Get-ChildItem {
             param ($Path)
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
         }
         Enable-IniExtension -iniPath $testIniPath -extNames @('opcache') | Should -Be 0
-        (Get-Content $testIniPath) -match '^zend_extension=php_opcache.dll' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^zend_extension=php_opcache.dll' | Should -Be $true
     }
 
     It "Prompts user to select extension if multiple matches found" {
@@ -126,7 +126,7 @@ extension=pdo_pgsql
 ;extension=pdo_sqlite
 ;extension=pgsql
 extension=sqlite3
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
         Mock Get-ChildItem {
             param ($Path)
             return @(
@@ -141,7 +141,7 @@ extension=sqlite3
 
         Enable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
-        (Get-Content $testIniPath) -match '^extension\s*=\s*pdo_mysql' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^extension\s*=\s*pdo_mysql' | Should -Be $true
     }
 
     It "Prints error message for non-valid number" {
@@ -151,7 +151,7 @@ extension=pdo_pgsql
 ;extension=pdo_sqlite
 ;extension=pgsql
 extension=sqlite3
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
 
         $script:callCount = 0
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
@@ -174,7 +174,7 @@ extension=sqlite3
 
         Enable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
-        (Get-Content $testIniPath) -match '^extension\s*=\s*pgsql' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^extension\s*=\s*pgsql' | Should -Be $true
     }
 
     It "Creates backup before modifying" {

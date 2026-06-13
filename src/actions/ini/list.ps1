@@ -78,7 +78,7 @@ function List-PHP-Extensions {
         if (-not $available) {
             $extensions = (Get-PHP-Data -PhpIniPath $iniPath).extensions
             if ($extensions.Count -eq 0) {
-                Write-Host "`nNo extensions found"
+                Write-Host -Object "`nNo extensions found"
                 return -1
             }
             $searchResult = $extensions
@@ -90,20 +90,20 @@ function List-PHP-Extensions {
                 if ($term) {
                     $msg += " matching '$term'"
                 }
-                Write-Host $msg -ForegroundColor DarkYellow
+                Write-Host -Object $msg -ForegroundColor DarkYellow
                 return -1
             }
             Display-Extensions-States -extensions $extensions
             Display-Installed-Extensions -extensions $searchResult
         } else {
-            Write-Host "`nLoading available extensions..."
+            Write-Host -Object "`nLoading available extensions..."
 
             $availableExtensions = Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
                 return [pscustomobject] (Get-PHPExtensions-From-Source)
             }
 
             if ($availableExtensions.Count -eq 0) {
-                Write-Host "`nNo extensions found"
+                Write-Host -Object "`nNo extensions found"
                 return -1
             }
 
@@ -128,14 +128,14 @@ function List-PHP-Extensions {
                 if ($term) {
                     $msg += " matching '$term'"
                 }
-                Write-Host $msg -ForegroundColor DarkYellow
+                Write-Host -Object $msg -ForegroundColor DarkYellow
                 return -1
             }
 
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
             $maxLineLength = [Math]::Max($MIN_LINE_LENGTH, $maxKeyLength + ($MIN_PAD_RIGHT_LENGTH * 3))
 
-            Write-Host "`nAvailable Extensions by Category:"
+            Write-Host -Object "`nAvailable Extensions by Category:"
             Write-Host    '--------------------------------'
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
                 $key  = "$($_.Key) "
@@ -164,14 +164,14 @@ function List-PHP-Extensions {
 
                 if ($descLines.Count -eq 0) {
                     $line = $label.PadRight($maxLineLength, '.')
-                    Write-Host $line
+                    Write-Host -Object $line
                 } else {
                     $line = $label.PadRight($maxLineLength, '.') + " $($descLines[0])"
-                    Write-Host $line
+                    Write-Host -Object $line
 
                     $indent = ' ' * ($maxLineLength + 1)
                     for ($i = 1; $i -lt $descLines.Count; $i++) {
-                        Write-Host "$indent$($descLines[$i])"
+                        Write-Host -Object "$indent$($descLines[$i])"
                     }
                 }
             }
@@ -179,12 +179,12 @@ function List-PHP-Extensions {
             $msg = "`nThis is a partial list. For a complete list, visit:"
             $msg += "`nPHP Extensions : $PECL_PACKAGES_URL"
             $msg += "`nXDebug : $XDEBUG_HISTORICAL_URL"
-            Write-Host $msg
+            Write-Host -Object $msg
         }
 
         return 0
     } catch {
-        Write-Host "`nFailed to list extensions"
+        Write-Host -Object "`nFailed to list extensions"
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"; exception = $_ }
         return -1
     }

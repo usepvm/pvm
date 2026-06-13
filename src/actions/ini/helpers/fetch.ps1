@@ -81,7 +81,7 @@ function Get-Extension-Matching-Categories {
 
         $page = 1
         $category = $matches[1] -replace '\+', ' '
-        Write-Host "- Checking category '$category'..." -ForegroundColor Gray
+        Write-Host -Object "- Checking category '$category'..." -ForegroundColor Gray
         do {
             $hasMore = $false
             $result = Get-Extension-Matching-Categories-By-Page -extName $extName -link $_.href -page $page
@@ -107,42 +107,42 @@ function Get-Extension-Links-From-URL {
             Filter-Extension-Links-From-URL -extName $extName
         }
     } catch {
-        Write-Host "`nExtension '$extName' not found, Loading matching extensions..."
+        Write-Host -Object "`nExtension '$extName' not found, Loading matching extensions..."
 
         $linksMatchingExtName = Get-Extension-Matching-Categories -extName $extName
 
         if ($linksMatchingExtName.Count -eq 0) {
-            Write-Host "`nExtension '$extName' not found" -ForegroundColor DarkYellow
+            Write-Host -Object "`nExtension '$extName' not found" -ForegroundColor DarkYellow
             return $null
         }
 
         if ($linksMatchingExtName.Count -eq 1) {
             $chosenItem = $($linksMatchingExtName)
         } else {
-            Write-Host "`nMatching '$extName' extension:"
+            Write-Host -Object "`nMatching '$extName' extension:"
             $index = 0
             $linksMatchingExtName | ForEach-Object {
                 $extItem = $_.href -replace '/package/', ''
-                Write-Host "[$index] $extItem"
+                Write-Host -Object "[$index] $extItem"
                 $index++
             }
 
             do {
-                $choiceRaw = Read-Host "`nInsert the [number] you want to install"
+                $choiceRaw = Read-Host -Prompt "`nInsert the [number] you want to install"
                 $choiceRaw = $choiceRaw.Trim()
                 if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
-                    Write-Host "`nInstallation cancelled"
+                    Write-Host -Object "`nInstallation cancelled"
                     return $null
                 }
 
                 $choice = $null
                 if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Write-Host 'Please enter a valid positive number.' -ForegroundColor Yellow
+                    Write-Host -Object 'Please enter a valid positive number.' -ForegroundColor Yellow
                     continue
                 }
 
                 if ($choice -lt 0 -or $choice -gt $linksMatchingExtName.Length - 1) {
-                    Write-Host "Number must be between 0 and $($linksMatchingExtName.Length - 1)." -ForegroundColor Yellow
+                    Write-Host -Object "Number must be between 0 and $($linksMatchingExtName.Length - 1)." -ForegroundColor Yellow
                     continue
                 }
 
@@ -151,7 +151,7 @@ function Get-Extension-Links-From-URL {
 
             $chosenItem = $linksMatchingExtName[$choice]
             if (-not $chosenItem) {
-                Write-Host "`nYou chose the wrong index: $choice" -ForegroundColor DarkYellow
+                Write-Host -Object "`nYou chose the wrong index: $choice" -ForegroundColor DarkYellow
                 return $null
             }
         }
@@ -175,7 +175,7 @@ function Get-Extension-From-URL {
 
     if (($null -eq $linksObj) -or ($linksObj.Count -eq 0) -or ($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
         $extName = if ($linksObj -and $linksObj.extName) { $linksObj.extName } else { $extName }
-        Write-Host "`nNo versions found for $extName" -ForegroundColor DarkYellow
+        Write-Host -Object "`nNo versions found for $extName" -ForegroundColor DarkYellow
         return @{ extName = $extName; data = $null }
     }
 

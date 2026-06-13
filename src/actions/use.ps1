@@ -3,14 +3,14 @@ function Detect-PHP-VersionFromProject {
     try {
         # 1. Check .php-version
         if (Is-File-Exists -path '.php-version') {
-            $version = Get-Content '.php-version' | Select-Object -First 1
+            $version = Get-Content -Path '.php-version' | Select-Object -First 1
             return $version.Trim()
         }
 
         # 2. Check composer.json
         if (Is-File-Exists -path 'composer.json') {
             try {
-                $json = Get-Content 'composer.json' -Raw | ConvertFrom-Json
+                $json = Get-Content -Path 'composer.json' -Raw | ConvertFrom-Json
                 if ($json.require.php) {
                     $constraint = $json.require.php.Trim()
                     # Extract first PHP version number in the string (e.g. from "^8.3" or ">=8.1 <8.3")
@@ -19,7 +19,7 @@ function Detect-PHP-VersionFromProject {
                     }
                 }
             } catch {
-                Write-Host "`nFailed to parse composer.json: $_"
+                Write-Host -Object "`nFailed to parse composer.json: $_"
                 throw $_
             }
         }
@@ -72,7 +72,7 @@ function Auto-Select-PHP-Version {
         return @{ code = -1; message = 'Could not detect PHP version from .php-version or composer.json'; color = 'DarkYellow' }
     }
 
-    Write-Host "`nDetected PHP version from project: $version"
+    Write-Host -Object "`nDetected PHP version from project: $version"
 
     $installedVersions = Get-Matching-PHP-Versions -version $version
     if (-not $installedVersions) {

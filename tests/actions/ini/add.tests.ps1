@@ -34,7 +34,7 @@ max_execution_time = 30
     $phpVersionPath = "$testDrivePath\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
     New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
-    Copy-Item $testIniPath "$phpVersionPath\php.ini" -Force
+    Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
 
     # Mock Log-Data function
     function script:Log-Data {
@@ -422,7 +422,7 @@ opcache.enable = 1
 Describe "Add-Missing-PHPExtension-To-Ini" {
     BeforeEach {
         Reset-Ini-Content
-        Remove-Item $testBackupPath -ErrorAction SilentlyContinue
+        Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
         Mock Get-Zend-Extensions-List { return @('xdebug', 'opcache') }
     }
 
@@ -445,12 +445,12 @@ Describe "Add-Missing-PHPExtension-To-Ini" {
         @"
 zend_extension=php_opcache.dll
 extension=php_mbstring.dll
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
 
         Mock Test-Path { return $true }
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName 'php_curl.dll'
         $result | Should -Be 0
-        (Get-Content $testIniPath) -match 'extension=php_curl.dll' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match 'extension=php_curl.dll' | Should -Be $true
         Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
             $Object -eq "- 'php_curl.dll' added successfully."
         }
@@ -460,37 +460,37 @@ extension=php_mbstring.dll
         @"
 zend_extension=php_opcache.dll
 ;extension=php_mbstring.dll
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
 
         Mock Test-Path { return $true }
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName 'php_curl.dll' -enable $false
         $result | Should -Be 0
-        (Get-Content $testIniPath) -match ';extension=php_curl.dll' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match ';extension=php_curl.dll' | Should -Be $true
     }
 
     It "Adds extensions correctly for older PHP versions" {
         @"
 zend_extension=php_opcache.dll
 extension=php_mbstring.dll
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
 
         Mock Test-Path { return $true }
         Mock Get-Current-PHP-Version { return @{ version = '7.1.0'; path = 'TestDrive:\php\7.1.0' } }
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName 'php_curl.dll'
         $result | Should -Be 0
-        (Get-Content $testIniPath) -match 'extension=php_curl.dll' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match 'extension=php_curl.dll' | Should -Be $true
     }
 
     It "Adds zend_extensions correctly" {
         @"
 extension=php_mbstring.dll
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
 
         Mock Test-Path { return $true }
         Mock Get-Current-PHP-Version { return @{ version = '7.1.0'; path = 'TestDrive:\php\7.1.0' } }
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName 'php_opcache.dll'
         $result | Should -Be 0
-        (Get-Content $testIniPath) -match 'zend_extension=php_opcache.dll' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match 'zend_extension=php_opcache.dll' | Should -Be $true
     }
 
     It "Returns -1 for non-existent ini file" {

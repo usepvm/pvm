@@ -9,7 +9,7 @@ function Get-PHP-Status {
             return $status
         }
 
-        $iniContent = Get-Content $phpIniPath
+        $iniContent = Get-Content -Path $phpIniPath
 
         foreach ($line in $iniContent) {
             $trimmed = $line.Trim()
@@ -23,7 +23,7 @@ function Get-PHP-Status {
         }
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve PHP status"; exception = $_ }
-        Write-Host "An error occurred while checking PHP status: $_"
+        Write-Host -Object "An error occurred while checking PHP status: $_"
     }
 
     return $status
@@ -32,7 +32,7 @@ function Get-PHP-Status {
 function Get-Current-PHP-Version {
     try {
         $emptyResult = @{ version = $null; path = $null; status = @{ opcache = $false; xdebug = $false } }
-        $currentPhpVersionPath = Get-Item $PHP_CURRENT_VERSION_PATH
+        $currentPhpVersionPath = Get-Item -Path $PHP_CURRENT_VERSION_PATH
         if (-not $currentPhpVersionPath) {
             return $emptyResult
         }

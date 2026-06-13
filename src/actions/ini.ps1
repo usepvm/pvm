@@ -8,13 +8,13 @@ function Invoke-IniAction {
         $currentPhpVersion = Get-Current-PHP-Version
 
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
-            Write-Host "`nFailed to get current PHP version." -ForegroundColor DarkYellow
+            Write-Host -Object "`nFailed to get current PHP version." -ForegroundColor DarkYellow
             return -1
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
         if (Is-File-Not-Exists -path $iniPath) {
-            Write-Host "php.ini not found at: $($currentPhpVersion.path)"
+            Write-Host -Object "php.ini not found at: $($currentPhpVersion.path)"
             return -1
         }
 
@@ -25,21 +25,21 @@ function Invoke-IniAction {
             }
             'get' {
                 if ($params.Count -eq 0) {
-                    Write-Host "`nPlease specify at least one setting name ('pvm ini get memory_limit)."
+                    Write-Host -Object "`nPlease specify at least one setting name ('pvm ini get memory_limit)."
                     return -1
                 }
 
-                Write-Host "`nRetrieving ini setting..."
+                Write-Host -Object "`nRetrieving ini setting..."
 
                 $exitCode = Get-IniSetting -iniPath $iniPath -keys @($params)
             }
             'set' {
                 if ($params.Count -eq 0) {
-                    Write-Host "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
+                    Write-Host -Object "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
                     return -1
                 }
 
-                Write-Host "`nSetting ini value..."
+                Write-Host -Object "`nSetting ini value..."
                 $enable = (-not ($params -contains '--disable'))
                 $params = $params | Where-Object { $_ -notmatch '^--disable$' }
 
@@ -47,31 +47,31 @@ function Invoke-IniAction {
             }
             'enable' {
                 if ($params.Count -eq 0) {
-                    Write-Host "`nPlease specify at least one extension (pvm ini enable curl)."
+                    Write-Host -Object "`nPlease specify at least one extension (pvm ini enable curl)."
                     return -1
                 }
 
-                Write-Host "`nEnabling extension(s): $($params -join ', ')"
+                Write-Host -Object "`nEnabling extension(s): $($params -join ', ')"
 
                 $exitCode = Enable-IniExtension -iniPath $iniPath -extNames @($params)
             }
             'disable' {
                 if ($params.Count -eq 0) {
-                    Write-Host "`nPlease specify at least one extension (pvm ini disable xdebug)."
+                    Write-Host -Object "`nPlease specify at least one extension (pvm ini disable xdebug)."
                     return -1
                 }
 
-                Write-Host "`nDisabling extension(s): $($params -join ', ')"
+                Write-Host -Object "`nDisabling extension(s): $($params -join ', ')"
 
                 $exitCode = Disable-IniExtension -iniPath $iniPath -extNames @($params)
             }
             'status' {
                 if ($params.Count -eq 0) {
-                    Write-Host "`nPlease specify at least one extension (pvm ini status opcache)."
+                    Write-Host -Object "`nPlease specify at least one extension (pvm ini status opcache)."
                     return -1
                 }
 
-                Write-Host "`nChecking status of extension(s): $($params -join ', ')"
+                Write-Host -Object "`nChecking status of extension(s): $($params -join ', ')"
 
                 $exitCode = Get-IniExtensionStatus -iniPath $iniPath -extNames @($params)
             }
@@ -80,21 +80,21 @@ function Invoke-IniAction {
             }
             'add' {
                 if ($params.Count -eq 0) {
-                    Write-Host "`nPlease specify at least one extension (pvm ini install xdebug)."
+                    Write-Host -Object "`nPlease specify at least one extension (pvm ini install xdebug)."
                     return -1
                 }
 
-                Write-Host "`nInstalling extension(s): $($params -join ', ')"
+                Write-Host -Object "`nInstalling extension(s): $($params -join ', ')"
 
                 $exitCode = Install-IniExtension -iniPath $iniPath -extNames @($params)
             }
             'remove' {
                 if ($params.Count -eq 0) {
-                    Write-Host "`nPlease specify at least one extension (pvm ini uninstall xdebug)."
+                    Write-Host -Object "`nPlease specify at least one extension (pvm ini uninstall xdebug)."
                     return -1
                 }
 
-                Write-Host "`nUninstalling extension(s): $($params -join ', ')"
+                Write-Host -Object "`nUninstalling extension(s): $($params -join ', ')"
 
                 $exitCode = Uninstall-Extension -iniPath $iniPath -extNames @($params)
             }
@@ -103,14 +103,14 @@ function Invoke-IniAction {
                 $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains 'available') -term $term
             }
             default {
-                Write-Host "`nUnknown action '$action' use one of following: 'info', 'get', 'set', 'enable', 'disable', 'status', 'install', 'list' or 'restore'."
+                Write-Host -Object "`nUnknown action '$action' use one of following: 'info', 'get', 'set', 'enable', 'disable', 'status', 'install', 'list' or 'restore'."
             }
         }
 
         return $exitCode
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to invoke ini action '$action'"; exception = $_ }
-        Write-Host "`nFailed to perform action '$action' on ini settings." -ForegroundColor Red
+        Write-Host -Object "`nFailed to perform action '$action' on ini settings." -ForegroundColor Red
         return -1
     }
 }

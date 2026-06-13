@@ -26,7 +26,7 @@ Describe "Get-From-Source" {
     BeforeEach {
         # Clean test directory
         if (Test-Path 'TestDrive:\data') {
-            Remove-Item 'TestDrive:\data' -Recurse -Force
+            Remove-Item -Path 'TestDrive:\data' -Recurse -Force
         }
 
         Mock Is-OS-64Bit { return $true }

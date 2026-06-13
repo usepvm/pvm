@@ -1,7 +1,7 @@
 ﻿
 function Show-Usage {
-    Write-Host "`nRunning version : $PVM_VERSION"
-    Write-Host "`nUsage:`n"
+    Write-Host -Object "`nRunning version : $PVM_VERSION"
+    Write-Host -Object "`nUsage:`n"
 
     $maxLineLength = ($actions.GetEnumerator() | ForEach-Object { $_.Value.command.Length } | Measure-Object -Maximum).Maximum + $MIN_PAD_RIGHT_LENGTH
     $maxDescLength = $Host.UI.RawUI.WindowSize.Width - ($maxLineLength + ($MIN_PAD_RIGHT_LENGTH * 2)) # Max length per description line
@@ -25,18 +25,18 @@ function Show-Usage {
         # First line (command + dots + description)
         $label = "  $command "
         $line = $label.PadRight($maxLineLength, '.') + " $($descLines[0])"
-        Write-Host $line
+        Write-Host -Object $line
 
         # Remaining description lines aligned under description column
         $indent = ' ' * ($maxLineLength + 1)
         for ($i = 1; $i -lt $descLines.Count; $i++) {
-            Write-Host "$indent$($descLines[$i])"
+            Write-Host -Object "$indent$($descLines[$i])"
         }
     }
 }
 
 function Show-PVM-Version {
-    Write-Host "`nPVM version $PVM_VERSION"
+    Write-Host -Object "`nPVM version $PVM_VERSION"
 }
 
 function Resolve-Alias {
@@ -81,14 +81,14 @@ function Start-PVM {
         $allowedOperations = Get-AllowedOperations
 
         if (($allowedOperations -notcontains $operation) -and (-not (Is-PVM-Setup))) {
-            Write-Host "`nPVM is not setup. Please run 'pvm setup' first."
+            Write-Host -Object "`nPVM is not setup. Please run 'pvm setup' first."
             return -1
         }
 
         return $($actions[$operation].action.Invoke())
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during operation '$operation'"; exception = $_ }
-        Write-Host "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
+        Write-Host -Object "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
         return -1
     }
 }

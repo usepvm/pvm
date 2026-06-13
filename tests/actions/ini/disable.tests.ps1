@@ -34,14 +34,14 @@ max_execution_time = 30
     $phpVersionPath = "$testDrivePath\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
     New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
-    Copy-Item $testIniPath "$phpVersionPath\php.ini" -Force
+    Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
 }
 
 Describe "Disable-IniExtension" {
     BeforeEach {
         Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
         Reset-Ini-Content
-        Remove-Item $testBackupPath -ErrorAction SilentlyContinue
+        Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
     }
 
     It "Disables enabled extension" {
@@ -50,7 +50,7 @@ Describe "Disable-IniExtension" {
             return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
         }
         Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
-        (Get-Content $testIniPath) -match '^;extension=php_curl.dll' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^;extension=php_curl.dll' | Should -Be $true
     }
 
     It "Returns -1 for already disabled extension" {
@@ -84,7 +84,7 @@ Describe "Disable-IniExtension" {
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
         }
         Disable-IniExtension -iniPath $testIniPath -extNames @('opcache') | Should -Be 0
-        (Get-Content $testIniPath) -match '^;zend_extension=php_opcache.dll' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^;zend_extension=php_opcache.dll' | Should -Be $true
     }
 
     It "Returns 0 when no line modification occurs while disabling extension" {
@@ -107,7 +107,7 @@ extension=pdo_mysql
 extension=pdo_sqlite
 extension=pgsql
 ;extension=sqlite3
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
         Mock Get-ChildItem {
             param ($Path)
             return @(
@@ -122,7 +122,7 @@ extension=pgsql
 
         Disable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
-        (Get-Content $testIniPath) -match '^;extension\s*=\s*pdo_mysql' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^;extension\s*=\s*pdo_mysql' | Should -Be $true
     }
 
     It "Prints error message for non-valid number" {
@@ -132,7 +132,7 @@ extension=pdo_mysql
 extension=pdo_sqlite
 extension=pgsql
 ;extension=sqlite3
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
 
         $script:callCount = 0
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
@@ -154,7 +154,7 @@ extension=pgsql
         }
         Disable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
-        (Get-Content $testIniPath) -match '^;extension\s*=\s*pgsql' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^;extension\s*=\s*pgsql' | Should -Be $true
     }
 
     It "Creates backup before modifying" {

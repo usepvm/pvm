@@ -17,7 +17,7 @@ function Is-PVM-Setup {
             $path = ''
         }
 
-        $parent = Split-Path $PHP_CURRENT_VERSION_PATH
+        $parent = Split-Path -Path $PHP_CURRENT_VERSION_PATH
         $pathEntries = $path -split ';' | Where-Object { $_ -ne '' }
         if (
             (
@@ -75,7 +75,7 @@ function Display-Msg-By-ExitCode {
                 if (-not $msg.color) {
                     $msg.color = 'White'
                 }
-                Write-Host $($msg.content) -ForegroundColor $msg.color
+                Write-Host -Object $($msg.content) -ForegroundColor $msg.color
             }
         } else {
             if ($message) {
@@ -85,7 +85,7 @@ function Display-Msg-By-ExitCode {
                 $result.color = 'Gray'
             }
 
-            Write-Host "`n$($result.message)" -ForegroundColor $result.color
+            Write-Host -Object "`n$($result.message)" -ForegroundColor $result.color
         }
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
@@ -97,9 +97,9 @@ function Log-Data {
 
     try {
         $logPath = if ($data.logPath) { $data.logPath } else { $LOG_ERROR_PATH }
-        $created = Make-Directory -path (Split-Path $logPath)
+        $created = Make-Directory -path (Split-Path -Path $logPath)
         if ($created -ne 0) {
-            Write-Host "Failed to create directory $(Split-Path $logPath)"
+            Write-Host -Object "Failed to create directory $(Split-Path -Path $logPath)"
             return -1
         }
         $content = "`n--------------------------"
@@ -193,7 +193,7 @@ function Get-EnvConfig {
     $config = @{}
 
     # Read the file and parse key=value pairs
-    Get-Content $envFile | ForEach-Object {
+    Get-Content -Path $envFile | ForEach-Object {
         # Skip empty lines and comments
         if ($_ -match '^\s*$' -or $_ -match '^\s*#') {
             return

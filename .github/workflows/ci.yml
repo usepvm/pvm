@@ -43,7 +43,7 @@ jobs:
         Write-Host "Installing Pester..." -ForegroundColor Yellow
         Install-Module -Name Pester -Force -SkipPublisherCheck
         Import-Module Pester
-        $pesterVersion = Get-Module Pester
+        $pesterVersion = Get-Module -Name Pester
         Write-Host "Pester version: $($pesterVersion.Version)" -ForegroundColor Green
       shell: pwsh
       

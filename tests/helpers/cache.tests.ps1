@@ -64,7 +64,7 @@ Describe "Can-Use-Cache" {
 
             # Set file modification time to be older than CACHE_MAX_HOURS (168 hours)
             $oldTime = (Get-Date).AddHours(-200)
-            (Get-Item "$CACHE_PATH\$cacheFile").LastWriteTime = $oldTime
+            (Get-Item -Path "$CACHE_PATH\$cacheFile").LastWriteTime = $oldTime
 
             $result = Can-Use-Cache -cacheFileName $cacheFileName
             $result | Should -Be $false
@@ -80,7 +80,7 @@ Describe "Can-Use-Cache" {
 
             # Set file modification time to be exactly at CACHE_MAX_HOURS
             $boundaryTime = (Get-Date).AddHours(-$CACHE_MAX_HOURS)
-            (Get-Item "$CACHE_PATH\$cacheFile").LastWriteTime = $boundaryTime
+            (Get-Item -Path "$CACHE_PATH\$cacheFile").LastWriteTime = $boundaryTime
 
             $result = Can-Use-Cache -cacheFileName $cacheFileName
             # Since the function uses -lt (less than), equality should return false

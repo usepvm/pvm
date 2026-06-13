@@ -135,14 +135,14 @@ function Optimize-SystemPath {
             header = "Original PATH`n$oldPath"
         }
         if ($outputLog -eq 0) {
-            Write-Host "`nOriginal Path saved to '$PATH_VAR_BACKUP_PATH'"
+            Write-Host -Object "`nOriginal Path saved to '$PATH_VAR_BACKUP_PATH'"
         }
 
         $output = 0
         if ($path -ne $oldPath) {
             $output = Set-EnvVar -name 'Path' -value $path
             if ($output -eq 0) {
-                Write-Host "`nPath optimized successfully" -ForegroundColor DarkGreen
+                Write-Host -Object "`nPath optimized successfully" -ForegroundColor DarkGreen
             }
         }
 

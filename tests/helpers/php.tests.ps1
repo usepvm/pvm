@@ -921,7 +921,7 @@ Describe "Get-PHP-Data" {
     }
 
     It "Handles empty ini file" {
-        '' | Set-Content $testIniPath
+        '' | Set-Content -Path $testIniPath
         $extensions = (Get-PHP-Data -PhpIniPath $testIniPath).extensions
         $extensions.Count | Should -Be 0
     }

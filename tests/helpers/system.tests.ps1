@@ -204,7 +204,7 @@ Describe "Optimize-SystemPath" {
             $result | Should -Be 0
 
             Test-Path $PATH_VAR_BACKUP_PATH | Should -Be $true
-            Get-Content $PATH_VAR_BACKUP_PATH -Raw | Should -Match 'Original PATH'
+            Get-Content -Path $PATH_VAR_BACKUP_PATH -Raw | Should -Match 'Original PATH'
         }
 
         It "Handles exceptions gracefully" {
@@ -214,7 +214,7 @@ Describe "Optimize-SystemPath" {
 
             # Check that an error was logged
             Test-Path $LOG_ERROR_PATH | Should -Be $true
-            Get-Content $LOG_ERROR_PATH -Raw | Should -Match 'Optimize-SystemPath - Failed to optimize system PATH variable'
+            Get-Content -Path $LOG_ERROR_PATH -Raw | Should -Match 'Optimize-SystemPath - Failed to optimize system PATH variable'
         }
 
         It "Sets Path variable successfully after optimization" {

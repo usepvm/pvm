@@ -6,7 +6,7 @@ function Invoke-Setup {
     }
     $optimized = Optimize-SystemPath
     if ($optimized -ne 0) {
-        Write-Host "`nFailed to optimize system path." -ForegroundColor DarkYellow
+        Write-Host -Object "`nFailed to optimize system path." -ForegroundColor DarkYellow
     }
 
     Display-Msg-By-ExitCode -result $result
@@ -16,7 +16,7 @@ function Invoke-Setup {
 function Invoke-Current {
     $result = Get-Current-PHP-Version
     if (-not $result.version) {
-        Write-Host "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
+        Write-Host -Object "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
         return -1
     }
     $text = "`nRunning version: PHP $($result.version)"
@@ -26,22 +26,22 @@ function Invoke-Current {
     if ($result.arch) {
         $text += " $($result.arch)"
     }
-    Write-Host $text
+    Write-Host -Object $text
 
     if (-not $result.status) {
-        Write-Host 'No status information available for the current PHP version.' -ForegroundColor Yellow
+        Write-Host -Object 'No status information available for the current PHP version.' -ForegroundColor Yellow
         return -1
     }
 
     foreach ($ext in $result.status.Keys) {
         if ($result.status[$ext]) {
-            Write-Host "- $ext is enabled" -ForegroundColor DarkGreen
+            Write-Host -Object "- $ext is enabled" -ForegroundColor DarkGreen
         } else {
-            Write-Host "- $ext is disabled" -ForegroundColor DarkYellow
+            Write-Host -Object "- $ext is disabled" -ForegroundColor DarkYellow
         }
     }
 
-    Write-Host "`nPath: $($result.path)" -ForegroundColor Gray
+    Write-Host -Object "`nPath: $($result.path)" -ForegroundColor Gray
     return 0
 }
 
@@ -77,16 +77,16 @@ function Invoke-Install {
     } elseif ($version -eq 'latest') {
         $latestVersion = Get-Latest-PHP-Version -arch $arch -buildType $buildType
         if (-not $latestVersion) {
-            Write-Host "`nFailed to find the latest PHP version"
+            Write-Host -Object "`nFailed to find the latest PHP version"
             return -1
         }
 
         $version = $latestVersion.version
-        Write-Host "`nLatest available PHP version is $version"
+        Write-Host -Object "`nLatest available PHP version is $version"
     }
 
     if (-not $version) {
-        Write-Host "`nPlease provide a PHP version to install"
+        Write-Host -Object "`nPlease provide a PHP version to install"
         return -1
     }
 
@@ -101,7 +101,7 @@ function Invoke-Uninstall {
     $version = $arguments[0]
 
     if (-not $version) {
-        Write-Host "`nPlease provide a PHP version to uninstall"
+        Write-Host -Object "`nPlease provide a PHP version to uninstall"
         return -1
     }
 
@@ -117,7 +117,7 @@ function Invoke-Use {
     $version = $arguments[0]
 
     if (-not $version) {
-        Write-Host "`nPlease provide a PHP version to use"
+        Write-Host -Object "`nPlease provide a PHP version to use"
         return -1
     }
 
@@ -141,7 +141,7 @@ function Invoke-Ini {
 
     $action = $arguments[0]
     if (-not $action) {
-        Write-Host "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable', 'install', 'list' or 'restore'."
+        Write-Host -Object "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable', 'install', 'list' or 'restore'."
         return -1
     }
 
@@ -156,8 +156,8 @@ function Invoke-Ini {
 function Invoke-Test {
     param ($arguments)
 
-    if (-not (Get-Module -ListAvailable Pester)) {
-        Write-Host "`nInstalling Pester..." -ForegroundColor Yellow
+    if (-not (Get-Module -Name Pester -ListAvailable)) {
+        Write-Host -Object "`nInstalling Pester..." -ForegroundColor Yellow
         Install-Module -Name Pester -Force -SkipPublisherCheck
     }
 
@@ -198,7 +198,7 @@ function Invoke-Test {
     }
 
     if ($options.target -lt 0 -or $options.target -gt 100) {
-        Write-Host "`nInvalid coverage value : $($options.target) | Min: 0, Max: 100" -ForegroundColor Yellow
+        Write-Host -Object "`nInvalid coverage value : $($options.target) | Min: 0, Max: 100" -ForegroundColor Yellow
         return -1
     }
 
@@ -227,15 +227,15 @@ function Invoke-Help {
     if ($command) {
         $usage = $actions[$command].usage
         if ($null -eq $usage) {
-            Write-Host "`nNo usage information available for the '$operation' operation." -ForegroundColor Yellow
+            Write-Host -Object "`nNo usage information available for the '$operation' operation." -ForegroundColor Yellow
             return -1
         }
         foreach ($key in $usage.Keys) {
-            Write-Host "`n$key`:" -ForegroundColor Cyan
+            Write-Host -Object "`n$key`:" -ForegroundColor Cyan
             if ($usage[$key] -is [array]) {
-                $($usage.$key) | ForEach-Object { Write-Host "  $_" }
+                $($usage.$key) | ForEach-Object { Write-Host -Object "  $_" }
             } else {
-                Write-Host "  $($usage[$key])"
+                Write-Host -Object "  $($usage[$key])"
             }
         }
     } else {
@@ -251,7 +251,7 @@ function Invoke-Profile {
     $action = $arguments[0]
 
     if (-not $action) {
-        Write-Host "`nPlease specify an action for 'pvm profile'. Use 'save', 'load', 'list', 'show', 'delete', 'export', or 'import'." -ForegroundColor Yellow
+        Write-Host -Object "`nPlease specify an action for 'pvm profile'. Use 'save', 'load', 'list', 'show', 'delete', 'export', or 'import'." -ForegroundColor Yellow
         return -1
     }
 
@@ -260,7 +260,7 @@ function Invoke-Profile {
     switch ($action.ToLower()) {
         'save' {
             if ($remainingArgs.Count -eq 0) {
-                Write-Host "`nPlease provide a profile name: pvm profile save <name> [description]" -ForegroundColor Yellow
+                Write-Host -Object "`nPlease provide a profile name: pvm profile save <name> [description]" -ForegroundColor Yellow
                 return -1
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -269,7 +269,7 @@ function Invoke-Profile {
         }
         'load' {
             if ($remainingArgs.Count -eq 0) {
-                Write-Host "`nPlease provide a profile name: pvm profile load <name>" -ForegroundColor Yellow
+                Write-Host -Object "`nPlease provide a profile name: pvm profile load <name>" -ForegroundColor Yellow
                 return -1
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -280,7 +280,7 @@ function Invoke-Profile {
         }
         'show' {
             if ($remainingArgs.Count -eq 0) {
-                Write-Host "`nPlease provide a profile name: pvm profile show <name>" -ForegroundColor Yellow
+                Write-Host -Object "`nPlease provide a profile name: pvm profile show <name>" -ForegroundColor Yellow
                 return -1
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -289,7 +289,7 @@ function Invoke-Profile {
         }
         'delete' {
             if ($remainingArgs.Count -eq 0) {
-                Write-Host "`nPlease provide a profile name: pvm profile delete <name>" -ForegroundColor Yellow
+                Write-Host -Object "`nPlease provide a profile name: pvm profile delete <name>" -ForegroundColor Yellow
                 return -1
             }
 
@@ -299,7 +299,7 @@ function Invoke-Profile {
         }
         'export' {
             if ($remainingArgs.Count -eq 0) {
-                Write-Host "`nPlease provide a profile name: pvm profile export <name> [path]" -ForegroundColor Yellow
+                Write-Host -Object "`nPlease provide a profile name: pvm profile export <name> [path]" -ForegroundColor Yellow
                 return -1
             }
 
@@ -310,7 +310,7 @@ function Invoke-Profile {
         }
         'import' {
             if ($remainingArgs.Count -eq 0) {
-                Write-Host "`nPlease provide a file path: pvm profile import <path> [name]" -ForegroundColor Yellow
+                Write-Host -Object "`nPlease provide a file path: pvm profile import <path> [name]" -ForegroundColor Yellow
                 return -1
             }
             $importPath = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -319,7 +319,7 @@ function Invoke-Profile {
             return (Import-PHP-Profile -importPath $importPath -profileName $profileName)
         }
         default {
-            Write-Host "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'export', or 'import'." -ForegroundColor Yellow
+            Write-Host -Object "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'export', or 'import'." -ForegroundColor Yellow
             return -1
         }
     }

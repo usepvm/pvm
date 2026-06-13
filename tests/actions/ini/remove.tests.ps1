@@ -33,7 +33,7 @@ Describe "Remove-Extension-From-Ini-File" {
         $result = Remove-Extension-From-Ini-File -iniPath $testIniPath -extensionObject $extension
 
         $result            | Should -Be 0
-        $content           = Get-Content $testIniPath
+        $content           = Get-Content -Path $testIniPath
         $content           | Should -Not -Contain 'extension=php_curl.dll'
         $content.Count     | Should -Be 4
     }
@@ -44,7 +44,7 @@ Describe "Remove-Extension-From-Ini-File" {
         $result = Remove-Extension-From-Ini-File -iniPath $testIniPath -extensionObject $extension
 
         $result        | Should -Be -1
-        $content       = Get-Content $testIniPath
+        $content       = Get-Content -Path $testIniPath
         $content.Count | Should -Be 5
     }
 
@@ -54,7 +54,7 @@ Describe "Remove-Extension-From-Ini-File" {
         $result = Remove-Extension-From-Ini-File -iniPath $testIniPath -extensionObject $extension
 
         $result        | Should -Be -1
-        $content       = Get-Content $testIniPath
+        $content       = Get-Content -Path $testIniPath
         $content.Count | Should -Be 5
     }
 

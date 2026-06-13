@@ -193,7 +193,7 @@ Describe "Setup-PVM" {
     Context "When directory creation is needed" {
         It "Should create parent directory if it doesn't exist" {
             Mock Get-EnvVar-ByName -MockWith { return '' }
-            Mock Is-Directory-Exists -ParameterFilter { $path -eq (Split-Path $PHP_CURRENT_VERSION_PATH) } -MockWith { return $false }
+            Mock Is-Directory-Exists -ParameterFilter { $path -eq (Split-Path -Path $PHP_CURRENT_VERSION_PATH) } -MockWith { return $false }
 
             $result = Setup-PVM
 
@@ -203,7 +203,7 @@ Describe "Setup-PVM" {
 
         It "Should not create directory if it already exists" {
             Mock Get-EnvVar-ByName -MockWith { return '' }
-            Mock Is-Directory-Exists -ParameterFilter { $path -eq (Split-Path $PHP_CURRENT_VERSION_PATH) } -MockWith { return $true }
+            Mock Is-Directory-Exists -ParameterFilter { $path -eq (Split-Path -Path $PHP_CURRENT_VERSION_PATH) } -MockWith { return $true }
             Mock New-Item { }
 
             $result = Setup-PVM

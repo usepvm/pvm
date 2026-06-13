@@ -83,7 +83,7 @@ Describe "Show-Log" {
     BeforeAll {
         $global:DEFAULT_LOG_PAGE_SIZE = 3
         $global:LOG_ERROR_PATH = 'TestDrive:\logs\error.log'
-        New-Item -ItemType Directory -Path (Split-Path $LOG_ERROR_PATH) -Force | Out-Null
+        New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
         Mock Write-Host {}
 
         @'
@@ -100,7 +100,7 @@ Message: Issue 0
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 +         throw "Issue $limit"
 +         ~~~~~~~~~~~~~~~~~~~~
-'@ | Set-Content $LOG_ERROR_PATH
+'@ | Set-Content -Path $LOG_ERROR_PATH
     }
 
     It "returns -1 for invalid page size (non-numeric)" {
@@ -188,7 +188,7 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
     }
 
     It "returns -1 if no entries found" {
-        '' | Set-Content $LOG_ERROR_PATH
+        '' | Set-Content -Path $LOG_ERROR_PATH
 
         $result = Show-Log -pageSize 1
 

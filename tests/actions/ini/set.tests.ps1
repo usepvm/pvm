@@ -34,13 +34,13 @@ max_execution_time = 30
     $phpVersionPath = "$testDrivePath\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
     New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
-    Copy-Item $testIniPath "$phpVersionPath\php.ini" -Force
+    Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
 }
 
 Describe "Set-IniSetting" {
     BeforeEach {
         Reset-Ini-Content
-        Remove-Item $testBackupPath -ErrorAction SilentlyContinue
+        Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
     }
 
     It "Accepts key parameter without value" {
@@ -62,44 +62,44 @@ Describe "Set-IniSetting" {
     It "Updates existing setting" {
         Mock Read-Host { return '256M' }
         Set-IniSetting -iniPath $testIniPath -keys @('memory_limit') | Should -Be 0
-        (Get-Content $testIniPath) -match '^memory_limit\s*=\s*256M' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^memory_limit\s*=\s*256M' | Should -Be $true
     }
 
     It "Updates setting with spaces" {
         Mock Read-Host { return 'Off' }
         Set-IniSetting -iniPath $testIniPath -keys @('display_errors') | Should -Be 0
-        (Get-Content $testIniPath) -match '^display_errors\s*=\s*Off' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^display_errors\s*=\s*Off' | Should -Be $true
     }
 
     It "Updates setting and disables" {
         Mock Read-Host { return '60' }
         Set-IniSetting -iniPath $testIniPath -keys @('max_execution_time') -enable $false | Should -Be 0
-        (Get-Content $testIniPath) -match '^;max_execution_time\s*=\s*60' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^;max_execution_time\s*=\s*60' | Should -Be $true
     }
 
     It "Prompts user when multiple matches found and requires input" {
         @"
 ;memory_limit=2G
 opcache.protect_memory=1
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
 
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
         Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '4G' }
 
         Set-IniSetting -iniPath $testIniPath -keys @('memory') | Should -Be 0
-        (Get-Content $testIniPath) -match '^memory_limit\s*=\s*4G' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^memory_limit\s*=\s*4G' | Should -Be $true
     }
 
     It "Prompts user when multiple matches found and does not require input" {
         @"
 ;memory_limit=2G
 opcache.protect_memory=1
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
 
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
 
         Set-IniSetting -iniPath $testIniPath -keys @('memory=2G') | Should -Be 0
-        (Get-Content $testIniPath) -match '^memory_limit\s*=\s*2G' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^memory_limit\s*=\s*2G' | Should -Be $true
     }
 
     It "Creates backup before modifying" {
@@ -116,7 +116,7 @@ opcache.protect_memory=1
         @"
 ;memory_limit=2G
 opcache.protect_memory=1
-"@ | Set-Content $testIniPath
+"@ | Set-Content -Path $testIniPath
 
         $script:callCount = 0
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
@@ -139,7 +139,7 @@ memory_limit=2G
         Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '3G' }
 
         Set-IniSetting -iniPath $testIniPath -keys @('memory') | Should -Be 0
-        (Get-Content $testIniPath) -match '^memory_limit\s*=\s*3G' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^memory_limit\s*=\s*3G' | Should -Be $true
     }
 
     It "Validates key=value format" {
@@ -151,7 +151,7 @@ memory_limit=2G
     It "Handles values with special characters" {
         Mock Read-Host { return '10M' }
         Set-IniSetting -iniPath $testIniPath -keys @('upload_max_filesize') | Should -Be 0
-        (Get-Content $testIniPath) -match '^upload_max_filesize\s*=\s*10M' | Should -Be $true
+        (Get-Content -Path $testIniPath) -match '^upload_max_filesize\s*=\s*10M' | Should -Be $true
     }
 
     It "Returns -1 on error" {

@@ -34,7 +34,7 @@ max_execution_time = 30
     $phpVersionPath = "$testDrivePath\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
     New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
-    Copy-Item $testIniPath "$phpVersionPath\php.ini" -Force
+    Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
 
     # Mock Log-Data function
     function script:Log-Data {
@@ -84,7 +84,7 @@ Describe "Invoke-IniAction" {
     BeforeEach {
         Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
         Reset-Ini-Content
-        Remove-Item $testBackupPath -ErrorAction SilentlyContinue
+        Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
     }
 
     Context "info action" {
@@ -148,7 +148,7 @@ Describe "Invoke-IniAction" {
 ;extension=php_xdebug.dll
 ;extension=php_gd.dll
 extension=php_curl.dll
-"@ | Set-Content "$phpVersionPath\php.ini"
+"@ | Set-Content -Path "$phpVersionPath\php.ini"
 
             $script:callCount = 0
             Mock Get-ChildItem {
@@ -346,7 +346,7 @@ extension=php_curl.dll
         }
 
         It "Handles missing php.ini file" {
-            Remove-Item "$phpVersionPath\php.ini" -Force
+            Remove-Item -Path "$phpVersionPath\php.ini" -Force
             $result = Invoke-IniAction -action 'info' -params @()
             $result | Should -Be -1
         }

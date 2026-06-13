@@ -158,11 +158,11 @@ function Download-PHP {
         $destination = "$STORAGE_PATH\php"
         $created = Make-Directory -path $destination
         if ($created -ne 0) {
-            Write-Host "Failed to create directory $destination"
+            Write-Host -Object "Failed to create directory $destination"
             return $null
         }
 
-        Write-Host "`nDownloading PHP $version ($buildType $arch)..."
+        Write-Host -Object "`nDownloading PHP $version ($buildType $arch)..."
 
         foreach ($key in $urls.Keys) {
             $_url = $urls[$key]
@@ -218,27 +218,27 @@ function Configure-Opcache {
     param ($version, $phpPath)
 
     try {
-        Write-Host "`nConfiguring Opcache..."
+        Write-Host -Object "`nConfiguring Opcache..."
 
         $phpIniPath = "$phpPath\php.ini"
         if (Is-File-Not-Exists -path $phpIniPath) {
-            Write-Host "php.ini not found at: $phpIniPath"
+            Write-Host -Object "php.ini not found at: $phpIniPath"
             return -1
         }
 
-        $phpIniContent = Get-Content $phpIniPath
+        $phpIniContent = Get-Content -Path $phpIniPath
         $phpIniContent = $phpIniContent | ForEach-Object {
             $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1' `
                -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `
                -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
-        Write-Host "`nOpcache configured successfully for PHP version $version"
+        Write-Host -Object "`nOpcache configured successfully for PHP version $version"
 
         return 0
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable opcache for PHP at $phpPath"; exception = $_ }
-        Write-Host "`nFailed to enable opcache for PHP version $version"
+        Write-Host -Object "`nFailed to enable opcache for PHP version $version"
         return -1
     }
 }
@@ -263,7 +263,7 @@ function Select-Version {
         if ($null -ne $buildType) {
             $text += " $buildType"
         }
-        Write-Host $text
+        Write-Host -Object $text
         $index = 0
         $matchingVersionsPartialList.GetEnumerator() | ForEach-Object {
             $key = $_.Key
@@ -271,10 +271,10 @@ function Select-Version {
             if ($versionsList.Length -eq 0) {
                 return
             }
-            Write-Host "`n$key versions:`n"
+            Write-Host -Object "`n$key versions:`n"
             $versionsList | ForEach-Object {
                 $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
-                Write-Host " [$index] $($_.version) $($_.arch) $($_.BuildType)"
+                Write-Host -Object " [$index] $($_.version) $($_.arch) $($_.BuildType)"
                 $index++
             }
         }
@@ -282,8 +282,8 @@ function Select-Version {
         $msg = "`nThis is a partial list (latest matches only). For the complete list, visit:"
         $msg += "`n Releases : $PHP_WIN_RELEASES_URL"
         $msg += "`n Archives : $PHP_WIN_ARCHIVES_URL"
-        Write-Host $msg
-        $selectedVersionInput = Read-Host "`nInsert the [number] matching the version to install (or press Enter to cancel)"
+        Write-Host -Object $msg
+        $selectedVersionInput = Read-Host -Prompt "`nInsert the [number] matching the version to install (or press Enter to cancel)"
         $selectedVersionInput = $selectedVersionInput.Trim()
 
         if (-not $selectedVersionInput) {
@@ -298,7 +298,7 @@ function Select-Version {
     }
 
     if (-not $selectedVersionObject) {
-        Write-Host "`nNo matching version found for '$selectedVersionInput'."
+        Write-Host -Object "`nNo matching version found for '$selectedVersionInput'."
         return $null
     }
 
@@ -315,7 +315,7 @@ function Install-PHP {
             if ($version -match '^(\d+)(?:\.(\d+))?') {
                 $currentVersion = Get-Current-PHP-Version
                 $familyVersion = $matches[0]
-                Write-Host "`nOther versions from the $familyVersion.x family are available:"
+                Write-Host -Object "`nOther versions from the $familyVersion.x family are available:"
                 $foundInstalledVersions | ForEach-Object {
                     $versionNumber = $_.Version
                     $isCurrent = ''
@@ -331,9 +331,9 @@ function Install-PHP {
                     }
                     $metaData = $metaData.Trim()
                     $versionNumber = "$versionNumber ".PadRight(15, '.')
-                    Write-Host " $versionNumber $metaData $isCurrent"
+                    Write-Host -Object " $versionNumber $metaData $isCurrent"
                 }
-                $response = Read-Host "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
+                $response = Read-Host -Prompt "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 $response = $response.Trim()
                 if ($response -ne 'y' -and $response -ne 'Y') {
                     return @{ code = -1; message = 'Installation cancelled' }
@@ -342,7 +342,7 @@ function Install-PHP {
             }
         }
 
-        Write-Host "`nLoading the matching versions..."
+        Write-Host -Object "`nLoading the matching versions..."
         $matchingVersions = Get-PHP-Versions -version $version -arch $arch -buildType $buildType
 
         if ($matchingVersions.Count -eq 0) {
@@ -371,7 +371,7 @@ function Install-PHP {
             return @{ code = -1; message = "Failed to download PHP version $version"; color = 'DarkYellow' }
         }
 
-        Write-Host "`nExtracting the downloaded zip ..."
+        Write-Host -Object "`nExtracting the downloaded zip ..."
         $phpDirectoryName = "$($selectedVersionObject.version)_$($selectedVersionObject.BuildType)_$($selectedVersionObject.arch)"
         Extract-And-Configure -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$phpDirectoryName"
 

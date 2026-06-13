@@ -5,7 +5,7 @@ function Backup-IniFile {
     try {
         $backup = "$iniPath.bak"
         if (Is-File-Not-Exists -path $backup) {
-            Copy-Item $iniPath $backup
+            Copy-Item -Path $iniPath $backup
         }
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to backup ini file"; exception = $_ }
@@ -19,7 +19,7 @@ function Get-Matching-PHPExtensionsStatus {
     $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*$extName[^\s`"';]*)\2\s*(;.*)?$"
     $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*$extName[^\s`"';]*)\2\s*(;.*)?$"
     Backup-IniFile $iniPath
-    $lines = Get-Content $iniPath
+    $lines = Get-Content -Path $iniPath
 
     $matchesList = @()
     $matchesInExt = @()
@@ -124,7 +124,7 @@ function Get-Matching-PHPExtensionsStatus {
 
             try {
                 $lines += $extensionLine
-                Set-Content $iniPath $lines -Encoding UTF8
+                Set-Content -Path $iniPath $lines -Encoding UTF8
 
                 $matchesList += @{
                     name = $extMatch.name

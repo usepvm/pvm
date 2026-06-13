@@ -8,7 +8,7 @@ function Setup-PVM {
         $newPath = $path
         $pathEntries = $path -split ';' | Where-Object { $_ -ne '' }
 
-        $parent = Split-Path $PHP_CURRENT_VERSION_PATH
+        $parent = Split-Path -Path $PHP_CURRENT_VERSION_PATH
         $created = Make-Directory -path $parent
         if ($created -ne 0) {
             return @{ code = -1; message = 'Failed to create directory for PHP version.'; color = 'DarkYellow'}

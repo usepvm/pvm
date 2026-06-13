@@ -250,7 +250,7 @@ Describe "Run-Ps-Command" {
             $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
             Mock Start-Process { return $mockProcess }
 
-            $result = Run-Ps-Command -command "Write-Host 'hello'"
+            $result = Run-Ps-Command -command "Write-Host -Object 'hello'"
 
             Should -Invoke Start-Process -Times 1 -ParameterFilter {
                 $FilePath -eq 'powershell.exe' -and
@@ -353,7 +353,7 @@ Describe "Log-Data" {
             $result | Should -Be 0
             Test-Path $LOG_ERROR_PATH | Should -Be $true
             # Get the actual content
-            $content = Get-Content $LOG_ERROR_PATH -Raw
+            $content = Get-Content -Path $LOG_ERROR_PATH -Raw
 
             # Verify the complete log format
             $content | Should -Match '\[.*\] Test message(.|\s)*Message: Test data'

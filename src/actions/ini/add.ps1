@@ -78,7 +78,7 @@ function Install-XDebug-Extension {
         }
 
         if ($null -eq $xDebugList -or $xDebugList.Count -eq 0) {
-            Write-Host "`nNo match was found, check the '$LOG_ERROR_PATH' for any potentiel errors"
+            Write-Host -Object "`nNo match was found, check the '$LOG_ERROR_PATH' for any potentiel errors"
             return -1
         }
 
@@ -140,18 +140,18 @@ function Install-XDebug-Extension {
             }
 
         $xDebugListGrouped.GetEnumerator() | ForEach-Object {
-            Write-Host "`nXDebug $($_.Key)"
+            Write-Host -Object "`nXDebug $($_.Key)"
             $_.Value | ForEach-Object {
                 $text = "PHP XDebug $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
-                Write-Host " [$($_.index)] $text"
+                Write-Host -Object " [$($_.index)] $text"
             }
         }
-        Write-Host "`nThis is a partial list. For a complete list, visit: $XDEBUG_HISTORICAL_URL"
+        Write-Host -Object "`nThis is a partial list. For a complete list, visit: $XDEBUG_HISTORICAL_URL"
 
-        $packageIndex = Read-Host "`nInsert the [number] you want to install"
+        $packageIndex = Read-Host -Prompt "`nInsert the [number] you want to install"
         $packageIndex = $packageIndex.Trim()
         if ([string]::IsNullOrWhiteSpace($packageIndex)) {
-            Write-Host "`nInstallation cancelled"
+            Write-Host -Object "`nInstallation cancelled"
             return -1
         }
 
@@ -161,18 +161,18 @@ function Install-XDebug-Extension {
             }
         }
         if (-not $chosenItem) {
-            Write-Host "`nYou chose the wrong index: $packageIndex" -ForegroundColor DarkYellow
+            Write-Host -Object "`nYou chose the wrong index: $packageIndex" -ForegroundColor DarkYellow
             return -1
         }
 
         Invoke-WebRequest -Uri "$XDEBUG_BASE_URL/$($chosenItem.href.TrimStart('/'))" -OutFile "$STORAGE_PATH\php"
         $phpPath = ($iniPath | Split-Path -Parent)
         if (Is-File-Exists -path "$phpPath\ext\$($chosenItem.fileName)") {
-            $response = Read-Host "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
+            $response = Read-Host -Prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
                 Remove-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)"
-                Write-Host "`nInstallation cancelled"
+                Write-Host -Object "`nInstallation cancelled"
                 return -1
             }
         }
@@ -183,7 +183,7 @@ function Install-XDebug-Extension {
             $xDebugConfig = Get-Xdebug-Config-V3 -XDebugPath $($chosenItem.fileName)
         }
         # check existence of previous xdebug
-        $iniContent = Get-Content $iniPath
+        $iniContent = Get-Content -Path $iniPath
         $dllXDebugExists = $false
         for ($i = 0; $i -lt $iniContent.Count; $i++) {
             if ($iniContent[$i] -match '^(?<comment>;)?\s*zend_extension\s*=.*xdebug.*$') {
@@ -198,7 +198,7 @@ function Install-XDebug-Extension {
             Add-Content -Path $iniPath -Value $xDebugConfig
         }
 
-        Write-Host "`nXDebug installed successfully" -ForegroundColor DarkGreen
+        Write-Host -Object "`nXDebug installed successfully" -ForegroundColor DarkGreen
 
         return 0
     } catch {
@@ -212,7 +212,7 @@ function Add-Missing-PHPExtension-To-Ini {
 
     try {
         if (Is-File-Not-Exists -path $iniPath) {
-            Write-Host "`nphp.ini file not found: $iniPath" -ForegroundColor DarkYellow
+            Write-Host -Object "`nphp.ini file not found: $iniPath" -ForegroundColor DarkYellow
             return -1
         }
 
@@ -222,19 +222,19 @@ function Add-Missing-PHPExtension-To-Ini {
         $extDirectory = "$phpDirectory\ext"
 
         if (Is-Directory-Not-Exists -path $extDirectory) {
-            Write-Host "`nExtensions directory not found: $extDirectory" -ForegroundColor DarkYellow
+            Write-Host -Object "`nExtensions directory not found: $extDirectory" -ForegroundColor DarkYellow
             return -1
         }
 
         if (Is-File-Not-Exists -path "$extDirectory\$extFileName") {
-            Write-Host "`nExtension file not found: $extFileName" -ForegroundColor DarkYellow
+            Write-Host -Object "`nExtension file not found: $extFileName" -ForegroundColor DarkYellow
             return -1
         }
 
-        $lines = Get-Content $iniPath
+        $lines = Get-Content -Path $iniPath
         foreach ($line in $lines) {
             if ($line -match "^(;)?\s*(zend_)?extension\s*=\s*$extFileName\s*") {
-                Write-Host "- Extension '$extFileName' already exists in php.ini" -ForegroundColor DarkGray
+                Write-Host -Object "- Extension '$extFileName' already exists in php.ini" -ForegroundColor DarkGray
                 return 0
             }
         }
@@ -246,8 +246,8 @@ function Add-Missing-PHPExtension-To-Ini {
         } else {
             $lines += "`n$commented" + "extension=$extFileName"
         }
-        Set-Content $iniPath $lines -Encoding UTF8
-        Write-Host "- '$extFileName' added successfully." -ForegroundColor DarkGreen
+        Set-Content -Path $iniPath $lines -Encoding UTF8
+        Write-Host -Object "- '$extFileName' added successfully." -ForegroundColor DarkGreen
 
         return 0
     } catch {
@@ -266,7 +266,7 @@ function Install-Extension {
 
         if (($null -eq $extensionLinksObj) -or ($extensionLinksObj.Count -eq 0) -or ($null -eq $extensionLinksObj.data) -or ($extensionLinksObj.data.Count -eq 0)) {
             $extName = if ($extensionLinksObj) { $extensionLinksObj.extName } else { $extName }
-            Write-Host "`nNo packages found for $extName" -ForegroundColor DarkYellow
+            Write-Host -Object "`nNo packages found for $extName" -ForegroundColor DarkYellow
             return -1
         }
 
@@ -283,7 +283,7 @@ function Install-Extension {
         }
 
         if ($null -eq $extensionLinks -or $extensionLinks.Count -eq 0) {
-            Write-Host "`nNo packages found for '$extName' matching current PHP architecture/build type" -ForegroundColor DarkYellow
+            Write-Host -Object "`nNo packages found for '$extName' matching current PHP architecture/build type" -ForegroundColor DarkYellow
             return -1
         }
 
@@ -336,18 +336,18 @@ function Install-Extension {
                 }
 
             $extensionLinksGrouped.GetEnumerator() | ForEach-Object {
-                Write-Host "`n$extName $($_.Key)"
+                Write-Host -Object "`n$extName $($_.Key)"
                 $_.Value | ForEach-Object {
                     $text = "PHP $extName $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
-                    Write-Host " [$($_.index)] $text"
+                    Write-Host -Object " [$($_.index)] $text"
                 }
             }
-            Write-Host "`nThis is a partial list. For a complete list, visit: $PECL_PACKAGE_ROOT_URL/$extName"
+            Write-Host -Object "`nThis is a partial list. For a complete list, visit: $PECL_PACKAGE_ROOT_URL/$extName"
 
-            $packageIndex = Read-Host "`nInsert the [number] you want to install"
+            $packageIndex = Read-Host -Prompt "`nInsert the [number] you want to install"
             $packageIndex = $packageIndex.Trim()
             if ([string]::IsNullOrWhiteSpace($packageIndex)) {
-                Write-Host "`nInstallation cancelled"
+                Write-Host -Object "`nInstallation cancelled"
                 return -1
             }
 
@@ -355,7 +355,7 @@ function Install-Extension {
         }
 
         if (-not $chosenItem) {
-            Write-Host "`nYou chose the wrong index: $packageIndex" -ForegroundColor DarkYellow
+            Write-Host -Object "`nYou chose the wrong index: $packageIndex" -ForegroundColor DarkYellow
             return -1
         }
 
@@ -368,16 +368,16 @@ function Install-Extension {
             ($_.Name -match "^php_$extName.*\.dll$")
         }
         if (-not $extFile) {
-            Write-Host "`nFailed to find $extName" -ForegroundColor DarkYellow
+            Write-Host -Object "`nFailed to find $extName" -ForegroundColor DarkYellow
             return -1
         }
         $phpPath = ($iniPath | Split-Path -Parent)
         if (Is-File-Exists -path "$phpPath\ext\$($extFile.Name)") {
-            $response = Read-Host "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
+            $response = Read-Host -Prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
                 Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath" -Force -Recurse
-                Write-Host "`nInstallation cancelled"
+                Write-Host -Object "`nInstallation cancelled"
                 return -1
             }
         }
@@ -385,10 +385,10 @@ function Install-Extension {
         Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath" -Force -Recurse
         $code = Add-Missing-PHPExtension-To-Ini -iniPath $iniPath -extFileName $extFile.Name -enable $false
         if ($code -ne 0) {
-            Write-Host "`nFailed to add $extName" -ForegroundColor DarkYellow
+            Write-Host -Object "`nFailed to add $extName" -ForegroundColor DarkYellow
             return -1
         }
-        Write-Host "`n$extName installed successfully" -ForegroundColor DarkGreen
+        Write-Host -Object "`n$extName installed successfully" -ForegroundColor DarkGreen
 
         return 0
     } catch {
@@ -402,7 +402,7 @@ function Install-IniExtension {
 
     try {
         if ($extNames.Count -eq 0) {
-            Write-Host "`nPlease provide at least one extension name to install"
+            Write-Host -Object "`nPlease provide at least one extension name to install"
             return -1
         }
 

@@ -31,13 +31,13 @@ Describe "Restore-IniBackup" {
         Backup-IniFile -iniPath $testIniPath
 
         # Modify original
-        'modified content' | Set-Content $testIniPath
+        'modified content' | Set-Content -Path $testIniPath
         Restore-IniBackup -iniPath $testIniPath | Should -Be 0
-        (Get-Content $testIniPath) | Should -Not -Be 'modified content'
+        (Get-Content -Path $testIniPath) | Should -Not -Be 'modified content'
     }
 
     It "Fails when backup doesn't exist" {
-        Remove-Item $testBackupPath -ErrorAction SilentlyContinue
+        Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
         Restore-IniBackup -iniPath $testIniPath | Should -Be -1
     }
 

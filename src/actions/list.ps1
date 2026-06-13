@@ -31,7 +31,7 @@ function Get-From-Source {
 
         if ($fetchedVersionsGrouped.Count -eq 0 -or
             ($fetchedVersionsGrouped['Archives'].Count -eq 0 -and $fetchedVersionsGrouped['Releases'].Count -eq 0)) {
-            Write-Host "`nNo PHP versions found in the source."
+            Write-Host -Object "`nNo PHP versions found in the source."
             return @{}
         }
 
@@ -65,12 +65,12 @@ function Get-Available-PHP-Versions {
     param ($term = $null, $arch = $null, $buildType = $null)
 
     try {
-        Write-Host "`nLoading available PHP versions..."
+        Write-Host -Object "`nLoading available PHP versions..."
 
         $fetchedVersionsGrouped = Get-PHP-List-To-Install
 
         if ($fetchedVersionsGrouped.Count -eq 0) {
-            Write-Host "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
+            Write-Host -Object "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
             return -1
         }
 
@@ -92,12 +92,12 @@ function Get-Available-PHP-Versions {
         }
 
         if ($fetchedVersionsGroupedPartialList.Count -eq 0) {
-            Write-Host "`nNo PHP versions found matching '$term'"
+            Write-Host -Object "`nNo PHP versions found matching '$term'"
             return -1
         }
 
-        Write-Host "`nAvailable Versions"
-        Write-Host '------------------'
+        Write-Host -Object "`nAvailable Versions"
+        Write-Host -Object '------------------'
 
         $fetchedVersionsGroupedPartialList.GetEnumerator()
             | Sort-Object Key
@@ -107,17 +107,17 @@ function Get-Available-PHP-Versions {
                 if ($fetchedVersionsGroupe.Length -eq 0) {
                     return
                 }
-                Write-Host "`n$key`n"
+                Write-Host -Object "`n$key`n"
                 $fetchedVersionsGroupe | ForEach-Object {
                     $versionNumber = "$($_.Version) ".PadRight(15, '.')
-                    Write-Host "  $versionNumber $($_.Arch) $($_.BuildType)"
+                    Write-Host -Object "  $versionNumber $($_.Arch) $($_.BuildType)"
                 }
             }
 
         $msg = "`nThis is a partial list. For a complete list, visit:"
         $msg += "`n Releases : $PHP_WIN_RELEASES_URL"
         $msg += "`n Archives : $PHP_WIN_ARCHIVES_URL"
-        Write-Host $msg
+        Write-Host -Object $msg
         return 0
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"; exception = $_ }
@@ -133,20 +133,20 @@ function Display-Installed-PHP-Versions {
         $installedPhp = Get-Installed-PHP-Versions -arch $arch -buildType $buildType
 
         if ($installedPhp.Count -eq 0) {
-            Write-Host "`nNo PHP versions found"
+            Write-Host -Object "`nNo PHP versions found"
             return -1
         }
 
         if ($term) {
             $installedPhp = $installedPhp | Where-Object { $_.Version -like "$term*" }
             if ($installedPhp.Count -eq 0) {
-                Write-Host "`nNo PHP versions found matching '$term'"
+                Write-Host -Object "`nNo PHP versions found matching '$term'"
                 return -1
             }
         }
 
-        Write-Host "`nInstalled Versions"
-        Write-Host '------------------'
+        Write-Host -Object "`nInstalled Versions"
+        Write-Host -Object '------------------'
         $duplicates = @()
         $installedPhp | ForEach-Object {
             $versionNumber = $_.Version
@@ -165,7 +165,7 @@ function Display-Installed-PHP-Versions {
                     $isCurrent = '(Current)'
                 }
                 $versionNumber = "$versionNumber ".PadRight(15, '.')
-                Write-Host " $versionNumber $metaData $isCurrent"
+                Write-Host -Object " $versionNumber $metaData $isCurrent"
             }
         }
         return 0

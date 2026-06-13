@@ -284,7 +284,7 @@ Describe "Make-Symbolic-Link" {
         It "Creates a symbolic link successfully" {
             $linkPath = 'TestDrive:\test_parent\test_link'
             $targetPath = "$STORAGE_PATH\php\8.1"
-            $parent = Split-Path $linkPath
+            $parent = Split-Path -Path $linkPath
 
             Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
             Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq $parent } -MockWith { return $true }

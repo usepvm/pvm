@@ -3,7 +3,7 @@
 $Global:PVM_VERSION = '2.5'
 
 # Root path of the PVM script
-$Global:PVMRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
+$Global:PVMRoot = (Resolve-Path -Path "$PSScriptRoot\..\..").Path
 
 # Storage paths
 $Global:STORAGE_PATH = "$PVMRoot\storage"

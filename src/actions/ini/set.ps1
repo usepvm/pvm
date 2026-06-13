@@ -4,7 +4,7 @@ function Set-IniSetting {
 
     try {
         if ($keys -isnot [array] -or $keys.Count -eq 0) {
-            Write-Host "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
+            Write-Host -Object "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
             return -1
         }
 
@@ -17,7 +17,7 @@ function Set-IniSetting {
                 $searchKey = $matches.k.Trim()
                 $inputValue = if ($null -ne $matches.v) { $matches.v.Trim() } else { $null }
             } else {
-                Write-Host 'Invalid input.' -ForegroundColor DarkGray
+                Write-Host -Object 'Invalid input.' -ForegroundColor DarkGray
                 $overallCode = -1
                 continue
             }
@@ -25,7 +25,7 @@ function Set-IniSetting {
             $pattern = '^[#;]?\s*(?<key>[^=\s]*{0}[^=\s]*)\s*=\s*(?<value>.*)$' -f [regex]::Escape($searchKey)
 
             $matchesList = @()
-            $lines = Get-Content $iniPath
+            $lines = Get-Content -Path $iniPath
 
             $index = 0
             foreach ($line in $lines) {
@@ -44,7 +44,7 @@ function Set-IniSetting {
             }
 
             if ($matchesList.Length -eq 0) {
-                # Write-Host "- No settings match '$searchKey'" -ForegroundColor DarkGray
+                # Write-Host -Object "- No settings match '$searchKey'" -ForegroundColor DarkGray
                 if ($notFound.Keys -notcontains $key) {
                     $notFound[$key] += @{ key = $searchKey; value = $null; status = 'Not Found'; color = 'Gray' }
                 }
@@ -54,28 +54,28 @@ function Set-IniSetting {
             }
 
             if ($matchesList.Length -gt 1) {
-                Write-Host "`nMultiple settings match '$searchKey':`n" -ForegroundColor Cyan
+                Write-Host -Object "`nMultiple settings match '$searchKey':`n" -ForegroundColor Cyan
 
                 $maxLineLength = ($matchesList.Key | Measure-Object -Maximum Length).Maximum + $MIN_PAD_RIGHT_LENGTH
                 $matchesList | ForEach-Object {
                     $state = if ($_.Enabled) { 'Enabled' } else { 'Disabled' }
                     $key = "$($_.Key) ".PadRight($maxLineLength, '.')
                     $value = if ($_.value -eq '') { '(not set)' } else { $_.value }
-                    Write-Host "[$($_.Index)] $key $value " -NoNewline
-                    Write-Host $state -ForegroundColor $_.Color
+                    Write-Host -Object "[$($_.Index)] $key $value " -NoNewline
+                    Write-Host -Object $state -ForegroundColor $_.Color
                 }
 
                 do {
-                    $choiceRaw = Read-Host "`nSelect a number"
+                    $choiceRaw = Read-Host -Prompt "`nSelect a number"
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                        Write-Host 'Please enter a valid positive number.' -ForegroundColor Yellow
+                        Write-Host -Object 'Please enter a valid positive number.' -ForegroundColor Yellow
                         continue
                     }
 
                     if ($choice -lt 0 -or $choice -gt $matchesList.Length - 1) {
-                        Write-Host "Number must be between 0 and $($matchesList.Length - 1)." -ForegroundColor Yellow
+                        Write-Host -Object "Number must be between 0 and $($matchesList.Length - 1)." -ForegroundColor Yellow
                         continue
                     }
 
@@ -88,7 +88,7 @@ function Set-IniSetting {
             }
 
             if (-not $inputValue) {
-                $inputValue = Read-Host "Enter new value for '$($selected.Key)'"
+                $inputValue = Read-Host -Prompt "Enter new value for '$($selected.Key)'"
             }
 
             $newLine = if ($enable) {
@@ -100,7 +100,7 @@ function Set-IniSetting {
             Backup-IniFile $iniPath
 
             $lines[$selected.LineNo] = $newLine
-            Set-Content $iniPath $lines -Encoding UTF8
+            Set-Content -Path $iniPath $lines -Encoding UTF8
 
             $status = if ($enable) {'Enabled'} else {'Disabled'}
             $color = if ($enable) {'DarkGreen'} else {'DarkYellow'}
@@ -111,12 +111,12 @@ function Set-IniSetting {
         $updatedSettings = $notFound + $updatedSettings
 
         $maxLineLength = ($updatedSettings.Values | ForEach-Object { $_ } | ForEach-Object { $_.key } | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
-        Write-Host "`n" -NoNewline
+        Write-Host -Object "`n" -NoNewline
         foreach ($key in $updatedSettings.Keys) {
             $item = $updatedSettings[$key]
             $name = "$($item.key) ".PadRight($maxLineLength, '.')
-            Write-Host "- $name $($item.value) " -NoNewline
-            Write-Host $item.status -ForegroundColor $item.color
+            Write-Host -Object "- $name $($item.value) " -NoNewline
+            Write-Host -Object $item.status -ForegroundColor $item.color
         }
 
         return $overallCode

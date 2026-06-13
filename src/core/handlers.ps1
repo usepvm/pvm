@@ -1,4 +1,4 @@
-
+﻿
 function Invoke-Setup {
     $result = @{ code = 0; message = 'PVM is already setup' }
     if (-not (Is-PVM-Setup)) {
@@ -320,6 +320,48 @@ function Invoke-Profile {
         }
         default {
             Write-Host -Object "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'export', or 'import'." -ForegroundColor Yellow
+            return -1
+        }
+    }
+}
+
+function Invoke-Cache {
+    param ($arguments)
+
+    $action = $arguments[0]
+
+    if (-not $action) {
+        Write-Host -Object "`nPlease specify an action for 'pvm cache'. Use 'clear'." -ForegroundColor Yellow
+        return -1
+    }
+
+    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
+
+    switch ($action.ToLower()) {
+        'list' {
+            return (List-Cache-Files)
+        }
+        'show' {
+            if ($remainingArgs.Count -eq 0) {
+                Write-Host -Object "`nPlease provide a cache name: pvm cache show <name>" -ForegroundColor Yellow
+                return -1
+            }
+            $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
+            return (Show-Cache-Data -cacheName $cacheName)
+        }
+        'delete' {
+            if ($remainingArgs.Count -eq 0) {
+                Write-Host -Object "`nPlease provide a cache name: pvm cache delete <name>" -ForegroundColor Yellow
+                return -1
+            }
+            $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
+            return (Delete-Cache-File -cacheName $cacheName)
+        }
+        'clear' {
+            return (Clear-Cache-Files)
+        }
+        default {
+            Write-Host -Object "`nUnknown action '$action'. Use 'list', 'show', 'delete', or 'clear'." -ForegroundColor Yellow
             return -1
         }
     }

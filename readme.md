@@ -210,6 +210,26 @@ pvm profile import <path> [name]
 
 **Note**: Only popular/common settings and extensions are saved in profiles. This keeps profiles focused and manageable.
 
+### Managing Cache
+
+Manage the cache directory and its contents:
+
+```sh
+# List files in the cache directory
+pvm cache list
+
+# Show details of a specific cache file
+pvm cache show <name>
+# Example: pvm cache show example-cache
+
+# Remove a specific cache file
+pvm cache delete <name>
+# Example: pvm cache delete example-cache
+
+# Remove all cache files
+pvm cache clear
+```
+
 ## Running Tests
 Run tests against the PowerShell scripts in the repo — especially useful for contributors verifying changes before submitting a pull request:
 

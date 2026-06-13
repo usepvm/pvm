@@ -123,7 +123,7 @@ function Make-Symbolic-Link {
     }
 }
 
-function Extract-Zip-Wrapper {
+function Extract-Zip-Core {
     param ($zipPath, $extractPath)
 
     Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -134,7 +134,7 @@ function Extract-Zip {
     param ($zipPath, $extractPath, $deleteZipAfter = $false)
 
     try {
-        Extract-Zip-Wrapper -zipPath $zipPath -extractPath $extractPath
+        Extract-Zip-Core -zipPath $zipPath -extractPath $extractPath
 
         if ($deleteZipAfter) {
             Remove-Item -Path $zipPath -ErrorAction SilentlyContinue

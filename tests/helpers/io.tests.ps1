@@ -308,7 +308,7 @@ Describe "Make-Symbolic-Link" {
 
 Describe "Extract-Zip Tests" {
     BeforeEach {
-        Mock Extract-Zip-Wrapper { }
+        Mock Extract-Zip-Core { }
         Mock Remove-Item { }
         Mock Write-Host { }
         Mock Log-Data { }
@@ -317,7 +317,7 @@ Describe "Extract-Zip Tests" {
     It "Should extract zip without errors" {
         # This is a basic test since we're mocking the zip extraction
         { Extract-Zip -zipPath 'test.zip' -extractPath 'testdir' } | Should -Not -Throw
-        Assert-MockCalled Extract-Zip-Wrapper -Times 1
+        Assert-MockCalled Extract-Zip-Core -Times 1
     }
 
     It "Should delete zip after extraction" {
@@ -331,7 +331,7 @@ Describe "Extract-Zip Tests" {
     }
     
     It "Should call Log-Data on extraction failure" -Tag i {
-        Mock Extract-Zip-Wrapper { throw "Extraction failed" }
+        Mock Extract-Zip-Core { throw "Extraction failed" }
         { Extract-Zip -zipPath 'bad.zip' -extractPath 'testdir' } | Should -Not -Throw
         Assert-MockCalled Log-Data -Times 1
     }

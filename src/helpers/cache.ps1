@@ -33,7 +33,7 @@ function Can-Use-Cache {
         $useCache = $false
 
         if (Is-File-Exists -path $path) {
-            $cacheFile = Get-Item $path -ErrorAction SilentlyContinue
+            $cacheFile = Get-Item -Path $path -ErrorAction SilentlyContinue
             if ($null -eq $cacheFile) {
                 return $false
             }

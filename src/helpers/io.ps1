@@ -122,3 +122,24 @@ function Make-Symbolic-Link {
         return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = 'DarkYellow' }
     }
 }
+
+function Extract-Zip-Wrapper {
+    param ($zipPath, $extractPath)
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
+}
+
+function Extract-Zip {
+    param ($zipPath, $extractPath, $deleteZipAfter = $false)
+
+    try {
+        Extract-Zip-Wrapper -zipPath $zipPath -extractPath $extractPath
+
+        if ($deleteZipAfter) {
+            Remove-Item -Path $zipPath -ErrorAction SilentlyContinue
+        }
+    } catch {
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to extract zip file from $zipPath"; exception = $_ }
+    }
+}

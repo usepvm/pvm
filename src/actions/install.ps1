@@ -179,17 +179,6 @@ function Download-PHP {
     return $null
 }
 
-function Extract-Zip {
-    param ($zipPath, $extractPath)
-
-    try {
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
-    } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to extract zip file from $zipPath"; exception = $_ }
-    }
-}
-
 function Extract-And-Configure {
     param ($path, $fileNamePath)
 

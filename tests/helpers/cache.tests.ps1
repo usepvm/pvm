@@ -7,6 +7,7 @@ BeforeAll {
 
 Describe "Get-Data-From-Cache" {
     It "Returns data from cache file" {
+        Mock Is-File-Not-Exists { return $false }
         Mock Get-Content { return @'
             {
                 'Releases': [
@@ -27,6 +28,7 @@ Describe "Get-Data-From-Cache" {
     }
 
     It "Returns empty list when cache file name is null or empty" {
+        Mock Is-File-Not-Exists { return $false }
         $list = Get-Data-From-Cache -cacheFileName ''
         $list.Count | Should -Be 0
 
@@ -34,19 +36,29 @@ Describe "Get-Data-From-Cache" {
         $list.Count | Should -Be 0
     }
 
-    It "Returns empty list when cache file does not exist" {
+    It "Returns empty list when cache file doesn't exist" {
+        Mock Is-File-Not-Exists { return $true }
+
+        $list = Get-Data-From-Cache -cacheFileName 'test.json'
+        $list.Count | Should -Be 0
+    }
+
+    It "Returns empty list when cache file content returns null" {
+        Mock Is-File-Not-Exists { return $false }
         Mock Get-Content { return $null }
         $list = Get-Data-From-Cache -cacheFileName 'test.json'
         $list.Count | Should -Be 0
     }
 
     It "Returns empty list when cache file is empty" {
+        Mock Is-File-Not-Exists { return $false }
         Mock Get-Content { return '' }
         $list = Get-Data-From-Cache -cacheFileName 'test.json'
         $list.Count | Should -Be 0
     }
 
     It "Handles exceptions gracefully" {
+        Mock Is-File-Not-Exists { return $false }
         Mock Get-Content { throw 'Simulated exception' }
         $list = Get-Data-From-Cache -cacheFileName 'test.json'
         $list.Count | Should -Be 0

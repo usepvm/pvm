@@ -1,4 +1,4 @@
-
+﻿
 function Get-Data-From-Cache {
     param ($cacheFileName)
 
@@ -8,6 +8,10 @@ function Get-Data-From-Cache {
         }
 
         $path = Get-Cache-FilePath -filename $cacheFileName
+        if (Is-File-Not-Exists -path $path) {
+            return @{}
+        }
+
         $jsonString = Get-Content -Path $path -Raw -ErrorAction SilentlyContinue
         if ([string]::IsNullOrWhiteSpace($jsonString)) {
             return @{}

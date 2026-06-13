@@ -365,7 +365,7 @@ function Install-PHP {
             return @{ code = -1; message = $message }
         }
 
-        $destination = Download-PHP -version $selectedVersionObject
+        $destination = Download-PHP -versionObject $selectedVersionObject
 
         if (-not $destination) {
             return @{ code = -1; message = "Failed to download PHP version $version"; color = 'DarkYellow' }

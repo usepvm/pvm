@@ -171,7 +171,7 @@ Describe "Resolve-Alias Tests" {
 
     It "Returns '<Expected>' when '<Operation>' is passed" -TestCases $testCases {
         param ($Operation, $Expected)
-        $result = Resolve-Alias $Operation
+        $result = Resolve-Alias -alias $Operation
         $result | Should -Be $Expected
     }
 }

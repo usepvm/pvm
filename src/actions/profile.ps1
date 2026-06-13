@@ -167,21 +167,28 @@ function Disable-IniExtension-Direct {
 
 function Get-Popular-PHP-Settings {
     # Return list of popular/common PHP settings that should be included in profiles
-    return @(
-        'memory_limit', 'max_execution_time', 'max_input_time',
-        'post_max_size', 'upload_max_filesize', 'max_file_uploads',
-        'display_errors', 'error_reporting', 'log_errors',
-        'opcache.enable', 'opcache.enable_cli', 'opcache.memory_consumption', 'opcache.max_accelerated_files'
-    )
+    $path = "$STORAGE_PATH\extensions.json"
+    if (Is-File-Exists -path $path) {
+        $data = (Get-Content -Path $path -Raw | ConvertFrom-Json)
+        if ($null -ne $data.profile -and $null -ne $data.profile.settings) {
+            return $data.profile.settings
+        }
+    }
+    
+    return $DEFAULT_SETTINGS
 }
 
 function Get-Popular-PHP-Extensions {
     # Return list of popular/common PHP extensions that should be included in profiles
-    return @(
-        'curl', 'fileinfo', 'gd', 'gettext', 'intl', 'mbstring', 'exif', 'openssl',
-        'mysqli', 'pdo_mysql', 'pdo_pgsql', 'pdo_sqlite', 'pgsql',
-        'sodium', 'sqlite3', 'zip', 'opcache', 'xdebug'
-    )
+    $path = "$STORAGE_PATH\extensions.json"
+    if (Is-File-Exists -path $path) {
+        $data = (Get-Content -Path $path -Raw | ConvertFrom-Json)
+        if ($null -ne $data.profile -and $null -ne $data.profile.extensions) {
+            return $data.profile.extensions
+        }
+    }
+
+    return $DEFAULT_EXTENSIONS
 }
 
 function Save-PHP-Profile {

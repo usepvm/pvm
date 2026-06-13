@@ -434,7 +434,7 @@ Describe "List-PHP-Profiles Tests" {
         $result | Should -Be -1
     }
 
-    It "Should list all available profiles" -Tag i {
+    It "Should list all available profiles" {
         $result = List-PHP-Profiles
         $result | Should -Be 0
 
@@ -489,22 +489,57 @@ Describe "List-PHP-Profiles Tests" {
     }
 }
 
-Describe "Get-Popular-PHP-Settings and Get-Popular-PHP-Extensions Tests" {
+Describe "Get-Popular-PHP-Settings Tests" {
+    BeforeEach {
+        $global:STORAGE_PATH = 'TestDrive:\\storage'
+        New-Item -ItemType Directory -Force -Path $global:STORAGE_PATH | Out-Null
+        $testContent = @{
+            'profile' = @{
+                'settings' = @('memory_limit', 'display_errors')
+            }
+        }
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:STORAGE_PATH\extensions.json"
+    }
     It "Should return popular PHP settings" {
         $settings = Get-Popular-PHP-Settings
         $settings | Should -Not -Be $null
-        $settings.Count | Should -BeGreaterThan 0
+        $settings.Count | Should -Be 2
         $settings | Should -Contain 'memory_limit'
         $settings | Should -Contain 'display_errors'
+    }
+    
+    It "Should fallback to default popular PHP settings" {
+        Remove-Item -Path "$global:STORAGE_PATH\extensions.json"
+        $settings = Get-Popular-PHP-Settings
+        $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
+    }
+}
+
+Describe "Get-Popular-PHP-Extensions Tests" {
+    BeforeEach {
+        $global:STORAGE_PATH = 'TestDrive:\\storage'
+        New-Item -ItemType Directory -Force -Path $global:STORAGE_PATH | Out-Null
+        $testContent = @{
+            'profile' = @{
+                'extensions' = @('curl', 'mbstring', 'opcache')
+            }
+        }
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:STORAGE_PATH\extensions.json"
     }
 
     It "Should return popular PHP extensions" {
         $extensions = Get-Popular-PHP-Extensions
         $extensions | Should -Not -Be $null
-        $extensions.Count | Should -BeGreaterThan 0
+        $extensions.Count | Should -Be 3
         $extensions | Should -Contain 'curl'
         $extensions | Should -Contain 'mbstring'
         $extensions | Should -Contain 'opcache'
+    }
+    
+    It "Should fallback to default popular PHP extensions" {
+        Remove-Item -Path "$global:STORAGE_PATH\extensions.json"
+        $extensions = Get-Popular-PHP-Extensions
+        $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
     }
 }
 

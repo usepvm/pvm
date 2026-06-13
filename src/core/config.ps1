@@ -36,3 +36,16 @@ $Global:DEFAULT_LOG_PAGE_SIZE = [int] $envConfig['DEFAULT_LOG_PAGE_SIZE']
 $Global:DEFAULT_PARTIAL_LIST_SIZE = [int] $envConfig['DEFAULT_PARTIAL_LIST_SIZE']
 $Global:MIN_PAD_RIGHT_LENGTH = [int] $envConfig['MIN_PAD_RIGHT_LENGTH']
 $Global:MIN_LINE_LENGTH = [int] $envConfig['MIN_LINE_LENGTH']
+
+$Global:DEFAULT_ZEND_EXTENSIONS = @('opcache', 'xdebug')
+$Global:DEFAULT_EXTENSIONS = @(
+    'curl', 'fileinfo', 'gd', 'gettext', 'intl', 'mbstring', 'exif',
+    'openssl', 'mysqli', 'pdo_mysql', 'pdo_pgsql', 'pdo_sqlite',
+    'pgsql', 'sodium', 'sqlite3', 'zip', 'opcache', 'xdebug'
+)
+$Global:DEFAULT_SETTINGS = @(
+    'memory_limit', 'max_execution_time', 'max_input_time',
+    'post_max_size', 'upload_max_filesize', 'max_file_uploads',
+    'display_errors', 'error_reporting', 'log_errors',
+    'opcache.enable', 'opcache.enable_cli', 'opcache.memory_consumption', 'opcache.max_accelerated_files'
+)

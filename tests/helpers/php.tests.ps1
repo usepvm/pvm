@@ -511,24 +511,24 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
 
 Describe "Get-Installed-PHP-Versions-From-Directory" {
     BeforeAll {
-        $script:STORAGE_PATH = 'C:\test\storage'
+        $script:STORAGE_PATH = 'TestDrive:\storage'
     }
 
     Context "When PHP versions exist" {
         It "Should return installed PHP versions with php.exe present" {
             Mock Get-All-Subdirectories {
                 return @(
-                    @{FullName = 'C:\test\storage\php\8.1'}
-                    @{FullName = 'C:\test\storage\php\8.2'}
+                    @{FullName = 'TestDrive:\storage\php\8.1'}
+                    @{FullName = 'TestDrive:\storage\php\8.2'}
                 )
             }
             Mock Test-Path { return $true }
             Mock Get-PHPInstallInfo {
                 param ($path)
-                if ($path -eq 'C:\test\storage\php\8.1') {
-                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = 'C:\test\storage\php\8.1'}
+                if ($path -eq 'TestDrive:\storage\php\8.1') {
+                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = 'TestDrive:\storage\php\8.1'}
                 } else {
-                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = 'C:\test\storage\php\8.2'}
+                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = 'TestDrive:\storage\php\8.2'}
                 }
             }
 
@@ -539,9 +539,9 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
         It "Should skip directories without php.exe" {
             Mock Get-All-Subdirectories {
                 return @(
-                    @{FullName = 'C:\test\storage\php\8.1'}
-                    @{FullName = 'C:\test\storage\php\invalid'}
-                    @{FullName = 'C:\test\storage\php\8.2'}
+                    @{FullName = 'TestDrive:\storage\php\8.1'}
+                    @{FullName = 'TestDrive:\storage\php\invalid'}
+                    @{FullName = 'TestDrive:\storage\php\8.2'}
                 )
             }
             Mock Test-Path {
@@ -550,9 +550,9 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
             }
             Mock Get-PHPInstallInfo {
                 param ($path)
-                if ($path -eq 'C:\test\storage\php\8.1') {
+                if ($path -eq 'TestDrive:\storage\php\8.1') {
                     return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                } elseif ($path -eq 'C:\test\storage\php\8.2') {
+                } elseif ($path -eq 'TestDrive:\storage\php\8.2') {
                     return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
                 }
             }
@@ -564,17 +564,17 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
         It "Should return versions sorted by version number" {
             Mock Get-All-Subdirectories {
                 return @(
-                    @{FullName = 'C:\test\storage\php\8.2'}
-                    @{FullName = 'C:\test\storage\php\7.4'}
-                    @{FullName = 'C:\test\storage\php\8.1'}
+                    @{FullName = 'TestDrive:\storage\php\8.2'}
+                    @{FullName = 'TestDrive:\storage\php\7.4'}
+                    @{FullName = 'TestDrive:\storage\php\8.1'}
                 )
             }
             Mock Test-Path { return $true }
             Mock Get-PHPInstallInfo {
                 param ($path)
-                if ($path -eq 'C:\test\storage\php\8.2') {
+                if ($path -eq 'TestDrive:\storage\php\8.2') {
                     return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
-                } elseif ($path -eq 'C:\test\storage\php\7.4') {
+                } elseif ($path -eq 'TestDrive:\storage\php\7.4') {
                     return @{Version = '7.4'; Arch = 'x86'; BuildType = 'TS'}
                 } else {
                     return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
@@ -600,8 +600,8 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
         It "Should return empty array when no php.exe files are present" {
             Mock Get-All-Subdirectories {
                 return @(
-                    @{FullName = 'C:\test\storage\php\invalid1'}
-                    @{FullName = 'C:\test\storage\php\invalid2'}
+                    @{FullName = 'TestDrive:\storage\php\invalid1'}
+                    @{FullName = 'TestDrive:\storage\php\invalid2'}
                 )
             }
             Mock Test-Path { return $false }
@@ -921,7 +921,7 @@ Describe "Get-Zend-Extensions-List" {
         $result | Should -Contain 'swoole'
     }
     
-    It "Falls back to default zend_extensions.json content" -Tag ii {
+    It "Falls back to default zend_extensions.json content" {
         Remove-Item -Path "$global:STORAGE_PATH\extensions.json"
         $result = Get-Zend-Extensions-List
         $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count

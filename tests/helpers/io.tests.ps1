@@ -330,7 +330,7 @@ Describe "Extract-Zip Tests" {
         Assert-MockCalled Remove-Item -Times 0
     }
     
-    It "Should call Log-Data on extraction failure" -Tag i {
+    It "Should call Log-Data on extraction failure" {
         Mock Extract-Zip-Core { throw "Extraction failed" }
         { Extract-Zip -zipPath 'bad.zip' -extractPath 'testdir' } | Should -Not -Throw
         Assert-MockCalled Log-Data -Times 1

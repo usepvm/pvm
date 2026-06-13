@@ -18,7 +18,7 @@ function Get-Matching-PHPExtensionsStatus {
 
     $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*$extName[^\s`"';]*)\2\s*(;.*)?$"
     $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*$extName[^\s`"';]*)\2\s*(;.*)?$"
-    Backup-IniFile $iniPath
+    Backup-IniFile -iniPath $iniPath
     $lines = Get-Content $iniPath
 
     $matchesList = @()

@@ -163,7 +163,8 @@ function Run-Tests {
         }
 
         Write-Host -Object "`n----------------------------------------------------------------"
-        Write-Host -Object "`n`nTest Results Summary: (Coverage : $($options.target)%)`n"
+        Write-Host -Object "`n`nTest Results Summary:"
+        Write-Host -Object " Coverage : $($options.target)% | Verbosity: $($options.verbosity)`n"
         $code = 0
         if ($testSummary.Count -gt 0) {
             $totalFailedTests = $testSummary | Where-Object { $_.code -ne 0 } | ForEach-Object { $_.testResultData.failedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum

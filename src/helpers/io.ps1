@@ -1,4 +1,4 @@
-
+﻿
 function Get-All-Subdirectories {
     param ($path)
 
@@ -52,6 +52,25 @@ function Is-File-Not-Exists {
     param ($path)
 
     return -not (Is-File-Exists -path $path)
+}
+
+function Create-File {
+    param ($path)
+
+    try {
+        if ([string]::IsNullOrWhiteSpace($path)) {
+            return -1
+        }
+
+        $path = $path.Trim()
+        if (Is-File-Not-Exists -path $path) {
+            New-Item -ItemType File -Path $path -Force | Out-Null
+        }
+
+        return 0
+    } catch {
+        return -1
+    }
 }
 
 function Make-Directory {

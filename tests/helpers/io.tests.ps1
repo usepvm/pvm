@@ -158,6 +158,34 @@ Describe "Is-File-Not-Exists" {
     }
 }
 
+Describe "Create File" {
+    It "Creates a new file successfully" {
+        $newFile = 'TestDrive:\new_file.txt'
+        $result = Create-File -path $newFile
+        $result | Should -Be 0
+        Test-Path $newFile | Should -Be $true
+    }
+
+    It "Returns 0 for existing file" {
+        $existingFile = 'TestDrive:\existing_file.txt'
+        New-Item -Path $existingFile -ItemType File -Force | Out-Null
+        $result = Create-File -path $existingFile
+        $result | Should -Be 0
+    }
+
+    It "Returns -1 for empty path" {
+        $result = Create-File -path ''
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when exception is thrown" {
+        Mock Is-File-Not-Exists { return $true }
+        Mock New-Item { throw 'Error' }
+        $result = Create-File -path 'TestDrive:\new_file.txt'
+        $result | Should -Be -1
+    }
+}
+
 Describe "Make-Directory" {
     Context "When creating directories" {
         It "Creates a new directory successfully" {

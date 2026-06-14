@@ -18,7 +18,7 @@ function Invoke-IniAction {
             return -1
         }
 
-        switch ($action) {
+        switch ($action.ToLower()) {
             'info' {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
                 $exitCode = Get-PHP-Info -term $term -extensions ($params -contains 'extensions') -settings ($params -contains 'settings')

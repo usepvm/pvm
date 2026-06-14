@@ -232,7 +232,7 @@ function Invoke-Help {
     if ($command) {
         $usage = $actions[$command].usage
         if ($null -eq $usage) {
-            Write-Host -Object "`nNo usage information available for the '$operation' operation." -ForegroundColor Yellow
+            Write-Host -Object "`nNo usage information available for the '$command' command." -ForegroundColor Yellow
             return -1
         }
         foreach ($key in $usage.Keys) {

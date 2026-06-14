@@ -1,7 +1,7 @@
 
 # PHP Version Manager (PVM) - A PowerShell script to manage multiple PHP versions on Windows.
 
-param ($operation)
+param ($command)
 
 $ProgressPreference = 'SilentlyContinue'
 
@@ -14,5 +14,5 @@ Get-ChildItem -Path "$PSScriptRoot\core\*.ps1" -Recurse -File | ForEach-Object {
 # Load actions scripts
 Get-ChildItem -Path "$PSScriptRoot\actions\*.ps1" -Recurse -File | ForEach-Object { . $_.FullName }
 
-$exitCode = Start-PVM -operation $operation -arguments $args
+$exitCode = Start-PVM -command $command -arguments $args
 exit $exitCode

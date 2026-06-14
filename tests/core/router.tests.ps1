@@ -132,7 +132,7 @@ Describe "Get-Actions Tests" {
 
             Assert-MockCalled Invoke-Profile -Times 1
         }
-        
+
         It "Should execute cache action" {
             $actions = Get-Actions -arguments @('list')
             $actions['cache'].action.Invoke()

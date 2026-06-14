@@ -39,6 +39,10 @@ function Show-PVM-Version {
     Write-Host -Object "`nPVM version $PVM_VERSION"
 }
 
+function Get-NestedCommands {
+    return @('ini', 'profile', 'cache')
+}
+
 function Resolve-Alias {
     param ($alias)
 
@@ -69,9 +73,19 @@ function Start-PVM {
             return 0
         }
 
-        $actions = Get-Actions -arguments $arguments
+        if ($command -like '*:*') {
+            $splitted = $command.Split(':')
+            $nestedCommand = $splitted[0]
+            if ($nestedCommand -in (Get-NestedCommands)) {
+                $command = $nestedCommand
+                $arguments = @($splitted[1]) + $arguments
+            }
+        }
 
         $command = Resolve-Alias -alias $command
+
+        $actions = Get-Actions -arguments $arguments
+
         if (-not ($command -and $actions.Contains($command))) {
             Write-Host -Object "`nInvalid command '$command'." -ForegroundColor DarkYellow
             Show-Usage

@@ -662,6 +662,35 @@ Describe "Start-PVM Function Tests" {
         }
     }
 
+    Context "Nested Command Tests" {
+        BeforeEach {
+            Mock Get-Actions {
+                [ordered]@{
+                    'install' = @{ action = { return Invoke-Install -arguments @() } }
+                    'list' = @{ action = { return Invoke-List -arguments @() } }
+                    'ini' = @{ action = { return Invoke-Ini -arguments @() } }
+                    'cache' = @{ action = { return Invoke-Cache -arguments @() } }
+                }
+            }
+        }
+        
+        It "Should execute nested command" -tag i {
+            Mock Invoke-Ini { return 0 }
+            $result = Start-PVM -command 'ini:get' -arguments @()
+            
+            $result | Should -Be 0
+            Assert-MockCalled Invoke-Ini -Times 1
+        }
+        
+        It "Should execute non nested command" -tag ii {
+            Mock Show-Usage { }
+            $result = Start-PVM -command 'install:8.2.0' -arguments @()
+            
+            $result | Should -Be 0
+            Assert-MockCalled Show-Usage -Times 1
+        }
+    }
+
     Context "Integration Path Tests" {
         It "Should execute complete happy path" {
             Mock Get-Actions {

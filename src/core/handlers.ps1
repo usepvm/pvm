@@ -146,7 +146,7 @@ function Invoke-Ini {
 
     $action = $arguments[0]
     if (-not $action) {
-        Write-Host -Object "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable', 'install', 'list' or 'restore'."
+        Write-Host -Object "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'list' or 'restore'."
         return -1
     }
 

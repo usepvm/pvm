@@ -1,10 +1,59 @@
+![GitHub release](https://img.shields.io/github/v/release/usepvm/pvm)
+![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue)
+![Windows](https://img.shields.io/badge/Windows-10%2F11-blue)
+
 # PHP Version Manager for Windows
 
 PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that makes it easy to install, switch, and manage multiple PHP versions.
 
+
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation & Setup](#installation--setup)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+  - [Basic Usage](#basic-usage)
+  - [Advanced Usage](#advanced-usage)
+  - [Automatic Version Detection](#automatic-version-detection)
+  - [Managing php.ini](#manage-phpini-settings-and-extensions)
+  - [Profiles](#manage-php-configuration-profiles)
+  - [Cache](#managing-cache)
+  - [Aliases](#command-aliases)
+  - [Build Types](#build-types)
+  - [Namespaced Commands](#namespaced-commands)
+- [Data Storage](#data-storage)
+- [Running Tests](#running-tests)
+  - [Requirements](#requirements-1)
+  - [Run the tests](#run-the-tests)
+- [Contributing](#contributing)
+- [Credits](#credits)
+- [License](#license)
+
+
+## Features
+
+- Install and manage multiple PHP versions
+- Switch PHP versions instantly
+- Auto-detect PHP version from project files
+- Manage php.ini settings
+- Enable, disable, install, and remove extensions
+- Save and load reusable PHP configuration profiles
+- Built-in cache management
+- Built-in test runner with coverage reporting
+
+
+## Requirements
+
+- Windows 10 or Windows 11
+- PowerShell 5.1+ or PowerShell 7+
+- Internet connection for installing PHP versions and extensions
+
+
 ## Installation & Setup
 
-Clone the repo and add the directory to your PATH variable.
+Clone the repository, copy the environment file, run setup, and ensure the project directory is available in your PATH.
 
 ```sh
 git clone https://github.com/drissboumlik/pvm
@@ -15,7 +64,39 @@ cp .env.example .env
 pvm setup
 ```
 
+
+## Quick Start
+
+The commands below install PHP 8.4, switch to it, and verify the active version.
+
+```sh
+# Install PHP 8.4
+pvm install 8.4
+
+# Switch to PHP 8.4
+pvm use 8.4
+
+# Verify active version
+pvm current
+
+# List installed versions
+pvm list
+```
+
+
 ## Usage
+
+### Basic Usage
+
+```sh
+pvm install latest
+pvm use 8.4
+pvm current
+pvm list
+pvm help
+```
+
+### Advanced Usage
 
 ```sh
 # Display the available options
@@ -71,10 +152,7 @@ pvm install <version> # pvm i <version>
 pvm install <version> [x86|x64] [ts|nts]
 # Example: pvm install 8.4 x64 nts # pvm i 8.4 x64 nts
 
-# Install the php version specified on your project.
-pvm install auto # pvm i auto
-
-# Install the latest available php version.
+# Install the latest available PHP version.
 pvm install latest # pvm i latest
 
 # Uninstall a specific version
@@ -84,12 +162,40 @@ pvm uninstall <version> # pvm rm <version>
 # Switch to use the specified version
 pvm use <version>
 # Example: pvm use 8.4
+```
+
+### Automatic Version Detection
+
+PVM can detect the PHP version from:
+
+- `.php-version`
+- `composer.json`
+
+Example `.php-version`:
+
+```text
+8.4
+```
+
+Example `composer.json`:
+
+```json
+{
+  "require": {
+    "php": "^8.4"
+  }
+}
+```
+
+```sh
+# Install the PHP version specified by your project.
+pvm install auto # pvm i auto
 
 # Switch to use the detected PHP version from .php-version or composer.json in your current project/directory
 pvm use auto
 ```
 
-### Manage php.ini settings and extensions directly from the CLI.
+### Manage php.ini settings and extensions
 
 ```sh
 # Check status of multiple extensions
@@ -98,10 +204,10 @@ pvm ini status <extension> # It shows all matching extensions
 # Example: pvm ini status sql
 
 # Enable or disable multiple extensions
-pvm ini enable <extension> # It shows all matching extensions then enables the selected on
+pvm ini enable <extension> # It shows all matching extensions then enables the selected one
 # Example: pvm ini enable xdebug opcache
 # Example: pvm ini enable sql
-pvm ini disable <extension> # It shows all matching extensions then enables the selected one
+pvm ini disable <extension> # It shows all matching extensions then disables the selected one
 # Example: pvm ini disable xdebug opcache
 # Example: pvm ini disable sql
 
@@ -141,7 +247,7 @@ pvm ini list available --search=<extension>
 # Example: pvm ini list available --search=zip
 
 # Restore backup
-pvm ini restore
+pvm ini restore # PVM automatically creates php.ini backups before modifying settings or extensions.
 
 # Check logs
 pvm log --pageSize=[number] --search=<term> # Default value is 5
@@ -211,6 +317,50 @@ pvm cache delete <name>
 pvm cache clear
 ```
 
+### Command Aliases
+
+| Command | Alias |
+|----------|--------|
+| help | h |
+| list | ls |
+| install | i |
+| uninstall | rm |
+
+### Build Types
+
+| Option | Meaning |
+|----------|----------|
+| x86 | 32-bit |
+| x64 | 64-bit |
+| ts | Thread Safe |
+| nts | Non Thread Safe |
+
+### Namespaced Commands
+
+The following command groups support both syntaxes:
+
+```sh
+pvm ini <subcommand>
+pvm ini:<subcommand>
+
+pvm profile <subcommand>
+pvm profile:<subcommand>
+
+pvm cache <subcommand>
+pvm cache:<subcommand>
+```
+
+
+## Data Storage
+
+| Item | Location |
+|--------|----------|
+| PHP Versions | storage/php/ |
+| Profiles | storage/data/profiles/ |
+| Cache | storage/data/cache/ |
+| Logs | storage/logs/ |
+
+
 ## Running Tests
 Run tests against the PowerShell scripts in the repo — especially useful for contributors verifying changes before submitting a pull request:
 
@@ -246,14 +396,17 @@ pvm test --sort=duration # .............. Runs all tests and sort results by dur
 pvm test --tag=myTag #................... Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity and only runs tests with tag "myTag".
 ```
 
+
 ## Contributing
 
 Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+
 
 ## Credits
 
 - [Driss](https://github.com/drissboumlik)
 - [All Contributors](https://github.com/usepvm/pvm/graphs/contributors?all=1)
+
 
 ## License
 

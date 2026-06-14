@@ -9,6 +9,11 @@ function Invoke-Setup {
         Write-Host -Object "`nFailed to optimize system path." -ForegroundColor DarkYellow
     }
 
+    $done = Setup-Environment-Directories-And-Files
+    if ($done -ne 0) {
+        Write-Host -Object "`nFailed to setup environment directories and files." -ForegroundColor DarkYellow
+    }
+
     Display-Msg-By-ExitCode -result $result
     return 0
 }

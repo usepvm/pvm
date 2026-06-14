@@ -8,12 +8,16 @@ $Global:PVMRoot = (Resolve-Path -Path "$PSScriptRoot\..\..").Path
 # Storage paths
 $Global:STORAGE_PATH = "$PVMRoot\storage"
 $Global:DATA_PATH = "$STORAGE_PATH\data"
-
-# Log paths
-$Global:LOG_ERROR_PATH = "$STORAGE_PATH\logs\error.log"
-$Global:PATH_VAR_BACKUP_PATH = "$STORAGE_PATH\logs\path.bak.log"
+$Global:TEMPLATES_PATH = "$DATA_PATH\templates"
 $Global:CACHE_PATH = "$DATA_PATH\cache"
 $Global:PROFILES_PATH = "$DATA_PATH\profiles"
+$Global:PROFILE_TEMPLATE_PATH = "$TEMPLATES_PATH\profile-template.json"
+$Global:ZEND_EXTENSIONS_LIST_PATH = "$TEMPLATES_PATH\zend_extensions.json"
+
+# Log paths
+$Global:LOG_PATH = "$STORAGE_PATH\logs"
+$Global:LOG_ERROR_PATH = "$LOG_PATH\error.log"
+$Global:PATH_VAR_BACKUP_PATH = "$LOG_PATH\path.bak.log"
 
 # Links
 $Global:XDEBUG_BASE_URL = 'http://xdebug.org'

@@ -6,10 +6,3 @@
 # Ignore all storage
 storage/*
 storage/data/*
-
-# Re-allow needed subfolders
-!storage/data
-!storage/data/profiles
-
-# Track this specific file
-!storage/data/profiles/example-profile.json

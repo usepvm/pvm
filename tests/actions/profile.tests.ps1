@@ -4,6 +4,7 @@ BeforeAll {
     $global:PROFILES_PATH = 'TestDrive:\\profiles'
     $PROFILES_PATH = $global:PROFILES_PATH
 
+    Mock Write-Host {}
     # Mock helper functions
     function Get-Current-PHP-Version {
         return @{
@@ -491,15 +492,13 @@ Describe "List-PHP-Profiles Tests" {
 
 Describe "Get-Popular-PHP-Settings Tests" {
     BeforeEach {
-        $global:DATA_PATH = 'TestDrive:\\storage\data'
-        New-Item -ItemType Directory -Force -Path $global:DATA_PATH | Out-Null
-        $testContent = @{
-            'profile' = @{
-                'settings' = @('memory_limit', 'display_errors')
-            }
-        }
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:DATA_PATH\php.json"
+        $global:TEMPLATES_PATH = 'TestDrive:\\storage\data\templates'
+        $global:PROFILE_TEMPLATE_PATH = "$TEMPLATES_PATH\profile-template.json"
+        New-Item -ItemType Directory -Force -Path $global:TEMPLATES_PATH | Out-Null
+        $testContent = @{ 'settings' = @('memory_limit', 'display_errors') }
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $PROFILE_TEMPLATE_PATH
     }
+
     It "Should return popular PHP settings" {
         $settings = Get-Popular-PHP-Settings
         $settings | Should -Not -Be $null
@@ -509,7 +508,7 @@ Describe "Get-Popular-PHP-Settings Tests" {
     }
 
     It "Should fallback to default popular PHP settings" {
-        Remove-Item -Path "$global:DATA_PATH\php.json"
+        Remove-Item -Path $PROFILE_TEMPLATE_PATH
         $settings = Get-Popular-PHP-Settings
         $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
     }
@@ -517,14 +516,11 @@ Describe "Get-Popular-PHP-Settings Tests" {
 
 Describe "Get-Popular-PHP-Extensions Tests" {
     BeforeEach {
-        $global:DATA_PATH = 'TestDrive:\\storage\data'
-        New-Item -ItemType Directory -Force -Path $global:DATA_PATH | Out-Null
-        $testContent = @{
-            'profile' = @{
-                'extensions' = @('curl', 'mbstring', 'opcache')
-            }
-        }
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:DATA_PATH\php.json"
+        $global:TEMPLATES_PATH = 'TestDrive:\\storage\data\templates'
+        $global:PROFILE_TEMPLATE_PATH = "$TEMPLATES_PATH\profile-template.json"
+        New-Item -ItemType Directory -Force -Path $global:TEMPLATES_PATH | Out-Null
+        $testContent = @{ 'extensions' = @('curl', 'mbstring', 'opcache') }
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $PROFILE_TEMPLATE_PATH
     }
 
     It "Should return popular PHP extensions" {
@@ -537,7 +533,7 @@ Describe "Get-Popular-PHP-Extensions Tests" {
     }
 
     It "Should fallback to default popular PHP extensions" {
-        Remove-Item -Path "$global:DATA_PATH\php.json"
+        Remove-Item -Path $PROFILE_TEMPLATE_PATH
         $extensions = Get-Popular-PHP-Extensions
         $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
     }
@@ -1828,5 +1824,37 @@ Describe "Import-PHP-Profile Tests" {
 
         $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'new-complex_456'
+    }
+}
+
+Describe "Create-Example-PHP-Profile Tests" {
+    It "Should create an example profile" {
+        $result = Create-Example-PHP-Profile
+        $result | Should -Be 0
+
+        $exampleProfilePath = "$global:PROFILES_PATH\example-profile.json"
+        Test-Path $exampleProfilePath | Should -Be $true
+    }
+
+    It "Returns -1 when exception is thrown" {
+        Mock Set-Content { throw 'Test exception' }
+        $result = Create-Example-PHP-Profile
+        $result | Should -Be -1
+    }
+}
+
+Describe "Create-Profile-Template Tests" {
+    It "Should create a profile template" {
+        $global:PROFILE_TEMPLATE_PATH = "$global:PROFILES_PATH\profile-template.json"
+        $result = Create-Profile-Template
+        $result | Should -Be 0
+
+        Test-Path $PROFILE_TEMPLATE_PATH | Should -Be $true
+    }
+
+    It "Returns -1 when exception is thrown" {
+        Mock Set-Content { throw 'Test exception' }
+        $result = Create-Profile-Template
+        $result | Should -Be -1
     }
 }

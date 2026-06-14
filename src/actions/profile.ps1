@@ -167,11 +167,10 @@ function Disable-IniExtension-Direct {
 
 function Get-Popular-PHP-Settings {
     # Return list of popular/common PHP settings that should be included in profiles
-    $path = "$DATA_PATH\php.json"
-    if (Is-File-Exists -path $path) {
-        $data = (Get-Content -Path $path -Raw | ConvertFrom-Json)
-        if ($null -ne $data.profile -and $null -ne $data.profile.settings) {
-            return $data.profile.settings
+    if (Is-File-Exists -path $PROFILE_TEMPLATE_PATH) {
+        $data = (Get-Content -Path $PROFILE_TEMPLATE_PATH -Raw | ConvertFrom-Json)
+        if ($null -ne $data.settings -and $data.settings.Count -gt 0) {
+            return $data.settings
         }
     }
 
@@ -180,11 +179,10 @@ function Get-Popular-PHP-Settings {
 
 function Get-Popular-PHP-Extensions {
     # Return list of popular/common PHP extensions that should be included in profiles
-    $path = "$DATA_PATH\php.json"
-    if (Is-File-Exists -path $path) {
-        $data = (Get-Content -Path $path -Raw | ConvertFrom-Json)
-        if ($null -ne $data.profile -and $null -ne $data.profile.extensions) {
-            return $data.profile.extensions
+    if (Is-File-Exists -path $PROFILE_TEMPLATE_PATH) {
+        $data = (Get-Content -Path $PROFILE_TEMPLATE_PATH -Raw | ConvertFrom-Json)
+        if ($null -ne $data.extensions -and $data.extensions.Count -gt 0) {
+            return $data.extensions
         }
     }
 
@@ -615,6 +613,85 @@ function Import-PHP-Profile {
     } catch {
         $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to import profile from '$importPath'"; exception = $_ }
         Write-Host -Object "`nFailed to import profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
+        return -1
+    }
+}
+
+function Create-Example-PHP-Profile {
+    try {
+        $exampleProfile = [ordered]@{
+            name = "example-profile"
+            description = "Dev"
+            created = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            phpVersion = "8.2.30"
+            settings = [ordered]@{
+                max_execution_time = @{ value = "300"; enabled = $true }
+                max_input_time = @{ value = "300"; enabled = $true }
+                memory_limit = @{ value = "2G"; enabled = $true }
+                error_reporting = @{ value = "E_ALL"; enabled = $true }
+                display_errors = @{ value = "On"; enabled = $true }
+                log_errors = @{ value = "On"; enabled = $true }
+                post_max_size = @{ value = "40M"; enabled = $true }
+                upload_max_filesize = @{ value = "30M"; enabled = $true }
+                max_file_uploads = @{ value = "40"; enabled = $true }
+                'opcache.enable' = @{ value = "1"; enabled = $true }
+                'opcache.enable_cli' = @{ value = "1"; enabled = $true }
+                'opcache.memory_consumption' = @{ value = "1G"; enabled = $true }
+                'opcache.max_accelerated_files' = @{ value = "10000"; enabled = $true }
+            }
+            extensions = [ordered]@{
+                curl = @{ enabled = $true; type = "extension" }
+                fileinfo = @{ enabled = $true; type = "extension" }
+                gd = @{ enabled = $true; type = "extension" }
+                gettext = @{ enabled = $true; type = "extension" }
+                intl = @{ enabled = $true; type = "extension" }
+                mbstring = @{ enabled = $true; type = "extension" }
+                exif = @{ enabled = $true; type = "extension" }
+                mysqli = @{ enabled = $false; type = "extension" }
+                openssl = @{ enabled = $true; type = "extension" }
+                pdo_mysql = @{ enabled = $true; type = "extension" }
+                pdo_pgsql = @{ enabled = $false; type = "extension" }
+                pdo_sqlite = @{ enabled = $false; type = "extension" }
+                pgsql = @{ enabled = $false; type = "extension" }
+                sodium = @{ enabled = $false; type = "extension" }
+                sqlite3 = @{ enabled = $false; type = "extension" }
+                zip = @{ enabled = $true; type = "extension" }
+                opcache = @{ enabled = $true; type = "zend_extension" }
+                xdebug = @{ enabled = $false; type = "zend_extension" }
+            }
+        }
+
+        $jsonContent = $exampleProfile | ConvertTo-Json -Depth 10
+        Set-Content -Path "$PROFILES_PATH\example-profile.json" -Value $jsonContent -Encoding UTF8
+
+        Write-Host -Object "`nExample profile created successfully at '$PROFILES_PATH\example-profile.json'." -ForegroundColor DarkGreen
+        Write-host -Object "- Use 'pvm help profile' to learn more." -ForegroundColor Gray
+
+        return 0
+    } catch {
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create example profile"; exception = $_ }
+        Write-Host -Object "`nFailed to create example profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
+        return -1
+    }
+}
+
+function Create-Profile-Template {
+    try {
+        $profileTemplate = [ordered]@{
+            extensions = $DEFAULT_EXTENSIONS
+            settings = $DEFAULT_SETTINGS
+        }
+
+        $jsonContent = $profileTemplate | ConvertTo-Json -Depth 10
+        Set-Content -Path $PROFILE_TEMPLATE_PATH -Value $jsonContent -Encoding UTF8
+
+        Write-Host -Object "`nProfile template created successfully at '$PROFILE_TEMPLATE_PATH'." -ForegroundColor DarkGreen
+        Write-host -Object '- Feel free to modify it.' -ForegroundColor Gray
+
+        return 0
+    } catch {
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create profile template"; exception = $_ }
+        Write-Host -Object "`nFailed to create profile template: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
 }

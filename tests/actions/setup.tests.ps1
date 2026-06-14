@@ -242,3 +242,41 @@ Describe "Setup-PVM" {
         Remove-Variable LOG_ERROR_PATH -Scope Global -ErrorAction SilentlyContinue
     }
 }
+
+Describe "Setup-Environment-Directories-And-Files" {
+    BeforeAll {
+        Mock Make-Directory { return 0 }
+        Mock Create-Example-PHP-Profile { return 0 }
+        Mock Create-Profile-Template { return 0 }
+        Mock Create-Zend-Extensions-List { return 0 }
+    }
+
+    It "Returns 0 when all directories and files are created" {
+        $result = Setup-Environment-Directories-And-Files
+        $result | Should -Be 0
+    }
+
+    It "Returns -1 when a directory creation fails" {
+        Mock Make-Directory { return -1 }
+        $result = Setup-Environment-Directories-And-Files
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when the example profile creation fails" {
+        Mock Create-Example-PHP-Profile { return -1 }
+        $result = Setup-Environment-Directories-And-Files
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when the profile template file creation fails" {
+        Mock Create-Profile-Template { return -1 }
+        $result = Setup-Environment-Directories-And-Files
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when the zend extensions file creation fails" {
+        Mock Create-Zend-Extensions-List { return -1 }
+        $result = Setup-Environment-Directories-And-Files
+        $result | Should -Be -1
+    }
+}

@@ -37,3 +37,23 @@ function Setup-PVM {
         return @{ code = -1; message = 'Failed to set up PVM environment.'; color = 'DarkYellow'}
     }
 }
+
+function Setup-Environment-Directories-And-Files {
+    $codes = @()
+    $codes += Make-Directory -path $STORAGE_PATH
+    $codes += Make-Directory -path $DATA_PATH
+    $codes += Make-Directory -path $TEMPLATES_PATH
+    $codes += Make-Directory -path $CACHE_PATH
+    $codes += Make-Directory -path $PROFILES_PATH
+    $codes += Create-Example-PHP-Profile
+    $codes += Create-Profile-Template
+    $codes += Create-Zend-Extensions-List
+
+    foreach ($code in $codes) {
+        if ($code -ne 0) {
+            return -1
+        }
+    }
+
+    return 0
+}

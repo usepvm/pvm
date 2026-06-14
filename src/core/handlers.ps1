@@ -1,4 +1,4 @@
-
+﻿
 function Invoke-Setup {
     $result = @{ code = 0; message = 'PVM is already setup' }
     if (-not (Is-PVM-Setup)) {
@@ -7,6 +7,11 @@ function Invoke-Setup {
     $optimized = Optimize-SystemPath
     if ($optimized -ne 0) {
         Write-Host -Object "`nFailed to optimize system path." -ForegroundColor DarkYellow
+    }
+
+    $done = Setup-Environment-Directories-And-Files
+    if ($done -ne 0) {
+        Write-Host -Object "`nFailed to setup environment directories and files." -ForegroundColor DarkYellow
     }
 
     Display-Msg-By-ExitCode -result $result

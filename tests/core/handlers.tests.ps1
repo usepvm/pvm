@@ -1,4 +1,4 @@
-
+﻿
 BeforeAll {
     Mock Write-Host {}
 }
@@ -8,6 +8,7 @@ Describe "Invoke-Setup Tests" {
         Mock Is-PVM-Setup { $true }
         Mock Setup-PVM { @{ code = 0; message = 'Setup completed' } }
         Mock Optimize-SystemPath { 0 }
+        Mock Setup-Environment-Directories-And-Files { 0 }
         Mock Display-Msg-By-ExitCode { }
         Mock Write-Host { }
     }
@@ -44,6 +45,15 @@ Describe "Invoke-Setup Tests" {
         $result | Should -Be 0
 
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Failed to optimize system path*' -and $ForegroundColor -eq 'DarkYellow' }
+    }
+
+    It "Should display warning when environment directories and files setup fails" {
+        Mock Setup-Environment-Directories-And-Files { -1 }
+
+        $result = Invoke-Setup
+        $result | Should -Be 0
+
+        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Failed to setup environment directories and files*' -and $ForegroundColor -eq 'DarkYellow' }
     }
 }
 

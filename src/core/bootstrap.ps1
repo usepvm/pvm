@@ -39,6 +39,10 @@ function Show-PVM-Version {
     Write-Host -Object "`nPVM version $PVM_VERSION"
 }
 
+function Get-NestedCommands {
+    return @('ini', 'profile', 'cache')
+}
+
 function Resolve-Alias {
     param ($alias)
 
@@ -56,39 +60,49 @@ function Resolve-Alias {
     }
 }
 
-function Get-AllowedOperations {
+function Get-AllowedCommands {
     return @('help', 'setup', 'log')
 }
 
 function Start-PVM {
-    param ($operation, $arguments)
+    param ($command, $arguments)
 
     try {
-        if ($arguments -match '^(--version|-v)$' -or $operation -eq 'version') {
+        if ($arguments -match '^(--version|-v)$' -or $command -eq 'version') {
             Show-PVM-Version
             return 0
         }
 
+        if ($command -like '*:*') {
+            $splitted = $command.Split(':')
+            $nestedCommand = $splitted[0]
+            if ($nestedCommand -in (Get-NestedCommands)) {
+                $command = $nestedCommand
+                $arguments = @($splitted[1]) + $arguments
+            }
+        }
+
+        $command = Resolve-Alias -alias $command
+
         $actions = Get-Actions -arguments $arguments
 
-        $operation = Resolve-Alias -alias $operation
-
-        if (-not ($operation -and $actions.Contains($operation))) {
+        if (-not ($command -and $actions.Contains($command))) {
+            Write-Host -Object "`nInvalid command '$command'." -ForegroundColor DarkYellow
             Show-Usage
             return 0
         }
 
-        $allowedOperations = Get-AllowedOperations
+        $allowedCommands = Get-AllowedCommands
 
-        if (($allowedOperations -notcontains $operation) -and (-not (Is-PVM-Setup))) {
+        if (($allowedCommands -notcontains $command) -and (-not (Is-PVM-Setup))) {
             Write-Host -Object "`nPVM is not setup. Please run 'pvm setup' first."
             return -1
         }
 
-        return $($actions[$operation].action.Invoke())
+        return $($actions[$command].action.Invoke())
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during operation '$operation'"; exception = $_ }
-        Write-Host -Object "`nOperation canceled or failed to elevate privileges." -ForegroundColor DarkYellow
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during command '$command'"; exception = $_ }
+        Write-Host -Object "`nCommand canceled or failed to elevate privileges." -ForegroundColor DarkYellow
         return -1
     }
 }

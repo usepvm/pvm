@@ -87,7 +87,6 @@ function Start-PVM {
         $actions = Get-Actions -arguments $arguments
 
         if (-not ($command -and $actions.Contains($command))) {
-            Write-Host -Object "`nInvalid command '$command'." -ForegroundColor DarkYellow
             Show-Usage
             return 0
         }

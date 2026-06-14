@@ -903,6 +903,27 @@ Describe "Get-BinaryArchitecture-From-DLL" {
     }
 }
 
+Describe "Create-Zend-Extensions-List" {
+    BeforeAll {
+        $global:TEMPLATES_PATH = 'TestDrive:\\storage\data\templates'
+        $global:ZEND_EXTENSIONS_LIST_PATH = "$TEMPLATES_PATH\zend_extensions.json"
+        New-Item -ItemType Directory -Force -Path $global:TEMPLATES_PATH | Out-Null
+    }
+    It "Creates zend_extensions.json" {
+        $result = Create-Zend-Extensions-List
+        $result | Should -Be 0
+        
+        $result = Get-Zend-Extensions-List
+        $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
+    }
+    
+    It "Returns -1 when exception is thrown" {
+        Mock Set-Content { throw 'Test exception' }
+        $result = Create-Zend-Extensions-List
+        $result | Should -Be -1
+    }
+}
+
 Describe "Get-Zend-Extensions-List" {
     BeforeAll {
         $global:TEMPLATES_PATH = 'TestDrive:\\storage\data\templates'

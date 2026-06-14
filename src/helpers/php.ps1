@@ -62,6 +62,19 @@ function Is-Two-PHP-Versions-Equal {
             ($version1.buildType -eq $version2.buildType))
 }
 
+function Create-Zend-Extensions-List {
+    try {
+        $jsonContent = $DEFAULT_ZEND_EXTENSIONS | ConvertTo-Json -Depth 10
+        Set-Content -Path $ZEND_EXTENSIONS_LIST_PATH -Value $jsonContent -Encoding UTF8
+
+        return 0
+    } catch {
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create zend extensions list"; exception = $_ }
+        Write-Host -Object "`nFailed to create zend extensions list: $($_.Exception.Message)" -ForegroundColor DarkYellow
+        return -1
+    }
+}
+
 function Get-Zend-Extensions-List {
     if (Is-File-Exists -path $ZEND_EXTENSIONS_LIST_PATH) {
         $data = (Get-Content -Path $ZEND_EXTENSIONS_LIST_PATH -Raw | ConvertFrom-Json)

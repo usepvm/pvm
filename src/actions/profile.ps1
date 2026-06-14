@@ -618,3 +618,60 @@ function Import-PHP-Profile {
         return -1
     }
 }
+
+function Create-Example-PHP-Profile {
+    try {
+        $exampleProfile = [ordered]@{
+            name = "example-profile"
+            description = "Dev"
+            created = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            phpVersion = "8.2.30"
+            settings = [ordered]@{
+                max_execution_time = @{ value = "300"; enabled = $true }
+                max_input_time = @{ value = "300"; enabled = $true }
+                memory_limit = @{ value = "2G"; enabled = $true }
+                error_reporting = @{ value = "E_ALL"; enabled = $true }
+                display_errors = @{ value = "On"; enabled = $true }
+                log_errors = @{ value = "On"; enabled = $true }
+                post_max_size = @{ value = "40M"; enabled = $true }
+                upload_max_filesize = @{ value = "30M"; enabled = $true }
+                max_file_uploads = @{ value = "40"; enabled = $true }
+                'opcache.enable' = @{ value = "1"; enabled = $true }
+                'opcache.enable_cli' = @{ value = "1"; enabled = $true }
+                'opcache.memory_consumption' = @{ value = "1G"; enabled = $true }
+                'opcache.max_accelerated_files' = @{ value = "10000"; enabled = $true }
+            }
+            extensions = [ordered]@{
+                curl = @{ enabled = $true; type = "extension" }
+                fileinfo = @{ enabled = $true; type = "extension" }
+                gd = @{ enabled = $true; type = "extension" }
+                gettext = @{ enabled = $true; type = "extension" }
+                intl = @{ enabled = $true; type = "extension" }
+                mbstring = @{ enabled = $true; type = "extension" }
+                exif = @{ enabled = $true; type = "extension" }
+                mysqli = @{ enabled = $false; type = "extension" }
+                openssl = @{ enabled = $true; type = "extension" }
+                pdo_mysql = @{ enabled = $true; type = "extension" }
+                pdo_pgsql = @{ enabled = $false; type = "extension" }
+                pdo_sqlite = @{ enabled = $false; type = "extension" }
+                pgsql = @{ enabled = $false; type = "extension" }
+                sodium = @{ enabled = $false; type = "extension" }
+                sqlite3 = @{ enabled = $false; type = "extension" }
+                zip = @{ enabled = $true; type = "extension" }
+                opcache = @{ enabled = $true; type = "zend_extension" }
+                xdebug = @{ enabled = $false; type = "zend_extension" }
+            }
+        }
+
+        $jsonContent = $exampleProfile | ConvertTo-Json -Depth 10 -Compress
+        Set-Content -Path "$PROFILES_PATH\example-profile.json" -Value $jsonContent -Encoding UTF8
+
+        Write-Host -Object "`nExample profile created successfully." -ForegroundColor DarkGreen
+
+        return 0
+    } catch {
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create example profile"; exception = $_ }
+        Write-Host -Object "`nFailed to create example profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
+        return -1
+    }
+}

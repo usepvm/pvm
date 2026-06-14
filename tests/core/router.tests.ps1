@@ -175,7 +175,7 @@ Describe "Integration Tests" {
         It "Should handle cascading failures gracefully" {
             Mock Is-PVM-Setup { $false }
             Mock Setup-PVM { @{ code = 1; message = 'Setup failed' } }
-            Mock Optimize-SystemPath { 1 }
+            Mock Optimize-SystemPath { -1 }
             Mock Display-Msg-By-ExitCode { }
             Mock Write-Host { }
 

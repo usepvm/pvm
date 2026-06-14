@@ -38,7 +38,7 @@ Describe "Invoke-Setup Tests" {
     }
 
     It "Should display warning when system path optimization fails" {
-        Mock Optimize-SystemPath { 1 }
+        Mock Optimize-SystemPath { -1 }
 
         $result = Invoke-Setup
         $result | Should -Be 0

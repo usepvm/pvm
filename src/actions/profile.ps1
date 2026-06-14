@@ -673,3 +673,24 @@ function Create-Example-PHP-Profile {
         return -1
     }
 }
+
+function Create-Profile-Template {
+    try {
+        $profileTemplate = [ordered]@{
+            extensions = $DEFAULT_EXTENSIONS
+            settings = $DEFAULT_SETTINGS
+        }
+        
+        $jsonContent = $profileTemplate | ConvertTo-Json -Depth 10
+        Set-Content -Path $PROFILE_TEMPLATE_PATH -Value $jsonContent -Encoding UTF8
+        
+        Write-Host -Object "`nProfile template created successfully at '$PROFILE_TEMPLATE_PATH'." -ForegroundColor DarkGreen
+        Write-host -Object '- Feel free to modify it.' -ForegroundColor Gray
+        
+        return 0
+    } catch {
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create profile template"; exception = $_ }
+        Write-Host -Object "`nFailed to create profile template: $($_.Exception.Message)" -ForegroundColor DarkYellow
+        return -1
+    }
+}

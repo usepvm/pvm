@@ -1826,3 +1826,19 @@ Describe "Import-PHP-Profile Tests" {
         $importedContent.name | Should -Be 'new-complex_456'
     }
 }
+
+Describe "Create-Profile-Template Tests" {
+    It "Should create a profile template" {
+        $global:PROFILE_TEMPLATE_PATH = "$global:PROFILES_PATH\profile-template.json"
+        $result = Create-Profile-Template
+        $result | Should -Be 0
+        
+        Test-Path $PROFILE_TEMPLATE_PATH | Should -Be $true
+    }    
+    
+    It "Returns -1 when exception is thrown" {
+        Mock Set-Content { throw 'Test exception' }
+        $result = Create-Profile-Template
+        $result | Should -Be -1
+    }
+}

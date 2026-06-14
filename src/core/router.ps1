@@ -214,6 +214,29 @@ function Get-Actions {
             }
             action      = { return Invoke-Profile -arguments $script:arguments }
         }
+        'cache'     = @{
+            command     = 'pvm cache <action> [<args>]';
+            description = 'Manage PVM cache files.';
+            usage       = [ordered]@{
+                USAGE       = 'pvm cache <action> [arguments]'
+                DESCRIPTION = @(
+                    'Manage PVM cache files stored in the cache directory.'
+                )
+                ARGUMENTS   = @(
+                    'list ......................................... List all available cache files'
+                    'show <name> .................................. Show detailed cache file contents'
+                    'delete <name> ................................ Delete a cache file'
+                    'clear ........................................ Delete all cache files'
+                )
+                EXAMPLES    = @(
+                    'pvm cache list ............................... Lists all available cache files'
+                    'pvm cache show available_php_versions ........ Shows detailed cache file information'
+                    'pvm cache delete old-cache ................... Deletes a cache file'
+                    'pvm cache clear .............................. Deletes all cache files'
+                )
+            }
+            action      = { return Invoke-Cache -arguments $script:arguments }
+        }
         'log'       = @{
             command     = 'pvm log';
             description = 'Display the log file.';

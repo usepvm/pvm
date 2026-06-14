@@ -16,6 +16,7 @@ Describe "Get-Actions Tests" {
         Mock Invoke-Log { }
         Mock Invoke-Test { }
         Mock Invoke-Profile { }
+        Mock Invoke-Cache { }
     }
 
     It "Should return ordered hashtable with all actions" {
@@ -32,6 +33,8 @@ Describe "Get-Actions Tests" {
         $actions.Keys | Should -Contain 'use'
         $actions.Keys | Should -Contain 'info'
         $actions.Keys | Should -Contain 'ini'
+        $actions.Keys | Should -Contain 'profile'
+        $actions.Keys | Should -Contain 'cache'
         $actions.Keys | Should -Contain 'test'
         $actions.Keys | Should -Contain 'log'
     }
@@ -128,6 +131,13 @@ Describe "Get-Actions Tests" {
             $actions['profile'].action.Invoke()
 
             Assert-MockCalled Invoke-Profile -Times 1
+        }
+        
+        It "Should execute cache action" {
+            $actions = Get-Actions -arguments @('list')
+            $actions['cache'].action.Invoke()
+
+            Assert-MockCalled Invoke-Cache -Times 1
         }
     }
 }

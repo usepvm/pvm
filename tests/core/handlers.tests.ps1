@@ -1,4 +1,4 @@
-
+﻿
 BeforeAll {
     Mock Write-Host {}
 }
@@ -689,6 +689,171 @@ Describe "Invoke-Profile Tests" {
             $result | Should -Be 0
 
             Assert-MockCalled Save-PHP-Profile -Times 1
+        }
+    }
+
+    Context "Action success and failure returns" {
+        It "Should return 0 when Save-PHP-Profile succeeds" {
+            Mock Save-PHP-Profile { return 0 }
+            $arguments = @('save', 'test')
+
+            $result = Invoke-Profile -arguments $arguments
+            $result | Should -Be 0
+        }
+
+        It "Should return -1 when Load-PHP-Profile fails" {
+            Mock Load-PHP-Profile { return -1 }
+            $arguments = @('load', 'test')
+
+            $result = Invoke-Profile -arguments $arguments
+            $result | Should -Be -1
+        }
+
+        It "Should return action result code from any profile action" {
+            Mock Delete-PHP-Profile { return 5 }
+            $arguments = @('delete', 'test')
+
+            $result = Invoke-Profile -arguments $arguments
+            $result | Should -Be 5
+        }
+    }
+}
+
+Describe "Invoke-Cache Tests" {
+    BeforeEach {
+        Mock Write-Host { }
+        Mock List-Cache-Files { 0 }
+        Mock Show-Cache-Data { 0 }
+        Mock Delete-Cache-File { 0 }
+        Mock Clear-Cache-Files { 0 }
+    }
+
+    Context "No action provided" {
+        It "Should return -1 when no action is provided" {
+            $arguments = @()
+
+            $result = Invoke-Cache -arguments $arguments
+            $result | Should -Be -1
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Please specify an action for 'pvm cache'*" -and
+                $ForegroundColor -eq 'Yellow'
+            }
+        }
+    }
+
+    Context "List action" {
+        It "Should list cache names without additional arguments" {
+            $arguments = @('list')
+
+            $result = Invoke-Cache -arguments $arguments
+            $result | Should -Be 0
+
+            Assert-MockCalled List-Cache-Files -Times 1
+        }
+    }
+
+    Context "Show action" {
+        It "Should return -1 when show action has no cache name" {
+            $arguments = @('show')
+
+            $result = Invoke-Cache -arguments $arguments
+            $result | Should -Be -1
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like '*Please provide a cache name: pvm cache show*'
+            }
+        }
+
+        It "Should show cache with provided name" {
+            $arguments = @('show', 'available_versions')
+
+            $result = Invoke-Cache -arguments $arguments
+            $result | Should -Be 0
+
+            Assert-MockCalled Show-Cache-Data -Times 1 -ParameterFilter {
+                $cacheName -eq 'available_versions'
+            }
+        }
+
+        It "Should take first and ignore extra arguments" {
+            $arguments = @('show', 'available_versions', 'to-be-ignored')
+
+            $result = Invoke-Cache -arguments $arguments
+            $result | Should -Be 0
+
+            Assert-MockCalled Show-Cache-Data -Times 1 -ParameterFilter {
+                $cacheName -eq 'available_versions'
+            }
+        }
+    }
+
+    Context "Delete action" {
+        It "Should return -1 when delete action has no cache name" {
+            $arguments = @('delete')
+
+            $result = Invoke-Cache -arguments $arguments
+            $result | Should -Be -1
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like '*Please provide a cache name: pvm cache delete*'
+            }
+        }
+
+        It "Should delete cache with provided name" {
+            $arguments = @('delete', 'available_versions')
+
+            $result = Invoke-Cache -arguments $arguments
+            $result | Should -Be 0
+
+            Assert-MockCalled Delete-Cache-File -Times 1 -ParameterFilter {
+                $cacheName -eq 'available_versions'
+            }
+        }
+
+        It "Should take first and ignore extra arguments" {
+            $arguments = @('delete', 'available_versions', 'to-be-ignored')
+
+            $result = Invoke-Cache -arguments $arguments
+            $result | Should -Be 0
+
+            Assert-MockCalled Delete-Cache-File -Times 1 -ParameterFilter {
+                $cacheName -eq 'available_versions'
+            }
+        }
+    }
+
+    Context "Clear action" {
+        It "Should clear all cache files" {
+            $arguments = @('clear')
+
+            $result = Invoke-Cache -arguments $arguments
+
+            $result | Should -Be 0
+            Assert-MockCalled Clear-Cache-Files -Times 1
+        }
+    }
+
+    Context "Unknown action" {
+        It "Should return -1 for unknown action" {
+            $arguments = @('unknown')
+
+            $result = Invoke-Cache -arguments $arguments
+            $result | Should -Be -1
+
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -like "*Unknown action 'unknown'*" -and
+                $ForegroundColor -eq "Yellow"
+            }
+        }
+
+        It "Should handle case-insensitive action names" {
+            $arguments = @('LIST', 'testcache')
+
+            $result = Invoke-Cache -arguments $arguments
+            $result | Should -Be 0
+
+            Assert-MockCalled List-Cache-Files -Times 1
         }
     }
 

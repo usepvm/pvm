@@ -324,12 +324,12 @@ Describe "Extract-Zip Tests" {
         { Extract-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $true } | Should -Not -Throw
         Assert-MockCalled Remove-Item -Times 1 -ParameterFilter { $Path -eq 'test.zip' }
     }
-    
+
     It "Should not delete zip if deleteZipAfter is false" {
         { Extract-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $false } | Should -Not -Throw
         Assert-MockCalled Remove-Item -Times 0
     }
-    
+
     It "Should call Log-Data on extraction failure" {
         Mock Extract-Zip-Core { throw "Extraction failed" }
         { Extract-Zip -zipPath 'bad.zip' -extractPath 'testdir' } | Should -Not -Throw

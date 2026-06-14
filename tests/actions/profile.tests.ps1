@@ -491,14 +491,14 @@ Describe "List-PHP-Profiles Tests" {
 
 Describe "Get-Popular-PHP-Settings Tests" {
     BeforeEach {
-        $global:STORAGE_PATH = 'TestDrive:\\storage'
-        New-Item -ItemType Directory -Force -Path $global:STORAGE_PATH | Out-Null
+        $global:DATA_PATH = 'TestDrive:\\storage\data'
+        New-Item -ItemType Directory -Force -Path $global:DATA_PATH | Out-Null
         $testContent = @{
             'profile' = @{
                 'settings' = @('memory_limit', 'display_errors')
             }
         }
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:STORAGE_PATH\extensions.json"
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:DATA_PATH\php.json"
     }
     It "Should return popular PHP settings" {
         $settings = Get-Popular-PHP-Settings
@@ -507,9 +507,9 @@ Describe "Get-Popular-PHP-Settings Tests" {
         $settings | Should -Contain 'memory_limit'
         $settings | Should -Contain 'display_errors'
     }
-    
+
     It "Should fallback to default popular PHP settings" {
-        Remove-Item -Path "$global:STORAGE_PATH\extensions.json"
+        Remove-Item -Path "$global:DATA_PATH\php.json"
         $settings = Get-Popular-PHP-Settings
         $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
     }
@@ -517,14 +517,14 @@ Describe "Get-Popular-PHP-Settings Tests" {
 
 Describe "Get-Popular-PHP-Extensions Tests" {
     BeforeEach {
-        $global:STORAGE_PATH = 'TestDrive:\\storage'
-        New-Item -ItemType Directory -Force -Path $global:STORAGE_PATH | Out-Null
+        $global:DATA_PATH = 'TestDrive:\\storage\data'
+        New-Item -ItemType Directory -Force -Path $global:DATA_PATH | Out-Null
         $testContent = @{
             'profile' = @{
                 'extensions' = @('curl', 'mbstring', 'opcache')
             }
         }
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:STORAGE_PATH\extensions.json"
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:DATA_PATH\php.json"
     }
 
     It "Should return popular PHP extensions" {
@@ -535,9 +535,9 @@ Describe "Get-Popular-PHP-Extensions Tests" {
         $extensions | Should -Contain 'mbstring'
         $extensions | Should -Contain 'opcache'
     }
-    
+
     It "Should fallback to default popular PHP extensions" {
-        Remove-Item -Path "$global:STORAGE_PATH\extensions.json"
+        Remove-Item -Path "$global:DATA_PATH\php.json"
         $extensions = Get-Popular-PHP-Extensions
         $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
     }

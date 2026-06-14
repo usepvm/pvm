@@ -912,11 +912,11 @@ Describe "Create-Zend-Extensions-List" {
     It "Creates zend_extensions.json" {
         $result = Create-Zend-Extensions-List
         $result | Should -Be 0
-        
+
         $result = Get-Zend-Extensions-List
         $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
     }
-    
+
     It "Returns -1 when exception is thrown" {
         Mock Set-Content { throw 'Test exception' }
         $result = Create-Zend-Extensions-List

@@ -336,7 +336,7 @@ function Invoke-Cache {
     $action = $arguments[0]
 
     if (-not $action) {
-        Write-Host -Object "`nPlease specify an action for 'pvm cache'. Use 'clear'." -ForegroundColor Yellow
+        Write-Host -Object "`nPlease specify an action for 'pvm cache'. Use 'list', 'show', 'delete', 'clear'." -ForegroundColor Yellow
         return -1
     }
 

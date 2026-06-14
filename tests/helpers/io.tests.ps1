@@ -176,6 +176,13 @@ Describe "Make-Directory" {
             $result = Make-Directory -path ''
             $result | Should -Be -1
         }
+
+        It "Returns -1 when exception is thrown" {
+            Mock Is-Directory-Not-Exists { return $true }
+            Mock New-Item { throw 'Error' }
+            $result = Make-Directory -path 'TestDrive:\new_dir'
+            $result | Should -Be -1
+        }
     }
 }
 

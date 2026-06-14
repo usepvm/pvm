@@ -63,11 +63,10 @@ function Is-Two-PHP-Versions-Equal {
 }
 
 function Get-Zend-Extensions-List {
-    $path = "$DATA_PATH\php.json"
-    if (Is-File-Exists -path $path) {
-        $data = (Get-Content -Path $path -Raw | ConvertFrom-Json)
-        if ($null -ne $data.zend_extensions) {
-            return $data.zend_extensions
+    if (Is-File-Exists -path $ZEND_EXTENSIONS_LIST_PATH) {
+        $data = (Get-Content -Path $ZEND_EXTENSIONS_LIST_PATH -Raw | ConvertFrom-Json)
+        if ($null -ne $data -and $data.Count -gt 0) {
+            return $data
         }
     }
 

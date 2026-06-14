@@ -1827,6 +1827,22 @@ Describe "Import-PHP-Profile Tests" {
     }
 }
 
+Describe "Create-Example-PHP-Profile Tests" {
+    It "Should create an example profile" {
+        $result = Create-Example-PHP-Profile
+        $result | Should -Be 0
+        
+        $exampleProfilePath = "$global:PROFILES_PATH\example-profile.json"
+        Test-Path $exampleProfilePath | Should -Be $true
+    }    
+    
+    It "Returns -1 when exception is thrown" {
+        Mock Set-Content { throw 'Test exception' }
+        $result = Create-Example-PHP-Profile
+        $result | Should -Be -1
+    }
+}
+
 Describe "Create-Profile-Template Tests" {
     It "Should create a profile template" {
         $global:PROFILE_TEMPLATE_PATH = "$global:PROFILES_PATH\profile-template.json"

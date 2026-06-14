@@ -3,6 +3,7 @@ function Show-Usage {
     Write-Host -Object "`nRunning version : $PVM_VERSION"
     Write-Host -Object "`nUsage:`n"
 
+    $actions = Get-Actions -arguments $arguments
     $maxLineLength = ($actions.GetEnumerator() | ForEach-Object { $_.Value.command.Length } | Measure-Object -Maximum).Maximum + $MIN_PAD_RIGHT_LENGTH
     $maxDescLength = $Host.UI.RawUI.WindowSize.Width - ($maxLineLength + ($MIN_PAD_RIGHT_LENGTH * 2)) # Max length per description line
     if ($maxDescLength -lt 100) { $maxDescLength = 100 }

@@ -673,19 +673,19 @@ Describe "Start-PVM Function Tests" {
                 }
             }
         }
-        
+
         It "Should execute nested command" -tag i {
             Mock Invoke-Ini { return 0 }
             $result = Start-PVM -command 'ini:get' -arguments @()
-            
+
             $result | Should -Be 0
             Assert-MockCalled Invoke-Ini -Times 1
         }
-        
+
         It "Should execute non nested command" -tag ii {
             Mock Show-Usage { }
             $result = Start-PVM -command 'install:8.2.0' -arguments @()
-            
+
             $result | Should -Be 0
             Assert-MockCalled Show-Usage -Times 1
         }

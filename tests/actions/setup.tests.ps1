@@ -249,6 +249,7 @@ Describe "Setup-Environment-Directories-And-Files" {
         Mock Create-Example-PHP-Profile { return 0 }
         Mock Create-Profile-Template { return 0 }
         Mock Create-Zend-Extensions-List { return 0 }
+        Mock Set-Aliases-List { return 0 }
     }
 
     It "Returns 0 when all directories and files are created" {
@@ -276,6 +277,12 @@ Describe "Setup-Environment-Directories-And-Files" {
 
     It "Returns -1 when the zend extensions file creation fails" {
         Mock Create-Zend-Extensions-List { return -1 }
+        $result = Setup-Environment-Directories-And-Files
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when the aliases file creation fails" {
+        Mock Set-Aliases-List { return -1 }
         $result = Setup-Environment-Directories-And-Files
         $result | Should -Be -1
     }

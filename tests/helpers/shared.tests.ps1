@@ -1,4 +1,4 @@
-
+﻿
 BeforeAll {
     Mock Write-Host {}
 }
@@ -634,6 +634,52 @@ Describe "Resolve-BuildType" {
             $result = Resolve-BuildType -arguments $null
             $result | Should -BeNullOrEmpty
         }
+    }
+}
+
+Describe "Set-Aliases-List" {
+    BeforeAll {
+        $global:TEMPLATES_PATH = 'TestDrive:\\storage\data\templates'
+        $global:ALIASES_LIST_PATH = "$TEMPLATES_PATH\aliases.json"
+        New-Item -ItemType Directory -Force -Path $global:TEMPLATES_PATH | Out-Null
+    }
+
+    It "Creates aliases.json" {
+        $result = Set-Aliases-List
+        $result | Should -Be 0
+
+        $result = Get-Aliases
+        $result.Count | Should -Be $DEFAULT_ALIASES.Count
+    }
+
+    It "Returns -1 when exception is thrown" {
+        Mock Set-Content { throw 'Test exception' }
+        $result = Set-Aliases-List
+        $result | Should -Be -1
+    }
+}
+
+Describe "Get-Aliases" {
+    BeforeAll {
+        $global:TEMPLATES_PATH = 'TestDrive:\\storage\data\templates'
+        $global:ALIASES_LIST_PATH = "$TEMPLATES_PATH\aliases.json"
+        New-Item -ItemType Directory -Path $global:TEMPLATES_PATH | Out-Null
+        $testContent = [ordered]@{'?'  = 'help'; 'i'  = 'install'; 'init' = 'setup'}
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ALIASES_LIST_PATH
+    }
+
+    It "Returns the zend_extensions.json content as a hashtable" {
+        $result = Get-Aliases
+        $result.Count | Should -Be 3
+        $result['?'] | Should -Be 'help'
+        $result['i'] | Should -Be 'install'
+        $result['init'] | Should -Be 'setup'
+    }
+
+    It "Falls back to DEFAULT_ALIASES value" {
+        Remove-Item -Path "$global:TEMPLATES_PATH\aliases.json"
+        $result = Get-Aliases
+        $result.Count | Should -Be $DEFAULT_ALIASES.Count
     }
 }
 

@@ -216,26 +216,34 @@ function Get-EnvConfig {
     return $config
 }
 
-function Get-Aliases {
-    return [ordered]@{
-        '?'  = 'help';
-        'h'  = 'help';
-        'init' = 'setup';
-        'cur' = 'current';
-        'active' = 'current';
-        'ls' = 'list';
-        'i'  = 'install';
-        'u'  = 'uninstall';
-        'switch' = 'use';
-        'on' = 'enable';
-        'off' = 'disable';
-        'a'  = 'add';
-        '+'  = 'add';
-        'rm' = 'remove';
-        '-'  = 'remove';
-        'del' = 'delete';
-        'cls' = 'clear';
+function Set-Aliases-List {
+    try {
+        $jsonContent = $DEFAULT_ALIASES | ConvertTo-Json -Depth 10
+        Set-Content -Path $ALIASES_LIST_PATH -Value $jsonContent -Encoding UTF8
+
+        Write-Host -Object "`nAliases list created successfully at '$ALIASES_LIST_PATH'." -ForegroundColor DarkGreen
+        Write-Host -Object "- Use 'pvm aliases' to see available aliases." -ForegroundColor Gray
+        Write-Host -Object "- Feel free to modify it." -ForegroundColor Gray
+
+        return 0
+    } catch {
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create aliases list"; exception = $_ }
+        Write-Host -Object "`nFailed to create aliases list: $($_.Exception.Message)" -ForegroundColor DarkYellow
+        return -1
     }
+}
+
+function Get-Aliases {
+    if (Is-File-Exists -path $ALIASES_LIST_PATH) {
+        $data = (Get-Content -Path $ALIASES_LIST_PATH -Raw | ConvertFrom-Json)
+        if ($null -ne $data) {
+            $ordered = [ordered]@{}
+            $data.PSObject.Properties | ForEach-Object { $ordered[$_.Name] = $_.Value }
+            if ($ordered.Count -gt 0) { return $ordered }
+        }
+    }
+
+    return $DEFAULT_ALIASES
 }
 
 function Resolve-Alias {

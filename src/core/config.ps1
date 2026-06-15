@@ -13,6 +13,7 @@ $Global:CACHE_PATH = "$DATA_PATH\cache"
 $Global:PROFILES_PATH = "$DATA_PATH\profiles"
 $Global:PROFILE_TEMPLATE_PATH = "$TEMPLATES_PATH\profile-template.json"
 $Global:ZEND_EXTENSIONS_LIST_PATH = "$TEMPLATES_PATH\zend_extensions.json"
+$Global:ALIASES_LIST_PATH = "$TEMPLATES_PATH\aliases.json"
 
 # Log paths
 $Global:LOG_PATH = "$STORAGE_PATH\logs"
@@ -53,3 +54,12 @@ $Global:DEFAULT_SETTINGS = @(
     'display_errors', 'error_reporting', 'log_errors',
     'opcache.enable', 'opcache.enable_cli', 'opcache.memory_consumption', 'opcache.max_accelerated_files'
 )
+
+$Global:DEFAULT_ALIASES =  [ordered]@{
+    '?'  = 'help'; 'h'  = 'help'; 'init' = 'setup';
+    'cur' = 'current'; 'active' = 'current';
+    'ls' = 'list'; 'i'  = 'install'; 'u'  = 'uninstall'; 'switch' = 'use';
+    'on' = 'enable'; 'off' = 'disable';
+    'a'  = 'add'; '+'  = 'add'; 'rm' = 'remove'; '-'  = 'remove';
+    'del' = 'delete'; 'cls' = 'clear';
+}

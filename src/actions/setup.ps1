@@ -48,6 +48,7 @@ function Setup-Environment-Directories-And-Files {
     $codes += Create-Example-PHP-Profile
     $codes += Create-Profile-Template
     $codes += Create-Zend-Extensions-List
+    $codes += Set-Aliases-List
 
     foreach ($code in $codes) {
         if ($code -ne 0) {

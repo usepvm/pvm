@@ -409,12 +409,12 @@ pvm test [files = (files inside the tests/ directory)] [--exclude=files] [--cove
 # Examples:
 pvm test # .............................. Runs all tests with Normal (default) verbosity.
 pvm test use install # .................. Runs only 'use.tests.ps1' and 'install.tests.ps1' files with Normal verbosity.
-pvm test --exclude=use,install # ........ Runs all tests except use.tests.ps1 and install.tests.ps1 with Normal verbosity.
+pvm test --exclude=use,install # ........ Runs all tests except 'use.tests.ps1' and 'install.tests.ps1' with Normal verbosity.
 pvm test --verbosity=Detailed # ......... Runs all tests with Detailed verbosity.
 pvm test --coverage # ................... Runs all tests and generates coverage report (target: 75%)
 pvm test --coverage=80.5 # .............. Runs all tests and generates coverage report (target: 80.5%)
 pvm test --sort=duration # .............. Runs all tests and sort results by duration
-pvm test --tag=myTag #................... Runs helpers.tests.ps1 and list.tests.ps1 with Diagnostic verbosity and only runs tests with tag "myTag".
+pvm test --tag=myTag #................... Runs only runs tests with tag "myTag".
 ```
 
 

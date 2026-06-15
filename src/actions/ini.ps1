@@ -18,6 +18,8 @@ function Invoke-IniAction {
             return -1
         }
 
+        $action = Resolve-Alias -alias $action.ToLower()
+
         switch ($action.ToLower()) {
             'info' {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''

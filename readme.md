@@ -361,6 +361,9 @@ pvm aliases
 The following command groups support both syntaxes:
 
 ```sh
+pvm help <subcommand>
+pvm help:<subcommand>
+
 pvm ini <subcommand>
 pvm ini:<subcommand>
 

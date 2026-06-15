@@ -41,7 +41,7 @@ function Show-PVM-Version {
 }
 
 function Get-NestedCommands {
-    return @('ini', 'profile', 'cache')
+    return @('ini', 'profile', 'cache', 'help')
 }
 
 function Get-AllowedCommands {

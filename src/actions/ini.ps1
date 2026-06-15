@@ -103,7 +103,7 @@ function Invoke-IniAction {
                 $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains 'available') -term $term
             }
             default {
-                Write-Host -Object "`nUnknown action '$action' use one of following: 'info', 'get', 'set', 'enable', 'disable', 'status', 'install', 'list' or 'restore'."
+                Write-Host -Object "`nUnknown action '$action' use one of following: 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'list' or 'restore'."
             }
         }
 

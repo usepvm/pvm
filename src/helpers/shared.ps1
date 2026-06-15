@@ -234,13 +234,17 @@ function Set-Aliases-List {
 }
 
 function Get-Aliases {
-    if (Is-File-Exists -path $ALIASES_LIST_PATH) {
-        $data = (Get-Content -Path $ALIASES_LIST_PATH -Raw | ConvertFrom-Json)
-        if ($null -ne $data) {
-            $ordered = [ordered]@{}
-            $data.PSObject.Properties | ForEach-Object { $ordered[$_.Name] = $_.Value }
-            if ($ordered.Count -gt 0) { return $ordered }
+    try {
+        if (Is-File-Exists -path $ALIASES_LIST_PATH) {
+            $data = (Get-Content -Path $ALIASES_LIST_PATH -Raw | ConvertFrom-Json)
+            if ($null -ne $data) {
+                $ordered = [ordered]@{}
+                $data.PSObject.Properties | ForEach-Object { $ordered[$_.Name] = $_.Value }
+                if ($ordered.Count -gt 0) { return $ordered }
+            }
         }
+    } catch {
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get aliases list"; exception = $_ }
     }
 
     return $DEFAULT_ALIASES

@@ -512,6 +512,13 @@ Describe "Get-Popular-PHP-Settings Tests" {
         $settings = Get-Popular-PHP-Settings
         $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
     }
+
+    It "Returns default value when exception is thrown" {
+        Mock Is-File-Exists { return $true }
+        Mock Get-Content { throw 'Test exception' }
+        $settings = Get-Popular-PHP-Settings
+        $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
+    }
 }
 
 Describe "Get-Popular-PHP-Extensions Tests" {
@@ -534,6 +541,13 @@ Describe "Get-Popular-PHP-Extensions Tests" {
 
     It "Should fallback to default popular PHP extensions" {
         Remove-Item -Path $PROFILE_TEMPLATE_PATH
+        $extensions = Get-Popular-PHP-Extensions
+        $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
+    }
+
+    It "Returns default value when exception is thrown" {
+        Mock Is-File-Exists { return $true }
+        Mock Get-Content { throw 'Test exception' }
         $extensions = Get-Popular-PHP-Extensions
         $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
     }

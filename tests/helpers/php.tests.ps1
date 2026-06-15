@@ -946,6 +946,13 @@ Describe "Get-Zend-Extensions-List" {
         $result = Get-Zend-Extensions-List
         $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
     }
+
+    It "Returns default value when exception is thrown" {
+        Mock Is-File-Exists { return $true }
+        Mock Get-Content { throw 'Test exception' }
+        $result = Get-Zend-Extensions-List
+        $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
+    }
 }
 
 Describe "Get-PHP-Data" {

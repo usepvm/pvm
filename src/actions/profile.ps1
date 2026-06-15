@@ -166,24 +166,32 @@ function Disable-IniExtension-Direct {
 }
 
 function Get-Popular-PHP-Settings {
-    # Return list of popular/common PHP settings that should be included in profiles
-    if (Is-File-Exists -path $PROFILE_TEMPLATE_PATH) {
-        $data = (Get-Content -Path $PROFILE_TEMPLATE_PATH -Raw | ConvertFrom-Json)
-        if ($null -ne $data.settings -and $data.settings.Count -gt 0) {
-            return $data.settings
+    try {
+        # Return list of popular/common PHP settings that should be included in profiles
+        if (Is-File-Exists -path $PROFILE_TEMPLATE_PATH) {
+            $data = (Get-Content -Path $PROFILE_TEMPLATE_PATH -Raw | ConvertFrom-Json)
+            if ($null -ne $data.settings -and $data.settings.Count -gt 0) {
+                return $data.settings
+            }
         }
+    } catch {
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP settings"; exception = $_ }
     }
 
     return $DEFAULT_SETTINGS
 }
 
 function Get-Popular-PHP-Extensions {
-    # Return list of popular/common PHP extensions that should be included in profiles
-    if (Is-File-Exists -path $PROFILE_TEMPLATE_PATH) {
-        $data = (Get-Content -Path $PROFILE_TEMPLATE_PATH -Raw | ConvertFrom-Json)
-        if ($null -ne $data.extensions -and $data.extensions.Count -gt 0) {
-            return $data.extensions
+    try {
+        # Return list of popular/common PHP extensions that should be included in profiles
+        if (Is-File-Exists -path $PROFILE_TEMPLATE_PATH) {
+            $data = (Get-Content -Path $PROFILE_TEMPLATE_PATH -Raw | ConvertFrom-Json)
+            if ($null -ne $data.extensions -and $data.extensions.Count -gt 0) {
+                return $data.extensions
+            }
         }
+    } catch {
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP extensions"; exception = $_ }
     }
 
     return $DEFAULT_EXTENSIONS

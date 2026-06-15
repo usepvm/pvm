@@ -78,11 +78,15 @@ function Create-Zend-Extensions-List {
 }
 
 function Get-Zend-Extensions-List {
-    if (Is-File-Exists -path $ZEND_EXTENSIONS_LIST_PATH) {
-        $data = (Get-Content -Path $ZEND_EXTENSIONS_LIST_PATH -Raw | ConvertFrom-Json)
-        if ($null -ne $data -and $data.Count -gt 0) {
-            return $data
+    try {
+        if (Is-File-Exists -path $ZEND_EXTENSIONS_LIST_PATH) {
+            $data = (Get-Content -Path $ZEND_EXTENSIONS_LIST_PATH -Raw | ConvertFrom-Json)
+            if ($null -ne $data -and $data.Count -gt 0) {
+                return $data
+            }
         }
+    } catch {
+        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get zend extensions list"; exception = $_ }
     }
 
     return $DEFAULT_ZEND_EXTENSIONS

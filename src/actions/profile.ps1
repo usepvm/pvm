@@ -665,7 +665,7 @@ function Create-Example-PHP-Profile {
         Set-Content -Path "$PROFILES_PATH\example-profile.json" -Value $jsonContent -Encoding UTF8
 
         Write-Host -Object "`nExample profile created successfully at '$PROFILES_PATH\example-profile.json'." -ForegroundColor DarkGreen
-        Write-host -Object "- Use 'pvm help profile' to learn more." -ForegroundColor Gray
+        Write-Host -Object "- Use 'pvm help profile' to learn more." -ForegroundColor Gray
 
         return 0
     } catch {
@@ -686,7 +686,7 @@ function Create-Profile-Template {
         Set-Content -Path $PROFILE_TEMPLATE_PATH -Value $jsonContent -Encoding UTF8
 
         Write-Host -Object "`nProfile template created successfully at '$PROFILE_TEMPLATE_PATH'." -ForegroundColor DarkGreen
-        Write-host -Object '- Feel free to modify it.' -ForegroundColor Gray
+        Write-Host -Object '- Feel free to modify it.' -ForegroundColor Gray
 
         return 0
     } catch {

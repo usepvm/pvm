@@ -53,9 +53,10 @@ Describe "Show-Usage Tests" {
         $origSize = $Host.UI.RawUI.WindowSize
         $Host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(80,25)
 
-        $longDesc = ('X' * 200)
-        $script:actions = [ordered]@{
-            'testcmd' = @{ command = 'pvm testcmd'; description = $longDesc }
+        Mock Get-Actions {
+            [ordered]@{
+                'testcmd' = @{ command = 'pvm testcmd'; description = ('X' * 200) }
+            }
         }
 
         Show-Usage
@@ -68,10 +69,11 @@ Describe "Show-Usage Tests" {
     It "Breaks mid-word when no space within maxDescLength" {
         Mock Write-Host {}
 
-        # Create description with no spaces in the first 150 chars
         $noSpace = ('A' * 150) + ' rest of description'
-        $script:actions = [ordered]@{
-            'nospace' = @{ command = 'pvm nospace'; description = $noSpace }
+        Mock Get-Actions {
+            [ordered]@{
+                'nospace' = @{ command = 'pvm nospace'; description = $noSpace }
+            }
         }
 
         Show-Usage
@@ -84,9 +86,12 @@ Describe "Show-Usage Tests" {
 
         # Create description with spaces to force multiple wrapped lines
         $spaced = (1..10 | ForEach-Object { ('word' + $_) }) -join ' '
-        $script:actions = [ordered]@{
-            'multiline' = @{ command = 'pvm multiline'; description = $spaced }
+        Mock Get-Actions {
+            [ordered]@{
+                'multiline' = @{ command = 'pvm multiline'; description = $spaced }
+            }
         }
+
 
         Show-Usage
 
@@ -152,17 +157,30 @@ Describe "Show-PVM-Version Function Tests" {
 
 Describe "Resolve-Alias Tests" {
     $testCases = @(
+        @{ Command = '?'; Expected = 'help' }
         @{ Command = 'h'; Expected = 'help' }
         @{ Command = 'H'; Expected = 'help' }
+        @{ Command = 'INIT'; Expected = 'setup' }
+        @{ Command = 'CUR'; Expected = 'current' }
         @{ Command = 'ls'; Expected = 'list' }
-        @{ Command = 'rm'; Expected = 'uninstall' }
-        @{ Command = 'i'; Expected = 'install' }
-        @{ Command = 'LS'; Expected = 'list' }
-        @{ Command = 'RM'; Expected = 'uninstall' }
+        @{ Command = 'list'; Expected = 'list' }
+        @{ Command = 'u'; Expected = 'uninstall' }
+        @{ Command = 'U'; Expected = 'uninstall' }
+        @{ Command = 'uninstall'; Expected = 'uninstall' }
         @{ Command = 'I'; Expected = 'install' }
         @{ Command = 'install'; Expected = 'install' }
-        @{ Command = 'list'; Expected = 'list' }
-        @{ Command = 'uninstall'; Expected = 'uninstall' }
+        @{ Command = 'SWITCH'; Expected = 'use' }
+        @{ Command = 'ON'; Expected = 'enable' }
+        @{ Command = 'OFF'; Expected = 'disable' }
+        @{ Command = 'A'; Expected = 'add' }
+        @{ Command = '+'; Expected = 'add' }
+        @{ Command = 'rm'; Expected = 'remove' }
+        @{ Command = '-'; Expected = 'remove' }
+        @{ Command = 'i'; Expected = 'install' }
+        @{ Command = 'LS'; Expected = 'list' }
+        @{ Command = 'RM'; Expected = 'remove' }
+        @{ Command = 'DEL'; Expected = 'delete' }
+        @{ Command = 'CLS'; Expected = 'clear' }
         @{ Command = 'unknown'; Expected = 'unknown' }
         @{ Command = ''; Expected = $null }
         @{ Command = '    '; Expected = $null }

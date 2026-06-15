@@ -44,6 +44,27 @@ function Get-NestedCommands {
     return @('ini', 'profile', 'cache')
 }
 
+function Get-Aliases {
+    return @{
+        '?'  = 'help';
+        'h'  = 'help';
+        'init' = 'setup';
+        'cur' = 'current';
+        'ls' = 'list';
+        'i'  = 'install';
+        'u'  = 'uninstall';
+        'switch' = 'use';
+        'on' = 'enable';
+        'off' = 'disable';
+        'a'  = 'add';
+        '+'  = 'add';
+        'rm' = 'remove';
+        '-'  = 'remove';
+        'del' = 'delete';
+        'cls' = 'clear';
+    }
+}
+
 function Resolve-Alias {
     param ($alias)
 
@@ -52,13 +73,13 @@ function Resolve-Alias {
     }
 
     $alias = $alias.Trim().ToLower()
-    switch ($alias) {
-        'ls' { return 'list' }
-        'rm' { return 'uninstall' }
-        'i'  { return 'install' }
-        'h'  { return 'help' }
-        Default { return $alias }
+    $aliases = Get-Aliases
+
+    if ($aliases.ContainsKey($alias)) {
+        return $aliases[$alias]
     }
+    
+    return $alias
 }
 
 function Get-AllowedCommands {

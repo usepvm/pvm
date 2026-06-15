@@ -542,7 +542,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'setup' -arguments $null
 
             $result | Should -Be 0
-            Assert-MockCalled Get-Actions -Times 1 -ParameterFilter { $arguments -eq $null }
+            Assert-MockCalled Get-Actions -Times 1 -ParameterFilter { $arguments.Count -eq 0 }
         }
 
         It "Should handle empty arguments array" {

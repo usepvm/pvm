@@ -44,6 +44,23 @@ function Get-NestedCommands {
     return @('ini', 'profile', 'cache', 'help')
 }
 
+function Resolve-NestedCommand {
+    param ($command, $arguments)
+
+    if ($command -notlike '*:*') {
+        return $command, $arguments
+    }
+
+    $splitted = $command.Split(':')
+    $nestedCommand = $splitted[0]
+
+    if ($nestedCommand -in (Get-NestedCommands)) {
+        return $nestedCommand, (@($splitted[1]) + $arguments)
+    }
+
+    return $command, $arguments
+}
+
 function Get-AllowedCommands {
     return @('help', 'setup', 'log')
 }
@@ -52,26 +69,23 @@ function Start-PVM {
     param ($command, $arguments)
 
     try {
-        if ([string]::IsNullOrWhiteSpace($command)) {
+        $arguments = @($arguments | Where-Object { $_ -ne $null })
+
+        if ([string]::IsNullOrWhiteSpace($command) -and $arguments.Count -eq 0) {
             Show-Usage
             return 0
         }
 
-        $command = $command.Trim().ToLower()
+        if ($null -ne $command) {
+            $command = $command.Trim().ToLower()
+        }
 
-        if ($arguments -match '^(--version|-v)$' -or $command -eq 'version') {
+        if ($arguments -contains '--version' -or $arguments -contains '-v' -or $command -eq 'version') {
             Show-PVM-Version
             return 0
         }
 
-        if ($command -like '*:*') {
-            $splitted = $command.Split(':')
-            $nestedCommand = $splitted[0]
-            if ($nestedCommand -in (Get-NestedCommands)) {
-                $command = $nestedCommand
-                $arguments = @($splitted[1]) + $arguments
-            }
-        }
+        $command, $arguments = Resolve-NestedCommand -command $command -arguments $arguments
 
         $command = Resolve-Alias -alias $command
 

@@ -62,7 +62,7 @@ function Is-Two-PHP-Versions-Equal {
             ($version1.buildType -eq $version2.buildType))
 }
 
-function Create-Zend-Extensions-List {
+function Set-Zend-Extensions-List {
     try {
         $jsonContent = $DEFAULT_ZEND_EXTENSIONS | ConvertTo-Json -Depth 10
         Set-Content -Path $ZEND_EXTENSIONS_LIST_PATH -Value $jsonContent -Encoding UTF8

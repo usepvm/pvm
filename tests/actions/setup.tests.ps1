@@ -248,7 +248,7 @@ Describe "Setup-Environment-Directories-And-Files" {
         Mock Make-Directory { return 0 }
         Mock Create-Example-PHP-Profile { return 0 }
         Mock Create-Profile-Template { return 0 }
-        Mock Create-Zend-Extensions-List { return 0 }
+        Mock Set-Zend-Extensions-List { return 0 }
         Mock Set-Aliases-List { return 0 }
     }
 
@@ -276,7 +276,7 @@ Describe "Setup-Environment-Directories-And-Files" {
     }
 
     It "Returns -1 when the zend extensions file creation fails" {
-        Mock Create-Zend-Extensions-List { return -1 }
+        Mock Set-Zend-Extensions-List { return -1 }
         $result = Setup-Environment-Directories-And-Files
         $result | Should -Be -1
     }

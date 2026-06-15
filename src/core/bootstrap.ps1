@@ -69,6 +69,13 @@ function Start-PVM {
     param ($command, $arguments)
 
     try {
+        if ([string]::IsNullOrWhiteSpace($command)) {
+            Show-Usage
+            return 0
+        }
+
+        $command = $command.Trim().ToLower()
+
         if ($arguments -match '^(--version|-v)$' -or $command -eq 'version') {
             Show-PVM-Version
             return 0
@@ -87,7 +94,7 @@ function Start-PVM {
 
         $actions = Get-Actions -arguments $arguments
 
-        if (-not ($command -and $actions.Contains($command))) {
+        if (-not $actions.Contains($command)) {
             Show-Usage
             return 0
         }

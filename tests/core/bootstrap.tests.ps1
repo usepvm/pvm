@@ -277,8 +277,6 @@ Describe "Start-PVM Function Tests" {
 
             $result | Should -Be 0
             Assert-MockCalled Show-Usage -Times 1
-            Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Resolve-Alias -Times 1
         }
 
         It "Should show usage and return 0 when command is empty string" {
@@ -286,8 +284,6 @@ Describe "Start-PVM Function Tests" {
 
             $result | Should -Be 0
             Assert-MockCalled Show-Usage -Times 1
-            Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Resolve-Alias -Times 1
         }
 
         It "Should show usage and return 0 when command is whitespace" {
@@ -561,17 +557,6 @@ Describe "Start-PVM Function Tests" {
                 $ForegroundColor -eq 'DarkYellow'
             }
         }
-
-        It "Should handle null command in exception logging" {
-            Mock Get-Actions { throw 'Early exception' }
-
-            $result = Start-PVM -command $null -arguments @()
-
-            $result | Should -Be -1
-            Assert-MockCalled Log-Data -Times 1 -ParameterFilter {
-                $data.header -eq "Start-PVM - An error occurred during command ''"
-            }
-        }
     }
 
     Context "Edge Cases and Boundary Tests" {
@@ -674,7 +659,7 @@ Describe "Start-PVM Function Tests" {
             }
         }
 
-        It "Should execute nested command" -tag i {
+        It "Should execute nested command" {
             Mock Invoke-Ini { return 0 }
             $result = Start-PVM -command 'ini:get' -arguments @()
 
@@ -682,7 +667,7 @@ Describe "Start-PVM Function Tests" {
             Assert-MockCalled Invoke-Ini -Times 1
         }
 
-        It "Should execute non nested command" -tag ii {
+        It "Should execute non nested command" {
             Mock Show-Usage { }
             $result = Start-PVM -command 'install:8.2.0' -arguments @()
 

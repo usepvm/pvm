@@ -17,6 +17,7 @@ Describe "Get-Actions Tests" {
         Mock Invoke-Test { }
         Mock Invoke-Profile { }
         Mock Invoke-Cache { }
+        Mock Invoke-Aliases { }
     }
 
     It "Should return ordered hashtable with all actions" {
@@ -138,6 +139,13 @@ Describe "Get-Actions Tests" {
             $actions['cache'].action.Invoke()
 
             Assert-MockCalled Invoke-Cache -Times 1
+        }
+
+        It "Should execute aliases action" {
+            $actions = Get-Actions -arguments @()
+            $actions['aliases'].action.Invoke()
+
+            Assert-MockCalled Invoke-Aliases -Times 1
         }
     }
 }

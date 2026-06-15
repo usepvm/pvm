@@ -893,3 +893,27 @@ Describe "Invoke-Cache Tests" {
         }
     }
 }
+
+Describe "Invoke-Aliases Tests" {
+    BeforeEach {
+        Mock Write-Host { }
+    }
+
+    It "Should return -1 when no aliases are found" {
+        Mock Get-Aliases { return @{} }
+
+        $result = Invoke-Aliases
+
+        $result | Should -Be -1
+        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*No aliases found.*' -and $ForegroundColor -eq 'DarkYellow' }
+    }
+
+    It "Should return 0 when aliases are found" {
+        Mock Get-Aliases { return @{ 'alias1' = 'command1'; 'alias2' = 'command2' } }
+
+        $result = Invoke-Aliases
+
+        $result | Should -Be 0
+        Assert-MockCalled Write-Host -Times 2
+    }
+}

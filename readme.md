@@ -319,12 +319,33 @@ pvm cache clear
 
 ### Command Aliases
 
-| Command | Alias |
+You can use the following aliases for commonly used commands.
+
+To view the complete list from the CLI:
+
+```sh
+pvm aliases
+```
+
+| Alias | Command |
 |----------|--------|
-| help | h |
-| list | ls |
-| install | i |
-| uninstall | rm |
+| ? | help |
+| h | help |
+| init | setup |
+| cur | current |
+| active | current |
+| ls | list |
+| i | install |
+| u | uninstall |
+| switch | use |
+| on | enable |
+| off | disable |
+| a | add |
+| + | add |
+| rm | remove |
+| - | remove |
+| del | delete |
+| cls | clear |
 
 ### Build Types
 

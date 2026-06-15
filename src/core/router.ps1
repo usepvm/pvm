@@ -237,6 +237,20 @@ function Get-Actions {
             }
             action      = { return Invoke-Cache -arguments $script:arguments }
         }
+        'aliases'   = @{
+            command     = 'pvm aliases';
+            description = 'List available aliases.';
+            usage       = [ordered]@{
+                USAGE       = 'pvm aliases'
+                DESCRIPTION = @(
+                    'Lists all available aliases.'
+                )
+                EXAMPLES    = @(
+                    'pvm aliases ......................... Lists all available aliases'
+                )
+            }
+            action      = { return Invoke-Aliases -arguments $script:arguments }
+        }
         'log'       = @{
             command     = 'pvm log';
             description = 'Display the log file.';

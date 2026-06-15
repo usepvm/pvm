@@ -375,3 +375,23 @@ function Invoke-Cache {
         }
     }
 }
+
+function Invoke-Aliases {
+    $aliases = Get-Aliases
+
+    if ($aliases.Count -eq 0) {
+        Write-Host -Object 'No aliases found.' -ForegroundColor DarkYellow
+        return -1
+    }
+
+    Write-Host -Object "`n`nAvailable Aliases:`n"
+    $maxAliasLength = ($aliases.Keys | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
+    $aliases.Keys | ForEach-Object {
+        $alias = "$_ ".PadRight($maxAliasLength, '.')
+        $command = $aliases[$_]
+
+        Write-Host -Object "  $alias $command"
+    }
+
+    return 0
+}

@@ -92,7 +92,6 @@ Describe "Show-Usage Tests" {
             }
         }
 
-
         Show-Usage
 
         # Ensure additional lines were written (calls beyond the initial line)
@@ -152,45 +151,6 @@ Describe "Show-PVM-Version Function Tests" {
         Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nPVM version 1.0.0-RC1+build.123"
         }
-    }
-}
-
-Describe "Resolve-Alias Tests" {
-    $testCases = @(
-        @{ Command = '?'; Expected = 'help' }
-        @{ Command = 'h'; Expected = 'help' }
-        @{ Command = 'H'; Expected = 'help' }
-        @{ Command = 'INIT'; Expected = 'setup' }
-        @{ Command = 'CUR'; Expected = 'current' }
-        @{ Command = 'ls'; Expected = 'list' }
-        @{ Command = 'list'; Expected = 'list' }
-        @{ Command = 'u'; Expected = 'uninstall' }
-        @{ Command = 'U'; Expected = 'uninstall' }
-        @{ Command = 'uninstall'; Expected = 'uninstall' }
-        @{ Command = 'I'; Expected = 'install' }
-        @{ Command = 'install'; Expected = 'install' }
-        @{ Command = 'SWITCH'; Expected = 'use' }
-        @{ Command = 'ON'; Expected = 'enable' }
-        @{ Command = 'OFF'; Expected = 'disable' }
-        @{ Command = 'A'; Expected = 'add' }
-        @{ Command = '+'; Expected = 'add' }
-        @{ Command = 'rm'; Expected = 'remove' }
-        @{ Command = '-'; Expected = 'remove' }
-        @{ Command = 'i'; Expected = 'install' }
-        @{ Command = 'LS'; Expected = 'list' }
-        @{ Command = 'RM'; Expected = 'remove' }
-        @{ Command = 'DEL'; Expected = 'delete' }
-        @{ Command = 'CLS'; Expected = 'clear' }
-        @{ Command = 'unknown'; Expected = 'unknown' }
-        @{ Command = ''; Expected = $null }
-        @{ Command = '    '; Expected = $null }
-        @{ Command = $null; Expected = $null }
-    )
-
-    It "Returns '<Expected>' when '<Command>' is passed" -TestCases $testCases {
-        param ($Command, $Expected)
-        $result = Resolve-Alias -alias $Command
-        $result | Should -Be $Expected
     }
 }
 

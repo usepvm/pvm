@@ -215,3 +215,42 @@ function Get-EnvConfig {
 
     return $config
 }
+
+function Get-Aliases {
+    return [ordered]@{
+        '?'  = 'help';
+        'h'  = 'help';
+        'init' = 'setup';
+        'cur' = 'current';
+        'active' = 'current';
+        'ls' = 'list';
+        'i'  = 'install';
+        'u'  = 'uninstall';
+        'switch' = 'use';
+        'on' = 'enable';
+        'off' = 'disable';
+        'a'  = 'add';
+        '+'  = 'add';
+        'rm' = 'remove';
+        '-'  = 'remove';
+        'del' = 'delete';
+        'cls' = 'clear';
+    }
+}
+
+function Resolve-Alias {
+    param ($alias)
+
+    if ([string]::IsNullOrWhiteSpace($alias)) {
+        return $null
+    }
+
+    $alias = $alias.Trim().ToLower()
+    $aliases = Get-Aliases
+
+    if ($aliases.Contains($alias)) {
+        return $aliases[$alias]
+    }
+
+    return $alias
+}

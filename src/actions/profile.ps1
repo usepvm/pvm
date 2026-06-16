@@ -669,13 +669,9 @@ function Create-Example-PHP-Profile {
         $jsonContent = $exampleProfile | ConvertTo-Json -Depth 10
         Set-Content -Path "$PROFILES_PATH\example-profile.json" -Value $jsonContent -Encoding UTF8
 
-        Write-Host -Object "`nExample profile created successfully at '$PROFILES_PATH\example-profile.json'." -ForegroundColor DarkGreen
-        Write-Host -Object "- Use 'pvm help profile' to learn more." -ForegroundColor Gray
-
         return 0
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create example profile"; exception = $_ }
-        Write-Host -Object "`nFailed to create example profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
 }
@@ -690,13 +686,9 @@ function Create-Profile-Template {
         $jsonContent = $profileTemplate | ConvertTo-Json -Depth 10
         Set-Content -Path $PROFILE_TEMPLATE_PATH -Value $jsonContent -Encoding UTF8
 
-        Write-Host -Object "`nProfile template created successfully at '$PROFILE_TEMPLATE_PATH'." -ForegroundColor DarkGreen
-        Write-Host -Object '- Feel free to modify it.' -ForegroundColor Gray
-
         return 0
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create profile template"; exception = $_ }
-        Write-Host -Object "`nFailed to create profile template: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
 }

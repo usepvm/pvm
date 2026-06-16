@@ -67,12 +67,9 @@ function Set-Zend-Extensions-List {
         $jsonContent = $DEFAULT_ZEND_EXTENSIONS | ConvertTo-Json -Depth 10
         Set-Content -Path $ZEND_EXTENSIONS_LIST_PATH -Value $jsonContent -Encoding UTF8
 
-        Write-Host -Object "`nZend extensions list created successfully at '$ZEND_EXTENSIONS_LIST_PATH'." -ForegroundColor DarkGreen
-
         return 0
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create zend extensions list"; exception = $_ }
-        Write-Host -Object "`nFailed to create zend extensions list: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
 }

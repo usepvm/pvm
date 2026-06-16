@@ -221,14 +221,9 @@ function Set-Aliases-List {
         $jsonContent = $DEFAULT_ALIASES | ConvertTo-Json -Depth 10
         Set-Content -Path $ALIASES_LIST_PATH -Value $jsonContent -Encoding UTF8
 
-        Write-Host -Object "`nAliases list created successfully at '$ALIASES_LIST_PATH'." -ForegroundColor DarkGreen
-        Write-Host -Object "- Use 'pvm aliases' to see available aliases." -ForegroundColor Gray
-        Write-Host -Object "- Feel free to modify it." -ForegroundColor Gray
-
         return 0
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create aliases list"; exception = $_ }
-        Write-Host -Object "`nFailed to create aliases list: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
 }

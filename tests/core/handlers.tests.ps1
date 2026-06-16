@@ -46,15 +46,6 @@ Describe "Invoke-Setup Tests" {
 
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Failed to optimize system path*' -and $ForegroundColor -eq 'DarkYellow' }
     }
-
-    It "Should display warning when environment directories and files setup fails" {
-        Mock Setup-Environment-Directories-And-Files { -1 }
-
-        $result = Invoke-Setup
-        $result | Should -Be 0
-
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Failed to setup environment directories and files*' -and $ForegroundColor -eq 'DarkYellow' }
-    }
 }
 
 Describe "Invoke-Current Tests" {

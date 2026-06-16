@@ -1,4 +1,8 @@
 ﻿
+BeforeAll {
+    Mock Write-Host {}
+}
+
 Describe "Setup-PVM" {
     BeforeAll {
         Mock Write-Host {}
@@ -243,24 +247,26 @@ Describe "Setup-PVM" {
     }
 }
 
-Describe "Setup-Environment-Directories-And-Files" {
-    BeforeAll {
-        Mock Make-Directory { return 0 }
-        Mock Create-Example-PHP-Profile { return 0 }
-        Mock Create-Profile-Template { return 0 }
-        Mock Set-Zend-Extensions-List { return 0 }
-        Mock Set-Aliases-List { return 0 }
-    }
-
+Describe "Initialize-PVMDirectories" {
     It "Returns 0 when all directories and files are created" {
-        $result = Setup-Environment-Directories-And-Files
-        $result | Should -Be 0
+        Mock Make-Directory { return 0 }
+        $result = Initialize-PVMDirectories
+        $result | Should -Be @(0, 0, 0, 0, 0)
     }
 
     It "Returns -1 when a directory creation fails" {
         Mock Make-Directory { return -1 }
-        $result = Setup-Environment-Directories-And-Files
-        $result | Should -Be -1
+        $result = Initialize-PVMDirectories
+        $result | Should -Be @(-1, -1, -1, -1, -1)
+    }
+}
+
+Describe "Initialize-PVMFiles" {
+    BeforeAll {
+        Mock Create-Example-PHP-Profile { return 0 }
+        Mock Create-Profile-Template { return 0 }
+        Mock Set-Zend-Extensions-List { return 0 }
+        Mock Set-Aliases-List { return 0 }
     }
 
     It "Returns -1 when the example profile creation fails" {
@@ -283,6 +289,32 @@ Describe "Setup-Environment-Directories-And-Files" {
 
     It "Returns -1 when the aliases file creation fails" {
         Mock Set-Aliases-List { return -1 }
+        $result = Setup-Environment-Directories-And-Files
+        $result | Should -Be -1
+    }
+}
+
+Describe "Setup-Environment-Directories-And-Files" {
+    It "Returns 0 when all directories and files are created" {
+        Mock Initialize-PVMDirectories { return @(0, 0) }
+        Mock Initialize-PVMFiles { return @(0, 0) }
+
+        $result = Setup-Environment-Directories-And-Files
+        $result | Should -Be 0
+    }
+
+    It "Returns -1 when a directory creation fails" {
+        Mock Initialize-PVMDirectories { return @(0, -1) }
+        Mock Initialize-PVMFiles { return @(0, 0) }
+
+        $result = Setup-Environment-Directories-And-Files
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when a file creation fails" {
+        Mock Initialize-PVMDirectories { return @(0, 0) }
+        Mock Initialize-PVMFiles { return @(0, -1) }
+
         $result = Setup-Environment-Directories-And-Files
         $result | Should -Be -1
     }

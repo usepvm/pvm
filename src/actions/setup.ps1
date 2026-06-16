@@ -2,16 +2,14 @@
 function Setup-PVM {
     try {
         $path = Get-EnvVar-ByName -name 'Path' -optimized $true
-        if ($null -eq $path) {
-            $path = ''
-        }
+        if ($null -eq $path) { $path = '' }
         $newPath = $path
         $pathEntries = $path -split ';' | Where-Object { $_ -ne '' }
 
         $parent = Split-Path -Path $PHP_CURRENT_VERSION_PATH
         $created = Make-Directory -path $parent
         if ($created -ne 0) {
-            return @{ code = -1; message = 'Failed to create directory for PHP version.'; color = 'DarkYellow'}
+            return @{ code = -1; message = 'Failed to create directory for PHP version.'; color = 'DarkYellow' }
         }
 
         $pvmEnvVarContent = Get-EnvVar-ByName -name 'PVM'
@@ -24,7 +22,7 @@ function Setup-PVM {
             $newPath += ";%$PVM_ENV_VAR_NAME%"
         }
 
-        $result = @{ code = 0; message = 'PVM environment has been set up.'; color = 'DarkGreen'}
+        $result = @{ code = 0; message = 'PVM environment has been set up.'; color = 'DarkGreen' }
         if ($newPath -ne $path) {
             $result.code = Set-EnvVar -name 'Path' -value $newPath
         }
@@ -36,23 +34,70 @@ function Setup-PVM {
     }
 }
 
-function Setup-Environment-Directories-And-Files {
-    $codes = @()
-    $codes += Make-Directory -path $STORAGE_PATH
-    $codes += Make-Directory -path $DATA_PATH
-    $codes += Make-Directory -path $TEMPLATES_PATH
-    $codes += Make-Directory -path $CACHE_PATH
-    $codes += Make-Directory -path $PROFILES_PATH
-    $codes += Create-Example-PHP-Profile
-    $codes += Create-Profile-Template
-    $codes += Set-Zend-Extensions-List
-    $codes += Set-Aliases-List
+function Initialize-PVMDirectories {
+    $dirs = @($STORAGE_PATH, $DATA_PATH, $TEMPLATES_PATH, $CACHE_PATH, $PROFILES_PATH)
 
-    foreach ($code in $codes) {
-        if ($code -ne 0) {
-            return -1
+    Write-Host "`nPVM environment directories:"
+    $codes = @()
+    $maxNameLength = ($dirs | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
+    foreach ($dir in $dirs) {
+        $codes += $code = Make-Directory -path $dir
+
+        $dirName = "- $dir ".PadRight($maxNameLength, '.')
+        if ($code -eq 0) {
+            Write-Host -Object "$dirName Created." -ForegroundColor DarkGreen
+        } else {
+            Write-Host -Object "$dirName Not created." -ForegroundColor DarkYellow
         }
     }
 
+    return $codes
+}
+
+function Initialize-PVMFiles {
+    $codes = @()
+
+    $codes += $code = Create-Example-PHP-Profile
+    if ($code -eq 0) {
+        Write-Host -Object "`nExample profile created successfully at '$PROFILES_PATH\example-profile.json'." -ForegroundColor DarkGreen
+        Write-Host -Object "- Use 'pvm help profile' to learn more." -ForegroundColor Gray
+    } else {
+        Write-Host -Object "`nFailed to create example profile." -ForegroundColor DarkYellow
+    }
+
+    $codes += $code = Create-Profile-Template
+    if ($code -eq 0) {
+        Write-Host -Object "`nProfile template created successfully at '$PROFILE_TEMPLATE_PATH'." -ForegroundColor DarkGreen
+        Write-Host -Object '- Feel free to modify it.' -ForegroundColor Gray
+    } else {
+        Write-Host -Object "`nFailed to create profile template." -ForegroundColor DarkYellow
+    }
+
+    $codes += $code = Set-Zend-Extensions-List
+    if ($code -eq 0) {
+        Write-Host -Object "`nZend extensions list created successfully at '$ZEND_EXTENSIONS_LIST_PATH'." -ForegroundColor DarkGreen
+    } else {
+        Write-Host -Object "`nFailed to create zend extensions list." -ForegroundColor DarkYellow
+    }
+
+    $codes += $code = Set-Aliases-List
+    if ($code -eq 0) {
+        Write-Host -Object "`nAliases list created successfully at '$ALIASES_LIST_PATH'." -ForegroundColor DarkGreen
+        Write-Host -Object "- Use 'pvm aliases' to see available aliases." -ForegroundColor Gray
+        Write-Host -Object "- Feel free to modify it." -ForegroundColor Gray
+    } else {
+        Write-Host -Object "`nFailed to create aliases list." -ForegroundColor DarkYellow
+    }
+
+    return $codes
+}
+
+function Setup-Environment-Directories-And-Files {
+    $codes = @()
+
+    $codes += Initialize-PVMDirectories
+    $codes += Initialize-PVMFiles
+
+    if ($codes | Where-Object { $_ -ne 0 }) { return -1 }
     return 0
 }

@@ -110,10 +110,8 @@ function Disable-IniExtension-Direct {
     try {
         # Normalize extension name - remove php_ prefix and .dll suffix if present
         $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
-        $extFileName = "php_$extName.dll"
 
         $lines = [string[]](Get-Content -Path $iniPath)
-        $modified = $false
 
         # Check for extension in multiple formats (only enabled/not commented lines):
         # 1. extension=php_openssl.dll (full filename, may have path)
@@ -153,7 +151,6 @@ function Disable-IniExtension-Direct {
             if ($isMatch) {
                 # Comment out the line
                 $lines[$i] = ";$line"
-                $modified = $true
                 break
             }
         }

@@ -2,12 +2,12 @@
 function Is-PVM-Setup {
     try {
         $pvmEnvVarContent = Get-EnvVar-ByName -name 'PVM'
-        $pvmEnvEntries = $pvmEnvVarContent -split ';' | Where-Object { $_ -ne '' }
 
         if ($null -eq $pvmEnvVarContent) {
             return $false
         }
 
+        $pvmEnvEntries = $pvmEnvVarContent -split ';' | Where-Object { $_ -ne '' }
         if ($pvmEnvEntries -notcontains $PVMRoot -or $pvmEnvEntries -notcontains $PHP_CURRENT_VERSION_PATH) {
             return $false
         }

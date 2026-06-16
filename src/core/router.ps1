@@ -19,7 +19,7 @@ function Get-Actions {
         }
         'setup'     = @{
             command     = 'pvm setup';
-            description = 'Setup the environment variables and paths for PHP.';
+            description = 'Configure PHP environment variables, paths, directories, and files.';
             usage       = [ordered]@{
                 USAGE       = 'pvm setup';
                 DESCRIPTION = @(
@@ -31,7 +31,7 @@ function Get-Actions {
         }
         'current'   = @{
             command     = 'pvm current';
-            description = 'Display active version.';
+            description = 'Display the active PHP version.';
             usage       = [ordered]@{
                 USAGE       = 'pvm current'
                 DESCRIPTION = @(
@@ -43,12 +43,12 @@ function Get-Actions {
         }
         'list'      = @{
             command     = 'pvm list [available] [x86|x64] [ts|nts]';
-            description = "Lists the PHP installations. Type 'available' at the end to see what can be installed.";
+            description = "List installed PHP versions, or use 'available' to show versions that can be installed.";
             usage       = [ordered]@{
                 USAGE       = 'pvm list [available] [--search=<term>] [x86|x64] [ts|nts] (alias: ls for list)'
                 DESCRIPTION = @(
-                    'shows installed PHP versions.'
-                    "With 'available' argument, shows available PHP versions for installation. (list is cashed for $CACHE_MAX_HOURS hours)"
+                    'Shows installed PHP versions.'
+                    "With the 'available' argument, shows PHP versions available for installation. The available-version list is cached for $CACHE_MAX_HOURS hours."
                 )
                 EXAMPLES    = @(
                     'pvm list ........................... Show installed versions'
@@ -63,12 +63,12 @@ function Get-Actions {
         }
         'install'   = @{
             command     = 'pvm install <version>|[auto] [x86|x64] [ts|nts]';
-            description = "The version must be a specific version. use 'auto' to install the version specified in the current directory's composer.json or .php-version file.";
+            description = "Install a specific PHP version, 'latest', or use 'auto' to install the version from composer.json or .php-version.";
             usage       = [ordered]@{
                 USAGE       = 'pvm install <version> (alias: pvm i <version>) | pvm install auto | pvm install latest'
                 DESCRIPTION = @(
-                    'Downloads and installs the PHP version, including opcache and xdebug.'
-                    "or use 'auto' to automatically select the version based on project configuration files."
+                    'Downloads and installs the PHP version.'
+                    "Use 'auto' to automatically select the version based on project configuration files."
                 )
                 ARGUMENTS   = @(
                     '<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)'
@@ -86,7 +86,7 @@ function Get-Actions {
         }
         'uninstall' = @{
             command     = 'pvm uninstall <version>';
-            description = 'The version must be a specific version.';
+            description = 'Remove an installed PHP version.';
             usage       = [ordered]@{
                 USAGE       = 'pvm uninstall <version> (alias: pvm rm <version>)'
                 DESCRIPTION = @(
@@ -101,7 +101,7 @@ function Get-Actions {
         }
         'use'       = @{
             command     = 'pvm use <version>|[auto]';
-            description = "Switch to use the specified version. use 'auto' to switch to the version specified in the current directory's composer.json or .php-version file.";
+            description = "Switch to a specific PHP version, or use 'auto' to select the version from composer.json or .php-version.";
             usage       = [ordered]@{
                 USAGE       = 'pvm use <version> | pvm use auto'
                 DESCRIPTION = @(
@@ -121,7 +121,7 @@ function Get-Actions {
         }
         'info'      = @{
             command     = 'pvm info';
-            description = 'Display information about the environment.';
+            description = 'Display PHP environment and configuration information.';
             usage       = [ordered]@{
                 USAGE       = 'pvm info | pvm ini info'
                 DESCRIPTION = @(
@@ -133,7 +133,7 @@ function Get-Actions {
         }
         'ini'       = @{
             command     = 'pvm ini <action> [<args>]';
-            description = "Manage PHP ini settings. You can use 'set' or 'get' for a setting value; 'status', 'add', 'remove', 'list [available]', 'enable' or 'disable' for an extension, 'info' for a summary or 'restore' the original ini file from backup.";
+            description = "Manage php.ini settings and extensions for the active PHP version.";
             usage       = [ordered]@{
                 USAGE       = 'pvm ini <action> [arguments]'
                 DESCRIPTION = @(
@@ -182,7 +182,7 @@ function Get-Actions {
         }
         'profile'   = @{
             command     = 'pvm profile <action> [<args>]';
-            description = 'Manage PHP configuration profiles. Save, load, and share popular PHP settings and extensions.';
+            description = 'Save, load, inspect, import, and export PHP configuration profiles.';
             usage       = [ordered]@{
                 USAGE       = 'pvm profile <action> [arguments]'
                 DESCRIPTION = @(
@@ -216,7 +216,7 @@ function Get-Actions {
         }
         'cache'     = @{
             command     = 'pvm cache <action> [<args>]';
-            description = 'Manage PVM cache files.';
+            description = 'List, inspect, delete, or clear PVM cache files.';
             usage       = [ordered]@{
                 USAGE       = 'pvm cache <action> [arguments]'
                 DESCRIPTION = @(
@@ -239,7 +239,7 @@ function Get-Actions {
         }
         'aliases'   = @{
             command     = 'pvm aliases';
-            description = 'List available aliases.';
+            description = 'List all command aliases.';
             usage       = [ordered]@{
                 USAGE       = 'pvm aliases'
                 DESCRIPTION = @(
@@ -253,7 +253,7 @@ function Get-Actions {
         }
         'log'       = @{
             command     = 'pvm log';
-            description = 'Display the log file.';
+            description = 'Display recent PVM log entries.';
             usage       = [ordered]@{
                 USAGE       = 'pvm log --pageSize=[number] [--search=<term>] (default is $DEFAULT_LOG_PAGE_SIZE)'
                 DESCRIPTION = @(
@@ -270,7 +270,7 @@ function Get-Actions {
         }
         'test'      = @{
             command     = 'pvm test';
-            description = 'Run tests.';
+            description = 'Run the PVM test suite.';
             usage       = [ordered]@{
                 USAGE       = 'pvm test [files] [--exclude=files] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>] [--sort=[coverage|duration|file]]'
                 DESCRIPTION = @(

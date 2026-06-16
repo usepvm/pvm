@@ -8,7 +8,7 @@ function Backup-IniFile {
             Copy-Item -Path $iniPath $backup
         }
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to backup ini file"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to backup ini file"; exception = $_ }
         return -1
     }
 }

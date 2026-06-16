@@ -60,7 +60,7 @@ function Get-Packages-From-Source-Links {
                 }
             }
         } catch {
-            $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to find packages for $extName v$extVersion"; exception = $_ }
+            $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to find packages for $extName v$extVersion"; exception = $_ }
         }
     }
 
@@ -72,7 +72,7 @@ function Get-Extension-Matching-Categories {
 
     $html_cat = Invoke-WebRequest -Uri $PECL_PACKAGES_URL
     $linksMatchingExtName = @()
-    $resultCat = $html_cat.Links | Where-Object {
+    $null = $html_cat.Links | Where-Object {
         if (-not $_.href) { return $false }
 
         if ($_.href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {

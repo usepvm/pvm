@@ -175,7 +175,7 @@ function Get-Popular-PHP-Settings {
             }
         }
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP settings"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP settings"; exception = $_ }
     }
 
     return $DEFAULT_SETTINGS
@@ -191,7 +191,7 @@ function Get-Popular-PHP-Extensions {
             }
         }
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP extensions"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP extensions"; exception = $_ }
     }
 
     return $DEFAULT_EXTENSIONS
@@ -272,7 +272,7 @@ function Save-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to save profile '$profileName'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to save profile '$profileName'"; exception = $_ }
         Write-Host -Object "`nFailed to save profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -386,7 +386,7 @@ function Load-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to load profile '$profileName'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to load profile '$profileName'"; exception = $_ }
         Write-Host -Object "`nFailed to load profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -443,7 +443,7 @@ function List-PHP-Profiles {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list profiles"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list profiles"; exception = $_ }
         Write-Host -Object "`nFailed to list profiles: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -511,7 +511,7 @@ function Show-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show profile '$profileName'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show profile '$profileName'"; exception = $_ }
         Write-Host -Object "`nFailed to show profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -541,7 +541,7 @@ function Delete-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete profile '$profileName'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete profile '$profileName'"; exception = $_ }
         Write-Host -Object "`nFailed to delete profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -567,7 +567,7 @@ function Export-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to export profile '$profileName'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to export profile '$profileName'"; exception = $_ }
         Write-Host -Object "`nFailed to export profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -619,7 +619,7 @@ function Import-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to import profile from '$importPath'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to import profile from '$importPath'"; exception = $_ }
         Write-Host -Object "`nFailed to import profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -677,7 +677,7 @@ function Create-Example-PHP-Profile {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create example profile"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create example profile"; exception = $_ }
         Write-Host -Object "`nFailed to create example profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -698,7 +698,7 @@ function Create-Profile-Template {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create profile template"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create profile template"; exception = $_ }
         Write-Host -Object "`nFailed to create profile template: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }

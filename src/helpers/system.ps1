@@ -11,7 +11,7 @@ function Get-All-EnvVars {
     try {
         return Get-All-EnvVars-Core
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get all environment variables"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get all environment variables"; exception = $_ }
         return $null
     }
 }
@@ -38,7 +38,7 @@ function Get-EnvVar-ByName {
 
         return $value
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get environment variable '$name'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get environment variable '$name'"; exception = $_ }
         return $null
     }
 }
@@ -67,7 +67,7 @@ function Set-EnvVar {
         Set-EnvVar-Core -name $name -value $value
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set environment variable '$name'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set environment variable '$name'"; exception = $_ }
         return -1
     }
 }
@@ -148,7 +148,7 @@ function Optimize-SystemPath {
 
         return $output
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to optimize system PATH variable"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to optimize system PATH variable"; exception = $_ }
         return -1
     }
 }

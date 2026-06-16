@@ -37,7 +37,7 @@ function Get-From-Source {
 
         return $fetchedVersionsGrouped
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch PHP versions from source"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch PHP versions from source"; exception = $_ }
         return @{}
     }
 }
@@ -56,7 +56,7 @@ function Get-PHP-List-To-Install {
 
         return $fetchedVersionsGrouped
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get fetch PHP versions"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get fetch PHP versions"; exception = $_ }
         return @{}
     }
 }
@@ -120,7 +120,7 @@ function Get-Available-PHP-Versions {
         Write-Host -Object $msg
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"; exception = $_ }
         return -1
     }
 }
@@ -170,7 +170,7 @@ function Display-Installed-PHP-Versions {
         }
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display installed PHP versions"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display installed PHP versions"; exception = $_ }
         return -1
     }
 }

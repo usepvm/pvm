@@ -20,7 +20,7 @@ function Get-Data-From-Cache {
         $jsonData = $jsonString | ConvertFrom-Json
         return $jsonData
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"; exception = $_ }
         return @{}
     }
 }
@@ -48,7 +48,7 @@ function Can-Use-Cache {
 
         return $useCache
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"; exception = $_ }
 
         return $false
     }
@@ -68,7 +68,7 @@ function Cache-Data {
         Set-Content -Path $path -Value $jsonString
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to cache data"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to cache data"; exception = $_ }
         return -1
     }
 }
@@ -98,7 +98,7 @@ function Get-OrUpdateCache {
     $data = & $compute
 
     if ($null -ne $data) {
-        $cached = Cache-Data -cacheFileName $cacheFileName -data $data -depth $depth
+        $null = Cache-Data -cacheFileName $cacheFileName -data $data -depth $depth
     }
 
     return $data

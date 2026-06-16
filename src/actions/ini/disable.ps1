@@ -93,7 +93,7 @@ function Disable-IniExtension {
 
         return $overallCode
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to disable extension '$($extNames -join ', ')'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to disable extension '$($extNames -join ', ')'"; exception = $_ }
         return -1
     }
 }

@@ -111,7 +111,7 @@ function Invoke-IniAction {
 
         return $exitCode
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to invoke ini action '$action'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to invoke ini action '$action'"; exception = $_ }
         Write-Host -Object "`nFailed to perform action '$action' on ini settings." -ForegroundColor Red
         return -1
     }

@@ -22,7 +22,7 @@ function List-Cache-Files {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list cache files"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list cache files"; exception = $_ }
         Write-Host -Object "`nFailed to list cache files." -ForegroundColor DarkYellow
         return -1
     }
@@ -53,7 +53,7 @@ function Show-Cache-Data {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show cache data"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show cache data"; exception = $_ }
         Write-Host -Object "`nFailed to show cache data." -ForegroundColor DarkYellow
         return -1
     }
@@ -82,7 +82,7 @@ function Delete-Cache-File {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete cache file '$cacheName'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete cache file '$cacheName'"; exception = $_ }
         Write-Host -Object "`nFailed to delete cache file: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -112,7 +112,7 @@ function Clear-Cache-Files {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear cache files"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear cache files"; exception = $_ }
         Write-Host -Object "`nFailed to clear cache files." -ForegroundColor DarkYellow
         return -1
     }

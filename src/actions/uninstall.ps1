@@ -25,11 +25,11 @@ function Uninstall-PHP {
 
         Remove-Item -Path ($pathVersionObject.path) -Recurse -Force
 
-        $cacheRefreshed = Refresh-Installed-PHP-Versions-Cache
+        $null = Refresh-Installed-PHP-Versions-Cache
 
         return @{ code = 0; message = "PHP version $($pathVersionObject.version) has been uninstalled successfully"; color = 'DarkGreen' }
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to uninstall PHP version '$version'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to uninstall PHP version '$version'"; exception = $_ }
         return @{ code = -1; message = "Failed to uninstall PHP version '$version'"; color = 'DarkYellow' }
     }
 }

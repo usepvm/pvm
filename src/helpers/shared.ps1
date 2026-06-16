@@ -31,7 +31,7 @@ function Is-PVM-Setup {
 
         return $true
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PVM is set up"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PVM is set up"; exception = $_ }
         return $false
     }
 }
@@ -88,7 +88,7 @@ function Display-Msg-By-ExitCode {
             Write-Host -Object "`n$($result.message)" -ForegroundColor $result.color
         }
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
     }
 }
 
@@ -142,7 +142,7 @@ function Format-Seconds {
 
         return '{0:D2}:{1:D2}' -f $minutes, $seconds
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to format seconds"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to format seconds"; exception = $_ }
         return -1
     }
 }
@@ -227,7 +227,7 @@ function Set-Aliases-List {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create aliases list"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create aliases list"; exception = $_ }
         Write-Host -Object "`nFailed to create aliases list: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -244,7 +244,7 @@ function Get-Aliases {
             }
         }
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get aliases list"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get aliases list"; exception = $_ }
     }
 
     return $DEFAULT_ALIASES

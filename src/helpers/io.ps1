@@ -9,7 +9,7 @@ function Get-All-Subdirectories {
         $path = $path.Trim()
         return Get-ChildItem -Path $path -Directory
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get all subdirectories of '$path'"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get all subdirectories of '$path'"; exception = $_ }
         return $null
     }
 }
@@ -118,7 +118,7 @@ function Make-Symbolic-Link {
         New-Item -ItemType SymbolicLink -Path $link -Target $target | Out-Null
         return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = 'DarkGreen' }
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to make symbolic link"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to make symbolic link"; exception = $_ }
         return @{ code = -1; message = "Failed to make symbolic link '$link' -> '$target'"; color = 'DarkYellow' }
     }
 }
@@ -140,6 +140,6 @@ function Extract-Zip {
             Remove-Item -Path $zipPath -Force
         }
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to extract zip file from $zipPath"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to extract zip file from $zipPath"; exception = $_ }
     }
 }

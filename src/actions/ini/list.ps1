@@ -5,7 +5,7 @@ function Get-Extension-Categories-By-Page {
     $availableExtensions = @()
     $html = Invoke-WebRequest -Uri "$PECL_BASE_URL/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
-    $resultLinks = $html.Links | Where-Object {
+    $null = $html.Links | Where-Object {
         if (-not $_.href) { return $false }
         if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+&pageID=(\d+)$') {
             $hasMore = ($page -eq ($matches[1] - 1))
@@ -31,7 +31,7 @@ function Get-PHPExtensions-From-Source {
     $availableExtensions = @{}
     try {
         $html_cat = Invoke-WebRequest -Uri $PECL_PACKAGES_URL
-        $resultCat = $html_cat.Links | Where-Object {
+        $null = $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
 
             if ($_.href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
@@ -62,11 +62,11 @@ function Get-PHPExtensions-From-Source {
         )
         $dataToCache = [ordered] @{}
         $availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object { $dataToCache[$_.Key] = $_.Value }
-        $cached = Cache-Data -cacheFileName 'available_extensions' -data $dataToCache -depth 3
+        $null = Cache-Data -cacheFileName 'available_extensions' -data $dataToCache -depth 3
 
         return $availableExtensions
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"; exception = $_ }
         return @{}
     }
 }
@@ -185,7 +185,7 @@ function List-PHP-Extensions {
         return 0
     } catch {
         Write-Host -Object "`nFailed to list extensions"
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"; exception = $_ }
         return -1
     }
 }

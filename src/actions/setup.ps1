@@ -17,8 +17,7 @@ function Setup-PVM {
         $pvmEnvVarContent = Get-EnvVar-ByName -name 'PVM'
 
         if (($null -eq $pvmEnvVarContent) -or ($pvmEnvVarContent -ne "$PVMRoot;$PHP_CURRENT_VERSION_PATH")) {
-            $pvmEnvVarContent = "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
-            $output = Set-EnvVar -name $PVM_ENV_VAR_NAME -value $pvmEnvVarContent
+            $null = Set-EnvVar -name $PVM_ENV_VAR_NAME -value "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
         }
 
         if ($pathEntries -notcontains "%$PVM_ENV_VAR_NAME%") {
@@ -27,13 +26,12 @@ function Setup-PVM {
 
         $result = @{ code = 0; message = 'PVM environment has been set up.'; color = 'DarkGreen'}
         if ($newPath -ne $path) {
-            $output = Set-EnvVar -name 'Path' -value $newPath
-            $result.code = $output
+            $result.code = Set-EnvVar -name 'Path' -value $newPath
         }
 
         return $result
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set up PVM environment"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set up PVM environment"; exception = $_ }
         return @{ code = -1; message = 'Failed to set up PVM environment.'; color = 'DarkYellow'}
     }
 }

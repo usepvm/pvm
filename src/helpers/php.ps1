@@ -71,7 +71,7 @@ function Set-Zend-Extensions-List {
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create zend extensions list"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create zend extensions list"; exception = $_ }
         Write-Host -Object "`nFailed to create zend extensions list: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -86,7 +86,7 @@ function Get-Zend-Extensions-List {
             }
         }
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get zend extensions list"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get zend extensions list"; exception = $_ }
     }
 
     return $DEFAULT_ZEND_EXTENSIONS
@@ -95,11 +95,11 @@ function Get-Zend-Extensions-List {
 function Refresh-Installed-PHP-Versions-Cache {
     try {
         $installedVersions = Get-Installed-PHP-Versions-From-Directory
-        $cached = Cache-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
+        $null = Cache-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
 
         return 0
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to refresh installed PHP versions cache"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to refresh installed PHP versions cache"; exception = $_ }
 
         return -1
     }
@@ -118,7 +118,7 @@ function Get-Installed-PHP-Versions-From-Directory {
 
     $installedVersions = ($installedVersions | Sort-Object { [version]$_.Version })
 
-    $cached = Cache-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
+    $null = Cache-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
 
     return $installedVersions
 }
@@ -147,7 +147,7 @@ function Get-Installed-PHP-Versions {
 
         return $installedVersions
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve installed PHP versions"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve installed PHP versions"; exception = $_ }
         return @()
     }
 }
@@ -202,7 +202,7 @@ function Get-Matching-PHP-Versions {
 
         return $matchingVersions
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
     }
 
     return $null
@@ -219,7 +219,7 @@ function Is-PHP-Version-Installed {
             $_.BuildType -eq $version.BuildType
         })
     } catch {
-        $logged = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
     }
 
     return $false

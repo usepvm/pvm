@@ -2,7 +2,7 @@
 BeforeAll {
     Mock Write-Host {}
     # Create a mock registry to simulate environment variables
-    $global:MockRegistry = @{
+    $script:MockRegistry = @{
         Machine = @{
             'Path' = 'C:\Windows\System32;C:\Program Files\Git\bin;C:\CustomApp;C:\Program Files\Java\bin'
             'JAVA_HOME' = 'C:\Program Files\Java'
@@ -17,15 +17,15 @@ BeforeAll {
     }
 
     # Setup test environment
-    $global:LOG_ERROR_PATH = 'TestDrive:\logs\error.log'
-    $global:STORAGE_PATH = 'TestDrive:\storage'
-    $global:PATH_VAR_BACKUP_PATH = 'TestDrive:\logs\path_backup.log'
+    $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
+    $script:STORAGE_PATH = $PVMConfig.paths.storage = 'TestDrive:\storage'
+    $script:PATH_VAR_BACKUP_PATH = $PVMConfig.paths.pathVarBackup = 'TestDrive:\logs\path_backup.log'
 
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
 
     # Mock file system for logging tests
-    $global:MockFileSystem = @{
+    $script:MockFileSystem = @{
         Directories = @("$($STORAGE_PATH)\php\8.1", "$($STORAGE_PATH)\php\8.2")
         Files = @{
             "$($LOG_ERROR_PATH)" = @()
@@ -37,36 +37,36 @@ BeforeAll {
 
     # Create wrapper functions that use our mock registry
     Mock Get-All-EnvVars-Core {
-        if ($global:MockRegistryThrowException) {
-            throw $global:MockRegistryException
+        if ($script:MockRegistryThrowException) {
+            throw $script:MockRegistryException
         }
 
         $result = @{}
-        $global:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
+        $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
         return $result
     }
 
     Mock Get-EnvVar-ByName-Core {
         param ($name)
 
-        if ($global:MockRegistryThrowException) {
-            throw $global:MockRegistryException
+        if ($script:MockRegistryThrowException) {
+            throw $script:MockRegistryException
         }
 
-        return $global:MockRegistry.Machine[$name]
+        return $script:MockRegistry.Machine[$name]
     }
 
     Mock Set-EnvVar-Core {
         param ($name, $value)
 
-        if ($global:MockRegistryThrowException) {
-            throw $global:MockRegistryException
+        if ($script:MockRegistryThrowException) {
+            throw $script:MockRegistryException
         }
 
         if ($null -eq $value) {
-            $global:MockRegistry.Machine.Remove($name)
+            $script:MockRegistry.Machine.Remove($name)
         } else {
-            $global:MockRegistry.Machine[$name] = $value
+            $script:MockRegistry.Machine[$name] = $value
         }
     }
 }
@@ -82,7 +82,7 @@ Describe "Get-All-EnvVars" {
 
     Context "When an exception occurs" {
         It "Returns null" {
-            Mock Get-All-EnvVars-Core { throw $global:MockRegistryException }
+            Mock Get-All-EnvVars-Core { throw $script:MockRegistryException }
             $result = Get-All-EnvVars
             $result | Should -BeNullOrEmpty
         }

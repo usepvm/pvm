@@ -52,7 +52,7 @@ function Update-PHP-Version {
             }
         }
 
-        $linkCreated = Make-Symbolic-Link -link $PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
+        $linkCreated = Make-Symbolic-Link -link $PVMConfig.env.PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
         if ($linkCreated.code -ne 0) {
             return $linkCreated
         }

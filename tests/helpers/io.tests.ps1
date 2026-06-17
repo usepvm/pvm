@@ -2,7 +2,7 @@
 BeforeAll {
     Mock Write-Host {}
     # Create a mock registry to simulate environment variables
-    $global:MockRegistry = @{
+    $script:MockRegistry = @{
         Machine = @{
             'Path' = 'C:\Windows\System32;C:\Program Files\Git\bin;C:\CustomApp;C:\Program Files\Java\bin'
             'JAVA_HOME' = 'C:\Program Files\Java'
@@ -17,9 +17,9 @@ BeforeAll {
     }
 
     # Setup test environment
-    $global:LOG_ERROR_PATH = 'TestDrive:\logs\error.log'
-    $global:STORAGE_PATH = 'TestDrive:\storage'
-    $global:PATH_VAR_BACKUP_PATH = 'TestDrive:\logs\path_backup.log'
+    $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
+    $script:STORAGE_PATH = $PVMConfig.paths.storage = 'TestDrive:\storage'
+    $script:PATH_VAR_BACKUP_PATH = $PVMConfig.paths.pathVarBackup = 'TestDrive:\logs\path_backup.log'
 
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null

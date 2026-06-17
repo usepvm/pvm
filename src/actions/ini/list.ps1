@@ -3,7 +3,7 @@ function Get-Extension-Categories-By-Page {
     param ($extCategory, $link, $page = 1)
 
     $availableExtensions = @()
-    $html = Invoke-WebRequest -Uri "$PECL_BASE_URL/$($link.TrimStart('/'))&pageID=$page"
+    $html = Invoke-WebRequest -Uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
     $null = $html.Links | Where-Object {
         if (-not $_.href) { return $false }
@@ -30,7 +30,7 @@ function Get-Extension-Categories-By-Page {
 function Get-PHPExtensions-From-Source {
     $availableExtensions = @{}
     try {
-        $html_cat = Invoke-WebRequest -Uri $PECL_PACKAGES_URL
+        $html_cat = Invoke-WebRequest -Uri $PVMConfig.links.peclPackages
         $null = $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
 
@@ -55,7 +55,7 @@ function Get-PHPExtensions-From-Source {
         }
         $availableExtensions['XDebug'] = @(
             @{
-                href = $XDEBUG_HISTORICAL_URL
+                href = $PVMConfig.links.xdebugHistorical
                 extName = 'xdebug'
                 extCategory = 'XDebug'
             }
@@ -133,7 +133,7 @@ function List-PHP-Extensions {
             }
 
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
-            $maxLineLength = [Math]::Max($MIN_LINE_LENGTH, $maxKeyLength + ($MIN_PAD_RIGHT_LENGTH * 3))
+            $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxKeyLength + ($($PVMConfig.env.MIN_PAD_RIGHT_LENGTH) * 3))
 
             Write-Host -Object "`nAvailable Extensions by Category:"
             Write-Host    '--------------------------------'
@@ -149,7 +149,7 @@ function List-PHP-Extensions {
                     $hostWidth = $hostVar.UI.RawUI.WindowSize.Width
                 }
 
-                $maxDescLength = $hostWidth - ($maxLineLength + ($MIN_PAD_RIGHT_LENGTH * 2))
+                $maxDescLength = $hostWidth - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH) * 2)
                 if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
                 $descLines = @()
@@ -177,8 +177,8 @@ function List-PHP-Extensions {
             }
 
             $msg = "`nThis is a partial list. For a complete list, visit:"
-            $msg += "`nPHP Extensions : $PECL_PACKAGES_URL"
-            $msg += "`nXDebug : $XDEBUG_HISTORICAL_URL"
+            $msg += "`nPHP Extensions : $($PVMConfig.links.peclPackages)"
+            $msg += "`nXDebug : $($PVMConfig.links.xdebugHistorical)"
             Write-Host -Object $msg
         }
 

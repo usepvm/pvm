@@ -2,7 +2,7 @@
 function Get-Extension-Matching-Categories-By-Page {
     param ($extName, $link, $page = 1)
 
-    $html = Invoke-WebRequest -Uri "$PECL_BASE_URL/$($link.TrimStart('/'))&pageID=$page"
+    $html = Invoke-WebRequest -Uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
     $resultLinks = $html.Links | Where-Object {
         if (-not $_.href) { return $false }
@@ -23,7 +23,7 @@ function Get-Extension-Matching-Categories-By-Page {
 function Filter-Extension-Links-From-URL {
     param ($extName)
 
-    $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName"
+    $html = Invoke-WebRequest -Uri "$($PVMConfig.links.peclPackageRoot)/$extName"
     $links = $html.Links | Where-Object {
         $_.href -match "/package/$extName/([^/]+)/windows$"
     }
@@ -38,7 +38,7 @@ function Get-Packages-From-Source-Links {
     $links | ForEach-Object {
         try {
             $extVersion = $_.href -replace "/package/$extName/", '' -replace '/windows', ''
-            $html = Invoke-WebRequest -Uri "$PECL_PACKAGE_ROOT_URL/$extName/$extVersion/windows"
+            $html = Invoke-WebRequest -Uri "$($PVMConfig.links.peclPackageRoot)/$extName/$extVersion/windows"
             $html.Links | ForEach-Object {
                 if (-not $_.href) { return }
 
@@ -70,7 +70,7 @@ function Get-Packages-From-Source-Links {
 function Get-Extension-Matching-Categories {
     param ($extName)
 
-    $html_cat = Invoke-WebRequest -Uri $PECL_PACKAGES_URL
+    $html_cat = Invoke-WebRequest -Uri $PVMConfig.links.peclPackages
     $linksMatchingExtName = @()
     $null = $html_cat.Links | Where-Object {
         if (-not $_.href) { return $false }

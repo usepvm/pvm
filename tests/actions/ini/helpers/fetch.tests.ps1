@@ -1,6 +1,9 @@
 ﻿
 BeforeAll {
     Mock Write-Host {}
+    $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
+    $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
+    $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
 }
 
 Describe "Get-Extension-Matching-Categories-By-Page Tests" {

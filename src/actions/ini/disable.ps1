@@ -23,7 +23,7 @@ function Disable-IniExtension {
             if ($matchesListStatus.Length -gt 1) {
                 Write-Host -Object "`nMultiple extensions match '$extName':`n" -ForegroundColor Cyan
 
-                $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + $MIN_PAD_RIGHT_LENGTH
+                $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
                 $index = 0
                 $matchesListStatus | ForEach-Object {
                     $name = "$($_.name) ".PadRight($maxLineLength, '.')
@@ -84,7 +84,7 @@ function Disable-IniExtension {
             $results += @{ name = $selected.name; status = 'Disabled'; color = 'DarkYellow' }
         }
 
-        $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
+        $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         Write-Host -Object "`nResults:"
         foreach ($item in $results) {
             Write-Host -Object "- $($item.name) ".PadRight($maxLineLength, '.') -NoNewline

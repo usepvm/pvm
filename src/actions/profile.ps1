@@ -165,8 +165,8 @@ function Disable-IniExtension-Direct {
 function Get-Popular-PHP-Settings {
     try {
         # Return list of popular/common PHP settings that should be included in profiles
-        if (Is-File-Exists -path $PROFILE_TEMPLATE_PATH) {
-            $data = (Get-Content -Path $PROFILE_TEMPLATE_PATH -Raw | ConvertFrom-Json)
+        if (Is-File-Exists -path $PVMConfig.paths.profileTemplate) {
+            $data = (Get-Content -Path $PVMConfig.paths.profileTemplate -Raw | ConvertFrom-Json)
             if ($null -ne $data.settings -and $data.settings.Count -gt 0) {
                 return $data.settings
             }
@@ -175,14 +175,14 @@ function Get-Popular-PHP-Settings {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP settings"; exception = $_ }
     }
 
-    return $DEFAULT_SETTINGS
+    return $PVMConfig.defaults.settings
 }
 
 function Get-Popular-PHP-Extensions {
     try {
         # Return list of popular/common PHP extensions that should be included in profiles
-        if (Is-File-Exists -path $PROFILE_TEMPLATE_PATH) {
-            $data = (Get-Content -Path $PROFILE_TEMPLATE_PATH -Raw | ConvertFrom-Json)
+        if (Is-File-Exists -path $PVMConfig.paths.profileTemplate) {
+            $data = (Get-Content -Path $PVMConfig.paths.profileTemplate -Raw | ConvertFrom-Json)
             if ($null -ne $data.extensions -and $data.extensions.Count -gt 0) {
                 return $data.extensions
             }
@@ -191,7 +191,7 @@ function Get-Popular-PHP-Extensions {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP extensions"; exception = $_ }
     }
 
-    return $DEFAULT_EXTENSIONS
+    return $PVMConfig.defaults.extensions
 }
 
 function Save-PHP-Profile {
@@ -250,13 +250,13 @@ function Save-PHP-Profile {
         }
 
         # Save to JSON file
-        $created = Make-Directory -path $PROFILES_PATH
+        $created = Make-Directory -path $PVMConfig.paths.profiles
         if ($created -ne 0) {
             Write-Host -Object "`nFailed to create profiles directory." -ForegroundColor DarkYellow
             return -1
         }
 
-        $profilePath = "$PROFILES_PATH\$profileName.json"
+        $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
         $jsonContent = $userProfile | ConvertTo-Json -Depth 10
         Set-Content -Path $profilePath -Value $jsonContent -Encoding UTF8
 
@@ -293,7 +293,7 @@ function Load-PHP-Profile {
         }
 
         # Load profile JSON
-        $profilePath = "$PROFILES_PATH\$profileName.json"
+        $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
         if (Is-File-Not-Exists -path $profilePath) {
             Write-Host -Object "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
             Write-Host -Object "  Use 'pvm profile list' to see available profiles." -ForegroundColor Gray
@@ -391,12 +391,12 @@ function Load-PHP-Profile {
 
 function List-PHP-Profiles {
     try {
-        if (Is-Directory-Not-Exists -path $PROFILES_PATH) {
+        if (Is-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
             Write-Host -Object "`nNo profiles directory found. Create a profile with 'pvm profile save <name>'." -ForegroundColor DarkYellow
             return -1
         }
 
-        $profileFiles = Get-ChildItem -Path $PROFILES_PATH -Filter '*.json' -ErrorAction SilentlyContinue
+        $profileFiles = Get-ChildItem -Path $PVMConfig.paths.profiles -Filter '*.json' -ErrorAction SilentlyContinue
 
         if ($profileFiles.Count -eq 0) {
             Write-Host -Object "`nNo profiles found. Create a profile with 'pvm profile save <name>'." -ForegroundColor DarkYellow
@@ -426,7 +426,7 @@ function List-PHP-Profiles {
             }
         }
 
-        $maxNameLength = ($profiles.Name | Measure-Object -Maximum Length).Maximum + $MIN_PAD_RIGHT_LENGTH
+        $maxNameLength = ($profiles.Name | Measure-Object -Maximum Length).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
 
         foreach ($userProfile in $profiles) {
             Write-Host -Object (' Name '.PadRight($maxNameLength, '.') + " $($userProfile.Name)")
@@ -435,7 +435,7 @@ function List-PHP-Profiles {
             Write-Host -Object ('   PHP '.PadRight($maxNameLength, '.') + " $($userProfile.PHPVersion)")
             Write-Host -Object ('   Settings '.PadRight($maxNameLength, '.') + " $($userProfile.Settings)")
             Write-Host -Object ('   Extensions '.PadRight($maxNameLength, '.') + " $($userProfile.Extensions)")
-            Write-Host -Object ('   Path '.PadRight($maxNameLength, '.') + " $PROFILES_PATH\$($userProfile.File)`n")
+            Write-Host -Object ('   Path '.PadRight($maxNameLength, '.') + " $($PVMConfig.paths.profiles)\$($userProfile.File)`n")
         }
 
         return 0
@@ -450,7 +450,7 @@ function Show-PHP-Profile {
     param ($profileName)
 
     try {
-        $profilePath = "$PROFILES_PATH\$profileName.json"
+        $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
         if (Is-File-Not-Exists -path $profilePath) {
             Write-Host -Object "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
             Write-Host -Object "  Use 'pvm profile list' to see available profiles." -ForegroundColor Gray
@@ -472,8 +472,8 @@ function Show-PHP-Profile {
 
         $settingsCount = if ($userProfile.settings) { ($userProfile.settings.PSObject.Properties | Measure-Object).Count } else { 0 }
         $maxNameLength = [Math]::Max(
-            ($userProfile.settings.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2),
-            ($userProfile.extensions.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 3)
+            ($userProfile.settings.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2),
+            ($userProfile.extensions.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
         )
 
         Write-Host -Object "`nSettings ($settingsCount):" -ForegroundColor Cyan
@@ -518,7 +518,7 @@ function Delete-PHP-Profile {
     param ($profileName)
 
     try {
-        $profilePath = "$PROFILES_PATH\$profileName.json"
+        $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
 
         if (Is-File-Not-Exists -path $profilePath) {
             Write-Host -Object "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
@@ -548,7 +548,7 @@ function Export-PHP-Profile {
     param ($profileName, $exportPath = $null)
 
     try {
-        $profilePath = "$PROFILES_PATH\$profileName.json"
+        $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
 
         if (Is-File-Not-Exists -path $profilePath) {
             Write-Host -Object "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
@@ -594,13 +594,13 @@ function Import-PHP-Profile {
         # Use provided name or name from profile
         $finalName = if ($profileName) { $profileName } else { $userProfile.name }
 
-        $created = Make-Directory -path $PROFILES_PATH
+        $created = Make-Directory -path $PVMConfig.paths.profiles
         if ($created -ne 0) {
             Write-Host -Object "`nFailed to create profiles directory." -ForegroundColor DarkYellow
             return -1
         }
 
-        $targetPath = "$PROFILES_PATH\$finalName.json"
+        $targetPath = "$($PVMConfig.paths.profiles)\$finalName.json"
 
         # Update profile name if different
         if ($finalName -ne $userProfile.name) {
@@ -667,7 +667,7 @@ function Create-Example-PHP-Profile {
         }
 
         $jsonContent = $exampleProfile | ConvertTo-Json -Depth 10
-        Set-Content -Path "$PROFILES_PATH\example-profile.json" -Value $jsonContent -Encoding UTF8
+        Set-Content -Path "$($PVMConfig.paths.profiles)\example-profile.json" -Value $jsonContent -Encoding UTF8
 
         return 0
     } catch {
@@ -679,12 +679,12 @@ function Create-Example-PHP-Profile {
 function Create-Profile-Template {
     try {
         $profileTemplate = [ordered]@{
-            extensions = $DEFAULT_EXTENSIONS
-            settings = $DEFAULT_SETTINGS
+            extensions = $PVMConfig.defaults.extensions
+            settings = $PVMConfig.defaults.settings
         }
 
         $jsonContent = $profileTemplate | ConvertTo-Json -Depth 10
-        Set-Content -Path $PROFILE_TEMPLATE_PATH -Value $jsonContent -Encoding UTF8
+        Set-Content -Path $PVMConfig.paths.profileTemplate -Value $jsonContent -Encoding UTF8
 
         return 0
     } catch {

@@ -1,12 +1,18 @@
-
+﻿
 BeforeAll {
     $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
     $testIniPath = "$testDrivePath\php.ini"
     $extDirectory = "$testDrivePath\ext"
     $testBackupPath = "$testIniPath.bak"
 
-    $global:CACHE_PATH = 'TestDrive:\cache'
-    New-Item -ItemType Directory -Path $global:CACHE_PATH -Force | Out-Null
+    $PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
+    $XDEBUG_DOWNLOAD_URL = $PVMConfig.links.xdebugDownload
+    $XDEBUG_HISTORICAL_URL = $PVMConfig.links.xdebugHistorical
+    $PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
+    $PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
+
+    $PVMConfig.paths.cache = 'TestDrive:\cache'
+    New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
 
     Mock Write-Host {}
 
@@ -27,30 +33,30 @@ max_execution_time = 30
     Reset-Ini-Content
 
     # Mock global variables
-    $script:LOG_ERROR_PATH = "$testDrivePath\error.log"
-    $script:PHP_CURRENT_VERSION_PATH = "$testDrivePath\php"
+    $PVMConfig.paths.logError = "$testDrivePath\error.log"
+    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$testDrivePath\php"
 
     # Create directory and symlink for current PHP version
     $phpVersionPath = "$testDrivePath\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
-    New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
+    New-Item -ItemType SymbolicLink -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
     Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
 
     # Mock Log-Data function
-    function script:Log-Data {
+    Mock Log-Data {
         param ($logPath, $message, $data)
         return $true
     }
 
     # Mock Get-Current-PHP-Version function
-    function script:Get-Current-PHP-Version {
+    Mock Get-Current-PHP-Version {
         return @{
             version = '8.2.0'
             path = $phpVersionPath
         }
     }
 
-    $global:MockFileSystem = @{
+    $script:MockFileSystem = @{
         Directories = @()
         Files = @{}
         WebResponses = @{}
@@ -60,14 +66,14 @@ max_execution_time = 30
     function Invoke-WebRequest {
         param ($Uri, $OutFile = $null)
 
-        if ($global:MockFileSystem.DownloadFails) {
+        if ($script:MockFileSystem.DownloadFails) {
             throw 'Network error'
         }
 
-        if ($global:MockFileSystem.WebResponses.ContainsKey($Uri)) {
-            $response = $global:MockFileSystem.WebResponses[$Uri]
+        if ($script:MockFileSystem.WebResponses.ContainsKey($Uri)) {
+            $response = $script:MockFileSystem.WebResponses[$Uri]
             if ($OutFile) {
-                $global:MockFileSystem.Files[$OutFile] = 'Downloaded content'
+                $script:MockFileSystem.Files[$OutFile] = 'Downloaded content'
                 return
             }
             return @{
@@ -83,16 +89,16 @@ max_execution_time = 30
 Describe "Get-XDebug-FROM-URL Tests" {
     BeforeAll {
         function Reset-MockState {
-            $global:MockRegistryThrowException = $false
-            $global:MockFileSystem.DownloadFails = $false
-            $global:MockFileSystem.WebResponses = @{}
-            $global:MockFileSystem.Files = @{}
-            $global:MockFileSystem.Directories = @()
+            $script:MockRegistryThrowException = $false
+            $script:MockFileSystem.DownloadFails = $false
+            $script:MockFileSystem.WebResponses = @{}
+            $script:MockFileSystem.Files = @{}
+            $script:MockFileSystem.Directories = @()
         }
 
         function Set-MockWebResponse {
             param ($url, $content, $links = @())
-            $global:MockFileSystem.WebResponses[$url] = @{
+            $script:MockFileSystem.WebResponses[$url] = @{
                 Content = $content
                 Links = $links
             }
@@ -121,7 +127,7 @@ Describe "Get-XDebug-FROM-URL Tests" {
     }
 
     It "Should handle network errors" {
-        $global:MockFileSystem.DownloadFails = $true
+        $script:MockFileSystem.DownloadFails = $true
 
         $result = Get-XDebug-FROM-URL -url 'https://test.com' -version '8.1'
 
@@ -164,25 +170,25 @@ Describe "Install-XDebug-Extension" {
         }
 
         function Reset-MockState {
-            $global:MockRegistryThrowException = $false
-            $global:MockFileSystem.DownloadFails = $false
-            $global:MockFileSystem.WebResponses = @{}
-            $global:MockFileSystem.Files = @{}
-            $global:MockFileSystem.Directories = @()
+            $script:MockRegistryThrowException = $false
+            $script:MockFileSystem.DownloadFails = $false
+            $script:MockFileSystem.WebResponses = @{}
+            $script:MockFileSystem.Files = @{}
+            $script:MockFileSystem.Directories = @()
         }
 
         function Add-Content {
             param ($Path, $Value)
-            if ($global:MockFileSystem.Files.ContainsKey($Path)) {
-                $global:MockFileSystem.Files[$Path] += "`n$Value"
+            if ($script:MockFileSystem.Files.ContainsKey($Path)) {
+                $script:MockFileSystem.Files[$Path] += "`n$Value"
             } else {
-                $global:MockFileSystem.Files[$Path] = $Value
+                $script:MockFileSystem.Files[$Path] = $Value
             }
         }
 
         function Set-MockWebResponse {
             param ($url, $content, $links = @())
-            $global:MockFileSystem.WebResponses[$url] = @{
+            $script:MockFileSystem.WebResponses[$url] = @{
                 Content = $content
                 Links = $links
             }
@@ -190,9 +196,9 @@ Describe "Install-XDebug-Extension" {
     }
 
     BeforeEach {
-        $global:MockFileSystem.Directories += 'TestDrive:\php'
-        $global:MockFileSystem.Directories += 'TestDrive:\php\ext'
-        $global:MockFileSystem.Files['TestDrive:\php\php.ini'] = @"
+        $script:MockFileSystem.Directories += 'TestDrive:\php'
+        $script:MockFileSystem.Directories += 'TestDrive:\php\ext'
+        $script:MockFileSystem.Files['TestDrive:\php\php.ini'] = @"
 ;extension_dir = "ext"
 zend_extension = opcache
 opcache.enable = 1
@@ -216,7 +222,6 @@ opcache.enable = 1
     }
 
     It "Returns -1 when user does not want to overwrite existing dll extension version" {
-        # $global:MockFileSystem.DownloadFails = $false
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Mock Test-Path { return $true }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
@@ -537,7 +542,7 @@ extension=php_mbstring.dll
 
 Describe "Install-Extension" {
     BeforeAll {
-        $global:MockFileSystem = @{
+        $script:MockFileSystem = @{
             Directories = @()
             Files = @{}
             WebResponses = @{}
@@ -553,7 +558,7 @@ Describe "Install-Extension" {
 
         function Get-ChildItem {
             param ($Path)
-            if ($global:getRandomFile) {
+            if ($script:getRandomFile) {
                 return @( @{ Name = 'random_file' } )
             }
             return @( @{ Name = 'php_curl.dll'; FullName = 'TestDrive:\php_curl-1.4.0-7.4-ts-vc15-x86\php_curl.dll' } )
@@ -565,9 +570,9 @@ Describe "Install-Extension" {
     }
 
     BeforeEach {
-        $global:getRandomFile = $false
-        $global:MockFileSystem.DownloadFails = $false
-        $global:MockFileSystem.WebResponses = @{
+        $script:getRandomFile = $false
+        $script:MockFileSystem.DownloadFails = $false
+        $script:MockFileSystem.WebResponses = @{
             "$PECL_PACKAGE_ROOT_URL/nonexistent_ext" = @{
                 Content = 'Mocked PHP nonexistent_ext content'
                 Links = @()
@@ -644,7 +649,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when downloaded zip extension has no dll" {
-        $global:getRandomFile = $true
+        $script:getRandomFile = $true
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
         $code | Should -Be -1
     }
@@ -781,7 +786,7 @@ Describe "Install-Extension" {
                 }
             }
             Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" } -MockWith {
-                $global:MockFileSystem.Files[$OutFile] = 'Downloaded content'
+                $script:MockFileSystem.Files[$OutFile] = 'Downloaded content'
                 return
             }
             Mock Get-ChildItem {
@@ -826,7 +831,7 @@ Describe "Install-Extension" {
     }
 
     It "Handles thrown exception" {
-        $global:MockFileSystem.DownloadFails = $true
+        $script:MockFileSystem.DownloadFails = $true
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
         $code | Should -Be -1
     }

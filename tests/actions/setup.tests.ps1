@@ -7,13 +7,13 @@ Describe "Setup-PVM" {
     BeforeAll {
         Mock Write-Host {}
         # Mock global variables that the function depends on
-        $global:PHP_CURRENT_VERSION_PATH = 'C:\php\8.2'
-        $global:PVMRoot = 'TestDrive:\PVM'
-        $global:PVM_ENV_VAR_NAME = 'PVM'
-        $global:LOG_ERROR_PATH = 'TestDrive:\logs\error.log'
+        $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'C:\php\8.2'
+        $script:PVMRoot = 'TestDrive:\PVM'
+        $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME = 'PVM'
+        $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
 
         # Initialize mock registry
-        $global:MockRegistry = @{
+        $script:MockRegistry = @{
             Machine = @{
                 'Path' = 'C:\Windows\System32'
                 'PHP' = $null
@@ -26,95 +26,37 @@ Describe "Setup-PVM" {
         # Mock Log-Data function
         Mock Log-Data { return 0 }
 
+        Mock Is-Not-Admin { return $false }
+
         # Mock the System.Environment methods
-        function Get-EnvironmentVariableWrapper {
-            param ($name, $target)
-
-            if ($global:MockRegistryThrowException) {
-                throw $global:MockRegistryException
-            }
-
-            switch ($target) {
-                ([System.EnvironmentVariableTarget]::Machine) { return $global:MockRegistry.Machine[$name] }
-                ([System.EnvironmentVariableTarget]::Process) { return $global:MockRegistry.Process[$name] }
-                ([System.EnvironmentVariableTarget]::User) { return $global:MockRegistry.User[$name] }
-                default { return $null }
-            }
-        }
-
-        function Get-EnvVar-ByName {
+        Mock Get-EnvVar-ByName-Core {
             param ($name)
 
-            try {
-                if ([string]::IsNullOrWhiteSpace($name)) {
-                    return $null
-                }
-                $name = $name.Trim()
-                return Get-EnvironmentVariableWrapper -name $name -target ([System.EnvironmentVariableTarget]::Machine)
-            } catch {
-                $logged = Log-Data -data @{
-                    header = "Get-EnvVar-ByName: Failed to get environment variable '$name'"
-                    exception = $_
-                }
-                return $null
+            if ($script:MockRegistryThrowException) {
+                throw $script:MockRegistryException
             }
+
+            return $script:MockRegistry.Machine[$name]
         }
 
-        function Set-EnvironmentVariableWrapper {
-            param ($name, $value, $target)
-
-            if ($global:MockRegistryThrowException) {
-                throw $global:MockRegistryException
-            }
-
-            switch ($target) {
-                ([System.EnvironmentVariableTarget]::Machine) {
-                    if ($null -eq $value) {
-                        $global:MockRegistry.Machine.Remove($name)
-                    } else {
-                        $global:MockRegistry.Machine[$name] = $value
-                    }
-                }
-                ([System.EnvironmentVariableTarget]::Process) {
-                    if ($null -eq $value) {
-                        $global:MockRegistry.Process.Remove($name)
-                    } else {
-                        $global:MockRegistry.Process[$name] = $value
-                    }
-                }
-                ([System.EnvironmentVariableTarget]::User) {
-                    if ($null -eq $value) {
-                        $global:MockRegistry.User.Remove($name)
-                    } else {
-                        $global:MockRegistry.User[$name] = $value
-                    }
-                }
-            }
-        }
-
-        function Set-EnvVar {
+        Mock Set-EnvVar-Core {
             param ($name, $value)
 
-            try {
-                if ([string]::IsNullOrWhiteSpace($name)) {
-                    return -1
-                }
-                $name = $name.Trim()
-                Set-EnvironmentVariableWrapper -name $name -value $value -target ([System.EnvironmentVariableTarget]::Machine)
-                return 0
-            } catch {
-                $logged = Log-Data -data @{
-                    header = "Set-EnvVar: Failed to set environment variable '$name'"
-                    exception = $_
-                }
-                return -1
+            if ($script:MockRegistryThrowException) {
+                throw $script:MockRegistryException
+            }
+
+            if ($null -eq $value) {
+                $script:MockRegistry.Machine.Remove($name)
+            } else {
+                $script:MockRegistry.Machine[$name] = $value
             }
         }
     }
 
     BeforeEach {
         # Reset mock registry before each test
-        $global:MockRegistry = @{
+        $script:MockRegistry = @{
             Machine = @{
                 'Path' = 'C:\Windows\System32'
                 'PHP' = $null
@@ -238,12 +180,6 @@ Describe "Setup-PVM" {
             $result.code | Should -Be -1
             $result.message | Should -Be 'Failed to create directory for PHP version.'
         }
-    }
-
-    AfterAll {
-        Remove-Variable PHP_CURRENT_VERSION_PATH -Scope Global -ErrorAction SilentlyContinue
-        Remove-Variable PVMRoot -Scope Global -ErrorAction SilentlyContinue
-        Remove-Variable LOG_ERROR_PATH -Scope Global -ErrorAction SilentlyContinue
     }
 }
 

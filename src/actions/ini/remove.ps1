@@ -79,7 +79,7 @@ function Uninstall-Extension {
             if ($matchingExtensions.Length -gt 1) {
                 Write-Host -Object "`nMultiple extensions match '$extName':`n" -ForegroundColor Cyan
 
-                $maxLineLength = ($matchingExtensions.name | Measure-Object -Maximum Length).Maximum + $MIN_PAD_RIGHT_LENGTH
+                $maxLineLength = ($matchingExtensions.name | Measure-Object -Maximum Length).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
                 $index = 0
                 $matchingExtensions | ForEach-Object {
                     $name = "$($_.name) ".PadRight($maxLineLength, '.')
@@ -143,7 +143,7 @@ function Uninstall-Extension {
             $results += @{ name = $extName; status = 'Uninstalled'; color = 'DarkGreen' }
         }
 
-        $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
+        $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         Write-Host -Object "`nResults:"
         foreach ($item in $results) {
             Write-Host -Object "- $($item.name) ".PadRight($maxLineLength, '.') -NoNewline

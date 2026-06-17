@@ -5,8 +5,11 @@ BeforeAll {
     $extDirectory = "$testDrivePath\ext"
     $testBackupPath = "$testIniPath.bak"
 
-    $global:CACHE_PATH = 'TestDrive:\cache'
-    New-Item -ItemType Directory -Path $global:CACHE_PATH -Force | Out-Null
+    $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
+    $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
+
+    $PVMConfig.paths.cache = 'TestDrive:\cache'
+    New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
 
     Mock Write-Host {}
 
@@ -27,47 +30,47 @@ max_execution_time = 30
     Reset-Ini-Content
 
     # Mock global variables
-    $script:LOG_ERROR_PATH = "$testDrivePath\error.log"
-    $script:PHP_CURRENT_VERSION_PATH = "$testDrivePath\php"
+    $PVMConfig.paths.logError = "$testDrivePath\error.log"
+    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$testDrivePath\php"
 
     # Create directory and symlink for current PHP version
     $phpVersionPath = "$testDrivePath\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
-    New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
+    New-Item -ItemType SymbolicLink -Path $$PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
     Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
 
     # Mock Log-Data function
-    function script:Log-Data {
+    Mock Log-Data {
         param ($logPath, $message, $data)
         return $true
     }
 
     # Mock Get-Current-PHP-Version function
-    function script:Get-Current-PHP-Version {
+    Mock Get-Current-PHP-Version {
         return @{
             version = '8.2.0'
             path = $phpVersionPath
         }
     }
 
-    $global:MockFileSystem = @{
+    $script:MockFileSystem = @{
         Directories = @()
         Files = @{}
         WebResponses = @{}
         DownloadFails = $false
     }
 
-    function Invoke-WebRequest {
+    Mock Invoke-WebRequest {
         param ($Uri, $OutFile = $null)
 
-        if ($global:MockFileSystem.DownloadFails) {
+        if ($script:MockFileSystem.DownloadFails) {
             throw 'Network error'
         }
 
-        if ($global:MockFileSystem.WebResponses.ContainsKey($Uri)) {
-            $response = $global:MockFileSystem.WebResponses[$Uri]
+        if ($script:MockFileSystem.WebResponses.ContainsKey($Uri)) {
+            $response = $script:MockFileSystem.WebResponses[$Uri]
             if ($OutFile) {
-                $global:MockFileSystem.Files[$OutFile] = 'Downloaded content'
+                $script:MockFileSystem.Files[$OutFile] = 'Downloaded content'
                 return
             }
             return @{
@@ -211,8 +214,8 @@ extension=php_curl.dll
 
     Context "install action" {
         BeforeAll {
-            $global:getRandomFile = $false
-            $global:MockFileSystem = @{
+            $script:getRandomFile = $false
+            $script:MockFileSystem = @{
                 Directories = @()
                 Files = @{}
                 WebResponses = @{
@@ -253,16 +256,16 @@ extension=php_curl.dll
                 DownloadFails = $false
             }
 
-            function Read-Host {
+            Mock Read-Host {
                 param ($Prompt)
                 if ($Prompt -eq "`nInsert the [number] you want to install") {
                     return 0
                 }
             }
 
-            function Get-ChildItem {
+            Mock Get-ChildItem {
                 param ($Path)
-                if ($global:getRandomFile) {
+                if ($script:getRandomFile) {
                     return @( @{ Name = 'random_file' } )
                 }
                 return @( @{ Name = 'php_curl.dll'; FullName = 'TestDrive:\php_curl-1.4.0-7.4-ts-vc15-x86\php_curl.dll' } )

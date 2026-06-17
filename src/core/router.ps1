@@ -48,7 +48,7 @@ function Get-Actions {
                 USAGE       = 'pvm list [available] [--search=<term>] [x86|x64] [ts|nts] (alias: ls for list)'
                 DESCRIPTION = @(
                     'Shows installed PHP versions.'
-                    "With the 'available' argument, shows PHP versions available for installation. The available-version list is cached for $CACHE_MAX_HOURS hours."
+                    "With the 'available' argument, shows PHP versions available for installation. The available-version list is cached for $($PVMConfig.env.CACHE_MAX_HOURS) hours."
                 )
                 EXAMPLES    = @(
                     'pvm list ........................... Show installed versions'
@@ -255,13 +255,13 @@ function Get-Actions {
             command     = 'pvm log';
             description = 'Display recent PVM log entries.';
             usage       = [ordered]@{
-                USAGE       = 'pvm log --pageSize=[number] [--search=<term>] (default is $DEFAULT_LOG_PAGE_SIZE)'
+                USAGE       = "pvm log --pageSize=[number] [--search=<term>] (default is $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE))"
                 DESCRIPTION = @(
                     'Displays the PVM log file contents, showing recent errors,'
                     'and system messages. Useful for troubleshooting issues.'
                 )
                 EXAMPLES    = @(
-                    'pvm log ................... Shows the last $DEFAULT_LOG_PAGE_SIZE entries of the log file'
+                    "pvm log ................... Shows the last $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE) entries of the log file"
                     'pvm log --pageSize=50 ..... Shows the last 50 entries of the log file'
                     "pvm log --search=error .... Shows entries matching 'error' term"
                 )

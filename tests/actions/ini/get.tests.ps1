@@ -5,8 +5,8 @@ BeforeAll {
     $extDirectory = "$testDrivePath\ext"
     $testBackupPath = "$testIniPath.bak"
 
-    $global:CACHE_PATH = 'TestDrive:\cache'
-    New-Item -ItemType Directory -Path $global:CACHE_PATH -Force | Out-Null
+    $PVMConfig.paths.cache = 'TestDrive:\cache'
+    New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
 
     Mock Write-Host {}
 
@@ -27,13 +27,13 @@ max_execution_time = 30
     Reset-Ini-Content
 
     # Mock global variables
-    $script:LOG_ERROR_PATH = "$testDrivePath\error.log"
-    $script:PHP_CURRENT_VERSION_PATH = "$testDrivePath\php"
+    $PVMConfig.paths.logError = "$testDrivePath\error.log"
+    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$testDrivePath\php"
 
     # Create directory and symlink for current PHP version
     $phpVersionPath = "$testDrivePath\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
-    New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
+    New-Item -ItemType SymbolicLink -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
     Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
 }
 

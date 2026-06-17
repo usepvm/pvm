@@ -6,15 +6,16 @@ BeforeAll {
 Describe "Is-PVM-Setup" {
     BeforeAll {
         $script:originalPVMRoot = $global:PVMRoot
-        $script:originalPHPCurrentVersionPath = $global:PHP_CURRENT_VERSION_PATH
+        $script:originalPHPCurrentVersionPath = $script:PHP_CURRENT_VERSION_PATH
         $global:PVMRoot = 'TestDrive:\pvm'
-        $global:PHP_CURRENT_VERSION_PATH = 'TestDrive:\pvm\php'
+        $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\pvm\php'
+        $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME
         New-Item -ItemType Directory -Path $global:PVMRoot -Force | Out-Null
     }
 
     AfterAll {
         $global:PVMRoot = $script:originalPVMRoot
-        $global:PHP_CURRENT_VERSION_PATH = $script:originalPHPCurrentVersionPath
+        $script:PHP_CURRENT_VERSION_PATH = $script:originalPHPCurrentVersionPath
     }
 
     Context "When PVM is properly set up" {
@@ -338,7 +339,7 @@ Describe "Display-Msg-By-ExitCode" {
 Describe "Log-Data" {
     Context "When logging data" {
         It "Logs data successfully" {
-            $LOG_ERROR_PATH = 'TestDrive:\logs\test.log'
+            $LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\test.log'
             $result = Log-Data -data @{
                 header = 'Test message'
                 exception = @{
@@ -639,9 +640,10 @@ Describe "Resolve-BuildType" {
 
 Describe "Set-Aliases-List" {
     BeforeAll {
-        $global:TEMPLATES_PATH = 'TestDrive:\\storage\data\templates'
-        $global:ALIASES_LIST_PATH = "$TEMPLATES_PATH\aliases.json"
-        New-Item -ItemType Directory -Force -Path $global:TEMPLATES_PATH | Out-Null
+        $script:TEMPLATES_PATH = $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
+        $script:ALIASES_LIST_PATH = $PVMConfig.paths.aliasesList = "$TEMPLATES_PATH\aliases.json"
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
+        $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
     }
 
     It "Creates aliases.json" {
@@ -661,11 +663,12 @@ Describe "Set-Aliases-List" {
 
 Describe "Get-Aliases" {
     BeforeAll {
-        $global:TEMPLATES_PATH = 'TestDrive:\\storage\data\templates'
-        $global:ALIASES_LIST_PATH = "$TEMPLATES_PATH\aliases.json"
-        New-Item -ItemType Directory -Path $global:TEMPLATES_PATH | Out-Null
+        $script:TEMPLATES_PATH = $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
+        $script:ALIASES_LIST_PATH = $PVMConfig.paths.aliasesList = "$TEMPLATES_PATH\aliases.json"
+        New-Item -ItemType Directory -Path $script:TEMPLATES_PATH | Out-Null
         $testContent = [ordered]@{'?'  = 'help'; 'i'  = 'install'; 'init' = 'setup'}
         $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ALIASES_LIST_PATH
+        $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
     }
 
     It "Returns the zend_extensions.json content as a hashtable" {
@@ -677,7 +680,7 @@ Describe "Get-Aliases" {
     }
 
     It "Falls back to DEFAULT_ALIASES value" {
-        Remove-Item -Path "$global:TEMPLATES_PATH\aliases.json"
+        Remove-Item -Path "$script:TEMPLATES_PATH\aliases.json"
         $result = Get-Aliases
         $result.Count | Should -Be $DEFAULT_ALIASES.Count
     }

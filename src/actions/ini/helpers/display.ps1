@@ -18,9 +18,8 @@ function Display-Installed-Extensions {
     }
 
     # Calculate max length dynamically
-    $MIN_LINE_LENGTH = 60
     $maxNameLength = ($extensions.Extension | Measure-Object -Maximum Length).Maximum
-    $maxLineLength = [Math]::Max($MIN_LINE_LENGTH, $maxNameLength + 40)
+    $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxNameLength + 40)
 
     $extensions |
     Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true },
@@ -60,9 +59,8 @@ function Display-Settings {
         return
     }
 
-    $MIN_LINE_LENGTH = 57
     $maxLineLength = (($settings.Name + $settings.Value) | Measure-Object -Maximum Length).Maximum
-    $maxLineLength = [Math]::Max($MIN_LINE_LENGTH, $maxLineLength + 40)
+    $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxLineLength + 40)
 
     $settings |
     Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true },

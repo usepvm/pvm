@@ -1,10 +1,14 @@
 ﻿
 BeforeAll {
     # Mock global variables that would be defined in the main script
-    $global:DATA_PATH = "$PSScriptRoot\storage\data"
-    $global:LOG_ERROR_PATH = "$PSScriptRoot\storage\logs\error.log"
+    $PVMConfig.paths.data = "TestDrive:\storage\data"
+    $PVMConfig.paths.logError = "TestDrive:\storage\logs\error.log"
+
+    $script:PHP_WIN_ARCHIVES_URL = $PVMConfig.links.phpWinArchives
+    $script:PHP_WIN_RELEASES_URL = $PVMConfig.links.phpWinReleases
 
     Mock Write-Host { }
+
     # Mock external functions that aren't defined in the provided code
     Mock Make-Directory { return 0 }
     Mock Log-Data { param ($logPath, $message, $data) return 0 }
@@ -16,10 +20,6 @@ BeforeAll {
     }
     Mock Get-Current-PHP-Version { return @{ version = '8.2.0' } }
     Mock Get-Installed-PHP-Versions { return @('php8.2.0', 'php8.1.5', 'php7.4.33') }
-}
-
-AfterAll {
-    Remove-Item -Path "$PSScriptRoot\storage" -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Describe "Get-From-Source" {

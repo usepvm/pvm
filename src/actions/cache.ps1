@@ -1,12 +1,12 @@
 ﻿
 function List-Cache-Files {
     try {
-        if (Is-Directory-Not-Exists -path $CACHE_PATH) {
+        if (Is-Directory-Not-Exists -path $PVMConfig.paths.cache) {
             Write-Host -Object "`nNo cache directory found." -ForegroundColor DarkYellow
             return -1
         }
 
-        $cacheFiles = Get-ChildItem -Path $CACHE_PATH -Filter '*.json' -ErrorAction SilentlyContinue
+        $cacheFiles = Get-ChildItem -Path $PVMConfig.paths.cache -Filter '*.json' -ErrorAction SilentlyContinue
 
         if ($cacheFiles.Count -eq 0) {
             Write-Host -Object "`nNo cache files found." -ForegroundColor DarkYellow
@@ -90,7 +90,7 @@ function Delete-Cache-File {
 
 function Clear-Cache-Files {
     try {
-        $cacheFiles = Get-ChildItem -Path $CACHE_PATH -Filter '*.json' -ErrorAction SilentlyContinue
+        $cacheFiles = Get-ChildItem -Path $PVMConfig.paths.cache -Filter '*.json' -ErrorAction SilentlyContinue
 
         if ($cacheFiles.Count -eq 0) {
             Write-Host -Object "`nNo cache files found." -ForegroundColor DarkYellow

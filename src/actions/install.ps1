@@ -155,7 +155,7 @@ function Download-PHP {
         $buildType = $versionObject.BuildType
         $arch = $versionObject.arch
 
-        $destination = "$STORAGE_PATH\php"
+        $destination = "$($PVMConfig.paths.storage)\php"
         $created = Make-Directory -path $destination
         if ($created -ne 0) {
             Write-Host -Object "Failed to create directory $destination"
@@ -236,7 +236,7 @@ function Select-Version {
 
     $matchingVersionsPartialList = [ordered]@{}
     $matchingVersions.GetEnumerator() | ForEach-Object {
-        $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $DEFAULT_PARTIAL_LIST_SIZE
+        $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE
     }
     $matchingKeys = $matchingVersions.Values | Where-Object { $_.Count -gt 0 }
 
@@ -268,8 +268,8 @@ function Select-Version {
         }
 
         $msg = "`nThis is a partial list (latest matches only). For the complete list, visit:"
-        $msg += "`n Releases : $PHP_WIN_RELEASES_URL"
-        $msg += "`n Archives : $PHP_WIN_ARCHIVES_URL"
+        $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
+        $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
         Write-Host -Object $msg
         $selectedVersionInput = Read-Host -Prompt "`nInsert the [number] matching the version to install (or press Enter to cancel)"
         $selectedVersionInput = $selectedVersionInput.Trim()

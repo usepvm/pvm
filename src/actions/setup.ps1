@@ -6,7 +6,7 @@ function Setup-PVM {
         $newPath = $path
         $pathEntries = $path -split ';' | Where-Object { $_ -ne '' }
 
-        $parent = Split-Path -Path $PHP_CURRENT_VERSION_PATH
+        $parent = Split-Path -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH
         $created = Make-Directory -path $parent
         if ($created -ne 0) {
             return @{ code = -1; message = 'Failed to create directory for PHP version.'; color = 'DarkYellow' }
@@ -14,12 +14,12 @@ function Setup-PVM {
 
         $pvmEnvVarContent = Get-EnvVar-ByName -name 'PVM'
 
-        if (($null -eq $pvmEnvVarContent) -or ($pvmEnvVarContent -ne "$PVMRoot;$PHP_CURRENT_VERSION_PATH")) {
-            $null = Set-EnvVar -name $PVM_ENV_VAR_NAME -value "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
+        if (($null -eq $pvmEnvVarContent) -or ($pvmEnvVarContent -ne "$PVMRoot;$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)")) {
+            $null = Set-EnvVar -name $PVMConfig.env.PVM_ENV_VAR_NAME -value "$PVMRoot;$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)"
         }
 
-        if ($pathEntries -notcontains "%$PVM_ENV_VAR_NAME%") {
-            $newPath += ";%$PVM_ENV_VAR_NAME%"
+        if ($pathEntries -notcontains "%$($PVMConfig.env.PVM_ENV_VAR_NAME)%") {
+            $newPath += ";%$($PVMConfig.env.PVM_ENV_VAR_NAME)%"
         }
 
         $result = @{ code = 0; message = 'PVM environment has been set up.'; color = 'DarkGreen' }
@@ -35,11 +35,11 @@ function Setup-PVM {
 }
 
 function Initialize-PVMDirectories {
-    $dirs = @($STORAGE_PATH, $DATA_PATH, $TEMPLATES_PATH, $CACHE_PATH, $PROFILES_PATH)
+    $dirs = @($PVMConfig.paths.storage, $PVMConfig.paths.data, $PVMConfig.paths.templates, $PVMConfig.paths.cache, $PVMConfig.paths.profiles)
 
     Write-Host "`nPVM environment directories:"
     $codes = @()
-    $maxNameLength = ($dirs | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
+    $maxNameLength = ($dirs | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     foreach ($dir in $dirs) {
         $codes += $code = Make-Directory -path $dir
 
@@ -59,7 +59,7 @@ function Initialize-PVMFiles {
 
     $codes += $code = Create-Example-PHP-Profile
     if ($code -eq 0) {
-        Write-Host -Object "`nExample profile created successfully at '$PROFILES_PATH\example-profile.json'." -ForegroundColor DarkGreen
+        Write-Host -Object "`nExample profile created successfully at '$($PVMConfig.paths.profiles)\example-profile.json'." -ForegroundColor DarkGreen
         Write-Host -Object "- Use 'pvm help profile' to learn more." -ForegroundColor Gray
     } else {
         Write-Host -Object "`nFailed to create example profile." -ForegroundColor DarkYellow
@@ -67,7 +67,7 @@ function Initialize-PVMFiles {
 
     $codes += $code = Create-Profile-Template
     if ($code -eq 0) {
-        Write-Host -Object "`nProfile template created successfully at '$PROFILE_TEMPLATE_PATH'." -ForegroundColor DarkGreen
+        Write-Host -Object "`nProfile template created successfully at '$($PVMConfig.paths.profileTemplate)'." -ForegroundColor DarkGreen
         Write-Host -Object '- Feel free to modify it.' -ForegroundColor Gray
     } else {
         Write-Host -Object "`nFailed to create profile template." -ForegroundColor DarkYellow
@@ -75,14 +75,14 @@ function Initialize-PVMFiles {
 
     $codes += $code = Set-Zend-Extensions-List
     if ($code -eq 0) {
-        Write-Host -Object "`nZend extensions list created successfully at '$ZEND_EXTENSIONS_LIST_PATH'." -ForegroundColor DarkGreen
+        Write-Host -Object "`nZend extensions list created successfully at '$($PVMConfig.paths.zendExtensionsList)'." -ForegroundColor DarkGreen
     } else {
         Write-Host -Object "`nFailed to create zend extensions list." -ForegroundColor DarkYellow
     }
 
     $codes += $code = Set-Aliases-List
     if ($code -eq 0) {
-        Write-Host -Object "`nAliases list created successfully at '$ALIASES_LIST_PATH'." -ForegroundColor DarkGreen
+        Write-Host -Object "`nAliases list created successfully at '$($PVMConfig.paths.aliasesList)'." -ForegroundColor DarkGreen
         Write-Host -Object "- Use 'pvm aliases' to see available aliases." -ForegroundColor Gray
         Write-Host -Object "- Feel free to modify it." -ForegroundColor Gray
     } else {

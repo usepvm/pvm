@@ -1,8 +1,8 @@
 ﻿
 BeforeAll {
     # Mock global variables that would be loaded from config
-    $global:PVM_VERSION = '1.0.0'
-    $global:LOG_ERROR_PATH = 'TestDrive:\logs\error.log'
+    $script:PVM_VERSION = $PVMConfig.version = '1.0.0'
+    $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
 }
 
 Describe "Show-Usage Tests" {
@@ -29,7 +29,7 @@ Describe "Show-Usage Tests" {
     }
 
     It "Should display current version when available" {
-        $global:PVM_VERSION = '2.0'
+        $script:PVM_VERSION = $PVMConfig.version = '2.0'
         Show-Usage
 
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Running version : 2.0*' }
@@ -102,7 +102,7 @@ Describe "Show-Usage Tests" {
 Describe "Show-PVM-Version Function Tests" {
     BeforeEach {
         Mock Write-Host { }
-        $global:PVM_VERSION = '1.2.3'
+        $script:PVM_VERSION = $PVMConfig.version = '1.2.3'
     }
 
     It "Should display version with proper formatting" {
@@ -114,7 +114,7 @@ Describe "Show-PVM-Version Function Tests" {
     }
 
     It "Should display version when PVM_VERSION is null" {
-        $global:PVM_VERSION = $null
+        $script:PVM_VERSION = $PVMConfig.version = $null
         Show-PVM-Version
 
         Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
@@ -123,7 +123,7 @@ Describe "Show-PVM-Version Function Tests" {
     }
 
     It "Should display version when PVM_VERSION is empty string" {
-        $global:PVM_VERSION = ''
+        $script:PVM_VERSION = $PVMConfig.version = ''
         Show-PVM-Version
 
         Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
@@ -135,7 +135,7 @@ Describe "Show-PVM-Version Function Tests" {
         $testVersions = @('1.0.0', '2.5.1-beta', '3.0.0-alpha.1', 'v1.0.0', '1.0.0.0')
 
         foreach ($version in $testVersions) {
-            $global:PVM_VERSION = $version
+            $script:PVM_VERSION = $PVMConfig.version = $version
             Show-PVM-Version
 
             Assert-MockCalled Write-Host -ParameterFilter {
@@ -145,7 +145,7 @@ Describe "Show-PVM-Version Function Tests" {
     }
 
     It "Should handle special characters in version" {
-        $global:PVM_VERSION = '1.0.0-RC1+build.123'
+        $script:PVM_VERSION = $PVMConfig.version = '1.0.0-RC1+build.123'
         Show-PVM-Version
 
         Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
@@ -185,7 +185,7 @@ Describe "Start-PVM Function Tests" {
             }
         }
 
-        $global:PVM_VERSION = '1.2.3'
+        $script:PVM_VERSION = $PVMConfig.version = '1.2.3'
     }
 
     Context "Version Display Path Tests" {

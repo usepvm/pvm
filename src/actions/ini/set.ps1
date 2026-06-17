@@ -56,7 +56,7 @@ function Set-IniSetting {
             if ($matchesList.Length -gt 1) {
                 Write-Host -Object "`nMultiple settings match '$searchKey':`n" -ForegroundColor Cyan
 
-                $maxLineLength = ($matchesList.Key | Measure-Object -Maximum Length).Maximum + $MIN_PAD_RIGHT_LENGTH
+                $maxLineLength = ($matchesList.Key | Measure-Object -Maximum Length).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
                 $matchesList | ForEach-Object {
                     $state = if ($_.Enabled) { 'Enabled' } else { 'Disabled' }
                     $key = "$($_.Key) ".PadRight($maxLineLength, '.')
@@ -110,7 +110,7 @@ function Set-IniSetting {
 
         $updatedSettings = $notFound + $updatedSettings
 
-        $maxLineLength = ($updatedSettings.Values | ForEach-Object { $_ } | ForEach-Object { $_.key } | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
+        $maxLineLength = ($updatedSettings.Values | ForEach-Object { $_ } | ForEach-Object { $_.key } | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         Write-Host -Object "`n" -NoNewline
         foreach ($key in $updatedSettings.Keys) {
             $item = $updatedSettings[$key]

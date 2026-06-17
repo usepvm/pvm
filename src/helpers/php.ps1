@@ -64,8 +64,8 @@ function Is-Two-PHP-Versions-Equal {
 
 function Set-Zend-Extensions-List {
     try {
-        $jsonContent = $DEFAULT_ZEND_EXTENSIONS | ConvertTo-Json -Depth 10
-        Set-Content -Path $ZEND_EXTENSIONS_LIST_PATH -Value $jsonContent -Encoding UTF8
+        $jsonContent = $PVMConfig.defaults.zendExtensions | ConvertTo-Json -Depth 10
+        Set-Content -Path $PVMConfig.paths.zendExtensionsList -Value $jsonContent -Encoding UTF8
 
         return 0
     } catch {
@@ -76,8 +76,8 @@ function Set-Zend-Extensions-List {
 
 function Get-Zend-Extensions-List {
     try {
-        if (Is-File-Exists -path $ZEND_EXTENSIONS_LIST_PATH) {
-            $data = (Get-Content -Path $ZEND_EXTENSIONS_LIST_PATH -Raw | ConvertFrom-Json)
+        if (Is-File-Exists -path $PVMConfig.paths.zendExtensionsList) {
+            $data = (Get-Content -Path $PVMConfig.paths.zendExtensionsList -Raw | ConvertFrom-Json)
             if ($null -ne $data -and $data.Count -gt 0) {
                 return $data
             }
@@ -86,7 +86,7 @@ function Get-Zend-Extensions-List {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get zend extensions list"; exception = $_ }
     }
 
-    return $DEFAULT_ZEND_EXTENSIONS
+    return $PVMConfig.defaults.zendExtensions
 }
 
 function Refresh-Installed-PHP-Versions-Cache {
@@ -103,7 +103,7 @@ function Refresh-Installed-PHP-Versions-Cache {
 }
 
 function Get-Installed-PHP-Versions-From-Directory {
-    $directories = Get-All-Subdirectories -path "$STORAGE_PATH\php"
+    $directories = Get-All-Subdirectories -path "$($PVMConfig.paths.storage)\php"
     $installedVersions = $directories | ForEach-Object {
         if (Is-File-Exists -path "$($_.FullName)\php.exe") {
             $phpInfo = Get-PHPInstallInfo -path $_.FullName
@@ -224,8 +224,8 @@ function Is-PHP-Version-Installed {
 
 function Get-Source-Urls {
     return [ordered]@{
-        'Archives' = $PHP_WIN_ARCHIVES_URL
-        'Releases' = $PHP_WIN_RELEASES_URL
+        'Archives' = $PVMConfig.links.phpWinArchives
+        'Releases' = $PVMConfig.links.phpWinReleases
     }
 }
 

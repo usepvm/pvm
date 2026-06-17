@@ -61,7 +61,7 @@ function Run-Test-File {
             $coveredFile = "$($covered.Name) | $($covered.FullName)"
         }
 
-        $separatorWidth = [Math]::Max($file.Name.Length + $file.FullName.Length, $coveredFile.Length) + ($MIN_PAD_RIGHT_LENGTH * 5/2)
+        $separatorWidth = [Math]::Max($file.Name.Length + $file.FullName.Length, $coveredFile.Length) + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 5/2)
 
         Write-Host -Object "`n`n$('-' * $separatorWidth)" -ForegroundColor Cyan
         Write-Host -Object "- Running test: $($file.Name) | $($file.FullName)" -ForegroundColor Cyan
@@ -178,7 +178,7 @@ function Run-Tests {
             $content += "`n"
             Write-Host -Object $content -ForegroundColor $color
 
-            $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 3)
+            $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
 
             $testSummary = SortBy -data $testSummary -sortByColumn $options.sortBy
             $testSummary | ForEach-Object {
@@ -200,7 +200,7 @@ function Run-Tests {
         return $code
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
-        Write-Host -Object "`nFailed to run tests, check log: $LOG_ERROR_PATH" -ForegroundColor DarkYellow
+        Write-Host -Object "`nFailed to run tests, check log: $($PVMConfig.paths.logError)" -ForegroundColor DarkYellow
 
         return -1
     }

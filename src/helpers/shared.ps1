@@ -8,7 +8,7 @@ function Is-PVM-Setup {
         }
 
         $pvmEnvEntries = $pvmEnvVarContent -split ';' | Where-Object { $_ -ne '' }
-        if ($pvmEnvEntries -notcontains $PVMRoot -or $pvmEnvEntries -notcontains $PHP_CURRENT_VERSION_PATH) {
+        if ($pvmEnvEntries -notcontains $PVMRoot -or $pvmEnvEntries -notcontains $PVMConfig.env.PHP_CURRENT_VERSION_PATH) {
             return $false
         }
 
@@ -17,12 +17,12 @@ function Is-PVM-Setup {
             $path = ''
         }
 
-        $parent = Split-Path -Path $PHP_CURRENT_VERSION_PATH
+        $parent = Split-Path -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH
         $pathEntries = $path -split ';' | Where-Object { $_ -ne '' }
         if (
             (
                 ($path -notlike "*$pvmEnvVarContent*") -and
-                ($pathEntries -notcontains "%$PVM_ENV_VAR_NAME%")
+                ($pathEntries -notcontains "%$($PVMConfig.env.PVM_ENV_VAR_NAME)%")
             ) -or
             (Is-Directory-Not-Exists -path $parent)
         ) {
@@ -96,7 +96,7 @@ function Log-Data {
     param ($data)
 
     try {
-        $logPath = if ($data.logPath) { $data.logPath } else { $LOG_ERROR_PATH }
+        $logPath = if ($data.logPath) { $data.logPath } else { $PVMConfig.paths.logError }
         $created = Make-Directory -path (Split-Path -Path $logPath)
         if ($created -ne 0) {
             Write-Host -Object "Failed to create directory $(Split-Path -Path $logPath)"
@@ -218,8 +218,8 @@ function Get-EnvConfig {
 
 function Set-Aliases-List {
     try {
-        $jsonContent = $DEFAULT_ALIASES | ConvertTo-Json -Depth 10
-        Set-Content -Path $ALIASES_LIST_PATH -Value $jsonContent -Encoding UTF8
+        $jsonContent = $PVMConfig.defaults.aliases | ConvertTo-Json -Depth 10
+        Set-Content -Path $PVMConfig.paths.aliasesList -Value $jsonContent -Encoding UTF8
 
         return 0
     } catch {
@@ -230,8 +230,8 @@ function Set-Aliases-List {
 
 function Get-Aliases {
     try {
-        if (Is-File-Exists -path $ALIASES_LIST_PATH) {
-            $data = (Get-Content -Path $ALIASES_LIST_PATH -Raw | ConvertFrom-Json)
+        if (Is-File-Exists -path $PVMConfig.paths.aliasesList) {
+            $data = (Get-Content -Path $PVMConfig.paths.aliasesList -Raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}
                 $data.PSObject.Properties | ForEach-Object { $ordered[$_.Name] = $_.Value }
@@ -242,7 +242,7 @@ function Get-Aliases {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get aliases list"; exception = $_ }
     }
 
-    return $DEFAULT_ALIASES
+    return $PVMConfig.defaults.aliases
 }
 
 function Resolve-Alias {

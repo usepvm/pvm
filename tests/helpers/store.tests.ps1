@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
-    $global:CACHE_PATH = 'TestDrive:\cache'
-    New-Item -ItemType Directory -Path $global:CACHE_PATH -Force | Out-Null
+    $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\cache'
+    New-Item -ItemType Directory -Path $script:CACHE_PATH -Force | Out-Null
     Mock Write-Host {}
 }
 
@@ -67,8 +67,8 @@ Describe "Get-Data-From-Cache" {
 
 Describe "Can-Use-Cache" {
     BeforeAll {
-        $global:CACHE_PATH = 'TestDrive:\cache'
-        $global:CACHE_MAX_HOURS = 168
+        $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\cache'
+        $script:CACHE_MAX_HOURS = $PVMConfig.env.CACHE_MAX_HOURS = 168
 
         New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
     }

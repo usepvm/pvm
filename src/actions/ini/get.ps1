@@ -51,7 +51,7 @@ function Get-IniSetting {
 
         $results = $notFound + $results
 
-        $maxLineLength = ($results.Values | ForEach-Object { $_ } | ForEach-Object { $_.extensionName } | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
+        $maxLineLength = ($results.Values | ForEach-Object { $_ } | ForEach-Object { $_.extensionName } | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         foreach ($key in $results.Keys) {
             Write-Host -Object "`nMatches for '$key'" -ForegroundColor Cyan
 

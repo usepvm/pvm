@@ -1,13 +1,13 @@
 ﻿
 BeforeAll {
     # Mock dependencies
-    $global:LOG_ERROR_PATH = 'TestDrive:\logs\error.log'
-    $global:PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
+    $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
+    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
 
     # Mock Log-Data function
     Mock Write-Host {}
 
-    function Log-Data {
+    Mock Log-Data {
         param ($logPath, $message, $data)
         return $true
     }
@@ -250,7 +250,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
                 return @{
                     Target = 'C:\php\8.2.0'
                 }
-            } -ParameterFilter { $Path -eq $PHP_CURRENT_VERSION_PATH }
+            } -ParameterFilter { $Path -eq $PVMConfig.env.PHP_CURRENT_VERSION_PATH }
 
             # Mock Get-PHP-Status
             Mock Get-PHP-Status {
@@ -339,7 +339,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
         BeforeEach {
             Mock Get-Item {
                 return $null
-            } -ParameterFilter { $Path -eq $PHP_CURRENT_VERSION_PATH }
+            } -ParameterFilter { $Path -eq $PVMConfig.env.PHP_CURRENT_VERSION_PATH }
         }
 
         It "Should handle null Get-Item result" {
@@ -360,7 +360,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
                 return @{
                     Target = 'C:\php\8.1.0'
                 }
-            } -ParameterFilter { $Path -eq $PHP_CURRENT_VERSION_PATH }
+            } -ParameterFilter { $Path -eq $PVMConfig.env.PHP_CURRENT_VERSION_PATH }
 
             # Mock Get-PHP-Status to return -1 (error case)
             Mock Get-PHP-Status {
@@ -409,9 +409,6 @@ Describe "Integration Tests" {
                 'memory_limit=256M'
             )
             $phpIniContent | Out-File -FilePath "$testPhpPath\php.ini"
-
-            # Mock the global variable and Get-Item for this test
-            $global:PHP_CURRENT_VERSION_PATH = $testCurrentPath
 
             Mock Get-Item {
                 return @{

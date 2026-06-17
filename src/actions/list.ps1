@@ -87,7 +87,7 @@ function Get-Available-PHP-Versions {
                 $searchResult = $searchResult | Where-Object { $_.Version -like "$term*" }
             }
             if ($searchResult.Count -ne 0) {
-                $fetchedVersionsGroupedPartialList[$_.Name] = $searchResult | Select-Object -Last $DEFAULT_PARTIAL_LIST_SIZE
+                $fetchedVersionsGroupedPartialList[$_.Name] = $searchResult | Select-Object -Last $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE
             }
         }
 
@@ -115,8 +115,8 @@ function Get-Available-PHP-Versions {
             }
 
         $msg = "`nThis is a partial list. For a complete list, visit:"
-        $msg += "`n Releases : $PHP_WIN_RELEASES_URL"
-        $msg += "`n Archives : $PHP_WIN_ARCHIVES_URL"
+        $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
+        $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
         Write-Host -Object $msg
         return 0
     } catch {

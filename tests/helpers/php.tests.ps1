@@ -618,7 +618,7 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
             Get-Installed-PHP-Versions-From-Directory
 
             Assert-MockCalled Get-All-Subdirectories -Exactly 1 -ParameterFilter {
-                $path -eq "$STORAGE_PATH\php"
+                $path -eq "$($PVMConfig.paths.storage)\php"
             }
         }
     }
@@ -905,9 +905,10 @@ Describe "Get-BinaryArchitecture-From-DLL" {
 
 Describe "Set-Zend-Extensions-List" {
     BeforeAll {
-        $global:TEMPLATES_PATH = 'TestDrive:\\storage\data\templates'
-        $global:ZEND_EXTENSIONS_LIST_PATH = "$TEMPLATES_PATH\zend_extensions.json"
-        New-Item -ItemType Directory -Force -Path $global:TEMPLATES_PATH | Out-Null
+        $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
+        $PVMConfig.paths.zendExtensionsList = "$($PVMConfig.paths.templates)\zend_extensions.json"
+        New-Item -ItemType Directory -Force -Path $PVMConfig.paths.templates | Out-Null
+        $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions
     }
     It "Creates zend_extensions.json" {
         $result = Set-Zend-Extensions-List
@@ -926,11 +927,12 @@ Describe "Set-Zend-Extensions-List" {
 
 Describe "Get-Zend-Extensions-List" {
     BeforeAll {
-        $global:TEMPLATES_PATH = 'TestDrive:\\storage\data\templates'
-        $global:ZEND_EXTENSIONS_LIST_PATH = "$TEMPLATES_PATH\zend_extensions.json"
-        New-Item -ItemType Directory -Path $global:TEMPLATES_PATH | Out-Null
+        $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
+        $ZEND_EXTENSIONS_LIST_PATH = "$($PVMConfig.paths.templates)\zend_extensions.json"
+        New-Item -ItemType Directory -Path $PVMConfig.paths.templates | Out-Null
         $testContent = @('opcache', 'xdebug', 'swoole')
         $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ZEND_EXTENSIONS_LIST_PATH
+        $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions
     }
 
     It "Returns the zend_extensions.json content as a hashtable" {
@@ -942,7 +944,7 @@ Describe "Get-Zend-Extensions-List" {
     }
 
     It "Falls back to DEFAULT_ZEND_EXTENSIONS value" {
-        Remove-Item -Path "$global:TEMPLATES_PATH\zend_extensions.json"
+        Remove-Item -Path "$($PVMConfig.paths.templates)\zend_extensions.json"
         $result = Get-Zend-Extensions-List
         $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
     }

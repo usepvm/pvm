@@ -1,13 +1,13 @@
 ﻿
 BeforeAll {
     # Create a test directory for PHP installations
-    $script:PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
-    $script:LOG_ERROR_PATH = 'TestDrive:\Logs\error.log'
+    $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
+    $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\Logs\error.log'
     $testPhpPath = 'TestDrive:\PHP'
     New-Item -Path "$testPhpPath\7.4" -ItemType Directory -Force
     New-Item -Path "$testPhpPath\8.0" -ItemType Directory -Force
 
-    function Log-Data { param ($logPath, $message, $data) }
+    Mock Log-Data { param ($logPath, $message, $data) }
     # Mock Log-Data globally - this will be available for all tests
     Mock Log-Data -MockWith {
         param ($logPath, $message, $data)

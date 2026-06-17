@@ -1,65 +1,81 @@
 
-# PVM version
-$Global:PVM_VERSION = '2.5'
+function Get-Config {
+    param([string] $rootPath)
+
+    $env = Get-EnvConfig -rootPath $rootPath
+
+    $storage  = "$rootPath\storage"
+    $data     = "$storage\data"
+    $templates = "$data\templates"
+    $logs     = "$storage\logs"
+
+    return @{
+        version = '2.6' # PVM version
+
+        paths = [ordered]@{
+            storage              = $storage
+            data                 = $data
+            templates            = $templates
+            cache                = "$data\cache"
+            profiles             = "$data\profiles"
+            profileTemplate      = "$templates\profile-template.json"
+            zendExtensionsList   = "$templates\zend_extensions.json"
+            aliasesList          = "$templates\aliases.json"
+            log                  = $logs
+            logError             = "$logs\error.log"
+            pathVarBackup        = "$logs\path.bak.log"
+        }
+
+        links = [ordered]@{
+            xdebugBase          = 'http://xdebug.org'
+            xdebugDownload      = 'http://xdebug.org/download'
+            xdebugHistorical    = 'http://xdebug.org/download/historical'
+            phpWinBase          = 'https://windows.php.net'
+            phpWinArchives      = 'https://windows.php.net/downloads/releases/archives'
+            phpWinReleases      = 'https://windows.php.net/downloads/releases'
+            peclBase            = 'https://pecl.php.net'
+            peclPackageRoot     = 'https://pecl.php.net/package'
+            peclPackages        = 'https://pecl.php.net/packages.php'
+            peclWinExtDownload  = 'https://downloads.php.net/~windows/pecl/releases'
+        }
+
+        env = [ordered]@{
+            PHP_CURRENT_VERSION_PATH  = $env['PHP_CURRENT_VERSION_PATH']
+            PVM_ENV_VAR_NAME          = $env['PVM_ENV_VAR_NAME']
+            CACHE_MAX_HOURS           = [int] $env['CACHE_MAX_HOURS']
+            DEFAULT_LOG_PAGE_SIZE     = [int] $env['DEFAULT_LOG_PAGE_SIZE']
+            DEFAULT_PARTIAL_LIST_SIZE = [int] $env['DEFAULT_PARTIAL_LIST_SIZE']
+            MIN_PAD_RIGHT_LENGTH      = [int] $env['MIN_PAD_RIGHT_LENGTH']
+            MIN_LINE_LENGTH           = [int] $env['MIN_LINE_LENGTH']
+        }
+
+        defaults = @{
+            zendExtensions = @('opcache', 'xdebug')
+            extensions     = @(
+                'curl', 'fileinfo', 'gd', 'gettext', 'intl', 'mbstring', 'exif',
+                'openssl', 'mysqli', 'pdo_mysql', 'pdo_pgsql', 'pdo_sqlite',
+                'pgsql', 'sodium', 'sqlite3', 'zip', 'opcache', 'xdebug'
+            )
+            settings       = @(
+                'memory_limit', 'max_execution_time', 'max_input_time',
+                'post_max_size', 'upload_max_filesize', 'max_file_uploads',
+                'display_errors', 'error_reporting', 'log_errors',
+                'opcache.enable', 'opcache.enable_cli', 'opcache.memory_consumption',
+                'opcache.max_accelerated_files'
+            )
+            aliases        = [ordered]@{
+                '?'  = 'help';  'h'      = 'help';    'init'   = 'setup'
+                'cur' = 'current'; 'active' = 'current'
+                'ls' = 'list';  'i'      = 'install'; 'u'      = 'uninstall'; 'switch' = 'use'
+                'on' = 'enable'; 'off'   = 'disable'
+                'a'  = 'add';   '+'      = 'add';     'rm'     = 'remove';    '-'      = 'remove'
+                'del' = 'delete'; 'cls'  = 'clear'
+            }
+        }
+    }
+}
 
 # Root path of the PVM script
 $Global:PVMRoot = (Resolve-Path -Path "$PSScriptRoot\..\..").Path
 
-# Storage paths
-$Global:STORAGE_PATH = "$PVMRoot\storage"
-$Global:DATA_PATH = "$STORAGE_PATH\data"
-$Global:TEMPLATES_PATH = "$DATA_PATH\templates"
-$Global:CACHE_PATH = "$DATA_PATH\cache"
-$Global:PROFILES_PATH = "$DATA_PATH\profiles"
-$Global:PROFILE_TEMPLATE_PATH = "$TEMPLATES_PATH\profile-template.json"
-$Global:ZEND_EXTENSIONS_LIST_PATH = "$TEMPLATES_PATH\zend_extensions.json"
-$Global:ALIASES_LIST_PATH = "$TEMPLATES_PATH\aliases.json"
-
-# Log paths
-$Global:LOG_PATH = "$STORAGE_PATH\logs"
-$Global:LOG_ERROR_PATH = "$LOG_PATH\error.log"
-$Global:PATH_VAR_BACKUP_PATH = "$LOG_PATH\path.bak.log"
-
-# Links
-$Global:XDEBUG_BASE_URL = 'http://xdebug.org'
-$Global:XDEBUG_DOWNLOAD_URL = "$XDEBUG_BASE_URL/download"
-$Global:XDEBUG_HISTORICAL_URL = "$XDEBUG_DOWNLOAD_URL/historical"
-$Global:PHP_WIN_BASE_URL = 'https://windows.php.net'
-$Global:PHP_WIN_ARCHIVES_URL = "$PHP_WIN_BASE_URL/downloads/releases/archives"
-$Global:PHP_WIN_RELEASES_URL = "$PHP_WIN_BASE_URL/downloads/releases"
-$Global:PECL_BASE_URL = 'https://pecl.php.net'
-$Global:PECL_PACKAGE_ROOT_URL = "$PECL_BASE_URL/package"
-$Global:PECL_PACKAGES_URL = "$PECL_BASE_URL/packages.php"
-$Global:PECL_WIN_EXT_DOWNLOAD_URL = 'https://downloads.php.net/~windows/pecl/releases'
-
-$envConfig = Get-EnvConfig -rootPath $PVMRoot
-
-$Global:PHP_CURRENT_VERSION_PATH = $envConfig['PHP_CURRENT_VERSION_PATH']
-$Global:PVM_ENV_VAR_NAME = $envConfig['PVM_ENV_VAR_NAME']
-$Global:CACHE_MAX_HOURS = [int] $envConfig['CACHE_MAX_HOURS']
-$Global:DEFAULT_LOG_PAGE_SIZE = [int] $envConfig['DEFAULT_LOG_PAGE_SIZE']
-$Global:DEFAULT_PARTIAL_LIST_SIZE = [int] $envConfig['DEFAULT_PARTIAL_LIST_SIZE']
-$Global:MIN_PAD_RIGHT_LENGTH = [int] $envConfig['MIN_PAD_RIGHT_LENGTH']
-$Global:MIN_LINE_LENGTH = [int] $envConfig['MIN_LINE_LENGTH']
-
-$Global:DEFAULT_ZEND_EXTENSIONS = @('opcache', 'xdebug')
-$Global:DEFAULT_EXTENSIONS = @(
-    'curl', 'fileinfo', 'gd', 'gettext', 'intl', 'mbstring', 'exif',
-    'openssl', 'mysqli', 'pdo_mysql', 'pdo_pgsql', 'pdo_sqlite',
-    'pgsql', 'sodium', 'sqlite3', 'zip', 'opcache', 'xdebug'
-)
-$Global:DEFAULT_SETTINGS = @(
-    'memory_limit', 'max_execution_time', 'max_input_time',
-    'post_max_size', 'upload_max_filesize', 'max_file_uploads',
-    'display_errors', 'error_reporting', 'log_errors',
-    'opcache.enable', 'opcache.enable_cli', 'opcache.memory_consumption', 'opcache.max_accelerated_files'
-)
-
-$Global:DEFAULT_ALIASES =  [ordered]@{
-    '?'  = 'help'; 'h'  = 'help'; 'init' = 'setup';
-    'cur' = 'current'; 'active' = 'current';
-    'ls' = 'list'; 'i'  = 'install'; 'u'  = 'uninstall'; 'switch' = 'use';
-    'on' = 'enable'; 'off' = 'disable';
-    'a'  = 'add'; '+'  = 'add'; 'rm' = 'remove'; '-'  = 'remove';
-    'del' = 'delete'; 'cls' = 'clear';
-}
+$Global:PVMConfig = Get-Config -rootPath $PVMRoot

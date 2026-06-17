@@ -213,7 +213,7 @@ function Invoke-Log {
     if ($pageSizeArg) {
         $pageSize = $pageSizeArg -replace '^--pageSize=', ''
     } else {
-        $pageSize = $DEFAULT_LOG_PAGE_SIZE
+        $pageSize = $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE
     }
 
     $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
@@ -381,7 +381,7 @@ function Invoke-Aliases {
     }
 
     Write-Host -Object "`n`nAvailable Aliases:`n"
-    $maxAliasLength = ($aliases.Keys | Measure-Object -Maximum Length).Maximum + ($MIN_PAD_RIGHT_LENGTH * 2)
+    $maxAliasLength = ($aliases.Keys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     $aliases.Keys | ForEach-Object {
         $alias = "$_ ".PadRight($maxAliasLength, '.')
         $command = $aliases[$_]

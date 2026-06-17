@@ -2,10 +2,11 @@
 BeforeAll {
     $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
     $testIniPath = "$testDrivePath\php.ini"
+    $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
 
     Mock Write-Host {}
 
-    $global:MockFileSystem = @{
+    $script:MockFileSystem = @{
         Directories = @()
         Files = @{}
         WebResponses = @{}
@@ -15,14 +16,14 @@ BeforeAll {
     function Invoke-WebRequest {
         param ($Uri, $OutFile = $null)
 
-        if ($global:MockFileSystem.DownloadFails) {
+        if ($script:MockFileSystem.DownloadFails) {
             throw 'Network error'
         }
 
-        if ($global:MockFileSystem.WebResponses.ContainsKey($Uri)) {
-            $response = $global:MockFileSystem.WebResponses[$Uri]
+        if ($script:MockFileSystem.WebResponses.ContainsKey($Uri)) {
+            $response = $script:MockFileSystem.WebResponses[$Uri]
             if ($OutFile) {
-                $global:MockFileSystem.Files[$OutFile] = 'Downloaded content'
+                $script:MockFileSystem.Files[$OutFile] = 'Downloaded content'
                 return
             }
             return @{

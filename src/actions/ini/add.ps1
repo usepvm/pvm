@@ -74,11 +74,11 @@ function Install-XDebug-Extension {
         $currentVersionObj = Get-Current-PHP-Version
         $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
         $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions_$currentVersion" -compute {
-            Get-XDebug-FROM-URL -url $XDEBUG_HISTORICAL_URL -version $currentVersion
+            Get-XDebug-FROM-URL -url $PVMConfig.links.xdebugHistorical -version $currentVersion
         }
 
         if ($null -eq $xDebugList -or $xDebugList.Count -eq 0) {
-            Write-Host -Object "`nNo match was found, check the '$LOG_ERROR_PATH' for any potentiel errors"
+            Write-Host -Object "`nNo match was found, check the '$($PVMConfig.paths.logError)' for any potentiel errors"
             return -1
         }
 
@@ -97,7 +97,7 @@ function Install-XDebug-Extension {
         $xDebugListGrouped = [ordered]@{}
         $index = 0
         $xDebugList |
-            Select-Object -First $DEFAULT_PARTIAL_LIST_SIZE |
+            Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
             Group-Object xDebugVersion |
             Sort-Object `
                 @{ Expression = {
@@ -146,7 +146,7 @@ function Install-XDebug-Extension {
                 Write-Host -Object " [$($_.index)] $text"
             }
         }
-        Write-Host -Object "`nThis is a partial list. For a complete list, visit: $XDEBUG_HISTORICAL_URL"
+        Write-Host -Object "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.xdebugHistorical)"
 
         $packageIndex = Read-Host -Prompt "`nInsert the [number] you want to install"
         $packageIndex = $packageIndex.Trim()
@@ -165,18 +165,18 @@ function Install-XDebug-Extension {
             return -1
         }
 
-        Invoke-WebRequest -Uri "$XDEBUG_BASE_URL/$($chosenItem.href.TrimStart('/'))" -OutFile "$STORAGE_PATH\php"
+        Invoke-WebRequest -Uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -OutFile "$($PVMConfig.paths.storage)\php"
         $phpPath = ($iniPath | Split-Path -Parent)
         if (Is-File-Exists -path "$phpPath\ext\$($chosenItem.fileName)") {
             $response = Read-Host -Prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
-                Remove-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)"
+                Remove-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)"
                 Write-Host -Object "`nInstallation cancelled"
                 return -1
             }
         }
-        Move-Item -Path "$STORAGE_PATH\php\$($chosenItem.fileName)" -Destination "$phpPath\ext"
+        Move-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)" -Destination "$phpPath\ext"
         $xDebugConfig = Get-Xdebug-Config-V2 -XDebugPath $($chosenItem.fileName)
         if ($chosenItem.xDebugVersion -like '3.*') {
             $xDebugConfig = Get-Xdebug-Config-V3 -XDebugPath $($chosenItem.fileName)
@@ -293,7 +293,7 @@ function Install-Extension {
             $extensionLinksGrouped = [ordered]@{}
             $index = 0
             $extensionLinks |
-                Select-Object -First $DEFAULT_PARTIAL_LIST_SIZE |
+                Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
                 Group-Object extVersion |
                 Sort-Object `
                     @{ Expression = {
@@ -341,7 +341,7 @@ function Install-Extension {
                     Write-Host -Object " [$($_.index)] $text"
                 }
             }
-            Write-Host -Object "`nThis is a partial list. For a complete list, visit: $PECL_PACKAGE_ROOT_URL/$extName"
+            Write-Host -Object "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.peclPackageRoot)/$extName"
 
             $packageIndex = Read-Host -Prompt "`nInsert the [number] you want to install"
             $packageIndex = $packageIndex.Trim()
@@ -358,9 +358,9 @@ function Install-Extension {
             return -1
         }
 
-        Invoke-WebRequest -Uri $chosenItem.href -OutFile "$STORAGE_PATH\php"
-        $fileNamePath = ($chosenItem.href -replace "$PECL_WIN_EXT_DOWNLOAD_URL/$extName/$($chosenItem.extVersion)/|.zip",'').Trim()
-        $extractPath = "$STORAGE_PATH\php\$fileNamePath"
+        Invoke-WebRequest -Uri $chosenItem.href -OutFile "$($PVMConfig.paths.storage)\php"
+        $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip",'').Trim()
+        $extractPath = "$($PVMConfig.paths.storage)\php\$fileNamePath"
         Extract-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
         $files = Get-ChildItem -Path $extractPath
         $extFile = $files | Where-Object {
@@ -375,7 +375,7 @@ function Install-Extension {
             $response = Read-Host -Prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
-                Remove-Item -Path "$STORAGE_PATH\php\$fileNamePath" -Force -Recurse
+                Remove-Item -Path "$($PVMConfig.paths.storage)\php\$fileNamePath" -Force -Recurse
                 Write-Host -Object "`nInstallation cancelled"
                 return -1
             }

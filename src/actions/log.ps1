@@ -70,7 +70,7 @@ function Format-NiceTimestamp {
 }
 
 function Show-Log {
-    param ($pageSize = $DEFAULT_LOG_PAGE_SIZE, $term = $null)
+    param ($pageSize = $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE, $term = $null)
 
     try {
         if ($pageSize -notmatch '^-?\d+$') {
@@ -85,13 +85,13 @@ function Show-Log {
         }
 
         # Check if log file exists
-        if (Is-File-Not-Exists -path $LOG_ERROR_PATH) {
-            Write-Host -Object "`nLog file not found: $LOG_ERROR_PATH" -ForegroundColor Red
+        if (Is-File-Not-Exists -path $PVMConfig.paths.logError) {
+            Write-Host -Object "`nLog file not found: $($PVMConfig.paths.logError)" -ForegroundColor Red
             return -1
         }
 
         # Read the entire log file
-        $logContent = Get-Content -Path $LOG_ERROR_PATH -Raw
+        $logContent = Get-Content -Path $PVMConfig.paths.logError -Raw
 
         # Split by the separator and filter out empty entries
         $logEntries = $logContent -split '-{26}' | Where-Object { $_.Trim() -ne '' }

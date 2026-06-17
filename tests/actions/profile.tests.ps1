@@ -1,19 +1,18 @@
 ﻿
 BeforeAll {
     # Mock global variables
-    $global:PROFILES_PATH = 'TestDrive:\\profiles'
-    $PROFILES_PATH = $global:PROFILES_PATH
+    $script:PROFILES_PATH = $PVMConfig.paths.profiles = 'TestDrive:\\profiles'
 
     Mock Write-Host {}
     # Mock helper functions
-    function Get-Current-PHP-Version {
+    Mock Get-Current-PHP-Version {
         return @{
             version = '8.2.0'
             path = 'C:\\php\\8.2.0'
         }
     }
 
-    function Get-PHP-Data {
+    Mock Get-PHP-Data {
         param ($PhpIniPath)
         return @{
             settings = @(
@@ -29,12 +28,12 @@ BeforeAll {
         }
     }
 
-    function Make-Directory { param ($path) return 0 }
+    Mock Make-Directory { param ($path) return 0 }
 
-    function Log-Data { param ($data) return $true }
+    Mock Log-Data { param ($data) return $true }
 
     # Create test profile directory
-    New-Item -ItemType Directory -Path $global:PROFILES_PATH -Force | Out-Null
+    New-Item -ItemType Directory -Path $script:PROFILES_PATH -Force | Out-Null
 }
 
 Describe "Set-IniSetting-Direct Tests" {
@@ -208,7 +207,7 @@ Describe "Save-PHP-Profile Tests" {
         $result = Save-PHP-Profile -profileName 'testprofile'
         $result | Should -Be 0
 
-        $profilePath = "$global:PROFILES_PATH\testprofile.json"
+        $profilePath = "$script:PROFILES_PATH\testprofile.json"
         Test-Path $profilePath | Should -Be $true
 
         $profileContent = Get-Content -Path $profilePath -Raw | ConvertFrom-Json
@@ -224,12 +223,12 @@ Describe "Save-PHP-Profile Tests" {
 
     It "Should create a profile file with correct structure" {
         # Ensure profiles directory exists
-        New-Item -ItemType Directory -Force -Path $global:PROFILES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
 
         $result = Save-PHP-Profile -profileName 'testprofile' -description 'Test profile'
         $result | Should -Be 0
 
-        $profilePath = "$global:PROFILES_PATH\testprofile.json"
+        $profilePath = "$script:PROFILES_PATH\testprofile.json"
         Test-Path $profilePath | Should -Be $true
 
         $profileContent = Get-Content -Path $profilePath -Raw | ConvertFrom-Json
@@ -281,8 +280,8 @@ Describe "Load-PHP-Profile Tests" {
         }
 
         # Ensure profiles directory exists
-        New-Item -ItemType Directory -Force -Path $global:PROFILES_PATH | Out-Null
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         # Create PHP directory and php.ini file
         $phpDir = 'TestDrive:\php\8.2.0'
@@ -388,8 +387,8 @@ Describe "Load-PHP-Profile Tests" {
             }
         }
 
-        New-Item -ItemType Directory -Force -Path $global:PROFILES_PATH | Out-Null
-        $testProfileNoType | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\notypefile.json"
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
+        $testProfileNoType | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\notypefile.json"
 
         $result = Load-PHP-Profile -profileName 'notypefile'
         $result | Should -Be 0
@@ -410,7 +409,7 @@ Describe "List-PHP-Profiles Tests" {
             phpVersion = '8.1.0'
             settings = @{}
             extensions = @{}
-        } | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\profile1.json"
+        } | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\profile1.json"
 
         @{
             name = 'profile2'
@@ -423,7 +422,7 @@ Describe "List-PHP-Profiles Tests" {
             extensions = @{
                 curl = @{ enabled = $true; type = 'extension' }
             }
-        } | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\profile2.json"
+        } | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\profile2.json"
 
         Mock Write-Host {}
     }
@@ -445,7 +444,7 @@ Describe "List-PHP-Profiles Tests" {
 
     It "Should handle empty profiles directory" {
         # Remove all profiles
-        Remove-Item -Path "$global:PROFILES_PATH\*" -Force
+        Remove-Item -Path "$script:PROFILES_PATH\*" -Force
 
         $result = List-PHP-Profiles
         $result | Should -Be -1
@@ -454,8 +453,8 @@ Describe "List-PHP-Profiles Tests" {
     It "Should handle exceptions gracefully when profile content cannot be read" {
         Mock Get-ChildItem {
             return @(
-                @{ Name = 'profile1.json'; FullName = "$global:PROFILES_PATH\profile1.json" }
-                @{ Name = 'profile2.json'; FullName = "$global:PROFILES_PATH\profile2.json" }
+                @{ Name = 'profile1.json'; FullName = "$script:PROFILES_PATH\profile1.json" }
+                @{ Name = 'profile2.json'; FullName = "$script:PROFILES_PATH\profile2.json" }
             )
         }
         Mock Get-Content { throw 'Error' }
@@ -467,14 +466,14 @@ Describe "List-PHP-Profiles Tests" {
     It "Should fallback to count 0 when settings or extensions cannot be parsed" {
         Mock Get-ChildItem {
             return @(
-                @{ Name = 'profile1.json'; FullName = "$global:PROFILES_PATH\profile1.json" }
-                @{ Name = 'profile2.json'; FullName = "$global:PROFILES_PATH\profile2.json" }
+                @{ Name = 'profile1.json'; FullName = "$script:PROFILES_PATH\profile1.json" }
+                @{ Name = 'profile2.json'; FullName = "$script:PROFILES_PATH\profile2.json" }
             )
         }
-        Mock Get-Content -ParameterFilter {$Path -eq "$global:PROFILES_PATH\profile1.json"} -MockWith {
+        Mock Get-Content -ParameterFilter {$Path -eq "$script:PROFILES_PATH\profile1.json"} -MockWith {
             return '{}'
         }
-        Mock Get-Content -ParameterFilter {$Path -eq "$global:PROFILES_PATH\profile2.json"} -MockWith {
+        Mock Get-Content -ParameterFilter {$Path -eq "$script:PROFILES_PATH\profile2.json"} -MockWith {
             throw 'Error'
         }
 
@@ -492,11 +491,12 @@ Describe "List-PHP-Profiles Tests" {
 
 Describe "Get-Popular-PHP-Settings Tests" {
     BeforeEach {
-        $global:TEMPLATES_PATH = 'TestDrive:\\storage\data\templates'
-        $global:PROFILE_TEMPLATE_PATH = "$TEMPLATES_PATH\profile-template.json"
-        New-Item -ItemType Directory -Force -Path $global:TEMPLATES_PATH | Out-Null
+        $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
+        $script:PROFILE_TEMPLATE_PATH = $PVMConfig.paths.profileTemplate = "$($PVMConfig.paths.templates)\profile-template.json"
+        New-Item -ItemType Directory -Force -Path $PVMConfig.paths.templates | Out-Null
         $testContent = @{ 'settings' = @('memory_limit', 'display_errors') }
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $PROFILE_TEMPLATE_PATH
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $PVMConfig.paths.profileTemplate
+        $script:DEFAULT_SETTINGS = $PVMConfig.defaults.settings
     }
 
     It "Should return popular PHP settings" {
@@ -523,11 +523,12 @@ Describe "Get-Popular-PHP-Settings Tests" {
 
 Describe "Get-Popular-PHP-Extensions Tests" {
     BeforeEach {
-        $global:TEMPLATES_PATH = 'TestDrive:\\storage\data\templates'
-        $global:PROFILE_TEMPLATE_PATH = "$TEMPLATES_PATH\profile-template.json"
-        New-Item -ItemType Directory -Force -Path $global:TEMPLATES_PATH | Out-Null
+        $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
+        $script:PROFILE_TEMPLATE_PATH = $PVMConfig.paths.profileTemplate = "$($PVMConfig.paths.templates)\profile-template.json"
+        New-Item -ItemType Directory -Force -Path $PVMConfig.paths.templates | Out-Null
         $testContent = @{ 'extensions' = @('curl', 'mbstring', 'opcache') }
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $PROFILE_TEMPLATE_PATH
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $PVMConfig.paths.profileTemplate
+        $script:DEFAULT_EXTENSIONS = $PVMConfig.defaults.extensions
     }
 
     It "Should return popular PHP extensions" {
@@ -559,7 +560,7 @@ Describe "Show-PHP-Profile Tests" {
         Mock Log-Data { return 0 }
 
         # Ensure profiles directory exists
-        New-Item -ItemType Directory -Force -Path $global:PROFILES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
     }
 
     It "Should return -1 when profile file does not exist" {
@@ -577,7 +578,7 @@ Describe "Show-PHP-Profile Tests" {
 
     It "Should return -1 when JSON parsing fails" {
         # Create invalid JSON file
-        'invalid json content {{{{ }' | Set-Content -Path "$global:PROFILES_PATH\invalid.json"
+        'invalid json content {{{{ }' | Set-Content -Path "$script:PROFILES_PATH\invalid.json"
 
         $result = Show-PHP-Profile -profileName 'invalid'
         $result | Should -Be -1
@@ -598,7 +599,7 @@ Describe "Show-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\emptyprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\emptyprofile.json"
 
         $result = Show-PHP-Profile -profileName 'emptyprofile'
         $result | Should -Be 0
@@ -632,7 +633,7 @@ Describe "Show-PHP-Profile Tests" {
             }
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\settingsonly.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\settingsonly.json"
 
         $result = Show-PHP-Profile -profileName 'settingsonly'
         $result | Should -Be 0
@@ -670,7 +671,7 @@ Describe "Show-PHP-Profile Tests" {
                 opcache = @{ enabled = $false; type = 'zend_extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\extensionsonly.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\extensionsonly.json"
 
         $result = Show-PHP-Profile -profileName 'extensionsonly'
         $result | Should -Be 0
@@ -711,7 +712,7 @@ Describe "Show-PHP-Profile Tests" {
                 opcache = @{ enabled = $false; type = 'zend_extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\fullprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\fullprofile.json"
 
         $result = Show-PHP-Profile -profileName 'fullprofile'
         $result | Should -Be 0
@@ -737,7 +738,7 @@ Describe "Show-PHP-Profile Tests" {
             }
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\mixedsettings.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\mixedsettings.json"
 
         $result = Show-PHP-Profile -profileName 'mixedsettings'
         $result | Should -Be 0
@@ -765,7 +766,7 @@ Describe "Show-PHP-Profile Tests" {
                 disabled_ext = @{ enabled = $false; type = 'extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\mixedextensions.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\mixedextensions.json"
 
         $result = Show-PHP-Profile -profileName 'mixedextensions'
         $result | Should -Be 0
@@ -793,7 +794,7 @@ Describe "Show-PHP-Profile Tests" {
                 zend_ext = @{ enabled = $true; type = 'zend_extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\extensiontypes.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\extensiontypes.json"
 
         $result = Show-PHP-Profile -profileName 'extensiontypes'
         $result | Should -Be 0
@@ -817,7 +818,7 @@ Describe "Show-PHP-Profile Tests" {
                 curl = @{ enabled = $true; type = 'extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\nullsettings.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\nullsettings.json"
 
         $result = Show-PHP-Profile -profileName 'nullsettings'
         $result | Should -Be 0
@@ -837,7 +838,7 @@ Describe "Show-PHP-Profile Tests" {
                 memory_limit = @{ value = '256M'; enabled = $true }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\nullextensions.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\nullextensions.json"
 
         $result = Show-PHP-Profile -profileName 'nullextensions'
         $result | Should -Be 0
@@ -856,7 +857,7 @@ Describe "Show-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\completeprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\completeprofile.json"
 
         $result = Show-PHP-Profile -profileName 'completeprofile'
         $result | Should -Be 0
@@ -895,7 +896,7 @@ Describe "Show-PHP-Profile Tests" {
             }
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\sortedsettings.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\sortedsettings.json"
 
         $output = @()
         Mock Write-Host -ParameterFilter { $Object -match 'alpha|beta|zebra' } {
@@ -932,7 +933,7 @@ Describe "Show-PHP-Profile Tests" {
                 beta_ext = @{ enabled = $true; type = 'extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\sortedextensions.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\sortedextensions.json"
 
         $result = Show-PHP-Profile -profileName 'sortedextensions'
         $result | Should -Be 0
@@ -963,7 +964,7 @@ Describe "Show-PHP-Profile Tests" {
             }
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\settingvalues.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\settingvalues.json"
 
         $result = Show-PHP-Profile -profileName 'settingvalues'
         $result | Should -Be 0
@@ -999,7 +1000,7 @@ Describe "Show-PHP-Profile Tests" {
             settings = $settings
             extensions = $extensions
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\largeprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\largeprofile.json"
 
         $result = Show-PHP-Profile -profileName 'largeprofile'
         $result | Should -Be 0
@@ -1020,7 +1021,7 @@ Describe "Delete-PHP-Profile Tests" {
         Mock Log-Data { return 0 }
 
         # Ensure profiles directory exists
-        New-Item -ItemType Directory -Force -Path $global:PROFILES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
     }
 
     It "Should return -1 when profile file does not exist" {
@@ -1042,7 +1043,7 @@ Describe "Delete-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-Host { return 'n' }
 
@@ -1050,7 +1051,7 @@ Describe "Delete-PHP-Profile Tests" {
         $result | Should -Be -1
 
         # Verify file still exists
-        Test-Path "$global:PROFILES_PATH\testprofile.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
 
         Assert-MockCalled Write-Host -ParameterFilter {
             $Object -match 'Deletion cancelled'
@@ -1069,7 +1070,7 @@ Describe "Delete-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-Host { return '' }
 
@@ -1077,7 +1078,7 @@ Describe "Delete-PHP-Profile Tests" {
         $result | Should -Be -1
 
         # Verify file still exists
-        Test-Path "$global:PROFILES_PATH\testprofile.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
 
         Assert-MockCalled Write-Host -ParameterFilter {
             $Object -match 'Deletion cancelled'
@@ -1094,7 +1095,7 @@ Describe "Delete-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-Host { return 'no' }
 
@@ -1102,7 +1103,7 @@ Describe "Delete-PHP-Profile Tests" {
         $result | Should -Be -1
 
         # Verify file still exists
-        Test-Path "$global:PROFILES_PATH\testprofile.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
 
         Assert-MockCalled Write-Host -ParameterFilter {
             $Object -match 'Deletion cancelled'
@@ -1119,7 +1120,7 @@ Describe "Delete-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-Host { return 'y' }
 
@@ -1127,7 +1128,7 @@ Describe "Delete-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify file is deleted
-        Test-Path "$global:PROFILES_PATH\testprofile.json" | Should -Be $false
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $false
 
         Assert-MockCalled Write-Host -ParameterFilter {
             $Object -match "Profile 'testprofile' deleted successfully"
@@ -1148,7 +1149,7 @@ Describe "Delete-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-Host { return 'Y' }
 
@@ -1156,7 +1157,7 @@ Describe "Delete-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify file is deleted
-        Test-Path "$global:PROFILES_PATH\testprofile.json" | Should -Be $false
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $false
 
         Assert-MockCalled Write-Host -ParameterFilter {
             $Object -match "Profile 'testprofile' deleted successfully"
@@ -1173,7 +1174,7 @@ Describe "Delete-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-Host { return '  y  ' }
 
@@ -1181,7 +1182,7 @@ Describe "Delete-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify file is deleted
-        Test-Path "$global:PROFILES_PATH\testprofile.json" | Should -Be $false
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $false
     }
 
     It "Should handle response with whitespace and cancel if not 'y' or 'Y'" {
@@ -1194,7 +1195,7 @@ Describe "Delete-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-Host { return '  n  ' }
 
@@ -1202,7 +1203,7 @@ Describe "Delete-PHP-Profile Tests" {
         $result | Should -Be -1
 
         # Verify file still exists
-        Test-Path "$global:PROFILES_PATH\testprofile.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
     }
 
     It "Should return -1 and log error when Remove-Item fails" {
@@ -1215,7 +1216,7 @@ Describe "Delete-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-Host { return 'y' }
         Mock Remove-Item { throw 'Access denied' }
@@ -1240,7 +1241,7 @@ Describe "Delete-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\myprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\myprofile.json"
 
         Mock Read-Host { return 'y' }
 
@@ -1263,7 +1264,7 @@ Describe "Delete-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\test-profile_123.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\test-profile_123.json"
 
         Mock Read-Host { return 'y' }
 
@@ -1271,7 +1272,7 @@ Describe "Delete-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify file is deleted
-        Test-Path "$global:PROFILES_PATH\test-profile_123.json" | Should -Be $false
+        Test-Path "$script:PROFILES_PATH\test-profile_123.json" | Should -Be $false
 
         Assert-MockCalled Write-Host -ParameterFilter {
             $Object -match "Profile 'test-profile_123' deleted successfully"
@@ -1288,7 +1289,7 @@ Describe "Delete-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         # Test that 'yes' (not just 'y') is rejected
         Mock Read-Host { return 'yes' }
@@ -1297,7 +1298,7 @@ Describe "Delete-PHP-Profile Tests" {
         $result | Should -Be -1
 
         # Verify file still exists
-        Test-Path "$global:PROFILES_PATH\testprofile.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
 
         Assert-MockCalled Write-Host -ParameterFilter {
             $Object -match 'Deletion cancelled'
@@ -1311,7 +1312,7 @@ Describe "Export-PHP-Profile Tests" {
         Mock Log-Data { return 0 }
 
         # Ensure profiles directory exists
-        New-Item -ItemType Directory -Force -Path $global:PROFILES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
 
         # Create export directory and set it as current location
         $exportDir = 'TestDrive:\export'
@@ -1345,7 +1346,7 @@ Describe "Export-PHP-Profile Tests" {
                 curl = @{ enabled = $true; type = 'extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         $result = Export-PHP-Profile -profileName 'testprofile'
         $result | Should -Be 0
@@ -1373,7 +1374,7 @@ Describe "Export-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         $customExportPath = 'TestDrive:\custom\myprofile.json'
         New-Item -ItemType Directory -Force -Path 'TestDrive:\custom' | Out-Null
@@ -1405,7 +1406,7 @@ Describe "Export-PHP-Profile Tests" {
             }
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         $exportPath = 'TestDrive:\existing.json'
         'old content' | Set-Content -Path $exportPath
@@ -1429,7 +1430,7 @@ Describe "Export-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Copy-Item { throw 'Access denied' }
 
@@ -1453,7 +1454,7 @@ Describe "Export-PHP-Profile Tests" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\test-profile_123.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\test-profile_123.json"
 
         $result = Export-PHP-Profile -profileName 'test-profile_123'
         $result | Should -Be 0
@@ -1482,7 +1483,7 @@ Describe "Export-PHP-Profile Tests" {
                 opcache = @{ enabled = $false; type = 'zend_extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$global:PROFILES_PATH\fullprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\fullprofile.json"
 
         $exportPath = 'TestDrive:\fullprofile.json'
         $result = Export-PHP-Profile -profileName 'fullprofile' -exportPath $exportPath
@@ -1521,7 +1522,7 @@ Describe "Import-PHP-Profile Tests" {
         Mock Make-Directory { return 0 }
 
         # Ensure profiles directory exists
-        New-Item -ItemType Directory -Force -Path $global:PROFILES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
     }
 
     It "Should return -1 when import file does not exist" {
@@ -1610,7 +1611,7 @@ Describe "Import-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify profile was imported with original name
-        $importedPath = "$global:PROFILES_PATH\originalname.json"
+        $importedPath = "$script:PROFILES_PATH\originalname.json"
         Test-Path $importedPath | Should -Be $true
 
         $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
@@ -1636,7 +1637,7 @@ Describe "Import-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify profile was imported with custom name
-        $importedPath = "$global:PROFILES_PATH\customname.json"
+        $importedPath = "$script:PROFILES_PATH\customname.json"
         Test-Path $importedPath | Should -Be $true
 
         $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
@@ -1664,7 +1665,7 @@ Describe "Import-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify profile name was updated
-        $importedPath = "$global:PROFILES_PATH\newname.json"
+        $importedPath = "$script:PROFILES_PATH\newname.json"
         $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'newname'
         # Verify other fields are preserved
@@ -1686,7 +1687,7 @@ Describe "Import-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify profile was imported
-        $importedPath = "$global:PROFILES_PATH\samename.json"
+        $importedPath = "$script:PROFILES_PATH\samename.json"
         Test-Path $importedPath | Should -Be $true
     }
 
@@ -1732,7 +1733,7 @@ Describe "Import-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify all fields are preserved
-        $importedPath = "$global:PROFILES_PATH\fullprofile.json"
+        $importedPath = "$script:PROFILES_PATH\fullprofile.json"
         $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'fullprofile'
         $importedContent.description | Should -Be 'Full profile description'
@@ -1811,7 +1812,7 @@ Describe "Import-PHP-Profile Tests" {
         $result = Import-PHP-Profile -importPath 'TestDrive:\emptyprofile.json'
         $result | Should -Be 0
 
-        $importedPath = "$global:PROFILES_PATH\emptyprofile.json"
+        $importedPath = "$script:PROFILES_PATH\emptyprofile.json"
         Test-Path $importedPath | Should -Be $true
 
         $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
@@ -1833,7 +1834,7 @@ Describe "Import-PHP-Profile Tests" {
         $result = Import-PHP-Profile -importPath 'TestDrive:\complex.json' -profileName 'new-complex_456'
         $result | Should -Be 0
 
-        $importedPath = "$global:PROFILES_PATH\new-complex_456.json"
+        $importedPath = "$script:PROFILES_PATH\new-complex_456.json"
         Test-Path $importedPath | Should -Be $true
 
         $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
@@ -1846,7 +1847,7 @@ Describe "Create-Example-PHP-Profile Tests" {
         $result = Create-Example-PHP-Profile
         $result | Should -Be 0
 
-        $exampleProfilePath = "$global:PROFILES_PATH\example-profile.json"
+        $exampleProfilePath = "$script:PROFILES_PATH\example-profile.json"
         Test-Path $exampleProfilePath | Should -Be $true
     }
 
@@ -1858,12 +1859,13 @@ Describe "Create-Example-PHP-Profile Tests" {
 }
 
 Describe "Create-Profile-Template Tests" {
-    It "Should create a profile template" {
-        $global:PROFILE_TEMPLATE_PATH = "$global:PROFILES_PATH\profile-template.json"
+    It "Should create a profile template" -Tag i {
+        $PVMConfig.paths.profiles = 'TestDrive:\profiles'
+        $PVMConfig.paths.profileTemplate = "$($PVMConfig.paths.profiles)\profile-template.json"
         $result = Create-Profile-Template
         $result | Should -Be 0
 
-        Test-Path $PROFILE_TEMPLATE_PATH | Should -Be $true
+        Test-Path $PVMConfig.paths.profileTemplate | Should -Be $true
     }
 
     It "Returns -1 when exception is thrown" {

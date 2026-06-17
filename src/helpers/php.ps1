@@ -161,6 +161,7 @@ function Get-UserSelected-PHP-Version {
         $currentVersion = Get-Current-PHP-Version
         $index = 0
         Write-Host -Object "`nInstalled versions :"
+        $maxNameLength = ($installedVersions.version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedVersions | ForEach-Object {
             $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
             $isCurrent = ''
@@ -174,7 +175,7 @@ function Get-UserSelected-PHP-Version {
             if ($_.BuildType) {
                 $metaData += $_.BuildType
             }
-            $versionNumber = "$($_.version) ".PadRight(15, '.')
+            $versionNumber = "$($_.version) ".PadRight($maxNameLength, '.')
             Write-Host -Object " [$index] $versionNumber $metaData $isCurrent"
             $index++
         }

@@ -304,6 +304,7 @@ function Install-PHP {
                 $currentVersion = Get-Current-PHP-Version
                 $familyVersion = $matches[0]
                 Write-Host -Object "`nOther versions from the $familyVersion.x family are available:"
+                $maxNameLength = ($foundInstalledVersions.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $foundInstalledVersions | ForEach-Object {
                     $versionNumber = $_.Version
                     $isCurrent = ''
@@ -318,7 +319,7 @@ function Install-PHP {
                         $isCurrent = '(Current)'
                     }
                     $metaData = $metaData.Trim()
-                    $versionNumber = "$versionNumber ".PadRight(15, '.')
+                    $versionNumber = "$versionNumber ".PadRight($maxNameLength, '.')
                     Write-Host -Object " $versionNumber $metaData $isCurrent"
                 }
                 $response = Read-Host -Prompt "`nWould you like to install another version from the $familyVersion.x ? (y/n)"

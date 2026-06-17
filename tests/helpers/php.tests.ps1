@@ -275,13 +275,15 @@ Describe "Get-UserSelected-PHP-Version" {
         Mock Write-Host { }
         Mock Get-Current-PHP-Version { return @{ version = '8.0'; arch = 'x64'; buildType = 'ts'}}
 
-        $null = Get-UserSelected-PHP-Version -installedVersions @(
+        $list = @(
             @{ version = '7.4'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\7.4'}
             @{ version = '8.0'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\8.0'}
             @{ version = '8.1'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\8.1'}
         )
+        $null = Get-UserSelected-PHP-Version -installedVersions $list
 
-        $version = '8.0 '.PadRight(15, '.')
+        $maxNameLength = ($list.version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+        $version = '8.0 '.PadRight($maxNameLength, '.')
         Assert-MockCalled Write-Host -ParameterFilter { $Object -eq " [1] $version x64 ts (Current)" }
     }
 }

@@ -108,8 +108,9 @@ function Get-Available-PHP-Versions {
                     return
                 }
                 Write-Host -Object "`n$key`n"
+                $maxNameLength = ($fetchedVersionsGroupe.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $fetchedVersionsGroupe | ForEach-Object {
-                    $versionNumber = "$($_.Version) ".PadRight(15, '.')
+                    $versionNumber = "$($_.Version) ".PadRight($maxNameLength, '.')
                     Write-Host -Object "  $versionNumber $($_.Arch) $($_.BuildType)"
                 }
             }
@@ -148,6 +149,7 @@ function Display-Installed-PHP-Versions {
         Write-Host -Object "`nInstalled Versions"
         Write-Host -Object '------------------'
         $duplicates = @()
+        $maxNameLength = ($installedPhp.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedPhp | ForEach-Object {
             $versionNumber = $_.Version
             $versionID = "$($_.Version)_$($_.buildType)_$($_.Arch)"
@@ -164,7 +166,7 @@ function Display-Installed-PHP-Versions {
                 if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
                     $isCurrent = '(Current)'
                 }
-                $versionNumber = "$versionNumber ".PadRight(15, '.')
+                $versionNumber = "$versionNumber ".PadRight($maxNameLength, '.')
                 Write-Host -Object " $versionNumber $metaData $isCurrent"
             }
         }

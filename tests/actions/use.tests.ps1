@@ -1,8 +1,8 @@
 ﻿
 BeforeAll {
     # Mock data and helper functions for testing
-    $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'C:\pvm\php'
-    $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'C:\logs\error.log'
+    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'C:\pvm\php'
+    $PVMConfig.paths.logError = 'C:\logs\error.log'
 
     Mock Write-Host {}
 

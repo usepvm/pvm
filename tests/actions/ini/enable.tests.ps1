@@ -1,9 +1,9 @@
 ﻿
 BeforeAll {
-    $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
-    $testIniPath = "$testDrivePath\php.ini"
-    $extDirectory = "$testDrivePath\ext"
-    $testBackupPath = "$testIniPath.bak"
+    $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
+    $script:testIniPath = "$testDrivePath\php.ini"
+    $script:extDirectory = "$testDrivePath\ext"
+    $script:testBackupPath = "$testIniPath.bak"
 
     $PVMConfig.paths.cache = 'TestDrive:\cache'
     New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null

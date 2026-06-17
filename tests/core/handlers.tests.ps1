@@ -337,7 +337,7 @@ Describe "Invoke-Ini Tests" {
 Describe "Invoke-Log Tests" {
     BeforeAll {
         # Default log page size value for tests
-        $script:DEFAULT_LOG_PAGE_SIZE = $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE = 5
+        $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE = 5
         Mock Show-Log { 0 }
     }
 

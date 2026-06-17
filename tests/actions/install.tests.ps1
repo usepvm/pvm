@@ -16,8 +16,6 @@ BeforeAll {
             'php8.0.5' = 'C:\PHP\8.0.5'
             'php7.4.30' = 'C:\PHP\7.4.30'
         }
-        Process = @{}
-        User = @{}
     }
 
     $script:MockRegistryThrowException = $false
@@ -45,8 +43,6 @@ BeforeAll {
                 'php8.0.5' = 'C:\PHP\8.0.5'
                 'php7.4.30' = 'C:\PHP\7.4.30'
             }
-            Process = @{}
-            User = @{}
         }
     }
 
@@ -576,9 +572,9 @@ Describe "Install-PHP Integration Tests" {
     }
 
     It "Should install PHP successfully" {
-        function Get-Matching-PHP-Versions { return $null }
+        Mock Get-Matching-PHP-Versions { return $null }
 
-        function Download-PHP-From-Url { return 'TestDrive:\php'}
+        Mock Download-PHP-From-Url { return 'TestDrive:\php'}
 
         $result = Install-PHP -version '8.1'
 

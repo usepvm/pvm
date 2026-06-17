@@ -217,7 +217,7 @@ Describe "Get-OrUpdateCache" {
             }
         }
 
-        $result = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
+        $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
             Example
         }
 
@@ -237,7 +237,7 @@ Describe "Get-OrUpdateCache" {
         Mock Cache-Data { return 0 }
         Mock Can-Use-Cache { return $false }
 
-        $result = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
+        $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
             Example
         }
 

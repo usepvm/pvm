@@ -2,8 +2,8 @@
 BeforeAll {
     Mock Write-Host {}
 
-    $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
-    $testIniPath = "$testDrivePath\php.ini"
+    $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
+    $script:testIniPath = "$testDrivePath\php.ini"
     function Reset-Ini-Content {
     # Create a test php.ini file
     @"
@@ -275,7 +275,7 @@ Describe "Get-UserSelected-PHP-Version" {
         Mock Write-Host { }
         Mock Get-Current-PHP-Version { return @{ version = '8.0'; arch = 'x64'; buildType = 'ts'}}
 
-        $result = Get-UserSelected-PHP-Version -installedVersions @(
+        $null = Get-UserSelected-PHP-Version -installedVersions @(
             @{ version = '7.4'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\7.4'}
             @{ version = '8.0'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\8.0'}
             @{ version = '8.1'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\8.1'}
@@ -440,7 +440,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
             }
             Mock Cache-Data { return 0 }
 
-            $result = Refresh-Installed-PHP-Versions-Cache
+            $null = Refresh-Installed-PHP-Versions-Cache
 
             Assert-MockCalled Get-Installed-PHP-Versions-From-Directory -Exactly 1
         }
@@ -453,7 +453,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
             }
             Mock Cache-Data { return 0 }
 
-            $result = Refresh-Installed-PHP-Versions-Cache
+            $null = Refresh-Installed-PHP-Versions-Cache
 
             Assert-MockCalled Cache-Data -Exactly 1 -ParameterFilter {
                 $cacheFileName -eq 'installed_php_versions' -and $depth -eq 1
@@ -468,7 +468,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
             Mock Get-Installed-PHP-Versions-From-Directory { return $mockVersions }
             Mock Cache-Data { return 0 }
 
-            $result = Refresh-Installed-PHP-Versions-Cache
+            $null = Refresh-Installed-PHP-Versions-Cache
 
             Assert-MockCalled Cache-Data -Exactly 1 -ParameterFilter {
                 $data.Count -eq 2 -and $data[0].Version -eq '7.4'
@@ -489,7 +489,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
             Mock Get-Installed-PHP-Versions-From-Directory { throw 'Test exception' }
             Mock Log-Data { return 0 }
 
-            $result = Refresh-Installed-PHP-Versions-Cache
+            $null = Refresh-Installed-PHP-Versions-Cache
 
             Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter {
                 $data.header -eq 'Refresh-Installed-PHP-Versions-Cache - Failed to refresh installed PHP versions cache'

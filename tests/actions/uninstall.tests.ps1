@@ -1,9 +1,9 @@
 ﻿
 BeforeAll {
     # Create a test directory for PHP installations
-    $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
-    $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\Logs\error.log'
-    $testPhpPath = 'TestDrive:\PHP'
+    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
+    $PVMConfig.paths.logError = 'TestDrive:\Logs\error.log'
+    $script:testPhpPath = 'TestDrive:\PHP'
     New-Item -Path "$testPhpPath\7.4" -ItemType Directory -Force
     New-Item -Path "$testPhpPath\8.0" -ItemType Directory -Force
 

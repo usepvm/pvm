@@ -12,8 +12,6 @@ BeforeAll {
             'SYSTEM32_DIR' = 'C:\Windows\System32'
             'REGULAR_VAR' = 'SomeValue'
         }
-        Process = @{}
-        User = @{}
     }
 
     # Setup test environment

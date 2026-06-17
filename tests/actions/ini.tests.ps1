@@ -1,9 +1,9 @@
 ﻿
 BeforeAll {
-    $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
-    $testIniPath = "$testDrivePath\php.ini"
-    $extDirectory = "$testDrivePath\ext"
-    $testBackupPath = "$testIniPath.bak"
+    $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
+    $script:testIniPath = "$testDrivePath\php.ini"
+    $script:extDirectory = "$testDrivePath\ext"
+    $script:testBackupPath = "$testIniPath.bak"
 
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload

@@ -1,7 +1,7 @@
 
 BeforeAll {
-    $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
-    $testIniPath = "$testDrivePath\php.ini"
+    $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
+    $script:testIniPath = "$testDrivePath\php.ini"
     $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
 
     Mock Write-Host {}

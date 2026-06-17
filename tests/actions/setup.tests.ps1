@@ -10,7 +10,7 @@ Describe "Setup-PVM" {
         $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'C:\php\8.2'
         $script:PVMRoot = 'TestDrive:\PVM'
         $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME = 'PVM'
-        $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
+        $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
 
         # Initialize mock registry
         $script:MockRegistry = @{
@@ -19,8 +19,6 @@ Describe "Setup-PVM" {
                 'PHP' = $null
                 'pvm' = $null
             }
-            Process = @{}
-            User = @{}
         }
 
         # Mock Log-Data function
@@ -62,8 +60,6 @@ Describe "Setup-PVM" {
                 'PHP' = $null
                 'pvm' = $null
             }
-            Process = @{}
-            User = @{}
         }
 
         Mock Get-EnvVar-ByName -MockWith { return $null }

@@ -1,15 +1,15 @@
 ﻿
 BeforeAll {
-    $testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
-    $testIniPath = "$testDrivePath\php.ini"
-    $extDirectory = "$testDrivePath\ext"
-    $testBackupPath = "$testIniPath.bak"
+    $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
+    $script:testIniPath = "$testDrivePath\php.ini"
+    $script:extDirectory = "$testDrivePath\ext"
+    $script:testBackupPath = "$testIniPath.bak"
 
-    $PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
-    $XDEBUG_DOWNLOAD_URL = $PVMConfig.links.xdebugDownload
-    $XDEBUG_HISTORICAL_URL = $PVMConfig.links.xdebugHistorical
-    $PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
-    $PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
+    $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
+    $script:XDEBUG_DOWNLOAD_URL = $PVMConfig.links.xdebugDownload
+    $script:XDEBUG_HISTORICAL_URL = $PVMConfig.links.xdebugHistorical
+    $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
+    $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
 
     $PVMConfig.paths.cache = 'TestDrive:\cache'
     New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null

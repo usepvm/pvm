@@ -12,14 +12,12 @@ BeforeAll {
             'SYSTEM32_DIR' = 'C:\Windows\System32'
             'REGULAR_VAR' = 'SomeValue'
         }
-        Process = @{}
-        User = @{}
     }
 
     # Setup test environment
-    $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
     $script:STORAGE_PATH = $PVMConfig.paths.storage = 'TestDrive:\storage'
-    $script:PATH_VAR_BACKUP_PATH = $PVMConfig.paths.pathVarBackup = 'TestDrive:\logs\path_backup.log'
+    $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
+    $PVMConfig.paths.pathVarBackup = 'TestDrive:\logs\path_backup.log'
 
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null

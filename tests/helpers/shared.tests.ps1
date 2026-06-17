@@ -641,7 +641,7 @@ Describe "Resolve-BuildType" {
 Describe "Set-Aliases-List" {
     BeforeAll {
         $script:TEMPLATES_PATH = $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
-        $script:ALIASES_LIST_PATH = $PVMConfig.paths.aliasesList = "$TEMPLATES_PATH\aliases.json"
+        $PVMConfig.paths.aliasesList = "$TEMPLATES_PATH\aliases.json"
         New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
     }

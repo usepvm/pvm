@@ -285,7 +285,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
                 InstallPath = 'C:\php\8.2.0'
             }}
             Mock Is-Directory-Exists { return $true }
-            $result = Get-Current-PHP-Version
+            $null = Get-Current-PHP-Version
 
             # Assert
             Assert-MockCalled Get-PHP-Status -Times 1 -ParameterFilter { $phpPath -eq 'C:\php\8.2.0' }
@@ -328,7 +328,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
             Mock Log-Data { return 0 }
 
             # Act
-            $result = Get-Current-PHP-Version
+            $null = Get-Current-PHP-Version
 
             # Assert
             Assert-MockCalled Log-Data -Times 1

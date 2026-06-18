@@ -715,7 +715,7 @@ function Create-Example-PHP-Profile {
         }
 
         $jsonContent = $exampleProfile | ConvertTo-Json -Depth 10
-        Set-Content -Path "$($PVMConfig.paths.profiles)\example-profile.json" -Value $jsonContent -Encoding UTF8
+        Set-Content -Path $PVMConfig.paths.exampleProfile -Value $jsonContent -Encoding UTF8
 
         return 0
     } catch {

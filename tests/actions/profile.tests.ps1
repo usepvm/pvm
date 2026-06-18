@@ -2052,8 +2052,7 @@ Describe "Create-Example-PHP-Profile Tests" {
         $result = Create-Example-PHP-Profile
         $result | Should -Be 0
 
-        $exampleProfilePath = "$script:PROFILES_PATH\example-profile.json"
-        Test-Path $exampleProfilePath | Should -Be $true
+        Test-Path $PVMConfig.paths.exampleProfile | Should -Be $true
     }
 
     It "Returns -1 when exception is thrown" {

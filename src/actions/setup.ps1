@@ -59,7 +59,7 @@ function Initialize-PVMFiles {
 
     $codes += $code = Create-Example-PHP-Profile
     if ($code -eq 0) {
-        Write-Host -Object "`nExample profile created successfully at '$($PVMConfig.paths.profiles)\example-profile.json'." -ForegroundColor DarkGreen
+        Write-Host -Object "`nExample profile created successfully at '$($PVMConfig.paths.exampleProfile)'." -ForegroundColor DarkGreen
         Write-Host -Object "- Use 'pvm help profile' to learn more." -ForegroundColor Gray
     } else {
         Write-Host -Object "`nFailed to create example profile." -ForegroundColor DarkYellow

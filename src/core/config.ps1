@@ -6,6 +6,7 @@ function Get-Config {
 
     $storage = "$rootPath\storage"
     $data = "$storage\data"
+    $profiles = "$data\profiles"
     $templates = "$data\templates"
     $logs = "$storage\logs"
 
@@ -18,7 +19,8 @@ function Get-Config {
             data               = $data
             templates          = $templates
             cache              = "$data\cache"
-            profiles           = "$data\profiles"
+            profiles           = $profiles
+            exampleProfile     = "$profiles\example-profile.json"
             profileTemplate    = "$templates\profile-template.json"
             zendExtensionsList = "$templates\zend_extensions.json"
             aliasesList        = "$templates\aliases.json"

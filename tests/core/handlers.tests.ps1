@@ -428,6 +428,7 @@ Describe "Invoke-Profile Tests" {
         Mock List-PHP-Profiles { 0 }
         Mock Show-PHP-Profile { 0 }
         Mock Delete-PHP-Profile { 0 }
+        Mock Clear-PHP-Profiles { 0 }
         Mock Export-PHP-Profile { 0 }
         Mock Import-PHP-Profile { 0 }
     }
@@ -595,6 +596,17 @@ Describe "Invoke-Profile Tests" {
             Assert-MockCalled Delete-PHP-Profile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
+        }
+    }
+
+    Context "Clear action" {
+        It "Should clear all profiles files" {
+            $arguments = @('clear')
+
+            $result = Invoke-Profile -arguments $arguments
+
+            $result | Should -Be 0
+            Assert-MockCalled Clear-PHP-Profiles -Times 1
         }
     }
 

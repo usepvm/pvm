@@ -300,6 +300,9 @@ function Invoke-Profile {
 
             return (Delete-PHP-Profile -profileName $profileName)
         }
+        'clear' {
+            return (Clear-PHP-Profiles)
+        }
         'export' {
             if ($remainingArgs.Count -eq 0) {
                 Write-Host -Object "`nPlease provide a profile name: pvm profile export <name> [path]" -ForegroundColor Yellow

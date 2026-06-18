@@ -559,6 +559,39 @@ function Delete-PHP-Profile {
     }
 }
 
+function Clear-PHP-Profiles {
+    try {
+        $profileFiles = Get-Profile-Files
+
+        if ($profileFiles.Count -eq 0) {
+            Write-Host -Object "`nNo profiles found. Create a profile with 'pvm profile save <name>'." -ForegroundColor DarkYellow
+            return -1
+        }
+        
+        $response = Read-Host -Prompt "`nAre you sure you want to delete all profiles? (y/n)"
+        $response = $response.Trim()
+        if ($response -ne 'y' -and $response -ne 'Y') {
+            Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
+            return -1
+        }
+        
+        foreach ($profileFile in $profileFiles) {
+            if ($profileFile.FullName -eq $PVMConfig.paths.exampleProfile) {
+                continue
+            }
+            Remove-Item -Path $profileFile.FullName -Force
+        }
+
+        Write-Host -Object "`nAll profiles deleted successfully." -ForegroundColor DarkGreen
+
+        return 0
+    } catch {
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear profiles"; exception = $_ }
+        Write-Host -Object "`nFailed to clear profiles." -ForegroundColor DarkYellow
+        return -1
+    }
+}
+
 function Export-PHP-Profile {
     param ($profileName, $exportPath = $null)
 

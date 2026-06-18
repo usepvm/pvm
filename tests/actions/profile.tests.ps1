@@ -1334,6 +1334,183 @@ Describe "Delete-PHP-Profile Tests" {
     }
 }
 
+Describe "Clear-PHP-Profiles Tests" {
+    BeforeEach {
+        Remove-Item -Path "$($PVMConfig.paths.profiles)\*" -Force -ErrorAction SilentlyContinue
+
+        Mock Write-Host {}
+        Mock Log-Data { return 0 }
+    }
+
+    It "Should return -1 when no profiles exist" {
+        $result = Clear-PHP-Profiles
+        $result | Should -Be -1
+
+        Assert-MockCalled Write-Host -ParameterFilter {
+            $Object -match 'No profiles found'
+        } -Exactly 1
+    }
+
+    It "Should return -1 when user cancels with 'n'" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example1.json"
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example2.json"
+
+        Mock Read-Host { return 'n' }
+
+        $result = Clear-PHP-Profiles
+        $result | Should -Be -1
+
+        Test-Path "$($PVMConfig.paths.profiles)\example1.json" | Should -Be $true
+        Test-Path "$($PVMConfig.paths.profiles)\example2.json" | Should -Be $true
+
+        Assert-MockCalled Write-Host -ParameterFilter {
+            $Object -match 'Deletion cancelled'
+        } -Exactly 1
+    }
+
+    It "Should return -1 when user cancels with empty response" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example.json"
+
+        Mock Read-Host { return '' }
+
+        $result = Clear-PHP-Profiles
+        $result | Should -Be -1
+
+        Test-Path "$($PVMConfig.paths.profiles)\example.json" | Should -Be $true
+    }
+
+    It "Should return -1 when user cancels with 'no'" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example.json"
+
+        Mock Read-Host { return 'no' }
+
+        $result = Clear-PHP-Profiles
+        $result | Should -Be -1
+
+        Test-Path "$($PVMConfig.paths.profiles)\example.json" | Should -Be $true
+    }
+
+    It "Should return -1 when user cancels with 'yes' (not just 'y')" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example.json"
+
+        Mock Read-Host { return 'yes' }
+
+        $result = Clear-PHP-Profiles
+        $result | Should -Be -1
+
+        Test-Path "$($PVMConfig.paths.profiles)\example.json" | Should -Be $true
+    }
+
+    It "Should delete all profiles except default when user confirms with 'y'" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example1.json"
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example2.json"
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example3.json"
+
+        Mock Read-Host { return 'y' }
+
+        $result = Clear-PHP-Profiles
+        $result | Should -Be 0
+
+        Test-Path "$($PVMConfig.paths.profiles)\example1.json"  | Should -Be $false
+        Test-Path "$($PVMConfig.paths.profiles)\example2.json"  | Should -Be $false
+        Test-Path "$($PVMConfig.paths.profiles)\example3.json"  | Should -Be $false
+        Test-Path $PVMConfig.paths.exampleProfile  | Should -Be $true
+
+        Assert-MockCalled Write-Host -ParameterFilter {
+            $Object -match 'All profiles deleted successfully'
+        } -Exactly 1
+    }
+
+    It "Should delete all profiles when user confirms with 'Y'" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example1.json"
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example2.json"
+
+        Mock Read-Host { return 'Y' }
+
+        $result = Clear-PHP-Profiles
+        $result | Should -Be 0
+
+        Test-Path "$($PVMConfig.paths.profiles)\example1.json" | Should -Be $false
+        Test-Path "$($PVMConfig.paths.profiles)\example2.json" | Should -Be $false
+    }
+
+    It "Should trim whitespace and delete all files when response is '  y  '" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example.json"
+
+        Mock Read-Host { return '  y  ' }
+
+        $result = Clear-PHP-Profiles
+        $result | Should -Be 0
+
+        Test-Path "$($PVMConfig.paths.profiles)\example.json" | Should -Be $false
+    }
+
+    It "Should trim whitespace and cancel when response is '  n  '" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example.json"
+
+        Mock Read-Host { return '  n  ' }
+
+        $result = Clear-PHP-Profiles
+        $result | Should -Be -1
+
+        Test-Path "$($PVMConfig.paths.profiles)\example.json" | Should -Be $true
+    }
+
+    It "Should display correct confirmation prompt" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example.json"
+
+        Mock Read-Host { return 'y' }
+
+        $result = Clear-PHP-Profiles
+        $result | Should -Be 0
+
+        Assert-MockCalled Read-Host -ParameterFilter {
+            $Prompt -match 'Are you sure you want to delete all profiles' -and
+            $Prompt -match '\(y/n\)'
+        } -Exactly 1
+    }
+
+    It "Should work correctly with a single profile" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\single.json"
+
+        Mock Read-Host { return 'y' }
+
+        $result = Clear-PHP-Profiles
+        $result | Should -Be 0
+
+        Test-Path "$($PVMConfig.paths.profiles)\single.json" | Should -Be $false
+    }
+
+    It "Should return -1 and log error when an exception occurs during deletion" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example.json"
+
+        Mock Read-Host { return 'y' }
+        Mock Remove-Item { throw 'Access denied' }
+
+        $result = Clear-PHP-Profiles
+        $result | Should -Be -1
+
+        Assert-MockCalled Write-Host -ParameterFilter {
+            $Object -match 'Failed to clear profiles'
+        } -Exactly 1
+
+        Assert-MockCalled Log-Data -Exactly 1
+    }
+
+    It "Should return -1 and log error when Get-Profile-Files throws" {
+        Mock Get-Profile-Files { throw 'Disk error' }
+
+        $result = Clear-PHP-Profiles
+        $result | Should -Be -1
+
+        Assert-MockCalled Write-Host -ParameterFilter {
+            $Object -match 'Failed to clear profiles'
+        } -Exactly 1
+
+        Assert-MockCalled Log-Data -Exactly 1
+    }
+}
+
 Describe "Export-PHP-Profile Tests" {
     BeforeEach {
         Mock Write-Host {}

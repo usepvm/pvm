@@ -1,4 +1,5 @@
-﻿BeforeAll {
+﻿
+BeforeAll {
     # Mock global variables
     $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\\cache'
 

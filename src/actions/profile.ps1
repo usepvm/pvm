@@ -567,14 +567,14 @@ function Clear-PHP-Profiles {
             Write-Host -Object "`nNo profiles found. Create a profile with 'pvm profile save <name>'." -ForegroundColor DarkYellow
             return -1
         }
-        
+
         $response = Read-Host -Prompt "`nAre you sure you want to delete all profiles? (y/n)"
         $response = $response.Trim()
         if ($response -ne 'y' -and $response -ne 'Y') {
             Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
             return -1
         }
-        
+
         foreach ($profileFile in $profileFiles) {
             if ($profileFile.FullName -eq $PVMConfig.paths.exampleProfile) {
                 continue

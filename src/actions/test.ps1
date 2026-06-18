@@ -1,4 +1,5 @@
-﻿function Get-PVMRootDirectory {
+﻿
+function Get-PVMRootDirectory {
     return (Resolve-Path -Path "$PSScriptRoot\..\..").Path
 }
 

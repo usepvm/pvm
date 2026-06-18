@@ -14,6 +14,7 @@ function Get-Config {
 
         paths = [ordered]@{
             storage              = $storage
+            php                  = "$storage\php"
             data                 = $data
             templates            = $templates
             cache                = "$data\cache"

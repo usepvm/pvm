@@ -103,7 +103,7 @@ function Refresh-Installed-PHP-Versions-Cache {
 }
 
 function Get-Installed-PHP-Versions-From-Directory {
-    $directories = Get-All-Subdirectories -path "$($PVMConfig.paths.storage)\php"
+    $directories = Get-All-Subdirectories -path $PVMConfig.paths.php
     $installedVersions = $directories | ForEach-Object {
         if (Is-File-Exists -path "$($_.FullName)\php.exe") {
             $phpInfo = Get-PHPInstallInfo -path $_.FullName

@@ -620,7 +620,7 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
             Get-Installed-PHP-Versions-From-Directory
 
             Assert-MockCalled Get-All-Subdirectories -Exactly 1 -ParameterFilter {
-                $path -eq "$($PVMConfig.paths.storage)\php"
+                $path -eq $PVMConfig.paths.php
             }
         }
     }

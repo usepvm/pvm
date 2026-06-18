@@ -155,7 +155,7 @@ function Download-PHP {
         $buildType = $versionObject.BuildType
         $arch = $versionObject.arch
 
-        $destination = "$($PVMConfig.paths.storage)\php"
+        $destination = $PVMConfig.paths.php
         $created = Make-Directory -path $destination
         if ($created -ne 0) {
             Write-Host -Object "Failed to create directory $destination"

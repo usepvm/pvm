@@ -165,7 +165,7 @@ function Install-XDebug-Extension {
             return -1
         }
 
-        Invoke-WebRequest -Uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -OutFile "$($PVMConfig.paths.storage)\php"
+        Invoke-WebRequest -Uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -OutFile $PVMConfig.paths.php
         $phpPath = ($iniPath | Split-Path -Parent)
         if (Is-File-Exists -path "$phpPath\ext\$($chosenItem.fileName)") {
             $response = Read-Host -Prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
@@ -358,7 +358,7 @@ function Install-Extension {
             return -1
         }
 
-        Invoke-WebRequest -Uri $chosenItem.href -OutFile "$($PVMConfig.paths.storage)\php"
+        Invoke-WebRequest -Uri $chosenItem.href -OutFile $PVMConfig.paths.php
         $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip",'').Trim()
         $extractPath = "$($PVMConfig.paths.storage)\php\$fileNamePath"
         Extract-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true

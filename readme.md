@@ -58,10 +58,13 @@ Clone the repository, copy the environment file, run setup, and ensure the proje
 ```sh
 git clone https://github.com/drissboumlik/pvm
 cd pvm
-cp .env.example .env
+cp .env.example .env # edit .env to set your config values before running setup
 
 # Run this command to setup pvm
 pvm setup
+
+# Ensure PVM directories and default files exist
+pvm repair 
 ```
 
 
@@ -106,18 +109,9 @@ pvm help
 pvm help <command>
 # Example: pvm help setup
 
-# Display information about the current PHP (version, path, extensions, settings)
-pvm info # pvm ini info
-
-# Display information about the current PHP extensions
-pvm info extensions # pvm ini info extensions
-
-# Display information about the current PHP settings
-pvm info settings # pvm ini info settings
-
-# Display information about the current PHP (version, path, extensions, settings) with 'cache' in their name
-pvm info --search=<term> # pvm ini info --search=<term>
-# Example: pvm info --search=cache
+# Displays information about the environment including PVM version, currently active PHP version, paths, and environment variables.
+pvm info
+pvm info --verbose
 
 # Display active PHP version
 pvm current
@@ -248,6 +242,20 @@ pvm ini list available --search=<extension>
 
 # Restore backup
 pvm ini restore # PVM automatically creates php.ini backups before modifying settings or extensions.
+
+# Display information about the current PHP (version, path, extensions, settings)
+pvm ini info
+
+# Display information about the current PHP extensions
+pvm ini info extensions
+
+# Display information about the current PHP settings
+pvm ini info settings
+
+# Display information about the current PHP (version, path, extensions, settings) with 'cache' in their name
+pvm ini info --search=<term>
+# Example: pvm ini info --search=cache
+
 
 # Check logs
 pvm log --pageSize=[number] --search=<term> # Default value is 5

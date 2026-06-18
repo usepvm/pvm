@@ -250,13 +250,13 @@ function Get-Actions {
         }
         'repair'  = @{
             command     = 'pvm repair';
-            description = 'Reset PVM default files and directories to their original state.';
+            description = 'Ensure PVM directories and default files exist.';
             usage       = [ordered]@{
                 USAGE       = 'pvm repair'
                 DESCRIPTION = @(
-                    'Recreates PVM default files and directories.',
-                    'Use this to repair a broken PVM installation or restore missing files.',
-                    'This includes the aliases list, zend extensions list, profile template, and storage directories.'
+                    'Ensures all required PVM directories and default files exist.',
+                    'Safe to run multiple times — existing files and directories are left untouched.',
+                    'Useful after a partial installation or when files are accidentally deleted.'
                 )
             }
             action      = { return Invoke-Repair -arguments $script:arguments }

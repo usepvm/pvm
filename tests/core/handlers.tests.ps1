@@ -48,6 +48,24 @@ Describe "Invoke-Setup Tests" {
     }
 }
 
+Describe "Invoke-Repair Tests" {
+    It "Should return 0 when Setup-Environment-Directories-And-Files succeeds" {
+        Mock Setup-Environment-Directories-And-Files { 0 }
+
+        $result = Invoke-Repair
+        $result | Should -Be 0
+        Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
+    }
+
+    It "Should return -1 when Setup-Environment-Directories-And-Files fails" {
+        Mock Setup-Environment-Directories-And-Files { -1 }
+
+        $result = Invoke-Repair
+        $result | Should -Be -1
+        Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
+    }
+}
+
 Describe "Invoke-Current Tests" {
     BeforeEach {
         Mock Get-Current-PHP-Version { @{

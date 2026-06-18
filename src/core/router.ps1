@@ -248,6 +248,19 @@ function Get-Actions {
             }
             action      = { return Invoke-Aliases -arguments $script:arguments }
         }
+        'repair'  = @{
+            command     = 'pvm repair';
+            description = 'Reset PVM default files and directories to their original state.';
+            usage       = [ordered]@{
+                USAGE       = 'pvm repair'
+                DESCRIPTION = @(
+                    'Recreates PVM default files and directories.',
+                    'Use this to repair a broken PVM installation or restore missing files.',
+                    'This includes the aliases list, zend extensions list, profile template, and storage directories.'
+                )
+            }
+            action      = { return Invoke-Repair -arguments $script:arguments }
+        }
         'log'       = @{
             command     = 'pvm log';
             description = 'Display recent PVM log entries.';

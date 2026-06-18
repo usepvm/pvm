@@ -7,6 +7,7 @@ Describe "Get-Actions Tests" {
     BeforeEach {
         Mock Invoke-Help { }
         Mock Invoke-Setup { }
+        Mock Invoke-Repair { }
         Mock Invoke-Current { }
         Mock Invoke-List { }
         Mock Invoke-Install { }
@@ -61,6 +62,13 @@ Describe "Get-Actions Tests" {
             $actions['setup'].action.Invoke()
 
             Assert-MockCalled Invoke-Setup -Times 1
+        }
+
+        It "Should execute repair action correctly" {
+            $actions = Get-Actions -arguments @()
+            $actions['repair'].action.Invoke()
+
+            Assert-MockCalled Invoke-Repair -Times 1
         }
 
         It "Should execute current action correctly" {

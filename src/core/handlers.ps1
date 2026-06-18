@@ -14,6 +14,12 @@ function Invoke-Setup {
     return 0
 }
 
+function Invoke-Repair {
+    $code = Setup-Environment-Directories-And-Files
+
+    return $code
+}
+
 function Invoke-Current {
     $result = Get-Current-PHP-Version
     if (-not $result.version) {

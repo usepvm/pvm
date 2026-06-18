@@ -486,7 +486,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
                 )
             }
             Mock Cache-Data { return -1 }
-            
+
             $result = Refresh-Installed-PHP-Versions-Cache
             $result | Should -Be -1
         }

@@ -1,10 +1,39 @@
 BeforeAll {
     # Mock global variables
-    $PVMConfig.paths.cache = 'TestDrive:\\cache'
+    $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\\cache'
 
     # Create test cache directory
     New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
 }
+
+Describe "Get-Cache-Files Tests" {
+    It "Should return a list of cache files" {
+        Mock Get-ChildItem {
+            return @(
+                @{ Name = 'cache1.json'; FullName = "$script:CACHE_PATH\cache1.json" }
+                @{ Name = 'cache2.json'; FullName = "$script:CACHE_PATH\cache2.json" }
+            )
+        }
+        
+        $result = Get-Cache-Files
+        $result.Count | Should -Be 2
+    }
+    
+    It "Should return null when cache directory does not exist" {
+        Mock Is-Directory-Not-Exists { return $true }
+
+        $result = Get-Cache-Files
+        $result | Should -Be $null
+    }
+    
+    It "Should handle exceptions gracefully when cache cannot be listed" {
+        Mock Get-ChildItem { throw 'Error' }
+
+        $result = Get-Cache-Files
+        $result | Should -Be $null
+    }
+}
+
 
 Describe "List-Cache-Files Tests" {
     BeforeEach {
@@ -68,8 +97,8 @@ Describe "List-Cache-Files Tests" {
         Assert-MockCalled Write-Host -ParameterFilter { $Object -match 'readme' } -Exactly 0
     }
 
-    It "Should return -1 and log error when Get-ChildItem throws" {
-        Mock Get-ChildItem { throw 'Access denied' }
+    It "Should return -1 and log error when Get-Cache-Files throws" {
+        Mock Get-Cache-Files { throw 'Access denied' }
 
         $result = List-Cache-Files
         $result | Should -Be -1
@@ -500,8 +529,8 @@ Describe "Clear-Cache-Files Tests" {
         Assert-MockCalled Log-Data -Exactly 1
     }
 
-    It "Should return -1 and log error when Get-ChildItem throws" {
-        Mock Get-ChildItem { throw 'Disk error' }
+    It "Should return -1 and log error when Get-Cache-Files throws" {
+        Mock Get-Cache-Files { throw 'Disk error' }
 
         $result = Clear-Cache-Files
         $result | Should -Be -1

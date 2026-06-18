@@ -1,4 +1,19 @@
 ﻿
+function Get-Cache-Files {
+    try {
+        if (Is-Directory-Not-Exists -path $PVMConfig.paths.cache) {
+            return $null
+        }
+        
+        $files = Get-ChildItem -Path $PVMConfig.paths.cache -Filter '*.json' -ErrorAction SilentlyContinue
+        
+        return $files
+    } catch {
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get cache files"; exception = $_ }
+        return $null
+    }
+}
+
 function List-Cache-Files {
     try {
         if (Is-Directory-Not-Exists -path $PVMConfig.paths.cache) {
@@ -6,7 +21,7 @@ function List-Cache-Files {
             return -1
         }
 
-        $cacheFiles = Get-ChildItem -Path $PVMConfig.paths.cache -Filter '*.json' -ErrorAction SilentlyContinue
+        $cacheFiles = Get-Cache-Files
 
         if ($cacheFiles.Count -eq 0) {
             Write-Host -Object "`nNo cache files found." -ForegroundColor DarkYellow
@@ -90,7 +105,7 @@ function Delete-Cache-File {
 
 function Clear-Cache-Files {
     try {
-        $cacheFiles = Get-ChildItem -Path $PVMConfig.paths.cache -Filter '*.json' -ErrorAction SilentlyContinue
+        $cacheFiles = Get-Cache-Files
 
         if ($cacheFiles.Count -eq 0) {
             Write-Host -Object "`nNo cache files found." -ForegroundColor DarkYellow

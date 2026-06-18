@@ -245,9 +245,6 @@ function Get-Actions {
                 DESCRIPTION = @(
                     'Lists all available aliases.'
                 )
-                EXAMPLES    = @(
-                    'pvm aliases ......................... Lists all available aliases'
-                )
             }
             action      = { return Invoke-Aliases -arguments $script:arguments }
         }

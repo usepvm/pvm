@@ -4,9 +4,9 @@ function Get-Cache-Files {
         if (Is-Directory-Not-Exists -path $PVMConfig.paths.cache) {
             return $null
         }
-        
+
         $files = Get-ChildItem -Path $PVMConfig.paths.cache -Filter '*.json' -ErrorAction SilentlyContinue
-        
+
         return $files
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get cache files"; exception = $_ }

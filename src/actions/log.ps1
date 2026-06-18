@@ -54,15 +54,15 @@ function Format-NiceTimestamp {
         }
 
         return @{
-            Date = $dateStr
-            Time = $timeStr
+            Date     = $dateStr
+            Time     = $timeStr
             Relative = $relativeTime
             DateTime = $dateTime
         }
     } catch {
         return @{
-            Date = $timestamp
-            Time = ''
+            Date     = $timestamp
+            Time     = ''
             Relative = ''
             DateTime = Get-Date
         }
@@ -103,7 +103,8 @@ function Show-Log {
                 continue
             }
             $lines = $entry.Trim() -split "`n"
-            if ($lines.Count -ge 1) {  # Changed from 2 to 1 to catch single-line entries
+            if ($lines.Count -ge 1) {
+                # Changed from 2 to 1 to catch single-line entries
                 # Extract timestamp from first line
                 $firstLine = $lines[0].Trim()
                 if ($firstLine -match '^\[(.+?)\]\s*(.+?)$') {
@@ -113,7 +114,7 @@ function Show-Log {
                     # Get remaining content
                     $remainingContent = @()
                     if ($lines.Count -gt 1) {
-                        $remainingContent = $lines[1..($lines.Count-1)] | Where-Object { $_.Trim() -ne '' }
+                        $remainingContent = $lines[1..($lines.Count - 1)] | Where-Object { $_.Trim() -ne '' }
                     }
 
                     # Combine first message with remaining content
@@ -135,20 +136,20 @@ function Show-Log {
                     $niceTime = Format-NiceTimestamp $timestamp
 
                     $parsedEntries += @{
-                        Timestamp = $timestamp
-                        Message = $fullMessageText
-                        ErrorMessage = $errorMessage
+                        Timestamp      = $timestamp
+                        Message        = $fullMessageText
+                        ErrorMessage   = $errorMessage
                         PositionDetail = $positionDetail
-                        Header = $header
-                        RawEntry = $entry.Trim()
-                        NiceTime = $niceTime
+                        Header         = $header
+                        RawEntry       = $entry.Trim()
+                        NiceTime       = $niceTime
                     }
                 }
             }
         }
 
         # Reverse the order to show most recent first
-        $reversedEntries = $parsedEntries[-1..-($parsedEntries.Length)]
+        $reversedEntries = $parsedEntries[-1.. - ($parsedEntries.Length)]
 
         if ($reversedEntries.Count -eq 0) {
             Write-Host -Object "`nNo log entries found." -ForegroundColor Yellow

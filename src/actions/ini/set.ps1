@@ -31,11 +31,11 @@ function Set-IniSetting {
             foreach ($line in $lines) {
                 if ($line -match $pattern) {
                     $matchesList += @{
-                        Index = $matchesList.Length
-                        Key = $matches['key'].Trim()
-                        Value = $matches['value'].Trim()
+                        Index   = $matchesList.Length
+                        Key     = $matches['key'].Trim()
+                        Value   = $matches['value'].Trim()
                         Enabled = -not ($line -match '^[#;]')
-                        Line = $line
+                        Line    = $line
                         LineNo  = $index
                         Color   = if ($line -match '^[#;]') { 'DarkYellow' } else { 'DarkGreen' }
                     }
@@ -102,8 +102,8 @@ function Set-IniSetting {
             $lines[$selected.LineNo] = $newLine
             Set-Content -Path $iniPath $lines -Encoding UTF8
 
-            $status = if ($enable) {'Enabled'} else {'Disabled'}
-            $color = if ($enable) {'DarkGreen'} else {'DarkYellow'}
+            $status = if ($enable) { 'Enabled' } else { 'Disabled' }
+            $color = if ($enable) { 'DarkGreen' } else { 'DarkYellow' }
 
             $updatedSettings[$selected.Key] = @{ key = $selected.Key; value = $inputValue; status = $status; color = $color }
         }

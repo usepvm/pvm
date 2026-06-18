@@ -50,8 +50,8 @@ function Get-Matching-PHPExtensionsStatus {
             if (-not $fileId) { continue }
 
             $matchesInExt += @{
-                name = $file.BaseName
-                id = $fileId
+                name     = $file.BaseName
+                id       = $fileId
                 fullPath = $file.FullName
                 fileName = $file.Name
             }
@@ -75,12 +75,12 @@ function Get-Matching-PHPExtensionsStatus {
 
             # track ini matches by normalized id
             $iniMatches[$id] = @{
-                name = $displayName
-                status = 'Enabled'
-                color = 'DarkGreen'
-                line = $line
+                name       = $displayName
+                status     = 'Enabled'
+                color      = 'DarkGreen'
+                line       = $line
                 lineNumber = $lineNumber
-                source = 'ini'
+                source     = 'ini'
             }
         }
         if ($line -match $disabledPattern) {
@@ -90,12 +90,12 @@ function Get-Matching-PHPExtensionsStatus {
             if (-not $id) { $lineNumber++; continue }
 
             $iniMatches[$id] = @{
-                name = $displayName
-                status = 'Disabled'
-                color = 'DarkYellow'
-                line = $line
+                name       = $displayName
+                status     = 'Disabled'
+                color      = 'DarkYellow'
+                line       = $line
                 lineNumber = $lineNumber
-                source = 'ini'
+                source     = 'ini'
             }
         }
         $lineNumber++
@@ -107,15 +107,15 @@ function Get-Matching-PHPExtensionsStatus {
         if ($iniMatches.ContainsKey($id)) {
             # Extension is configured in ini
             $matchesList += @{
-                name = $iniMatches[$id].name
-                id = $id
-                status = $iniMatches[$id].status
-                color = $iniMatches[$id].color
-                line = $iniMatches[$id].line
+                name       = $iniMatches[$id].name
+                id         = $id
+                status     = $iniMatches[$id].status
+                color      = $iniMatches[$id].color
+                line       = $iniMatches[$id].line
                 lineNumber = $iniMatches[$id].lineNumber
-                source = 'ext,ini'
-                fullPath = $extMatch.fullPath
-                fileName = $extMatch.fileName
+                source     = 'ext,ini'
+                fullPath   = $extMatch.fullPath
+                fileName   = $extMatch.fileName
             }
         } else {
             # Extension exists in ext but not configured in ini - add it as disabled
@@ -127,28 +127,28 @@ function Get-Matching-PHPExtensionsStatus {
                 Set-Content -Path $iniPath $lines -Encoding UTF8
 
                 $matchesList += @{
-                    name = $extMatch.name
-                    id = $id
-                    status = 'Disabled'
-                    color = 'DarkYellow'
-                    line = $extensionLine
+                    name       = $extMatch.name
+                    id         = $id
+                    status     = 'Disabled'
+                    color      = 'DarkYellow'
+                    line       = $extensionLine
                     lineNumber = $lines.Count
-                    source = 'ext,ini'
-                    fullPath = $extMatch.fullPath
-                    fileName = $extMatch.fileName
+                    source     = 'ext,ini'
+                    fullPath   = $extMatch.fullPath
+                    fileName   = $extMatch.fileName
                 }
             } catch {
                 # If adding fails, still return it as available
                 $matchesList += @{
-                    name = $extMatch.name
-                    id = $id
-                    status = 'Available (not configured)'
-                    color = 'DarkCyan'
-                    line = 'Found in ext directory: $($extMatch.fullPath)'
+                    name       = $extMatch.name
+                    id         = $id
+                    status     = 'Available (not configured)'
+                    color      = 'DarkCyan'
+                    line       = 'Found in ext directory: $($extMatch.fullPath)'
                     lineNumber = 0
-                    source = 'ext'
-                    fullPath = $extMatch.fullPath
-                    fileName = $extMatch.fileName
+                    source     = 'ext'
+                    fullPath   = $extMatch.fullPath
+                    fileName   = $extMatch.fileName
                 }
             }
         }

@@ -15,7 +15,7 @@ function Get-Extension-Matching-Categories-By-Page {
     }
 
     return @{
-        hasMore = $hasMore
+        hasMore     = $hasMore
         resultLinks = $resultLinks
     }
 }
@@ -50,13 +50,13 @@ function Get-Packages-From-Source-Links {
                 if ($fileName -notmatch "^php_$extName-[\d\.]+(?:[a-z]+\d+)?-$version-") { return }
 
                 $formattedList += @{
-                    href        = $_.href
-                    version     = $version
-                    extVersion  = $extVersion
-                    arch        = if ($fileName -match '(x86_64|x64)(?=\.zip$)') { 'x64' } else { 'x86' }
-                    buildType   = if ($fileName -match '(?i)(?:^|-)nts(?:-|\.zip$)') { 'NTS' } else { 'TS' }
-                    compiler    = if ($fileName -match '(?i)\b(vs|vc)\d+\b') { $matches[0].ToUpper() } else { 'unknown' }
-                    fileName    = $fileName
+                    href       = $_.href
+                    version    = $version
+                    extVersion = $extVersion
+                    arch       = if ($fileName -match '(x86_64|x64)(?=\.zip$)') { 'x64' } else { 'x86' }
+                    buildType  = if ($fileName -match '(?i)(?:^|-)nts(?:-|\.zip$)') { 'NTS' } else { 'TS' }
+                    compiler   = if ($fileName -match '(?i)\b(vs|vc)\d+\b') { $matches[0].ToUpper() } else { 'unknown' }
+                    fileName   = $fileName
                 }
             }
         } catch {
@@ -164,7 +164,7 @@ function Get-Extension-Links-From-URL {
 
     return @{
         extName = $extName
-        links = $links
+        links   = $links
     }
 }
 
@@ -185,6 +185,6 @@ function Get-Extension-From-URL {
 
     return @{
         extName = $linksObj.extName
-        data = $formattedList
+        data    = $formattedList
     }
 }

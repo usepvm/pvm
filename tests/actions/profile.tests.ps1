@@ -407,18 +407,18 @@ Describe "Get-Profile-Files Tests" {
                 @{ Name = 'profile2.json'; FullName = "$script:PROFILES_PATH\profile2.json" }
             )
         }
-        
+
         $result = Get-Profile-Files
         $result.Count | Should -Be 2
     }
-    
+
     It "Should return null when profiles directory does not exist" {
         Mock Is-Directory-Not-Exists { return $true }
 
         $result = Get-Profile-Files
         $result | Should -Be $null
     }
-    
+
     It "Should handle exceptions gracefully when profiles cannot be listed" {
         Mock Get-ChildItem { throw 'Error' }
 

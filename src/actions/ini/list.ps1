@@ -22,7 +22,7 @@ function Get-Extension-Categories-By-Page {
     }
 
     return @{
-        hasMore = $hasMore
+        hasMore             = $hasMore
         availableExtensions = $availableExtensions
     }
 }
@@ -55,8 +55,8 @@ function Get-PHPExtensions-From-Source {
         }
         $availableExtensions['XDebug'] = @(
             @{
-                href = $PVMConfig.links.xdebugHistorical
-                extName = 'xdebug'
+                href        = $PVMConfig.links.xdebugHistorical
+                extName     = 'xdebug'
                 extCategory = 'XDebug'
             }
         )
@@ -138,7 +138,7 @@ function List-PHP-Extensions {
             Write-Host -Object "`nAvailable Extensions by Category:"
             Write-Host    '--------------------------------'
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
-                $key  = "$($_.Key) "
+                $key = "$($_.Key) "
                 $vals = ($_.Value | ForEach-Object { $_.extName }) -join ', '
 
                 $label = "  $key"

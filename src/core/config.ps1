@@ -4,43 +4,43 @@ function Get-Config {
 
     $env = Get-EnvConfig -rootPath $rootPath
 
-    $storage  = "$rootPath\storage"
-    $data     = "$storage\data"
+    $storage = "$rootPath\storage"
+    $data = "$storage\data"
     $templates = "$data\templates"
-    $logs     = "$storage\logs"
+    $logs = "$storage\logs"
 
     return @{
-        version = '2.6' # PVM version
+        version  = '2.6' # PVM version
 
-        paths = [ordered]@{
-            storage              = $storage
-            php                  = "$storage\php"
-            data                 = $data
-            templates            = $templates
-            cache                = "$data\cache"
-            profiles             = "$data\profiles"
-            profileTemplate      = "$templates\profile-template.json"
-            zendExtensionsList   = "$templates\zend_extensions.json"
-            aliasesList          = "$templates\aliases.json"
-            log                  = $logs
-            logError             = "$logs\error.log"
-            pathVarBackup        = "$logs\path.bak.log"
+        paths    = [ordered]@{
+            storage            = $storage
+            php                = "$storage\php"
+            data               = $data
+            templates          = $templates
+            cache              = "$data\cache"
+            profiles           = "$data\profiles"
+            profileTemplate    = "$templates\profile-template.json"
+            zendExtensionsList = "$templates\zend_extensions.json"
+            aliasesList        = "$templates\aliases.json"
+            log                = $logs
+            logError           = "$logs\error.log"
+            pathVarBackup      = "$logs\path.bak.log"
         }
 
-        links = [ordered]@{
-            xdebugBase          = 'http://xdebug.org'
-            xdebugDownload      = 'http://xdebug.org/download'
-            xdebugHistorical    = 'http://xdebug.org/download/historical'
-            phpWinBase          = 'https://windows.php.net'
-            phpWinArchives      = 'https://windows.php.net/downloads/releases/archives'
-            phpWinReleases      = 'https://windows.php.net/downloads/releases'
-            peclBase            = 'https://pecl.php.net'
-            peclPackageRoot     = 'https://pecl.php.net/package'
-            peclPackages        = 'https://pecl.php.net/packages.php'
-            peclWinExtDownload  = 'https://downloads.php.net/~windows/pecl/releases'
+        links    = [ordered]@{
+            xdebugBase         = 'http://xdebug.org'
+            xdebugDownload     = 'http://xdebug.org/download'
+            xdebugHistorical   = 'http://xdebug.org/download/historical'
+            phpWinBase         = 'https://windows.php.net'
+            phpWinArchives     = 'https://windows.php.net/downloads/releases/archives'
+            phpWinReleases     = 'https://windows.php.net/downloads/releases'
+            peclBase           = 'https://pecl.php.net'
+            peclPackageRoot    = 'https://pecl.php.net/package'
+            peclPackages       = 'https://pecl.php.net/packages.php'
+            peclWinExtDownload = 'https://downloads.php.net/~windows/pecl/releases'
         }
 
-        env = [ordered]@{
+        env      = [ordered]@{
             PHP_CURRENT_VERSION_PATH  = $env['PHP_CURRENT_VERSION_PATH']
             PVM_ENV_VAR_NAME          = $env['PVM_ENV_VAR_NAME']
             CACHE_MAX_HOURS           = [int] $env['CACHE_MAX_HOURS']
@@ -65,12 +65,12 @@ function Get-Config {
                 'opcache.max_accelerated_files'
             )
             aliases        = [ordered]@{
-                '?'  = 'help';  'h'      = 'help';    'init'   = 'setup'
+                '?' = 'help'; 'h' = 'help'; 'init' = 'setup'
                 'cur' = 'current'; 'active' = 'current'
-                'ls' = 'list';  'i'      = 'install'; 'u'      = 'uninstall'; 'switch' = 'use'
-                'on' = 'enable'; 'off'   = 'disable'
-                'a'  = 'add';   '+'      = 'add';     'rm'     = 'remove';    '-'      = 'remove'
-                'del' = 'delete'; 'cls'  = 'clear'
+                'ls' = 'list'; 'i' = 'install'; 'u' = 'uninstall'; 'switch' = 'use'
+                'on' = 'enable'; 'off' = 'disable'
+                'a' = 'add'; '+' = 'add'; 'rm' = 'remove'; '-' = 'remove'
+                'del' = 'delete'; 'cls' = 'clear'
             }
         }
     }

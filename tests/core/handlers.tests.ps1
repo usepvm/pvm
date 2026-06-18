@@ -51,12 +51,12 @@ Describe "Invoke-Setup Tests" {
 Describe "Invoke-Current Tests" {
     BeforeEach {
         Mock Get-Current-PHP-Version { @{
-            version = '8.2.0'
-            arch = 'x64'
-            buildType = 'TS'
-            path = 'C:\PHP\8.2.0'
-            status = @{ "xdebug" = $true; "opcache" = $false }
-        }}
+                version   = '8.2.0'
+                arch      = 'x64'
+                buildType = 'TS'
+                path      = 'C:\PHP\8.2.0'
+                status    = @{ "xdebug" = $true; "opcache" = $false }
+            } }
         Mock Write-Host { }
     }
 
@@ -158,7 +158,7 @@ Describe "Invoke-Install Tests" {
 
     It "Should install latest PHP version when 'latest' argument is provided" {
         $arguments = @('latest')
-        Mock Get-Latest-PHP-Version { return @{version = '8.6.0'} }
+        Mock Get-Latest-PHP-Version { return @{version = '8.6.0' } }
 
         $result = Invoke-Install -arguments $arguments
         $result | Should -Be 0

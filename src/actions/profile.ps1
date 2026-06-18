@@ -216,12 +216,12 @@ function Save-PHP-Profile {
 
         # Build profile structure
         $userProfile = [ordered]@{
-            name = $profileName
+            name        = $profileName
             description = if ($description) { $description } else { "Profile saved on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" }
-            created = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
-            phpVersion = $currentPhpVersion.version
-            settings = [ordered]@{}
-            extensions = [ordered]@{}
+            created     = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
+            phpVersion  = $currentPhpVersion.version
+            settings    = [ordered]@{}
+            extensions  = [ordered]@{}
         }
 
         # Get popular settings and extensions lists
@@ -232,7 +232,7 @@ function Save-PHP-Profile {
         foreach ($setting in $phpIniData.settings) {
             if ($popularSettings -contains $setting.Name) {
                 $userProfile.settings[$setting.Name] = @{
-                    value = $setting.Value
+                    value   = $setting.Value
                     enabled = $setting.Enabled
                 }
             }
@@ -244,7 +244,7 @@ function Save-PHP-Profile {
             if ($popularExtensions -contains $extName) {
                 $userProfile.extensions[$extName] = @{
                     enabled = $ext.Enabled
-                    type = $ext.Type  # "extension" or "zend_extension"
+                    type    = $ext.Type  # "extension" or "zend_extension"
                 }
             }
         }
@@ -394,9 +394,9 @@ function Get-Profile-Files {
         if (Is-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
             return $null
         }
-        
+
         $files = Get-ChildItem -Path $PVMConfig.paths.profiles -Filter '*.json' -ErrorAction SilentlyContinue
-        
+
         return $files
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get profile files"; exception = $_ }
@@ -428,13 +428,13 @@ function List-PHP-Profiles {
                 $settingsCount = if ($userProfile.settings) { ($userProfile.settings.PSObject.Properties | Measure-Object).Count } else { 0 }
                 $extensionsCount = if ($userProfile.extensions) { ($userProfile.extensions.PSObject.Properties | Measure-Object).Count } else { 0 }
                 $profiles += @{
-                    Name = $userProfile.name
+                    Name        = $userProfile.name
                     Description = if ($userProfile.description) { $userProfile.description } else { '(no description)' }
-                    Created = $userProfile.created
-                    PHPVersion = $userProfile.phpVersion
-                    Settings = $settingsCount
-                    Extensions = $extensionsCount
-                    File = $file.Name
+                    Created     = $userProfile.created
+                    PHPVersion  = $userProfile.phpVersion
+                    Settings    = $settingsCount
+                    Extensions  = $extensionsCount
+                    File        = $file.Name
                 }
             } catch {
                 Write-Host -Object "  Warning: Failed to parse $($file.Name)" -ForegroundColor DarkYellow
@@ -640,44 +640,44 @@ function Import-PHP-Profile {
 function Create-Example-PHP-Profile {
     try {
         $exampleProfile = [ordered]@{
-            name = "example-profile"
+            name        = "example-profile"
             description = "Dev"
-            created = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-            phpVersion = "8.2.30"
-            settings = [ordered]@{
-                max_execution_time = @{ value = "300"; enabled = $true }
-                max_input_time = @{ value = "300"; enabled = $true }
-                memory_limit = @{ value = "2G"; enabled = $true }
-                error_reporting = @{ value = "E_ALL"; enabled = $true }
-                display_errors = @{ value = "On"; enabled = $true }
-                log_errors = @{ value = "On"; enabled = $true }
-                post_max_size = @{ value = "40M"; enabled = $true }
-                upload_max_filesize = @{ value = "30M"; enabled = $true }
-                max_file_uploads = @{ value = "40"; enabled = $true }
-                'opcache.enable' = @{ value = "1"; enabled = $true }
-                'opcache.enable_cli' = @{ value = "1"; enabled = $true }
-                'opcache.memory_consumption' = @{ value = "1G"; enabled = $true }
+            created     = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            phpVersion  = "8.2.30"
+            settings    = [ordered]@{
+                max_execution_time              = @{ value = "300"; enabled = $true }
+                max_input_time                  = @{ value = "300"; enabled = $true }
+                memory_limit                    = @{ value = "2G"; enabled = $true }
+                error_reporting                 = @{ value = "E_ALL"; enabled = $true }
+                display_errors                  = @{ value = "On"; enabled = $true }
+                log_errors                      = @{ value = "On"; enabled = $true }
+                post_max_size                   = @{ value = "40M"; enabled = $true }
+                upload_max_filesize             = @{ value = "30M"; enabled = $true }
+                max_file_uploads                = @{ value = "40"; enabled = $true }
+                'opcache.enable'                = @{ value = "1"; enabled = $true }
+                'opcache.enable_cli'            = @{ value = "1"; enabled = $true }
+                'opcache.memory_consumption'    = @{ value = "1G"; enabled = $true }
                 'opcache.max_accelerated_files' = @{ value = "10000"; enabled = $true }
             }
-            extensions = [ordered]@{
-                curl = @{ enabled = $true; type = "extension" }
-                fileinfo = @{ enabled = $true; type = "extension" }
-                gd = @{ enabled = $true; type = "extension" }
-                gettext = @{ enabled = $true; type = "extension" }
-                intl = @{ enabled = $true; type = "extension" }
-                mbstring = @{ enabled = $true; type = "extension" }
-                exif = @{ enabled = $true; type = "extension" }
-                mysqli = @{ enabled = $false; type = "extension" }
-                openssl = @{ enabled = $true; type = "extension" }
-                pdo_mysql = @{ enabled = $true; type = "extension" }
-                pdo_pgsql = @{ enabled = $false; type = "extension" }
+            extensions  = [ordered]@{
+                curl       = @{ enabled = $true; type = "extension" }
+                fileinfo   = @{ enabled = $true; type = "extension" }
+                gd         = @{ enabled = $true; type = "extension" }
+                gettext    = @{ enabled = $true; type = "extension" }
+                intl       = @{ enabled = $true; type = "extension" }
+                mbstring   = @{ enabled = $true; type = "extension" }
+                exif       = @{ enabled = $true; type = "extension" }
+                mysqli     = @{ enabled = $false; type = "extension" }
+                openssl    = @{ enabled = $true; type = "extension" }
+                pdo_mysql  = @{ enabled = $true; type = "extension" }
+                pdo_pgsql  = @{ enabled = $false; type = "extension" }
                 pdo_sqlite = @{ enabled = $false; type = "extension" }
-                pgsql = @{ enabled = $false; type = "extension" }
-                sodium = @{ enabled = $false; type = "extension" }
-                sqlite3 = @{ enabled = $false; type = "extension" }
-                zip = @{ enabled = $true; type = "extension" }
-                opcache = @{ enabled = $true; type = "zend_extension" }
-                xdebug = @{ enabled = $false; type = "zend_extension" }
+                pgsql      = @{ enabled = $false; type = "extension" }
+                sodium     = @{ enabled = $false; type = "extension" }
+                sqlite3    = @{ enabled = $false; type = "extension" }
+                zip        = @{ enabled = $true; type = "extension" }
+                opcache    = @{ enabled = $true; type = "zend_extension" }
+                xdebug     = @{ enabled = $false; type = "zend_extension" }
             }
         }
 
@@ -695,7 +695,7 @@ function Create-Profile-Template {
     try {
         $profileTemplate = [ordered]@{
             extensions = $PVMConfig.defaults.extensions
-            settings = $PVMConfig.defaults.settings
+            settings   = $PVMConfig.defaults.settings
         }
 
         $jsonContent = $profileTemplate | ConvertTo-Json -Depth 10

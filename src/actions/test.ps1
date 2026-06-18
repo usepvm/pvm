@@ -61,7 +61,7 @@ function Run-Test-File {
             $coveredFile = "$($covered.Name) | $($covered.FullName)"
         }
 
-        $separatorWidth = [Math]::Max($file.Name.Length + $file.FullName.Length, $coveredFile.Length) + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 5/2)
+        $separatorWidth = [Math]::Max($file.Name.Length + $file.FullName.Length, $coveredFile.Length) + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 5 / 2)
 
         Write-Host -Object "`n`n$('-' * $separatorWidth)" -ForegroundColor Cyan
         Write-Host -Object "- Running test: $($file.Name) | $($file.FullName)" -ForegroundColor Cyan

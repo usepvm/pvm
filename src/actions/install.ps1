@@ -24,11 +24,11 @@ function Get-Latest-PHP-Version {
                         $fileName = $_.href -split '/'
                         $fileName = $fileName[$fileName.Count - 1]
                         $allVersions += @{
-                            href = $_.href
-                            version = $version
-                            fileName = $fileName
+                            href      = $_.href
+                            version   = $version
+                            fileName  = $fileName
                             BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
-                            arch = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                            arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
                         }
                     }
                 } catch {
@@ -77,11 +77,11 @@ function Get-PHP-Versions-From-Url {
             $fileName = $_.href -split '/'
             $fileName = $fileName[$fileName.Count - 1]
             $formattedList += @{
-                href = $_.href
-                version = $version
-                fileName = $fileName
+                href      = $_.href
+                version   = $version
+                fileName  = $fileName
                 BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
-                arch = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
             }
         }
 
@@ -217,8 +217,8 @@ function Configure-Opcache {
         $phpIniContent = Get-Content -Path $phpIniPath
         $phpIniContent = $phpIniContent | ForEach-Object {
             $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1' `
-               -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `
-               -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
+                -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `
+                -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
         Write-Host -Object "`nOpcache configured successfully for PHP version $version"

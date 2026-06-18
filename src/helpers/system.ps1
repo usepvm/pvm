@@ -100,8 +100,8 @@ function Reconstruct-EnvContent {
     param ($value)
 
     $rebuiltValue = $value -split ';' |
-        ForEach-Object { $_.Trim() } |
-        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    ForEach-Object { $_.Trim() } |
+    Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 
     return ($rebuiltValue -join ';')
 }
@@ -112,9 +112,9 @@ function Remove-PathDuplicates {
     $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 
     $entries = $Path -split ';' |
-        ForEach-Object { $_.Trim() } |
-        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
-        Where-Object { $seen.Add($_) }
+    ForEach-Object { $_.Trim() } |
+    Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+    Where-Object { $seen.Add($_) }
 
     return ($entries -join ';')
 }
@@ -132,7 +132,7 @@ function Optimize-SystemPath {
         # Saving Path to log
         $outputLog = Log-Data -data @{
             logPath = $PVMConfig.paths.pathVarBackup
-            header = "Original PATH`n$oldPath"
+            header  = "Original PATH`n$oldPath"
         }
         if ($outputLog -eq 0) {
             Write-Host -Object "`nOriginal Path saved to '$($PVMConfig.paths.pathVarBackup)'"

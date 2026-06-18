@@ -23,7 +23,7 @@ function Display-Installed-Extensions {
 
     $extensions |
     Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true },
-                @{Expression = { $_.Extension }; Ascending = $true } |
+    @{Expression = { $_.Extension }; Ascending = $true } |
     ForEach-Object {
         $label = "  $($_.Extension) "
         $label = $label.PadRight($maxLineLength, '.')
@@ -64,13 +64,13 @@ function Display-Settings {
 
     $settings |
     Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true },
-                @{Expression = { $_.Name }; Ascending = $true } |
+    @{Expression = { $_.Name }; Ascending = $true } |
     ForEach-Object {
         $label = "  $($_.Name) "
         $value = " $($_.Value) "
 
         # pad with dots so value always starts at same column
-        $line  = $label.PadRight($maxLineLength - $value.Length, '.') + $value
+        $line = $label.PadRight($maxLineLength - $value.Length, '.') + $value
 
         if ($_.Enabled) {
             $status = 'Enabled'

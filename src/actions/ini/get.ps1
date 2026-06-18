@@ -21,9 +21,9 @@ function Get-IniSetting {
                 if ($line -match $pattern) {
                     $item = @{
                         extensionName = $matches[1].Trim()
-                        value = $matches[2].Trim()
-                        enabled = 'Enabled'
-                        color = 'DarkGreen'
+                        value         = $matches[2].Trim()
+                        enabled       = 'Enabled'
+                        color         = 'DarkGreen'
                     }
 
                     if ($matches[0] -match '^[#;]') {
@@ -36,12 +36,14 @@ function Get-IniSetting {
             }
 
             if ($result.Count -eq 0) {
-                $notFound[$key] = @(@{
-                    extensionName = $key
-                    value = $null
-                    enabled = 'Not Found'
-                    color = 'Gray'
-                })
+                $notFound[$key] = @(
+                    @{
+                        extensionName = $key
+                        value         = $null
+                        enabled       = 'Not Found'
+                        color         = 'Gray'
+                    }
+                )
                 $overallCode = -1
                 continue
             }

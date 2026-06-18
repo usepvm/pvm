@@ -1,4 +1,4 @@
-
+﻿
 function Get-Xdebug-Config-V2 {
     param ($XDebugPath)
 
@@ -49,14 +49,14 @@ function Get-XDebug-FROM-URL {
             }
 
             $formattedList += @{
-                href = $_.href
-                version = $version
+                href          = $_.href
+                version       = $version
                 xDebugVersion = $xDebugVersion;
-                arch = if ($fileName -match '(x86_64|x64)(?=\.dll$)') { 'x64' } else { 'x86' }
-                buildType = if ($fileName -match '(?i)(?:^|-)nts(?:-|\.dll$)') { 'NTS' } else { 'TS' }
-                compiler = if ($fileName -match '(?i)\b(vs|vc)\d+\b') { $matches[0].ToUpper() } else { 'unknown' }
-                fileName = $fileName;
-                outerHTML = $_.outerHTML
+                arch          = if ($fileName -match '(x86_64|x64)(?=\.dll$)') { 'x64' } else { 'x86' }
+                buildType     = if ($fileName -match '(?i)(?:^|-)nts(?:-|\.dll$)') { 'NTS' } else { 'TS' }
+                compiler      = if ($fileName -match '(?i)\b(vs|vc)\d+\b') { $matches[0].ToUpper() } else { 'unknown' }
+                fileName      = $fileName;
+                outerHTML     = $_.outerHTML
             }
         }
 
@@ -97,47 +97,51 @@ function Install-XDebug-Extension {
         $xDebugListGrouped = [ordered]@{}
         $index = 0
         $xDebugList |
-            Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
-            Group-Object xDebugVersion |
-            Sort-Object `
-                @{ Expression = {
-                        # extract numeric version
-                        [version]($_.Name -replace '(alpha|beta|rc).*','')
-                }; Descending = $true },
-                @{ Expression = {
-                    # prerelease weight
-                    if ($_.Name -match 'alpha') { 1 }
-                    elseif ($_.Name -match 'beta') { 2 }
-                    elseif ($_.Name -match 'rc') { 3 }
-                    else { 4 } # stable
-                }; Descending = $true },
-                @{ Expression = {
-                    # prerelease number (alpha3, rc2, etc)
-                    if ($_.Name -match '(alpha|beta|rc)(\d+)') {
-                        [int]$matches[2]
-                    } else {
-                        [int]::MaxValue
-                    }
-                }; Descending = $true } |
-            ForEach-Object {
-                $sortedGroup = $_.Group | Sort-Object `
-                    @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
-                    @{ Expression = {
-                        switch ($_.arch) {
-                            'x86_64' { 2 }
-                            'x64'    { 2 }
-                            'x86'    { 1 }
-                            default  { 0 }
-                        }
-                    }; Descending = $true }
-
-                $sortedGroup | ForEach-Object {
-                    $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
-                    $index++
+        Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
+        Group-Object xDebugVersion |
+        Sort-Object `
+        @{ Expression     = {
+                # extract numeric version
+                [version]($_.Name -replace '(alpha|beta|rc).*', '')
+            }; Descending = $true
+        },
+        @{ Expression     = {
+                # prerelease weight
+                if ($_.Name -match 'alpha') { 1 }
+                elseif ($_.Name -match 'beta') { 2 }
+                elseif ($_.Name -match 'rc') { 3 }
+                else { 4 } # stable
+            }; Descending = $true
+        },
+        @{ Expression     = {
+                # prerelease number (alpha3, rc2, etc)
+                if ($_.Name -match '(alpha|beta|rc)(\d+)') {
+                    [int]$matches[2]
+                } else {
+                    [int]::MaxValue
                 }
-
-                $xDebugListGrouped[$_.Name] = $sortedGroup
+            }; Descending = $true
+        } |
+        ForEach-Object {
+            $sortedGroup = $_.Group | Sort-Object `
+            @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
+            @{ Expression     = {
+                    switch ($_.arch) {
+                        'x86_64' { 2 }
+                        'x64' { 2 }
+                        'x86' { 1 }
+                        default { 0 }
+                    }
+                }; Descending = $true
             }
+
+            $sortedGroup | ForEach-Object {
+                $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
+                $index++
+            }
+
+            $xDebugListGrouped[$_.Name] = $sortedGroup
+        }
 
         $xDebugListGrouped.GetEnumerator() | ForEach-Object {
             Write-Host -Object "`nXDebug $($_.Key)"
@@ -293,46 +297,50 @@ function Install-Extension {
             $extensionLinksGrouped = [ordered]@{}
             $index = 0
             $extensionLinks |
-                Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
-                Group-Object extVersion |
-                Sort-Object `
-                    @{ Expression = {
-                        # extract numeric version
-                        [version]($_.Name -replace '(alpha|beta|rc).*','')
-                    }; Descending = $true },
-                    @{ Expression = {
-                        # prerelease weight
-                        if ($_.Name -match 'alpha') { 1 }
-                        elseif ($_.Name -match 'beta') { 2 }
-                        elseif ($_.Name -match 'rc') { 3 }
-                        else { 4 } # stable
-                    }; Descending = $true },
-                    @{ Expression = {
-                        # prerelease number (alpha3, rc2, etc)
-                        if ($_.Name -match '(alpha|beta|rc)(\d+)') {
-                            [int]$matches[2]
-                        } else {
-                            [int]::MaxValue
-                        }
-                    }; Descending = $true } |
-                ForEach-Object {
-                    $sortedGroup = $_.Group | Sort-Object `
-                        @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
-                        @{ Expression = {
-                            switch ($_.arch) {
-                                'x86_64' { 2 }
-                                'x64'    { 2 }
-                                'x86'    { 1 }
-                                default  { 0 }
-                            }
-                        }; Descending = $true }
-                    $sortedGroup | ForEach-Object {
-                        $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
-                        $index++
+            Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
+            Group-Object extVersion |
+            Sort-Object `
+            @{ Expression     = {
+                    # extract numeric version
+                    [version]($_.Name -replace '(alpha|beta|rc).*', '')
+                }; Descending = $true
+            },
+            @{ Expression     = {
+                    # prerelease weight
+                    if ($_.Name -match 'alpha') { 1 }
+                    elseif ($_.Name -match 'beta') { 2 }
+                    elseif ($_.Name -match 'rc') { 3 }
+                    else { 4 } # stable
+                }; Descending = $true
+            },
+            @{ Expression     = {
+                    # prerelease number (alpha3, rc2, etc)
+                    if ($_.Name -match '(alpha|beta|rc)(\d+)') {
+                        [int]$matches[2]
+                    } else {
+                        [int]::MaxValue
                     }
-
-                    $extensionLinksGrouped[$_.Name] = $sortedGroup
+                }; Descending = $true
+            } |
+            ForEach-Object {
+                $sortedGroup = $_.Group | Sort-Object `
+                @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
+                @{ Expression     = {
+                        switch ($_.arch) {
+                            'x86_64' { 2 }
+                            'x64' { 2 }
+                            'x86' { 1 }
+                            default { 0 }
+                        }
+                    }; Descending = $true
                 }
+                $sortedGroup | ForEach-Object {
+                    $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
+                    $index++
+                }
+
+                $extensionLinksGrouped[$_.Name] = $sortedGroup
+            }
 
             $extensionLinksGrouped.GetEnumerator() | ForEach-Object {
                 Write-Host -Object "`n$extName $($_.Key)"
@@ -359,7 +367,7 @@ function Install-Extension {
         }
 
         Invoke-WebRequest -Uri $chosenItem.href -OutFile $PVMConfig.paths.php
-        $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip",'').Trim()
+        $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip", '').Trim()
         $extractPath = "$($PVMConfig.paths.storage)\php\$fileNamePath"
         Extract-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
         $files = Get-ChildItem -Path $extractPath

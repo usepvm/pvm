@@ -1,4 +1,4 @@
-BeforeAll {
+﻿BeforeAll {
     # Mock global variables
     $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\\cache'
 
@@ -14,18 +14,18 @@ Describe "Get-Cache-Files Tests" {
                 @{ Name = 'cache2.json'; FullName = "$script:CACHE_PATH\cache2.json" }
             )
         }
-        
+
         $result = Get-Cache-Files
         $result.Count | Should -Be 2
     }
-    
+
     It "Should return null when cache directory does not exist" {
         Mock Is-Directory-Not-Exists { return $true }
 
         $result = Get-Cache-Files
         $result | Should -Be $null
     }
-    
+
     It "Should handle exceptions gracefully when cache cannot be listed" {
         Mock Get-ChildItem { throw 'Error' }
 
@@ -33,7 +33,6 @@ Describe "Get-Cache-Files Tests" {
         $result | Should -Be $null
     }
 }
-
 
 Describe "List-Cache-Files Tests" {
     BeforeEach {

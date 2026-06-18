@@ -3,17 +3,16 @@ function Get-PHPInstallInfo {
     param ($path)
 
     $tsDll = Get-ChildItem -Path "$path\php*ts.dll" -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -notmatch 'nts\.dll$' } |
-        Select-Object -First 1
+    Where-Object { $_.Name -notmatch 'nts\.dll$' } |
+    Select-Object -First 1
 
     if ($tsDll) {
         $buildType = 'TS'
         $dll = $tsDll
-    }
-    else {
+    } else {
         $dll = Get-ChildItem -Path "$path\php*.dll" |
-            Where-Object { $_.Name -notmatch 'phpdbg' } |
-            Select-Object -First 1
+        Where-Object { $_.Name -notmatch 'phpdbg' } |
+        Select-Object -First 1
         $buildType = 'NTS'
     }
 
@@ -22,11 +21,11 @@ function Get-PHPInstallInfo {
     }
 
     return @{
-        Version      = $dll.VersionInfo.ProductVersion
-        Arch         = Get-BinaryArchitecture-From-DLL -path $dll.FullName
-        BuildType    = $buildType
-        Dll          = $dll.Name
-        InstallPath  = $path
+        Version     = $dll.VersionInfo.ProductVersion
+        Arch        = Get-BinaryArchitecture-From-DLL -path $dll.FullName
+        BuildType   = $buildType
+        Dll         = $dll.Name
+        InstallPath = $path
     }
 }
 
@@ -58,8 +57,8 @@ function Is-Two-PHP-Versions-Equal {
     }
 
     return (($version1.version -eq $version2.version) -and
-            ($version1.arch -eq $version2.arch) -and
-            ($version1.buildType -eq $version2.buildType))
+        ($version1.arch -eq $version2.arch) -and
+        ($version1.buildType -eq $version2.buildType))
 }
 
 function Set-Zend-Extensions-List {
@@ -182,7 +181,7 @@ function Get-UserSelected-PHP-Version {
         $response = Read-Host -Prompt "`nInsert the [number] of the version you want to use (or press Enter to cancel)"
         $response = $response.Trim()
         if (-not $response) {
-            return @{ code = -1; message = 'Operation cancelled.'; color = 'DarkYellow'}
+            return @{ code = -1; message = 'Operation cancelled.'; color = 'DarkYellow' }
         }
         $versionObj = $installedVersions | Where-Object { $_.index -eq $response }
     }
@@ -212,10 +211,11 @@ function Is-PHP-Version-Installed {
     try {
         $installedVersions = Get-Matching-PHP-Versions -version $version.version
         return ($installedVersions | Where-Object {
-            $_.Version -eq $version.version -and
-            $_.Arch -eq $version.arch -and
-            $_.BuildType -eq $version.BuildType
-        })
+                $_.Version -eq $version.version -and
+                $_.Arch -eq $version.arch -and
+                $_.BuildType -eq $version.BuildType
+            }
+        )
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
     }
@@ -253,11 +253,11 @@ function Get-PHP-Data {
             }
         } elseif ($line -match '^\s*(;)?([A-Za-z0-9_.]+)\s*=\s*("?[^";]+?"?)\s*(?:;.*)?$') {
             $phpIniData.settings += @{
-                Section   = 'setting'
-                Name      = $matches[2]   # e.g. memory_limit
-                Type      = 'setting'
-                Value     = $matches[3].Trim('"') # strip quotes if present
-                Enabled   = -not $matches[1]      # false if line starts with ;
+                Section = 'setting'
+                Name    = $matches[2]   # e.g. memory_limit
+                Type    = 'setting'
+                Value   = $matches[3].Trim('"') # strip quotes if present
+                Enabled = -not $matches[1]      # false if line starts with ;
             }
         }
     }

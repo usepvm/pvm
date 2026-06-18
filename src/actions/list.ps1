@@ -99,9 +99,9 @@ function Get-Available-PHP-Versions {
         Write-Host -Object "`nAvailable Versions"
         Write-Host -Object '------------------'
 
-        $fetchedVersionsGroupedPartialList.GetEnumerator()
-            | Sort-Object Key
-            | ForEach-Object {
+        $fetchedVersionsGroupedPartialList.GetEnumerator() |
+            Sort-Object Key |
+            ForEach-Object {
                 $key = $_.Key
                 $fetchedVersionsGroupe = $_.Value
                 if ($fetchedVersionsGroupe.Length -eq 0) {

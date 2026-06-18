@@ -194,6 +194,10 @@ Describe "Get-Extension-Matching-Categories Tests" {
 }
 
 Describe "Get-Extension-Links-From-URL Tests" {
+    BeforeEach {
+        $PVMConfig.paths.cache = 'TestDrive:\cache'
+    }
+
     It "Returns filtered links" {
         Mock Filter-Extension-Links-From-URL {
             return @(
@@ -299,6 +303,7 @@ Describe "Get-Extension-Links-From-URL Tests" {
 
 Describe "Get-Extension-From-URL Tests" {
     BeforeEach {
+        $PVMConfig.paths.cache = 'TestDrive:\cache'
         Mock Write-Host { }
     }
 

@@ -399,7 +399,7 @@ function Invoke-Info {
     param ($arguments)
 
     $currentPHP = Get-Current-PHP-Version
-    $installedPHP = Get-Installed-PHP-Versions-From-Directory
+    $installedPHP = Get-Installed-PHP-Versions-From-Disk
     $currentPhpVersion = 'Not Set'
     $currentPhpPath = 'Not Set'
     if ($currentPHP) {

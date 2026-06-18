@@ -90,7 +90,7 @@ function Get-Zend-Extensions-List {
 
 function Refresh-Installed-PHP-Versions-Cache {
     try {
-        $installedVersions = Get-Installed-PHP-Versions-From-Directory
+        $installedVersions = Get-Installed-PHP-Versions-From-Disk
         $null = Cache-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
 
         return 0
@@ -101,7 +101,7 @@ function Refresh-Installed-PHP-Versions-Cache {
     }
 }
 
-function Get-Installed-PHP-Versions-From-Directory {
+function Get-Installed-PHP-Versions-From-Disk {
     $directories = Get-All-Subdirectories -path $PVMConfig.paths.php
     $installedVersions = $directories | ForEach-Object {
         if (Is-File-Exists -path "$($_.FullName)\php.exe") {
@@ -124,7 +124,7 @@ function Get-Installed-PHP-Versions {
 
     try {
         $installedVersions = Get-OrUpdateCache -cacheFileName 'installed_php_versions' -depth 1 -compute {
-            Get-Installed-PHP-Versions-From-Directory
+            Get-Installed-PHP-Versions-From-Disk
         }
 
         if ($null -eq $installedVersions) {

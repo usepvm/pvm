@@ -765,7 +765,7 @@ Describe "Environment Variable Tests" {
     It "Get-Installed-PHP-Versions should return sorted versions" {
         Mock Cache-Data { return 0 }
         Mock Can-Use-Cache { return $false }
-        Mock Get-Installed-PHP-Versions-From-Directory {
+        Mock Get-Installed-PHP-Versions-From-Disk {
             return @(
                 @{version = '8.2'; arch = 'x64'; buildType = 'nts'}
                 @{version = '8.1'; arch = 'x64'; buildType = 'nts'}

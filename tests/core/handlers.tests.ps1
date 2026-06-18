@@ -941,7 +941,7 @@ Describe "Invoke-Info Tests" {
         Mock Get-Cache-Files {
             @('cache1.json')
         }
-        Mock Get-Installed-PHP-Versions-From-Directory {
+        Mock Get-Installed-PHP-Versions-From-Disk {
             @(
                 @{ version = '8.2' }
                 @{ version = '8.3' }

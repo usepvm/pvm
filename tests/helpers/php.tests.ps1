@@ -137,7 +137,7 @@ Describe "Get-Installed-PHP-Versions" {
             $script:LOG_ERROR_PATH = 'C:\mock\error'
             Mock Cache-Data { return 0 }
             Mock Can-Use-Cache { return $false }
-            Mock Get-Installed-PHP-Versions-From-Directory {
+            Mock Get-Installed-PHP-Versions-From-Disk {
                 return @(
                     @{version = '5.6'; arch = 'x64'; buildType = 'nts'}
                     @{version = '7.4'; arch = 'x64'; buildType = 'nts'}
@@ -158,7 +158,7 @@ Describe "Get-Installed-PHP-Versions" {
 
         It "Should return empty array when no PHP versions are found" {
             Mock Can-Use-Cache { return $false }
-            Mock Get-Installed-PHP-Versions-From-Directory { return @() }
+            Mock Get-Installed-PHP-Versions-From-Disk { return @() }
 
             $result = Get-Installed-PHP-Versions
             $result.Count | Should -Be 0
@@ -167,7 +167,7 @@ Describe "Get-Installed-PHP-Versions" {
         It "Should handle single digit versions" {
             Mock Cache-Data { return 0 }
             Mock Can-Use-Cache { return $false }
-            Mock Get-Installed-PHP-Versions-From-Directory {
+            Mock Get-Installed-PHP-Versions-From-Disk {
                 return @(
                     @{version = '7.4'; arch = 'x64'; buildType = 'nts'}
                     @{version = '8.1'; arch = 'x64'; buildType = 'nts'}
@@ -219,7 +219,7 @@ Describe "Get-Installed-PHP-Versions" {
     }
 
     Context "When exceptions occur" {
-        It "Should return empty array and log error when Get-Installed-PHP-Versions-From-Directory throws exception" {
+        It "Should return empty array and log error when Get-Installed-PHP-Versions-From-Disk throws exception" {
             Mock Get-OrUpdateCache { throw 'Test exception' }
             Mock Log-Data { return 0 }
 
@@ -422,7 +422,7 @@ Describe "Is-PHP-Version-Installed" {
 Describe "Refresh-Installed-PHP-Versions-Cache" {
     Context "When cache is successfully refreshed" {
         It "Should return 0 on success" {
-            Mock Get-Installed-PHP-Versions-From-Directory {
+            Mock Get-Installed-PHP-Versions-From-Disk {
                 return @(
                     @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
                     @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
@@ -434,8 +434,8 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
             $result | Should -Be 0
         }
 
-        It "Should call Get-Installed-PHP-Versions-From-Directory" {
-            Mock Get-Installed-PHP-Versions-From-Directory {
+        It "Should call Get-Installed-PHP-Versions-From-Disk" {
+            Mock Get-Installed-PHP-Versions-From-Disk {
                 return @(
                     @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
                 )
@@ -444,11 +444,11 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
 
             $null = Refresh-Installed-PHP-Versions-Cache
 
-            Assert-MockCalled Get-Installed-PHP-Versions-From-Directory -Exactly 1
+            Assert-MockCalled Get-Installed-PHP-Versions-From-Disk -Exactly 1
         }
 
         It "Should call Cache-Data with installed_php_versions file and depth 1" {
-            Mock Get-Installed-PHP-Versions-From-Directory {
+            Mock Get-Installed-PHP-Versions-From-Disk {
                 return @(
                     @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
                 )
@@ -462,12 +462,12 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
             }
         }
 
-        It "Should cache the results from Get-Installed-PHP-Versions-From-Directory" {
+        It "Should cache the results from Get-Installed-PHP-Versions-From-Disk" {
             $mockVersions = @(
                 @{Version = '7.4'; Arch = 'x64'; BuildType = 'NTS'}
                 @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
             )
-            Mock Get-Installed-PHP-Versions-From-Directory { return $mockVersions }
+            Mock Get-Installed-PHP-Versions-From-Disk { return $mockVersions }
             Mock Cache-Data { return 0 }
 
             $null = Refresh-Installed-PHP-Versions-Cache
@@ -480,7 +480,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
 
     Context "When exceptions occur" {
         It "Should return -1 on exception" {
-            Mock Get-Installed-PHP-Versions-From-Directory { throw 'Test exception' }
+            Mock Get-Installed-PHP-Versions-From-Disk { throw 'Test exception' }
             Mock Log-Data { return 0 }
 
             $result = Refresh-Installed-PHP-Versions-Cache
@@ -488,7 +488,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
         }
 
         It "Should log error when exception occurs" {
-            Mock Get-Installed-PHP-Versions-From-Directory { throw 'Test exception' }
+            Mock Get-Installed-PHP-Versions-From-Disk { throw 'Test exception' }
             Mock Log-Data { return 0 }
 
             $null = Refresh-Installed-PHP-Versions-Cache
@@ -499,7 +499,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
         }
 
         It "Should return -1 when Cache-Data throws exception" {
-            Mock Get-Installed-PHP-Versions-From-Directory {
+            Mock Get-Installed-PHP-Versions-From-Disk {
                 return @(@{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'})
             }
             Mock Cache-Data { throw 'Cache exception' }
@@ -511,7 +511,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
     }
 }
 
-Describe "Get-Installed-PHP-Versions-From-Directory" {
+Describe "Get-Installed-PHP-Versions-From-Disk" {
     BeforeAll {
         $script:STORAGE_PATH = 'TestDrive:\storage'
     }
@@ -534,7 +534,7 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
                 }
             }
 
-            $result = Get-Installed-PHP-Versions-From-Directory
+            $result = Get-Installed-PHP-Versions-From-Disk
             $result.Count | Should -Be 2
         }
 
@@ -559,7 +559,7 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
                 }
             }
 
-            $result = Get-Installed-PHP-Versions-From-Directory
+            $result = Get-Installed-PHP-Versions-From-Disk
             $result.Count | Should -Be 2
         }
 
@@ -583,7 +583,7 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
                 }
             }
 
-            $result = Get-Installed-PHP-Versions-From-Directory
+            $result = Get-Installed-PHP-Versions-From-Disk
             $result.Count | Should -Be 3
             $result[0].Version | Should -Be '7.4'
             $result[1].Version | Should -Be '8.1'
@@ -595,7 +595,7 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
         It "Should return empty array when no directories exist" {
             Mock Get-All-Subdirectories { return @() }
 
-            $result = Get-Installed-PHP-Versions-From-Directory
+            $result = Get-Installed-PHP-Versions-From-Disk
             $result.Count | Should -Be 0
         }
 
@@ -608,7 +608,7 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
             }
             Mock Test-Path { return $false }
 
-            $result = Get-Installed-PHP-Versions-From-Directory
+            $result = Get-Installed-PHP-Versions-From-Disk
             $result.Count | Should -Be 0
         }
     }
@@ -617,7 +617,7 @@ Describe "Get-Installed-PHP-Versions-From-Directory" {
         It "Should call Get-All-Subdirectories with php storage path" {
             Mock Get-All-Subdirectories { return @() }
 
-            Get-Installed-PHP-Versions-From-Directory
+            Get-Installed-PHP-Versions-From-Disk
 
             Assert-MockCalled Get-All-Subdirectories -Exactly 1 -ParameterFilter {
                 $path -eq $PVMConfig.paths.php

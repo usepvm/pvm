@@ -434,9 +434,9 @@ function Invoke-Info {
     }
 
     if ($arguments -contains '--verbose') {
-        $PVM_PATHS = $PVMConfig.paths 
+        $PVM_PATHS = $PVMConfig.paths
         $PVM_PATHS["Current PHP Path"] = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
-        
+
         Write-Host "`n`nPVM paths:`n" -ForegroundColor Cyan
         foreach ($entry in $PVM_PATHS.GetEnumerator()) {
             $key = "$($entry.Key) ".PadRight($maxNameLength, '.')

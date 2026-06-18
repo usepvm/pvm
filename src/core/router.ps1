@@ -120,16 +120,16 @@ function Get-Actions {
             action      = { return Invoke-Use -arguments $script:arguments }
         }
         'info'      = @{
-            command     = 'pvm info';
-            description = 'Display PHP environment and configuration information.';
+            command     = 'pvm info [--verbose]';
+            description = 'Show PVM status and environment information.';
             usage       = [ordered]@{
-                USAGE       = 'pvm info | pvm ini info'
+                USAGE       = 'pvm info | pvm info --verbose'
                 DESCRIPTION = @(
                     'Displays information about the environment,'
-                    'including active PHP version, PHP paths, and extensions.'
+                    'including PVM version, currently active PHP version, paths, and environment variables.'
                 )
             }
-            action      = { $script:arguments = @('info') + $script:arguments; return Invoke-Ini -arguments $script:arguments }
+            action      = { return Invoke-Info -arguments $script:arguments }
         }
         'ini'       = @{
             command     = 'pvm ini <action> [<args>]';

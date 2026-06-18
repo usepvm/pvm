@@ -908,3 +908,119 @@ Describe "Invoke-Aliases Tests" {
         Assert-MockCalled Write-Host -Times 2
     }
 }
+
+Describe "Invoke-Info Tests" {
+    BeforeEach {
+        Mock Write-Host { }
+        $Global:PVMRoot = 'C:\pvm'
+        $PVMConfig.version = '2.6'
+        $PVMConfig.paths = @{
+            storage = 'C:\pvm\storage'
+            data    = 'C:\pvm\storage\data'
+        }
+        $PVMConfig.env = @{
+            CACHE_MAX_HOURS      = 168
+            MIN_PAD_RIGHT_LENGTH = 2
+        }
+        Mock Get-Profile-Files {
+            @('profile1.json', 'profile2.json')
+        }
+        Mock Get-Cache-Files {
+            @('cache1.json')
+        }
+        Mock Get-Installed-PHP-Versions-From-Directory {
+            @(
+                @{ version = '8.2' }
+                @{ version = '8.3' }
+            )
+        }
+    }
+
+    Context "Default output" {
+        BeforeEach {
+            Mock Get-Current-PHP-Version {
+                @{
+                    version   = '8.3.28'
+                    arch      = 'x64'
+                    buildType = 'TS'
+                    path      = 'C:\pvm\storage\php\8.3.28'
+                }
+            }
+        }
+
+        It "Returns 0" {
+            Invoke-Info -arguments @() | Should -Be 0
+        }
+
+        It "Displays status section" {
+            Invoke-Info -arguments @()
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*PVM status*'
+            }
+        }
+
+        It "Does not display verbose sections" {
+            Invoke-Info -arguments @()
+
+            Should -Not -Invoke Write-Host -ParameterFilter {
+                $Object -like '*PVM environment paths*'
+            }
+
+            Should -Not -Invoke Write-Host -ParameterFilter {
+                $Object -like '*PVM settings*'
+            }
+        }
+    }
+
+    Context "When no PHP version is active" {
+        BeforeEach {
+            Mock Get-Current-PHP-Version { $null }
+        }
+
+        It "Returns 0" {
+            Invoke-Info -arguments @() | Should -Be 0
+        }
+
+        It "Completes successfully" {
+            { Invoke-Info -arguments @() } | Should -Not -Throw
+        }
+    }
+
+    Context "Verbose output" {
+        BeforeEach {
+            Mock Get-Current-PHP-Version {
+                @{
+                    version   = '8.3.28'
+                    arch      = 'x64'
+                    buildType = 'TS'
+                    path      = 'C:\pvm\storage\php\8.3.28'
+                }
+            }
+        }
+
+        It "Displays environment paths section" {
+            Invoke-Info -arguments @('--verbose')
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*PVM environment paths*'
+            }
+        }
+
+        It "Displays settings section" {
+            Invoke-Info -arguments @('--verbose')
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*PVM environment*'
+            }
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*PVM configuration*'
+            }
+        }
+
+        It "Returns 0" {
+            Invoke-Info -arguments @('--verbose') | Should -Be 0
+        }
+    }
+}

@@ -391,3 +391,63 @@ function Invoke-Aliases {
 
     return 0
 }
+
+function Invoke-Info {
+    param ($arguments)
+
+    $currentPHP = Get-Current-PHP-Version
+    $installedPHP = Get-Installed-PHP-Versions-From-Directory
+    $currentPhpVersion = 'Not Set'
+    $currentPhpPath = 'Not Set'
+    if ($currentPHP) {
+        if ($currentPHP.version) {
+            $currentPhpVersion = $currentPHP.version
+            if ($currentPHP.arch -and $currentPHP.buildType) {
+                $currentPhpVersion = "$currentPhpVersion ($($currentPHP.arch) $($currentPHP.buildType))"
+            }
+        }
+
+        if ($currentPHP.path) {
+            $currentPhpPath = $currentPHP.path
+        }
+    }
+
+    $config = [ordered]@{
+        'PVM Version' = $PVMConfig.version
+        'PVM Root' = $PVMRoot
+        'Storage Path' = $PVMConfig.paths.storage
+        'Current PHP' = $currentPhpVersion
+        'PHP Path' = $currentPhpPath
+        'Installed PHPs' = @($installedPHP).Count
+        'Cache TTL' = "$($PVMConfig.env.CACHE_MAX_HOURS) hours"
+        'Profiles' = @(Get-Profile-Files).Count
+        'Cached Files' = @(Get-Cache-Files).Count
+    }
+    $allKeys = $config.Keys + $PVMConfig.paths.Keys + $PVMConfig.env.Keys
+    $maxNameLength = ($allKeys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+
+    Write-Host "`n`nPVM status:`n" -ForegroundColor Cyan
+    foreach ($var in $config.GetEnumerator()) {
+        $key = "$($var.Key) ".PadRight($maxNameLength, '.')
+        $rel = $var.Value
+        Write-Host "- $key $rel"
+    }
+
+    if ($arguments -contains '--verbose') {
+        Write-Host "`n`nPVM environment paths:`n" -ForegroundColor Cyan
+        foreach ($entry in $PVMConfig.paths.GetEnumerator()) {
+            $key = "$($entry.Key) ".PadRight($maxNameLength, '.')
+            $rel = $entry.Value.Replace("$PVMRoot\", '')
+            Write-Host "- $key $rel"
+        }
+
+        Write-Host "`n`nPVM configuration:`n" -ForegroundColor Cyan
+        foreach ($var in $PVMConfig.env.GetEnumerator()) {
+            $key = "$($var.Key) ".PadRight($maxNameLength, '.')
+            $rel = $var.Value
+            Write-Host "- $key $rel"
+        }
+    }
+
+    return 0
+}

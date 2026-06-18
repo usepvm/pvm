@@ -12,6 +12,7 @@ Describe "Get-Actions Tests" {
         Mock Invoke-Install { }
         Mock Invoke-Uninstall { }
         Mock Invoke-Use { }
+        Mock Invoke-Info { }
         Mock Invoke-Ini { }
         Mock Invoke-Log { }
         Mock Invoke-Test { }
@@ -109,7 +110,7 @@ Describe "Get-Actions Tests" {
             $actions = Get-Actions -arguments @()
             $actions['info'].action.Invoke()
 
-            Assert-MockCalled Invoke-Ini -Times 1
+            Assert-MockCalled Invoke-Info -Times 1
         }
 
         It "Should execute log action" {

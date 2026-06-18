@@ -399,6 +399,34 @@ Describe "Load-PHP-Profile Tests" {
     }
 }
 
+Describe "Get-Profile-Files Tests" {
+    It "Should return a list of profile files" {
+        Mock Get-ChildItem {
+            return @(
+                @{ Name = 'profile1.json'; FullName = "$script:PROFILES_PATH\profile1.json" }
+                @{ Name = 'profile2.json'; FullName = "$script:PROFILES_PATH\profile2.json" }
+            )
+        }
+        
+        $result = Get-Profile-Files
+        $result.Count | Should -Be 2
+    }
+    
+    It "Should return null when profiles directory does not exist" {
+        Mock Is-Directory-Not-Exists { return $true }
+
+        $result = Get-Profile-Files
+        $result | Should -Be $null
+    }
+    
+    It "Should handle exceptions gracefully when profiles cannot be listed" {
+        Mock Get-ChildItem { throw 'Error' }
+
+        $result = Get-Profile-Files
+        $result | Should -Be $null
+    }
+}
+
 Describe "List-PHP-Profiles Tests" {
     BeforeEach {
         # Create test profiles
@@ -451,7 +479,7 @@ Describe "List-PHP-Profiles Tests" {
     }
 
     It "Should handle exceptions gracefully when profile content cannot be read" {
-        Mock Get-ChildItem {
+        Mock Get-Profile-Files {
             return @(
                 @{ Name = 'profile1.json'; FullName = "$script:PROFILES_PATH\profile1.json" }
                 @{ Name = 'profile2.json'; FullName = "$script:PROFILES_PATH\profile2.json" }
@@ -464,7 +492,7 @@ Describe "List-PHP-Profiles Tests" {
     }
 
     It "Should fallback to count 0 when settings or extensions cannot be parsed" {
-        Mock Get-ChildItem {
+        Mock Get-Profile-Files {
             return @(
                 @{ Name = 'profile1.json'; FullName = "$script:PROFILES_PATH\profile1.json" }
                 @{ Name = 'profile2.json'; FullName = "$script:PROFILES_PATH\profile2.json" }
@@ -482,7 +510,7 @@ Describe "List-PHP-Profiles Tests" {
     }
 
     It "Should handle exceptions gracefully when profiles cannot be listed" {
-        Mock Get-ChildItem { throw 'Error' }
+        Mock Get-Profile-Files { throw 'Error' }
 
         $result = List-PHP-Profiles
         $result | Should -Be -1

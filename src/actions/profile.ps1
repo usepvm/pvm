@@ -389,6 +389,21 @@ function Load-PHP-Profile {
     }
 }
 
+function Get-Profile-Files {
+    try {
+        if (Is-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
+            return $null
+        }
+        
+        $files = Get-ChildItem -Path $PVMConfig.paths.profiles -Filter '*.json' -ErrorAction SilentlyContinue
+        
+        return $files
+    } catch {
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get profile files"; exception = $_ }
+        return $null
+    }
+}
+
 function List-PHP-Profiles {
     try {
         if (Is-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
@@ -396,7 +411,7 @@ function List-PHP-Profiles {
             return -1
         }
 
-        $profileFiles = Get-ChildItem -Path $PVMConfig.paths.profiles -Filter '*.json' -ErrorAction SilentlyContinue
+        $profileFiles = Get-Profile-Files
 
         if ($profileFiles.Count -eq 0) {
             Write-Host -Object "`nNo profiles found. Create a profile with 'pvm profile save <name>'." -ForegroundColor DarkYellow

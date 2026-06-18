@@ -114,8 +114,6 @@ function Get-Installed-PHP-Versions-From-Disk {
 
     $installedVersions = ($installedVersions | Sort-Object { [version]$_.Version })
 
-    $null = Cache-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
-
     return $installedVersions
 }
 

@@ -91,9 +91,9 @@ function Get-Zend-Extensions-List {
 function Refresh-Installed-PHP-Versions-Cache {
     try {
         $installedVersions = Get-Installed-PHP-Versions-From-Disk
-        $null = Cache-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
+        $code = Cache-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
 
-        return 0
+        return $code
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to refresh installed PHP versions cache"; exception = $_ }
 

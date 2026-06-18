@@ -479,6 +479,18 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
     }
 
     Context "When exceptions occur" {
+        It "Should return -1 when Cache-Data returns -1" {
+            Mock Get-Installed-PHP-Versions-From-Disk {
+                return @(
+                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                )
+            }
+            Mock Cache-Data { return -1 }
+            
+            $result = Refresh-Installed-PHP-Versions-Cache
+            $result | Should -Be -1
+        }
+
         It "Should return -1 on exception" {
             Mock Get-Installed-PHP-Versions-From-Disk { throw 'Test exception' }
             Mock Log-Data { return 0 }

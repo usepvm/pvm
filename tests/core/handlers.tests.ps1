@@ -921,6 +921,7 @@ Describe "Invoke-Info Tests" {
         $PVMConfig.env = @{
             CACHE_MAX_HOURS      = 168
             MIN_PAD_RIGHT_LENGTH = 2
+            PHP_CURRENT_VERSION_PATH = 'C:\pvm'
         }
         Mock Get-Profile-Files {
             @('profile1.json', 'profile2.json')
@@ -964,11 +965,7 @@ Describe "Invoke-Info Tests" {
             Invoke-Info -arguments @()
 
             Should -Not -Invoke Write-Host -ParameterFilter {
-                $Object -like '*PVM environment paths*'
-            }
-
-            Should -Not -Invoke Write-Host -ParameterFilter {
-                $Object -like '*PVM settings*'
+                $Object -like '*PVM paths*'
             }
         }
     }
@@ -1003,19 +1000,7 @@ Describe "Invoke-Info Tests" {
             Invoke-Info -arguments @('--verbose')
 
             Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*PVM environment paths*'
-            }
-        }
-
-        It "Displays settings section" {
-            Invoke-Info -arguments @('--verbose')
-
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*PVM environment*'
-            }
-
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*PVM configuration*'
+                $Object -like '*PVM paths*'
             }
         }
 

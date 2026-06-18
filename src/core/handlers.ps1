@@ -434,17 +434,13 @@ function Invoke-Info {
     }
 
     if ($arguments -contains '--verbose') {
-        Write-Host "`n`nPVM environment paths:`n" -ForegroundColor Cyan
-        foreach ($entry in $PVMConfig.paths.GetEnumerator()) {
+        $PVM_PATHS = $PVMConfig.paths 
+        $PVM_PATHS["Current PHP Path"] = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        
+        Write-Host "`n`nPVM paths:`n" -ForegroundColor Cyan
+        foreach ($entry in $PVM_PATHS.GetEnumerator()) {
             $key = "$($entry.Key) ".PadRight($maxNameLength, '.')
             $rel = $entry.Value.Replace("$PVMRoot\", '')
-            Write-Host "- $key $rel"
-        }
-
-        Write-Host "`n`nPVM configuration:`n" -ForegroundColor Cyan
-        foreach ($var in $PVMConfig.env.GetEnumerator()) {
-            $key = "$($var.Key) ".PadRight($maxNameLength, '.')
-            $rel = $var.Value
             Write-Host "- $key $rel"
         }
     }

@@ -57,7 +57,6 @@ Describe "Setup-PVM" {
         $script:MockRegistry = @{
             Machine = @{
                 'Path' = 'C:\Windows\System32'
-                'PHP' = $null
                 'pvm' = $null
             }
         }

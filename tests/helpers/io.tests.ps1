@@ -44,7 +44,7 @@ Describe "Get-All-Subdirectories" {
         }
 
         It "Returns null for non-existent path" {
-            $result = Get-All-Subdirectories -path 'C:\Nonexistent\Path'
+            $result = Get-All-Subdirectories -path 'TestDrive:\Nonexistent\Path'
             $result | Should -Be $null
         }
 
@@ -65,7 +65,7 @@ Describe "Is-Directory-Exists" {
         }
 
         It "Returns false for non-existent directory" {
-            $result = Is-Directory-Exists -path 'C:\Nonexistent\Path'
+            $result = Is-Directory-Exists -path 'TestDrive:\Nonexistent\Path'
             $result | Should -Be $false
         }
 
@@ -82,7 +82,7 @@ Describe "Is-Directory-Exists" {
         It "Handles exceptions gracefully" {
             Mock Test-Path { throw 'Error' }
 
-            $result = Is-Directory-Exists -path 'C:\Nonexistent\Path'
+            $result = Is-Directory-Exists -path 'TestDrive:\Nonexistent\Path'
             $result | Should -Be $false
         }
     }
@@ -92,7 +92,7 @@ Describe "Is-Directory-Not-Exists" {
     It "Returns true for non-existent directory" {
         Mock Is-Directory-Exists { return $false }
 
-        $result = Is-Directory-Not-Exists -path 'C:\Nonexistent\Path'
+        $result = Is-Directory-Not-Exists -path 'TestDrive:\Nonexistent\Path'
         $result | Should -Be $true
     }
 
@@ -117,7 +117,7 @@ Describe "Is-File-Exists" {
         }
 
         It "Returns false for non-existent file" {
-            $result = Is-File-Exists -path 'C:\Nonexistent\file.txt'
+            $result = Is-File-Exists -path 'TestDrive:\Nonexistent\file.txt'
             $result | Should -Be $false
         }
 
@@ -134,7 +134,7 @@ Describe "Is-File-Exists" {
         It "Handles exceptions gracefully" {
             Mock Test-Path { throw 'Error' }
 
-            $result = Is-File-Exists -path 'C:\Nonexistent\file.txt'
+            $result = Is-File-Exists -path 'TestDrive:\Nonexistent\file.txt'
             $result | Should -Be $false
         }
     }
@@ -144,7 +144,7 @@ Describe "Is-File-Not-Exists" {
     It "Returns true for non-existent file" {
         Mock Is-File-Exists { return $false }
 
-        $result = Is-File-Not-Exists -path 'C:\Nonexistent\file.txt'
+        $result = Is-File-Not-Exists -path 'TestDrive:\Nonexistent\file.txt'
         $result | Should -Be $true
     }
 
@@ -248,9 +248,9 @@ Describe "Make-Symbolic-Link" {
         }
 
         It "Returns -1 if target directory does not exist" {
-            $result = Make-Symbolic-Link -link 'TestDrive:\link' -target 'C:\Nonexistent\Target'
+            $result = Make-Symbolic-Link -link 'TestDrive:\link' -target 'TestDrive:\Nonexistent\Target'
             $result.code | Should -Be -1
-            $result.message | Should -Match "Target directory 'C:\\Nonexistent\\Target' does not exist!"
+            $result.message | Should -Match "Target directory 'TestDrive:\\Nonexistent\\Target' does not exist!"
             $result.color | Should -Be 'DarkYellow'
         }
 

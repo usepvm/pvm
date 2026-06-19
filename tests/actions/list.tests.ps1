@@ -88,6 +88,10 @@ Describe "Get-From-Source" {
 }
 
 Describe "Get-PHP-List-To-Install" {
+    BeforeEach {
+        $PVMConfig.paths.cache = 'TestDrive:\storage\cache'
+    }
+
     It "Returns empty object when cache and/or source not working" {
         Mock Get-OrUpdateCache { return $null }
 

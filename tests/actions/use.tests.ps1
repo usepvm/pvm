@@ -1,8 +1,10 @@
 ﻿
 BeforeAll {
     # Mock data and helper functions for testing
-    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'C:\pvm\php'
+    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\pvm\php'
     $PVMConfig.paths.logError = 'C:\logs\error.log'
+
+    New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
 
     Mock Write-Host {}
 

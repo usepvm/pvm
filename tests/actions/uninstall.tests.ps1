@@ -13,6 +13,8 @@ BeforeAll {
         param ($logPath, $message, $data)
         return 0
     }
+
+    New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
 }
 
 Describe "Uninstall-PHP" {

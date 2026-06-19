@@ -4,6 +4,8 @@ BeforeAll {
     $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
     $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
 
+    New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
+
     # Mock Log-Data function
     Mock Write-Host {}
 

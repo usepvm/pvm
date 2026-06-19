@@ -12,9 +12,6 @@ BeforeAll {
     $script:MockRegistry = @{
         Machine = @{
             'Path' = 'C:\Windows\System32;C:\Program Files\Git\bin'
-            'php8.1.0' = 'C:\PHP\8.1.0'
-            'php8.0.5' = 'C:\PHP\8.0.5'
-            'php7.4.30' = 'C:\PHP\7.4.30'
         }
     }
 
@@ -39,9 +36,6 @@ BeforeAll {
         $script:MockRegistry = @{
             Machine = @{
                 'Path' = 'C:\Windows\System32;C:\Program Files\Git\bin'
-                'php8.1.0' = 'C:\PHP\8.1.0'
-                'php8.0.5' = 'C:\PHP\8.0.5'
-                'php7.4.30' = 'C:\PHP\7.4.30'
             }
         }
     }
@@ -582,8 +576,6 @@ Describe "Install-PHP Integration Tests" {
     }
 
     It "Should return -1 if version already installed" {
-        $script:MockRegistry.Machine['php8.1'] = 'C:\PHP\php-8.1'
-
         $result = Install-PHP -version '8.1'
 
         $result.code | Should -Be -1
@@ -692,7 +684,6 @@ Describe "Install-PHP Integration Tests" {
         }
 
         Set-EnvVar -name 'php8.1' -value $null
-        $script:MockRegistry.Machine['php8.1.0'] = 'C:\PHP\php-8.1.0'
         $script:MockUserInput = 'y'
 
         $result = Install-PHP -version '8.1'
@@ -701,7 +692,6 @@ Describe "Install-PHP Integration Tests" {
     }
 
     It "Should cancel when user declines family version install" {
-        $script:MockRegistry.Machine['php8.1.0'] = 'C:\PHP\php-8.1.0'
         $script:MockUserInput = 'n'
 
         $result = Install-PHP -version '8.1'

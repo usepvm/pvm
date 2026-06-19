@@ -182,13 +182,13 @@ Describe "Initialize-PVMDirectories" {
     It "Returns 0 when all directories and files are created" {
         Mock Make-Directory { return 0 }
         $result = Initialize-PVMDirectories
-        $result | Should -Be @(0, 0, 0, 0, 0)
+        $result | Should -Be @(0, 0, 0, 0, 0, 0, 0)
     }
 
     It "Returns -1 when a directory creation fails" {
         Mock Make-Directory { return -1 }
         $result = Initialize-PVMDirectories
-        $result | Should -Be @(-1, -1, -1, -1, -1)
+        $result | Should -Be @(-1, -1, -1, -1, -1, -1, -1)
     }
 }
 

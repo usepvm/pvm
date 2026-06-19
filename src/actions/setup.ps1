@@ -35,7 +35,15 @@ function Setup-PVM {
 }
 
 function Initialize-PVMDirectories {
-    $dirs = @($PVMConfig.paths.storage, $PVMConfig.paths.data, $PVMConfig.paths.templates, $PVMConfig.paths.cache, $PVMConfig.paths.profiles)
+    $dirs = @(
+        $PVMConfig.paths.storage,
+        $PVMConfig.paths.php,
+        $PVMConfig.paths.data,
+        $PVMConfig.paths.templates,
+        $PVMConfig.paths.cache,
+        $PVMConfig.paths.profiles,
+        $PVMConfig.paths.log
+    )
 
     Write-Host "`nPVM environment directories:"
     $codes = @()

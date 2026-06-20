@@ -1,12 +1,12 @@
-
+﻿
 function Display-Extensions-States {
     param ($extensions)
 
     # Pre-count for summary
-    $enabledCount = @($extensions | Where-Object Enabled).Count
+    $enabledCount = @($extensions | Where-Object { $_.enabled }).Count
     $disabledCount = $extensions.Count - $enabledCount
 
-    Write-Host -Object "`n- Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
+    Write-Host -Object "`n- Total Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
 }
 
 function Display-Installed-Extensions {
@@ -18,22 +18,18 @@ function Display-Installed-Extensions {
     }
 
     # Calculate max length dynamically
-    $maxNameLength = ($extensions.Extension | Measure-Object -Maximum Length).Maximum
+    $maxNameLength = ($extensions | ForEach-Object { $_.name } | Measure-Object -Maximum Length).Maximum
     $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxNameLength + 40)
 
     $extensions |
-    Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true },
-    @{Expression = { $_.Extension }; Ascending = $true } |
+    Sort-Object @{Expression = { -not $_.enabled }; Ascending = $true },
+    @{Expression = { $_.name }; Ascending = $true } |
     ForEach-Object {
-        $label = "  $($_.Extension) "
-        $label = $label.PadRight($maxLineLength, '.')
-
-        if ($_.Enabled) {
-            $status = 'Enabled'
-            $color = 'DarkGreen'
-        } else {
-            $status = 'Disabled'
-            $color = 'DarkGray'
+        $label = "  $($_.name) ".PadRight($maxLineLength, '.')
+        $status = if ($_.enabled) { 'Enabled' } else { 'Disabled' }
+        $color = if ($_.enabled) { 'DarkGreen' } else { 'DarkYellow' }
+        if ($_.comment) {
+            $status = "$status - $($_.comment)"
         }
 
         Write-Host -Object "$label " -NoNewline
@@ -45,10 +41,10 @@ function Display-Settings-States {
     param ($settings)
 
     # Pre-count for summary
-    $enabledCount = @($settings | Where-Object Enabled).Count
+    $enabledCount = @($settings | Where-Object { $_.enabled }).Count
     $disabledCount = $settings.Count - $enabledCount
 
-    Write-Host -Object "`n- Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
+    Write-Host -Object "`n- Total Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
 }
 
 function Display-Settings {
@@ -59,28 +55,23 @@ function Display-Settings {
         return
     }
 
-    $maxLineLength = (($settings.Name + $settings.Value) | Measure-Object -Maximum Length).Maximum
+    $maxLineLength = ($settings | ForEach-Object { $_.name.Length + $_.value.Length } | Measure-Object -Maximum).Maximum
     $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxLineLength + 40)
 
     $settings |
-    Sort-Object @{Expression = { -not $_.Enabled }; Ascending = $true },
-    @{Expression = { $_.Name }; Ascending = $true } |
+    Sort-Object @{Expression = { -not $_.enabled }; Ascending = $true },
+    @{Expression = { $_.name }; Ascending = $true } |
     ForEach-Object {
-        $label = "  $($_.Name) "
-        $value = " $($_.Value) "
-
-        # pad with dots so value always starts at same column
-        $line = $label.PadRight($maxLineLength - $value.Length, '.') + $value
-
-        if ($_.Enabled) {
-            $status = 'Enabled'
-            $color = 'DarkGreen'
-        } else {
-            $status = 'Disabled'
-            $color = 'DarkGray'
+        # $value = " $($_.value) "
+        $value = if ($_.value -eq '') { '(not set) ' } elseif ($null -eq $_.value) { '' } else { "$($_.value) " }
+        $line = "  - $($_.name) ".PadRight($maxLineLength - $value.Length, '.')
+        $status = if ($_.enabled) { 'Enabled' } else { 'Disabled' }
+        $color = if ($_.enabled) { 'DarkGreen' } else { 'DarkYellow' }
+        if ($_.comment) {
+            $status = "$status - $($_.comment)"
         }
 
-        Write-Host -Object $line -NoNewline
+        Write-Host -Object "$line $value" -NoNewline
         Write-Host -Object $status -ForegroundColor $color
     }
 }

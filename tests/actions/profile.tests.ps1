@@ -1406,26 +1406,6 @@ Describe "Clear-PHP-Profiles Tests" {
         Test-Path "$($PVMConfig.paths.profiles)\example.json" | Should -Be $true
     }
 
-    It "Should delete all profiles except default when user confirms with 'y'" {
-        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example1.json"
-        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example2.json"
-        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example3.json"
-
-        Mock Read-Host { return 'y' }
-
-        $result = Clear-PHP-Profiles
-        $result | Should -Be 0
-
-        Test-Path "$($PVMConfig.paths.profiles)\example1.json"  | Should -Be $false
-        Test-Path "$($PVMConfig.paths.profiles)\example2.json"  | Should -Be $false
-        Test-Path "$($PVMConfig.paths.profiles)\example3.json"  | Should -Be $false
-        Test-Path $PVMConfig.paths.exampleProfile  | Should -Be $true
-
-        Assert-MockCalled Write-Host -ParameterFilter {
-            $Object -match 'All profiles deleted successfully'
-        } -Exactly 1
-    }
-
     It "Should delete all profiles when user confirms with 'Y'" {
         '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example1.json"
         '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example2.json"
@@ -1437,6 +1417,9 @@ Describe "Clear-PHP-Profiles Tests" {
 
         Test-Path "$($PVMConfig.paths.profiles)\example1.json" | Should -Be $false
         Test-Path "$($PVMConfig.paths.profiles)\example2.json" | Should -Be $false
+        Assert-MockCalled Write-Host -ParameterFilter {
+            $Object -match 'All profiles deleted successfully'
+        } -Exactly 1
     }
 
     It "Should trim whitespace and delete all files when response is '  y  '" {

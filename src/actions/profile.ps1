@@ -576,9 +576,6 @@ function Clear-PHP-Profiles {
         }
 
         foreach ($profileFile in $profileFiles) {
-            if ($profileFile.FullName -eq $PVMConfig.paths.exampleProfile) {
-                continue
-            }
             Remove-Item -Path $profileFile.FullName -Force
         }
 

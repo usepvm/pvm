@@ -1,6 +1,6 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = $PVMConfig.Clone()
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 
     Mock Write-Host {}
     $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages

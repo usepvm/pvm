@@ -1,6 +1,6 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = $PVMConfig.Clone()
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     # Mock data and helper functions for testing
     $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\pvm\php'
     $PVMConfig.paths.logError = 'C:\logs\error.log'

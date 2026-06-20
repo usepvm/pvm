@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
     # Mock dependencies
-    $script:PVMConfigBackup = $PVMConfig.Clone()
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
     $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
 

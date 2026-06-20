@@ -2,7 +2,7 @@
 BeforeAll {
     Mock Write-Host {}
     $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = $PVMConfig.Clone()
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 }
 
 AfterAll {

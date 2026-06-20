@@ -1,6 +1,6 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = $PVMConfig.Clone()
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\cache'
     New-Item -ItemType Directory -Path $script:CACHE_PATH -Force | Out-Null
     Mock Write-Host {}

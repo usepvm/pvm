@@ -1,6 +1,6 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = $PVMConfig.Clone()
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     # Mock global variables
     $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\\cache'
 

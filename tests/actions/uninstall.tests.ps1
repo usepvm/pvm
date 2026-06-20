@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
     # Create a test directory for PHP installations
-    $script:PVMConfigBackup = $PVMConfig.Clone()
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
     $PVMConfig.paths.logError = 'TestDrive:\Logs\error.log'
     $script:testPhpPath = 'TestDrive:\PHP'

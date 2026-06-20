@@ -15,7 +15,7 @@ BeforeAll {
     }
 
     # Setup test environment
-    $script:PVMConfigBackup = $PVMConfig.Clone()
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:STORAGE_PATH = $PVMConfig.paths.storage = 'TestDrive:\storage'
     $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
     $PVMConfig.paths.pathVarBackup = 'TestDrive:\logs\path_backup.log'

@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
     # Mock global variables that would be loaded from config
-    $script:PVMConfigBackup = $PVMConfig.Clone()
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $PVMConfig.version = '1.0.0'
     $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
 }

@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
     Mock Write-Host {}
-    $script:PVMConfigBackup = $PVMConfig.Clone()
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     # Global test variables
     $PVMConfig.paths.logError = 'TestDrive:\error.log'
     $PVMConfig.paths.storage = 'TestDrive:\storage'

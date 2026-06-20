@@ -1,6 +1,6 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = $PVMConfig.Clone()
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     # Mock global variables that would be defined in the main script
     $PVMConfig.paths.data = "TestDrive:\storage\data"
     $PVMConfig.paths.logError = "TestDrive:\storage\logs\error.log"

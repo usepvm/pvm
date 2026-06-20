@@ -13,11 +13,11 @@ function Backup-IniFile {
     }
 }
 
-function Get-Matching-PHPExtensionsStatus {
-    param ($iniPath, $extName)
+function Get-All-PHPExtensionsStatus {
+    param ($iniPath, $includeIniOnly = $false)
 
-    $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*$extName[^\s`"';]*)\2\s*(;.*)?$"
-    $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*$extName[^\s`"';]*)\2\s*(;.*)?$"
+    $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*)\2\s*(;.*)?$"
+    $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*)\2\s*(;.*)?$"
     Backup-IniFile -iniPath $iniPath
     $lines = Get-Content -Path $iniPath
 
@@ -29,26 +29,21 @@ function Get-Matching-PHPExtensionsStatus {
         param ($n)
         if (-not $n) { return '' }
         $s = $n.ToString()
-        $s = $s.Trim('"', "'") # remove surrounding quotes (single or double)
-        $s = [System.IO.Path]::GetFileName($s) # get file name only (strip path)
-        $s = $s -replace '^php_', '' -replace '\.dll$', '' # strip php_ prefix and .dll suffix and lowercase
+        $s = $s.Trim('"', "'")
+        $s = [System.IO.Path]::GetFileName($s)
+        $s = $s -replace '^php_', '' -replace '\.dll$', ''
         return $s.ToLower()
     }
 
-    # normalized search id from the provided extName
-    $searchId = & $normalizeId $extName
-
-    # Step 1: Check ext directory first for matches
+    # Step 1: All dlls in ext directory
     $phpDirectory = Split-Path -Path $iniPath -Parent
     $extDirectory = "$phpDirectory\ext"
 
     if (Is-Directory-Exists -path $extDirectory) {
-        $dllPattern = if ($searchId) { "*$searchId*.dll" } else { '*.dll' }
-        $dllFiles = Get-ChildItem -Path $extDirectory -Filter $dllPattern -File -ErrorAction SilentlyContinue
+        $dllFiles = Get-ChildItem -Path $extDirectory -Filter '*.dll' -File -ErrorAction SilentlyContinue
         foreach ($file in $dllFiles) {
             $fileId = & $normalizeId $file.BaseName
             if (-not $fileId) { continue }
-
             $matchesInExt += @{
                 name     = $file.BaseName
                 id       = $fileId
@@ -58,58 +53,53 @@ function Get-Matching-PHPExtensionsStatus {
         }
     }
 
-    if ($matchesInExt.Count -eq 0) {
-        return @()
-    }
-
-    # Step 2: Search ini file for matching extensions (only if found in ext)
+    # Step 2: Full ini scan
     $lineNumber = 1
-    $iniMatches = @{}  # hashtable to track ini entries by id
+    $iniMatches = @{}
 
     foreach ($line in $lines) {
         if ($line -match $enabledPattern) {
-            $rawExt = $matches['ext']
-            $displayName = ($rawExt).Trim('"', "'")
+            $displayName = $matches['ext'].Trim('"', "'")
             $id = & $normalizeId $displayName
             if (-not $id) { $lineNumber++; continue }
-
-            # track ini matches by normalized id
             $iniMatches[$id] = @{
                 name       = $displayName
                 status     = 'Enabled'
+                enabled    = $true
                 color      = 'DarkGreen'
                 line       = $line
                 lineNumber = $lineNumber
-                source     = 'ini'
             }
         }
         if ($line -match $disabledPattern) {
-            $rawExt = $matches['ext']
-            $displayName = ($rawExt).Trim('"', "'")
+            $displayName = $matches['ext'].Trim('"', "'")
             $id = & $normalizeId $displayName
             if (-not $id) { $lineNumber++; continue }
-
             $iniMatches[$id] = @{
                 name       = $displayName
                 status     = 'Disabled'
+                enabled    = $false
                 color      = 'DarkYellow'
                 line       = $line
                 lineNumber = $lineNumber
-                source     = 'ini'
             }
         }
         $lineNumber++
     }
-    # Step 3: Build result list: merge ext files with ini entries (ini status takes precedence if exists)
+
+    # Step 3: Merge ext+ini
+    $coveredIds = @{}
+
     foreach ($extMatch in $matchesInExt) {
         $id = $extMatch.id
+        $coveredIds[$id] = $true
 
         if ($iniMatches.ContainsKey($id)) {
-            # Extension is configured in ini
             $matchesList += @{
                 name       = $iniMatches[$id].name
                 id         = $id
                 status     = $iniMatches[$id].status
+                enabled    = $iniMatches[$id].enabled
                 color      = $iniMatches[$id].color
                 line       = $iniMatches[$id].line
                 lineNumber = $iniMatches[$id].lineNumber
@@ -118,18 +108,17 @@ function Get-Matching-PHPExtensionsStatus {
                 fileName   = $extMatch.fileName
             }
         } else {
-            # Extension exists in ext but not configured in ini - add it as disabled
             $isZendExtension = Get-Zend-Extensions-List | Where-Object { $extMatch.name -like "*$_*" }
             $extensionLine = if ($isZendExtension) { ";zend_extension=$($extMatch.name).dll" } else { ";extension=$($extMatch.name).dll" }
 
             try {
                 $lines += $extensionLine
                 Set-Content -Path $iniPath $lines -Encoding UTF8
-
                 $matchesList += @{
                     name       = $extMatch.name
                     id         = $id
                     status     = 'Disabled'
+                    enabled    = $false
                     color      = 'DarkYellow'
                     line       = $extensionLine
                     lineNumber = $lines.Count
@@ -138,13 +127,14 @@ function Get-Matching-PHPExtensionsStatus {
                     fileName   = $extMatch.fileName
                 }
             } catch {
-                # If adding fails, still return it as available
                 $matchesList += @{
                     name       = $extMatch.name
                     id         = $id
-                    status     = 'Available (not configured)'
+                    status     = 'Disabled'
+                    enabled    = $false
+                    comment    = 'Available (not configured)'
                     color      = 'DarkCyan'
-                    line       = 'Found in ext directory: $($extMatch.fullPath)'
+                    line       = "Found in ext directory: $($extMatch.fullPath)"
                     lineNumber = 0
                     source     = 'ext'
                     fullPath   = $extMatch.fullPath
@@ -154,5 +144,80 @@ function Get-Matching-PHPExtensionsStatus {
         }
     }
 
+    if ($includeIniOnly) {
+        # Step 4: ini-only entries
+        foreach ($id in $iniMatches.Keys) {
+            if ($coveredIds.ContainsKey($id)) { continue }
+            $entry = $iniMatches[$id]
+            $matchesList += @{
+                name       = $entry.name
+                id         = $id
+                status     = $entry.status
+                enabled    = $entry.enabled
+                comment    = 'DLL file not found'
+                color      = $entry.color
+                line       = $entry.line
+                lineNumber = $entry.lineNumber
+                source     = 'ini'
+                fullPath   = $null
+                fileName   = $null
+            }
+        }
+    }
+
     return $matchesList
+}
+
+function Get-Matching-PHPExtensionsStatus {
+    param ($iniPath, $extName, $includeIniOnly = $false)
+
+    if ([string]::IsNullOrWhiteSpace($extName)) {
+        return @()
+    }
+
+    $searchId = $extName.Trim('"', "'").ToLower() -replace '^php_', '' -replace '\.dll$', ''
+
+    return Get-All-PHPExtensionsStatus -iniPath $iniPath -includeIniOnly $includeIniOnly | Where-Object {
+        $_.name -like "*$extName*" -or $_.id -like "*$searchId*"
+    }
+}
+
+function Get-All-PHPSettings {
+    param ($iniPath)
+
+    $pattern = '^(?<comment>[#;])?\s*(?<key>[^=\s]+)\s*=\s*(?<value>.*)$'
+
+    $lines = Get-Content -Path $iniPath
+    $results = @()
+    $lineNo = 0
+
+    foreach ($line in $lines) {
+        if ($line -match $pattern) {
+            $isEnabled = -not $matches['comment']
+            $results += @{
+                name    = $matches['key'].Trim()
+                value   = $matches['value'].Trim()
+                enabled = $isEnabled
+                status  = if ($isEnabled) { 'Enabled' } else { 'Disabled' }
+                color   = if ($isEnabled) { 'DarkGreen' } else { 'DarkYellow' }
+                line    = $line
+                lineNo  = $lineNo
+            }
+        }
+        $lineNo++
+    }
+
+    return $results
+}
+
+function Get-Matching-PHPSettings {
+    param ($iniPath, $searchKey = '')
+
+    if (-not $searchKey) {
+        return @()
+    }
+
+    return @(Get-All-PHPSettings -iniPath $iniPath) | Where-Object {
+        $_.name -like "*$searchKey*"
+    }
 }

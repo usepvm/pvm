@@ -275,6 +275,9 @@ pvm profile show <name>
 pvm profile delete <name>
 # Example: pvm profile delete old-profile
 
+# Remove all profiles files
+pvm profile clear
+
 # Export profile to a JSON file
 pvm profile export <name> [path]
 # Example: pvm profile export development

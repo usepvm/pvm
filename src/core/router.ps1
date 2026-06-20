@@ -196,6 +196,7 @@ function Get-Actions {
                     'list ......................................... List all available profiles'
                     'show <name> .................................. Show detailed profile contents'
                     'delete <name> ................................ Delete a profile'
+                    'clear ........................................ Delete all profiles files'
                     'export <name> [path] ......................... Export profile to a JSON file'
                     'import <path> [name] ......................... Import profile from a JSON file'
                 )
@@ -206,6 +207,7 @@ function Get-Actions {
                     'pvm profile list ............................. Lists all saved profiles'
                     'pvm profile show development ................. Shows detailed profile information'
                     'pvm profile delete old-profile ............... Deletes a profile'
+                    'pvm profile clear ............................ Deletes all profiles files'
                     'pvm profile export development ............... Exports profile to current directory'
                     'pvm profile export dev ./backup.json ......... Exports to specific path'
                     'pvm profile import ./my-profile.json ......... Imports profile from file'

@@ -14,8 +14,6 @@ PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that make
 - [Installation & Setup](#installation--setup)
 - [Quick Start](#quick-start)
 - [Usage](#usage)
-  - [Basic Usage](#basic-usage)
-  - [Advanced Usage](#advanced-usage)
   - [Automatic Version Detection](#automatic-version-detection)
   - [Managing php.ini](#manage-phpini-settings-and-extensions)
   - [Profiles](#manage-php-configuration-profiles)
@@ -88,18 +86,6 @@ pvm list
 
 
 ## Usage
-
-### Basic Usage
-
-```sh
-pvm install latest
-pvm use 8.4
-pvm current
-pvm list
-pvm help
-```
-
-### Advanced Usage
 
 ```sh
 # Display the available options
@@ -255,9 +241,11 @@ pvm ini info settings
 # Display information about the current PHP (version, path, extensions, settings) with 'cache' in their name
 pvm ini info --search=<term>
 # Example: pvm ini info --search=cache
+```
 
+### Check logs
 
-# Check logs
+```sh
 pvm log --pageSize=[number] --search=<term> # Default value is 5
 # Example: pvm log --pageSize=3 --search=error
 ```

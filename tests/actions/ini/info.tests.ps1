@@ -11,12 +11,14 @@ BeforeAll {
     Mock Write-Host {}
 
     function Reset-Ini-Content {
-    # Create a test php.ini file
-    @"
+        # Create a test php.ini file
+        @"
 memory_limit = 128M
 ;extension=php_xdebug.dll
 extension=php_curl.dll
+;extension=php_mysql.dll
 zend_extension=php_opcache.dll
+mysqli.default_port=3306
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
@@ -40,7 +42,7 @@ max_execution_time = 30
     Mock Get-Current-PHP-Version {
         return @{
             version = '8.2.0'
-            path = $phpVersionPath
+            path    = $phpVersionPath
         }
     }
 }
@@ -51,18 +53,6 @@ Describe "Get-PHP-Info" {
     }
 
     It "Returns PHP version info successfully" {
-        Mock Get-PHP-Data {
-            return @{
-                extensions = @(
-                    @{ Extension = 'curl'; Enabled = $true }
-                    @{ Extension = 'xdebug'; Enabled = $false }
-                )
-                settings = @(
-                    @{ Name = 'memory_limit'; Value = '128M'; Enabled = $true }
-                    @{ Name = 'max_execution_time'; Value = '30'; Enabled = $false }
-                )
-            }
-        }
         $result = Get-PHP-Info
         $result | Should -Be 0
     }
@@ -71,5 +61,11 @@ Describe "Get-PHP-Info" {
         Mock Get-Current-PHP-Version { return @{ version = $null; path = $null } }
         $result = Get-PHP-Info
         $result | Should -Be -1
+    }
+
+    It "Displays only matching extensions and settings" {
+        $result = Get-PHP-Info -term 'sql'
+
+        $result | Should -Be 0
     }
 }

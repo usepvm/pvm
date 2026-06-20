@@ -1,4 +1,4 @@
-
+﻿
 BeforeAll {
     $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
     $script:testIniPath = "$testDrivePath\php.ini"
@@ -7,9 +7,9 @@ BeforeAll {
     Mock Write-Host {}
 
     $script:MockFileSystem = @{
-        Directories = @()
-        Files = @{}
-        WebResponses = @{}
+        Directories   = @()
+        Files         = @{}
+        WebResponses  = @{}
         DownloadFails = $false
     }
 
@@ -28,7 +28,7 @@ BeforeAll {
             }
             return @{
                 Content = $response.Content
-                Links = $response.Links
+                Links   = $response.Links
             }
         }
 
@@ -41,7 +41,7 @@ Describe "Get-Extension-Categories-By-Page Tests" {
         Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
-                Links = @(
+                Links   = @(
                     @{ href = '/package/APC' }
                     @{ href = '/package/APCu' }
                     @{ href = '/package/memcache' }
@@ -64,7 +64,7 @@ Describe "Get-Extension-Categories-By-Page Tests" {
         Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
-                Links = @(
+                Links   = @(
                     @{ href = $null }
                     @{ href = 'random_link.php' }
                     @{ href = '/packages.php?catpid=3&amp;catname=Caching&pageID=2' }
@@ -88,15 +88,18 @@ Describe "Get-PHPExtensions-From-Source" {
         Mock Invoke-WebRequest -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
-                Links = @(
+                Links   = @(
                     @{ href = $null }
                     @{ href = 'random_link' }
-                    @{ href = '/packages.php?catpid=1&amp;catname=Authentication';
-                        outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>' }
-                    @{ href = '/packages.php?catpid=3&amp;catname=Caching';
-                        outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>' }
-                    @{ href = '/packages.php?catpid=7&amp;catname=EmptyCat';
-                        outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>' }
+                    @{ href       = '/packages.php?catpid=1&amp;catname=Authentication';
+                        outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>'
+                    }
+                    @{ href       = '/packages.php?catpid=3&amp;catname=Caching';
+                        outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>'
+                    }
+                    @{ href       = '/packages.php?catpid=7&amp;catname=EmptyCat';
+                        outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>'
+                    }
                 )
             }
         }
@@ -104,7 +107,7 @@ Describe "Get-PHPExtensions-From-Source" {
             param ($link)
             if ($link -eq '/packages.php?catpid=1&amp;catname=Authentication') {
                 return @{
-                    hasMore = $false
+                    hasMore             = $false
                     availableExtensions = @(
                         @{ href = '/package/courierauth' }
                         @{ href = '/package/krb5' }
@@ -113,7 +116,7 @@ Describe "Get-PHPExtensions-From-Source" {
             }
             if ($link -eq '/packages.php?catpid=3&amp;catname=Caching') {
                 return @{
-                    hasMore = $false
+                    hasMore             = $false
                     availableExtensions = @(
                         @{ href = '/package/memcache' }
                         @{ href = '/package/memcached' }
@@ -140,59 +143,63 @@ Describe "Get-PHPExtensions-From-Source" {
 
 Describe "List-PHP-Extensions" {
     BeforeAll {
-        Mock Get-PHP-Data {
-            return @{
-                extensions = @(
-                    @{Extension = 'curl'; Enabled = $true; Type = 'extension'}
-                    @{Extension = 'opcache'; Enabled = $false; Type = 'zend_extension'}
-                )
-            }
+        Mock Get-All-PHPExtensionsStatus {
+            return @(
+                @{ name = 'curl'; enabled = $true; status = 'Enabled' }
+                @{ name = 'opcache'; enabled = $false; status = 'Disabled' }
+            )
+        }
+        Mock Get-Matching-PHPExtensionsStatus {
+            return @(
+                @{ name = 'curl'; enabled = $true; status = 'Enabled' }
+                @{ name = 'opcache'; enabled = $false; status = 'Disabled' }
+            )
         }
 
         function Get-Extension-List {
             return @{
                 Authentication = @(
                     @{
-                        outerHTML = '<a href="/package/APC"><strong>APC</strong></a>';
-                        tagName = 'A';
-                        href = '/package/courierauth';
-                        extName = 'courierauth';
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/courierauth';
+                        extName     = 'courierauth';
                         extCategory = 'Authentication';
                     },
                     @{
-                        outerHTML = '<a href="/package/APC"><strong>APC</strong></a>';
-                        tagName = 'A';
-                        href = '/package/krb5';
-                        extName = 'krb5';
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/krb5';
+                        extName     = 'krb5';
                         extCategory = 'Authentication'
                     }
                 )
-                Caching = @(
+                Caching        = @(
                     @{
-                        outerHTML = '<a href="/package/APC"><strong>APC</strong></a>';
-                        tagName = 'A';
-                        href = '/package/APC';
-                        extName = 'APC';
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/APC';
+                        extName     = 'APC';
                         extCategory = 'Caching'
                     }
                     @{
-                        outerHTML = '<a href="/package/APC"><strong>APC</strong></a>';
-                        tagName = 'A';
-                        href = '/package/APCu';
-                        extName = 'APCu';
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/APCu';
+                        extName     = 'APCu';
                         extCategory = 'Caching'
                     }
                 )
             }
         }
         Mock Get-Data-From-Cache { return Get-Extension-List }
-        Mock Get-PHPExtensions-From-Source -MockWith{ return Get-Extension-List }
+        Mock Get-PHPExtensions-From-Source -MockWith { return Get-Extension-List }
         Mock Display-Extensions-States {}
         Mock Display-Installed-Extensions {}
     }
 
     It "Returns -1 when no extensions are installed" {
-        Mock Get-PHP-Data { return @{ extensions = @() } }
+        Mock Get-All-PHPExtensionsStatus { return @() }
         $code = List-PHP-Extensions -iniPath $testIniPath
         $code | Should -Be -1
     }
@@ -200,7 +207,8 @@ Describe "List-PHP-Extensions" {
     It "Displays installed extensions" {
         $code = List-PHP-Extensions -iniPath $testIniPath
         $code | Should -Be 0
-        Assert-MockCalled Get-PHP-Data -Exactly 1
+        Assert-MockCalled Get-All-PHPExtensionsStatus -Exactly 1
+        Assert-MockCalled Get-Matching-PHPExtensionsStatus -Exactly 0
         Assert-MockCalled Display-Extensions-States -Exactly 1
         Assert-MockCalled Display-Installed-Extensions -Exactly 1
     }
@@ -208,15 +216,17 @@ Describe "List-PHP-Extensions" {
     It "Displays local extensions matching the filter" {
         $code = List-PHP-Extensions -iniPath $testIniPath -term 'pc'
         $code | Should -Be 0
-        Assert-MockCalled Get-PHP-Data -Exactly 1
+        Assert-MockCalled Get-All-PHPExtensionsStatus -Exactly 1
+        Assert-MockCalled Get-Matching-PHPExtensionsStatus -Exactly 1
         Assert-MockCalled Display-Extensions-States -Exactly 1
         Assert-MockCalled Display-Installed-Extensions -Exactly 1
     }
 
     It "Returns -1 when no local extensions matchs the filter" {
+        Mock Get-Matching-PHPExtensionsStatus { return @() }
         $code = List-PHP-Extensions -iniPath $testIniPath -term 'nonexistent'
         $code | Should -Be -1
-        Assert-MockCalled Get-PHP-Data -Exactly 1
+        Assert-MockCalled Get-Matching-PHPExtensionsStatus -Exactly 1
         Assert-MockCalled Display-Extensions-States -Exactly 0
         Assert-MockCalled Display-Installed-Extensions -Exactly 0
     }
@@ -234,14 +244,14 @@ Describe "List-PHP-Extensions" {
         Mock Can-Use-Cache { return $true }
         Mock Get-Data-From-Cache {
             return @{
-                GUI = @(
-                    @{href = '/package/php_xcb'; extName = 'php_xcb'; extCategory = 'GUI'}
-                    @{href = '/package/tk'; extName = 'tk'; extCategory = 'GUI'}
-                    @{href = '/package/php_xcb'; extName = 'php_xcb'; extCategory = 'GUI'}
+                GUI    = @(
+                    @{href = '/package/php_xcb'; extName = 'php_xcb'; extCategory = 'GUI' }
+                    @{href = '/package/tk'; extName = 'tk'; extCategory = 'GUI' }
+                    @{href = '/package/php_xcb'; extName = 'php_xcb'; extCategory = 'GUI' }
                 );
                 Images = @(
-                    @{href = '/package/cairo'; extName = 'cairo'; extCategory = 'Images'}
-                    @{href = '/package/cairo_wrapper'; extName = 'cairo_wrapper'; extCategory = 'Images'}
+                    @{href = '/package/cairo'; extName = 'cairo'; extCategory = 'Images' }
+                    @{href = '/package/cairo_wrapper'; extName = 'cairo_wrapper'; extCategory = 'Images' }
                 )
             }
         }
@@ -303,12 +313,13 @@ Describe "List-PHP-Extensions" {
         # Mock $Host.UI.RawUI.WindowSize to trigger the maxDescLength < 100 condition
         Mock -CommandName Get-Variable -ParameterFilter { $Name -eq 'Host' } -MockWith {
             return @{ Value = @{
-                UI = @{
-                    RawUI = @{
-                        WindowSize = @{ Width = 50 }
+                    UI = @{
+                        RawUI = @{
+                            WindowSize = @{ Width = 50 }
+                        }
                     }
                 }
-            }}
+            }
         }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be 0

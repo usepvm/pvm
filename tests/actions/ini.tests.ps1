@@ -14,8 +14,8 @@ BeforeAll {
     Mock Write-Host {}
 
     function Reset-Ini-Content {
-    # Create a test php.ini file
-    @"
+        # Create a test php.ini file
+        @"
 memory_limit = 128M
 ;extension=php_xdebug.dll
 extension=php_curl.dll
@@ -319,19 +319,19 @@ extension=php_curl.dll
 
     Context "list action" {
         It "Lists extensions" {
-            Mock Get-PHP-Data {
-                @{
-                    extensions = @(
-                        @{Extension = 'curl'; Enabled = $true; Type = 'extension'}
-                        @{Extension = 'opcache'; Enabled = $false; Type = 'zend_extension'}
-                    )
-                    settings = @(
-                        @{Name = 'memory_limit'; Value = '128M'; Enabled = $true; Type = 'setting'}
-                        @{Name = 'max_execution_time'; Value = '60'; Enabled = $false; Type = 'setting'}
-                    )
-                }
+            Mock Get-Matching-PHPExtensionsStatus {
+                return @(@{
+                        fullPath   = "$extDirectory\pdo_mysql.dll"
+                        fileName   = 'pdo_mysql.dll'
+                        name       = 'pdo_mysql'
+                        source     = 'ext,ini'
+                        line       = 'extension=pdo_mysql.dll'
+                        lineNumber = 4
+                        status     = 'Disabled'
+                        color      = 'DarkYellow'
+                    })
             }
-            $result = Invoke-IniAction -action 'list' -params @('--search=pc')
+            $result = Invoke-IniAction -action 'list' -params @('--search=sql')
             $result | Should -Be 0
         }
     }

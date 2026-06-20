@@ -2051,7 +2051,7 @@ Describe "Create-Example-PHP-Profile Tests" {
 }
 
 Describe "Create-Profile-Template Tests" {
-    It "Should create a profile template" -Tag i {
+    It "Should create a profile template" {
         $PVMConfig.paths.profiles = 'TestDrive:\profiles'
         $PVMConfig.paths.profileTemplate = "$($PVMConfig.paths.profiles)\profile-template.json"
         $result = Create-Profile-Template

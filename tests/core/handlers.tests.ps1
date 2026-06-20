@@ -1,6 +1,13 @@
 ﻿
 BeforeAll {
     Mock Write-Host {}
+    $script:PVMRootBackup = $PVMRoot
+    $script:PVMConfigBackup = $PVMConfig.Clone()
+}
+
+AfterAll {
+    $Global:PVMRoot = $PVMRootBackup
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Invoke-Setup Tests" {

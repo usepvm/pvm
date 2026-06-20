@@ -1,5 +1,6 @@
 ﻿
 BeforeAll {
+    $script:PVMConfigBackup = $PVMConfig.Clone()
     # Mock global variables
     $script:PROFILES_PATH = $PVMConfig.paths.profiles = 'TestDrive:\\profiles'
 
@@ -34,6 +35,10 @@ BeforeAll {
 
     # Create test profile directory
     New-Item -ItemType Directory -Path $script:PROFILES_PATH -Force | Out-Null
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Set-IniSetting-Direct Tests" {

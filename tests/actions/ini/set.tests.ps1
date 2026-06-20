@@ -1,5 +1,7 @@
 ﻿
 BeforeAll {
+    $script:PVMConfigBackup = $PVMConfig.Clone()
+
     $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
     $script:testIniPath = "$testDrivePath\php.ini"
     $script:extDirectory = "$testDrivePath\ext"
@@ -35,6 +37,10 @@ max_execution_time = 30
     New-Item -ItemType Directory -Path $phpVersionPath -Force
     New-Item -ItemType SymbolicLink -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
     Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Set-IniSetting" {

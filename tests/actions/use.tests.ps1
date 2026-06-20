@@ -1,5 +1,6 @@
 ﻿
 BeforeAll {
+    $script:PVMConfigBackup = $PVMConfig.Clone()
     # Mock data and helper functions for testing
     $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\pvm\php'
     $PVMConfig.paths.logError = 'C:\logs\error.log'
@@ -49,6 +50,10 @@ BeforeAll {
         # Mock implementation
         return $true
     }
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Detect-PHP-VersionFromProject" {

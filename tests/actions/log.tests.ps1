@@ -1,4 +1,12 @@
 ﻿
+BeforeAll {
+    $script:PVMConfigBackup = $PVMConfig.Clone()
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
+}
+
 Describe "Format-NiceTimestamp" {
     It "returns 'just now' for current timestamp" {
         $now = Get-Date

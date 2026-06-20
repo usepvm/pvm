@@ -1,5 +1,6 @@
 ﻿
 BeforeAll {
+    $script:PVMConfigBackup = $PVMConfig.Clone()
     # Mock global variables that would be defined in the main script
     $PVMConfig.paths.data = "TestDrive:\storage\data"
     $PVMConfig.paths.logError = "TestDrive:\storage\logs\error.log"
@@ -20,6 +21,10 @@ BeforeAll {
     }
     Mock Get-Current-PHP-Version { return @{ version = '8.2.0' } }
     Mock Get-Installed-PHP-Versions { return @('php8.2.0', 'php8.1.5', 'php7.4.33') }
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-From-Source" {

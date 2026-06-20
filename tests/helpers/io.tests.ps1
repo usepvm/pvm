@@ -15,12 +15,17 @@ BeforeAll {
     }
 
     # Setup test environment
+    $script:PVMConfigBackup = $PVMConfig.Clone()
     $script:STORAGE_PATH = $PVMConfig.paths.storage = 'TestDrive:\storage'
     $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
     $PVMConfig.paths.pathVarBackup = 'TestDrive:\logs\path_backup.log'
 
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-All-Subdirectories" {

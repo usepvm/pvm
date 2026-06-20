@@ -2,6 +2,8 @@
 BeforeAll {
     Mock Write-Host {}
 
+    $script:PVMConfigBackup = $PVMConfig.Clone()
+
     $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
     $script:testIniPath = "$testDrivePath\php.ini"
     function Reset-Ini-Content {
@@ -19,6 +21,10 @@ max_execution_time = 30
 
     # Create initial ini content first
     Reset-Ini-Content
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-PHPInstallInfo" {

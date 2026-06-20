@@ -1,8 +1,13 @@
 ﻿
 BeforeAll {
     # Mock global variables that would be loaded from config
+    $script:PVMConfigBackup = $PVMConfig.Clone()
     $PVMConfig.version = '1.0.0'
     $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Show-Usage Tests" {

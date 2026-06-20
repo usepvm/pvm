@@ -1,6 +1,7 @@
 ﻿
 BeforeAll {
     # Create a test directory for PHP installations
+    $script:PVMConfigBackup = $PVMConfig.Clone()
     $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
     $PVMConfig.paths.logError = 'TestDrive:\Logs\error.log'
     $script:testPhpPath = 'TestDrive:\PHP'
@@ -15,6 +16,10 @@ BeforeAll {
     }
 
     New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Uninstall-PHP" {

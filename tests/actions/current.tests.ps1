@@ -1,6 +1,7 @@
 ﻿
 BeforeAll {
     # Mock dependencies
+    $script:PVMConfigBackup = $PVMConfig.Clone()
     $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
     $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
 
@@ -13,6 +14,10 @@ BeforeAll {
         param ($logPath, $message, $data)
         return $true
     }
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-PHP-Status Function Tests" {

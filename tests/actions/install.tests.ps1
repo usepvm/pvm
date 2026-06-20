@@ -1,6 +1,7 @@
 ﻿
 BeforeAll {
     Mock Write-Host {}
+    $script:PVMConfigBackup = $PVMConfig.Clone()
     # Global test variables
     $PVMConfig.paths.logError = 'TestDrive:\error.log'
     $PVMConfig.paths.storage = 'TestDrive:\storage'
@@ -167,6 +168,10 @@ BeforeAll {
             $script:MockRegistry.Machine[$name] = $value
         }
     }
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 # Test Suites

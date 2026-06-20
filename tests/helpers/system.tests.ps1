@@ -15,6 +15,7 @@ BeforeAll {
     }
 
     # Setup test environment
+    $script:PVMConfigBackup = $PVMConfig.Clone()
     $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
     $script:STORAGE_PATH = $PVMConfig.paths.storage = 'TestDrive:\storage'
     $script:PATH_VAR_BACKUP_PATH = $PVMConfig.paths.pathVarBackup = 'TestDrive:\logs\path_backup.log'
@@ -67,6 +68,10 @@ BeforeAll {
             $script:MockRegistry.Machine[$name] = $value
         }
     }
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-All-EnvVars" {

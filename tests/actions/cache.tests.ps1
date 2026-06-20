@@ -1,10 +1,15 @@
 ﻿
 BeforeAll {
+    $script:PVMConfigBackup = $PVMConfig.Clone()
     # Mock global variables
     $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\\cache'
 
     # Create test cache directory
     New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-Cache-Files Tests" {

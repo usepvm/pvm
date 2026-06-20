@@ -1,8 +1,13 @@
 ﻿
 BeforeAll {
+    $script:PVMConfigBackup = $PVMConfig.Clone()
     $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\cache'
     New-Item -ItemType Directory -Path $script:CACHE_PATH -Force | Out-Null
     Mock Write-Host {}
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-Data-From-Cache" {

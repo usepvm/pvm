@@ -1,5 +1,7 @@
 ﻿
 BeforeAll {
+    $script:PVMConfigBackup = $PVMConfig.Clone()
+
     $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
     $script:testIniPath = "$testDrivePath\php.ini"
     $script:extDirectory = "$testDrivePath\ext"
@@ -45,6 +47,10 @@ max_execution_time = 30
             path    = $phpVersionPath
         }
     }
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-PHP-Info" {

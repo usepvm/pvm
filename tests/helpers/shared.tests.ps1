@@ -1,21 +1,21 @@
 ﻿
 BeforeAll {
     Mock Write-Host {}
+    $script:PVMRootBackup = $PVMRoot
+    $script:PVMConfigBackup = $PVMConfig.Clone()
+}
+
+AfterAll {
+    $Global:PVMRoot = $PVMRootBackup
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Is-PVM-Setup" {
     BeforeAll {
-        $script:originalPVMRoot = $global:PVMRoot
-        $script:originalPHPCurrentVersionPath = $script:PHP_CURRENT_VERSION_PATH
         $global:PVMRoot = 'TestDrive:\pvm'
         $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\pvm\php'
         $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME
         New-Item -ItemType Directory -Path $global:PVMRoot -Force | Out-Null
-    }
-
-    AfterAll {
-        $global:PVMRoot = $script:originalPVMRoot
-        $script:PHP_CURRENT_VERSION_PATH = $script:originalPHPCurrentVersionPath
     }
 
     Context "When PVM is properly set up" {
@@ -339,7 +339,7 @@ Describe "Display-Msg-By-ExitCode" {
 Describe "Log-Data" {
     Context "When logging data" {
         It "Logs data successfully" {
-            $LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\test.log'
+            $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\test.log'
             $result = Log-Data -data @{
                 header = 'Test message'
                 exception = @{

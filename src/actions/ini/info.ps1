@@ -20,7 +20,8 @@ function Get-PHP-Info {
     $iniPath = "$($currentPHPVersion.path)\php.ini"
 
     if ($extensions) {
-        $allExtensions = Get-All-PHPExtensionsStatus -iniPath $iniPath
+        $allExtensions = Get-All-PHPExtensionsStatus -iniPath $iniPath -includeIniOnly $true
+
         $filteredExtensions = if ($term) {
             Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $term -includeIniOnly $true
         } else {

@@ -198,10 +198,14 @@ Describe "List-PHP-Extensions" {
         Mock Display-Installed-Extensions {}
     }
 
-    It "Returns -1 when no extensions are installed" {
+    It "Returns 0 when no extensions are installed" {
         Mock Get-All-PHPExtensionsStatus { return @() }
+
         $code = List-PHP-Extensions -iniPath $testIniPath
-        $code | Should -Be -1
+
+        $code | Should -Be 0
+        Assert-MockCalled Display-Extensions-States -Exactly 1
+        Assert-MockCalled Display-Installed-Extensions -Exactly 1
     }
 
     It "Displays installed extensions" {
@@ -222,13 +226,15 @@ Describe "List-PHP-Extensions" {
         Assert-MockCalled Display-Installed-Extensions -Exactly 1
     }
 
-    It "Returns -1 when no local extensions matchs the filter" {
+    It "Returns 0 when no local extensions matchs the filter" {
         Mock Get-Matching-PHPExtensionsStatus { return @() }
+
         $code = List-PHP-Extensions -iniPath $testIniPath -term 'nonexistent'
-        $code | Should -Be -1
+
+        $code | Should -Be 0
         Assert-MockCalled Get-Matching-PHPExtensionsStatus -Exactly 1
-        Assert-MockCalled Display-Extensions-States -Exactly 0
-        Assert-MockCalled Display-Installed-Extensions -Exactly 0
+        Assert-MockCalled Display-Extensions-States -Exactly 1
+        Assert-MockCalled Display-Installed-Extensions -Exactly 1
     }
 
     It "Returns -1 when no extensions are found" {

@@ -78,20 +78,10 @@ function List-PHP-Extensions {
         if (-not $available) {
             $allExtensions = Get-All-PHPExtensionsStatus -iniPath $iniPath -includeIniOnly $true
 
-            if ($allExtensions.Length -eq 0) {
-                Write-Host -Object "`nNo extensions found"
-                return -1
-            }
-
             $filtered = if ($term) {
-                Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $term
+                Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $term -includeIniOnly $true
             } else {
                 $allExtensions
-            }
-
-            if ($filtered.Length -eq 0) {
-                Write-Host -Object "`nNo extensions found matching '$term'" -ForegroundColor DarkYellow
-                return -1
             }
 
             Display-Extensions-States -extensions $allExtensions

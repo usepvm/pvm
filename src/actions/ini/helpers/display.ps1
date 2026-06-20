@@ -13,7 +13,7 @@ function Display-Installed-Extensions {
     param ($extensions)
 
     if ($extensions.Count -eq 0) {
-        Write-Host -Object '  No extensions found matching the search term.' -ForegroundColor DarkGray
+        Write-Host -Object '  No extensions found.' -ForegroundColor DarkGray
         return
     }
 
@@ -51,7 +51,7 @@ function Display-Settings {
     param ($settings)
 
     if ($settings.Count -eq 0) {
-        Write-Host -Object '  No settings found matching the search term.' -ForegroundColor DarkGray
+        Write-Host -Object '  No settings found.' -ForegroundColor DarkGray
         return
     }
 

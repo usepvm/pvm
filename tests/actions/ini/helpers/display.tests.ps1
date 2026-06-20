@@ -49,7 +49,7 @@ Describe "Display-Installed-Extensions" {
         $extensions = @()
         Display-Installed-Extensions -extensions $extensions
         Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
-            $Object -eq '  No extensions found matching the search term.'
+            $Object -eq '  No extensions found.'
         }
     }
 
@@ -109,7 +109,7 @@ Describe "Display-Settings" {
         $settings = @()
         Display-Settings -settings $settings
         Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
-            $Object -eq '  No settings found matching the search term.'
+            $Object -eq '  No settings found.'
         }
     }
 

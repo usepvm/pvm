@@ -8,34 +8,13 @@ function Get-IniSetting {
             return -1
         }
 
-        $lines = Get-Content -Path $iniPath
-
         $overallCode = 0
         $results = [ordered]@{}
         $notFound = [ordered]@{}
         foreach ($key in $keys) {
-            $pattern = '^[#;]?\s*([^=\s]*{0}[^=\s]*)\s*=\s*(.*)' -f [regex]::Escape($key)
+            $matchesList = Get-Matching-PHPSettings -iniPath $iniPath -searchKey $key
 
-            $result = @()
-            foreach ($line in $lines) {
-                if ($line -match $pattern) {
-                    $item = @{
-                        extensionName = $matches[1].Trim()
-                        value         = $matches[2].Trim()
-                        enabled       = 'Enabled'
-                        color         = 'DarkGreen'
-                    }
-
-                    if ($matches[0] -match '^[#;]') {
-                        $item.enabled = 'Disabled'
-                        $item.color = 'DarkYellow'
-                    }
-
-                    $result += $item
-                }
-            }
-
-            if ($result.Count -eq 0) {
+            if ($matchesList.Count -eq 0) {
                 $notFound[$key] = @(
                     @{
                         extensionName = $key
@@ -48,7 +27,9 @@ function Get-IniSetting {
                 continue
             }
 
-            $results[$key] = $result
+            $results[$key] = $matchesList | ForEach-Object {
+                @{ extensionName = $_.name; value = $_.value; enabled = $_.status; color = $_.color }
+            }
         }
 
         $results = $notFound + $results

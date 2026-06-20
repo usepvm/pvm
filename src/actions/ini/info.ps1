@@ -16,18 +16,29 @@ function Get-PHP-Info {
 
     Write-Host -Object "`n- Running PHP version`t: $($currentPHPVersion.version)"
     Write-Host -Object "`n- PHP path`t`t: $($currentPHPVersion.path)"
-    $phpIniData = Get-PHP-Data -PhpIniPath "$($currentPHPVersion.path)\php.ini"
+
+    $iniPath = "$($currentPHPVersion.path)\php.ini"
 
     if ($extensions) {
-        $extensions = $phpIniData.extensions | Where-Object { $_.Extension -like "*$term*" }
-        Display-Extensions-States -extensions $phpIniData.extensions
-        Display-Installed-Extensions -extensions $extensions
+        $allExtensions = Get-All-PHPExtensionsStatus -iniPath $iniPath
+        $filteredExtensions = if ($term) {
+            Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $term -includeIniOnly $true
+        } else {
+            $allExtensions
+        }
+        Display-Extensions-States -extensions $allExtensions
+        Display-Installed-Extensions -extensions $filteredExtensions
     }
 
     if ($settings) {
-        $settings = $phpIniData.settings | Where-Object { $_.Name -like "*$term*" }
-        Display-Settings-States -settings $phpIniData.settings
-        Display-Settings -settings $settings
+        $allSettings = Get-All-PHPSettings -iniPath $iniPath
+        $filteredSettings = if ($term) {
+            Get-Matching-PHPSettings -iniPath $iniPath -searchKey $term
+        } else {
+            $allSettings
+        }
+        Display-Settings-States -settings $allSettings
+        Display-Settings -settings $filteredSettings
     }
 
     return 0

@@ -422,15 +422,16 @@ function Invoke-Info {
     }
 
     $config = [ordered]@{
-        'PVM Version'    = $PVMConfig.version
-        'PVM Root'       = $PVMRoot
-        'Storage Path'   = $PVMConfig.paths.storage
-        'Current PHP'    = $currentPhpVersion
-        'PHP Path'       = $currentPhpPath
-        'Installed PHPs' = @($installedPHP).Count
-        'Cache TTL'      = "$($PVMConfig.env.CACHE_MAX_HOURS) hours"
-        'Profiles'       = @(Get-Profile-Files).Count
-        'Cached Files'   = @(Get-Cache-Files).Count
+        'PVM Version'      = $PVMConfig.version
+        'PVM Root'         = $PVMRoot
+        'Storage Path'     = $PVMConfig.paths.storage
+        'Current PHP'      = $currentPhpVersion
+        'Real PHP Path'    = $currentPhpPath
+        'Active PHP Path'  = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        'Installed PHPs'   = @($installedPHP).Count
+        'Cache TTL'        = "$($PVMConfig.env.CACHE_MAX_HOURS) hours"
+        'Profiles'         = @(Get-Profile-Files).Count
+        'Cached Files'     = @(Get-Cache-Files).Count
     }
     $allKeys = $config.Keys + $PVMConfig.paths.Keys + $PVMConfig.env.Keys
     $maxNameLength = ($allKeys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)

@@ -1,7 +1,7 @@
 ﻿
 function Invoke-Setup {
     $result = @{ code = 0; message = 'PVM is already setup' }
-    if (-not (Is-PVM-Setup)) {
+    if (Is-PVM-Not-Setup) {
         $result = Setup-PVM
         $null = Setup-Environment-Directories-And-Files
     }

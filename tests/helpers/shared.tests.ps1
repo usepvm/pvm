@@ -99,6 +99,22 @@ Describe "Is-PVM-Setup" {
     }
 }
 
+Describe "Is-PVM-Not-Setup" {
+    It "Returns true when PVM is not set up" {
+        Mock Is-PVM-Setup { return $false }
+
+        $result = Is-PVM-Not-Setup
+        $result | Should -Be $true
+    }
+
+    It "Returns false when PVM is set up" {
+        Mock Is-PVM-Setup { return $true }
+
+        $result = Is-PVM-Not-Setup
+        $result | Should -Be $false
+    }
+}
+
 Describe "Get-EnvConfig" {
     BeforeEach {
         $script:envRoot = 'TestDrive:\envconfig'

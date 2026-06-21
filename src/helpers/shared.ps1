@@ -36,6 +36,10 @@ function Is-PVM-Setup {
     }
 }
 
+function Is-PVM-Not-Setup {
+    return -not (Is-PVM-Setup)
+}
+
 function Run-PS-Command {
     param ($command)
 

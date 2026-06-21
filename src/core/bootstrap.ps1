@@ -98,7 +98,7 @@ function Start-PVM {
 
         $allowedCommands = Get-AllowedCommands
 
-        if (($allowedCommands -notcontains $command) -and (-not (Is-PVM-Setup))) {
+        if (($allowedCommands -notcontains $command) -and (Is-PVM-Not-Setup)) {
             Write-Host -Object "`nPVM is not setup. Please run 'pvm setup' first."
             return -1
         }

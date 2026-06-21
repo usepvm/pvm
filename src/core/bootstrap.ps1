@@ -76,9 +76,7 @@ function Start-PVM {
             return 0
         }
 
-        if ($null -ne $command) {
-            $command = $command.Trim().ToLower()
-        }
+        $command = $command.Trim().ToLower()
 
         if ($arguments -contains '--version' -or $arguments -contains '-v' -or $command -eq 'version') {
             Show-PVM-Version
@@ -92,6 +90,7 @@ function Start-PVM {
         $actions = Get-Actions -arguments $arguments
 
         if (-not $actions.Contains($command)) {
+            Write-Host -Object "`n'$command' is not a valid command." -ForegroundColor DarkYellow
             Show-Usage
             return 0
         }

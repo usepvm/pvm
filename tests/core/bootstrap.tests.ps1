@@ -263,6 +263,9 @@ Describe "Start-PVM Function Tests" {
             Assert-MockCalled Show-Usage -Times 1
             Assert-MockCalled Get-Actions -Times 1
             Assert-MockCalled Resolve-Alias -Times 1
+            Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+                $Object -eq "`n'invalid-command' is not a valid command."
+            }
         }
 
         It "Should proceed when command exists in actions" {

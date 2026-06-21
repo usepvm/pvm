@@ -232,6 +232,7 @@ opcache.enable = 1
         Mock Test-Path { return $true }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_xdebug-3.1.0-8.1-vs16-x64.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { return 'n' }
+        Mock Remove-Item { }
 
         $code = Install-XDebug-Extension -iniPath $testIniPath
         $code | Should -Be -1

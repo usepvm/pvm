@@ -45,7 +45,7 @@ function Initialize-PVMDirectories {
         $PVMConfig.paths.log
     )
 
-    Write-Host "`nPVM environment directories:"
+    Write-Host -Object "`nPVM environment directories:"
     $codes = @()
     $maxNameLength = ($dirs | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     foreach ($dir in $dirs) {

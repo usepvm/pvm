@@ -436,22 +436,22 @@ function Invoke-Info {
     $allKeys = $config.Keys + $PVMConfig.paths.Keys + $PVMConfig.env.Keys
     $maxNameLength = ($allKeys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
 
-    Write-Host "`n`nPVM status:`n" -ForegroundColor Cyan
+    Write-Host -Object "`n`nPVM status:`n" -ForegroundColor Cyan
     foreach ($var in $config.GetEnumerator()) {
         $key = "$($var.Key) ".PadRight($maxNameLength, '.')
         $rel = $var.Value
-        Write-Host "- $key $rel"
+        Write-Host -Object "- $key $rel"
     }
 
     if ($arguments -contains '--verbose') {
         $PVM_PATHS = $PVMConfig.paths
         $PVM_PATHS["Current PHP Path"] = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
 
-        Write-Host "`n`nPVM paths:`n" -ForegroundColor Cyan
+        Write-Host -Object "`n`nPVM paths:`n" -ForegroundColor Cyan
         foreach ($entry in $PVM_PATHS.GetEnumerator()) {
             $key = "$($entry.Key) ".PadRight($maxNameLength, '.')
             $rel = $entry.Value.Replace("$PVMRoot\", '')
-            Write-Host "- $key $rel"
+            Write-Host -Object "- $key $rel"
         }
     }
 

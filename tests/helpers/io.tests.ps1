@@ -300,6 +300,15 @@ Describe "Make-Symbolic-Link" {
             Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq $parent } -MockWith { return $true }
             Mock Is-Not-Admin { return $false }
             Mock Make-Directory -MockWith { return 0 }
+            Mock Test-Path { return $false }
+            Mock New-Item {
+                param ($ItemType, $Path, $Target)
+                if ($ItemType -eq 'SymbolicLink') {
+                    # Create a dummy file to simulate the link
+                    New-Item -Path $Path -ItemType File -Force | Out-Null
+                    return @{ FullName = $Path }
+                }
+            } -ParameterFilter { $ItemType -eq 'SymbolicLink' }
 
             $result = Make-Symbolic-Link -link $linkPath -target $targetPath
             $result.code | Should -Be 0

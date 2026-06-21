@@ -76,7 +76,9 @@ function Start-PVM {
             return 0
         }
 
-        $command = $command.Trim().ToLower()
+        if ($null -ne $command) {
+            $command = $command.Trim().ToLower()
+        }
 
         if ($arguments -contains '--version' -or $arguments -contains '-v' -or $command -eq 'version') {
             Show-PVM-Version

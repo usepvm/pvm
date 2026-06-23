@@ -122,15 +122,12 @@ Describe "Get-EnvConfig" {
     }
 
     Context "When .env file is missing" {
-        It "Throws an error with the root path" {
-            Mock Copy-Item { }
+        It "Copies .env.example to .env" {
             Set-Content -Path "$envRoot\.env.example" -Value 'KEY=value'
             Get-EnvConfig -rootPath $envRoot
 
-            Assert-MockCalled Copy-Item -Exactly 1 -ParameterFilter {
-                $Path -eq "$envRoot\.env.example"
-                $Destination -eq "$envRoot\.env"
-            }
+            $result = Get-Content -Path "$envRoot\.env"
+            $result | Should -Be 'KEY=value'
         }
     }
 

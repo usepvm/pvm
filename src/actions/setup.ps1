@@ -138,4 +138,3 @@ function Create-Env-File {
         return -1
     }
 }
-

@@ -188,8 +188,8 @@ function Get-EnvConfig {
 
     $envFile = "$rootPath\.env"
 
-    if (-not (Test-Path $envFile)) {
-        throw ".env file not found in: $rootPath"
+    if (Is-File-Not-Exists -path $envFile) {
+        Copy-Item -Path "$rootPath\.env.example" -Destination $envFile
     } else {
         Write-Verbose "Using .env from: $envFile"
     }

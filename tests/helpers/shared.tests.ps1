@@ -123,9 +123,14 @@ Describe "Get-EnvConfig" {
 
     Context "When .env file is missing" {
         It "Throws an error with the root path" {
-            $missingRoot = 'TestDrive:\envconfig_missing'
+            Mock Copy-Item { }
+            Set-Content -Path "$envRoot\.env.example" -Value 'KEY=value'
+            Get-EnvConfig -rootPath $envRoot
 
-            { Get-EnvConfig -rootPath $missingRoot } | Should -Throw ".env file not found in: $missingRoot"
+            Assert-MockCalled Copy-Item -Exactly 1 -ParameterFilter {
+                $Path -eq "$envRoot\.env.example"
+                $Destination -eq "$envRoot\.env"
+            }
         }
     }
 

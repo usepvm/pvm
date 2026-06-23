@@ -74,6 +74,12 @@ function Get-Config {
                 'a' = 'add'; '+' = 'add'; 'rm' = 'remove'; '-' = 'remove'
                 'del' = 'delete'; 'cls' = 'clear'
             }
+            flags          = [ordered]@{
+                '--version' = 'version'
+                '-v'        = 'version'
+                '--help'    = 'help'
+                '-h'        = 'help'
+            }
         }
     }
 }

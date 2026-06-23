@@ -748,3 +748,28 @@ Describe "Resolve-Alias Tests" {
         $result | Should -Be $Expected
     }
 }
+
+Describe "Get-FlagMap" {
+    It "Returns PVMConfig.defaults.flags" {
+        $result = Get-FlagMap
+        $result.Count | Should -Be $PVMConfig.defaults.flags.Count
+    }
+}
+
+Describe "Resolve-FlagCommand" {
+    $testCases = @(
+        @{ Command = '--version'; Expected = 'version' }
+        @{ Command = '-v'; Expected = 'version' }
+        @{ Command = '--help'; Expected = 'help' }
+        @{ Command = '-h'; Expected = 'help' }
+        @{ Command = 'unknown'; Expected = $null }
+        @{ Command = ''; Expected = $null }
+        @{ Command = '    '; Expected = $null }
+    )
+
+    It "Returns '<Expected>' when '<Command>' is passed" -TestCases $testCases {
+        param ($Command, $Expected)
+        $result = Resolve-FlagCommand -arguments @($Command)
+        $result | Should -Be $Expected
+    }
+}

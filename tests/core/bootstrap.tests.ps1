@@ -143,8 +143,10 @@ Describe "Start-PVM Function Tests" {
         Mock Write-Host { }
         Mock Show-Usage { }
         Mock Show-PVM-Version { }
+        Mock Resolve-FlagCommand { return $null }
         Mock Get-Actions {
             [ordered]@{
+                'version' = @{ action = { return 0 } }
                 'setup' = @{ action = { return 0 } }
                 'install' = @{ action = { return 0 } }
                 'use' = @{ action = { return 0 } }
@@ -173,63 +175,24 @@ Describe "Start-PVM Function Tests" {
     }
 
     Context "Version Display Path Tests" {
-        It "Should show version and return 0 with --version argument" {
-            $result = Start-PVM -command 'install' -arguments @('--version')
+        It "Should resolve -v flag to version command" {
+            Mock Resolve-FlagCommand { return 'version' }
+
+            $result = Start-PVM -command $null -arguments @('-v')
 
             $result | Should -Be 0
-            Assert-MockCalled Show-PVM-Version -Times 1
-            Assert-MockCalled Get-Actions -Times 0
-            Assert-MockCalled Show-Usage -Times 0
-        }
-
-        It "Should show version and return 0 with -v argument" {
-            $result = Start-PVM -command 'install' -arguments @('-v')
-
-            $result | Should -Be 0
-            Assert-MockCalled Show-PVM-Version -Times 1
-            Assert-MockCalled Get-Actions -Times 0
-            Assert-MockCalled Show-Usage -Times 0
-        }
-
-        It "Should show version and return 0 with version command" {
-            $result = Start-PVM -command 'version' -arguments @()
-
-            $result | Should -Be 0
-            Assert-MockCalled Show-PVM-Version -Times 1
-            Assert-MockCalled Get-Actions -Times 0
-            Assert-MockCalled Show-Usage -Times 0
-        }
-
-        It "Should show version when both version flag and version command are present" {
-            $result = Start-PVM -command 'version' -arguments @('--version')
-
-            $result | Should -Be 0
-            Assert-MockCalled Show-PVM-Version -Times 1
-            Assert-MockCalled Get-Actions -Times 0
-        }
-
-        It "Should show version with --version in mixed arguments" {
-            $result = Start-PVM -command 'install' -arguments @('8.2.0', '--version', 'extra')
-
-            $result | Should -Be 0
-            Assert-MockCalled Show-PVM-Version -Times 1
-            Assert-MockCalled Get-Actions -Times 0
-        }
-
-        It "Should show version with -v in mixed arguments" {
-            $result = Start-PVM -command 'use' -arguments @('8.1.0', '-v', '--force')
-
-            $result | Should -Be 0
-            Assert-MockCalled Show-PVM-Version -Times 1
-            Assert-MockCalled Get-Actions -Times 0
-        }
-
-        It "Should not show version with partial matches" {
-            $result = Start-PVM -command 'install' -arguments @('--verbose', '-version')
-
-            $result | Should -Be 0
-            Assert-MockCalled Show-PVM-Version -Times 0
+            Assert-MockCalled Resolve-FlagCommand -Times 1
             Assert-MockCalled Get-Actions -Times 1
+        }
+
+        It "Should show usage and return 0 when unknown flag is present" {
+            Mock Resolve-FlagCommand { return $null }
+
+            $result = Start-PVM -command $null -arguments @('--unknown')
+
+            $result | Should -Be 0
+            Assert-MockCalled Resolve-FlagCommand -Times 1
+            Assert-MockCalled Show-Usage -Times 1
         }
     }
 
@@ -546,15 +509,6 @@ Describe "Start-PVM Function Tests" {
 
             $result | Should -Be 0
             Assert-MockCalled Get-Actions -Times 1 -ParameterFilter { $arguments.Count -eq 100 }
-        }
-
-        It "Should handle version flag with other parameters" {
-            $result = Start-PVM -command 'install' -arguments @('8.2.0', '--version', '--force', 'extra')
-
-            $result | Should -Be 0
-            Assert-MockCalled Show-PVM-Version -Times 1
-            # Should short-circuit before other calls
-            Assert-MockCalled Get-Actions -Times 0
         }
 
         It "Should handle multiple commands through alias handler" {

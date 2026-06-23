@@ -76,18 +76,24 @@ function Start-PVM {
             return 0
         }
 
-        if ($null -ne $command) {
+        if ([string]::IsNullOrWhiteSpace($command)) {
+            $flagCommand = Resolve-FlagCommand -arguments $arguments
+            if ($flagCommand) {
+                $command   = $flagCommand
+                $arguments = @($arguments | Where-Object { -not (Get-FlagMap).Contains($_) })
+            }
+        } else {
             $command = $command.Trim().ToLower()
-        }
-
-        if ($arguments -contains '--version' -or $arguments -contains '-v' -or $command -eq 'version') {
-            Show-PVM-Version
-            return 0
         }
 
         $command, $arguments = Resolve-NestedCommand -command $command -arguments $arguments
 
         $command = Resolve-Alias -alias $command
+
+        if ([string]::IsNullOrWhiteSpace($command)) {
+            Show-Usage
+            return 0
+        }
 
         $actions = Get-Actions -arguments $arguments
 

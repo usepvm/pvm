@@ -265,3 +265,21 @@ function Resolve-Alias {
 
     return $alias
 }
+
+function Get-FlagMap {
+    return $PVMConfig.defaults.flags
+}
+
+function Resolve-FlagCommand {
+    param ($arguments)
+
+    $flagMap = Get-FlagMap
+
+    $flag = $arguments | Where-Object { $flagMap.Contains($_) } | Select-Object -First 1
+
+    if ($flag) {
+        return $flagMap[$flag]
+    }
+
+    return $null
+}

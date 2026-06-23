@@ -34,14 +34,22 @@ function Get-All-Test-Names {
 function Get-Covered-Source-File {
     param ($testFile, $root)
 
-    return Get-ChildItem -Path "$root\src" -Recurse -Filter '*.ps1' | Where-Object {
-        $testRelative = $testFile.FullName -replace [regex]::Escape("$root\tests"), ''
-        $testRelative = $testRelative -replace '\.tests\.ps1$', ''
-        $srcRelative = $_.FullName -replace [regex]::Escape("$root\src"), ''
-        $srcRelative = $srcRelative -replace '\.ps1$', ''
+    $testsMap = Get-Tests-Map -root $root
 
-        $srcRelative -eq $testRelative
+    return $testsMap[$testFile.FullName]
+}
+
+function Get-Tests-Map {
+    param ($root)
+
+    $testsMap = @{}
+    Get-ChildItem -Path "$root\src" -Recurse -Filter '*.ps1' | ForEach-Object {
+        $testFile = $_.FullName -replace [regex]::Escape("$root\src"), "$root\tests"
+        $testFile = $testFile -replace '.ps1', '.tests.ps1'
+        $testsMap += @{ $testFile = $_ }
     }
+
+    return $testsMap
 }
 
 function Build-Pester-Config {
@@ -64,12 +72,13 @@ function Set-Coverage-Config {
 
     $config.CodeCoverage.Enabled = $true
     $config.CodeCoverage.Path = $covered.FullName
-    $config.CodeCoverage.OutputPath = "$root\storage\coverage\$($testFile.Name).xml"
+    $outputPath = $covered.FullName -replace [regex]::Escape("$root\src"), ''
+    $config.CodeCoverage.OutputPath = "$root\storage\coverage\$outputPath.xml"
     $config.CodeCoverage.OutputFormat = 'JaCoCo'
     $config.CodeCoverage.OutputEncoding = 'UTF8'
     $config.CodeCoverage.CoveragePercentTarget = $options.target
 
-    return $covered
+    return @{ covered = $covered; config = $config }
 }
 
 function Get-Separator-Width {
@@ -125,7 +134,9 @@ function Run-Test-File {
 
     $coveredFile = $null
     if ($options.coverage) {
-        $coveredFile = Set-Coverage-Config -config $config -testFile $file -options $options -root $root
+        $coverageConfig = Set-Coverage-Config -config $config -testFile $file -options $options -root $root
+        $coveredFile = $coverageConfig.covered
+        $config = $coverageConfig.config
     }
 
     Write-Test-Header -file $file -coveredFile $coveredFile -separatorWidth $separatorWidth

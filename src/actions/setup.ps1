@@ -115,21 +115,27 @@ function Setup-Environment-Directories-And-Files {
 
 function Create-Env-File {
     param ($overwrite = $false)
-    if (Is-File-Not-Exists -path "$PVMRoot\.env.example") {
-        Write-Host -Object "`nFailed to find .env.example file." -ForegroundColor DarkYellow
+
+    try {
+        if (Is-File-Not-Exists -path "$PVMRoot\.env.example") {
+            Write-Host -Object "`nFailed to find .env.example file." -ForegroundColor DarkYellow
+            return -1
+        }
+
+        if ((Is-File-Exists -path "$PVMRoot\.env") -and ($overwrite -eq $false)) {
+            $response = Read-Host -Prompt "`n.env file already exists. Overwrite? (y/n)"
+            $response = $response.Trim()
+            if ($response -ne 'y' -and $response -ne 'Y') {
+                return 0
+            }
+        }
+        Copy-Item -Path "$PVMRoot\.env.example" -Destination "$PVMRoot\.env"
+        Write-Host -Object "`nCreated .env file." -ForegroundColor DarkGreen
+
+        return 0
+    } catch {
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create .env file"; exception = $_ }
         return -1
     }
-    
-    if ((Is-File-Exists -path "$PVMRoot\.env") -and ($overwrite -eq $false)) {
-        $response = Read-Host -Prompt "`n.env file already exists. Overwrite? (y/n)"
-        $response = $response.Trim()
-        if ($response -ne 'y' -and $response -ne 'Y') {
-            return 0
-        }
-    }
-    Copy-Item -Path "$PVMRoot\.env.example" -Destination "$PVMRoot\.env"
-    Write-Host -Object "`nCreated .env file." -ForegroundColor DarkGreen
-    
-    return 0
 }
 

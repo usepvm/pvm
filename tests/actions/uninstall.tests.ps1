@@ -2,6 +2,7 @@
 BeforeAll {
     # Create a test directory for PHP installations
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $PVMConfig.paths.cache = 'TestDrive:\\cache'
     $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
     $PVMConfig.paths.logError = 'TestDrive:\Logs\error.log'
     $script:testPhpPath = 'TestDrive:\PHP'

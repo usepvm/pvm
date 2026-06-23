@@ -4,6 +4,9 @@ BeforeAll {
     $script:testIniPath = "$testDrivePath\php.ini"
     $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
 
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $PVMConfig.paths.cache = 'TestDrive:\\cache'
+
     Mock Write-Host {}
 
     $script:MockFileSystem = @{
@@ -34,6 +37,10 @@ BeforeAll {
 
         throw "URL not mocked: $Uri"
     }
+}
+
+AfterAll {
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-Extension-Categories-By-Page Tests" {

@@ -3,6 +3,7 @@ BeforeAll {
     Mock Write-Host {}
 
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $PVMConfig.paths.cache = 'TestDrive:\\cache'
 
     $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
     $script:testIniPath = "$testDrivePath\php.ini"

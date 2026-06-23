@@ -783,3 +783,76 @@ Describe "Resolve-FlagCommand" {
         $result | Should -Be $Expected
     }
 }
+
+Describe "Get-Config" {
+    Context "When .env file exists" {
+        BeforeAll {
+            $script:testRoot = 'TestDrive:\pvm'
+            New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
+            @'
+PHP_CURRENT_VERSION_PATH=C:\pvm\php
+PVM_ENV_VAR_NAME=PVM
+CACHE_MAX_HOURS=168
+DEFAULT_LOG_PAGE_SIZE=5
+DEFAULT_PARTIAL_LIST_SIZE=10
+MIN_PAD_RIGHT_LENGTH=20
+MIN_LINE_LENGTH=50
+'@ | Set-Content -Path "$testRoot\.env"
+        }
+
+        It "Returns a hashtable with all expected sections" {
+            $result = Get-Config -rootPath $testRoot
+
+            $result | Should -BeOfType [hashtable]
+            $result.ContainsKey('version') | Should -Be $true
+            $result.ContainsKey('paths') | Should -Be $true
+            $result.ContainsKey('links') | Should -Be $true
+            $result.ContainsKey('env') | Should -Be $true
+            $result.ContainsKey('defaults') | Should -Be $true
+        }
+
+        It "Sets the correct version" {
+            $result = Get-Config -rootPath $testRoot
+            $result.version | Should -Be '2.6'
+        }
+
+        It "Sets paths correctly" {
+            $result = Get-Config -rootPath $testRoot
+            $result.paths.storage | Should -Be "$testRoot\storage"
+            $result.paths.php | Should -Be "$testRoot\storage\php"
+            $result.paths.data | Should -Be "$testRoot\storage\data"
+            $result.paths.templates | Should -Be "$testRoot\storage\data\templates"
+            $result.paths.cache | Should -Be "$testRoot\storage\data\cache"
+            $result.paths.profiles | Should -Be "$testRoot\storage\data\profiles"
+            $result.paths.log | Should -Be "$testRoot\storage\logs"
+            $result.paths.logError | Should -Be "$testRoot\storage\logs\error.log"
+        }
+
+        It "Sets env variables from .env file" {
+            $result = Get-Config -rootPath $testRoot
+            $result.env.PHP_CURRENT_VERSION_PATH | Should -Be 'C:\pvm\php'
+            $result.env.PVM_ENV_VAR_NAME | Should -Be 'PVM'
+            $result.env.CACHE_MAX_HOURS | Should -Be 168
+            $result.env.DEFAULT_LOG_PAGE_SIZE | Should -Be 5
+        }
+
+        It "Sets default zend extensions" {
+            $result = Get-Config -rootPath $testRoot
+            $result.defaults.zendExtensions | Should -Be @('opcache', 'xdebug')
+        }
+
+        It "Sets default extensions list" {
+            $result = Get-Config -rootPath $testRoot
+            $result.defaults.extensions | Should -Contain 'curl'
+            $result.defaults.extensions | Should -Contain 'mbstring'
+            $result.defaults.extensions | Should -Contain 'opcache'
+        }
+
+        It "Sets aliases dictionary" {
+            $result = Get-Config -rootPath $testRoot
+            $result.defaults.aliases['?'] | Should -Be 'help'
+            $result.defaults.aliases['i'] | Should -Be 'install'
+            $result.defaults.aliases['ls'] | Should -Be 'list'
+        }
+    }
+}

@@ -79,11 +79,11 @@ Describe "Invoke-Repair Tests" {
         Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
         Assert-MockCalled Create-Env-File -Times 1
     }
-    
+
     It "Should return -1 when Create-Env-File fails" {
         Mock Setup-Environment-Directories-And-Files { 0 }
         Mock Create-Env-File { -1 }
-        
+
         $result = Invoke-Repair
         $result | Should -Be -1
         Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1

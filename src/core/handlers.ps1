@@ -4,7 +4,7 @@ function Invoke-Setup {
     if (Is-PVM-Not-Setup) {
         $result = Setup-PVM
         $null = Setup-Environment-Directories-And-Files
-        $null = Create-Env-File
+        $null = Create-Env-File -overwrite $true
     }
     $optimized = Optimize-SystemPath
     if ($optimized -ne 0) {

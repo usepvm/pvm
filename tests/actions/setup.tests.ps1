@@ -182,6 +182,22 @@ Describe "Setup-PVM" {
             $result.code | Should -Be -1
             $result.message | Should -Be 'Failed to create directory for PHP version.'
         }
+        
+        It "Returns error code when Set-EnvVar fails" {
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'Path' } -MockWith {
+                return 'C:\Windows\System32;C:\Program Files\PowerShell'
+            }
+            Mock Get-EnvVar-ByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
+                return "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
+            }
+            Mock Set-EnvVar { -1 }
+
+            $result = Setup-PVM
+
+            $result.code | Should -Be -1
+            $result.message | Should -Be 'Failed to set Path environment variable.'
+            Should -Invoke Set-EnvVar -ParameterFilter { $name -eq 'Path' -and $value -like "*$PVM_ENV_VAR_NAME*" } -Exactly 1
+        }
     }
 }
 

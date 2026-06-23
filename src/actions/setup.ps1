@@ -24,7 +24,10 @@ function Setup-PVM {
 
         $result = @{ code = 0; message = 'PVM environment has been set up.'; color = 'DarkGreen' }
         if ($newPath -ne $path) {
-            $result.code = Set-EnvVar -name 'Path' -value $newPath
+            $code = Set-EnvVar -name 'Path' -value $newPath
+            if ($code -ne 0) {
+                $result = @{ code = -1; message = 'Failed to set Path environment variable.'; color = 'DarkYellow' }
+            }
         }
 
         return $result

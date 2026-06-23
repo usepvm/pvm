@@ -484,6 +484,11 @@ Describe "Format-Seconds" {
             $result = Format-Seconds -totalSeconds '90'
             $result | Should -Be '01:30'
         }
+
+        It "Handles string input that cannot be converted" {
+            $result = Format-Seconds -totalSeconds 'not a number'
+            $result | Should -Be -1
+        }
     }
 }
 

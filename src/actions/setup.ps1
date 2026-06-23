@@ -109,3 +109,23 @@ function Setup-Environment-Directories-And-Files {
     if ($codes | Where-Object { $_ -ne 0 }) { return -1 }
     return 0
 }
+
+function Create-Env-File {
+    if (Is-File-Not-Exists -path "$PVMRoot\.env.example") {
+        Write-Host -Object "`nFailed to find .env.example file." -ForegroundColor DarkYellow
+        return -1
+    }
+    
+    if (Is-File-Exists -path "$PVMRoot\.env") {
+        $response = Read-Host -Prompt "`n.env file already exists. Overwrite? (y/n)"
+        $response = $response.Trim()
+        if ($response -ne 'y' -and $response -ne 'Y') {
+            return 0
+        }
+    }
+    Copy-Item -Path "$PVMRoot\.env.example" -Destination "$PVMRoot\.env"
+    Write-Host -Object "`nCreated .env file." -ForegroundColor DarkGreen
+    
+    return 0
+}
+

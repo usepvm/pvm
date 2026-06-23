@@ -4,6 +4,7 @@ function Invoke-Setup {
     if (Is-PVM-Not-Setup) {
         $result = Setup-PVM
         $null = Setup-Environment-Directories-And-Files
+        $null = Create-Env-File
     }
     $optimized = Optimize-SystemPath
     if ($optimized -ne 0) {
@@ -15,9 +16,12 @@ function Invoke-Setup {
 }
 
 function Invoke-Repair {
-    $code = Setup-Environment-Directories-And-Files
+    $codes = @()
+    $codes += Setup-Environment-Directories-And-Files
+    $codes += Create-Env-File
 
-    return $code
+    if ($codes | Where-Object { $_ -ne 0 }) { return -1 }
+    return 0
 }
 
 function Invoke-Current {

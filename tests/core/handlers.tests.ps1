@@ -16,6 +16,7 @@ Describe "Invoke-Setup Tests" {
         Mock Setup-PVM { @{ code = 0; message = 'Setup completed' } }
         Mock Optimize-SystemPath { 0 }
         Mock Setup-Environment-Directories-And-Files { 0 }
+        Mock Create-Env-File { 0 }
         Mock Display-Msg-By-ExitCode { }
         Mock Write-Host { }
     }
@@ -28,6 +29,8 @@ Describe "Invoke-Setup Tests" {
 
         Assert-MockCalled Is-PVM-Setup -Times 1
         Assert-MockCalled Setup-PVM -Times 0
+        Assert-MockCalled Setup-Environment-Directories-And-Files -Times 0
+        Assert-MockCalled Create-Env-File -Times 0
         Assert-MockCalled Optimize-SystemPath -Times 1
         Assert-MockCalled Display-Msg-By-ExitCode -Times 1
     }
@@ -41,6 +44,8 @@ Describe "Invoke-Setup Tests" {
 
         Assert-MockCalled Is-PVM-Setup -Times 1
         Assert-MockCalled Setup-PVM -Times 1
+        Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
+        Assert-MockCalled Create-Env-File -Times 1
         Assert-MockCalled Optimize-SystemPath -Times 1
         Assert-MockCalled Display-Msg-By-ExitCode -Times 1
     }
@@ -56,7 +61,8 @@ Describe "Invoke-Setup Tests" {
 }
 
 Describe "Invoke-Repair Tests" {
-    It "Should return 0 when Setup-Environment-Directories-And-Files succeeds" {
+    It "Should return 0 when all actions succeed" {
+        Mock Create-Env-File { 0 }
         Mock Setup-Environment-Directories-And-Files { 0 }
 
         $result = Invoke-Repair
@@ -66,10 +72,22 @@ Describe "Invoke-Repair Tests" {
 
     It "Should return -1 when Setup-Environment-Directories-And-Files fails" {
         Mock Setup-Environment-Directories-And-Files { -1 }
+        Mock Create-Env-File { 0 }
 
         $result = Invoke-Repair
         $result | Should -Be -1
         Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
+        Assert-MockCalled Create-Env-File -Times 1
+    }
+    
+    It "Should return -1 when Create-Env-File fails" {
+        Mock Setup-Environment-Directories-And-Files { 0 }
+        Mock Create-Env-File { -1 }
+        
+        $result = Invoke-Repair
+        $result | Should -Be -1
+        Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
+        Assert-MockCalled Create-Env-File -Times 1
     }
 }
 

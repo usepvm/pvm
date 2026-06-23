@@ -257,3 +257,61 @@ Describe "Setup-Environment-Directories-And-Files" {
         $result | Should -Be -1
     }
 }
+
+Describe "Create-Env-File" {
+    BeforeAll {
+        $script:PVMRoot = 'TestDrive:\PVM'
+        Mock Copy-Item { }
+    }
+    
+    It "Returns -1 when the .env.example file is not found" {
+        Mock Is-File-Not-Exists { return $true }
+        
+        $result = Create-Env-File
+        
+        $result | Should -Be -1
+        Assert-MockCalled Copy-Item -Times 0
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            $Object -like '*Failed to find .env.example file.*'
+        }
+    }
+    
+    It "Returns 0 when the user does not want to overwrite the .env file" {
+        Mock Is-File-Not-Exists { return $false }
+        New-Item -ItemType File -Path "$PVMRoot\.env" -Force | Out-Null
+        Mock Read-Host { return 'n' }
+        
+        $result = Create-Env-File
+        
+        $result | Should -Be 0
+        Assert-MockCalled Copy-Item -Times 0        
+    }
+    
+    It "Returns 0 when the user wants to overwrite the .env file" {
+        Mock Is-File-Not-Exists { return $false }
+        New-Item -ItemType File -Path "$PVMRoot\.env" -Force | Out-Null
+        Mock Read-Host { return 'y' }
+        
+        $result = Create-Env-File
+        
+        $result | Should -Be 0
+        Assert-MockCalled Copy-Item -Times 1
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            $Object -like '*Created .env file.*'
+        }
+    }
+    
+    It "Returns 0 when the .env is created" {
+        Mock Is-File-Not-Exists -ParameterFilter { $path -eq "$PVMRoot\.env.example"} { return $false }
+        Mock Is-File-Exists -ParameterFilter { $path -eq "$PVMRoot\.env"} { return $false }
+        Mock Read-Host { return 'y' }
+        
+        $result = Create-Env-File
+        
+        $result | Should -Be 0
+        Assert-MockCalled Copy-Item -Times 1
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            $Object -like '*Created .env file.*'
+        }        
+    }
+}

@@ -67,7 +67,8 @@ function Get-Config {
                 'opcache.max_accelerated_files'
             )
             aliases        = [ordered]@{
-                '?' = 'help'; 'h' = 'help'; 'init' = 'setup'
+                '?' = 'help'; 'h' = 'help';
+                'ver' = 'version'; 'init' = 'setup'
                 'cur' = 'current'; 'active' = 'current'
                 'ls' = 'list'; 'i' = 'install'; 'u' = 'uninstall'; 'switch' = 'use'
                 'on' = 'enable'; 'off' = 'disable'

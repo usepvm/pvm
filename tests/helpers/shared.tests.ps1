@@ -687,7 +687,7 @@ Describe "Get-Aliases" {
         $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
     }
 
-    It "Returns the zend_extensions.json content as a hashtable" {
+    It "Returns aliases from aliases.json or PVMConfig.defaults.aliases" {
         $result = Get-Aliases
         $result.Count | Should -Be 3
         $result['?'] | Should -Be 'help'

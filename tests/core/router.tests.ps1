@@ -5,6 +5,7 @@ BeforeAll {
 
 Describe "Get-Actions Tests" {
     BeforeEach {
+        Mock Invoke-Version { }
         Mock Invoke-Help { }
         Mock Invoke-Setup { }
         Mock Invoke-Repair { }
@@ -28,6 +29,7 @@ Describe "Get-Actions Tests" {
 
         $actions | Should -BeOfType [System.Collections.Specialized.OrderedDictionary]
         $actions.Keys | Should -Contain 'help'
+        $actions.Keys | Should -Contain 'version'
         $actions.Keys | Should -Contain 'setup'
         $actions.Keys | Should -Contain 'current'
         $actions.Keys | Should -Contain 'list'
@@ -55,6 +57,13 @@ Describe "Get-Actions Tests" {
             $actions['help'].action.Invoke()
 
             Assert-MockCalled Invoke-Help -Times 1
+        }
+
+        It "Should execute version action correctly" {
+            $actions = Get-Actions -arguments @()
+            $actions['version'].action.Invoke()
+
+            Assert-MockCalled Invoke-Version -Times 1
         }
 
         It "Should execute setup action correctly" {

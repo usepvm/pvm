@@ -227,6 +227,11 @@ function Invoke-Log {
     return $code
 }
 
+function Invoke-Version {
+    Show-PVM-Version
+    return 0
+}
+
 function Invoke-Help {
     param ($arguments)
 

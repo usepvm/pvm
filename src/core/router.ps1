@@ -17,6 +17,15 @@ function Get-Actions {
             };
             action      = { return Invoke-Help -arguments $script:arguments }
         }
+        'version' = @{
+            command     = 'pvm version';
+            description = 'Display the current PVM version.';
+            usage       = [ordered]@{
+                USAGE       = 'pvm version'
+                DESCRIPTION = @('Displays the current PVM version.')
+            }
+            action      = { return Invoke-Version }
+        }
         'setup'     = @{
             command     = 'pvm setup';
             description = 'Configure PHP environment variables, paths, directories, and files.';

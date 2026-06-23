@@ -389,6 +389,16 @@ Describe "Invoke-Log Tests" {
     }
 }
 
+Describe "Invoke-Version Tests" {
+    It "Should show version and return 0" {
+        Mock Show-PVM-Version { }
+        $result = Invoke-Version
+
+        $result | Should -Be 0
+        Assert-MockCalled Show-PVM-Version -Times 1
+    }
+}
+
 Describe "Invoke-Help Tests" {
     It "Should display help for setup command" {
         $result = Invoke-Help -arguments @('setup')

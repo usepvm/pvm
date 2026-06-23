@@ -173,6 +173,8 @@ Describe "Integration Tests" {
         BeforeEach {
             # Setup comprehensive mocks for integration testing
             Mock Is-PVM-Setup { $true }
+            Mock Setup-Environment-Directories-And-Files { 0 }
+            Mock Create-Env-File { 0 }
             Mock Setup-PVM { @{ code = 0; message = 'Setup completed' } }
             Mock Optimize-SystemPath { 0 }
             Mock Display-Msg-By-ExitCode { }
@@ -210,6 +212,8 @@ Describe "Integration Tests" {
     Context "Error Handling Integration" {
         It "Should handle cascading failures gracefully" {
             Mock Is-PVM-Setup { $false }
+            Mock Setup-Environment-Directories-And-Files { -1 }
+            Mock Create-Env-File { -1 }
             Mock Setup-PVM { @{ code = 1; message = 'Setup failed' } }
             Mock Optimize-SystemPath { -1 }
             Mock Display-Msg-By-ExitCode { }

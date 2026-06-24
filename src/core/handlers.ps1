@@ -116,7 +116,10 @@ function Invoke-Uninstall {
         return -1
     }
 
-    $result = Uninstall-PHP -version $version
+    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
+    $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+
+    $result = Uninstall-PHP -version $version -skipConfirmation $skipConfirmation
 
     Display-Msg-By-ExitCode -result $result
     return 0

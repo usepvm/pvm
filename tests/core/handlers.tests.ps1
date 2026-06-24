@@ -232,41 +232,62 @@ Describe "Invoke-Install Tests" {
 
 Describe "Invoke-Uninstall Tests" {
     BeforeEach {
-        Mock Get-Current-PHP-Version { @{ version = '8.1.0' } }
         Mock Uninstall-PHP { @{ code = 0; message = 'Uninstalled successfully' } }
         Mock Display-Msg-By-ExitCode { }
         Mock Write-Host { }
-        Mock Read-Host { }
     }
 
     It "Should return -1 when no version is provided" {
-        $arguments = @()
-
-        $result = Invoke-Uninstall -arguments $arguments
+        $result = Invoke-Uninstall -arguments @()
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Please provide a PHP version to uninstall*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Please provide a PHP version to uninstall*' }
     }
 
-    It "Should uninstall PHP version successfully" {
-        $arguments = @('8.2.0')
-
-        $result = Invoke-Uninstall -arguments $arguments
+    It "Should uninstall PHP version without skipConfirmation by default" {
+        $result = Invoke-Uninstall -arguments @('8.2.0')
         $result | Should -Be 0
 
-        Assert-MockCalled Uninstall-PHP -Times 1 -ParameterFilter { $version -eq '8.2.0' }
-        Assert-MockCalled Display-Msg-By-ExitCode -Times 1
+        Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
+            $version -eq '8.2.0' -and $skipConfirmation -eq $false
+        }
+        Should -Invoke Display-Msg-By-ExitCode -Exactly 1
     }
 
-    It "Should not prompt when uninstalling different version than current" {
-        Mock Get-Current-PHP-Version { @{ version = '8.1.0' } }
-        $arguments = @('8.2.0')
-
-        $result = Invoke-Uninstall -arguments $arguments
+    It "Should pass skipConfirmation true when -y flag is provided" {
+        $result = Invoke-Uninstall -arguments @('8.2.0', '-y')
         $result | Should -Be 0
 
-        Assert-MockCalled Read-Host -Times 0
-        Assert-MockCalled Uninstall-PHP -Times 1
+        Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
+            $version -eq '8.2.0' -and $skipConfirmation -eq $true
+        }
+    }
+
+    It "Should pass skipConfirmation true when --yes flag is provided" {
+        $result = Invoke-Uninstall -arguments @('8.2.0', '--yes')
+        $result | Should -Be 0
+
+        Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
+            $version -eq '8.2.0' -and $skipConfirmation -eq $true
+        }
+    }
+
+    It "Should pass skipConfirmation false when no flag is provided" {
+        $result = Invoke-Uninstall -arguments @('8.2.0')
+        $result | Should -Be 0
+
+        Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
+            $version -eq '8.2.0' -and $skipConfirmation -eq $false
+        }
+    }
+
+    It "Should ignore unrecognized flags and not set skipConfirmation" {
+        $result = Invoke-Uninstall -arguments @('8.2.0', '--force')
+        $result | Should -Be 0
+
+        Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
+            $version -eq '8.2.0' -and $skipConfirmation -eq $false
+        }
     }
 }
 

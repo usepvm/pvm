@@ -650,11 +650,40 @@ Describe "Invoke-Profile Tests" {
                 $profileName -eq 'myprofile'
             }
         }
+
+        It "Should delete profile with provided name and skip confirmation" {
+            $arguments = @('delete', 'myprofile', '-y')
+
+            $result = Invoke-Profile -arguments $arguments
+            $result | Should -Be 0
+
+            Assert-MockCalled Delete-PHP-Profile -Times 1 -ParameterFilter {
+                $profileName -eq 'myprofile' -and $skipConfirmation -eq $true
+            }
+        }
     }
 
     Context "Clear action" {
         It "Should clear all profiles files" {
             $arguments = @('clear')
+
+            $result = Invoke-Profile -arguments $arguments
+
+            $result | Should -Be 0
+            Assert-MockCalled Clear-PHP-Profiles -Times 1
+        }
+
+        It "Should clear all profiles files and skip confirmation" {
+            $arguments = @('clear', '-y')
+
+            $result = Invoke-Profile -arguments $arguments
+
+            $result | Should -Be 0
+            Assert-MockCalled Clear-PHP-Profiles -Times 1
+        }
+
+        It "Should clear all profiles files and skip confirmation using --yes" {
+            $arguments = @('clear', '--yes')
 
             $result = Invoke-Profile -arguments $arguments
 
@@ -887,11 +916,40 @@ Describe "Invoke-Cache Tests" {
                 $cacheName -eq 'available_versions'
             }
         }
+
+        It "Should delete profile with provided name and skip confirmation" {
+            $arguments = @('delete', 'available_versions', '-y')
+
+            $result = Invoke-Cache -arguments $arguments
+            $result | Should -Be 0
+
+            Assert-MockCalled Delete-Cache-File -Times 1 -ParameterFilter {
+                $cacheName -eq 'available_versions' -and $skipConfirmation -eq $true
+            }
+        }
     }
 
     Context "Clear action" {
         It "Should clear all cache files" {
             $arguments = @('clear')
+
+            $result = Invoke-Cache -arguments $arguments
+
+            $result | Should -Be 0
+            Assert-MockCalled Clear-Cache-Files -Times 1
+        }
+
+        It "Should clear all cache files and skip confirmation" {
+            $arguments = @('clear', '-y')
+
+            $result = Invoke-Cache -arguments $arguments
+
+            $result | Should -Be 0
+            Assert-MockCalled Clear-Cache-Files -Times 1
+        }
+
+        It "Should clear all cache files and skip confirmation using --yes" {
+            $arguments = @('clear', '--yes')
 
             $result = Invoke-Cache -arguments $arguments
 

@@ -75,7 +75,7 @@ function Show-Cache-Data {
 }
 
 function Delete-Cache-File {
-    param ($cacheName)
+    param ($cacheName, $skipConfirmation = $false)
 
     try {
         $cachePath = Get-Cache-FilePath -fileName $cacheName
@@ -85,11 +85,13 @@ function Delete-Cache-File {
             return -1
         }
 
-        $response = Read-Host -Prompt "`nAre you sure you want to delete cache file '$cacheName'? (y/n)"
-        $response = $response.Trim()
-        if ($response -ne 'y' -and $response -ne 'Y') {
-            Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
-            return -1
+        if (-not $skipConfirmation) {
+            $response = Read-Host -Prompt "`nAre you sure you want to delete cache file '$cacheName'? (y/n)"
+            $response = $response.Trim()
+            if ($response -ne 'y' -and $response -ne 'Y') {
+                Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
+                return -1
+            }
         }
 
         Remove-Item -Path $cachePath -Force
@@ -104,6 +106,8 @@ function Delete-Cache-File {
 }
 
 function Clear-Cache-Files {
+    param ($skipConfirmation = $false)
+
     try {
         $cacheFiles = Get-Cache-Files
 
@@ -112,11 +116,13 @@ function Clear-Cache-Files {
             return -1
         }
 
-        $response = Read-Host -Prompt "`nAre you sure you want to delete all cache files? (y/n)"
-        $response = $response.Trim()
-        if ($response -ne 'y' -and $response -ne 'Y') {
-            Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
-            return -1
+        if (-not $skipConfirmation) {
+            $response = Read-Host -Prompt "`nAre you sure you want to delete all cache files? (y/n)"
+            $response = $response.Trim()
+            if ($response -ne 'y' -and $response -ne 'Y') {
+                Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
+                return -1
+            }
         }
 
         foreach ($cacheFile in $cacheFiles) {

@@ -320,7 +320,7 @@ extension=php_curl.dll
         }
     }
 
-    Context "uninstall action" {
+    Context "remove action" {
         It "Uninstalls extension" {
             Mock Uninstall-Extension { return 0 }
 
@@ -344,6 +344,18 @@ extension=php_curl.dll
             $result | Should -Be -1
 
             Assert-MockCalled Uninstall-Extension -Times 0
+        }
+
+        It "Uninstalls extension with skip confirmation" {
+            Mock Uninstall-Extension { return 0 }
+
+            $result = Invoke-IniAction -action 'remove' -params @('xdebug', 'curl', '-y')
+
+            $result | Should -Be 0
+
+            Assert-MockCalled Uninstall-Extension -Times 1 -ParameterFilter {
+                $skipConfirmation -eq $true
+            }
         }
     }
 

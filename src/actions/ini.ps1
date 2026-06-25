@@ -101,7 +101,10 @@ function Invoke-IniAction {
 
                 Write-Host -Object "`nUninstalling extension(s): $($params -join ', ')"
 
-                $exitCode = Uninstall-Extension -iniPath $iniPath -extNames @($params)
+                $skipConfirmation = [bool]($params | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+                $params = $params | Where-Object { @('-y', '--yes') -notcontains $_ }
+
+                $exitCode = Uninstall-Extension -iniPath $iniPath -extNames @($params) -skipConfirmation $skipConfirmation
             }
             'list' {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''

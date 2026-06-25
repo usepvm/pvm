@@ -50,7 +50,7 @@ function Remove-Extension-From-Ext-Directory {
 }
 
 function Uninstall-Extension {
-    param ($iniPath, $extNames)
+    param ($iniPath, $extNames, $skipConfirmation = $false)
 
     try {
         if ($extNames.Count -eq 0) {
@@ -110,12 +110,14 @@ function Uninstall-Extension {
                 $selected = $($matchingExtensions)
             }
 
-            $response = Read-Host -Prompt "`nAre you sure you want to uninstall '$($selected.name)'? (y/n)"
-            $response = $response.Trim()
-            if ($response -ne 'y' -and $response -ne 'Y') {
-                $results += @{ name = $selected.name; status = 'Uninstallation cancelled'; color = 'Gray' }
-                $overallCode = -1
-                continue
+            if (-not $skipConfirmation) {
+                $response = Read-Host -Prompt "`nAre you sure you want to uninstall '$($selected.name)'? (y/n)"
+                $response = $response.Trim()
+                if ($response -ne 'y' -and $response -ne 'Y') {
+                    $results += @{ name = $selected.name; status = 'Uninstallation cancelled'; color = 'Gray' }
+                    $overallCode = -1
+                    continue
+                }
             }
 
             if (Is-File-Not-Exists -path $selected.fullPath) {

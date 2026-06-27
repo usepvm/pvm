@@ -39,6 +39,10 @@ jobs:
     
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.name }} - PowerShell ${{ matrix.psVersion }}
+
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
     
     steps:
     - name: Checkout code
@@ -51,7 +55,6 @@ jobs:
         Write-Host "OS Name: $(Get-ComputerInfo -Property WindowsProductName | Select-Object -ExpandProperty WindowsProductName)"
         Write-Host "OS Version: $(Get-ComputerInfo -Property WindowsVersion | Select-Object -ExpandProperty WindowsVersion)"
         Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
-      shell: ${{ matrix.shell }}
 
     - name: Install Pester
       run: |
@@ -60,7 +63,6 @@ jobs:
         Import-Module Pester
         $pesterVersion = Get-Module -Name Pester
         Write-Host "Pester version: $($pesterVersion.Version)" -ForegroundColor Green
-      shell: ${{ matrix.shell }}
       
     - name: Copy .env.example
       run:
@@ -76,7 +78,6 @@ jobs:
           exit $LASTEXITCODE
         }
         Write-Host "✅ PVM setup completed successfully" -ForegroundColor Green
-      shell: ${{ matrix.shell }}
         
     - name: Run tests
       run: |
@@ -94,4 +95,3 @@ jobs:
           Write-Host "❌ Tests failed with exit code: $exitCode" -ForegroundColor Red
           exit $exitCode
         }
-      shell: ${{ matrix.shell }}

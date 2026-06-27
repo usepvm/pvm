@@ -3,6 +3,4 @@
 /tests/storage
 /coverage
 
-# Ignore all storage
-storage/*
-storage/data/*
+/storage

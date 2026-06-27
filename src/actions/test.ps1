@@ -204,18 +204,27 @@ function Write-Tests-Summary {
     Write-Host -Object "$content`n" -ForegroundColor $color
 
     $sorted = SortBy -data $testSummary -sortByColumn $options.sortBy
-    $sorted | ForEach-Object {
-        $label = "  - $($_.relativeFilePath) "
-        $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
-        $color = 'DarkYellow'
-        if ($_.code -eq 0) {
-            if ($null -ne $_.testResultData.coverageRaw -and $_.testResultData.coverageRaw -lt $options.target) {
-                $color = 'DarkGray'
-            } else {
-                $color = 'DarkGreen'
+
+    $grouped = $sorted | Group-Object -Property { Split-Path $_.relativeFilePath -Parent }
+
+    foreach ($group in $grouped) {
+        $dirLabel = if ($group.Name) { $group.Name } else { '.' }
+        Write-Host -Object "`n  [$dirLabel]" -ForegroundColor DarkCyan
+
+        $group.Group | ForEach-Object {
+            $fileName = Split-Path $_.relativeFilePath -Leaf
+            $label = "    - $fileName "
+            $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
+            $color = 'DarkYellow'
+            if ($_.code -eq 0) {
+                if ($null -ne $_.testResultData.coverageRaw -and $_.testResultData.coverageRaw -lt $options.target) {
+                    $color = 'DarkGray'
+                } else {
+                    $color = 'DarkGreen'
+                }
             }
+            Write-Host -Object $line -ForegroundColor $color
         }
-        Write-Host -Object $line -ForegroundColor $color
     }
 
     if ($totalFailedTests -gt 0) {

@@ -198,9 +198,8 @@ function Get-Matching-PHP-Versions {
         return $matchingVersions
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
+        return $null
     }
-
-    return $null
 }
 
 function Is-PHP-Version-Installed {
@@ -216,9 +215,8 @@ function Is-PHP-Version-Installed {
         )
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
+        return $false
     }
-
-    return $false
 }
 
 function Get-Source-Urls {

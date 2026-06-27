@@ -147,7 +147,12 @@ function Run-Test-File {
         $testResult = Invoke-Pester -Configuration $config
 
         $rawDuration = $testResult.Duration.TotalSeconds
-        $coverageRaw = $options.coverage ? [double]$testResult.CodeCoverage.CoveragePercent : $null
+
+        if ($options.coverage) {
+            $coverageRaw = [double]$testResult.CodeCoverage.CoveragePercent
+        } else {
+            $coverageRaw = $null
+        }
         $message = Format-Test-Result-Message -testResult $testResult -rawDuration $rawDuration -coverageRaw $coverageRaw
 
         $testResultData.passedCount = $testResult.PassedCount
@@ -155,7 +160,12 @@ function Run-Test-File {
         $testResultData.duration = $rawDuration
         $testResultData.coverageRaw = $coverageRaw
 
-        $code = ($LASTEXITCODE -ne 0) ? -1 : 0
+        if ($LASTEXITCODE -ne 0) {
+            $code = -1
+        } else {
+            $code = 0
+        }
+
         return @{ code = $code; Name = $file.Name; relativeFilePath = $relativeFilePath; Message = $message; testResultData = $testResultData }
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"; exception = $_ }
@@ -182,7 +192,11 @@ function Write-Tests-Summary {
     $totalDuration = $testSummary | ForEach-Object { $_.testResultData.duration } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
     $totalDurationFormatted = Format-Seconds -totalSeconds $totalDuration
 
-    $color = ($totalFailedTests -gt 0) ? 'DarkYellow' : 'DarkGreen'
+    if ($totalFailedTests -gt 0) {
+        $color = 'DarkYellow'
+    } else {
+        $color = 'DarkGreen'
+    }
     $content = " Files tested : $($testSummary.Count) | Total failed tests: $totalFailedTests"
     if ($totalDurationFormatted -ne -1) {
         $content += " | Total duration: $totalDurationFormatted"
@@ -195,12 +209,20 @@ function Write-Tests-Summary {
         $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
         $color = 'DarkYellow'
         if ($_.code -eq 0) {
-            $color = ($null -ne $_.testResultData.coverageRaw -and $_.testResultData.coverageRaw -lt $options.target) ? 'DarkGray' : 'DarkGreen'
+            if ($null -ne $_.testResultData.coverageRaw -and $_.testResultData.coverageRaw -lt $options.target) {
+                $color = 'DarkGray'
+            } else {
+                $color = 'DarkGreen'
+            }
         }
         Write-Host -Object $line -ForegroundColor $color
     }
 
-    return ($totalFailedTests -gt 0) ? -1 : 0
+    if ($totalFailedTests -gt 0) {
+        return -1
+    } else {
+        return 0
+    }
 }
 
 function Run-Tests {
@@ -256,13 +278,27 @@ function SortBy {
     switch ($sortByColumn) {
         'duration' {
             return $data | Sort-Object @{
-                Expression = { ($null -eq $_.testResultData.duration) ? [double]::PositiveInfinity : [double]$_.testResultData.duration }
+                Expression = {
+                    if ($null -eq $_.testResultData.duration) {
+                        [double]::PositiveInfinity
+                    } else {
+                        [double]$_.testResultData.duration
+                    }
+                }
+
                 Descending = $direction
             }
         }
         'coverage' {
             return $data | Sort-Object @{
-                Expression = { ($null -eq $_.testResultData.coverageRaw) ? [double]::PositiveInfinity : [double]$_.testResultData.coverageRaw }
+                Expression = {
+                    if ($null -eq $_.testResultData.coverageRaw) {
+                        [double]::PositiveInfinity
+                    } else {
+                        [double]$_.testResultData.coverageRaw
+                    }
+                }
+
                 Descending = $direction
             }
         }

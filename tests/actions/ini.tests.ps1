@@ -265,7 +265,7 @@ extension=php_curl.dll
             Mock Read-Host {
                 param ($Prompt)
                 if ($Prompt -eq "`nInsert the [number] you want to install") {
-                    return 0
+                    return '0'
                 }
             }
 

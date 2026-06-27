@@ -89,7 +89,7 @@ Describe "Set-IniSetting" {
 opcache.protect_memory=1
 "@ | Set-Content -Path $testIniPath
 
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return '0' }
         Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '4G' }
 
         Set-IniSetting -iniPath $testIniPath -keys @('memory') | Should -Be 0
@@ -102,7 +102,7 @@ opcache.protect_memory=1
 opcache.protect_memory=1
 "@ | Set-Content -Path $testIniPath
 
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return '0' }
 
         Set-IniSetting -iniPath $testIniPath -keys @('memory=2G') | Should -Be 0
         (Get-Content -Path $testIniPath) -match '^memory_limit\s*=\s*2G' | Should -Be $true
@@ -128,7 +128,7 @@ opcache.protect_memory=1
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
             $script:callCount++
             if ($script:callCount -eq 1) { return 'A' }
-            if ($script:callCount -eq 2) { return -1 }
+            if ($script:callCount -eq 2) { return '-1' }
             else { return '1' }
         }
 
@@ -141,7 +141,7 @@ memory_limit=
 memory_limit=2G
 "@ | Set-Content -Path $testIniPath -Encoding UTF8
 
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return 0 }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return '0' }
         Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '3G' }
 
         Set-IniSetting -iniPath $testIniPath -keys @('memory') | Should -Be 0

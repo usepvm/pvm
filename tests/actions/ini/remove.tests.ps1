@@ -373,8 +373,8 @@ Describe "Uninstall-Extension" {
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
             $script:callCount++
             if ($script:callCount -eq 1) { return 'A' }
-            if ($script:callCount -eq 2) { return -1 }
-            else { return 1 }
+            if ($script:callCount -eq 2) { return '-1' }
+            else { return '1' }
         }
 
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nAre you sure you want to uninstall 'pdo_mysql'? (y/n)" } -MockWith {

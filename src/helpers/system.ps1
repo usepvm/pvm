@@ -59,7 +59,7 @@ function Set-EnvVar {
         $name = $name.Trim()
 
         if (Is-Not-Admin) {
-            $command = "Set-EnvVar-Core -name '$name' -value '$value'"
+            $command = "[System.Environment]::SetEnvironmentVariable('$name', '$value', [System.EnvironmentVariableTarget]::Machine)"
             return (Run-PS-Command -command $command)
         }
 

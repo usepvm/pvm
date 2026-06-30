@@ -1,4 +1,4 @@
-﻿
+
 function Show-Usage {
     Write-Host -Object "`nRunning version : $($PVMConfig.version)"
     Write-Host -Object "`nUsage:`n"
@@ -62,7 +62,7 @@ function Resolve-NestedCommand {
 }
 
 function Get-AllowedCommands {
-    return @('help', 'setup', 'log')
+    return @('help', 'setup', 'log', 'update')
 }
 
 function Start-PVM {

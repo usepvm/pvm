@@ -4,7 +4,7 @@ function Get-From-Source {
         $urls = Get-Source-Urls
         $fetchedVersionsGrouped = @{}
         foreach ($key in $urls.Keys) {
-            $html = Invoke-WebRequest -Uri $urls[$key]
+            $html = Get-Web-Response -uri $urls[$key]
             $links = $html.Links
 
             # Filter the links to find versions that match the given version

@@ -369,3 +369,20 @@ function Get-Config {
         }
     }
 }
+
+function Get-Web-Response {
+    param ($uri, $outFile = $null)
+
+    $uri = $uri.Trim()
+
+    $params = @{
+        Uri = $uri
+        UseBasicParsing = $true
+    }
+
+    if ($outFile) {
+        $params.OutFile = $outFile
+    }
+
+    return Invoke-WebRequest @params
+}

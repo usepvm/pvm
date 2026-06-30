@@ -56,7 +56,7 @@ BeforeAll {
         return $true
     }
 
-    function Invoke-WebRequest {
+    function Get-Web-Response {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {

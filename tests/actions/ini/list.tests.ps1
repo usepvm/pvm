@@ -16,7 +16,7 @@ BeforeAll {
         DownloadFails = $false
     }
 
-    function Invoke-WebRequest {
+    Mock Get-Web-Response {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
@@ -45,7 +45,7 @@ AfterAll {
 
 Describe "Get-Extension-Categories-By-Page Tests" {
     It "Returns extensions links by page" {
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Get-Web-Response -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links   = @(
@@ -68,7 +68,7 @@ Describe "Get-Extension-Categories-By-Page Tests" {
     }
 
     It "Sets hasMore to true when more pages are available" {
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Get-Web-Response -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links   = @(
@@ -92,7 +92,7 @@ Describe "Get-Extension-Categories-By-Page Tests" {
 Describe "Get-PHPExtensions-From-Source" {
     BeforeAll {
         Mock Cache-Data { return 0 }
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+        Mock Get-Web-Response -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
                 Links   = @(

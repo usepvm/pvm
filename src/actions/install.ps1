@@ -10,7 +10,7 @@ function Get-Latest-PHP-Version {
             foreach ($key in $urls.Keys) {
                 $url = $urls[$key]
                 try {
-                    $html = Invoke-WebRequest -Uri $url
+                    $html = Get-Web-Response -uri $url
                     $links = $html.Links
 
                     $filteredLinks = $links | Where-Object {
@@ -60,7 +60,7 @@ function Get-PHP-Versions-From-Url {
     param ($url, $version)
 
     try {
-        $html = Invoke-WebRequest -Uri $url
+        $html = Get-Web-Response -uri $url
         $links = $html.Links
 
         # Filter the links to find versions that match the given version
@@ -136,7 +136,7 @@ function Download-PHP-From-Url {
     try {
         # Download the selected PHP version
         $fileName = $versionObject.fileName
-        Invoke-WebRequest -Uri $url -OutFile "$destination\$fileName"
+        $null = Get-Web-Response -uri $url -outFile "$destination\$fileName"
         return $destination
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP from $url"; exception = $_ }

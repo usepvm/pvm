@@ -3,7 +3,7 @@ function Get-Extension-Categories-By-Page {
     param ($extCategory, $link, $page = 1)
 
     $availableExtensions = @()
-    $html = Invoke-WebRequest -Uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
+    $html = Get-Web-Response -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
     $null = $html.Links | Where-Object {
         if (-not $_.href) { return $false }
@@ -30,7 +30,7 @@ function Get-Extension-Categories-By-Page {
 function Get-PHPExtensions-From-Source {
     $availableExtensions = @{}
     try {
-        $html_cat = Invoke-WebRequest -Uri $PVMConfig.links.peclPackages
+        $html_cat = Get-Web-Response -uri $PVMConfig.links.peclPackages
         $null = $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
 

@@ -68,7 +68,7 @@ function Get-XDebug-FROM-URL {
 }
 
 function Install-XDebug-Extension {
-    param ($iniPath)
+    param ($iniPath, $skipConfirmation = $false)
 
     try {
         $currentVersionObj = Get-Current-PHP-Version
@@ -170,16 +170,21 @@ function Install-XDebug-Extension {
         }
 
         Invoke-WebRequest -Uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -OutFile $PVMConfig.paths.php
+
         $phpPath = ($iniPath | Split-Path -Parent)
-        if (Is-File-Exists -path "$phpPath\ext\$($chosenItem.fileName)") {
-            $response = Read-Host -Prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
-            $response = $response.Trim()
-            if ($response -ne 'y' -and $response -ne 'Y') {
-                Remove-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)"
-                Write-Host -Object "`nInstallation cancelled"
-                return -1
+
+        if (-not $skipConfirmation) {
+            if (Is-File-Exists -path "$phpPath\ext\$($chosenItem.fileName)") {
+                $response = Read-Host -Prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
+                $response = $response.Trim()
+                if ($response -ne 'y' -and $response -ne 'Y') {
+                    Remove-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)"
+                    Write-Host -Object "`nInstallation cancelled"
+                    return -1
+                }
             }
         }
+
         Move-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)" -Destination "$phpPath\ext"
         $xDebugConfig = Get-Xdebug-Config-V2 -XDebugPath $($chosenItem.fileName)
         if ($chosenItem.xDebugVersion -like '3.*') {
@@ -260,7 +265,7 @@ function Add-Missing-PHPExtension-To-Ini {
 }
 
 function Install-Extension {
-    param ($iniPath, $extName)
+    param ($iniPath, $extName, $skipConfirmation = $false)
 
     try {
         $currentVersionObj = Get-Current-PHP-Version
@@ -378,16 +383,21 @@ function Install-Extension {
             Write-Host -Object "`nFailed to find $extName" -ForegroundColor DarkYellow
             return -1
         }
+
         $phpPath = ($iniPath | Split-Path -Parent)
-        if (Is-File-Exists -path "$phpPath\ext\$($extFile.Name)") {
-            $response = Read-Host -Prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
-            $response = $response.Trim()
-            if ($response -ne 'y' -and $response -ne 'Y') {
-                Remove-Item -Path "$($PVMConfig.paths.storage)\php\$fileNamePath" -Force -Recurse
-                Write-Host -Object "`nInstallation cancelled"
-                return -1
+
+        if (-not $skipConfirmation) {
+            if (Is-File-Exists -path "$phpPath\ext\$($extFile.Name)") {
+                $response = Read-Host -Prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
+                $response = $response.Trim()
+                if ($response -ne 'y' -and $response -ne 'Y') {
+                    Remove-Item -Path "$($PVMConfig.paths.storage)\php\$fileNamePath" -Force -Recurse
+                    Write-Host -Object "`nInstallation cancelled"
+                    return -1
+                }
             }
         }
+
         Move-Item -Path $extFile.FullName -Destination "$phpPath\ext"
         Remove-Item -Path $extractPath -Force -Recurse
         $code = Add-Missing-PHPExtension-To-Ini -iniPath $iniPath -extFileName $extFile.Name -enable $false
@@ -405,7 +415,7 @@ function Install-Extension {
 }
 
 function Install-IniExtension {
-    param ($iniPath, $extNames)
+    param ($iniPath, $extNames, $skipConfirmation = $false)
 
     try {
         if ($extNames.Count -eq 0) {
@@ -416,9 +426,9 @@ function Install-IniExtension {
         $overallCode = 0
         foreach ($extName in $extNames) {
             if ($extName -like '*xdebug*') {
-                $overallCode = Install-XDebug-Extension -iniPath $iniPath
+                $overallCode = Install-XDebug-Extension -iniPath $iniPath -skipConfirmation $skipConfirmation
             } else {
-                $overallCode = Install-Extension -iniPath $iniPath -extName $extName
+                $overallCode = Install-Extension -iniPath $iniPath -extName $extName -skipConfirmation $skipConfirmation
             }
         }
 

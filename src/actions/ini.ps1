@@ -88,7 +88,10 @@ function Invoke-IniAction {
 
                 Write-Host -Object "`nInstalling extension(s): $($params -join ', ')"
 
-                $exitCode = Install-IniExtension -iniPath $iniPath -extNames @($params)
+                $skipConfirmation = [bool]($params | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+                $params = $params | Where-Object { @('-y', '--yes') -notcontains $_ }
+
+                $exitCode = Install-IniExtension -iniPath $iniPath -extNames @($params) -skipConfirmation $skipConfirmation
             }
             'remove' {
                 if ($params.Count -eq 0) {
@@ -98,7 +101,10 @@ function Invoke-IniAction {
 
                 Write-Host -Object "`nUninstalling extension(s): $($params -join ', ')"
 
-                $exitCode = Uninstall-Extension -iniPath $iniPath -extNames @($params)
+                $skipConfirmation = [bool]($params | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+                $params = $params | Where-Object { @('-y', '--yes') -notcontains $_ }
+
+                $exitCode = Uninstall-Extension -iniPath $iniPath -extNames @($params) -skipConfirmation $skipConfirmation
             }
             'list' {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''

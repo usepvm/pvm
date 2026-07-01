@@ -59,6 +59,12 @@ function Get-PVM-Version-From-Git {
     }
 }
 
+function Normalize-Version {
+    param($version)
+
+    return ($version -replace '^v', '') -replace '(\.0)+$', ''
+}
+
 function Update-PVM {
     param ($checkOnly = $false)
 
@@ -149,11 +155,24 @@ function Update-PVM {
     Write-Host -Object "Update available. Pulling changes..." -ForegroundColor Yellow
 
     try {
+        $oldVersion = $PVMConfig.version
         git -C $PVMRoot pull origin $currentBranch | Out-Null
 
-        $newVersion = $PVMConfig.version
-        if ($latestVersion) {
-            $newVersion = $latestVersion.Trim()
+        $newVersion = Get-PVM-Version-From-Git
+        if (-not $newVersion) {
+            $newVersion = $PVMConfig.version
+        }
+
+        # Normalize versions for comparison (remove 'v' prefix)
+        $oldVersionNormalized = Normalize-Version -version $oldVersion
+        $newVersionNormalized = Normalize-Version -version $newVersion
+
+        if ($oldVersionNormalized -eq $newVersionNormalized) {
+            return @{
+                code    = 0
+                message = "PVM has been updated successfully. No version change (still $newVersion)."
+                color   = 'DarkGreen'
+            }
         }
 
         return @{

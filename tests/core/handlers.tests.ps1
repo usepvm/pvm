@@ -1153,3 +1153,17 @@ Describe "Invoke-Info Tests" {
         }
     }
 }
+
+Describe "Invoke-Update Tests" {
+    BeforeEach {
+        Mock Write-Host { }
+        Mock Update-PVM { @{ code = 0; message = 'Updated' } }
+    }
+
+    It "Should call Update-PVM and return 0" {
+        $result = Invoke-Update -arguments @()
+        $result | Should -Be 0
+
+        Assert-MockCalled Update-PVM -Times 1
+    }
+}

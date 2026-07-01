@@ -473,3 +473,13 @@ function Invoke-Info {
 
     return 0
 }
+
+function Invoke-Update {
+    param ($arguments)
+
+    $checkOnly = $arguments -contains '--check'
+
+    $result = Update-PVM -checkOnly $checkOnly
+    Display-Msg-By-ExitCode -result $result
+    return $result.code
+}

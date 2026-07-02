@@ -1,4 +1,4 @@
-
+﻿
 function Test-Git-Available {
     try {
         $null = Get-Command git -ErrorAction Stop
@@ -144,14 +144,13 @@ function Update-PVM {
         $msg = "Update available!"
         if ($currentVersion -and $latestVersion) {
             $msg = "Update available"
-            
+
             $currentVersionNormalized = Normalize-Version -version $currentVersion
             $latestVersionNormalized = Normalize-Version -version $latestVersion
-            
+
             if ($currentVersionNormalized -lt $latestVersionNormalized) {
                 $msg += ": $currentVersion -> $latestVersion"
             }
-
         }
         return @{
             code    = 0

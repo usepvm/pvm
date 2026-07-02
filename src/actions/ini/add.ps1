@@ -29,7 +29,7 @@ function Get-XDebug-FROM-URL {
     param ($url, $version)
 
     try {
-        $html = Invoke-WebRequest -Uri $url
+        $html = Get-Web-Response -uri $url
         $links = $html.Links
 
         # Return the filtered links (PHP version names)
@@ -169,8 +169,7 @@ function Install-XDebug-Extension {
             return -1
         }
 
-        Invoke-WebRequest -Uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -OutFile $PVMConfig.paths.php
-
+        $null = Get-Web-Response -uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -outFile $PVMConfig.paths.php
         $phpPath = ($iniPath | Split-Path -Parent)
 
         if (-not $skipConfirmation) {
@@ -371,7 +370,7 @@ function Install-Extension {
             return -1
         }
 
-        Invoke-WebRequest -Uri $chosenItem.href -OutFile $PVMConfig.paths.php
+        $null = Get-Web-Response -uri $chosenItem.href -outFile $PVMConfig.paths.php
         $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip", '').Trim()
         $extractPath = "$($PVMConfig.paths.storage)\php\$fileNamePath"
         Extract-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true

@@ -854,6 +854,112 @@ MIN_LINE_LENGTH=50
     }
 }
 
+Describe "Get-Web-Response" {
+    Context "When making web requests" {
+        It "Calls Invoke-WebRequest with UseBasicParsing" {
+            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
+
+            $result = Get-Web-Response -uri 'https://example.com'
+
+            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
+                $Uri -eq 'https://example.com' -and
+                $UseBasicParsing -eq $true
+            }
+        }
+
+        It "Calls Invoke-WebRequest with OutFile parameter when provided" {
+            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
+            $outFile = 'TestDrive:\output.txt'
+
+            $result = Get-Web-Response -uri 'https://example.com' -outFile $outFile
+
+            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
+                $Uri -eq 'https://example.com' -and
+                $UseBasicParsing -eq $true -and
+                $OutFile -eq $outFile
+            }
+        }
+
+        It "Returns the result from Invoke-WebRequest" {
+            $mockResponse = @{ StatusCode = 200; Content = 'test content' }
+            Mock Invoke-WebRequest { return $mockResponse }
+
+            $result = Get-Web-Response -uri 'https://example.com'
+
+            $result.StatusCode | Should -Be 200
+            $result.Content | Should -Be 'test content'
+        }
+
+        It "Does not include OutFile parameter when not provided" {
+            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
+
+            $result = Get-Web-Response -uri 'https://example.com'
+
+            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
+                $PSBoundParameters.ContainsKey('OutFile') -eq $false
+            }
+        }
+    }
+
+    Context "Error handling" {
+        It "Throws when Invoke-WebRequest throws" {
+            Mock Invoke-WebRequest { throw 'Network error' }
+
+            { Get-Web-Response -uri 'https://example.com' } | Should -Throw
+        }
+
+        It "Handles invalid URI format" {
+            Mock Invoke-WebRequest { throw 'Invalid URI format' }
+
+            { Get-Web-Response -uri 'not-a-valid-uri' } | Should -Throw
+        }
+    }
+
+    Context "Parameter validation" {
+        It "Trims whitespace from URI" {
+            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
+
+            Get-Web-Response -uri '   https://example.com   '
+
+            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
+                $Uri -eq 'https://example.com'
+            }
+        }
+
+        It "Passes trimmed empty string to Invoke-WebRequest" {
+            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
+
+            Get-Web-Response -uri '   '
+
+            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
+                $Uri -eq ''
+            }
+        }
+    }
+
+    Context "With different URI schemes" {
+        It "Handles HTTPS URIs" {
+            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
+
+            $result = Get-Web-Response -uri 'https://example.com'
+
+            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
+                $Uri -eq 'https://example.com'
+            }
+        }
+
+        It "Handles HTTP URIs" {
+            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
+
+            $result = Get-Web-Response -uri 'http://example.com'
+
+            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
+                $Uri -eq 'http://example.com'
+            }
+        }
+    }
+}
+
 Describe "Get-Console-Width" {
     It "Returns the console width as an integer" {
         $result = Get-Console-Width

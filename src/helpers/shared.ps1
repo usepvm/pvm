@@ -370,6 +370,23 @@ function Get-Config {
     }
 }
 
+function Get-Web-Response {
+    param ($uri, $outFile = $null, $useBasicParsing = $true)
+
+    $uri = $uri.Trim()
+
+    $params = @{
+        Uri = $uri
+        UseBasicParsing = $useBasicParsing
+    }
+
+    if ($outFile) {
+        $params.OutFile = $outFile
+    }
+
+    return Invoke-WebRequest @params
+}
+
 function Get-Console-Width {
     return $Host.UI.RawUI.WindowSize.Width
 }

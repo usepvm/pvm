@@ -14,7 +14,7 @@ AfterAll {
 
 Describe "Get-Extension-Matching-Categories-By-Page Tests" {
     It "Returns matching categories links by page" {
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Get-Web-Response -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links = @(
@@ -35,7 +35,7 @@ Describe "Get-Extension-Matching-Categories-By-Page Tests" {
     }
 
     It "Sets hasMore to true when next page link exists" {
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Get-Web-Response -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links = @(
@@ -57,7 +57,7 @@ Describe "Get-Extension-Matching-Categories-By-Page Tests" {
 
 Describe "Filter-Extension-Links-From-URL" {
     It "Returns filtered links for given extension" {
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
+        Mock Get-Web-Response -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
             return @{
                 Content = 'Mocked memcache content'
                 Links = @(
@@ -82,7 +82,7 @@ Describe "Filter-Extension-Links-From-URL" {
 Describe "Get-Packages-From-Source-Links Tests" {
     It "Returns formatted list for matching packages" {
         Mock Log-Data { return 0 }
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" } -MockWith {
+        Mock Get-Web-Response -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" } -MockWith {
             return @{
                 Content = 'Mocked PHP memcache 3.4.0 content'
                 Links = @(
@@ -92,7 +92,7 @@ Describe "Get-Packages-From-Source-Links Tests" {
                 )
             }
         }
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.3.0/windows" } -MockWith {
+        Mock Get-Web-Response -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.3.0/windows" } -MockWith {
             return @{
                 Content = 'Mocked PHP memcache 3.4.0 content'
                 Links = @(
@@ -102,7 +102,7 @@ Describe "Get-Packages-From-Source-Links Tests" {
                 )
             }
         }
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.2.0/windows" } -MockWith {
+        Mock Get-Web-Response -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.2.0/windows" } -MockWith {
             return @{
                 Content = 'Mocked PHP memcache 3.4.0 content'
                 Links = @(
@@ -129,7 +129,7 @@ Describe "Get-Packages-From-Source-Links Tests" {
     }
 
     It "Handles exception gracefully" {
-        Mock Invoke-WebRequest { throw 'Network error' }
+        Mock Get-Web-Response { throw 'Network error' }
 
         $result = Get-Packages-From-Source-Links -extName 'memcache' -version '8.2' -links @( @{ href = '/package/memcache/3.4.0/windows' } )
 
@@ -139,7 +139,7 @@ Describe "Get-Packages-From-Source-Links Tests" {
 
 Describe "Get-Extension-Matching-Categories Tests" {
     BeforeAll {
-        Mock Invoke-WebRequest -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+        Mock Get-Web-Response -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
                 Links = @(

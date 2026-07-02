@@ -62,7 +62,7 @@ max_execution_time = 30
         DownloadFails = $false
     }
 
-    Mock Invoke-WebRequest {
+    Mock Get-Web-Response {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {

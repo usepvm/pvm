@@ -853,3 +853,11 @@ MIN_LINE_LENGTH=50
         }
     }
 }
+
+Describe "Get-Console-Width" {
+    It "Returns the console width as an integer" {
+        $result = Get-Console-Width
+        $result | Should -BeOfType [int]
+        $result | Should -BeGreaterThan 0
+    }
+}

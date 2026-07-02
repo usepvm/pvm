@@ -241,6 +241,7 @@ opcache.enable = 1
 
     It "Returns 0 when user wants to overwrite existing dll extension version" {
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
+        Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-2.9.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Mock Test-Path { return $false }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Remove-Item { }
@@ -432,7 +433,9 @@ opcache.enable = 1
     }
 
     It "Skips overwrite prompt and installs when skipConfirmation is true and file exists" {
+        Mock Can-Use-Cache { return $false }
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
+        Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-2.9.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Is-File-Exists { return $true }
         Mock Remove-Item { }
@@ -464,7 +467,9 @@ opcache.enable = 1
     }
 
     It "Prompts overwrite when skipConfirmation is false and file exists and user confirms" {
+        Mock Can-Use-Cache { return $false }
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
+        Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-2.9.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Is-File-Exists { return $true }
         Mock Read-Host -ParameterFilter { $Prompt -like '*already exists*' } -MockWith { return 'y' }
@@ -671,6 +676,12 @@ Describe "Install-Extension" {
             }
             "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip" = @{
                 Content = 'Mocked PHP courierauth 1.4.0 zip content'
+            }
+            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0alpha1/php_curl-1.5.0alpha1-8.2-ts-vs16-x64.zip"   = @{
+                Content = 'Mocked PHP curl 1.5.0alpha1 zip content'
+            }
+            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0alpha2/php_curl-1.5.0alpha2-8.2-ts-vs16-x64.zip"   = @{
+                Content = 'Mocked PHP curl 1.5.0alpha2 zip content'
             }
             "$PECL_PACKAGE_ROOT_URL/curl/2.1.0/windows"                                              = @{
                 Content = 'Mocked PHP curl 2.1.0 content'
@@ -1195,5 +1206,38 @@ Describe "Install-IniExtension" {
         Should -Invoke Install-Extension -Exactly 1 -ParameterFilter {
             $skipConfirmation -eq $false
         }
+    }
+}
+
+Describe "Get-PrereleaseSortKey" {
+    It "Scores stable higher than rc/beta/alpha for the same version" {
+        $stable = Get-PrereleaseSortKey -Name '3.1.0'
+        $rc     = Get-PrereleaseSortKey -Name '3.1.0rc1'
+        $beta   = Get-PrereleaseSortKey -Name '3.1.0beta1'
+        $alpha  = Get-PrereleaseSortKey -Name '3.1.0alpha1'
+
+        $stable | Should -BeGreaterThan $rc
+        $rc     | Should -BeGreaterThan $beta
+        $beta   | Should -BeGreaterThan $alpha
+    }
+
+    It "Scores higher prerelease numbers higher within the same tier" {
+        (Get-PrereleaseSortKey -Name '3.1.0rc2')    | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0rc1')
+        (Get-PrereleaseSortKey -Name '3.1.0beta2')  | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0beta1')
+        (Get-PrereleaseSortKey -Name '3.1.0alpha2') | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0alpha1')
+    }
+
+    It "Scores higher base versions higher regardless of prerelease tier" {
+        (Get-PrereleaseSortKey -Name '3.2.0alpha1') | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0')
+    }
+
+    It "Treats missing version segments as zero" {
+        Get-PrereleaseSortKey -Name '3.1' | Should -Be (Get-PrereleaseSortKey -Name '3.1.0')
+    }
+    
+    It "Does not overflow Int32 for realistic version numbers" {
+        $score = Get-PrereleaseSortKey -Name '1.5.0'
+        $score | Should -BeOfType [long]
+        $score | Should -BeGreaterThan ([int32]::MaxValue)
     }
 }

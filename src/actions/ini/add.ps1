@@ -67,6 +67,26 @@ function Get-XDebug-FROM-URL {
     }
 }
 
+function Get-PrereleaseSortKey {
+    param ($Name)
+
+    $baseVersionParts = ($Name -replace '(alpha|beta|rc).*', '') -split '\.'
+    [int64]$versionScore = 0
+    for ($i = 0; $i -lt 3; $i++) {
+        $part = if ($i -lt $baseVersionParts.Count) { [int64]$baseVersionParts[$i] } else { 0 }
+        $versionScore = ($versionScore * 1000) + $part
+    }
+
+    $weight = if ($Name -match 'alpha') { 1 }
+    elseif ($Name -match 'beta') { 2 }
+    elseif ($Name -match 'rc') { 3 }
+    else { 4 } # stable
+
+    $number = if ($Name -match '(alpha|beta|rc)(\d+)') { [int64]$matches[2] } else { 9999 }
+
+    return ($versionScore * 100000) + ($weight * 10000) + $number
+}
+
 function Install-XDebug-Extension {
     param ($iniPath, $skipConfirmation = $false)
 
@@ -99,29 +119,7 @@ function Install-XDebug-Extension {
         $xDebugList |
         Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
         Group-Object xDebugVersion |
-        Sort-Object `
-        @{ Expression     = {
-                # extract numeric version
-                [version]($_.Name -replace '(alpha|beta|rc).*', '')
-            }; Descending = $true
-        },
-        @{ Expression     = {
-                # prerelease weight
-                if ($_.Name -match 'alpha') { 1 }
-                elseif ($_.Name -match 'beta') { 2 }
-                elseif ($_.Name -match 'rc') { 3 }
-                else { 4 } # stable
-            }; Descending = $true
-        },
-        @{ Expression     = {
-                # prerelease number (alpha3, rc2, etc)
-                if ($_.Name -match '(alpha|beta|rc)(\d+)') {
-                    [int]$matches[2]
-                } else {
-                    [int]::MaxValue
-                }
-            }; Descending = $true
-        } |
+        Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
         ForEach-Object {
             $sortedGroup = $_.Group | Sort-Object `
             @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
@@ -303,29 +301,7 @@ function Install-Extension {
             $extensionLinks |
             Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
             Group-Object extVersion |
-            Sort-Object `
-            @{ Expression     = {
-                    # extract numeric version
-                    [version]($_.Name -replace '(alpha|beta|rc).*', '')
-                }; Descending = $true
-            },
-            @{ Expression     = {
-                    # prerelease weight
-                    if ($_.Name -match 'alpha') { 1 }
-                    elseif ($_.Name -match 'beta') { 2 }
-                    elseif ($_.Name -match 'rc') { 3 }
-                    else { 4 } # stable
-                }; Descending = $true
-            },
-            @{ Expression     = {
-                    # prerelease number (alpha3, rc2, etc)
-                    if ($_.Name -match '(alpha|beta|rc)(\d+)') {
-                        [int]$matches[2]
-                    } else {
-                        [int]::MaxValue
-                    }
-                }; Descending = $true
-            } |
+            Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
             ForEach-Object {
                 $sortedGroup = $_.Group | Sort-Object `
                 @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },

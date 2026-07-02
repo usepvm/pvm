@@ -66,7 +66,7 @@ function Normalize-Version {
 }
 
 function Update-PVM {
-    param ($checkOnly = $false)
+    param ($checkOnly = $false, $quiet = $false)
 
     if (-not (Test-Git-Available)) {
         return @{
@@ -117,7 +117,9 @@ function Update-PVM {
         }
     }
 
-    Write-Host -Object "`nChecking for updates..." -ForegroundColor Cyan
+    if (-not $quiet) {
+        Write-Host -Object "`nChecking for updates..." -ForegroundColor Cyan
+    }
 
     $latestCommit = Get-Latest-Git-Commit -branch $currentBranch
     if (-not $latestCommit) {

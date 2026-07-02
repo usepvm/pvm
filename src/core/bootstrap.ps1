@@ -110,7 +110,14 @@ function Start-PVM {
             return -1
         }
 
-        return $($actions[$command].action.Invoke())
+        $result = $($actions[$command].action.Invoke())
+
+        # Check for updates after successful command execution (skip for update command itself)
+        if ($result -eq 0 -and $command -ne 'update') {
+            $null = (Check-For-Updates-Quietly)
+        }
+
+        return $result
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during command '$command'"; exception = $_ }
         Write-Host -Object "`nCommand canceled or failed to elevate privileges." -ForegroundColor DarkYellow

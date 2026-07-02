@@ -141,6 +141,7 @@ Describe "Start-PVM Function Tests" {
         Mock Show-Usage { }
         Mock Show-PVM-Version { }
         Mock Resolve-FlagCommand { return $null }
+        Mock Check-For-Updates-Quietly {}
         Mock Get-Actions {
             [ordered]@{
                 'version' = @{ action = { return 0 } }

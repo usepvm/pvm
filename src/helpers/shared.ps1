@@ -373,21 +373,20 @@ function Get-Config {
 }
 
 function Get-Last-Update-Check-Timestamp {
-    $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
-    if (Is-File-Exists -path $timestampFile) {
-        try {
+    try {
+        $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
+        if (Is-File-Exists -path $timestampFile) {
             return [DateTime](Get-Content -Path $timestampFile)
-        } catch {
-            return $null
         }
+    } catch {
+        return $null
     }
-    return $null
 }
 
 function Set-Last-Update-Check-Timestamp {
-    $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
-    Make-Directory -path $PVMConfig.paths.cache | Out-Null
     try {
+        $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
+        Make-Directory -path $PVMConfig.paths.cache | Out-Null
         Get-Date | Set-Content -Path $timestampFile
         return 0
     } catch {
@@ -406,12 +405,12 @@ function Should-Check-For-Updates {
     }
 
     $hoursSinceCheck = ((Get-Date) - $lastCheck).TotalHours
-    return $hoursSinceCheck -ge $PVMConfig.env.UPDATE_CHECK_INTERVAL_HOURS
+    return ($hoursSinceCheck -ge $PVMConfig.env.UPDATE_CHECK_INTERVAL_HOURS)
 }
 
 function Check-For-Updates-Quietly {
     if (-not (Should-Check-For-Updates)) {
-        return
+        return 0
     }
 
     try {
@@ -421,8 +420,11 @@ function Check-For-Updates-Quietly {
         if ($result.code -eq 0 -and $result.message -like '*Update available*') {
             Write-Host -Object "`n$($result.message) Run 'pvm update' to update." -ForegroundColor DarkYellow
         }
+        
+        return $result.code
     } catch {
-        # Silently fail to not interrupt normal operations
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check for updates"; exception = $_ }
+        return -1
     }
 }
 

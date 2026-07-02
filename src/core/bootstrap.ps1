@@ -114,7 +114,7 @@ function Start-PVM {
 
         # Check for updates after successful command execution (skip for update command itself)
         if ($result -eq 0 -and $command -ne 'update') {
-            Check-For-Updates-Quietly
+            $null = (Check-For-Updates-Quietly)
         }
 
         return $result

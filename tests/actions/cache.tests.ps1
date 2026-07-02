@@ -340,6 +340,16 @@ Describe "Delete-Cache-File Tests" {
         } -Exactly 1
     }
 
+    It "Should not display the confirmation prompt when skipConfirmation is true" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.cache)\mydata.json"
+        Mock Read-Host { }
+
+        $result = Delete-Cache-File -cacheName 'mydata' -skipConfirmation $true
+        $result | Should -Be 0
+        Assert-MockCalled Read-Host -Exactly 0
+        Test-Path "$($PVMConfig.paths.cache)\mydata.json" | Should -Be $false
+    }
+
     It "Should return -1 and log error when Remove-Item throws" {
         '{}' | Set-Content -Path "$($PVMConfig.paths.cache)\releases.json"
 
@@ -516,6 +526,16 @@ Describe "Clear-Cache-Files Tests" {
         $result | Should -Be 0
 
         Test-Path "$($PVMConfig.paths.cache)\single.json" | Should -Be $false
+    }
+
+    It "Should not display the confirmation prompt when skipConfirmation is true" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.cache)\mydata.json"
+        Mock Read-Host { }
+
+        $result = Clear-Cache-Files -skipConfirmation $true
+        $result | Should -Be 0
+        Assert-MockCalled Read-Host -Exactly 0
+        Test-Path "$($PVMConfig.paths.cache)\mydata.json" | Should -Be $false
     }
 
     It "Should return -1 and log error when an exception occurs during deletion" {

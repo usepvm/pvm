@@ -386,3 +386,7 @@ function Get-Web-Response {
 
     return Invoke-WebRequest @params
 }
+
+function Get-Console-Width {
+    return $Host.UI.RawUI.WindowSize.Width
+}

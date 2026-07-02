@@ -530,7 +530,7 @@ function Show-PHP-Profile {
 }
 
 function Delete-PHP-Profile {
-    param ($profileName)
+    param ($profileName, $skipConfirmation = $false)
 
     try {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
@@ -540,12 +540,13 @@ function Delete-PHP-Profile {
             return -1
         }
 
-        $response = Read-Host -Prompt "`nAre you sure you want to delete profile '$profileName'? (y/n)"
-        $response = $response.Trim()
-
-        if ($response -ne 'y' -and $response -ne 'Y') {
-            Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
-            return -1
+        if (-not $skipConfirmation) {
+            $response = Read-Host -Prompt "`nAre you sure you want to delete profile '$profileName'? (y/n)"
+            $response = $response.Trim()
+            if ($response -ne 'y' -and $response -ne 'Y') {
+                Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
+                return -1
+            }
         }
 
         Remove-Item -Path $profilePath -Force
@@ -560,6 +561,8 @@ function Delete-PHP-Profile {
 }
 
 function Clear-PHP-Profiles {
+    param ($skipConfirmation = $false)
+
     try {
         $profileFiles = Get-Profile-Files
 
@@ -568,11 +571,13 @@ function Clear-PHP-Profiles {
             return -1
         }
 
-        $response = Read-Host -Prompt "`nAre you sure you want to delete all profiles? (y/n)"
-        $response = $response.Trim()
-        if ($response -ne 'y' -and $response -ne 'Y') {
-            Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
-            return -1
+        if (-not $skipConfirmation) {
+            $response = Read-Host -Prompt "`nAre you sure you want to delete all profiles? (y/n)"
+            $response = $response.Trim()
+            if ($response -ne 'y' -and $response -ne 'Y') {
+                Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
+                return -1
+            }
         }
 
         foreach ($profileFile in $profileFiles) {

@@ -959,3 +959,11 @@ Describe "Get-Web-Response" {
         }
     }
 }
+
+Describe "Get-Console-Width" {
+    It "Returns the console width as an integer" {
+        $result = Get-Console-Width
+        $result | Should -BeOfType [int]
+        $result | Should -BeGreaterThan 0
+    }
+}

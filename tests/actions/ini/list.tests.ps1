@@ -324,16 +324,7 @@ Describe "List-PHP-Extensions" {
             }
         }
         # Mock $Host.UI.RawUI.WindowSize to trigger the maxDescLength < 100 condition
-        Mock -CommandName Get-Variable -ParameterFilter { $Name -eq 'Host' } -MockWith {
-            return @{ Value = @{
-                    UI = @{
-                        RawUI = @{
-                            WindowSize = @{ Width = 50 }
-                        }
-                    }
-                }
-            }
-        }
+        Mock Get-Console-Width { 80 }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be 0
     }

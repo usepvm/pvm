@@ -386,7 +386,7 @@ function Get-Last-Update-Check-Timestamp {
 function Set-Last-Update-Check-Timestamp {
     try {
         $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
-        Make-Directory -path $PVMConfig.paths.cache | Out-Null
+        $null = Make-Directory -path $PVMConfig.paths.cache
         Get-Date | Set-Content -Path $timestampFile
         return 0
     } catch {
@@ -415,7 +415,7 @@ function Check-For-Updates-Quietly {
 
     try {
         $result = Update-PVM -checkOnly $true -quiet $true
-        Set-Last-Update-Check-Timestamp
+        $null = Set-Last-Update-Check-Timestamp
 
         if ($result.code -eq 0 -and $result.message -like '*Update available*') {
             Write-Host -Object "`n$($result.message) Run 'pvm update' to update." -ForegroundColor DarkYellow

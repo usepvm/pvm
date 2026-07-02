@@ -145,8 +145,8 @@ function Update-PVM {
         if ($currentVersion -and $latestVersion) {
             $msg = "Update available"
             
-            $currentVersionNormalized = Normalize-Version -version $oldVersion
-            $latestVersionNormalized = Normalize-Version -version $newVersion
+            $currentVersionNormalized = Normalize-Version -version $currentVersion
+            $latestVersionNormalized = Normalize-Version -version $latestVersion
             
             if ($currentVersionNormalized -lt $latestVersionNormalized) {
                 $msg += ": $currentVersion -> $latestVersion"

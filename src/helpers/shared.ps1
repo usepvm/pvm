@@ -371,13 +371,13 @@ function Get-Config {
 }
 
 function Get-Web-Response {
-    param ($uri, $outFile = $null)
+    param ($uri, $outFile = $null, $useBasicParsing = $true)
 
     $uri = $uri.Trim()
 
     $params = @{
         Uri = $uri
-        UseBasicParsing = $true
+        UseBasicParsing = $useBasicParsing
     }
 
     if ($outFile) {

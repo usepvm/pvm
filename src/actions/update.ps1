@@ -39,7 +39,7 @@ function Get-Latest-Git-Commit {
     param ($branch = 'main')
 
     try {
-        git -C $PVMRoot fetch origin $branch | Out-Null
+        git -C $PVMRoot fetch origin $branch 2>$null
         $commit = git -C $PVMRoot rev-parse origin/$branch
         return $commit.Trim()
     } catch {
@@ -165,7 +165,7 @@ function Update-PVM {
 
     try {
         $oldVersion = $PVMConfig.version
-        git -C $PVMRoot pull origin $currentBranch | Out-Null
+        git -C $PVMRoot pull origin $currentBranch 2>$null
 
         $newVersion = Get-PVM-Version-From-Git
         if (-not $newVersion) {

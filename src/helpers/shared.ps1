@@ -369,3 +369,7 @@ function Get-Config {
         }
     }
 }
+
+function Get-Console-Width {
+    return $Host.UI.RawUI.WindowSize.Width
+}

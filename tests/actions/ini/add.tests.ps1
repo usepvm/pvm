@@ -1234,7 +1234,7 @@ Describe "Get-PrereleaseSortKey" {
     It "Treats missing version segments as zero" {
         Get-PrereleaseSortKey -Name '3.1' | Should -Be (Get-PrereleaseSortKey -Name '3.1.0')
     }
-    
+
     It "Does not overflow Int32 for realistic version numbers" {
         $score = Get-PrereleaseSortKey -Name '1.5.0'
         $score | Should -BeOfType [long]

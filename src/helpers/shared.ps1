@@ -328,13 +328,15 @@ function Get-Config {
         }
 
         env      = [ordered]@{
-            PHP_CURRENT_VERSION_PATH  = $env['PHP_CURRENT_VERSION_PATH']
-            PVM_ENV_VAR_NAME          = $env['PVM_ENV_VAR_NAME']
-            CACHE_MAX_HOURS           = [int] $env['CACHE_MAX_HOURS']
-            DEFAULT_LOG_PAGE_SIZE     = [int] $env['DEFAULT_LOG_PAGE_SIZE']
-            DEFAULT_PARTIAL_LIST_SIZE = [int] $env['DEFAULT_PARTIAL_LIST_SIZE']
-            MIN_PAD_RIGHT_LENGTH      = [int] $env['MIN_PAD_RIGHT_LENGTH']
-            MIN_LINE_LENGTH           = [int] $env['MIN_LINE_LENGTH']
+            PHP_CURRENT_VERSION_PATH    = $env['PHP_CURRENT_VERSION_PATH']
+            PVM_ENV_VAR_NAME            = $env['PVM_ENV_VAR_NAME']
+            CACHE_MAX_HOURS             = [int] $env['CACHE_MAX_HOURS']
+            DEFAULT_LOG_PAGE_SIZE       = [int] $env['DEFAULT_LOG_PAGE_SIZE']
+            DEFAULT_PARTIAL_LIST_SIZE   = [int] $env['DEFAULT_PARTIAL_LIST_SIZE']
+            MIN_PAD_RIGHT_LENGTH        = [int] $env['MIN_PAD_RIGHT_LENGTH']
+            MIN_LINE_LENGTH             = [int] $env['MIN_LINE_LENGTH']
+            ENABLE_UPDATE_CHECK         = [bool] $env['ENABLE_UPDATE_CHECK']
+            UPDATE_CHECK_INTERVAL_HOURS = [int] $env['UPDATE_CHECK_INTERVAL_HOURS']
         }
 
         defaults = @{
@@ -367,6 +369,60 @@ function Get-Config {
                 '-h'        = 'help'
             }
         }
+    }
+}
+
+function Get-Last-Update-Check-Timestamp {
+    $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
+    if (Is-File-Exists -path $timestampFile) {
+        try {
+            return [DateTime](Get-Content -Path $timestampFile)
+        } catch {
+            return $null
+        }
+    }
+    return $null
+}
+
+function Set-Last-Update-Check-Timestamp {
+    $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
+    Make-Directory -path $PVMConfig.paths.cache | Out-Null
+    try {
+        Get-Date | Set-Content -Path $timestampFile
+        return 0
+    } catch {
+        return -1
+    }
+}
+
+function Should-Check-For-Updates {
+    if (-not $PVMConfig.env.ENABLE_UPDATE_CHECK) {
+        return $false
+    }
+
+    $lastCheck = Get-Last-Update-Check-Timestamp
+    if (-not $lastCheck) {
+        return $true
+    }
+
+    $hoursSinceCheck = ((Get-Date) - $lastCheck).TotalHours
+    return $hoursSinceCheck -ge $PVMConfig.env.UPDATE_CHECK_INTERVAL_HOURS
+}
+
+function Check-For-Updates-Quietly {
+    if (-not (Should-Check-For-Updates)) {
+        return
+    }
+
+    try {
+        $result = Update-PVM -checkOnly $true -quiet $true
+        Set-Last-Update-Check-Timestamp
+
+        if ($result.code -eq 0 -and $result.message -like '*Update available*') {
+            Write-Host -Object "`n$($result.message) Run 'pvm update' to update." -ForegroundColor DarkYellow
+        }
+    } catch {
+        # Silently fail to not interrupt normal operations
     }
 }
 

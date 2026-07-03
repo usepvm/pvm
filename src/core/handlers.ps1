@@ -208,6 +208,9 @@ function Invoke-Test {
             $options.verbosity = $Matches[1]
             return $false
         }
+        if ($_ -match '^-{1,2}') {
+            return $false
+        }
         return $true
     }
 

@@ -1,7 +1,6 @@
 ﻿
 function Get-PowerShell-Info {
     $psInfo = @{
-        Name = $PSVersionTable.PSVersion.ToString()
         Edition = $PSVersionTable.PSEdition
         Platform = if ($PSVersionTable.Platform) { $PSVersionTable.Platform } else { 'Windows' }
         Path = $PSHome
@@ -59,9 +58,7 @@ function Get-All-Test-Names {
 }
 
 function Get-Covered-Source-File {
-    param ($testFile, $root)
-
-    $testsMap = Get-Tests-Map -root $root
+    param ($testFile, $testsMap)
 
     return $testsMap[$testFile.FullName]
 }
@@ -73,7 +70,7 @@ function Get-Tests-Map {
     Get-ChildItem -Path "$root\src" -Recurse -Filter '*.ps1' | ForEach-Object {
         $testFile = $_.FullName -replace [regex]::Escape("$root\src"), "$root\tests"
         $testFile = $testFile -replace '.ps1', '.tests.ps1'
-        $testsMap += @{ $testFile = $_ }
+        $testsMap[$testFile] = $_
     }
 
     return $testsMap
@@ -93,9 +90,9 @@ function Build-Pester-Config {
 }
 
 function Set-Coverage-Config {
-    param ($config, $testFile, $options, $root)
+    param ($config, $testFile, $options, $root, $testsMap)
 
-    $covered = Get-Covered-Source-File -testFile $testFile -root $root
+    $covered = Get-Covered-Source-File -testFile $testFile -testsMap $testsMap
 
     $config.CodeCoverage.Enabled = $true
     $config.CodeCoverage.Path = $covered.FullName
@@ -145,7 +142,7 @@ function Format-Test-Result-Message {
 }
 
 function Run-Test-File {
-    param ($config, $file, $options = $null, $separatorWidth = 60)
+    param ($config, $file, $options = $null, $separatorWidth = 60, $testsMap = $null)
 
     $testResultData = @{ passedCount = 0; failedCount = 0; duration = 0; coverageRaw = $null }
     $root = Get-PVMRootDirectory
@@ -161,7 +158,7 @@ function Run-Test-File {
 
     $coveredFile = $null
     if ($options.coverage) {
-        $coverageConfig = Set-Coverage-Config -config $config -testFile $file -options $options -root $root
+        $coverageConfig = Set-Coverage-Config -config $config -testFile $file -options $options -root $root -testsMap $testsMap
         $coveredFile = $coverageConfig.covered
         $config = $coverageConfig.config
     }
@@ -187,11 +184,7 @@ function Run-Test-File {
         $testResultData.duration = $rawDuration
         $testResultData.coverageRaw = $coverageRaw
 
-        if ($LASTEXITCODE -ne 0) {
-            $code = -1
-        } else {
-            $code = 0
-        }
+        $code = if ($testResult.FailedCount -gt 0) { -1 } else { 0 }
 
         return @{ code = $code; Name = $file.Name; relativeFilePath = $relativeFilePath; Message = $message; testResultData = $testResultData }
     } catch {
@@ -254,6 +247,33 @@ function Get-Folder-Group-Name {
     return ($parent -replace '\\', '/')
 }
 
+function Get-Result-Color {
+    param ($item, $target)
+
+    if ($item.code -ne 0) { return 'DarkYellow' }
+
+    if ($null -ne $item.testResultData.coverageRaw -and $item.testResultData.coverageRaw -lt $target) { return 'DarkGray' }
+
+    return 'DarkGreen'
+}
+
+function Write-Grouped-Results {
+    param ($sorted, $groupExpr, $maxLineLength, $target)
+
+    $grouped = if ($groupExpr) { $sorted | Group-Object -Property $groupExpr } else { @(@{ Name = $null; Group = $sorted }) }
+
+    foreach ($group in $grouped) {
+        if ($group.Name) { Write-Host -Object "`n  [$($group.Name)]" -ForegroundColor DarkCyan }
+
+        $group.Group | ForEach-Object {
+            $fileName = Split-Path $_.relativeFilePath -Leaf
+            $label = "    - $fileName "
+            $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
+            Write-Host -Object $line -ForegroundColor (Get-Result-Color -item $_ -target $target)
+        }
+    }
+}
+
 function Write-Tests-Summary {
     param ($testSummary, $options, $maxLineLength)
 
@@ -274,64 +294,13 @@ function Write-Tests-Summary {
 
     $sorted = SortBy -data $testSummary -sortByColumn $options.sortBy
 
-    if ($options.groupBy -eq 'coverage') {
-        $grouped = $sorted | Group-Object -Property { Get-Coverage-Group-Name -coverageRaw $_.testResultData.coverageRaw }
-        foreach ($group in $grouped) {
-            $dirLabel = $group.Name
-            Write-Host -Object "`n  [$dirLabel]" -ForegroundColor DarkCyan
-
-            $group.Group | ForEach-Object {
-                $fileName = Split-Path $_.relativeFilePath -Leaf
-                $label = "    - $fileName "
-                $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
-                $color = 'DarkYellow'
-                if ($_.code -eq 0) {
-                    if ($null -ne $_.testResultData.coverageRaw -and $_.testResultData.coverageRaw -lt $options.target) {
-                        $color = 'DarkGray'
-                    } else {
-                        $color = 'DarkGreen'
-                    }
-                }
-                Write-Host -Object $line -ForegroundColor $color
-            }
-        }
-    } elseif ($options.groupBy -eq 'folder') {
-        $grouped = $sorted | Group-Object -Property { Get-Folder-Group-Name -relativeFilePath $_.relativeFilePath }
-        foreach ($group in $grouped) {
-            $dirLabel = $group.Name
-            Write-Host -Object "`n  [$dirLabel]" -ForegroundColor DarkCyan
-
-            $group.Group | ForEach-Object {
-                $fileName = Split-Path $_.relativeFilePath -Leaf
-                $label = "    - $fileName "
-                $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
-                $color = 'DarkYellow'
-                if ($_.code -eq 0) {
-                    if ($null -ne $_.testResultData.coverageRaw -and $_.testResultData.coverageRaw -lt $options.target) {
-                        $color = 'DarkGray'
-                    } else {
-                        $color = 'DarkGreen'
-                    }
-                }
-                Write-Host -Object $line -ForegroundColor $color
-            }
-        }
-    } else {
-        $sorted | ForEach-Object {
-            $fileName = Split-Path $_.relativeFilePath -Leaf
-            $label = "    - $fileName "
-            $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
-            $color = 'DarkYellow'
-            if ($_.code -eq 0) {
-                if ($null -ne $_.testResultData.coverageRaw -and $_.testResultData.coverageRaw -lt $options.target) {
-                    $color = 'DarkGray'
-                } else {
-                    $color = 'DarkGreen'
-                }
-            }
-            Write-Host -Object $line -ForegroundColor $color
-        }
+    $groupExpr = switch ($options.groupBy) {
+        'coverage' { { Get-Coverage-Group-Name -coverageRaw $_.testResultData.coverageRaw } }
+        'folder'   { { Get-Folder-Group-Name -relativeFilePath $_.relativeFilePath } }
+        default    { $null }
     }
+
+    Write-Grouped-Results -sorted $sorted -groupExpr $groupExpr -maxLineLength $maxLineLength -target $options.target
 
     if ($totalFailedTests -gt 0) {
         return -1
@@ -356,12 +325,14 @@ function Run-Tests {
 
         $config = Build-Pester-Config -options $options
         $separatorWidth = Get-Separator-Width -tests $tests
+        $root = Get-PVMRootDirectory
+        $testsMap = if ($options.coverage) { Get-Tests-Map -root $root } else { $null }
 
         Write-PowerShell-Info
         Write-Host -Object "`nRunning tests with verbosity: $($options.verbosity)" -ForegroundColor Cyan
 
         $testSummary = $tests | ForEach-Object {
-            Run-Test-File -config $config -file $_ -options $options -separatorWidth $separatorWidth
+            Run-Test-File -config $config -file $_ -options $options -separatorWidth $separatorWidth -testsMap $testsMap
         }
 
         $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)

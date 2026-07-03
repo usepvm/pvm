@@ -182,6 +182,7 @@ function Invoke-Test {
         tag       = $null
         target    = 75
         sortBy    = $null
+        groupBy   = $null
     }
     $exclude = $null
     $testsNames = $arguments | Where-Object {
@@ -191,6 +192,10 @@ function Invoke-Test {
         }
         if ($_ -match '^--sort=(.+)$') {
             $options.sortBy = $Matches[1]
+            return $false
+        }
+        if ($_ -match '^--group=(.+)$') {
+            $options.groupBy = $Matches[1]
             return $false
         }
         if ($_ -match '^--tag=(.+)$') {

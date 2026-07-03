@@ -212,6 +212,48 @@ function Prepare-Tests {
     return Run-Tests -tests $tests -options $options
 }
 
+function Get-Coverage-Group-Name {
+    param ($coverageRaw)
+
+    if ($null -eq $coverageRaw) {
+        return 'n/a'
+    }
+
+    if ($coverageRaw -ge 100) {
+        return '100%'
+    }
+
+    if ($coverageRaw -ge 90) {
+        return '90%+'
+    }
+
+    if ($coverageRaw -ge 80) {
+        return '80%-89%'
+    }
+
+    if ($coverageRaw -ge 70) {
+        return '70%-79%'
+    }
+
+    if ($coverageRaw -ge 60) {
+        return '60%-69%'
+    }
+
+    return '<60%'
+}
+
+function Get-Folder-Group-Name {
+    param ($relativeFilePath)
+
+    $parent = Split-Path -Path $relativeFilePath -Parent
+
+    if (-not $parent) {
+        return '(root)'
+    }
+
+    return ($parent -replace '\\', '/')
+}
+
 function Write-Tests-Summary {
     param ($testSummary, $options, $maxLineLength)
 
@@ -232,13 +274,50 @@ function Write-Tests-Summary {
 
     $sorted = SortBy -data $testSummary -sortByColumn $options.sortBy
 
-    $grouped = $sorted | Group-Object -Property { Split-Path $_.relativeFilePath -Parent }
+    if ($options.groupBy -eq 'coverage') {
+        $grouped = $sorted | Group-Object -Property { Get-Coverage-Group-Name -coverageRaw $_.testResultData.coverageRaw }
+        foreach ($group in $grouped) {
+            $dirLabel = $group.Name
+            Write-Host -Object "`n  [$dirLabel]" -ForegroundColor DarkCyan
 
-    foreach ($group in $grouped) {
-        $dirLabel = if ($group.Name) { $group.Name } else { '.' }
-        Write-Host -Object "`n  [$dirLabel]" -ForegroundColor DarkCyan
+            $group.Group | ForEach-Object {
+                $fileName = Split-Path $_.relativeFilePath -Leaf
+                $label = "    - $fileName "
+                $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
+                $color = 'DarkYellow'
+                if ($_.code -eq 0) {
+                    if ($null -ne $_.testResultData.coverageRaw -and $_.testResultData.coverageRaw -lt $options.target) {
+                        $color = 'DarkGray'
+                    } else {
+                        $color = 'DarkGreen'
+                    }
+                }
+                Write-Host -Object $line -ForegroundColor $color
+            }
+        }
+    } elseif ($options.groupBy -eq 'folder') {
+        $grouped = $sorted | Group-Object -Property { Get-Folder-Group-Name -relativeFilePath $_.relativeFilePath }
+        foreach ($group in $grouped) {
+            $dirLabel = $group.Name
+            Write-Host -Object "`n  [$dirLabel]" -ForegroundColor DarkCyan
 
-        $group.Group | ForEach-Object {
+            $group.Group | ForEach-Object {
+                $fileName = Split-Path $_.relativeFilePath -Leaf
+                $label = "    - $fileName "
+                $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
+                $color = 'DarkYellow'
+                if ($_.code -eq 0) {
+                    if ($null -ne $_.testResultData.coverageRaw -and $_.testResultData.coverageRaw -lt $options.target) {
+                        $color = 'DarkGray'
+                    } else {
+                        $color = 'DarkGreen'
+                    }
+                }
+                Write-Host -Object $line -ForegroundColor $color
+            }
+        }
+    } else {
+        $sorted | ForEach-Object {
             $fileName = Split-Path $_.relativeFilePath -Leaf
             $label = "    - $fileName "
             $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
@@ -266,7 +345,7 @@ function Run-Tests {
 
     try {
         if (-not $options) {
-            $options = @{ verbosity = 'Normal'; coverage = $false; tag = $null; target = 75 }
+            $options = @{ verbosity = 'Normal'; coverage = $false; tag = $null; target = 75; groupBy = $null }
         }
 
         $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')

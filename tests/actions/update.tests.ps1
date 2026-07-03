@@ -272,7 +272,10 @@ Describe "Get-Current-Git-Commit" {
 
 Describe "Get-Latest-Git-Commit" {
     It "fetches origin and returns the trimmed remote commit" {
-        Mock git { return "def456`n" }
+        Mock git {
+            if ($args -contains 'fetch') { return $null }
+            return "def456`n"
+        }
 
         Get-Latest-Git-Commit -branch 'main' | Should -Be 'def456'
     }
@@ -284,7 +287,10 @@ Describe "Get-Latest-Git-Commit" {
     }
 
     It "defaults branch to 'main' when not specified" {
-        Mock git { return 'def456' }
+        Mock git {
+            if ($args -contains 'fetch') { return $null }
+            return 'def456'
+        }
 
         Get-Latest-Git-Commit | Should -Be 'def456'
     }

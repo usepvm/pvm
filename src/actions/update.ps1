@@ -39,8 +39,8 @@ function Get-Latest-Git-Commit {
     param ($branch = 'main')
 
     try {
-        git -C $PVMRoot fetch origin $branch 2>$null
-        $commit = git -C $PVMRoot rev-parse origin/$branch
+        git -C $PVMRoot fetch origin $branch >$null 2>$null
+        $commit = git -C $PVMRoot rev-parse origin/$branch 2>$null
         return $commit.Trim()
     } catch {
         return $null

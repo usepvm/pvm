@@ -1,0 +1,56 @@
+﻿
+function Get-Last-Update-Check-Timestamp {
+    try {
+        $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
+        if (Is-File-Exists -path $timestampFile) {
+            return [DateTime](Get-Content -Path $timestampFile)
+        }
+    } catch {
+        return $null
+    }
+}
+
+function Set-Last-Update-Check-Timestamp {
+    try {
+        $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
+        $null = Make-Directory -path $PVMConfig.paths.cache
+        Get-Date | Set-Content -Path $timestampFile
+        return 0
+    } catch {
+        return -1
+    }
+}
+
+function Should-Check-For-Updates {
+    if (-not $PVMConfig.env.ENABLE_UPDATE_CHECK) {
+        return $false
+    }
+
+    $lastCheck = Get-Last-Update-Check-Timestamp
+    if (-not $lastCheck) {
+        return $true
+    }
+
+    $hoursSinceCheck = ((Get-Date) - $lastCheck).TotalHours
+    return ($hoursSinceCheck -ge $PVMConfig.env.UPDATE_CHECK_INTERVAL_HOURS)
+}
+
+function Check-For-Updates-Quietly {
+    if (-not (Should-Check-For-Updates)) {
+        return 0
+    }
+
+    try {
+        $result = Update-PVM -checkOnly $true -quiet $true
+        $null = Set-Last-Update-Check-Timestamp
+
+        if ($result.code -eq 0 -and $result.message -like '*Update available*') {
+            Write-Host -Object "`n$($result.message) Run 'pvm update' to update." -ForegroundColor DarkYellow
+        }
+
+        return $result.code
+    } catch {
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check for updates"; exception = $_ }
+        return -1
+    }
+}

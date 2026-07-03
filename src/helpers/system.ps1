@@ -152,3 +152,33 @@ function Optimize-SystemPath {
         return -1
     }
 }
+
+function Run-PS-Command {
+    param ($command)
+
+    $process = Start-Process `
+        -FilePath 'powershell.exe' `
+        -ArgumentList @(
+            '-NoProfile',
+            '-ExecutionPolicy', 'Bypass',
+            '-Command', $command
+        ) `
+        -Verb RunAs `
+        -PassThru `
+        -Wait `
+        -WindowStyle Hidden
+
+    return $process.ExitCode
+}
+
+function Is-Admin {
+    $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
+    $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+    return $isAdmin
+}
+
+function Is-Not-Admin {
+    return -not (Is-Admin)
+}

@@ -1,4 +1,4 @@
-
+﻿
 BeforeAll {
     Mock Write-Host {}
     # Create a mock registry to simulate environment variables
@@ -15,6 +15,7 @@ BeforeAll {
     }
 
     # Setup test environment
+    $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
     $script:STORAGE_PATH = $PVMConfig.paths.storage = 'TestDrive:\storage'
@@ -31,8 +32,6 @@ BeforeAll {
             "$($PATH_VAR_BACKUP_PATH)" = @()
         }
     }
-
-    Mock Is-Not-Admin { return $false }
 
     # Create wrapper functions that use our mock registry
     Mock Get-All-EnvVars-Core {
@@ -71,6 +70,7 @@ BeforeAll {
 }
 
 AfterAll {
+    $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -93,6 +93,10 @@ Describe "Get-All-EnvVars" {
 }
 
 Describe "Get-EnvVar-ByName" {
+    BeforeAll {
+        Mock Is-Not-Admin { return $false }
+    }
+
     Context "When variable exists" {
         It "Returns the variable value" {
             # Set a test variable
@@ -138,6 +142,10 @@ Describe "Get-EnvVar-ByName" {
 }
 
 Describe "Set-EnvVar" {
+    BeforeAll {
+        Mock Is-Not-Admin { return $false }
+    }
+
     Context "When setting environment variables" {
         It "Sets a new variable successfully (admin required)" {
             $result = Set-EnvVar -name 'TEST_VAR_SET' -value 'TEST_VALUE'
@@ -175,6 +183,10 @@ Describe "Set-EnvVar" {
 }
 
 Describe "Optimize-SystemPath" {
+    BeforeAll {
+        Mock Is-Not-Admin { return $false }
+    }
+
     Context "When optimizing system PATH" {
         BeforeEach {
             # Set a test PATH with some variables
@@ -237,5 +249,63 @@ Describe "Optimize-SystemPath" {
 
             $result | Should -Be 0
         }
+    }
+}
+
+Describe "Run-Ps-Command" {
+    Context "When executing PowerShell commands" {
+        It "Passes -NoProfile and Bypass execution policy" {
+            $mockProcess = @{ ExitCode = 0 }
+            $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
+            Mock Start-Process { return $mockProcess }
+
+            $result = Run-Ps-Command -command "Write-Host -Object 'hello'"
+
+            Should -Invoke Start-Process -Times 1 -ParameterFilter {
+                $FilePath -eq 'powershell.exe' -and
+                $ArgumentList -contains '-NoProfile' -and
+                $ArgumentList -contains '-ExecutionPolicy' -and
+                $ArgumentList -contains 'Bypass'
+            }
+            $result | Should -Be 0
+        }
+
+        It "Returns the process exit code" {
+            $mockProcess = @{ ExitCode = 42 }
+            $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
+            Mock Start-Process { return $mockProcess }
+
+            $result = Run-Ps-Command -command "Write-Error 'fail'"
+
+            $result | Should -Be 42
+        }
+    }
+}
+
+Describe "Is-Admin" {
+    Context "When checking admin status" {
+        It "Returns a boolean value" {
+            $result = Is-Admin
+            $result | Should -BeOfType [bool]
+        }
+    }
+}
+
+Describe "Is-Not-Admin" {
+    It "Returns a boolean value" {
+        $result = Is-Not-Admin
+        $result | Should -BeOfType [bool]
+    }
+
+    It "Returns true when not running as admin" {
+        Mock Is-Admin { return $false }
+        $result = Is-Not-Admin
+        $result | Should -Be $true
+    }
+
+    It "Returns false when running as admin" {
+        Mock Is-Admin { return $true }
+        $result = Is-Not-Admin
+        $result | Should -Be $false
     }
 }

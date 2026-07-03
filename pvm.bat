@@ -7,13 +7,9 @@ set "ENGINE_OVERRIDE="
 set "ARGS=%*"
 
 if /I "%~1"=="test" (
-    echo !ARGS! | findstr /I /C:"--powershell" >nul
-    if %ERRORLEVEL%==0 set "ENGINE_OVERRIDE=powershell"
-
-    if not defined ENGINE_OVERRIDE (
-        echo !ARGS! | findstr /I /C:"--pwsh" >nul
-        if %ERRORLEVEL%==0 set "ENGINE_OVERRIDE=pwsh"
-    )
+    rem detect via substring-replace: if replacing the flag changes the string, it was present
+    if "!ARGS!" NEQ "!ARGS:--pwsh=!" set "ENGINE_OVERRIDE=pwsh"
+    if "!ARGS!" NEQ "!ARGS:--powershell=!" set "ENGINE_OVERRIDE=powershell"
 
     set "ARGS=!ARGS:--powershell=!"
     set "ARGS=!ARGS:--pwsh=!"
@@ -28,7 +24,7 @@ if defined ENGINE_OVERRIDE (
     set "ENGINE=%ENGINE_OVERRIDE%"
 ) else (
     where pwsh >nul 2>&1
-    if %ERRORLEVEL%==0 (
+    if !ERRORLEVEL!==0 (
         set "ENGINE=pwsh"
     ) else (
         set "ENGINE=powershell"

@@ -8,11 +8,11 @@ set "ARGS=%*"
 
 if /I "%~1"=="test" (
     echo !ARGS! | findstr /I /C:"--powershell" >nul
-    if !ERRORLEVEL!==0 set "ENGINE_OVERRIDE=powershell"
+    if %ERRORLEVEL%==0 set "ENGINE_OVERRIDE=powershell"
 
     if not defined ENGINE_OVERRIDE (
         echo !ARGS! | findstr /I /C:"--pwsh" >nul
-        if !ERRORLEVEL!==0 set "ENGINE_OVERRIDE=pwsh"
+        if %ERRORLEVEL%==0 set "ENGINE_OVERRIDE=pwsh"
     )
 
     set "ARGS=!ARGS:--powershell=!"
@@ -28,7 +28,7 @@ if defined ENGINE_OVERRIDE (
     set "ENGINE=%ENGINE_OVERRIDE%"
 ) else (
     where pwsh >nul 2>&1
-    if !ERRORLEVEL!==0 (
+    if %ERRORLEVEL%==0 (
         set "ENGINE=pwsh"
     ) else (
         set "ENGINE=powershell"

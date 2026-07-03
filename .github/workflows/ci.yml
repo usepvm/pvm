@@ -63,11 +63,7 @@ jobs:
         Import-Module Pester
         $pesterVersion = Get-Module -Name Pester
         Write-Host "Pester version: $($pesterVersion.Version)" -ForegroundColor Green
-      
-    - name: Copy .env.example
-      run:
-        Copy-Item -Path .env.example -Destination .env
-      
+        
     - name: Setup PVM
       run: |
         Write-Host "Setting up PVM..." -ForegroundColor Yellow

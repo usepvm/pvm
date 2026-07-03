@@ -19,8 +19,8 @@ BeforeAll {
     Mock Write-Host {}
 
     function Reset-Ini-Content {
-    # Create a test php.ini file
-    @"
+        # Create a test php.ini file
+        @"
 memory_limit = 128M
 ;extension=php_xdebug.dll
 extension=php_curl.dll
@@ -54,18 +54,18 @@ max_execution_time = 30
     Mock Get-Current-PHP-Version {
         return @{
             version = '8.2.0'
-            path = $phpVersionPath
+            path    = $phpVersionPath
         }
     }
 
     $script:MockFileSystem = @{
-        Directories = @()
-        Files = @{}
-        WebResponses = @{}
+        Directories   = @()
+        Files         = @{}
+        WebResponses  = @{}
         DownloadFails = $false
     }
 
-    function Invoke-WebRequest {
+    Mock Get-Web-Response {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
@@ -80,7 +80,7 @@ max_execution_time = 30
             }
             return @{
                 Content = $response.Content
-                Links = $response.Links
+                Links   = $response.Links
             }
         }
 
@@ -106,7 +106,7 @@ Describe "Get-XDebug-FROM-URL Tests" {
             param ($url, $content, $links = @())
             $script:MockFileSystem.WebResponses[$url] = @{
                 Content = $content
-                Links = $links
+                Links   = $links
             }
         }
     }
@@ -159,7 +159,7 @@ Describe "Get-XDebug-FROM-URL Tests" {
 
 Describe "Install-XDebug-Extension" {
     BeforeAll {
-        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = 'TestDrive:\php\8.1.0' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = 'TestDrive:\php\8.1.0' } }
         Mock Get-XDebug-FROM-URL {
             return @(
                 @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a href='/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'>php_xdebug-3.1.0-8.1-vs16-x64.dll</a>" }
@@ -187,7 +187,8 @@ Describe "Install-XDebug-Extension" {
             param ($Path, $Value)
             if ($script:MockFileSystem.Files.ContainsKey($Path)) {
                 $script:MockFileSystem.Files[$Path] += "`n$Value"
-            } else {
+            }
+            else {
                 $script:MockFileSystem.Files[$Path] = $Value
             }
         }
@@ -196,7 +197,7 @@ Describe "Install-XDebug-Extension" {
             param ($url, $content, $links = @())
             $script:MockFileSystem.WebResponses[$url] = @{
                 Content = $content
-                Links = $links
+                Links   = $links
             }
         }
     }
@@ -240,6 +241,7 @@ opcache.enable = 1
 
     It "Returns 0 when user wants to overwrite existing dll extension version" {
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
+        Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-2.9.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Mock Test-Path { return $false }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Remove-Item { }
@@ -262,7 +264,7 @@ opcache.enable = 1
     }
 
     It "Filters xdebug versions by architecture" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x86'; buildType = 'ts'; path = 'TestDrive:\php\8.1.0' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x86'; buildType = 'ts'; path = 'TestDrive:\php\8.1.0' } }
         Mock Get-XDebug-FROM-URL {
             return @(
                 @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
@@ -270,7 +272,7 @@ opcache.enable = 1
             )
         }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest { }
+        Mock Get-Web-Response { }
         Mock Move-Item { }
         Mock Get-Content { return "zend_extension=opcache" }
         Mock Set-Content { }
@@ -281,7 +283,7 @@ opcache.enable = 1
     }
 
     It "Filters xdebug versions by build type" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x64'; buildType = 'nts'; path = 'TestDrive:\php\8.1.0' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x64'; buildType = 'nts'; path = 'TestDrive:\php\8.1.0' } }
         Mock Get-XDebug-FROM-URL {
             return @(
                 @{ href = '/download/php_xdebug-3.1.0-8.1-ts-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-ts-x64.dll'; outerHTML = "<a>test</a>" }
@@ -289,7 +291,7 @@ opcache.enable = 1
             )
         }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest { }
+        Mock Get-Web-Response { }
         Mock Move-Item { }
         Mock Get-Content { return "zend_extension=opcache" }
         Mock Set-Content { }
@@ -300,7 +302,7 @@ opcache.enable = 1
     }
 
     It "Sorts prerelease versions correctly (alpha, beta, rc)" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = 'TestDrive:\php\8.1.0' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = 'TestDrive:\php\8.1.0' } }
         Mock Get-XDebug-FROM-URL {
             return @(
                 @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
@@ -310,7 +312,7 @@ opcache.enable = 1
             )
         }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest { }
+        Mock Get-Web-Response { }
         Mock Move-Item { }
         Mock Get-Content { return "zend_extension=opcache" }
         Mock Set-Content { }
@@ -321,14 +323,14 @@ opcache.enable = 1
     }
 
     It "Replaces existing xdebug configuration in ini file" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = 'TestDrive:\php\8.1.0' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = 'TestDrive:\php\8.1.0' } }
         Mock Get-XDebug-FROM-URL {
             return @(
                 @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest { }
+        Mock Get-Web-Response { }
         Mock Move-Item { }
         Mock Remove-Item { }
 
@@ -349,14 +351,14 @@ opcache.enable = 1
     }
 
     It "Adds xdebug v3 config when no existing xdebug found" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = 'TestDrive:\php\8.1.0' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = 'TestDrive:\php\8.1.0' } }
         Mock Get-XDebug-FROM-URL {
             return @(
                 @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest { }
+        Mock Get-Web-Response { }
         Mock Move-Item { }
         Mock Remove-Item { }
         Mock Get-Content { return "zend_extension=opcache`nopache.enable = 1" }
@@ -370,14 +372,14 @@ opcache.enable = 1
     }
 
     It "Adds xdebug v2 config when version 2.x is selected" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = 'TestDrive:\php\8.1.0' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = 'TestDrive:\php\8.1.0' } }
         Mock Get-XDebug-FROM-URL {
             return @(
                 @{ href = '/download/php_xdebug-2.9.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '2.9.0'; fileName = 'php_xdebug-2.9.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest { }
+        Mock Get-Web-Response { }
         Mock Move-Item { }
         Mock Remove-Item { }
         Mock Get-Content { return "zend_extension=opcache`nopache.enable = 1" }
@@ -393,7 +395,7 @@ opcache.enable = 1
     }
 
     It "Handles x86_64 architecture in sorting" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = $null; buildType = $null; path = 'TestDrive:\php\8.1.0' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = $null; buildType = $null; path = 'TestDrive:\php\8.1.0' } }
         Mock Get-XDebug-FROM-URL {
             return @(
                 @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x86.dll'; arch = 'x86'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x86.dll'; outerHTML = "<a>test</a>" }
@@ -401,7 +403,7 @@ opcache.enable = 1
             )
         }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest { }
+        Mock Get-Web-Response { }
         Mock Move-Item { }
         Mock Remove-Item { }
         Mock Get-Content { return "zend_extension=opcache" }
@@ -412,7 +414,7 @@ opcache.enable = 1
     }
 
     It "Handles unknown architecture in sorting" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = $null; buildType = $null; path = 'TestDrive:\php\8.1.0' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.1'; arch = $null; buildType = $null; path = 'TestDrive:\php\8.1.0' } }
         Mock Get-XDebug-FROM-URL {
             return @(
                 @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x86.dll'; arch = 'x86'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x86.dll'; outerHTML = "<a>test</a>" }
@@ -420,7 +422,7 @@ opcache.enable = 1
             )
         }
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
-        Mock Invoke-WebRequest { }
+        Mock Get-Web-Response { }
         Mock Move-Item { }
         Mock Remove-Item { }
         Mock Get-Content { return "zend_extension=opcache" }
@@ -428,6 +430,60 @@ opcache.enable = 1
 
         $code = Install-XDebug-Extension -iniPath $testIniPath
         $code | Should -Be 0
+    }
+
+    It "Skips overwrite prompt and installs when skipConfirmation is true and file exists" {
+        Mock Can-Use-Cache { return $false }
+        Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
+        Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-2.9.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Is-File-Exists { return $true }
+        Mock Remove-Item { }
+        Mock Move-Item { }
+        Mock Get-Content { return "zend_extension=opcache" }
+        Mock Add-Content { }
+
+        $code = Install-XDebug-Extension -iniPath $testIniPath -skipConfirmation $true
+
+        $code | Should -Be 0
+        Should -Invoke Read-Host -Exactly 0 -ParameterFilter {
+            $Prompt -like '*already exists*'
+        }
+    }
+
+    It "Prompts overwrite when skipConfirmation is false and file exists and user cancels" {
+        Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Is-File-Exists { return $true }
+        Mock Read-Host -ParameterFilter { $Prompt -like '*already exists*' } -MockWith { return 'n' }
+        Mock Remove-Item { }
+
+        $code = Install-XDebug-Extension -iniPath $testIniPath -skipConfirmation $false
+
+        $code | Should -Be -1
+        Should -Invoke Read-Host -Exactly 1 -ParameterFilter {
+            $Prompt -like '*already exists*'
+        }
+    }
+
+    It "Prompts overwrite when skipConfirmation is false and file exists and user confirms" {
+        Mock Can-Use-Cache { return $false }
+        Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
+        Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-2.9.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Is-File-Exists { return $true }
+        Mock Read-Host -ParameterFilter { $Prompt -like '*already exists*' } -MockWith { return 'y' }
+        Mock Remove-Item { }
+        Mock Move-Item { }
+        Mock Get-Content { return "zend_extension=opcache" }
+        Mock Add-Content { }
+
+        $code = Install-XDebug-Extension -iniPath $testIniPath -skipConfirmation $false
+
+        $code | Should -Be 0
+        Should -Invoke Read-Host -Exactly 1 -ParameterFilter {
+            $Prompt -like '*already exists*'
+        }
     }
 }
 
@@ -550,20 +606,20 @@ extension=php_mbstring.dll
 Describe "Install-Extension" {
     BeforeAll {
         $script:MockFileSystem = @{
-            Directories = @()
-            Files = @{}
-            WebResponses = @{}
+            Directories   = @()
+            Files         = @{}
+            WebResponses  = @{}
             DownloadFails = $false
         }
 
-        function Read-Host {
+        Mock Read-Host {
             param ($Prompt)
             if ($Prompt -eq "`nInsert the [number] you want to install") {
                 return '0'
             }
         }
 
-        function Get-ChildItem {
+        Mock Get-ChildItem {
             param ($Path)
             if ($script:getRandomFile) {
                 return @( @{ Name = 'random_file' } )
@@ -580,50 +636,56 @@ Describe "Install-Extension" {
         $script:getRandomFile = $false
         $script:MockFileSystem.DownloadFails = $false
         $script:MockFileSystem.WebResponses = @{
-            "$PECL_PACKAGE_ROOT_URL/nonexistent_ext" = @{
+            "$PECL_PACKAGE_ROOT_URL/nonexistent_ext"                                                 = @{
                 Content = 'Mocked PHP nonexistent_ext content'
-                Links = @()
+                Links   = @()
             }
-            "$PECL_PACKAGE_ROOT_URL/pdo_mysql" = @{
+            "$PECL_PACKAGE_ROOT_URL/pdo_mysql"                                                       = @{
                 Content = 'Mocked pdo_mysql content'
-                Links = @(
+                Links   = @(
                     @{ href = '/package/pdo_mysql/1.4.0/windows' },
                     @{ href = '/package/pdo_mysql/2.1.0/windows' }
                 )
             }
-            "$PECL_PACKAGE_ROOT_URL/curl" = @{
+            "$PECL_PACKAGE_ROOT_URL/curl"                                                            = @{
                 Content = 'Mocked curl content'
-                Links = @(
+                Links   = @(
                     @{ href = '/package/curl/1.4.0/windows' },
                     @{ href = '/package/curl/2.1.0/windows' }
                 )
             }
-            "$PECL_PACKAGE_ROOT_URL/curl/1.4.0/windows" = @{
+            "$PECL_PACKAGE_ROOT_URL/curl/1.4.0/windows"                                              = @{
                 Content = 'Mocked PHP curl 1.4.0 content'
-                Links = @(
+                Links   = @(
                     @{ href = 'other_link' },
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" },
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip" }
                 )
             }
-            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" = @{
+            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"               = @{
                 Content = 'Mocked PHP curl 1.4.0 zip content'
             }
-            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86_64.zip" = @{
+            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86_64.zip"            = @{
                 Content = 'Mocked PHP curl 1.4.0 zip content'
             }
-            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-arm64.zip" = @{
+            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-arm64.zip"             = @{
                 Content = 'Mocked PHP curl 1.4.0 zip content'
             }
-            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0/php_curl-1.5.0-8.2-ts-vs16-x64.zip" = @{
+            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0/php_curl-1.5.0-8.2-ts-vs16-x64.zip"               = @{
                 Content = 'Mocked PHP curl 1.5.0 zip content'
             }
             "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip" = @{
                 Content = 'Mocked PHP courierauth 1.4.0 zip content'
             }
-            "$PECL_PACKAGE_ROOT_URL/curl/2.1.0/windows" = @{
+            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0alpha1/php_curl-1.5.0alpha1-8.2-ts-vs16-x64.zip"   = @{
+                Content = 'Mocked PHP curl 1.5.0alpha1 zip content'
+            }
+            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0alpha2/php_curl-1.5.0alpha2-8.2-ts-vs16-x64.zip"   = @{
+                Content = 'Mocked PHP curl 1.5.0alpha2 zip content'
+            }
+            "$PECL_PACKAGE_ROOT_URL/curl/2.1.0/windows"                                              = @{
                 Content = 'Mocked PHP curl 2.1.0 content'
-                Links = @()
+                Links   = @()
             }
         }
     }
@@ -682,11 +744,11 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when no extension matching installed php version (arch & build type)" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x64'; buildType = 'ts' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x64'; buildType = 'ts' } }
         Mock Get-Extension-From-URL {
             return @{
                 extName = 'curl'
-                data = @(
+                data    = @(
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
@@ -699,7 +761,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when no matching extension is found" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x64'; buildType = 'ts' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x64'; buildType = 'ts' } }
         Mock Get-Extension-From-URL { return $null }
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
@@ -707,11 +769,11 @@ Describe "Install-Extension" {
     }
 
     It "Installs extension successfully" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' } }
         Mock Get-Extension-From-URL {
             return @{
                 extName = 'curl'
-                data = @(
+                data    = @(
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip'>8.2 Thread Safe (TS) x86</a>" }
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-nts-vs16-x86.zip'; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x86.zip'>8.2 Non Thread Safe (NTS) x86</a>" }
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x64.zip'; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip'>8.2 Thread Safe (TS) x64</a>" }
@@ -728,38 +790,41 @@ Describe "Install-Extension" {
 
     Context "When extension has no direct link" {
         BeforeEach {
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/nonexistent_ext" } -MockWith {
+            Mock Get-Web-Response -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/nonexistent_ext" } -MockWith {
                 throw 'Network error'
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+            Mock Get-Web-Response -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
                 return @{
                     Content = 'Mocked PHP extensions content'
-                    Links = @(
+                    Links   = @(
                         @{ href = $null }
                         @{ href = 'random_link' }
-                        @{ href = '/packages.php?catpid=1&amp;catname=Authentication';
-                            outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>' }
-                        @{ href = '/packages.php?catpid=3&amp;catname=Caching';
-                            outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>' }
-                        @{ href = '/packages.php?catpid=7&amp;catname=EmptyCat';
-                            outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>' }
+                        @{ href       = '/packages.php?catpid=1&amp;catname=Authentication';
+                            outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>'
+                        }
+                        @{ href       = '/packages.php?catpid=3&amp;catname=Caching';
+                            outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>'
+                        }
+                        @{ href       = '/packages.php?catpid=7&amp;catname=EmptyCat';
+                            outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>'
+                        }
                     )
                 }
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=1&amp;catname=Authentication" } -MockWith {
+            Mock Get-Web-Response -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=1&amp;catname=Authentication" } -MockWith {
                 return @{
                     Content = 'Mocked PHP extension Auth content'
-                    Links = @(
+                    Links   = @(
                         @{ href = $null }
                         @{ href = '/package/courierauth' }
                         @{ href = '/package/krb5' }
                     )
                 }
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching" } -MockWith {
+            Mock Get-Web-Response -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching" } -MockWith {
                 return @{
                     Content = 'Mocked PHP extension Caching content'
-                    Links = @(
+                    Links   = @(
                         @{ href = '/package/APC' }
                         @{ href = '/package/APCu' }
                         @{ href = '/package/memcache' }
@@ -767,32 +832,32 @@ Describe "Install-Extension" {
                     )
                 }
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=7&amp;catname=EmptyCat" } -MockWith {
+            Mock Get-Web-Response -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=7&amp;catname=EmptyCat" } -MockWith {
                 return @{
                     Content = 'Mocked PHP extension EmptyCat content'
-                    Links = @()
+                    Links   = @()
                 }
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/courierauth" } -MockWith {
+            Mock Get-Web-Response -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/courierauth" } -MockWith {
                 return @{
                     Content = 'Mocked courierauth content'
-                    Links = @(
+                    Links   = @(
                         @{ href = '/package/courierauth/1.4.0/windows' },
                         @{ href = '/package/courierauth/2.1.0/windows' }
                     )
                 }
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/courierauth/1.4.0/windows" } -MockWith {
+            Mock Get-Web-Response -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/courierauth/1.4.0/windows" } -MockWith {
                 return @{
                     Content = 'Mocked PHP courierauth 1.4.0 content'
-                    Links = @(
+                    Links   = @(
                         @{ href = 'other_link' },
                         @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" },
                         @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip" }
                     )
                 }
             }
-            Mock Invoke-WebRequest -ParameterFilter { $Uri -eq "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" } -MockWith {
+            Mock Get-Web-Response -ParameterFilter { $Uri -eq "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" } -MockWith {
                 $script:MockFileSystem.Files[$OutFile] = 'Downloaded content'
                 return
             }
@@ -803,11 +868,11 @@ Describe "Install-Extension" {
         }
 
         It "Falls back to matching links if extension direct link is not found" {
-            Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x64'; buildType = 'ts' }}
+            Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x64'; buildType = 'ts' } }
             Mock Get-Extension-From-URL {
                 return @{
                     extName = 'courierauth'
-                    data = @(
+                    data    = @(
                         @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-ts-vs16-x64.zip'; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip'>8.2 Thread Safe (TS) x64</a>" }
                         @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-nts-vs16-x64.zip'; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x64.zip'>8.2 Non Thread Safe (NTS) x64</a>" }
                         @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip'>8.2 Thread Safe (TS) x86</a>" }
@@ -844,11 +909,11 @@ Describe "Install-Extension" {
     }
 
     It "Displays multiple extension versions with prerelease sorting" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = $null; buildType = $null }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = $null; buildType = $null } }
         Mock Get-Extension-From-URL {
             return @{
                 extName = 'curl'
-                data = @(
+                data    = @(
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0/php_curl-1.5.0-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.5.0'; compiler = 'vs16' }
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0rc1/php_curl-1.5.0rc1-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.5.0rc1'; compiler = 'vs16' }
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0beta1/php_curl-1.5.0beta1-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.5.0beta1'; compiler = 'vs16' }
@@ -866,11 +931,11 @@ Describe "Install-Extension" {
     }
 
     It "Sorts extensions with x86_64 architecture correctly" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = $null; buildType = $null }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = $null; buildType = $null } }
         Mock Get-Extension-From-URL {
             return @{
                 extName = 'curl'
-                data = @(
+                data    = @(
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; compiler = 'vs16' }
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86_64.zip"; arch = 'x86_64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; compiler = 'vs16' }
                 )
@@ -885,11 +950,11 @@ Describe "Install-Extension" {
     }
 
     It "Sorts extensions with unknown architecture correctly" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = $null; buildType = $null }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = $null; buildType = $null } }
         Mock Get-Extension-From-URL {
             return @{
                 extName = 'curl'
-                data = @(
+                data    = @(
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-arm64.zip"; arch = 'arm64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; compiler = 'vs16' }
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; compiler = 'vs16' }
                 )
@@ -904,11 +969,11 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when no dll file matches the pattern" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' } }
         Mock Get-Extension-From-URL {
             return @{
                 extName = 'curl'
-                data = @(
+                data    = @(
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
                 )
             }
@@ -924,11 +989,11 @@ Describe "Install-Extension" {
     }
 
     It "Prompts user when file already exists and user cancels" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' } }
         Mock Get-Extension-From-URL {
             return @{
                 extName = 'curl'
-                data = @(
+                data    = @(
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
                 )
             }
@@ -945,11 +1010,11 @@ Describe "Install-Extension" {
     }
 
     It "Prompts user when file already exists and user overwrites" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' } }
         Mock Get-Extension-From-URL {
             return @{
                 extName = 'curl'
-                data = @(
+                data    = @(
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
                 )
             }
@@ -968,11 +1033,11 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when adding extension to ini fails" {
-        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' }}
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' } }
         Mock Get-Extension-From-URL {
             return @{
                 extName = 'curl'
-                data = @(
+                data    = @(
                     @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
                 )
             }
@@ -987,6 +1052,84 @@ Describe "Install-Extension" {
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
         $code | Should -Be -1
+    }
+
+    It "Skips overwrite prompt and installs when skipConfirmation is true and file exists" {
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' } }
+        Mock Get-Extension-From-URL {
+            return @{
+                extName = 'curl'
+                data    = @(
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts'; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
+                )
+            }
+        }
+        Mock Get-ChildItem {
+            return @( @{ Name = 'php_curl.dll'; FullName = 'TestDrive:\extracted\php_curl.dll' } )
+        }
+        Mock Is-File-Exists { return $true }
+        Mock Move-Item { }
+        Mock Remove-Item { }
+        Mock Add-Missing-PHPExtension-To-Ini { return 0 }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl' -skipConfirmation $true
+
+        $code | Should -Be 0
+        Should -Invoke Read-Host -Exactly 0 -ParameterFilter {
+            $Prompt -like '*already exists*'
+        }
+    }
+
+    It "Prompts overwrite when skipConfirmation is false and file exists and user cancels" {
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' } }
+        Mock Get-Extension-From-URL {
+            return @{
+                extName = 'curl'
+                data    = @(
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts'; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
+                )
+            }
+        }
+        Mock Get-ChildItem {
+            return @( @{ Name = 'php_curl.dll'; FullName = 'TestDrive:\extracted\php_curl.dll' } )
+        }
+        Mock Is-File-Exists { return $true }
+        Mock Read-Host -ParameterFilter { $Prompt -like '*already exists*' } -MockWith { return 'n' }
+        Mock Remove-Item { }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl' -skipConfirmation $false
+
+        $code | Should -Be -1
+        Should -Invoke Read-Host -Exactly 1 -ParameterFilter {
+            $Prompt -like '*already exists*'
+        }
+    }
+
+    It "Prompts overwrite when skipConfirmation is false and file exists and user confirms" {
+        Mock Get-Current-PHP-Version { return @{ version = '8.2.0'; path = 'TestDrive:\php\8.2.0'; arch = 'x86'; buildType = 'ts' } }
+        Mock Get-Extension-From-URL {
+            return @{
+                extName = 'curl'
+                data    = @(
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts'; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
+                )
+            }
+        }
+        Mock Get-ChildItem {
+            return @( @{ Name = 'php_curl.dll'; FullName = 'TestDrive:\extracted\php_curl.dll' } )
+        }
+        Mock Is-File-Exists { return $true }
+        Mock Read-Host -ParameterFilter { $Prompt -like '*already exists*' } -MockWith { return 'y' }
+        Mock Move-Item { }
+        Mock Remove-Item { }
+        Mock Add-Missing-PHPExtension-To-Ini { return 0 }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl' -skipConfirmation $false
+
+        $code | Should -Be 0
+        Should -Invoke Read-Host -Exactly 1 -ParameterFilter {
+            $Prompt -like '*already exists*'
+        }
     }
 }
 
@@ -1019,5 +1162,82 @@ Describe "Install-IniExtension" {
         Mock Install-Extension { throw 'Network error' }
         $code = Install-IniExtension -iniPath $testIniPath -extName 'curl'
         $code | Should -Be -1
+    }
+
+    It "Passes skipConfirmation true to Install-XDebug-Extension" {
+        Mock Install-XDebug-Extension { return 0 }
+
+        $code = Install-IniExtension -iniPath $testIniPath -extNames @('xdebug') -skipConfirmation $true
+
+        $code | Should -Be 0
+        Should -Invoke Install-XDebug-Extension -Exactly 1 -ParameterFilter {
+            $skipConfirmation -eq $true
+        }
+    }
+
+    It "Passes skipConfirmation false to Install-XDebug-Extension by default" {
+        Mock Install-XDebug-Extension { return 0 }
+
+        $code = Install-IniExtension -iniPath $testIniPath -extNames @('xdebug')
+
+        $code | Should -Be 0
+        Should -Invoke Install-XDebug-Extension -Exactly 1 -ParameterFilter {
+            $skipConfirmation -eq $false
+        }
+    }
+
+    It "Passes skipConfirmation true to Install-Extension" {
+        Mock Install-Extension { return 0 }
+
+        $code = Install-IniExtension -iniPath $testIniPath -extNames @('curl') -skipConfirmation $true
+
+        $code | Should -Be 0
+        Should -Invoke Install-Extension -Exactly 1 -ParameterFilter {
+            $skipConfirmation -eq $true
+        }
+    }
+
+    It "Passes skipConfirmation false to Install-Extension by default" {
+        Mock Install-Extension { return 0 }
+
+        $code = Install-IniExtension -iniPath $testIniPath -extNames @('curl')
+
+        $code | Should -Be 0
+        Should -Invoke Install-Extension -Exactly 1 -ParameterFilter {
+            $skipConfirmation -eq $false
+        }
+    }
+}
+
+Describe "Get-PrereleaseSortKey" {
+    It "Scores stable higher than rc/beta/alpha for the same version" {
+        $stable = Get-PrereleaseSortKey -Name '3.1.0'
+        $rc     = Get-PrereleaseSortKey -Name '3.1.0rc1'
+        $beta   = Get-PrereleaseSortKey -Name '3.1.0beta1'
+        $alpha  = Get-PrereleaseSortKey -Name '3.1.0alpha1'
+
+        $stable | Should -BeGreaterThan $rc
+        $rc     | Should -BeGreaterThan $beta
+        $beta   | Should -BeGreaterThan $alpha
+    }
+
+    It "Scores higher prerelease numbers higher within the same tier" {
+        (Get-PrereleaseSortKey -Name '3.1.0rc2')    | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0rc1')
+        (Get-PrereleaseSortKey -Name '3.1.0beta2')  | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0beta1')
+        (Get-PrereleaseSortKey -Name '3.1.0alpha2') | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0alpha1')
+    }
+
+    It "Scores higher base versions higher regardless of prerelease tier" {
+        (Get-PrereleaseSortKey -Name '3.2.0alpha1') | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0')
+    }
+
+    It "Treats missing version segments as zero" {
+        Get-PrereleaseSortKey -Name '3.1' | Should -Be (Get-PrereleaseSortKey -Name '3.1.0')
+    }
+
+    It "Does not overflow Int32 for realistic version numbers" {
+        $score = Get-PrereleaseSortKey -Name '1.5.0'
+        $score | Should -BeOfType [long]
+        $score | Should -BeGreaterThan ([int32]::MaxValue)
     }
 }

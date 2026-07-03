@@ -29,7 +29,7 @@ function Get-XDebug-FROM-URL {
     param ($url, $version)
 
     try {
-        $html = Invoke-WebRequest -Uri $url
+        $html = Get-Web-Response -uri $url
         $links = $html.Links
 
         # Return the filtered links (PHP version names)
@@ -67,8 +67,28 @@ function Get-XDebug-FROM-URL {
     }
 }
 
+function Get-PrereleaseSortKey {
+    param ($Name)
+
+    $baseVersionParts = ($Name -replace '(alpha|beta|rc).*', '') -split '\.'
+    [int64]$versionScore = 0
+    for ($i = 0; $i -lt 3; $i++) {
+        $part = if ($i -lt $baseVersionParts.Count) { [int64]$baseVersionParts[$i] } else { 0 }
+        $versionScore = ($versionScore * 1000) + $part
+    }
+
+    $weight = if ($Name -match 'alpha') { 1 }
+    elseif ($Name -match 'beta') { 2 }
+    elseif ($Name -match 'rc') { 3 }
+    else { 4 } # stable
+
+    $number = if ($Name -match '(alpha|beta|rc)(\d+)') { [int64]$matches[2] } else { 9999 }
+
+    return ($versionScore * 100000) + ($weight * 10000) + $number
+}
+
 function Install-XDebug-Extension {
-    param ($iniPath)
+    param ($iniPath, $skipConfirmation = $false)
 
     try {
         $currentVersionObj = Get-Current-PHP-Version
@@ -99,29 +119,7 @@ function Install-XDebug-Extension {
         $xDebugList |
         Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
         Group-Object xDebugVersion |
-        Sort-Object `
-        @{ Expression     = {
-                # extract numeric version
-                [version]($_.Name -replace '(alpha|beta|rc).*', '')
-            }; Descending = $true
-        },
-        @{ Expression     = {
-                # prerelease weight
-                if ($_.Name -match 'alpha') { 1 }
-                elseif ($_.Name -match 'beta') { 2 }
-                elseif ($_.Name -match 'rc') { 3 }
-                else { 4 } # stable
-            }; Descending = $true
-        },
-        @{ Expression     = {
-                # prerelease number (alpha3, rc2, etc)
-                if ($_.Name -match '(alpha|beta|rc)(\d+)') {
-                    [int]$matches[2]
-                } else {
-                    [int]::MaxValue
-                }
-            }; Descending = $true
-        } |
+        Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
         ForEach-Object {
             $sortedGroup = $_.Group | Sort-Object `
             @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
@@ -169,17 +167,21 @@ function Install-XDebug-Extension {
             return -1
         }
 
-        Invoke-WebRequest -Uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -OutFile $PVMConfig.paths.php
+        $null = Get-Web-Response -uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -outFile $PVMConfig.paths.php
         $phpPath = ($iniPath | Split-Path -Parent)
-        if (Is-File-Exists -path "$phpPath\ext\$($chosenItem.fileName)") {
-            $response = Read-Host -Prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
-            $response = $response.Trim()
-            if ($response -ne 'y' -and $response -ne 'Y') {
-                Remove-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)"
-                Write-Host -Object "`nInstallation cancelled"
-                return -1
+
+        if (-not $skipConfirmation) {
+            if (Is-File-Exists -path "$phpPath\ext\$($chosenItem.fileName)") {
+                $response = Read-Host -Prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
+                $response = $response.Trim()
+                if ($response -ne 'y' -and $response -ne 'Y') {
+                    Remove-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)"
+                    Write-Host -Object "`nInstallation cancelled"
+                    return -1
+                }
             }
         }
+
         Move-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)" -Destination "$phpPath\ext"
         $xDebugConfig = Get-Xdebug-Config-V2 -XDebugPath $($chosenItem.fileName)
         if ($chosenItem.xDebugVersion -like '3.*') {
@@ -260,7 +262,7 @@ function Add-Missing-PHPExtension-To-Ini {
 }
 
 function Install-Extension {
-    param ($iniPath, $extName)
+    param ($iniPath, $extName, $skipConfirmation = $false)
 
     try {
         $currentVersionObj = Get-Current-PHP-Version
@@ -299,29 +301,7 @@ function Install-Extension {
             $extensionLinks |
             Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
             Group-Object extVersion |
-            Sort-Object `
-            @{ Expression     = {
-                    # extract numeric version
-                    [version]($_.Name -replace '(alpha|beta|rc).*', '')
-                }; Descending = $true
-            },
-            @{ Expression     = {
-                    # prerelease weight
-                    if ($_.Name -match 'alpha') { 1 }
-                    elseif ($_.Name -match 'beta') { 2 }
-                    elseif ($_.Name -match 'rc') { 3 }
-                    else { 4 } # stable
-                }; Descending = $true
-            },
-            @{ Expression     = {
-                    # prerelease number (alpha3, rc2, etc)
-                    if ($_.Name -match '(alpha|beta|rc)(\d+)') {
-                        [int]$matches[2]
-                    } else {
-                        [int]::MaxValue
-                    }
-                }; Descending = $true
-            } |
+            Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
             ForEach-Object {
                 $sortedGroup = $_.Group | Sort-Object `
                 @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
@@ -366,7 +346,7 @@ function Install-Extension {
             return -1
         }
 
-        Invoke-WebRequest -Uri $chosenItem.href -OutFile $PVMConfig.paths.php
+        $null = Get-Web-Response -uri $chosenItem.href -outFile $PVMConfig.paths.php
         $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip", '').Trim()
         $extractPath = "$($PVMConfig.paths.storage)\php\$fileNamePath"
         Extract-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
@@ -378,16 +358,21 @@ function Install-Extension {
             Write-Host -Object "`nFailed to find $extName" -ForegroundColor DarkYellow
             return -1
         }
+
         $phpPath = ($iniPath | Split-Path -Parent)
-        if (Is-File-Exists -path "$phpPath\ext\$($extFile.Name)") {
-            $response = Read-Host -Prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
-            $response = $response.Trim()
-            if ($response -ne 'y' -and $response -ne 'Y') {
-                Remove-Item -Path "$($PVMConfig.paths.storage)\php\$fileNamePath" -Force -Recurse
-                Write-Host -Object "`nInstallation cancelled"
-                return -1
+
+        if (-not $skipConfirmation) {
+            if (Is-File-Exists -path "$phpPath\ext\$($extFile.Name)") {
+                $response = Read-Host -Prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
+                $response = $response.Trim()
+                if ($response -ne 'y' -and $response -ne 'Y') {
+                    Remove-Item -Path "$($PVMConfig.paths.storage)\php\$fileNamePath" -Force -Recurse
+                    Write-Host -Object "`nInstallation cancelled"
+                    return -1
+                }
             }
         }
+
         Move-Item -Path $extFile.FullName -Destination "$phpPath\ext"
         Remove-Item -Path $extractPath -Force -Recurse
         $code = Add-Missing-PHPExtension-To-Ini -iniPath $iniPath -extFileName $extFile.Name -enable $false
@@ -405,7 +390,7 @@ function Install-Extension {
 }
 
 function Install-IniExtension {
-    param ($iniPath, $extNames)
+    param ($iniPath, $extNames, $skipConfirmation = $false)
 
     try {
         if ($extNames.Count -eq 0) {
@@ -416,9 +401,9 @@ function Install-IniExtension {
         $overallCode = 0
         foreach ($extName in $extNames) {
             if ($extName -like '*xdebug*') {
-                $overallCode = Install-XDebug-Extension -iniPath $iniPath
+                $overallCode = Install-XDebug-Extension -iniPath $iniPath -skipConfirmation $skipConfirmation
             } else {
-                $overallCode = Install-Extension -iniPath $iniPath -extName $extName
+                $overallCode = Install-Extension -iniPath $iniPath -extName $extName -skipConfirmation $skipConfirmation
             }
         }
 

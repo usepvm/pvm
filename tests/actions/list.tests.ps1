@@ -49,7 +49,7 @@ Describe "Get-From-Source" {
             @{ href = 'php-8.2.0-nts-Win32-x64.zip' }
         )
 
-        Mock Invoke-WebRequest {
+        Mock Get-Web-Response {
             return @{ Links = $mockLinks }
         }
 
@@ -70,7 +70,7 @@ Describe "Get-From-Source" {
     }
 
     It "Should return empty list" {
-        Mock Invoke-WebRequest {
+        Mock Get-Web-Response {
             return @{ Links = @() }
         }
         Mock Cache-Data { }
@@ -82,7 +82,7 @@ Describe "Get-From-Source" {
     }
 
     It "Should handle web request failure" {
-        Mock Invoke-WebRequest { throw 'Network error' }
+        Mock Get-Web-Response { throw 'Network error' }
         Mock Log-Data { return 0 }
 
         $result = Get-From-Source

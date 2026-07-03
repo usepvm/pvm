@@ -51,9 +51,7 @@ Describe "Show-Usage Tests" {
     }
 
     It "Uses fallback maxDescLength when window is small" {
-        # Narrow the host width to force fallback to 100
-        $origSize = $Host.UI.RawUI.WindowSize
-        $Host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(80,25)
+        Mock Get-Console-Width { 80 }
 
         Mock Get-Actions {
             [ordered]@{
@@ -63,8 +61,7 @@ Describe "Show-Usage Tests" {
 
         Show-Usage
 
-        # restore
-        $Host.UI.RawUI.WindowSize = $origSize
+        Assert-MockCalled Get-Console-Width -Times 1
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm testcmd*' }
     }
 
@@ -144,6 +141,7 @@ Describe "Start-PVM Function Tests" {
         Mock Show-Usage { }
         Mock Show-PVM-Version { }
         Mock Resolve-FlagCommand { return $null }
+        Mock Check-For-Updates-Quietly {}
         Mock Get-Actions {
             [ordered]@{
                 'version' = @{ action = { return 0 } }

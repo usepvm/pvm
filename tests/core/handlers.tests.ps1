@@ -232,41 +232,62 @@ Describe "Invoke-Install Tests" {
 
 Describe "Invoke-Uninstall Tests" {
     BeforeEach {
-        Mock Get-Current-PHP-Version { @{ version = '8.1.0' } }
         Mock Uninstall-PHP { @{ code = 0; message = 'Uninstalled successfully' } }
         Mock Display-Msg-By-ExitCode { }
         Mock Write-Host { }
-        Mock Read-Host { }
     }
 
     It "Should return -1 when no version is provided" {
-        $arguments = @()
-
-        $result = Invoke-Uninstall -arguments $arguments
+        $result = Invoke-Uninstall -arguments @()
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Please provide a PHP version to uninstall*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Please provide a PHP version to uninstall*' }
     }
 
-    It "Should uninstall PHP version successfully" {
-        $arguments = @('8.2.0')
-
-        $result = Invoke-Uninstall -arguments $arguments
+    It "Should uninstall PHP version without skipConfirmation by default" {
+        $result = Invoke-Uninstall -arguments @('8.2.0')
         $result | Should -Be 0
 
-        Assert-MockCalled Uninstall-PHP -Times 1 -ParameterFilter { $version -eq '8.2.0' }
-        Assert-MockCalled Display-Msg-By-ExitCode -Times 1
+        Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
+            $version -eq '8.2.0' -and $skipConfirmation -eq $false
+        }
+        Should -Invoke Display-Msg-By-ExitCode -Exactly 1
     }
 
-    It "Should not prompt when uninstalling different version than current" {
-        Mock Get-Current-PHP-Version { @{ version = '8.1.0' } }
-        $arguments = @('8.2.0')
-
-        $result = Invoke-Uninstall -arguments $arguments
+    It "Should pass skipConfirmation true when -y flag is provided" {
+        $result = Invoke-Uninstall -arguments @('8.2.0', '-y')
         $result | Should -Be 0
 
-        Assert-MockCalled Read-Host -Times 0
-        Assert-MockCalled Uninstall-PHP -Times 1
+        Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
+            $version -eq '8.2.0' -and $skipConfirmation -eq $true
+        }
+    }
+
+    It "Should pass skipConfirmation true when --yes flag is provided" {
+        $result = Invoke-Uninstall -arguments @('8.2.0', '--yes')
+        $result | Should -Be 0
+
+        Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
+            $version -eq '8.2.0' -and $skipConfirmation -eq $true
+        }
+    }
+
+    It "Should pass skipConfirmation false when no flag is provided" {
+        $result = Invoke-Uninstall -arguments @('8.2.0')
+        $result | Should -Be 0
+
+        Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
+            $version -eq '8.2.0' -and $skipConfirmation -eq $false
+        }
+    }
+
+    It "Should ignore unrecognized flags and not set skipConfirmation" {
+        $result = Invoke-Uninstall -arguments @('8.2.0', '--force')
+        $result | Should -Be 0
+
+        Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
+            $version -eq '8.2.0' -and $skipConfirmation -eq $false
+        }
     }
 }
 
@@ -650,11 +671,40 @@ Describe "Invoke-Profile Tests" {
                 $profileName -eq 'myprofile'
             }
         }
+
+        It "Should delete profile with provided name and skip confirmation" {
+            $arguments = @('delete', 'myprofile', '-y')
+
+            $result = Invoke-Profile -arguments $arguments
+            $result | Should -Be 0
+
+            Assert-MockCalled Delete-PHP-Profile -Times 1 -ParameterFilter {
+                $profileName -eq 'myprofile' -and $skipConfirmation -eq $true
+            }
+        }
     }
 
     Context "Clear action" {
         It "Should clear all profiles files" {
             $arguments = @('clear')
+
+            $result = Invoke-Profile -arguments $arguments
+
+            $result | Should -Be 0
+            Assert-MockCalled Clear-PHP-Profiles -Times 1
+        }
+
+        It "Should clear all profiles files and skip confirmation" {
+            $arguments = @('clear', '-y')
+
+            $result = Invoke-Profile -arguments $arguments
+
+            $result | Should -Be 0
+            Assert-MockCalled Clear-PHP-Profiles -Times 1
+        }
+
+        It "Should clear all profiles files and skip confirmation using --yes" {
+            $arguments = @('clear', '--yes')
 
             $result = Invoke-Profile -arguments $arguments
 
@@ -887,11 +937,40 @@ Describe "Invoke-Cache Tests" {
                 $cacheName -eq 'available_versions'
             }
         }
+
+        It "Should delete profile with provided name and skip confirmation" {
+            $arguments = @('delete', 'available_versions', '-y')
+
+            $result = Invoke-Cache -arguments $arguments
+            $result | Should -Be 0
+
+            Assert-MockCalled Delete-Cache-File -Times 1 -ParameterFilter {
+                $cacheName -eq 'available_versions' -and $skipConfirmation -eq $true
+            }
+        }
     }
 
     Context "Clear action" {
         It "Should clear all cache files" {
             $arguments = @('clear')
+
+            $result = Invoke-Cache -arguments $arguments
+
+            $result | Should -Be 0
+            Assert-MockCalled Clear-Cache-Files -Times 1
+        }
+
+        It "Should clear all cache files and skip confirmation" {
+            $arguments = @('clear', '-y')
+
+            $result = Invoke-Cache -arguments $arguments
+
+            $result | Should -Be 0
+            Assert-MockCalled Clear-Cache-Files -Times 1
+        }
+
+        It "Should clear all cache files and skip confirmation using --yes" {
+            $arguments = @('clear', '--yes')
 
             $result = Invoke-Cache -arguments $arguments
 
@@ -1072,5 +1151,19 @@ Describe "Invoke-Info Tests" {
         It "Returns 0" {
             Invoke-Info -arguments @('--verbose') | Should -Be 0
         }
+    }
+}
+
+Describe "Invoke-Update Tests" {
+    BeforeEach {
+        Mock Write-Host { }
+        Mock Update-PVM { @{ code = 0; message = 'Updated' } }
+    }
+
+    It "Should call Update-PVM and return 0" {
+        $result = Invoke-Update -arguments @()
+        $result | Should -Be 0
+
+        Assert-MockCalled Update-PVM -Times 1
     }
 }

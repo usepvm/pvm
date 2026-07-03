@@ -116,7 +116,10 @@ function Invoke-Uninstall {
         return -1
     }
 
-    $result = Uninstall-PHP -version $version
+    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
+    $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+
+    $result = Uninstall-PHP -version $version -skipConfirmation $skipConfirmation
 
     Display-Msg-By-ExitCode -result $result
     return 0
@@ -312,11 +315,12 @@ function Invoke-Profile {
             }
 
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
-
-            return (Delete-PHP-Profile -profileName $profileName)
+            $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+            return (Delete-PHP-Profile -profileName $profileName -skipConfirmation $skipConfirmation)
         }
         'clear' {
-            return (Clear-PHP-Profiles)
+            $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+            return (Clear-PHP-Profiles -skipConfirmation $skipConfirmation)
         }
         'export' {
             if ($remainingArgs.Count -eq 0) {
@@ -340,7 +344,7 @@ function Invoke-Profile {
             return (Import-PHP-Profile -importPath $importPath -profileName $profileName)
         }
         default {
-            Write-Host -Object "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'export', or 'import'." -ForegroundColor Yellow
+            Write-Host -Object "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'." -ForegroundColor Yellow
             return -1
         }
     }
@@ -377,11 +381,14 @@ function Invoke-Cache {
                 Write-Host -Object "`nPlease provide a cache name: pvm cache delete <name>" -ForegroundColor Yellow
                 return -1
             }
+
             $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
-            return (Delete-Cache-File -cacheName $cacheName)
+            $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+            return (Delete-Cache-File -cacheName $cacheName -skipConfirmation $skipConfirmation)
         }
         'clear' {
-            return (Clear-Cache-Files)
+            $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+            return (Clear-Cache-Files -skipConfirmation $skipConfirmation)
         }
         default {
             Write-Host -Object "`nUnknown action '$action'. Use 'list', 'show', 'delete', or 'clear'." -ForegroundColor Yellow
@@ -465,4 +472,14 @@ function Invoke-Info {
     }
 
     return 0
+}
+
+function Invoke-Update {
+    param ($arguments)
+
+    $checkOnly = $arguments -contains '--check'
+
+    $result = Update-PVM -checkOnly $checkOnly
+    Display-Msg-By-ExitCode -result $result
+    return $result.code
 }

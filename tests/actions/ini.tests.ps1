@@ -51,18 +51,18 @@ max_execution_time = 30
     Mock Get-Current-PHP-Version {
         return @{
             version = '8.2.0'
-            path = $phpVersionPath
+            path    = $phpVersionPath
         }
     }
 
     $script:MockFileSystem = @{
-        Directories = @()
-        Files = @{}
-        WebResponses = @{}
+        Directories   = @()
+        Files         = @{}
+        WebResponses  = @{}
         DownloadFails = $false
     }
 
-    Mock Invoke-WebRequest {
+    Mock Get-Web-Response {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
@@ -77,7 +77,7 @@ max_execution_time = 30
             }
             return @{
                 Content = $response.Content
-                Links = $response.Links
+                Links   = $response.Links
             }
         }
 
@@ -218,34 +218,34 @@ extension=php_curl.dll
         }
     }
 
-    Context "install action" {
+    Context "add action" {
         BeforeAll {
             $script:getRandomFile = $false
             $script:MockFileSystem = @{
-                Directories = @()
-                Files = @{}
-                WebResponses = @{
-                    "$PECL_PACKAGE_ROOT_URL/nonexistent_ext" = @{
+                Directories   = @()
+                Files         = @{}
+                WebResponses  = @{
+                    "$PECL_PACKAGE_ROOT_URL/nonexistent_ext"                                   = @{
                         Content = 'Mocked PHP nonexistent_ext content'
-                        Links = @()
+                        Links   = @()
                     }
-                    "$PECL_PACKAGE_ROOT_URL/pdo_mysql" = @{
+                    "$PECL_PACKAGE_ROOT_URL/pdo_mysql"                                         = @{
                         Content = 'Mocked pdo_mysql content'
-                        Links = @(
+                        Links   = @(
                             @{ href = '/package/pdo_mysql/1.4.0/windows' },
                             @{ href = '/package/pdo_mysql/2.1.0/windows' }
                         )
                     }
-                    "$PECL_PACKAGE_ROOT_URL/curl" = @{
+                    "$PECL_PACKAGE_ROOT_URL/curl"                                              = @{
                         Content = 'Mocked curl content'
-                        Links = @(
+                        Links   = @(
                             @{ href = '/package/curl/1.4.0/windows' },
                             @{ href = '/package/curl/2.1.0/windows' }
                         )
                     }
-                    "$PECL_PACKAGE_ROOT_URL/curl/1.4.0/windows" = @{
+                    "$PECL_PACKAGE_ROOT_URL/curl/1.4.0/windows"                                = @{
                         Content = 'Mocked PHP curl 1.4.0 content'
-                        Links = @(
+                        Links   = @(
                             @{ href = 'other_link' },
                             @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" },
                             @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip" }
@@ -254,9 +254,9 @@ extension=php_curl.dll
                     "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" = @{
                         Content = 'Mocked PHP curl 1.4.0 zip content'
                     }
-                    "$PECL_PACKAGE_ROOT_URL/curl/2.1.0/windows" = @{
+                    "$PECL_PACKAGE_ROOT_URL/curl/2.1.0/windows"                                = @{
                         Content = 'Mocked PHP curl 2.1.0 content'
-                        Links = @()
+                        Links   = @()
                     }
                 }
                 DownloadFails = $false
@@ -283,6 +283,7 @@ extension=php_curl.dll
                 return 'y'
             }
             Mock Install-Extension { return 0 }
+            Mock Install-XDebug-Extension { return 0 }
         }
 
         It "Installs extension" {
@@ -290,13 +291,36 @@ extension=php_curl.dll
             $result | Should -Be 0
         }
 
+        It "Installs xdebug extension" {
+            $result = Invoke-IniAction -action 'add' -params @('xdebug')
+            $result | Should -Be 0
+        }
+
         It "Requires at least one parameter" {
             $result = Invoke-IniAction -action 'add' -params @()
             $result | Should -Be -1
         }
+
+        It "Installs extension with skip confirmation" {
+            $result = Invoke-IniAction -action 'add' -params @('pdo_mysql', '-y')
+
+            $result | Should -Be 0
+            Assert-MockCalled Install-Extension -Times 1 -ParameterFilter {
+                $skipConfirmation -eq $true
+            }
+        }
+
+        It "Installs extension with skip confirmation" {
+            $result = Invoke-IniAction -action 'add' -params @('xdebug', '-y')
+
+            $result | Should -Be 0
+            Assert-MockCalled Install-XDebug-Extension -Times 1 -ParameterFilter {
+                $skipConfirmation -eq $true
+            }
+        }
     }
 
-    Context "uninstall action" {
+    Context "remove action" {
         It "Uninstalls extension" {
             Mock Uninstall-Extension { return 0 }
 
@@ -320,6 +344,18 @@ extension=php_curl.dll
             $result | Should -Be -1
 
             Assert-MockCalled Uninstall-Extension -Times 0
+        }
+
+        It "Uninstalls extension with skip confirmation" {
+            Mock Uninstall-Extension { return 0 }
+
+            $result = Invoke-IniAction -action 'remove' -params @('xdebug', 'curl', '-y')
+
+            $result | Should -Be 0
+
+            Assert-MockCalled Uninstall-Extension -Times 1 -ParameterFilter {
+                $skipConfirmation -eq $true
+            }
         }
     }
 

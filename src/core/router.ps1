@@ -322,5 +322,25 @@ function Get-Actions {
             }
             action      = { return Invoke-Test -arguments $script:arguments }
         }
+        'update'    = @{
+            command     = 'pvm update [--check]';
+            description = 'Update PVM to the latest version from git repository.';
+            usage       = [ordered]@{
+                USAGE       = 'pvm update [--check]'
+                DESCRIPTION = @(
+                    'Updates PVM by pulling the latest changes from the git repository.',
+                    'Requires Git to be installed and PVM to be installed from a git clone.',
+                    'Checks for uncommitted changes before updating.'
+                )
+                EXAMPLES    = @(
+                    'pvm update ................. Updates PVM to the latest version'
+                    'pvm update --check ......... Checks for updates without applying them'
+                )
+                OPTIONS     = @(
+                    '--check .................... Only check for updates without applying them'
+                )
+            }
+            action      = { return Invoke-Update -arguments $script:arguments }
+        }
     }
 }

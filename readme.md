@@ -6,7 +6,6 @@
 
 PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that makes it easy to install, switch, and manage multiple PHP versions.
 
-
 ## Table of Contents
 
 - [Features](#features)
@@ -29,7 +28,6 @@ PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that make
 - [Credits](#credits)
 - [License](#license)
 
-
 ## Features
 
 - Install and manage multiple PHP versions
@@ -41,13 +39,11 @@ PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that make
 - Built-in cache management
 - Built-in test runner with coverage reporting
 
-
 ## Requirements
 
 - Windows 10 or Windows 11
 - PowerShell 5.1+ or PowerShell 7+
 - Internet connection for installing PHP versions and extensions
-
 
 ## Installation & Setup
 
@@ -62,9 +58,8 @@ cp .env.example .env # edit .env to set your config values before running setup
 pvm setup
 
 # Ensure PVM directories and default files exist
-pvm repair 
+pvm repair
 ```
-
 
 ## Quick Start
 
@@ -83,7 +78,6 @@ pvm current
 # List installed versions
 pvm list
 ```
-
 
 ## Usage
 
@@ -110,14 +104,14 @@ pvm list --search=<version>
 # Example: pvm list --search=8.2
 
 # List installed versions matching x86 and nts
-pvm list [x86|x64] [ts|nts] 
+pvm list [x86|x64] [ts|nts]
 # Example: pvm list x86 nts
 
 # List installable PHP versions from remote source
 pvm list available # pvm ls available
 
 # List installable PHP versions from remote source matching x86 and nts
-pvm list available [x86|x64] [ts|nts] 
+pvm list available [x86|x64] [ts|nts]
 # Example: pvm list available x86 nts
 
 # List available versions with 8.2 in the name
@@ -136,12 +130,18 @@ pvm install <version> [x86|x64] [ts|nts]
 pvm install latest # pvm i latest
 
 # Uninstall a specific version
-pvm uninstall <version> # pvm rm <version>
+pvm uninstall <version> [--yes|-y] # pvm rm <version> [--yes|-y]
 # Example: pvm uninstall 8.4 # pvm rm 8.4
+# Example: pvm uninstall 8.4 -y # pvm rm 8.4 -y # Skip confirmation
 
 # Switch to use the specified version
 pvm use <version>
 # Example: pvm use 8.4
+
+# Update PVM to the latest version from the repository
+pvm update [--check]
+# Example: pvm update
+# Example: pvm update --check
 ```
 
 ### Automatic Version Detection
@@ -203,14 +203,14 @@ pvm ini get <setting> # It shows all matching settings
 # Example: pvm ini get memory
 
 # Install extensions from remote source
-pvm ini add <extension> # It shows all matching extensions then adds the selected one
+pvm ini add <extension> [--yes|-y] # It shows all matching extensions then adds the selected one
 # Example: pvm ini add opcache
-# Example: pvm ini add sql
+# Example: pvm ini add opcache -y # Skip confirmation
 
 # Remove extensions from extensions directory and ini file
-pvm ini remove <extension> # It shows all matching extensions then removes the selected one
+pvm ini remove <extension> [--yes|-y] # It shows all matching extensions then removes the selected one
 # Example: pvm ini remove opcache
-# Example: pvm ini remove sql
+# Example: pvm ini remove opcache -y # Skip confirmation
 
 # List installed extensions
 pvm ini list
@@ -272,11 +272,13 @@ pvm profile show <name>
 # Example: pvm profile show development
 
 # Delete a profile
-pvm profile delete <name>
+pvm profile delete <name> [--yes|-y]
 # Example: pvm profile delete old-profile
+# Example: pvm profile delete old-profile -y # Skip confirmation
 
 # Remove all profiles files
-pvm profile clear
+pvm profile clear [--yes|-y]
+# Example: pvm profile clear -y # Skip confirmation
 
 # Export profile to a JSON file
 pvm profile export <name> [path]
@@ -290,6 +292,7 @@ pvm profile import <path> [name]
 ```
 
 **Profile Structure**: Profiles are stored as JSON files in `storage/data/profiles/` and contain:
+
 - Popular/common PHP settings (key-value pairs with enabled/disabled state)
 - Popular/common extensions (enabled/disabled state and type)
 - Metadata (name, description, creation date, PHP version)
@@ -309,11 +312,13 @@ pvm cache show <name>
 # Example: pvm cache show example-cache
 
 # Remove a specific cache file
-pvm cache delete <name>
+pvm cache delete <name> [--yes|-y]
 # Example: pvm cache delete example-cache
+# Example: pvm cache delete example-cache --y # Skip confirmation
 
 # Remove all cache files
-pvm cache clear
+pvm cache clear [--yes|-y]
+# Example: pvm cache clear --y # Skip confirmation
 ```
 
 ### Command Aliases
@@ -326,34 +331,34 @@ To view the complete list from the CLI:
 pvm aliases
 ```
 
-| Alias | Command |
-|----------|--------|
-| ? | help |
-| h | help |
-| init | setup |
-| cur | current |
-| active | current |
-| ls | list |
-| i | install |
-| u | uninstall |
-| switch | use |
-| on | enable |
-| off | disable |
-| a | add |
-| + | add |
-| rm | remove |
-| - | remove |
-| del | delete |
-| cls | clear |
+| Alias  | Command   |
+| ------ | --------- |
+| ?      | help      |
+| h      | help      |
+| init   | setup     |
+| cur    | current   |
+| active | current   |
+| ls     | list      |
+| i      | install   |
+| u      | uninstall |
+| switch | use       |
+| on     | enable    |
+| off    | disable   |
+| a      | add       |
+| +      | add       |
+| rm     | remove    |
+| -      | remove    |
+| del    | delete    |
+| cls    | clear     |
 
 ### Build Types
 
-| Option | Meaning |
-|----------|----------|
-| x86 | 32-bit |
-| x64 | 64-bit |
-| ts | Thread Safe |
-| nts | Non Thread Safe |
+| Option | Meaning         |
+| ------ | --------------- |
+| x86    | 32-bit          |
+| x64    | 64-bit          |
+| ts     | Thread Safe     |
+| nts    | Non Thread Safe |
 
 ### Namespaced Commands
 
@@ -373,18 +378,17 @@ pvm cache <subcommand>
 pvm cache:<subcommand>
 ```
 
-
 ## Data Storage
 
-| Item | Location |
-|--------|----------|
-| PHP Versions | storage/php/ |
-| Profiles | storage/data/profiles/ |
-| Cache | storage/data/cache/ |
-| Logs | storage/logs/ |
-
+| Item         | Location               |
+| ------------ | ---------------------- |
+| PHP Versions | storage/php/           |
+| Profiles     | storage/data/profiles/ |
+| Cache        | storage/data/cache/    |
+| Logs         | storage/logs/          |
 
 ## Running Tests
+
 Run tests against the PowerShell scripts in the repo — especially useful for contributors verifying changes before submitting a pull request:
 
 ### Requirements
@@ -396,9 +400,11 @@ Open PowerShell as Administrator and run:
 ```powershell
 Install-Module -Name Pester -Force -SkipPublisherCheck
 ```
+
 > 💡 If prompted to trust the repository, type Y and press Enter.
 
 You can verify the installation with:
+
 ```powershell
 Get-Module -ListAvailable Pester
 ```
@@ -419,17 +425,14 @@ pvm test --sort=duration # .............. Runs all tests and sort results by dur
 pvm test --tag=myTag #................... Runs only runs tests with tag "myTag".
 ```
 
-
 ## Contributing
 
 Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
-
 
 ## Credits
 
 - [Driss](https://github.com/drissboumlik)
 - [All Contributors](https://github.com/usepvm/pvm/graphs/contributors?all=1)
-
 
 ## License
 

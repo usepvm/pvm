@@ -1,11 +1,11 @@
-﻿
+
 function Show-Usage {
     Write-Host -Object "`nRunning version : $($PVMConfig.version)"
     Write-Host -Object "`nUsage:`n"
 
     $actions = Get-Actions -arguments $arguments
     $maxLineLength = ($actions.GetEnumerator() | ForEach-Object { $_.Value.command.Length } | Measure-Object -Maximum).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
-    $maxDescLength = $Host.UI.RawUI.WindowSize.Width - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)) # Max length per description line
+    $maxDescLength = (Get-Console-Width) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2))
     if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
     $actions.GetEnumerator() | ForEach-Object {
@@ -62,7 +62,7 @@ function Resolve-NestedCommand {
 }
 
 function Get-AllowedCommands {
-    return @('help', 'setup', 'log')
+    return @('help', 'setup', 'log', 'update')
 }
 
 function Start-PVM {
@@ -110,7 +110,14 @@ function Start-PVM {
             return -1
         }
 
-        return $($actions[$command].action.Invoke())
+        $result = $($actions[$command].action.Invoke())
+
+        # Check for updates after successful command execution (skip for update command itself)
+        if ($result -eq 0 -and $command -ne 'update') {
+            $null = (Check-For-Updates-Quietly)
+        }
+
+        return $result
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during command '$command'"; exception = $_ }
         Write-Host -Object "`nCommand canceled or failed to elevate privileges." -ForegroundColor DarkYellow

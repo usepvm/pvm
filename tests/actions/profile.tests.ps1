@@ -1239,6 +1239,16 @@ Describe "Delete-PHP-Profile Tests" {
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
     }
 
+    It "Should not display the confirmation prompt when skipConfirmation is true" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example.json"
+        Mock Read-Host { }
+
+        $result = Delete-PHP-Profile -profileName 'example' -skipConfirmation $true
+        $result | Should -Be 0
+        Assert-MockCalled Read-Host -Exactly 0
+        Test-Path "$($PVMConfig.paths.profiles)\example.json" | Should -Be $false
+    }
+
     It "Should return -1 and log error when Remove-Item fails" {
         # Create test profile
         $testProfile = @{
@@ -1442,6 +1452,16 @@ Describe "Clear-PHP-Profiles Tests" {
         $result | Should -Be -1
 
         Test-Path "$($PVMConfig.paths.profiles)\example.json" | Should -Be $true
+    }
+
+    It "Should not display the confirmation prompt when skipConfirmation is true" {
+        '{}' | Set-Content -Path "$($PVMConfig.paths.profiles)\example.json"
+        Mock Read-Host { }
+
+        $result = Clear-PHP-Profiles -skipConfirmation $true
+        $result | Should -Be 0
+        Assert-MockCalled Read-Host -Exactly 0
+        Test-Path "$($PVMConfig.paths.profiles)\example.json" | Should -Be $false
     }
 
     It "Should display correct confirmation prompt" {

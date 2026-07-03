@@ -1,4 +1,31 @@
 ﻿
+function Get-PowerShell-Info {
+    $psInfo = @{
+        Name = $PSVersionTable.PSVersion.ToString()
+        Edition = $PSVersionTable.PSEdition
+        Platform = if ($PSVersionTable.Platform) { $PSVersionTable.Platform } else { 'Windows' }
+        Path = $PSHome
+    }
+
+    if ($PSVersionTable.PSVersion.Major -ge 6) {
+        $psInfo.Name = 'PowerShell Core (pwsh)'
+    } else {
+        $psInfo.Name = 'Windows PowerShell (powershell)'
+    }
+
+    return $psInfo
+}
+
+function Write-PowerShell-Info {
+    $psInfo = Get-PowerShell-Info
+    Write-Host -Object "`nPowerShell Info:" -ForegroundColor Cyan
+    Write-Host -Object "  Engine: $($psInfo.Name)" -ForegroundColor Gray
+    Write-Host -Object "  Version: $($PSVersionTable.PSVersion)" -ForegroundColor Gray
+    Write-Host -Object "  Edition: $($psInfo.Edition)" -ForegroundColor Gray
+    Write-Host -Object "  Platform: $($psInfo.Platform)" -ForegroundColor Gray
+    Write-Host -Object "  Path: $($psInfo.Path)" -ForegroundColor Gray
+}
+
 function Get-PVMRootDirectory {
     return (Resolve-Path -Path "$PSScriptRoot\..\..").Path
 }
@@ -251,6 +278,7 @@ function Run-Tests {
         $config = Build-Pester-Config -options $options
         $separatorWidth = Get-Separator-Width -tests $tests
 
+        Write-PowerShell-Info
         Write-Host -Object "`nRunning tests with verbosity: $($options.verbosity)" -ForegroundColor Cyan
 
         $testSummary = $tests | ForEach-Object {

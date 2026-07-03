@@ -3,7 +3,7 @@ function Get-Extension-Categories-By-Page {
     param ($extCategory, $link, $page = 1)
 
     $availableExtensions = @()
-    $html = Invoke-WebRequest -Uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
+    $html = Get-Web-Response -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
     $null = $html.Links | Where-Object {
         if (-not $_.href) { return $false }
@@ -30,7 +30,7 @@ function Get-Extension-Categories-By-Page {
 function Get-PHPExtensions-From-Source {
     $availableExtensions = @{}
     try {
-        $html_cat = Invoke-WebRequest -Uri $PVMConfig.links.peclPackages
+        $html_cat = Get-Web-Response -uri $PVMConfig.links.peclPackages
         $null = $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
 
@@ -124,7 +124,7 @@ function List-PHP-Extensions {
             }
 
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
-            $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxKeyLength + ($($PVMConfig.env.MIN_PAD_RIGHT_LENGTH) * 3))
+            $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxKeyLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3))
 
             Write-Host -Object "`nAvailable Extensions by Category:"
             Write-Host    '--------------------------------'
@@ -133,14 +133,8 @@ function List-PHP-Extensions {
                 $vals = ($_.Value | ForEach-Object { $_.extName }) -join ', '
 
                 $label = "  $key"
-                # Read Host via Get-Variable so tests can mock it
-                $hostVar = Get-Variable -Name Host -ValueOnly -ErrorAction SilentlyContinue
-                $hostWidth = 0
-                if ($hostVar -and $hostVar.UI -and $hostVar.UI.RawUI -and $hostVar.UI.RawUI.WindowSize) {
-                    $hostWidth = $hostVar.UI.RawUI.WindowSize.Width
-                }
 
-                $maxDescLength = $hostWidth - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH) * 2)
+                $maxDescLength = (Get-Console-Width) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH) * 2)
                 if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
                 $descLines = @()

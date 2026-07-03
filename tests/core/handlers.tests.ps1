@@ -492,6 +492,11 @@ Describe "Invoke-Test Tests" {
             $result | Should -Be -1
         }
     }
+
+    It "Should handle unknown flags gracefully" {
+        $result = Invoke-Test -arguments @('-i', '--unknown')
+        $result | Should -Be 0
+    }
 }
 
 Describe "Invoke-Profile Tests" {

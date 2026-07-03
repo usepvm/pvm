@@ -97,33 +97,41 @@ function Get-PHP-Versions {
 
     try {
         $urls = Get-Source-Urls
-        $fetchedVersions = [ordered]@{}
+        $rawByKey = @{}
 
-        $rawByKey = [ordered]@{}
         foreach ($key in $urls.Keys) {
             $fetched = Get-PHP-Versions-From-Url -url $urls[$key] -version $version
-            if ($fetched.Count -eq 0) { continue }
+            if ($fetched.Count -eq 0) {
+                continue
+            }
             if ($null -ne $arch) { $fetched = $fetched | Where-Object { $_.arch -eq $arch } }
             if ($null -ne $buildType) { $fetched = $fetched | Where-Object { $_.buildType -eq $buildType } }
             if ($fetched.Count -eq 0) { continue }
             $rawByKey[$key] = $fetched
         }
 
-        $dedupOrder = @('Releases', 'Archives')
-        $found = @{}
-        foreach ($key in $dedupOrder) {
-            if (-not $rawByKey.Contains($key)) { continue }
-            foreach ($item in $rawByKey[$key]) {
-                if (-not $found.ContainsKey($item.fileName)) {
-                    $found[$item.fileName] = $key
+        $fetchedVersions = [ordered]@{}
+        foreach ($key in $urls.Keys) {
+            $fetchedVersions[$key] = @()
+        }
+
+        $found = @()
+        foreach ($key in @('Releases', 'Archives')) {
+            if (-not $rawByKey.ContainsKey($key)) {
+                continue
+            }
+            $rawByKey[$key] | ForEach-Object {
+                if ($found -notcontains $_.fileName) {
+                    $fetchedVersions[$key] += $_
+                    $found += $_.fileName
                 }
             }
         }
 
-        foreach ($key in $urls.Keys) {
-            if (-not $rawByKey.Contains($key)) { continue }
-            $list = @($rawByKey[$key] | Where-Object { $found[$_.fileName] -eq $key })
-            if ($list.Count -gt 0) { $fetchedVersions[$key] = $list }
+        foreach ($key in @($fetchedVersions.Keys)) {
+            if ($fetchedVersions[$key].Count -eq 0) {
+                $fetchedVersions.Remove($key)
+            }
         }
 
         return $fetchedVersions

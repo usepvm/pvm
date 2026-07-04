@@ -273,7 +273,7 @@ function Invoke-Profile {
     $action = $arguments[0]
 
     if (-not $action) {
-        Write-Host -Object "`nPlease specify an action for 'pvm profile'. Use 'save', 'load', 'list', 'show', 'delete', 'export', or 'import'." -ForegroundColor Yellow
+        Write-Host -Object "`nPlease specify an action for 'pvm profile'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'." -ForegroundColor Yellow
         return -1
     }
 

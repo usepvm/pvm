@@ -147,9 +147,10 @@ function Run-Test-File {
     $testResultData = @{ passedCount = 0; failedCount = 0; duration = 0; coverageRaw = $null }
     $root = Get-PVMRootDirectory
     $relativeFilePath = $file.FullName -replace [regex]::Escape("$root\tests\"), ''
+    $sortedName = if ($options -and $options.groupBy) { $file.Name } else { $relativeFilePath }
 
     if (Is-File-Not-Exists -path $file.FullName) {
-        return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; Message = 'File not found!'; testResultData = $testResultData }
+        return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = 'File not found!'; testResultData = $testResultData }
     }
 
     if (-not $options) {
@@ -186,10 +187,10 @@ function Run-Test-File {
 
         $code = if ($testResult.FailedCount -gt 0) { -1 } else { 0 }
 
-        return @{ code = $code; Name = $file.Name; relativeFilePath = $relativeFilePath; Message = $message; testResultData = $testResultData }
+        return @{ code = $code; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = $message; testResultData = $testResultData }
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"; exception = $_ }
-        return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; Message = 'Failed to run test, check log.'; testResultData = $testResultData }
+        return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = 'Failed to run test, check log.'; testResultData = $testResultData }
     }
 }
 
@@ -266,8 +267,7 @@ function Write-Grouped-Results {
         if ($group.Name) { Write-Host -Object "`n  [$($group.Name)]" -ForegroundColor DarkCyan }
 
         $group.Group | ForEach-Object {
-            $fileName = Split-Path $_.relativeFilePath -Leaf
-            $label = "    - $fileName "
+            $label = "    - $($_.sortedName) "
             $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
             Write-Host -Object $line -ForegroundColor (Get-Result-Color -item $_ -target $target)
         }
@@ -390,7 +390,7 @@ function SortBy {
             }
         }
         'file' {
-            return $data | Sort-Object @{ Expression = { [string]$_.relativeFilePath }; Descending = $direction }
+            return $data | Sort-Object @{ Expression = { [string]$_.sortedName }; Descending = $direction }
         }
     }
 

@@ -481,6 +481,55 @@ Describe "Invoke-Test Tests" {
         $result | Should -Be 0
     }
 
+    It "Should keep grouping disabled by default" {
+        Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+
+        $result = Invoke-Test -arguments @()
+
+        $result.groupBy | Should -BeNullOrEmpty
+    }
+
+    It "Should pass coverage grouping option to Prepare-Tests" {
+        Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+
+        $result = Invoke-Test -arguments @('--group=coverage')
+
+        $result.groupBy | Should -Be 'coverage'
+    }
+
+    It "Should group summary entries by folder when requested" {
+        Mock Write-Host { }
+
+        $testSummary = @(
+            [pscustomobject]@{
+                code = 0
+                relativeFilePath = 'core/handlers.tests.ps1'
+                Message = 'Passed'
+                testResultData = [pscustomobject]@{
+                    failedCount = 0
+                    duration = 0.2
+                    coverageRaw = 100
+                }
+            },
+            [pscustomobject]@{
+                code = 0
+                relativeFilePath = 'actions/install.tests.ps1'
+                Message = 'Passed'
+                testResultData = [pscustomobject]@{
+                    failedCount = 0
+                    duration = 0.1
+                    coverageRaw = 90
+                }
+            }
+        )
+
+        $result = Write-Tests-Summary -testSummary $testSummary -options @{ sortBy = $null; groupBy = 'folder'; target = 75 } -maxLineLength 40
+
+        $result | Should -Be 0
+        Assert-MockCalled Write-Host -ParameterFilter { $Object -eq "`n  [core]" }
+        Assert-MockCalled Write-Host -ParameterFilter { $Object -eq "`n  [actions]" }
+    }
+
     Context "Handle invalid coverage target values" {
         It "Should return -1 for over 100 coverage target" {
             $result = Invoke-Test -arguments @('TestFile.ps1', '--coverage=150')

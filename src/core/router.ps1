@@ -293,7 +293,7 @@ function Get-Actions {
             command     = 'pvm test';
             description = 'Run the PVM test suite.';
             usage       = [ordered]@{
-                USAGE       = 'pvm test [files] [--exclude=files] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>] [--sort=[coverage|duration|file]]'
+                USAGE       = 'pvm test [files] [--exclude=files] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>] [--sort=[coverage|duration|file]] [--group=[folder|coverage]]'
                 DESCRIPTION = @(
                     'Runs the PVM test suite to verify that the installation and configuration'
                     'are working correctly. This includes testing PHP version switching,'
@@ -308,12 +308,14 @@ function Get-Actions {
                     'pvm test --coverage=80 ........... Runs all tests and generates coverage report (target: 80%)'
                     "pvm test --tag=unit .............. Runs only tests with tag 'unit'"
                     'pvm test --sort=coverage ......... Runs all tests and sort results by coverage'
+                    'pvm test --group=coverage ........ Runs all tests and group results by coverage bands'
                 )
                 ARGUMENTS   = @(
                     'files ............................ Run only specific test files (e.g. use, install)'
                 )
                 OPTIONS     = @(
                     '--sort=[coverage|duration|file] .. Sort tests results by coverage, duration or file names'
+                    '--group=[folder|coverage] ........ Group test results by folder or coverage bands'
                     '--coverage[=<number>] ............ Generate coverage report with optional target percentage (default: 75%)'
                     '--verbosity=<verbosity> .......... Set verbosity level (None, Normal (Default), Detailed, Diagnostic)'
                     '--tag=<tag> ...................... Run only tests with specific tag'

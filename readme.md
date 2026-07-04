@@ -414,7 +414,7 @@ Get-Module -ListAvailable Pester
 By default, pvm test auto-detects pwsh if available, falling back to powershell. Use --powershell or --pwsh to force a specific engine — useful for verifying PS 5.1/7 cross-version compatibility.
 
 ```sh
-pvm test [files = (files inside the tests/ directory)] [--exclude=files] [--coverage[=<number>]] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=<tag>] [--sort=[coverage|duration|file]] [--group=[coverage|folder]] [--powershell|--pwsh]
+pvm test [files = (files inside the tests/ directory)] [--exclude=files] [--coverage[=<number>]] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=<tag>] [--sort=[coverage|duration|file|-coverage|-duration|-file]] [--group=[coverage|folder]] [--powershell|--pwsh]
 
 # Examples:
 pvm test # .............................. Runs all tests with Normal (default) verbosity.
@@ -423,7 +423,8 @@ pvm test --exclude=use,install # ........ Runs all tests except 'use.tests.ps1' 
 pvm test --verbosity=Detailed # ......... Runs all tests with Detailed verbosity.
 pvm test --coverage # ................... Runs all tests and generates coverage report (target: 75%)
 pvm test --coverage=80.5 # .............. Runs all tests and generates coverage report (target: 80.5%)
-pvm test --sort=duration # .............. Runs all tests and sort results by duration
+pvm test --sort=duration # .............. Runs all tests and sorts results by duration (ascending)
+pvm test --sort=-duration # ............. Runs all tests and sorts results by duration (descending)
 pvm test --tag=myTag #................... Runs only runs tests with tag "myTag".
 pvm test --group=folder # ............... Runs all tests and groups results by folder
 pvm test --powershell # ................. Forces Windows PowerShell (powershell.exe) instead of auto-detected pwsh.

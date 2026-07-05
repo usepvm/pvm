@@ -411,7 +411,7 @@ Get-Module -ListAvailable Pester
 
 ### Run the tests
 
-By default, pvm test auto-detects pwsh if available, falling back to powershell. Use --powershell or --pwsh to force a specific engine — useful for verifying PS 5.1/7 cross-version compatibility.
+By default, pvm test auto-detects pwsh if available, falling back to powershell. Use --shell=powershell or --shell=pwsh to force a specific engine — useful for verifying PS 5.1/7 cross-version compatibility.
 
 ```sh
 pvm test [files = (files inside the tests/ directory)] [--exclude=files] [--coverage[=<number>]] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=<tag>] [--sort=[coverage|duration|file|-coverage|-duration|-file]] [--group=[coverage|folder]] [--shell=[powershell|pwsh]]

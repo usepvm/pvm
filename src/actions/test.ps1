@@ -222,18 +222,22 @@ function Get-Coverage-Group-Name {
     }
 
     if ($coverageRaw -ge 80) {
-        return '80%-89%'
+        return '80%+'
     }
 
     if ($coverageRaw -ge 70) {
-        return '70%-79%'
+        return '70%+'
     }
 
     if ($coverageRaw -ge 60) {
-        return '60%-69%'
+        return '60%+'
     }
 
-    return '<60%'
+    if ($coverageRaw -ge 50) {
+        return '50%+'
+    }
+
+    return '<50%'
 }
 
 function Get-Folder-Group-Name {
@@ -258,10 +262,27 @@ function Get-Result-Color {
     return 'DarkGreen'
 }
 
+function Get-Coverage-Group-Rank {
+    param ($groupName)
+
+    $order = @('<50%', '50%+', '60%+', '70%+', '80%+', '90%+', '100%', 'n/a')
+    $rank = [array]::IndexOf($order, $groupName)
+
+    if ($rank -eq -1) { return 999 }
+
+    return $rank
+}
+
 function Write-Grouped-Results {
-    param ($sorted, $groupExpr, $maxLineLength, $target)
+    param ($sorted, $groupExpr, $maxLineLength, $target, $groupBy = $null)
 
     $grouped = if ($groupExpr) { $sorted | Group-Object -Property $groupExpr } else { @(@{ Name = $null; Group = $sorted }) }
+
+    if ($groupBy -eq 'coverage') {
+        $grouped = $grouped | Sort-Object { Get-Coverage-Group-Rank -groupName $_.Name }
+    } elseif ($groupBy -eq 'folder') {
+        $grouped = $grouped | Sort-Object { $_.Name }
+    }
 
     foreach ($group in $grouped) {
         if ($group.Name) { Write-Host -Object "`n  [$($group.Name)]" -ForegroundColor DarkCyan }
@@ -300,7 +321,7 @@ function Write-Tests-Summary {
         default    { $null }
     }
 
-    Write-Grouped-Results -sorted $sorted -groupExpr $groupExpr -maxLineLength $maxLineLength -target $options.target
+    Write-Grouped-Results -sorted $sorted -groupExpr $groupExpr -maxLineLength $maxLineLength -target $options.target -groupBy $options.groupBy
 
     if ($totalFailedTests -gt 0) {
         return -1

@@ -1,5 +1,7 @@
 
 function Show-Usage {
+    param ($arguments)
+    
     Write-Host -Object "`nRunning version : $($PVMConfig.version)"
     Write-Host -Object "`nUsage:`n"
 
@@ -72,7 +74,7 @@ function Start-PVM {
         $arguments = @($arguments | Where-Object { $_ -ne $null })
 
         if ([string]::IsNullOrWhiteSpace($command) -and $arguments.Count -eq 0) {
-            Show-Usage
+            Show-Usage -arguments $arguments
             return 0
         }
 
@@ -91,7 +93,7 @@ function Start-PVM {
         $command = Resolve-Alias -alias $command
 
         if ([string]::IsNullOrWhiteSpace($command)) {
-            Show-Usage
+            Show-Usage -arguments $arguments
             return 0
         }
 
@@ -99,7 +101,7 @@ function Start-PVM {
 
         if (-not $actions.Contains($command)) {
             Write-Host -Object "`n'$command' is not a valid command." -ForegroundColor DarkYellow
-            Show-Usage
+            Show-Usage -arguments $arguments
             return 0
         }
 

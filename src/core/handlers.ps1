@@ -266,7 +266,7 @@ function Invoke-Help {
             }
         }
     } else {
-        Show-Usage
+        Show-Usage -arguments $arguments
     }
 
     return 0

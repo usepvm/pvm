@@ -135,6 +135,71 @@ Describe "Show-PVM-Version Function Tests" {
     }
 }
 
+Describe "Get-LevenshteinDistance tests" {
+    It "Should return zero distance for identical strings" {
+        $result = Get-LevenshteinDistance -first 'test' -second 'test'
+        $result | Should -Be 0
+    }
+
+    It "Should return second string length when first string is empty" {
+        $result = Get-LevenshteinDistance -first '' -second 'hello'
+        $result | Should -Be 5
+    }
+
+    It "Should return first string length when second string is empty" {
+        $result = Get-LevenshteinDistance -first 'hello' -second ''
+        $result | Should -Be 5
+    }
+}
+
+Describe "Get-ClosestCommandSuggestion tests" {
+    It "Should return null suggestion for whitespace command" {
+        Mock Get-Aliases { @{} }
+        $actions = [ordered]@{
+            'install' = @{ action = { return 0 } }
+        }
+
+        $result = Get-ClosestCommandSuggestion -command '   ' -actions $actions
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Should return null when no candidate commands exist" {
+        Mock Get-Aliases { @{} }
+        $actions = [ordered]@{}
+
+        $result = Get-ClosestCommandSuggestion -command 'anything' -actions $actions
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Should use max distance 1 for short commands" {
+        Mock Get-Aliases { @{} }
+        $actions = [ordered]@{
+            'list' = @{ action = { return 0 } }
+        }
+
+        $result = Get-ClosestCommandSuggestion -command 'tst' -actions $actions
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Should use max distance 3 for medium commands" {
+        Mock Get-Aliases { @{} }
+        $actions = [ordered]@{
+            'install' = @{ action = { return 0 } }
+        }
+
+        $result = Get-ClosestCommandSuggestion -command 'invalidcmd' -actions $actions
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Should return alias mapping when alias is the best suggestion" {
+        Mock Get-Aliases { [ordered]@{ 'ls' = 'list' } }
+        $actions = [ordered]@{}
+
+        $result = Get-ClosestCommandSuggestion -command 'ls' -actions $actions
+        $result | Should -Be 'list'
+    }
+}
+
 Describe "Start-PVM Function Tests" {
     BeforeEach {
         Mock Write-Host { }
@@ -225,6 +290,55 @@ Describe "Start-PVM Function Tests" {
             Assert-MockCalled Get-Actions -Times 1
             Assert-MockCalled Resolve-Alias -Times 1
             Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+                $Object -eq "`n'invalid-command' is not a valid command."
+            }
+        }
+
+        It "Should suggest the closest valid command when a typo is entered" {
+            Mock Get-Actions {
+                [ordered]@{
+                    'cache' = @{ action = { return 0 } }
+                    'help' = @{ action = { return 0 } }
+                }
+            }
+
+            $result = Start-PVM -command 'cach' -arguments @()
+
+            $result | Should -Be 0
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -eq "`n'cach' is not a valid command. Did you mean 'cache'?"
+            }
+        }
+
+        It "Should suggest aliases when command is a prefix of aliases" {
+            Mock Get-Actions {
+                [ordered]@{
+                    'aliases' = @{ action = { return 0 } }
+                    'help' = @{ action = { return 0 } }
+                }
+            }
+
+            $result = Start-PVM -command 'ali' -arguments @()
+
+            $result | Should -Be 0
+            Assert-MockCalled Write-Host -ParameterFilter {
+                $Object -eq "`n'ali' is not a valid command. Did you mean 'aliases'?"
+            }
+        }
+
+        It "Should not suggest unrelated commands for very different invalid input" {
+            Mock Get-Actions {
+                [ordered]@{
+                    'install' = @{ action = { return 0 } }
+                    'help' = @{ action = { return 0 } }
+                    'list' = @{ action = { return 0 } }
+                }
+            }
+
+            $result = Start-PVM -command 'invalid-command' -arguments @()
+
+            $result | Should -Be 0
+            Assert-MockCalled Write-Host -ParameterFilter {
                 $Object -eq "`n'invalid-command' is not a valid command."
             }
         }

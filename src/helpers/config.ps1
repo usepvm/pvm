@@ -141,14 +141,14 @@ function Get-Config {
             aliases        = [ordered]@{
                 '?' = 'help'; 'h' = 'help';
                 'ver' = 'version'; 'init' = 'setup'
-                'cur' = 'current'; 'active' = 'current'; 'status' = 'current'
+                'cur' = 'current'; 'active' = 'current';
                 'ls' = 'list'; 'i' = 'install'; 'u' = 'uninstall'; 'switch' = 'use'
                 'on' = 'enable'; 'off' = 'disable'
                 'a' = 'add'; '+' = 'add'; 'rm' = 'remove'; '-' = 'remove'
                 'del' = 'delete'; 'cls' = 'clear'
                 'logs' = 'log'; 'upgrade' = 'update'
                 'run' = 'test'
-                'fix' = 'repair'; 'restore' = 'repair'
+                'fix' = 'repair';
             }
             flags          = [ordered]@{
                 '--version' = 'version'

@@ -32,19 +32,19 @@ Describe "Show-Usage Tests" {
 
     It "Should display current version when available" {
         $PVMConfig.version = '2.0'
-        Show-Usage
+        Show-Usage -arguments @()
 
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Running version : 2.0*' }
     }
 
     It "Should display usage header" {
-        Show-Usage
+        Show-Usage -arguments @()
 
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Usage:*' }
     }
 
     It "Should display all available commands with descriptions" {
-        Show-Usage
+        Show-Usage -arguments @()
 
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm setup*Setup the environment*' }
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm current*Display active version*' }
@@ -59,7 +59,7 @@ Describe "Show-Usage Tests" {
             }
         }
 
-        Show-Usage
+        Show-Usage -arguments @()
 
         Assert-MockCalled Get-Console-Width -Times 1
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm testcmd*' }
@@ -75,7 +75,7 @@ Describe "Show-Usage Tests" {
             }
         }
 
-        Show-Usage
+        Show-Usage -arguments @()
 
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm nospace*' }
     }
@@ -91,7 +91,7 @@ Describe "Show-Usage Tests" {
             }
         }
 
-        Show-Usage
+        Show-Usage -arguments @()
 
         # Ensure additional lines were written (calls beyond the initial line)
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*multiline*' }

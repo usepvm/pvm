@@ -68,10 +68,7 @@ function Get-AllowedCommands {
 }
 
 function Get-LevenshteinDistance {
-    param (
-        [string] $first,
-        [string] $second
-    )
+    param ($first, $second)
 
     if ($first -eq $second) {
         return 0
@@ -111,10 +108,7 @@ function Get-LevenshteinDistance {
 }
 
 function Get-ClosestCommandSuggestion {
-    param (
-        [string] $command,
-        $actions
-    )
+    param ($command, $actions)
 
     if ([string]::IsNullOrWhiteSpace($command)) {
         return $null

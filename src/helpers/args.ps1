@@ -9,6 +9,10 @@ function Resolve-Alias {
     $alias = $alias.Trim().ToLower()
     $aliases = Get-Aliases
 
+    if ($null -eq $aliases -or $aliases.Count -eq 0) {
+        return $alias
+    }
+
     if ($aliases.Contains($alias)) {
         return $aliases[$alias]
     }

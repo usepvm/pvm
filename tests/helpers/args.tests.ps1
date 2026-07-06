@@ -1,4 +1,4 @@
-
+﻿
 BeforeAll {
     Mock Write-Host {}
     $script:PVMRootBackup = $PVMRoot
@@ -47,6 +47,20 @@ Describe "Resolve-Alias Tests" {
         param ($Command, $Expected)
         $result = Resolve-Alias -alias $Command
         $result | Should -Be $Expected
+    }
+
+    It "Returns the alias itself when Get-Aliases returns null" {
+        Mock Get-Aliases { return $null }
+
+        $result = Resolve-Alias -alias 'ls'
+        $result | Should -Be 'ls'
+    }
+
+    It "Returns the alias itself when Get-Aliases returns an empty hashtable" {
+        Mock Get-Aliases { return @{} }
+
+        $result = Resolve-Alias -alias 'ls'
+        $result | Should -Be 'ls'
     }
 }
 

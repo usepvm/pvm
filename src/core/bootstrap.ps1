@@ -64,7 +64,7 @@ function Resolve-NestedCommand {
 }
 
 function Get-AllowedCommands {
-    return @('help', 'setup', 'log', 'update')
+    return @('help', 'setup', 'repair', 'log', 'update')
 }
 
 function Start-PVM {

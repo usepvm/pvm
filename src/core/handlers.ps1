@@ -24,7 +24,7 @@ function Invoke-Repair {
 
     $envCode = Create-Env-File
     if ($envCode -eq 0) { Pause-ForEnvEdit }
-    $codes += ($envCode -eq -1 ? -1 : 0)
+    $codes += if ($envCode -eq -1) { -1 } else { 0 }
 
     if ($codes | Where-Object { $_ -ne 0 }) { return -1 }
     return 0

@@ -173,11 +173,7 @@ function Run-Test-File {
 
         $rawDuration = $testResult.Duration.TotalSeconds
 
-        if ($options.coverage) {
-            $coverageRaw = [double]$testResult.CodeCoverage.CoveragePercent
-        } else {
-            $coverageRaw = $null
-        }
+        $coverageRaw = if ($options.coverage) { [double]$testResult.CodeCoverage.CoveragePercent } else { $null }
         $message = Format-Test-Result-Message -testResult $testResult -rawDuration $rawDuration -coverageRaw $coverageRaw
 
         $testResultData.passedCount = $testResult.PassedCount
@@ -302,11 +298,7 @@ function Write-Tests-Summary {
     $totalDuration = $testSummary | ForEach-Object { $_.testResultData.duration } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
     $totalDurationFormatted = Format-Seconds -totalSeconds $totalDuration
 
-    if ($totalFailedTests -gt 0) {
-        $color = 'DarkYellow'
-    } else {
-        $color = 'DarkGreen'
-    }
+    $color = if ($totalFailedTests -gt 0) { 'DarkYellow' } else { 'DarkGreen' }
     $content = " Files tested : $($testSummary.Count) | Total failed tests: $totalFailedTests"
     if ($totalDurationFormatted -ne -1) {
         $content += " | Total duration: $totalDurationFormatted"

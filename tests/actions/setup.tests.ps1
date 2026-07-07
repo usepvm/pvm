@@ -299,7 +299,7 @@ Describe "Create-Env-File" {
 
         $result = Create-Env-File
 
-        $result | Should -Be 0
+        $result | Should -Be -1
         Assert-MockCalled Copy-Item -Times 0
     }
 
@@ -343,5 +343,18 @@ Describe "Create-Env-File" {
         $result | Should -Be -1
         Assert-MockCalled Read-Host -Times 0
         Assert-MockCalled Copy-Item -Times 1
+    }
+}
+
+Describe "Pause-ForEnvEdit" {
+    It "Should prompt the user to edit the .env file" {
+        Mock Read-Host { return '' }
+
+        Pause-ForEnvEdit
+
+        Assert-MockCalled Read-Host -Times 1
+        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            $Object -like "*Edit $PVMRoot\.env now if you want custom settings*"
+        }
     }
 }

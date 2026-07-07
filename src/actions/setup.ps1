@@ -126,7 +126,7 @@ function Create-Env-File {
             $response = Read-Host -Prompt "`n.env file already exists. Overwrite? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
-                return 0
+                return -1
             }
         }
         Copy-Item -Path "$PVMRoot\.env.example" -Destination "$PVMRoot\.env"
@@ -137,4 +137,10 @@ function Create-Env-File {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create .env file"; exception = $_ }
         return -1
     }
+}
+
+function Pause-ForEnvEdit {
+    Write-Host "`nEdit $PVMRoot\.env now if you want custom settings, then press Enter to continue..." -ForegroundColor Cyan
+    Read-Host | Out-Null
+    $Global:PVMConfig = Get-Config -rootPath $PVMRoot
 }

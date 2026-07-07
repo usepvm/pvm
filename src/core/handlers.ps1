@@ -2,9 +2,12 @@
 function Invoke-Setup {
     $result = @{ code = 0; message = 'PVM is already setup' }
     if (Is-PVM-Not-Setup) {
-        $result = Setup-PVM
         $null = Setup-Environment-Directories-And-Files
-        $null = Create-Env-File -overwrite $true
+        $envCode = Create-Env-File -overwrite $true
+
+        if ($envCode -eq 0) { Pause-ForEnvEdit }
+
+        $result = Setup-PVM
     }
     $optimized = Optimize-SystemPath
     if ($optimized -ne 0) {
@@ -18,7 +21,10 @@ function Invoke-Setup {
 function Invoke-Repair {
     $codes = @()
     $codes += Setup-Environment-Directories-And-Files
-    $codes += Create-Env-File
+
+    $envCode = Create-Env-File
+    if ($envCode -eq 0) { Pause-ForEnvEdit }
+    $codes += if ($envCode -eq -1) { -1 } else { 0 }
 
     if ($codes | Where-Object { $_ -ne 0 }) { return -1 }
     return 0

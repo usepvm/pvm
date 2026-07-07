@@ -10,11 +10,7 @@ function Set-IniSetting-Direct {
 
         for ($i = 0; $i -lt $lines.Count; $i++) {
             if ($lines[$i] -match $exactPattern) {
-                $newLine = if ($enabled) {
-                    "$settingName = $value"
-                } else {
-                    ";$settingName = $value"
-                }
+                $newLine = if ($enabled) { "$settingName = $value" } else { ";$settingName = $value" }
                 $lines[$i] = $newLine
                 $modified = $true
                 break
@@ -23,11 +19,7 @@ function Set-IniSetting-Direct {
 
         if (-not $modified) {
             # Setting doesn't exist, add it at the end
-            $newLine = if ($enabled) {
-                "$settingName = $value"
-            } else {
-                ";$settingName = $value"
-            }
+            $newLine = if ($enabled) { "$settingName = $value" } else { ";$settingName = $value" }
             $lines += $newLine
         }
 
@@ -89,11 +81,7 @@ function Enable-IniExtension-Direct {
 
         if (-not $modified) {
             # Extension doesn't exist, add it at the end
-            $newLine = if ($extType -eq 'zend_extension') {
-                "zend_extension=$extFileName"
-            } else {
-                "extension=$extFileName"
-            }
+            $newLine = if ($extType -eq 'zend_extension') { "zend_extension=$extFileName" } else { "extension=$extFileName" }
             $lines += $newLine
         }
 
@@ -324,11 +312,7 @@ function Load-PHP-Profile {
             if ($popularSettings -contains $settingName) {
                 $setting = $jsonContent.settings.$settingName
                 $result = Set-IniSetting-Direct -iniPath $iniPath -settingName $settingName -value $setting.value -enabled $setting.enabled
-                if ($result -eq 0) {
-                    $settingsApplied++
-                } else {
-                    $settingsSkipped++
-                }
+                if ($result -eq 0) { $settingsApplied++ } else { $settingsSkipped++ }
             } else {
                 $settingsIgnored++
             }
@@ -346,18 +330,10 @@ function Load-PHP-Profile {
                 $extType = if ($ext.type) { $ext.type } else { 'extension' }
                 if ($ext.enabled) {
                     $result = Enable-IniExtension-Direct -iniPath $iniPath -extName $extName -extType $extType
-                    if ($result -eq 0) {
-                        $extensionsEnabled++
-                    } else {
-                        $extensionsSkipped++
-                    }
+                    if ($result -eq 0) { $extensionsEnabled++ } else { $extensionsSkipped++ }
                 } else {
                     $result = Disable-IniExtension-Direct -iniPath $iniPath -extName $extName -extType $extType
-                    if ($result -eq 0) {
-                        $extensionsDisabled++
-                    } else {
-                        $extensionsSkipped++
-                    }
+                    if ($result -eq 0) { $extensionsDisabled++ } else { $extensionsSkipped++ }
                 }
             } else {
                 $extensionsIgnored++

@@ -1,7 +1,7 @@
 ﻿
 function Is-PVM-Setup {
     try {
-        $pvmEnvVarContent = Get-EnvVar-ByName -name 'PVM'
+        $pvmEnvVarContent = Get-EnvVar-ByName -name $PVMConfig.env.PVM_ENV_VAR_NAME
 
         if ($null -eq $pvmEnvVarContent) {
             return $false

@@ -1,4 +1,71 @@
 ﻿
+function Use-Pester-Version {
+    param ($version)
+
+    Write-Host "`nChecking for Pester version: $version" -ForegroundColor Yellow
+
+    $availableVersions = Get-Module -Name Pester -ListAvailable
+
+    if (-not $availableVersions) {
+        Write-Host "No Pester module found. Please install Pester first." -ForegroundColor Red
+        return $false
+    }
+
+    if ([string]::IsNullOrWhiteSpace($version) -or $version -eq 'latest') {
+        $latestVersion = $availableVersions | Sort-Object Version -Descending | Select-Object -First 1
+        Import-Module Pester -RequiredVersion $latestVersion.Version -Force
+        $pesterVersion = Get-Module -Name Pester
+        Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
+        return $pesterVersion
+    }
+
+    if ($version -match '^\d+\.\d+\.\d+$') {
+        $targetVersion = $availableVersions | Where-Object { $_.Version -eq $version }
+        if (-not $targetVersion) {
+            Write-Host "Pester version $version not found. Available versions: $($availableVersions.Version -join ', ')" -ForegroundColor Red
+            return $false
+        }
+        Import-Module Pester -RequiredVersion $version -Force
+        $pesterVersion = Get-Module -Name Pester
+        Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
+        return $pesterVersion
+    }
+
+    if ($version -match '^\d+\.\d+') {
+        $targetVersion = $availableVersions | Where-Object { $_.Version -like "$version.*" } | Sort-Object Version -Descending | Select-Object -First 1
+        if (-not $targetVersion) {
+            Write-Host "No Pester version matching $version.* found. Available versions: $($availableVersions.Version -join ', ')" -ForegroundColor Red
+            return $false
+        }
+        Import-Module Pester -RequiredVersion $targetVersion.Version -Force
+        $pesterVersion = Get-Module -Name Pester
+        Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
+        return $pesterVersion
+    }
+
+    if ($version -match '^\d+$') {
+        $targetVersion = $availableVersions | Where-Object { $_.Version.Major -eq [int]$version } | Sort-Object Version -Descending | Select-Object -First 1
+        if (-not $targetVersion) {
+            Write-Host "No Pester version with major $version found. Available versions: $($availableVersions.Version -join ', ')" -ForegroundColor Red
+            return $false
+        }
+        Import-Module Pester -RequiredVersion $targetVersion.Version -Force
+        $pesterVersion = Get-Module -Name Pester
+        Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
+        return $pesterVersion
+    }
+
+    $targetVersion = $availableVersions | Where-Object { $_.Version -le $version } | Sort-Object Version -Descending | Select-Object -First 1
+    if (-not $targetVersion) {
+        Write-Host "No Pester version <= $version found. Available versions: $($availableVersions.Version -join ', ')" -ForegroundColor Red
+        return $false
+    }
+    Import-Module Pester -RequiredVersion $targetVersion.Version -Force
+    $pesterVersion = Get-Module -Name Pester
+    Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
+    return $pesterVersion
+}
+
 function Get-PowerShell-Info {
     $psInfo = @{
         Edition = $PSVersionTable.PSEdition
@@ -173,7 +240,11 @@ function Run-Test-File {
 
         $rawDuration = $testResult.Duration.TotalSeconds
 
-        $coverageRaw = if ($options.coverage) { [double]$testResult.CodeCoverage.CoveragePercent } else { $null }
+        if ($options.coverage) {
+            $coverageRaw = [double]$testResult.CodeCoverage.CoveragePercent
+        } else {
+            $coverageRaw = $null
+        }
         $message = Format-Test-Result-Message -testResult $testResult -rawDuration $rawDuration -coverageRaw $coverageRaw
 
         $testResultData.passedCount = $testResult.PassedCount
@@ -191,7 +262,7 @@ function Run-Test-File {
 }
 
 function Prepare-Tests {
-    param ($testsNames = $null, $options = $null, $exclude = $null)
+    param ($testsNames = $null, $options = $null, $exclude = $null, $pesterVersion = $null)
 
     if ($null -ne $exclude) {
         $testsNames = Get-All-Test-Names -exclude $exclude
@@ -199,7 +270,7 @@ function Prepare-Tests {
 
     $tests = Get-Tests-Files -testsNames $testsNames
 
-    return Run-Tests -tests $tests -options $options
+    return Run-Tests -tests $tests -options $options -pesterVersion $pesterVersion
 }
 
 function Get-Coverage-Group-Name {
@@ -298,7 +369,11 @@ function Write-Tests-Summary {
     $totalDuration = $testSummary | ForEach-Object { $_.testResultData.duration } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
     $totalDurationFormatted = Format-Seconds -totalSeconds $totalDuration
 
-    $color = if ($totalFailedTests -gt 0) { 'DarkYellow' } else { 'DarkGreen' }
+    if ($totalFailedTests -gt 0) {
+        $color = 'DarkYellow'
+    } else {
+        $color = 'DarkGreen'
+    }
     $content = " Files tested : $($testSummary.Count) | Total failed tests: $totalFailedTests"
     if ($totalDurationFormatted -ne -1) {
         $content += " | Total duration: $totalDurationFormatted"
@@ -323,9 +398,16 @@ function Write-Tests-Summary {
 }
 
 function Run-Tests {
-    param ($tests = $null, $options = $null)
+    param ($tests = $null, $options = $null, $pesterVersion = $null)
 
     try {
+        if ($PesterVersion) {
+            $versionLoaded = Use-Pester-Version -version $PesterVersion
+            if (-not $versionLoaded) {
+                return -1
+            }
+        }
+
         if (-not $options) {
             $options = @{ verbosity = 'Normal'; coverage = $false; tag = $null; target = 75; groupBy = $null }
         }

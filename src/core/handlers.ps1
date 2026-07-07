@@ -176,9 +176,29 @@ function Invoke-Ini {
 function Invoke-Test {
     param ($arguments)
 
-    if (-not (Get-Module -Name Pester -ListAvailable)) {
+    $pesterVersion = ($arguments | Where-Object { $_ -match '^--pester=(.+)$' }) -replace '^--pester=', ''
+
+    $pesterInstalled = if ($pesterVersion -and $pesterVersion -ne 'latest') {
+        Get-Module -Name Pester -ListAvailable | Where-Object { $_.Version -like "$pesterVersion*" }
+    } else {
+        Get-Module -Name Pester -ListAvailable
+    }
+
+    if (-not $pesterInstalled) {
         Write-Host -Object "`nInstalling Pester..." -ForegroundColor Yellow
-        Install-Module -Name Pester -Force -SkipPublisherCheck
+        if ($pesterVersion) {
+            if ($pesterVersion -eq 'latest') {
+                Install-Module -Name Pester -Force -SkipPublisherCheck
+            } elseif ($pesterVersion -match '^\d+\.\d+\.\d+$') {
+                Install-Module -Name Pester -RequiredVersion $pesterVersion -Force -SkipPublisherCheck
+            } elseif ($pesterVersion -match '^\d+\.\d+') {
+                Install-Module -Name Pester -MaximumVersion "$pesterVersion.99" -MinimumVersion "$pesterVersion.0" -Force -SkipPublisherCheck
+            } else {
+                Install-Module -Name Pester -MinimumVersion "$pesterVersion.0" -MaximumVersion "$pesterVersion.99999" -Force -SkipPublisherCheck
+            }
+        } else {
+            Install-Module -Name Pester -Force -SkipPublisherCheck
+        }
     }
 
     $options = @{
@@ -219,6 +239,9 @@ function Invoke-Test {
             $options.verbosity = $Matches[1]
             return $false
         }
+        if ($_ -match '^--pester=(.+)$') {
+            return $false
+        }
         if ($_ -match '^-{1,2}') {
             return $false
         }
@@ -230,7 +253,7 @@ function Invoke-Test {
         return -1
     }
 
-    return Prepare-Tests -testsNames $testsNames -options $options -exclude $exclude
+    return Prepare-Tests -testsNames $testsNames -options $options -exclude $exclude -pesterVersion $pesterVersion
 }
 
 function Invoke-Log {

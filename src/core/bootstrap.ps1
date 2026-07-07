@@ -1,7 +1,7 @@
-
+﻿
 function Show-Usage {
     param ($arguments)
-    
+
     Write-Host -Object "`nRunning version : $($PVMConfig.version)"
     Write-Host -Object "`nUsage:`n"
 

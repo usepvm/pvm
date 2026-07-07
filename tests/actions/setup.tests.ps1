@@ -349,6 +349,7 @@ Describe "Create-Env-File" {
 Describe "Pause-ForEnvEdit" {
     It "Should prompt the user to edit the .env file" {
         Mock Read-Host { return '' }
+        Mock Get-Config { return @{} }
 
         Pause-ForEnvEdit
 

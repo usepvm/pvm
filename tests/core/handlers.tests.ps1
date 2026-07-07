@@ -17,6 +17,7 @@ Describe "Invoke-Setup Tests" {
         Mock Optimize-SystemPath { 0 }
         Mock Setup-Environment-Directories-And-Files { 0 }
         Mock Create-Env-File { 0 }
+        Mock Pause-ForEnvEdit { }
         Mock Display-Msg-By-ExitCode { }
         Mock Write-Host { }
     }
@@ -61,7 +62,7 @@ Describe "Invoke-Setup Tests" {
     
     It "Should pause for env edit after creating env file" {
         Mock Is-PVM-Setup { $false }
-        Mock Create-Env-File { return -1 }
+        Mock Create-Env-File { return 0 }
         Mock Pause-ForEnvEdit { }
         Mock Setup-PVM { @{ code = 0; message = 'Setup completed successfully' } }
         
@@ -75,6 +76,10 @@ Describe "Invoke-Setup Tests" {
 }
 
 Describe "Invoke-Repair Tests" {
+    BeforeAll {
+        Mock Pause-ForEnvEdit { }
+    }
+    
     It "Should return 0 when all actions succeed" {
         Mock Create-Env-File { 0 }
         Mock Setup-Environment-Directories-And-Files { 0 }
@@ -106,7 +111,7 @@ Describe "Invoke-Repair Tests" {
     
     It "Should pause for env edit after creating env file" {
         Mock Setup-Environment-Directories-And-Files { 0 }
-        Mock Create-Env-File { -1 }
+        Mock Create-Env-File { 0 }
         Mock Pause-ForEnvEdit { }
         
         $result = Invoke-Repair

@@ -58,6 +58,20 @@ Describe "Invoke-Setup Tests" {
 
         Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Failed to optimize system path*' -and $ForegroundColor -eq 'DarkYellow' }
     }
+    
+    It "Should pause for env edit after creating env file" {
+        Mock Is-PVM-Setup { $false }
+        Mock Create-Env-File { return -1 }
+        Mock Pause-ForEnvEdit { }
+        Mock Setup-PVM { @{ code = 0; message = 'Setup completed successfully' } }
+        
+        $result = Invoke-Setup
+        $result | Should -Be 0
+
+        Assert-MockCalled Create-Env-File -Times 1
+        Assert-MockCalled Pause-ForEnvEdit -Times 1
+        Assert-MockCalled Setup-PVM -Times 1
+    }
 }
 
 Describe "Invoke-Repair Tests" {
@@ -88,6 +102,18 @@ Describe "Invoke-Repair Tests" {
         $result | Should -Be -1
         Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
         Assert-MockCalled Create-Env-File -Times 1
+    }
+    
+    It "Should pause for env edit after creating env file" {
+        Mock Setup-Environment-Directories-And-Files { 0 }
+        Mock Create-Env-File { -1 }
+        Mock Pause-ForEnvEdit { }
+        
+        $result = Invoke-Repair
+        $result | Should -Be 0
+        Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
+        Assert-MockCalled Create-Env-File -Times 1
+        Assert-MockCalled Pause-ForEnvEdit -Times 1
     }
 }
 

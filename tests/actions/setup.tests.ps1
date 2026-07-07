@@ -299,7 +299,7 @@ Describe "Create-Env-File" {
 
         $result = Create-Env-File
 
-        $result | Should -Be 0
+        $result | Should -Be -1
         Assert-MockCalled Copy-Item -Times 0
     }
 

@@ -5,7 +5,7 @@ function Invoke-Setup {
         $null = Setup-Environment-Directories-And-Files
         $envCode = Create-Env-File -overwrite $true
 
-        if ($envCode -eq 1) { Pause-ForEnvEdit }
+        if ($envCode -eq 0) { Pause-ForEnvEdit }
 
         $result = Setup-PVM
     }
@@ -23,7 +23,7 @@ function Invoke-Repair {
     $codes += Setup-Environment-Directories-And-Files
 
     $envCode = Create-Env-File
-    if ($envCode -eq 1) { Pause-ForEnvEdit }
+    if ($envCode -eq 0) { Pause-ForEnvEdit }
     $codes += ($envCode -eq -1 ? -1 : 0)
 
     if ($codes | Where-Object { $_ -ne 0 }) { return -1 }

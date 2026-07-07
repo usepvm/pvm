@@ -115,7 +115,7 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
         $result = Show-Log -pageSize 'abc'
 
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nInvalid page size: abc"
         }
     }
@@ -124,7 +124,7 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
         $result = Show-Log -pageSize 0
 
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nPage size must be a positive integer."
         }
     }
@@ -133,7 +133,7 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
         $result = Show-Log -pageSize -5
 
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nPage size must be a positive integer."
         }
     }
@@ -209,7 +209,7 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
         $result = Show-Log -pageSize 1
 
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nLog file not found: $LOG_ERROR_PATH"
         }
     }

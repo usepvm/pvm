@@ -242,7 +242,7 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            Assert-MockCalled Log-Data -Times 1
+            Should -Invoke Log-Data -Times 1
             $result.opcache | Should -Be $false
             $result.xdebug | Should -Be $false
         }
@@ -295,7 +295,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
             $null = Get-Current-PHP-Version
 
             # Assert
-            Assert-MockCalled Get-PHP-Status -Times 1 -ParameterFilter { $phpPath -eq 'C:\php\8.2.0' }
+            Should -Invoke Get-PHP-Status -Times 1 -ParameterFilter { $phpPath -eq 'C:\php\8.2.0' }
         }
     }
 
@@ -338,7 +338,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
             $null = Get-Current-PHP-Version
 
             # Assert
-            Assert-MockCalled Log-Data -Times 1
+            Should -Invoke Log-Data -Times 1
         }
     }
 

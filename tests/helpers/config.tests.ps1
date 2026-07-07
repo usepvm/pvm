@@ -33,7 +33,7 @@ Describe "Get-EnvConfig" {
 
             Get-EnvConfig -rootPath $envRoot -Verbose
 
-            Assert-MockCalled Write-Verbose -ParameterFilter {
+            Should -Invoke Write-Verbose -ParameterFilter {
                 $Message -eq "Using .env from: $envRoot\.env"
             } -Times 1 -Exactly
         }

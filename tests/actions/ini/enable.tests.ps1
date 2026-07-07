@@ -77,7 +77,7 @@ Describe "Enable-IniExtension" {
         Mock Set-Content { }
 
         Enable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
-        Assert-MockCalled Set-Content -Times 0
+        Should -Invoke Set-Content -Times 0
     }
 
     It "Returns 0 when line does not match for modification (file already has correct state)" {

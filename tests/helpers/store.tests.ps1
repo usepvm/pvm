@@ -226,9 +226,9 @@ Describe "Get-OrUpdateCache" {
             Example
         }
 
-        Assert-MockCalled Get-Data-From-Cache -Exactly 1
-        Assert-MockCalled Example -Exactly 0
-        Assert-MockCalled Cache-Data -Exactly 0
+        Should -Invoke Get-Data-From-Cache -Exactly 1
+        Should -Invoke Example -Exactly 0
+        Should -Invoke Cache-Data -Exactly 0
     }
 
     It "Runs the passed command when can't read from cache" {
@@ -246,7 +246,7 @@ Describe "Get-OrUpdateCache" {
             Example
         }
 
-        Assert-MockCalled Example -Exactly 1
-        Assert-MockCalled Cache-Data -Exactly 1
+        Should -Invoke Example -Exactly 1
+        Should -Invoke Cache-Data -Exactly 1
     }
 }

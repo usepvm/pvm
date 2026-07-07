@@ -28,12 +28,12 @@ Describe "Invoke-Setup Tests" {
         $result = Invoke-Setup
         $result | Should -Be 0
 
-        Assert-MockCalled Is-PVM-Setup -Times 1
-        Assert-MockCalled Setup-PVM -Times 0
-        Assert-MockCalled Setup-Environment-Directories-And-Files -Times 0
-        Assert-MockCalled Create-Env-File -Times 0
-        Assert-MockCalled Optimize-SystemPath -Times 1
-        Assert-MockCalled Display-Msg-By-ExitCode -Times 1
+        Should -Invoke Is-PVM-Setup -Times 1
+        Should -Invoke Setup-PVM -Times 0
+        Should -Invoke Setup-Environment-Directories-And-Files -Times 0
+        Should -Invoke Create-Env-File -Times 0
+        Should -Invoke Optimize-SystemPath -Times 1
+        Should -Invoke Display-Msg-By-ExitCode -Times 1
     }
 
     It "Should setup PVM when not already setup" {
@@ -43,12 +43,12 @@ Describe "Invoke-Setup Tests" {
         $result = Invoke-Setup
         $result | Should -Be 0
 
-        Assert-MockCalled Is-PVM-Setup -Times 1
-        Assert-MockCalled Setup-PVM -Times 1
-        Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
-        Assert-MockCalled Create-Env-File -Times 1
-        Assert-MockCalled Optimize-SystemPath -Times 1
-        Assert-MockCalled Display-Msg-By-ExitCode -Times 1
+        Should -Invoke Is-PVM-Setup -Times 1
+        Should -Invoke Setup-PVM -Times 1
+        Should -Invoke Setup-Environment-Directories-And-Files -Times 1
+        Should -Invoke Create-Env-File -Times 1
+        Should -Invoke Optimize-SystemPath -Times 1
+        Should -Invoke Display-Msg-By-ExitCode -Times 1
     }
 
     It "Should display warning when system path optimization fails" {
@@ -57,7 +57,7 @@ Describe "Invoke-Setup Tests" {
         $result = Invoke-Setup
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Failed to optimize system path*' -and $ForegroundColor -eq 'DarkYellow' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Failed to optimize system path*' -and $ForegroundColor -eq 'DarkYellow' }
     }
     
     It "Should pause for env edit after creating env file" {
@@ -69,9 +69,9 @@ Describe "Invoke-Setup Tests" {
         $result = Invoke-Setup
         $result | Should -Be 0
 
-        Assert-MockCalled Create-Env-File -Times 1
-        Assert-MockCalled Pause-ForEnvEdit -Times 1
-        Assert-MockCalled Setup-PVM -Times 1
+        Should -Invoke Create-Env-File -Times 1
+        Should -Invoke Pause-ForEnvEdit -Times 1
+        Should -Invoke Setup-PVM -Times 1
     }
 }
 
@@ -86,7 +86,7 @@ Describe "Invoke-Repair Tests" {
 
         $result = Invoke-Repair
         $result | Should -Be 0
-        Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
+        Should -Invoke Setup-Environment-Directories-And-Files -Times 1
     }
 
     It "Should return -1 when Setup-Environment-Directories-And-Files fails" {
@@ -95,8 +95,8 @@ Describe "Invoke-Repair Tests" {
 
         $result = Invoke-Repair
         $result | Should -Be -1
-        Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
-        Assert-MockCalled Create-Env-File -Times 1
+        Should -Invoke Setup-Environment-Directories-And-Files -Times 1
+        Should -Invoke Create-Env-File -Times 1
     }
 
     It "Should return -1 when Create-Env-File fails" {
@@ -105,8 +105,8 @@ Describe "Invoke-Repair Tests" {
 
         $result = Invoke-Repair
         $result | Should -Be -1
-        Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
-        Assert-MockCalled Create-Env-File -Times 1
+        Should -Invoke Setup-Environment-Directories-And-Files -Times 1
+        Should -Invoke Create-Env-File -Times 1
     }
     
     It "Should pause for env edit after creating env file" {
@@ -116,9 +116,9 @@ Describe "Invoke-Repair Tests" {
         
         $result = Invoke-Repair
         $result | Should -Be 0
-        Assert-MockCalled Setup-Environment-Directories-And-Files -Times 1
-        Assert-MockCalled Create-Env-File -Times 1
-        Assert-MockCalled Pause-ForEnvEdit -Times 1
+        Should -Invoke Setup-Environment-Directories-And-Files -Times 1
+        Should -Invoke Create-Env-File -Times 1
+        Should -Invoke Pause-ForEnvEdit -Times 1
     }
 }
 
@@ -138,11 +138,11 @@ Describe "Invoke-Current Tests" {
         $result = Invoke-Current
         $result | Should -Be 0
 
-        Assert-MockCalled Get-Current-PHP-Version -Times 1
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Running version: PHP 8.2.0*' }
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*xdebug is enabled*' -and $ForegroundColor -eq 'DarkGreen' }
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*opcache is disabled*' -and $ForegroundColor -eq 'DarkYellow' }
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Path: C:\PHP\8.2.0*' -and $ForegroundColor -eq 'Gray' }
+        Should -Invoke Get-Current-PHP-Version -Times 1
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Running version: PHP 8.2.0*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*xdebug is enabled*' -and $ForegroundColor -eq 'DarkGreen' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*opcache is disabled*' -and $ForegroundColor -eq 'DarkYellow' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Path: C:\PHP\8.2.0*' -and $ForegroundColor -eq 'Gray' }
     }
 
     It "Should return -1 when no PHP version is set" {
@@ -151,7 +151,7 @@ Describe "Invoke-Current Tests" {
         $result = Invoke-Current
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*No PHP version is currently set*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*No PHP version is currently set*' }
     }
 
     It "Should handle missing status information" {
@@ -160,7 +160,7 @@ Describe "Invoke-Current Tests" {
         $result = Invoke-Current
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*No status information available*' -and $ForegroundColor -eq 'Yellow' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*No status information available*' -and $ForegroundColor -eq 'Yellow' }
     }
 }
 
@@ -176,8 +176,8 @@ Describe "Invoke-List Tests" {
         $result = Invoke-List -arguments $arguments
         $result | Should -Be 0
 
-        Assert-MockCalled Get-Available-PHP-Versions -Times 1
-        Assert-MockCalled Display-Installed-PHP-Versions -Times 0
+        Should -Invoke Get-Available-PHP-Versions -Times 1
+        Should -Invoke Display-Installed-PHP-Versions -Times 0
     }
 
     It "Should call Display-Installed-PHP-Versions when no 'available' argument" {
@@ -186,8 +186,8 @@ Describe "Invoke-List Tests" {
         $result = Invoke-List -arguments $arguments
         $result | Should -Be 0
 
-        Assert-MockCalled Display-Installed-PHP-Versions -Times 1
-        Assert-MockCalled Get-Available-PHP-Versions -Times 0
+        Should -Invoke Display-Installed-PHP-Versions -Times 1
+        Should -Invoke Get-Available-PHP-Versions -Times 0
     }
 }
 
@@ -203,7 +203,7 @@ Describe "Invoke-Install Tests" {
         $result = Invoke-Install -arguments $arguments
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Please provide a PHP version to install*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Please provide a PHP version to install*' }
     }
 
     It "Should install PHP with basic parameters" {
@@ -212,7 +212,7 @@ Describe "Invoke-Install Tests" {
         $result = Invoke-Install -arguments $arguments
         $result | Should -Be 0
 
-        Assert-MockCalled Install-PHP -Times 1 -ParameterFilter {
+        Should -Invoke Install-PHP -Times 1 -ParameterFilter {
             $version -eq '8.2.0'
         }
     }
@@ -225,7 +225,7 @@ Describe "Invoke-Install Tests" {
         $result = Invoke-Install -arguments $arguments
         $result | Should -Be 0
 
-        Assert-MockCalled Install-PHP -Times 1 -ParameterFilter {
+        Should -Invoke Install-PHP -Times 1 -ParameterFilter {
             $version -eq '8.1'
         }
     }
@@ -237,7 +237,7 @@ Describe "Invoke-Install Tests" {
         $result = Invoke-Install -arguments $arguments
         $result | Should -Be 0
 
-        Assert-MockCalled Install-PHP -Times 1 -ParameterFilter {
+        Should -Invoke Install-PHP -Times 1 -ParameterFilter {
             $version -eq '8.6.0'
         }
     }
@@ -336,7 +336,7 @@ Describe "Invoke-Use Tests" {
         $result = Invoke-Use -arguments $arguments
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Please provide a PHP version to use*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Please provide a PHP version to use*' }
     }
 
     It "Should use specific PHP version" {
@@ -345,10 +345,10 @@ Describe "Invoke-Use Tests" {
         $result = Invoke-Use -arguments $arguments
         $result | Should -Be 0
 
-        Assert-MockCalled Update-PHP-Version -Times 1 -ParameterFilter {
+        Should -Invoke Update-PHP-Version -Times 1 -ParameterFilter {
             $version -eq '8.2.0'
         }
-        Assert-MockCalled Display-Msg-By-ExitCode -Times 1
+        Should -Invoke Display-Msg-By-ExitCode -Times 1
     }
 
     It "Should handle 'auto' version selection successfully" {
@@ -357,8 +357,8 @@ Describe "Invoke-Use Tests" {
         $result = Invoke-Use -arguments $arguments
         $result | Should -Be 0
 
-        Assert-MockCalled Auto-Select-PHP-Version -Times 1
-        Assert-MockCalled Update-PHP-Version -Times 1 -ParameterFilter { $version -eq '8.2.0' }
+        Should -Invoke Auto-Select-PHP-Version -Times 1
+        Should -Invoke Update-PHP-Version -Times 1 -ParameterFilter { $version -eq '8.2.0' }
     }
 
     It "Should return -1 when auto-selection fails" {
@@ -368,9 +368,9 @@ Describe "Invoke-Use Tests" {
         $result = Invoke-Use -arguments $arguments
         $result | Should -Be -1
 
-        Assert-MockCalled Auto-Select-PHP-Version -Times 1
-        Assert-MockCalled Display-Msg-By-ExitCode -Times 1
-        Assert-MockCalled Update-PHP-Version -Times 0
+        Should -Invoke Auto-Select-PHP-Version -Times 1
+        Should -Invoke Display-Msg-By-ExitCode -Times 1
+        Should -Invoke Update-PHP-Version -Times 0
     }
 }
 
@@ -386,7 +386,7 @@ Describe "Invoke-Ini Tests" {
         $result = Invoke-Ini -arguments $arguments
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like "*Please specify an action for 'pvm ini'*" }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like "*Please specify an action for 'pvm ini'*" }
     }
 
     It "Should call Invoke-IniAction with correct parameters for single action" {
@@ -395,7 +395,7 @@ Describe "Invoke-Ini Tests" {
         $result = Invoke-Ini -arguments $arguments
         $result | Should -Be 0
 
-        Assert-MockCalled Invoke-IniAction -Times 1 -ParameterFilter {
+        Should -Invoke Invoke-IniAction -Times 1 -ParameterFilter {
             $action -eq 'set' -and
             $params.Count -eq 0
         }
@@ -407,7 +407,7 @@ Describe "Invoke-Ini Tests" {
         $result = Invoke-Ini -arguments $arguments
         $result | Should -Be 0
 
-        Assert-MockCalled Invoke-IniAction -Times 1 -ParameterFilter {
+        Should -Invoke Invoke-IniAction -Times 1 -ParameterFilter {
             $action -eq 'set' -and
             $params.Count -eq 2 -and
             $params[0] -eq 'memory_limit' -and
@@ -424,7 +424,7 @@ Describe "Invoke-Ini Tests" {
             $result = Invoke-Ini -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Invoke-IniAction -ParameterFilter { $action -eq $testAction }
+            Should -Invoke Invoke-IniAction -ParameterFilter { $action -eq $testAction }
         }
     }
 }
@@ -440,14 +440,14 @@ Describe "Invoke-Log Tests" {
         $arguments = @('--pageSize=5')
         Invoke-Log -arguments $arguments | Should -Be 0
 
-        Assert-MockCalled Show-Log -Exactly 1 -ParameterFilter { $pageSize -eq '5' }
+        Should -Invoke Show-Log -Exactly 1 -ParameterFilter { $pageSize -eq '5' }
     }
 
     It "Calls Show-Log with default page size when no argument is given" {
         $arguments = @()
         Invoke-Log -arguments $arguments | Should -Be 0
 
-        Assert-MockCalled Show-Log -Exactly 1 -ParameterFilter { $pageSize -eq 5 }
+        Should -Invoke Show-Log -Exactly 1 -ParameterFilter { $pageSize -eq 5 }
     }
 
     It "Passes return code from Show-Log back to caller" {
@@ -465,7 +465,7 @@ Describe "Invoke-Version Tests" {
         $result = Invoke-Version
 
         $result | Should -Be 0
-        Assert-MockCalled Show-PVM-Version -Times 1
+        Should -Invoke Show-PVM-Version -Times 1
     }
 }
 
@@ -557,8 +557,8 @@ Describe "Invoke-Test Tests" {
         $result = Write-Tests-Summary -testSummary $testSummary -options @{ sortBy = $null; groupBy = 'folder'; target = 75 } -maxLineLength 40
 
         $result | Should -Be 0
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -eq "`n  [core]" }
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -eq "`n  [actions]" }
+        Should -Invoke Write-Host -ParameterFilter { $Object -eq "`n  [core]" }
+        Should -Invoke Write-Host -ParameterFilter { $Object -eq "`n  [actions]" }
     }
 
     Context "Handle invalid coverage target values" {
@@ -599,7 +599,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -like "*Please specify an action for 'pvm profile'*" -and
                 $ForegroundColor -eq 'Yellow'
             }
@@ -613,7 +613,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -like '*Please provide a profile name: pvm profile save*'
             }
         }
@@ -624,7 +624,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Save-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Save-PHP-Profile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile' -and $description -eq $null
             }
         }
@@ -635,7 +635,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Save-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Save-PHP-Profile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile' -and
                 $description -eq 'This is my description'
             }
@@ -649,7 +649,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -like '*Please provide a profile name: pvm profile load*'
             }
         }
@@ -660,7 +660,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Load-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Load-PHP-Profile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
         }
@@ -671,7 +671,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Load-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Load-PHP-Profile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
         }
@@ -684,7 +684,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled List-PHP-Profiles -Times 1
+            Should -Invoke List-PHP-Profiles -Times 1
         }
     }
 
@@ -695,7 +695,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -like '*Please provide a profile name: pvm profile show*'
             }
         }
@@ -706,7 +706,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Show-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Show-PHP-Profile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
         }
@@ -717,7 +717,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Show-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Show-PHP-Profile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
         }
@@ -730,7 +730,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -like '*Please provide a profile name: pvm profile delete*'
             }
         }
@@ -741,7 +741,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Delete-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Delete-PHP-Profile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
         }
@@ -752,7 +752,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Delete-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Delete-PHP-Profile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
         }
@@ -763,7 +763,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Delete-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Delete-PHP-Profile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile' -and $skipConfirmation -eq $true
             }
         }
@@ -776,7 +776,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
 
             $result | Should -Be 0
-            Assert-MockCalled Clear-PHP-Profiles -Times 1
+            Should -Invoke Clear-PHP-Profiles -Times 1
         }
 
         It "Should clear all profiles files and skip confirmation" {
@@ -785,7 +785,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
 
             $result | Should -Be 0
-            Assert-MockCalled Clear-PHP-Profiles -Times 1
+            Should -Invoke Clear-PHP-Profiles -Times 1
         }
 
         It "Should clear all profiles files and skip confirmation using --yes" {
@@ -794,7 +794,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
 
             $result | Should -Be 0
-            Assert-MockCalled Clear-PHP-Profiles -Times 1
+            Should -Invoke Clear-PHP-Profiles -Times 1
         }
     }
 
@@ -805,7 +805,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -like '*Please provide a profile name: pvm profile export*'
             }
         }
@@ -816,7 +816,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Export-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Export-PHP-Profile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile' -and $exportPath -eq $null
             }
         }
@@ -827,7 +827,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Export-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Export-PHP-Profile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile' -and
                 $exportPath -eq 'C:\exports\profile.json'
             }
@@ -841,7 +841,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -like '*Please provide a file path: pvm profile import*'
             }
         }
@@ -852,7 +852,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Import-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Import-PHP-Profile -Times 1 -ParameterFilter {
                 $importPath -eq 'C:\profiles\export.json' -and $profileName -eq $null
             }
         }
@@ -863,7 +863,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Import-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Import-PHP-Profile -Times 1 -ParameterFilter {
                 $importPath -eq 'C:\profiles\export.json' -and
                 $profileName -eq 'myimported'
             }
@@ -877,7 +877,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -like "*Unknown action 'unknown'*" -and
                 $ForegroundColor -eq "Yellow"
             }
@@ -889,7 +889,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Save-PHP-Profile -Times 1
+            Should -Invoke Save-PHP-Profile -Times 1
         }
     }
 
@@ -936,7 +936,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be -1
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -like "*Please specify an action for 'pvm cache'*" -and
                 $ForegroundColor -eq 'Yellow'
             }
@@ -950,7 +950,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled List-Cache-Files -Times 1
+            Should -Invoke List-Cache-Files -Times 1
         }
     }
 
@@ -961,7 +961,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be -1
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -like '*Please provide a cache name: pvm cache show*'
             }
         }
@@ -972,7 +972,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Show-Cache-Data -Times 1 -ParameterFilter {
+            Should -Invoke Show-Cache-Data -Times 1 -ParameterFilter {
                 $cacheName -eq 'available_versions'
             }
         }
@@ -983,7 +983,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Show-Cache-Data -Times 1 -ParameterFilter {
+            Should -Invoke Show-Cache-Data -Times 1 -ParameterFilter {
                 $cacheName -eq 'available_versions'
             }
         }
@@ -996,7 +996,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be -1
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -like '*Please provide a cache name: pvm cache delete*'
             }
         }
@@ -1007,7 +1007,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Delete-Cache-File -Times 1 -ParameterFilter {
+            Should -Invoke Delete-Cache-File -Times 1 -ParameterFilter {
                 $cacheName -eq 'available_versions'
             }
         }
@@ -1018,7 +1018,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Delete-Cache-File -Times 1 -ParameterFilter {
+            Should -Invoke Delete-Cache-File -Times 1 -ParameterFilter {
                 $cacheName -eq 'available_versions'
             }
         }
@@ -1029,7 +1029,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled Delete-Cache-File -Times 1 -ParameterFilter {
+            Should -Invoke Delete-Cache-File -Times 1 -ParameterFilter {
                 $cacheName -eq 'available_versions' -and $skipConfirmation -eq $true
             }
         }
@@ -1042,7 +1042,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
 
             $result | Should -Be 0
-            Assert-MockCalled Clear-Cache-Files -Times 1
+            Should -Invoke Clear-Cache-Files -Times 1
         }
 
         It "Should clear all cache files and skip confirmation" {
@@ -1051,7 +1051,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
 
             $result | Should -Be 0
-            Assert-MockCalled Clear-Cache-Files -Times 1
+            Should -Invoke Clear-Cache-Files -Times 1
         }
 
         It "Should clear all cache files and skip confirmation using --yes" {
@@ -1060,7 +1060,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
 
             $result | Should -Be 0
-            Assert-MockCalled Clear-Cache-Files -Times 1
+            Should -Invoke Clear-Cache-Files -Times 1
         }
     }
 
@@ -1071,7 +1071,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be -1
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -like "*Unknown action 'unknown'*" -and
                 $ForegroundColor -eq "Yellow"
             }
@@ -1083,7 +1083,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Assert-MockCalled List-Cache-Files -Times 1
+            Should -Invoke List-Cache-Files -Times 1
         }
     }
 
@@ -1125,7 +1125,7 @@ Describe "Invoke-Aliases Tests" {
         $result = Invoke-Aliases
 
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*No aliases found.*' -and $ForegroundColor -eq 'DarkYellow' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*No aliases found.*' -and $ForegroundColor -eq 'DarkYellow' }
     }
 
     It "Should return 0 when aliases are found" {
@@ -1134,7 +1134,7 @@ Describe "Invoke-Aliases Tests" {
         $result = Invoke-Aliases
 
         $result | Should -Be 0
-        Assert-MockCalled Write-Host -Times 2
+        Should -Invoke Write-Host -Times 2
     }
 }
 
@@ -1249,6 +1249,6 @@ Describe "Invoke-Update Tests" {
         $result = Invoke-Update -arguments @()
         $result | Should -Be 0
 
-        Assert-MockCalled Update-PVM -Times 1
+        Should -Invoke Update-PVM -Times 1
     }
 }

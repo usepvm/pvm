@@ -305,7 +305,7 @@ extension=php_curl.dll
             $result = Invoke-IniAction -action 'add' -params @('pdo_mysql', '-y')
 
             $result | Should -Be 0
-            Assert-MockCalled Install-Extension -Times 1 -ParameterFilter {
+            Should -Invoke Install-Extension -Times 1 -ParameterFilter {
                 $skipConfirmation -eq $true
             }
         }
@@ -314,7 +314,7 @@ extension=php_curl.dll
             $result = Invoke-IniAction -action 'add' -params @('xdebug', '-y')
 
             $result | Should -Be 0
-            Assert-MockCalled Install-XDebug-Extension -Times 1 -ParameterFilter {
+            Should -Invoke Install-XDebug-Extension -Times 1 -ParameterFilter {
                 $skipConfirmation -eq $true
             }
         }
@@ -328,7 +328,7 @@ extension=php_curl.dll
 
             $result | Should -Be 0
 
-            Assert-MockCalled Uninstall-Extension -Times 1 -ParameterFilter {
+            Should -Invoke Uninstall-Extension -Times 1 -ParameterFilter {
                 $iniPath -eq "$phpVersionPath\php.ini" -and
                 $extNames.Count -eq 2 -and
                 $extNames[0] -eq 'curl' -and
@@ -343,7 +343,7 @@ extension=php_curl.dll
 
             $result | Should -Be -1
 
-            Assert-MockCalled Uninstall-Extension -Times 0
+            Should -Invoke Uninstall-Extension -Times 0
         }
 
         It "Uninstalls extension with skip confirmation" {
@@ -353,7 +353,7 @@ extension=php_curl.dll
 
             $result | Should -Be 0
 
-            Assert-MockCalled Uninstall-Extension -Times 1 -ParameterFilter {
+            Should -Invoke Uninstall-Extension -Times 1 -ParameterFilter {
                 $skipConfirmation -eq $true
             }
         }

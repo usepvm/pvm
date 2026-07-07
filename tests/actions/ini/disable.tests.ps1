@@ -72,7 +72,7 @@ Describe "Disable-IniExtension" {
         Mock Set-Content { }
 
         Disable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
-        Assert-MockCalled Set-Content -Times 0
+        Should -Invoke Set-Content -Times 0
     }
 
     It "Returns -1 for non-existent extension" {
@@ -103,7 +103,7 @@ Describe "Disable-IniExtension" {
         Mock Set-Content { }
 
         Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
-        Assert-MockCalled Set-Content -Times 0
+        Should -Invoke Set-Content -Times 0
     }
 
     It "Prompts user to select extension if multiple matches found" {

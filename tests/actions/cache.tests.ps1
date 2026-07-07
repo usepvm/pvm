@@ -55,7 +55,7 @@ Describe "List-Cache-Files Tests" {
         $result = List-Cache-Files
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'No cache directory found'
         } -Exactly 1
     }
@@ -65,7 +65,7 @@ Describe "List-Cache-Files Tests" {
         $result = List-Cache-Files
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'No cache files found'
         } -Exactly 1
     }
@@ -77,8 +77,8 @@ Describe "List-Cache-Files Tests" {
         $result = List-Cache-Files
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -match 'releases' }
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -match 'versions' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -match 'releases' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -match 'versions' }
     }
 
     It "Should return 0 and display header when at least one file exists" {
@@ -87,7 +87,7 @@ Describe "List-Cache-Files Tests" {
         $result = List-Cache-Files
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Available Cache Files'
         } -Exactly 1
     }
@@ -99,7 +99,7 @@ Describe "List-Cache-Files Tests" {
         $result = List-Cache-Files
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -match 'readme' } -Exactly 0
+        Should -Invoke Write-Host -ParameterFilter { $Object -match 'readme' } -Exactly 0
     }
 
     It "Should return -1 and log error when Get-Cache-Files throws" {
@@ -108,11 +108,11 @@ Describe "List-Cache-Files Tests" {
         $result = List-Cache-Files
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to list cache files'
         } -Exactly 1
 
-        Assert-MockCalled Log-Data -Exactly 1
+        Should -Invoke Log-Data -Exactly 1
     }
 }
 
@@ -128,11 +128,11 @@ Describe "Show-Cache-Data Tests" {
         $result = Show-Cache-Data -cacheName 'nonexistent'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Cache file 'nonexistent' not found"
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Use 'pvm cache list' to see available cache files"
         } -Exactly 1
     }
@@ -145,7 +145,7 @@ Describe "Show-Cache-Data Tests" {
         $result = Show-Cache-Data -cacheName 'empty'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "No data found in cache file 'empty'"
         } -Exactly 1
     }
@@ -157,7 +157,7 @@ Describe "Show-Cache-Data Tests" {
         $result = Show-Cache-Data -cacheName 'emptycol'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "No data found in cache file 'emptycol'"
         } -Exactly 1
     }
@@ -172,7 +172,7 @@ Describe "Show-Cache-Data Tests" {
         $result = Show-Cache-Data -cacheName 'releases'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Cache Data for 'releases'"
         } -Exactly 1
     }
@@ -185,7 +185,7 @@ Describe "Show-Cache-Data Tests" {
         $result = Show-Cache-Data -cacheName 'info'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match '---'
         } -Exactly 1
     }
@@ -197,11 +197,11 @@ Describe "Show-Cache-Data Tests" {
         $result = Show-Cache-Data -cacheName 'broken'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to show cache data'
         } -Exactly 1
 
-        Assert-MockCalled Log-Data -Exactly 1
+        Should -Invoke Log-Data -Exactly 1
     }
 }
 
@@ -217,11 +217,11 @@ Describe "Delete-Cache-File Tests" {
         $result = Delete-Cache-File -cacheName 'nonexistent'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Cache file 'nonexistent' not found"
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Use 'pvm cache list' to see available cache files"
         } -Exactly 1
     }
@@ -236,7 +236,7 @@ Describe "Delete-Cache-File Tests" {
 
         Test-Path "$($PVMConfig.paths.cache)\releases.json" | Should -Be $true
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Deletion cancelled'
         } -Exactly 1
     }
@@ -251,7 +251,7 @@ Describe "Delete-Cache-File Tests" {
 
         Test-Path "$($PVMConfig.paths.cache)\releases.json" | Should -Be $true
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Deletion cancelled'
         } -Exactly 1
     }
@@ -288,7 +288,7 @@ Describe "Delete-Cache-File Tests" {
 
         Test-Path "$($PVMConfig.paths.cache)\releases.json" | Should -Be $false
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Cache file 'releases' deleted successfully"
         } -Exactly 1
     }
@@ -334,7 +334,7 @@ Describe "Delete-Cache-File Tests" {
         $result = Delete-Cache-File -cacheName 'mydata'
         $result | Should -Be 0
 
-        Assert-MockCalled Read-Host -ParameterFilter {
+        Should -Invoke Read-Host -ParameterFilter {
             $Prompt -match "Are you sure you want to delete cache file 'mydata'" -and
             $Prompt -match '\(y/n\)'
         } -Exactly 1
@@ -346,7 +346,7 @@ Describe "Delete-Cache-File Tests" {
 
         $result = Delete-Cache-File -cacheName 'mydata' -skipConfirmation $true
         $result | Should -Be 0
-        Assert-MockCalled Read-Host -Exactly 0
+        Should -Invoke Read-Host -Exactly 0
         Test-Path "$($PVMConfig.paths.cache)\mydata.json" | Should -Be $false
     }
 
@@ -359,11 +359,11 @@ Describe "Delete-Cache-File Tests" {
         $result = Delete-Cache-File -cacheName 'releases'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to delete cache file'
         } -Exactly 1
 
-        Assert-MockCalled Log-Data -Exactly 1
+        Should -Invoke Log-Data -Exactly 1
     }
 
     It "Should handle cache file with complex name" {
@@ -376,7 +376,7 @@ Describe "Delete-Cache-File Tests" {
 
         Test-Path "$($PVMConfig.paths.cache)\php-releases_8x.json" | Should -Be $false
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Cache file 'php-releases_8x' deleted successfully"
         } -Exactly 1
     }
@@ -394,7 +394,7 @@ Describe "Clear-Cache-Files Tests" {
         $result = Clear-Cache-Files
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'No cache files found'
         } -Exactly 1
     }
@@ -411,7 +411,7 @@ Describe "Clear-Cache-Files Tests" {
         Test-Path "$($PVMConfig.paths.cache)\releases.json" | Should -Be $true
         Test-Path "$($PVMConfig.paths.cache)\versions.json" | Should -Be $true
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Deletion cancelled'
         } -Exactly 1
     }
@@ -463,7 +463,7 @@ Describe "Clear-Cache-Files Tests" {
         Test-Path "$($PVMConfig.paths.cache)\versions.json"  | Should -Be $false
         Test-Path "$($PVMConfig.paths.cache)\metadata.json"  | Should -Be $false
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'All cache files deleted successfully'
         } -Exactly 1
     }
@@ -511,7 +511,7 @@ Describe "Clear-Cache-Files Tests" {
         $result = Clear-Cache-Files
         $result | Should -Be 0
 
-        Assert-MockCalled Read-Host -ParameterFilter {
+        Should -Invoke Read-Host -ParameterFilter {
             $Prompt -match 'Are you sure you want to delete all cache files' -and
             $Prompt -match '\(y/n\)'
         } -Exactly 1
@@ -534,7 +534,7 @@ Describe "Clear-Cache-Files Tests" {
 
         $result = Clear-Cache-Files -skipConfirmation $true
         $result | Should -Be 0
-        Assert-MockCalled Read-Host -Exactly 0
+        Should -Invoke Read-Host -Exactly 0
         Test-Path "$($PVMConfig.paths.cache)\mydata.json" | Should -Be $false
     }
 
@@ -547,11 +547,11 @@ Describe "Clear-Cache-Files Tests" {
         $result = Clear-Cache-Files
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to clear cache files'
         } -Exactly 1
 
-        Assert-MockCalled Log-Data -Exactly 1
+        Should -Invoke Log-Data -Exactly 1
     }
 
     It "Should return -1 and log error when Get-Cache-Files throws" {
@@ -560,10 +560,10 @@ Describe "Clear-Cache-Files Tests" {
         $result = Clear-Cache-Files
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to clear cache files'
         } -Exactly 1
 
-        Assert-MockCalled Log-Data -Exactly 1
+        Should -Invoke Log-Data -Exactly 1
     }
 }

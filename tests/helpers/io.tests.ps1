@@ -216,7 +216,7 @@ Describe "Make-Symbolic-Link" {
             $result.color | Should -Be 'DarkGreen'
 
             # Verify New-Item was called with correct parameters
-            Assert-MockCalled New-Item -ParameterFilter {
+            Should -Invoke New-Item -ParameterFilter {
                 $ItemType -eq 'SymbolicLink' -and
                 $Path -eq $linkPath -and
                 $Target -eq $targetPath
@@ -247,7 +247,7 @@ Describe "Make-Symbolic-Link" {
             $result.message | Should -Match 'Created symbolic link'
             $result.color | Should -Be 'DarkGreen'
 
-            Assert-MockCalled Run-Ps-Command -ParameterFilter {
+            Should -Invoke Run-Ps-Command -ParameterFilter {
                 $command -like '*New-Item -ItemType SymbolicLink*' -and
                 $command -like "*$linkPath*" -and
                 $command -like "*$targetPath*"
@@ -338,23 +338,23 @@ Describe "Extract-Zip Tests" {
     It "Should extract zip without errors" {
         # This is a basic test since we're mocking the zip extraction
         { Extract-Zip -zipPath 'test.zip' -extractPath 'testdir' } | Should -Not -Throw
-        Assert-MockCalled Extract-Zip-Core -Times 1
+        Should -Invoke Extract-Zip-Core -Times 1
     }
 
     It "Should delete zip after extraction" {
         { Extract-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $true } | Should -Not -Throw
-        Assert-MockCalled Remove-Item -Times 1 -ParameterFilter { $Path -eq 'test.zip' }
+        Should -Invoke Remove-Item -Times 1 -ParameterFilter { $Path -eq 'test.zip' }
     }
 
     It "Should not delete zip if deleteZipAfter is false" {
         { Extract-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $false } | Should -Not -Throw
-        Assert-MockCalled Remove-Item -Times 0
+        Should -Invoke Remove-Item -Times 0
     }
 
     It "Should call Log-Data on extraction failure" {
         Mock Extract-Zip-Core { throw "Extraction failed" }
         { Extract-Zip -zipPath 'bad.zip' -extractPath 'testdir' } | Should -Not -Throw
-        Assert-MockCalled Log-Data -Times 1
+        Should -Invoke Log-Data -Times 1
     }
 }
 

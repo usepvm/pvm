@@ -286,8 +286,8 @@ Describe "Create-Env-File" {
         $result = Create-Env-File
 
         $result | Should -Be -1
-        Assert-MockCalled Copy-Item -Times 0
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Copy-Item -Times 0
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -like '*Failed to find .env.example file.*'
         }
     }
@@ -300,7 +300,7 @@ Describe "Create-Env-File" {
         $result = Create-Env-File
 
         $result | Should -Be -1
-        Assert-MockCalled Copy-Item -Times 0
+        Should -Invoke Copy-Item -Times 0
     }
 
     It "Returns 0 when the user wants to overwrite the .env file" {
@@ -311,8 +311,8 @@ Describe "Create-Env-File" {
         $result = Create-Env-File
 
         $result | Should -Be 0
-        Assert-MockCalled Copy-Item -Times 1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Copy-Item -Times 1
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -like '*Created .env file.*'
         }
     }
@@ -325,9 +325,9 @@ Describe "Create-Env-File" {
         $result = Create-Env-File
 
         $result | Should -Be 0
-        Assert-MockCalled Read-Host -Times 0
-        Assert-MockCalled Copy-Item -Times 1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Read-Host -Times 0
+        Should -Invoke Copy-Item -Times 1
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -like '*Created .env file.*'
         }
     }
@@ -341,8 +341,8 @@ Describe "Create-Env-File" {
         $result = Create-Env-File
 
         $result | Should -Be -1
-        Assert-MockCalled Read-Host -Times 0
-        Assert-MockCalled Copy-Item -Times 1
+        Should -Invoke Read-Host -Times 0
+        Should -Invoke Copy-Item -Times 1
     }
 }
 
@@ -353,8 +353,8 @@ Describe "Pause-ForEnvEdit" {
 
         Pause-ForEnvEdit
 
-        Assert-MockCalled Read-Host -Times 1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Read-Host -Times 1
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -like "*Edit $PVMRoot\.env now if you want custom settings*"
         }
     }

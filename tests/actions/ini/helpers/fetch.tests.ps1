@@ -271,7 +271,7 @@ Describe "Get-Extension-Links-From-URL Tests" {
             $result = Get-Extension-Links-From-URL -extName 'mem' -version '8.2'
 
             $result | Should -Be $null
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            Should -Invoke Write-Host -Times 1 -ParameterFilter {
                 $Object -eq "`nInstallation cancelled"
             }
         }
@@ -300,7 +300,7 @@ Describe "Get-Extension-Links-From-URL Tests" {
 
             # Should return null and show error message when chosen item is null
             $result | Should -Be $null
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            Should -Invoke Write-Host -Times 1 -ParameterFilter {
                 $Object -like "*You chose the wrong index*"
             }
         }
@@ -345,7 +345,7 @@ Describe "Get-Extension-From-URL Tests" {
 
         $result = Get-Extension-From-URL -extName 'cache' -version '8.2'
 
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nNo versions found for cache"
         }
         $result.data | Should -Be $null
@@ -358,7 +358,7 @@ Describe "Get-Extension-From-URL Tests" {
 
         $result = Get-Extension-From-URL -extName 'mem' -version '8.2'
 
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nNo versions found for memcache"
         }
         $result.extName | Should -Be 'memcache'

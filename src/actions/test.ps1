@@ -70,6 +70,7 @@ function Import-Pester-Version {
 
 function Get-PowerShell-Info {
     $psInfo = @{
+        Version = $PSVersionTable.PSVersion
         Edition = $PSVersionTable.PSEdition
         Platform = if ($PSVersionTable.Platform) { $PSVersionTable.Platform } else { 'Windows' }
         Path = $PSHome
@@ -85,10 +86,11 @@ function Get-PowerShell-Info {
 }
 
 function Write-PowerShell-Info {
-    $psInfo = Get-PowerShell-Info
+    param ($psInfo)
+
     Write-Host -Object "`nPowerShell Info:" -ForegroundColor Cyan
     Write-Host -Object "  Engine: $($psInfo.Name)" -ForegroundColor Gray
-    Write-Host -Object "  Version: $($PSVersionTable.PSVersion)" -ForegroundColor Gray
+    Write-Host -Object "  Version: $($psInfo.Version)" -ForegroundColor Gray
     Write-Host -Object "  Edition: $($psInfo.Edition)" -ForegroundColor Gray
     Write-Host -Object "  Platform: $($psInfo.Platform)" -ForegroundColor Gray
     Write-Host -Object "  Path: $($psInfo.Path)" -ForegroundColor Gray
@@ -404,12 +406,12 @@ function Run-Tests {
 
     try {
         if ($pesterVersion) {
-            $versionLoaded = Use-Pester-Version -version $pesterVersion
+            $pesterInfo = Use-Pester-Version -version $pesterVersion
         } else {
-            $versionLoaded = Use-Latest-Pester-Version
+            $pesterInfo = Use-Latest-Pester-Version
         }
 
-        if (-not $versionLoaded) {
+        if (-not $pesterInfo) {
             Write-Host -Object "`nNo Pester module found. Please install Pester first." -ForegroundColor DarkYellow
             return -1
         }
@@ -429,7 +431,8 @@ function Run-Tests {
         $root = Get-PVMRootDirectory
         $testsMap = if ($options.coverage) { Get-Tests-Map -root $root } else { $null }
 
-        Write-PowerShell-Info
+        $psInfo = Get-PowerShell-Info
+        Write-PowerShell-Info -psInfo $psInfo
         Write-Host -Object "`nRunning tests with verbosity: $($options.verbosity)" -ForegroundColor Cyan
 
         $testSummary = $tests | ForEach-Object {
@@ -439,8 +442,13 @@ function Run-Tests {
         $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
 
         Write-Host -Object "`n----------------------------------------------------------------"
-        Write-Host -Object "`n`nTest Results Summary:"
-        Write-Host -Object " Coverage : $($options.target)% | Verbosity: $($options.verbosity)`n"
+        Write-Host -Object "`n`nTests Settings:"
+        Write-Host -Object " PowerShell Engine ..... $($psInfo.Name)"
+        Write-Host -Object " PowerShell ............ $($psInfo.Version)"
+        Write-Host -Object " Pester ................ $($pesterInfo.Version)"
+        Write-Host -Object "`nTest Results Summary:"
+        Write-Host -Object " Coverage .............. $($options.target)%"
+        Write-Host -Object " Verbosity ............. $($options.verbosity)`n"
 
         if ($testSummary.Count -eq 0) {
             Write-Host -Object 'No tests found.' -ForegroundColor DarkYellow

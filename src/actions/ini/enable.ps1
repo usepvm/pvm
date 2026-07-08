@@ -79,7 +79,7 @@ function Enable-IniExtension {
                 continue
             }
 
-            Backup-IniFile -iniPath $iniPath
+            $null = Backup-IniFile -iniPath $iniPath
             Set-Content -Path $iniPath $newLines -Encoding UTF8
 
             $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }

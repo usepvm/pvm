@@ -74,7 +74,7 @@ function Set-IniSetting {
 
             $newLine = if ($enable) { "$($selected.name) = $inputValue" } else { ";$($selected.name) = $inputValue" }
 
-            Backup-IniFile -iniPath $iniPath
+            $null = Backup-IniFile -iniPath $iniPath
 
             $lines = Get-Content -Path $iniPath
             $lines[$selected.lineNo] = $newLine

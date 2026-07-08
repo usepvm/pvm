@@ -7,6 +7,7 @@ function Backup-IniFile {
         if (Is-File-Not-Exists -path $backup) {
             Copy-Item -Path $iniPath $backup
         }
+        return 0
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to backup ini file"; exception = $_ }
         return -1
@@ -18,7 +19,7 @@ function Get-All-PHPExtensionsStatus {
 
     $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*)\2\s*(;.*)?$"
     $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*)\2\s*(;.*)?$"
-    Backup-IniFile -iniPath $iniPath
+    $null = Backup-IniFile -iniPath $iniPath
     $lines = Get-Content -Path $iniPath
 
     $matchesList = @()

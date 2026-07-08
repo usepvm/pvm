@@ -579,6 +579,174 @@ Describe "Invoke-Test Tests" {
         $result = Invoke-Test -arguments @('-i', '--unknown')
         $result | Should -Be 0
     }
+
+    Context "Pester version parsing" {
+        It "Should parse --pester argument correctly" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+
+            $result = Invoke-Test -arguments @('--pester=5.5')
+
+            $result | Should -Be '5.5'
+        }
+
+        It "Should pass null when no --pester argument" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+
+            $result = Invoke-Test -arguments @()
+
+            $result | Should -Be $null
+        }
+
+        It "Should pass 'latest' when --pester=latest is specified" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+
+            $result = Invoke-Test -arguments @('--pester=latest')
+
+            $result | Should -Be 'latest'
+        }
+
+        It "Should pass pesterVersion to Prepare-Tests" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+
+            $result = Invoke-Test -arguments @('--pester=5.6.0')
+
+            Should -Invoke Prepare-Tests -ParameterFilter {
+                $pesterVersion -eq '5.6.0'
+            } -Times 1
+        }
+
+        It "Should pass null pesterVersion when no --pester argument" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+
+            $result = Invoke-Test -arguments @()
+
+            Should -Invoke Prepare-Tests -ParameterFilter {
+                $pesterVersion -eq $null
+            } -Times 1
+        }
+    }
+
+    Context "Test argument parsing" {
+        It "Should filter out --pester argument from test names" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $testsNames }
+
+            $result = Invoke-Test -arguments @('TestFile.ps1', '--pester=5.5')
+
+            $result | Should -Not -Contain '--pester=5.5'
+        }
+
+        It "Should parse --exclude argument correctly" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $exclude }
+
+            $result = Invoke-Test -arguments @('--exclude=TestFile1.ps1,TestFile2.ps1')
+
+            $result | Should -Be @('TestFile1.ps1', 'TestFile2.ps1')
+        }
+
+        It "Should parse --sort argument correctly" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+
+            $result = Invoke-Test -arguments @('--sort=coverage')
+
+            $result.sortBy | Should -Be 'coverage'
+        }
+
+        It "Should parse --group argument correctly" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+
+            $result = Invoke-Test -arguments @('--group=folder')
+
+            $result.groupBy | Should -Be 'folder'
+        }
+
+        It "Should parse --tag argument correctly" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+
+            $result = Invoke-Test -arguments @('--tag=unit')
+
+            $result.tag | Should -Be 'unit'
+        }
+
+        It "Should parse --coverage argument with custom target" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+
+            $result = Invoke-Test -arguments @('--coverage=85')
+
+            $result.coverage | Should -Be $true
+            $result.target | Should -Be 85
+        }
+
+        It "Should parse --coverage argument without target (default 75)" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+
+            $result = Invoke-Test -arguments @('--coverage')
+
+            $result.coverage | Should -Be $true
+            $result.target | Should -Be 75
+        }
+
+        It "Should parse --verbosity argument correctly" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+
+            $result = Invoke-Test -arguments @('--verbosity=detailed')
+
+            $result.verbosity | Should -Be 'detailed'
+        }
+
+        It "Should filter out flag arguments from test names" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $testsNames }
+
+            $result = Invoke-Test -arguments @('TestFile.ps1', '--unknown', '-x')
+
+            $result | Should -Be @('TestFile.ps1')
+        }
+
+        It "Should pass non-flag arguments as test names" {
+            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $testsNames }
+
+            $result = Invoke-Test -arguments @('TestFile1.ps1', 'TestFile2.ps1')
+
+            $result | Should -Be @('TestFile1.ps1', 'TestFile2.ps1')
+        }
+    }
+
+    Context "Coverage validation" {
+        It "Should return -1 when coverage target is over 100" {
+            $result = Invoke-Test -arguments @('--coverage=150')
+
+            $result | Should -Be -1
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*Invalid coverage value*' -and $ForegroundColor -eq 'Yellow'
+            }
+        }
+
+        It "Should return -1 when coverage target is negative" {
+            $result = Invoke-Test -arguments @('--coverage=-10')
+
+            $result | Should -Be -1
+
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*Invalid coverage value*' -and $ForegroundColor -eq 'Yellow'
+            }
+        }
+
+        It "Should accept coverage target of 0" {
+            Mock Prepare-Tests { 0 }
+
+            $result = Invoke-Test -arguments @('--coverage=0')
+
+            $result | Should -Be 0
+        }
+
+        It "Should accept coverage target of 100" {
+            Mock Prepare-Tests { 0 }
+
+            $result = Invoke-Test -arguments @('--coverage=100')
+
+            $result | Should -Be 0
+        }
+    }
 }
 
 Describe "Invoke-Profile Tests" {

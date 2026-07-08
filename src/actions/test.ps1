@@ -11,58 +11,51 @@ function Use-Pester-Version {
         return $false
     }
 
-    if ([string]::IsNullOrWhiteSpace($version) -or $version -eq 'latest') {
-        $latestVersion = $availableVersions | Sort-Object Version -Descending | Select-Object -First 1
-        Import-Module Pester -RequiredVersion $latestVersion.Version -Force
-        $pesterVersion = Get-Module -Name Pester
-        Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
-        return $pesterVersion
-    }
+    $targetVersion = Find-Pester-Version -version $version -availableVersions $availableVersions
 
-    if ($version -match '^\d+\.\d+\.\d+$') {
-        $targetVersion = $availableVersions | Where-Object { $_.Version -eq $version }
-        if (-not $targetVersion) {
-            Write-Host "Pester version $version not found. Available versions: $($availableVersions.Version -join ', ')" -ForegroundColor Red
-            return $false
-        }
-        Import-Module Pester -RequiredVersion $version -Force
-        $pesterVersion = Get-Module -Name Pester
-        Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
-        return $pesterVersion
-    }
-
-    if ($version -match '^\d+\.\d+') {
-        $targetVersion = $availableVersions | Where-Object { $_.Version -like "$version.*" } | Sort-Object Version -Descending | Select-Object -First 1
-        if (-not $targetVersion) {
-            Write-Host "No Pester version matching $version.* found. Available versions: $($availableVersions.Version -join ', ')" -ForegroundColor Red
-            return $false
-        }
-        Import-Module Pester -RequiredVersion $targetVersion.Version -Force
-        $pesterVersion = Get-Module -Name Pester
-        Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
-        return $pesterVersion
-    }
-
-    if ($version -match '^\d+$') {
-        $targetVersion = $availableVersions | Where-Object { $_.Version.Major -eq [int]$version } | Sort-Object Version -Descending | Select-Object -First 1
-        if (-not $targetVersion) {
-            Write-Host "No Pester version with major $version found. Available versions: $($availableVersions.Version -join ', ')" -ForegroundColor Red
-            return $false
-        }
-        Import-Module Pester -RequiredVersion $targetVersion.Version -Force
-        $pesterVersion = Get-Module -Name Pester
-        Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
-        return $pesterVersion
-    }
-
-    $targetVersion = $availableVersions | Where-Object { $_.Version -le $version } | Sort-Object Version -Descending | Select-Object -First 1
     if (-not $targetVersion) {
-        Write-Host "No Pester version <= $version found. Available versions: $($availableVersions.Version -join ', ')" -ForegroundColor Red
+        $availableList = $availableVersions.Version -join ', '
+        Write-Host "Pester version '$version' not found. Available versions: $availableList" -ForegroundColor Red
         return $false
     }
+
+    return Import-Pester-Version -targetVersion $targetVersion
+}
+
+function Find-Pester-Version {
+    param ($version, $availableVersions)
+
+    if ([string]::IsNullOrWhiteSpace($version) -or $version -eq 'latest') {
+        return $availableVersions | Sort-Object Version -Descending | Select-Object -First 1
+    }
+
+    switch -Regex ($version) {
+        '^\d+\.\d+\.\d+$' {
+            return $availableVersions | Where-Object { $_.Version -eq $version }
+        }
+        '^\d+\.\d+$' {
+            return $availableVersions | Where-Object { $_.Version -like "$version.*" } | Sort-Object Version -Descending | Select-Object -First 1
+        }
+        '^\d+$' {
+            return $availableVersions | Where-Object { $_.Version.Major -eq [int]$version } | Sort-Object Version -Descending | Select-Object -First 1
+        }
+        default {
+            return $availableVersions | Where-Object { $_.Version -le $version } | Sort-Object Version -Descending | Select-Object -First 1
+        }
+    }
+}
+
+function Import-Pester-Version {
+    param ($targetVersion)
+
     Import-Module Pester -RequiredVersion $targetVersion.Version -Force
     $pesterVersion = Get-Module -Name Pester
     Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
+
+    Write-Host -Object "`nPester Info:" -ForegroundColor Cyan
+    Write-Host -Object "  Version: $($pesterVersion.Version)" -ForegroundColor Gray
+    Write-Host -Object "  Path: $($pesterVersion.Path)" -ForegroundColor Gray
+
     return $pesterVersion
 }
 
@@ -401,8 +394,8 @@ function Run-Tests {
     param ($tests = $null, $options = $null, $pesterVersion = $null)
 
     try {
-        if ($PesterVersion) {
-            $versionLoaded = Use-Pester-Version -version $PesterVersion
+        if ($pesterVersion) {
+            $versionLoaded = Use-Pester-Version -version $pesterVersion
             if (-not $versionLoaded) {
                 return -1
             }

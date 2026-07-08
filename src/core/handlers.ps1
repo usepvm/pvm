@@ -176,31 +176,6 @@ function Invoke-Ini {
 function Invoke-Test {
     param ($arguments)
 
-    $pesterVersion = ($arguments | Where-Object { $_ -match '^--pester=(.+)$' }) -replace '^--pester=', ''
-
-    $pesterInstalled = if ($pesterVersion -and $pesterVersion -ne 'latest') {
-        Get-Module -Name Pester -ListAvailable | Where-Object { $_.Version -like "$pesterVersion*" }
-    } else {
-        Get-Module -Name Pester -ListAvailable
-    }
-
-    if (-not $pesterInstalled) {
-        Write-Host -Object "`nInstalling Pester..." -ForegroundColor Yellow
-        if ($pesterVersion) {
-            if ($pesterVersion -eq 'latest') {
-                Install-Module -Name Pester -Force -SkipPublisherCheck
-            } elseif ($pesterVersion -match '^\d+\.\d+\.\d+$') {
-                Install-Module -Name Pester -RequiredVersion $pesterVersion -Force -SkipPublisherCheck
-            } elseif ($pesterVersion -match '^\d+\.\d+') {
-                Install-Module -Name Pester -MaximumVersion "$pesterVersion.99" -MinimumVersion "$pesterVersion.0" -Force -SkipPublisherCheck
-            } else {
-                Install-Module -Name Pester -MinimumVersion "$pesterVersion.0" -MaximumVersion "$pesterVersion.99999" -Force -SkipPublisherCheck
-            }
-        } else {
-            Install-Module -Name Pester -Force -SkipPublisherCheck
-        }
-    }
-
     $options = @{
         exclude   = $null
         verbosity = 'Normal'
@@ -211,6 +186,7 @@ function Invoke-Test {
         groupBy   = $null
     }
     $exclude = $null
+    $pesterVersion = $null
     $testsNames = $arguments | Where-Object {
         if (($_ -join (',') -match '^--exclude=(.+)$')) {
             $exclude = $Matches[1] -split ','
@@ -240,6 +216,7 @@ function Invoke-Test {
             return $false
         }
         if ($_ -match '^--pester=(.+)$') {
+            $pesterVersion = $Matches[1]
             return $false
         }
         if ($_ -match '^-{1,2}') {

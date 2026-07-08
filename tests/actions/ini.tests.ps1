@@ -225,7 +225,14 @@ extension=php_curl.dll
 
     Context "restore action" {
         It "Restores from backup" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Is-File-Not-Exists { return $false } -ParameterFilter { $Path -eq "$phpVersionPath\php.ini" }
+
+            $script:callCount = 0
+            Mock Is-File-Not-Exists {
+                $script:callCount++
+                if ($script:callCount -eq 1) { return $true }
+                else { return $false }
+            } -ParameterFilter { $Path -eq "$phpVersionPath\php.ini.bak" }
             # Create a backup first
             $null = Backup-IniFile -iniPath "$phpVersionPath\php.ini"
             $result = Invoke-IniAction -action 'restore' -params @()

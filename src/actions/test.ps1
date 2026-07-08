@@ -22,6 +22,15 @@ function Use-Pester-Version {
     return Import-Pester-Version -targetVersion $targetVersion
 }
 
+function Use-Latest-Pester-Version {
+    Write-Host "`nChecking for latest Pester version" -ForegroundColor Yellow
+
+    $availableVersions = Get-Module -Name Pester -ListAvailable
+    $targetVersion = Find-Pester-Version -version 'latest' -availableVersions $availableVersions
+
+    return Import-Pester-Version -targetVersion $targetVersion
+}
+
 function Find-Pester-Version {
     param ($version, $availableVersions)
 
@@ -396,9 +405,13 @@ function Run-Tests {
     try {
         if ($pesterVersion) {
             $versionLoaded = Use-Pester-Version -version $pesterVersion
-            if (-not $versionLoaded) {
-                return -1
-            }
+        } else {
+            $versionLoaded = Use-Latest-Pester-Version
+        }
+
+        if (-not $versionLoaded) {
+            Write-Host -Object "`nNo Pester module found. Please install Pester first." -ForegroundColor DarkYellow
+            return -1
         }
 
         if (-not $options) {

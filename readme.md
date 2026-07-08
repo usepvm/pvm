@@ -414,7 +414,7 @@ Get-Module -ListAvailable Pester
 By default, pvm test auto-detects pwsh if available, falling back to powershell. Use --shell=powershell or --shell=pwsh to force a specific engine — useful for verifying PS 5.1/7 cross-version compatibility.
 
 ```sh
-pvm test [files = (files inside the tests/ directory)] [--exclude=files] [--coverage[=<number>]] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=<tag>] [--sort=[coverage|duration|file|-coverage|-duration|-file]] [--group=[coverage|folder]] [--shell=[powershell|pwsh]]
+pvm test [files = (files inside the tests/ directory)] [--exclude=files] [--coverage[=<number>]] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=<tag>] [--sort=[coverage|duration|file|-coverage|-duration|-file]] [--group=[coverage|folder]] [--shell=[powershell|pwsh]] [--pester=<version>]
 
 # Examples:
 pvm test # .............................. Runs all tests with Normal (default) verbosity.
@@ -427,8 +427,9 @@ pvm test --sort=duration # .............. Runs all tests and sorts results by du
 pvm test --sort=-duration # ............. Runs all tests and sorts results by duration (descending)
 pvm test --tag=myTag #................... Runs only runs tests with tag "myTag".
 pvm test --group=folder # ............... Runs all tests and groups results by folder
-pvm test --shell=powershell # ................. Forces Windows PowerShell (powershell.exe) instead of auto-detected pwsh.
-pvm test --shell=pwsh # ....................... Forces PowerShell 7+ (pwsh.exe).
+pvm test --shell=powershell # ........... Forces Windows PowerShell (powershell.exe) instead of auto-detected pwsh.
+pvm test --shell=pwsh # ................. Forces PowerShell 7+ (pwsh.exe).
+pvm test --pester=5.7.0 # ............... Forces Pester 5.7.0.
 ```
 
 ## Contributing

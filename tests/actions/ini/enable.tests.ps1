@@ -45,7 +45,7 @@ AfterAll {
 
 Describe "Enable-IniExtension" {
     BeforeEach {
-        Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
+        Mock Is-Directory-Exists -ParameterFilter { $path -eq $extDirectory } -MockWith { return $true }
         Reset-Ini-Content
         Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
     }
@@ -77,7 +77,7 @@ Describe "Enable-IniExtension" {
         Mock Set-Content { }
 
         Enable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
-        Assert-MockCalled Set-Content -Times 0
+        Should -Invoke Set-Content -Times 0
     }
 
     It "Returns 0 when line does not match for modification (file already has correct state)" {

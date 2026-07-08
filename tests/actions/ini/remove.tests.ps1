@@ -66,7 +66,7 @@ Describe "Remove-Extension-From-Ini-File" {
         $result = Remove-Extension-From-Ini-File -iniPath $testIniPath -extensionObject $extension
 
         $result | Should -Be -1
-        Assert-MockCalled Log-Data -Times 1
+        Should -Invoke Log-Data -Times 1
     }
 }
 
@@ -127,8 +127,8 @@ Describe "Remove-Extension-From-Ext-Directory" {
         $result = Remove-Extension-From-Ext-Directory -extensionDirectory $extDirectory -extensionObject $extensionObject
 
         $result | Should -Be -1
-        Assert-MockCalled Remove-Item -Times 1
-        Assert-MockCalled Log-Data -Times 1
+        Should -Invoke Remove-Item -Times 1
+        Should -Invoke Log-Data -Times 1
     }
 }
 
@@ -152,7 +152,7 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @()
 
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nPlease provide at least one extension name to uninstall"
         }
     }
@@ -163,7 +163,7 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
 
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -like "*Extensions directory not found*"
         }
     }
@@ -174,7 +174,7 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('nonexistent')
 
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -like "*nonexistent*"
         }
     }
@@ -215,7 +215,7 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
 
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -like "*Failed to remove*ext directory*"
         }
     }
@@ -239,7 +239,7 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
 
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -like "*Failed to remove*php.ini*"
         }
     }
@@ -263,7 +263,7 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
 
         $result | Should -Be 0
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq ' Uninstalled'
         }
     }
@@ -288,8 +288,8 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
 
         $result | Should -Be 0
-        Assert-MockCalled Remove-Extension-From-Ini-File -Times 0
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Remove-Extension-From-Ini-File -Times 0
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq ' Uninstalled'
         }
     }
@@ -319,7 +319,7 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
 
         $result | Should -Be -1
-        Assert-MockCalled Log-Data -Times 1
+        Should -Invoke Log-Data -Times 1
     }
 
     It "Skips extension removal for non-existent extension" {
@@ -386,7 +386,7 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('sql')
 
         $result | Should -Be 0
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq ' Uninstalled'
         }
     }

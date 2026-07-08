@@ -92,7 +92,7 @@ Describe "Is-PVM-Setup" {
             $result = Is-PVM-Setup
             $result | Should -Be $false
 
-            Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter {
+            Should -Invoke Log-Data -Exactly 1 -ParameterFilter {
                 $data.header -eq 'Is-PVM-Setup - Failed to check if PVM is set up'
             }
         }

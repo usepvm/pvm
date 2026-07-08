@@ -34,20 +34,20 @@ Describe "Show-Usage Tests" {
         $PVMConfig.version = '2.0'
         Show-Usage -arguments @()
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Running version : 2.0*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Running version : 2.0*' }
     }
 
     It "Should display usage header" {
         Show-Usage -arguments @()
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Usage:*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Usage:*' }
     }
 
     It "Should display all available commands with descriptions" {
         Show-Usage -arguments @()
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm setup*Setup the environment*' }
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm current*Display active version*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*pvm setup*Setup the environment*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*pvm current*Display active version*' }
     }
 
     It "Uses fallback maxDescLength when window is small" {
@@ -61,8 +61,8 @@ Describe "Show-Usage Tests" {
 
         Show-Usage -arguments @()
 
-        Assert-MockCalled Get-Console-Width -Times 1
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm testcmd*' }
+        Should -Invoke Get-Console-Width -Times 1
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*pvm testcmd*' }
     }
 
     It "Breaks mid-word when no space within maxDescLength" {
@@ -77,7 +77,7 @@ Describe "Show-Usage Tests" {
 
         Show-Usage -arguments @()
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*pvm nospace*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*pvm nospace*' }
     }
 
     It "Writes additional description lines when wrapping occurs" {
@@ -94,7 +94,7 @@ Describe "Show-Usage Tests" {
         Show-Usage -arguments @()
 
         # Ensure additional lines were written (calls beyond the initial line)
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*multiline*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*multiline*' }
     }
 }
 
@@ -107,7 +107,7 @@ Describe "Show-PVM-Version Function Tests" {
     It "Should display version with proper formatting" {
         Show-PVM-Version
 
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nPVM version 1.2.3"
         }
     }
@@ -119,7 +119,7 @@ Describe "Show-PVM-Version Function Tests" {
             $PVMConfig.version = $version
             Show-PVM-Version
 
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -eq "`nPVM version $version"
             }
         }
@@ -129,7 +129,7 @@ Describe "Show-PVM-Version Function Tests" {
         $PVMConfig.version = '1.0.0-RC1+build.123'
         Show-PVM-Version
 
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nPVM version 1.0.0-RC1+build.123"
         }
     }
@@ -244,8 +244,8 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command $null -arguments @('-v')
 
             $result | Should -Be 0
-            Assert-MockCalled Resolve-FlagCommand -Times 1
-            Assert-MockCalled Get-Actions -Times 1
+            Should -Invoke Resolve-FlagCommand -Times 1
+            Should -Invoke Get-Actions -Times 1
         }
 
         It "Should show usage and return 0 when unknown flag is present" {
@@ -254,8 +254,8 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command $null -arguments @('--unknown')
 
             $result | Should -Be 0
-            Assert-MockCalled Resolve-FlagCommand -Times 1
-            Assert-MockCalled Show-Usage -Times 1
+            Should -Invoke Resolve-FlagCommand -Times 1
+            Should -Invoke Show-Usage -Times 1
         }
     }
 
@@ -264,14 +264,14 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command $null -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Show-Usage -Times 1
+            Should -Invoke Show-Usage -Times 1
         }
 
         It "Should show usage and return 0 when command is empty string" {
             $result = Start-PVM -command '' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Show-Usage -Times 1
+            Should -Invoke Show-Usage -Times 1
         }
 
         It "Should show usage and return 0 when command is whitespace" {
@@ -279,17 +279,17 @@ Describe "Start-PVM Function Tests" {
 
             $result = Start-PVM -command '   ' -arguments @()
             $result | Should -Be 0
-            Assert-MockCalled Show-Usage -Times 1
+            Should -Invoke Show-Usage -Times 1
         }
 
         It "Should show usage and return 0 when command not in actions" {
             $result = Start-PVM -command 'invalid-command' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Show-Usage -Times 1
-            Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Resolve-Alias -Times 1
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            Should -Invoke Show-Usage -Times 1
+            Should -Invoke Get-Actions -Times 1
+            Should -Invoke Resolve-Alias -Times 1
+            Should -Invoke Write-Host -Times 1 -ParameterFilter {
                 $Object -eq "`n'invalid-command' is not a valid command."
             }
         }
@@ -347,17 +347,17 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Show-Usage -Times 0
-            Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Resolve-Alias -Times 1
+            Should -Invoke Show-Usage -Times 0
+            Should -Invoke Get-Actions -Times 1
+            Should -Invoke Resolve-Alias -Times 1
         }
 
         It "Should handle alias conversion correctly" {
             $result = Start-PVM -command 'i' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Resolve-Alias -Times 1 -ParameterFilter { $alias -eq 'i' }
-            Assert-MockCalled Show-Usage -Times 0
+            Should -Invoke Resolve-Alias -Times 1 -ParameterFilter { $alias -eq 'i' }
+            Should -Invoke Show-Usage -Times 0
         }
 
         It "Should handle case where Get-Actions returns empty hashtable" {
@@ -366,7 +366,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Show-Usage -Times 1
+            Should -Invoke Show-Usage -Times 1
         }
     }
 
@@ -378,7 +378,7 @@ Describe "Start-PVM Function Tests" {
 
             $result | Should -Be 0
             # The setup check condition should not evaluate Is-PVM-Setup for setup command
-            Assert-MockCalled Is-PVM-Setup -Times 0
+            Should -Invoke Is-PVM-Setup -Times 0
         }
 
         It "Should require setup when PVM is not setup for non-setup command" {
@@ -387,8 +387,8 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install' -arguments @()
 
             $result | Should -Be -1
-            Assert-MockCalled Is-PVM-Setup -Times 1
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            Should -Invoke Is-PVM-Setup -Times 1
+            Should -Invoke Write-Host -Times 1 -ParameterFilter {
                 $Object -eq "`nPVM is not setup. Please run 'pvm setup' first."
             }
         }
@@ -399,8 +399,8 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Is-PVM-Setup -Times 1
-            Assert-MockCalled Write-Host -Times 0 -ParameterFilter {
+            Should -Invoke Is-PVM-Setup -Times 1
+            Should -Invoke Write-Host -Times 0 -ParameterFilter {
                 $Object -like '*PVM is not setup*'
             }
         }
@@ -419,7 +419,7 @@ Describe "Start-PVM Function Tests" {
                 $result = Start-PVM -command $op -arguments @()
 
                 $result | Should -Be -1
-                Assert-MockCalled Write-Host -ParameterFilter {
+                Should -Invoke Write-Host -ParameterFilter {
                     $Object -eq "`nPVM is not setup. Please run 'pvm setup' first."
                 }
             }
@@ -478,7 +478,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'test' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Test-Path -Times 1
+            Should -Invoke Test-Path -Times 1
         }
     }
 
@@ -495,8 +495,8 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install' -arguments @()
 
             $result | Should -Be -1
-            Assert-MockCalled Log-Data -Times 1
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            Should -Invoke Log-Data -Times 1
+            Should -Invoke Write-Host -Times 1 -ParameterFilter {
                 $Object -eq "`nCommand canceled or failed to elevate privileges." -and
                 $ForegroundColor -eq 'DarkYellow'
             }
@@ -514,7 +514,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install' -arguments @()
 
             $result | Should -Be -1
-            Assert-MockCalled Log-Data -Times 1 -ParameterFilter {
+            Should -Invoke Log-Data -Times 1 -ParameterFilter {
                 $data.header -eq "Start-PVM - An error occurred during command 'install'" -and
                 $data.exception.Exception.Message -like '*Detailed test exception*'
             }
@@ -540,7 +540,7 @@ Describe "Start-PVM Function Tests" {
                 $result = Start-PVM -command 'test' -arguments @()
 
                 $result | Should -Be -1
-                Assert-MockCalled Log-Data -ParameterFilter {
+                Should -Invoke Log-Data -ParameterFilter {
                     $data.exception.Exception.Message -like "*$($exception.Message)*"
                 }
             }
@@ -552,7 +552,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install' -arguments @()
 
             $result | Should -Be -1
-            Assert-MockCalled Log-Data -Times 1 -ParameterFilter {
+            Should -Invoke Log-Data -Times 1 -ParameterFilter {
                 $data.exception.Exception.Message -like '*Get-Actions failed*'
             }
         }
@@ -563,7 +563,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install' -arguments @()
 
             $result | Should -Be -1
-            Assert-MockCalled Log-Data -Times 1 -ParameterFilter {
+            Should -Invoke Log-Data -Times 1 -ParameterFilter {
                 $data.exception.Exception.Message -like '*Alias handler failed*'
             }
         }
@@ -574,7 +574,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install' -arguments @()
 
             $result | Should -Be -1
-            Assert-MockCalled Log-Data -Times 1 -ParameterFilter {
+            Should -Invoke Log-Data -Times 1 -ParameterFilter {
                 $data.exception.Exception.Message -like '*Setup check failed*'
             }
         }
@@ -592,8 +592,8 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install' -arguments @()
 
             $result | Should -Be -1
-            Assert-MockCalled Log-Data -Times 1
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            Should -Invoke Log-Data -Times 1
+            Should -Invoke Write-Host -Times 1 -ParameterFilter {
                 $ForegroundColor -eq 'DarkYellow'
             }
         }
@@ -604,14 +604,14 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'setup' -arguments $null
 
             $result | Should -Be 0
-            Assert-MockCalled Get-Actions -Times 1 -ParameterFilter { $arguments.Count -eq 0 }
+            Should -Invoke Get-Actions -Times 1 -ParameterFilter { $arguments.Count -eq 0 }
         }
 
         It "Should handle empty arguments array" {
             $result = Start-PVM -command 'setup' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Get-Actions -Times 1 -ParameterFilter { $arguments.Count -eq 0 }
+            Should -Invoke Get-Actions -Times 1 -ParameterFilter { $arguments.Count -eq 0 }
         }
 
         It "Should handle large arguments array" {
@@ -620,7 +620,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'setup' -arguments $largeArgs
 
             $result | Should -Be 0
-            Assert-MockCalled Get-Actions -Times 1 -ParameterFilter { $arguments.Count -eq 100 }
+            Should -Invoke Get-Actions -Times 1 -ParameterFilter { $arguments.Count -eq 100 }
         }
 
         It "Should handle multiple commands through alias handler" {
@@ -651,14 +651,14 @@ Describe "Start-PVM Function Tests" {
 
                 $result = Start-PVM -command $case.input -arguments @()
 
-                Assert-MockCalled Resolve-Alias -ParameterFilter { $alias -eq $case.input }
+                Should -Invoke Resolve-Alias -ParameterFilter { $alias -eq $case.input }
 
                 if ($case.expected -in @('install', 'use', 'list')) {
                     $result | Should -BeGreaterThan 0
-                    Assert-MockCalled Show-Usage -Times 0
+                    Should -Invoke Show-Usage -Times 0
                 } else {
                     $result | Should -Be 0
-                    Assert-MockCalled Show-Usage -Times 1
+                    Should -Invoke Show-Usage -Times 1
                 }
             }
         }
@@ -668,7 +668,7 @@ Describe "Start-PVM Function Tests" {
 
             Start-PVM -command 'setup' -arguments $testArgs
 
-            Assert-MockCalled Get-Actions -Times 1 -ParameterFilter {
+            Should -Invoke Get-Actions -Times 1 -ParameterFilter {
                 $arguments.Count -eq 4 -and
                 $arguments[0] -eq 'arg1' -and
                 $arguments[1] -eq '--flag' -and
@@ -695,7 +695,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'ini:get' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Invoke-Ini -Times 1
+            Should -Invoke Invoke-Ini -Times 1
         }
 
         It "Should execute non nested command" {
@@ -703,7 +703,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install:8.2.0' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Show-Usage -Times 1
+            Should -Invoke Show-Usage -Times 1
         }
     }
 
@@ -719,12 +719,12 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install' -arguments @('8.2.0')
 
             $result | Should -Be 0
-            Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Resolve-Alias -Times 1
-            Assert-MockCalled Is-PVM-Setup -Times 1
-            Assert-MockCalled Show-Usage -Times 0
-            Assert-MockCalled Show-PVM-Version -Times 0
-            Assert-MockCalled Log-Data -Times 0
+            Should -Invoke Get-Actions -Times 1
+            Should -Invoke Resolve-Alias -Times 1
+            Should -Invoke Is-PVM-Setup -Times 1
+            Should -Invoke Show-Usage -Times 0
+            Should -Invoke Show-PVM-Version -Times 0
+            Should -Invoke Log-Data -Times 0
         }
 
         It "Should handle complete setup workflow" {
@@ -739,10 +739,10 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'setup' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Resolve-Alias -Times 1
-            Assert-MockCalled Is-PVM-Setup -Times 0
-            Assert-MockCalled Show-Usage -Times 0
+            Should -Invoke Get-Actions -Times 1
+            Should -Invoke Resolve-Alias -Times 1
+            Should -Invoke Is-PVM-Setup -Times 0
+            Should -Invoke Show-Usage -Times 0
         }
 
         It "Should handle complete error workflow" {
@@ -760,11 +760,11 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'install' -arguments @('8.2.0')
 
             $result | Should -Be -1
-            Assert-MockCalled Get-Actions -Times 1
-            Assert-MockCalled Resolve-Alias -Times 1
-            Assert-MockCalled Is-PVM-Setup -Times 1
-            Assert-MockCalled Log-Data -Times 1
-            Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+            Should -Invoke Get-Actions -Times 1
+            Should -Invoke Resolve-Alias -Times 1
+            Should -Invoke Is-PVM-Setup -Times 1
+            Should -Invoke Log-Data -Times 1
+            Should -Invoke Write-Host -Times 1 -ParameterFilter {
                 $ForegroundColor -eq 'DarkYellow'
             }
         }

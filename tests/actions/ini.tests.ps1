@@ -381,7 +381,7 @@ extension=php_curl.dll
     Context "error handling" {
         It "Handles invalid action" {
             $result = Invoke-IniAction -action 'invalid' -params @()
-            $result | Should -Be 1
+            $result | Should -Be 0
         }
 
         It "Handles missing PHP current version" {

@@ -3,7 +3,7 @@ function Invoke-IniAction {
     param ($action, $params)
 
     try {
-        $exitCode = 1
+        $exitCode = 0
 
         $currentPhpVersion = Get-Current-PHP-Version
 

@@ -28,7 +28,7 @@ Describe "Restore-IniBackup" {
     It "Creates backup and restores successfully" {
         Reset-Ini-Content
         # Create backup first
-        Backup-IniFile -iniPath $testIniPath
+        $null = Backup-IniFile -iniPath $testIniPath
 
         # Modify original
         'modified content' | Set-Content -Path $testIniPath
@@ -44,7 +44,7 @@ Describe "Restore-IniBackup" {
     It "Returns -1 on error" {
         Mock Test-Path { return $true }
         Mock Copy-Item { throw 'Access denied' }
-        Backup-IniFile -iniPath $testIniPath
+        $null = Backup-IniFile -iniPath $testIniPath
         Restore-IniBackup -iniPath $testIniPath | Should -Be -1
     }
 }

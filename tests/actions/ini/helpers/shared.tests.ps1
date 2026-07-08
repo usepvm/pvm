@@ -27,23 +27,27 @@ max_execution_time = 30
 Describe "Backup-IniFile" {
     It "Creates a backup when none exists" {
         Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
-        Backup-IniFile -iniPath $testIniPath
+        $result = Backup-IniFile -iniPath $testIniPath
+        $result | Should -Be 0
         Test-Path $testBackupPath | Should -Be $true
         (Get-Content -Path $testBackupPath) | Should -Be (Get-Content -Path $testIniPath)
     }
 
     It "Does not overwrite existing backup" {
         $originalContent = Get-Content -Path $testIniPath
-        Backup-IniFile -iniPath $testIniPath
+        $result = Backup-IniFile -iniPath $testIniPath
+        $result | Should -Be 0
         $newContent = 'modified content'
         $newContent | Set-Content -Path $testIniPath
-        Backup-IniFile -iniPath $testIniPath
+        $result = Backup-IniFile -iniPath $testIniPath
+        $result | Should -Be 0
         (Get-Content -Path $testBackupPath) | Should -Be $originalContent
     }
 
     It "Returns -1 on error" {
         Mock Copy-Item { throw 'Access denied' }
-        Backup-IniFile -iniPath 'invalidpath' | Should -Be -1
+        $result = Backup-IniFile -iniPath 'invalidpath'
+        $result | Should -Be -1
     }
 }
 

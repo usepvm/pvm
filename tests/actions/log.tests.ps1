@@ -222,4 +222,29 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 
         $result | Should -Be -1
     }
+
+    It "filters log entries based on search term" {
+        @'
+--------------------------
+[2025-08-23 14:38:48] Test log entry 1 :
+Message: Issue 1
+Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
++         throw "Issue $limit"
++         ~~~~~~~~~~~~~~~~~~~~
+
+--------------------------
+[2025-08-23 14:38:48] Test log entry 0 :
+Message: Issue 0
+Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
++         throw "Issue $limit"
++         ~~~~~~~~~~~~~~~~~~~~
+'@ | Set-Content -Path $LOG_ERROR_PATH
+
+        Mock Clear-Host {}
+        Mock Get-ConsoleKey { @{ Key = 'Q' } }
+
+        $result = Show-Log -pageSize 1 -term 'entry 1'
+
+        $result | Should -Be 0
+    }
 }

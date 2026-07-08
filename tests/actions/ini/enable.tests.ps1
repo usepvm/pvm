@@ -45,7 +45,7 @@ AfterAll {
 
 Describe "Enable-IniExtension" {
     BeforeEach {
-        Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
+        Mock Is-Directory-Exists -ParameterFilter { $path -eq $extDirectory } -MockWith { return $true }
         Reset-Ini-Content
         Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
     }

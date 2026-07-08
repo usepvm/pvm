@@ -1,6 +1,76 @@
 ﻿
+function Use-Pester-Version {
+    param ($version)
+
+    Write-Host "`nChecking for Pester version: $version" -ForegroundColor Yellow
+
+    $availableVersions = Get-Module -Name Pester -ListAvailable
+
+    if (-not $availableVersions) {
+        Write-Host "No Pester module found. Please install Pester first." -ForegroundColor Red
+        return $false
+    }
+
+    $targetVersion = Find-Pester-Version -version $version -availableVersions $availableVersions
+
+    if (-not $targetVersion) {
+        $availableList = $availableVersions.Version -join ', '
+        Write-Host "Pester version '$version' not found. Available versions: $availableList" -ForegroundColor Red
+        return $false
+    }
+
+    return Import-Pester-Version -targetVersion $targetVersion
+}
+
+function Use-Latest-Pester-Version {
+    Write-Host "`nChecking for latest Pester version" -ForegroundColor Yellow
+
+    $availableVersions = Get-Module -Name Pester -ListAvailable
+    $targetVersion = Find-Pester-Version -version 'latest' -availableVersions $availableVersions
+
+    return Import-Pester-Version -targetVersion $targetVersion
+}
+
+function Find-Pester-Version {
+    param ($version, $availableVersions)
+
+    if ([string]::IsNullOrWhiteSpace($version) -or $version -eq 'latest') {
+        return $availableVersions | Sort-Object Version -Descending | Select-Object -First 1
+    }
+
+    switch -Regex ($version) {
+        '^\d+\.\d+\.\d+$' {
+            return $availableVersions | Where-Object { $_.Version -eq $version }
+        }
+        '^\d+\.\d+$' {
+            return $availableVersions | Where-Object { $_.Version -like "$version.*" } | Sort-Object Version -Descending | Select-Object -First 1
+        }
+        '^\d+$' {
+            return $availableVersions | Where-Object { $_.Version.Major -eq [int]$version } | Sort-Object Version -Descending | Select-Object -First 1
+        }
+        default {
+            return $availableVersions | Where-Object { $_.Version -le $version } | Sort-Object Version -Descending | Select-Object -First 1
+        }
+    }
+}
+
+function Import-Pester-Version {
+    param ($targetVersion)
+
+    Import-Module Pester -RequiredVersion $targetVersion.Version -Force
+    $pesterVersion = Get-Module -Name Pester
+    Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
+
+    Write-Host -Object "`nPester Info:" -ForegroundColor Cyan
+    Write-Host -Object "  Version: $($pesterVersion.Version)" -ForegroundColor Gray
+    Write-Host -Object "  Path: $($pesterVersion.Path)" -ForegroundColor Gray
+
+    return $pesterVersion
+}
+
 function Get-PowerShell-Info {
     $psInfo = @{
+        Version = $PSVersionTable.PSVersion
         Edition = $PSVersionTable.PSEdition
         Platform = if ($PSVersionTable.Platform) { $PSVersionTable.Platform } else { 'Windows' }
         Path = $PSHome
@@ -16,10 +86,11 @@ function Get-PowerShell-Info {
 }
 
 function Write-PowerShell-Info {
-    $psInfo = Get-PowerShell-Info
+    param ($psInfo)
+
     Write-Host -Object "`nPowerShell Info:" -ForegroundColor Cyan
     Write-Host -Object "  Engine: $($psInfo.Name)" -ForegroundColor Gray
-    Write-Host -Object "  Version: $($PSVersionTable.PSVersion)" -ForegroundColor Gray
+    Write-Host -Object "  Version: $($psInfo.Version)" -ForegroundColor Gray
     Write-Host -Object "  Edition: $($psInfo.Edition)" -ForegroundColor Gray
     Write-Host -Object "  Platform: $($psInfo.Platform)" -ForegroundColor Gray
     Write-Host -Object "  Path: $($psInfo.Path)" -ForegroundColor Gray
@@ -173,7 +244,11 @@ function Run-Test-File {
 
         $rawDuration = $testResult.Duration.TotalSeconds
 
-        $coverageRaw = if ($options.coverage) { [double]$testResult.CodeCoverage.CoveragePercent } else { $null }
+        if ($options.coverage) {
+            $coverageRaw = [double]$testResult.CodeCoverage.CoveragePercent
+        } else {
+            $coverageRaw = $null
+        }
         $message = Format-Test-Result-Message -testResult $testResult -rawDuration $rawDuration -coverageRaw $coverageRaw
 
         $testResultData.passedCount = $testResult.PassedCount
@@ -191,7 +266,7 @@ function Run-Test-File {
 }
 
 function Prepare-Tests {
-    param ($testsNames = $null, $options = $null, $exclude = $null)
+    param ($testsNames = $null, $options = $null, $exclude = $null, $pesterVersion = $null)
 
     if ($null -ne $exclude) {
         $testsNames = Get-All-Test-Names -exclude $exclude
@@ -199,7 +274,7 @@ function Prepare-Tests {
 
     $tests = Get-Tests-Files -testsNames $testsNames
 
-    return Run-Tests -tests $tests -options $options
+    return Run-Tests -tests $tests -options $options -pesterVersion $pesterVersion
 }
 
 function Get-Coverage-Group-Name {
@@ -298,7 +373,11 @@ function Write-Tests-Summary {
     $totalDuration = $testSummary | ForEach-Object { $_.testResultData.duration } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
     $totalDurationFormatted = Format-Seconds -totalSeconds $totalDuration
 
-    $color = if ($totalFailedTests -gt 0) { 'DarkYellow' } else { 'DarkGreen' }
+    if ($totalFailedTests -gt 0) {
+        $color = 'DarkYellow'
+    } else {
+        $color = 'DarkGreen'
+    }
     $content = " Files tested : $($testSummary.Count) | Total failed tests: $totalFailedTests"
     if ($totalDurationFormatted -ne -1) {
         $content += " | Total duration: $totalDurationFormatted"
@@ -323,9 +402,20 @@ function Write-Tests-Summary {
 }
 
 function Run-Tests {
-    param ($tests = $null, $options = $null)
+    param ($tests = $null, $options = $null, $pesterVersion = $null)
 
     try {
+        if ($pesterVersion) {
+            $pesterInfo = Use-Pester-Version -version $pesterVersion
+        } else {
+            $pesterInfo = Use-Latest-Pester-Version
+        }
+
+        if (-not $pesterInfo) {
+            Write-Host -Object "`nNo Pester module found. Please install Pester first." -ForegroundColor DarkYellow
+            return -1
+        }
+
         if (-not $options) {
             $options = @{ verbosity = 'Normal'; coverage = $false; tag = $null; target = 75; groupBy = $null }
         }
@@ -341,7 +431,8 @@ function Run-Tests {
         $root = Get-PVMRootDirectory
         $testsMap = if ($options.coverage) { Get-Tests-Map -root $root } else { $null }
 
-        Write-PowerShell-Info
+        $psInfo = Get-PowerShell-Info
+        Write-PowerShell-Info -psInfo $psInfo
         Write-Host -Object "`nRunning tests with verbosity: $($options.verbosity)" -ForegroundColor Cyan
 
         $testSummary = $tests | ForEach-Object {
@@ -351,8 +442,13 @@ function Run-Tests {
         $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
 
         Write-Host -Object "`n----------------------------------------------------------------"
-        Write-Host -Object "`n`nTest Results Summary:"
-        Write-Host -Object " Coverage : $($options.target)% | Verbosity: $($options.verbosity)`n"
+        Write-Host -Object "`n`nTests Settings:"
+        Write-Host -Object " PowerShell Engine ..... $($psInfo.Name)"
+        Write-Host -Object " PowerShell ............ $($psInfo.Version)"
+        Write-Host -Object " Pester ................ $($pesterInfo.Version)"
+        Write-Host -Object "`nTest Results Summary:"
+        Write-Host -Object " Coverage .............. $($options.target)%"
+        Write-Host -Object " Verbosity ............. $($options.verbosity)`n"
 
         if ($testSummary.Count -eq 0) {
             Write-Host -Object 'No tests found.' -ForegroundColor DarkYellow

@@ -347,7 +347,7 @@ opcache.enable = 1
         $code | Should -Be 0
 
         # Verify Set-Content was called to update the ini
-        Assert-MockCalled Set-Content -Times 1 -ParameterFilter { $Path -eq $testIniPath }
+        Should -Invoke Set-Content -Times 1 -ParameterFilter { $Path -eq $testIniPath }
     }
 
     It "Adds xdebug v3 config when no existing xdebug found" {
@@ -368,7 +368,7 @@ opcache.enable = 1
         $code | Should -Be 0
 
         # Verify Add-Content was called for xdebug config
-        Assert-MockCalled Add-Content -Times 1 -ParameterFilter { $Path -eq $testIniPath }
+        Should -Invoke Add-Content -Times 1 -ParameterFilter { $Path -eq $testIniPath }
     }
 
     It "Adds xdebug v2 config when version 2.x is selected" {
@@ -389,7 +389,7 @@ opcache.enable = 1
         $code | Should -Be 0
 
         # Verify Add-Content was called with v2 config
-        Assert-MockCalled Add-Content -Times 1 -ParameterFilter {
+        Should -Invoke Add-Content -Times 1 -ParameterFilter {
             $Path -eq $testIniPath -and $Value -match 'xdebug.remote_enable'
         }
     }
@@ -504,7 +504,7 @@ Describe "Add-Missing-PHPExtension-To-Ini" {
         Mock Test-Path { return $true }
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName 'php_xdebug.dll'
         $result | Should -Be 0
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "- Extension 'php_xdebug.dll' already exists in php.ini"
         }
     }
@@ -519,7 +519,7 @@ extension=php_mbstring.dll
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName 'php_curl.dll'
         $result | Should -Be 0
         (Get-Content -Path $testIniPath) -match 'extension=php_curl.dll' | Should -Be $true
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "- 'php_curl.dll' added successfully."
         }
     }
@@ -565,7 +565,7 @@ extension=php_mbstring.dll
         Mock Test-Path { return $false }
         $result = Add-Missing-PHPExtension-To-Ini -iniPath 'nonexistent.ini' -extFileName 'php_curl.dll'
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nphp.ini file not found: nonexistent.ini"
         }
     }
@@ -577,7 +577,7 @@ extension=php_mbstring.dll
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName 'php_curl.dll'
 
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nExtensions directory not found: $extDirectory"
         }
     }
@@ -590,7 +590,7 @@ extension=php_mbstring.dll
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName 'php_curl.dll'
 
         $result | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nExtension file not found: php_curl.dll"
         }
     }

@@ -58,35 +58,35 @@ Describe "Get-Actions Tests" {
             $actions = Get-Actions -arguments @()
             $actions['help'].action.Invoke()
 
-            Assert-MockCalled Invoke-Help -Times 1
+            Should -Invoke Invoke-Help -Times 1
         }
 
         It "Should execute version action correctly" {
             $actions = Get-Actions -arguments @()
             $actions['version'].action.Invoke()
 
-            Assert-MockCalled Invoke-Version -Times 1
+            Should -Invoke Invoke-Version -Times 1
         }
 
         It "Should execute setup action correctly" {
             $actions = Get-Actions -arguments @()
             $actions['setup'].action.Invoke()
 
-            Assert-MockCalled Invoke-Setup -Times 1
+            Should -Invoke Invoke-Setup -Times 1
         }
 
         It "Should execute repair action correctly" {
             $actions = Get-Actions -arguments @()
             $actions['repair'].action.Invoke()
 
-            Assert-MockCalled Invoke-Repair -Times 1
+            Should -Invoke Invoke-Repair -Times 1
         }
 
         It "Should execute current action correctly" {
             $actions = Get-Actions -arguments @()
             $actions['current'].action.Invoke()
 
-            Assert-MockCalled Invoke-Current -Times 1
+            Should -Invoke Invoke-Current -Times 1
         }
 
         It "Should execute list action with arguments" {
@@ -94,49 +94,49 @@ Describe "Get-Actions Tests" {
             $actions = Get-Actions -arguments $testArgs
             $actions['list'].action.Invoke()
 
-            Assert-MockCalled Invoke-List -Times 1
+            Should -Invoke Invoke-List -Times 1
         }
 
         It "Should execute install action correctly" {
             $actions = Get-Actions -arguments @('8.2.0')
             $actions['install'].action.Invoke()
 
-            Assert-MockCalled Invoke-Install -Times 1
+            Should -Invoke Invoke-Install -Times 1
         }
 
         It "Should execute uninstall action correctly" {
             $actions = Get-Actions -arguments @('8.2.0')
             $actions['uninstall'].action.Invoke()
 
-            Assert-MockCalled Invoke-Uninstall -Times 1
+            Should -Invoke Invoke-Uninstall -Times 1
         }
 
         It "Should execute use action correctly" {
             $actions = Get-Actions -arguments @('8.2.0')
             $actions['use'].action.Invoke()
 
-            Assert-MockCalled Invoke-Use -Times 1
+            Should -Invoke Invoke-Use -Times 1
         }
 
         It "Should execute ini action correctly" {
             $actions = Get-Actions -arguments @('set', 'memory_limit=256M')
             $actions['ini'].action.Invoke()
 
-            Assert-MockCalled Invoke-Ini -Times 1
+            Should -Invoke Invoke-Ini -Times 1
         }
 
         It "Should execute info action" {
             $actions = Get-Actions -arguments @()
             $actions['info'].action.Invoke()
 
-            Assert-MockCalled Invoke-Info -Times 1
+            Should -Invoke Invoke-Info -Times 1
         }
 
         It "Should execute log action" {
             $actions = Get-Actions -arguments @("--pageSize=10")
             $actions['log'].action.Invoke()
 
-            Assert-MockCalled Invoke-Log -Times 1
+            Should -Invoke Invoke-Log -Times 1
         }
 
         It "Should execute test action with verbosity" {
@@ -144,35 +144,35 @@ Describe "Get-Actions Tests" {
             $actions = Get-Actions -arguments $testArgs
             $actions['test'].action.Invoke()
 
-            Assert-MockCalled Invoke-Test -Times 1
+            Should -Invoke Invoke-Test -Times 1
         }
 
         It "Should execute profile action" {
             $actions = Get-Actions -arguments @('save')
             $actions['profile'].action.Invoke()
 
-            Assert-MockCalled Invoke-Profile -Times 1
+            Should -Invoke Invoke-Profile -Times 1
         }
 
         It "Should execute cache action" {
             $actions = Get-Actions -arguments @('list')
             $actions['cache'].action.Invoke()
 
-            Assert-MockCalled Invoke-Cache -Times 1
+            Should -Invoke Invoke-Cache -Times 1
         }
 
         It "Should execute aliases action" {
             $actions = Get-Actions -arguments @()
             $actions['aliases'].action.Invoke()
 
-            Assert-MockCalled Invoke-Aliases -Times 1
+            Should -Invoke Invoke-Aliases -Times 1
         }
 
         It "Should execute update action" {
             $actions = Get-Actions -arguments @()
             $actions['update'].action.Invoke()
 
-            Assert-MockCalled Invoke-Update -Times 1
+            Should -Invoke Invoke-Update -Times 1
         }
     }
 }
@@ -211,10 +211,10 @@ Describe "Integration Tests" {
             $result | Should -Be 0
 
             # Verify all functions were called
-            Assert-MockCalled Is-PVM-Setup -Times 1
-            Assert-MockCalled Install-PHP -Times 1
-            Assert-MockCalled Update-PHP-Version -Times 1
-            Assert-MockCalled Get-Current-PHP-Version -Times 1
+            Should -Invoke Is-PVM-Setup -Times 1
+            Should -Invoke Install-PHP -Times 1
+            Should -Invoke Update-PHP-Version -Times 1
+            Should -Invoke Get-Current-PHP-Version -Times 1
         }
     }
 
@@ -231,9 +231,9 @@ Describe "Integration Tests" {
             $result = Invoke-Setup
             $result | Should -Be 0
 
-            Assert-MockCalled Setup-PVM -Times 1
-            Assert-MockCalled Write-Host -ParameterFilter { $Object -like '*Failed to optimize system path*' }
-            Assert-MockCalled Display-Msg-By-ExitCode -Times 1
+            Should -Invoke Setup-PVM -Times 1
+            Should -Invoke Write-Host -ParameterFilter { $Object -like '*Failed to optimize system path*' }
+            Should -Invoke Display-Msg-By-ExitCode -Times 1
         }
     }
 }

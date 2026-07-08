@@ -233,7 +233,7 @@ Describe "Get-Installed-PHP-Versions" {
             $result = Get-Installed-PHP-Versions
             $result.Count | Should -Be 0
 
-            Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter {
+            Should -Invoke Log-Data -Exactly 1 -ParameterFilter {
                 $data.header -eq 'Get-Installed-PHP-Versions - Failed to retrieve installed PHP versions'
             }
         }
@@ -291,7 +291,7 @@ Describe "Get-UserSelected-PHP-Version" {
 
         $maxNameLength = ($list.version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $version = '8.0 '.PadRight($maxNameLength, '.')
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -eq " [1] $version x64 ts (Current)" }
+        Should -Invoke Write-Host -ParameterFilter { $Object -eq " [1] $version x64 ts (Current)" }
     }
 }
 
@@ -365,7 +365,7 @@ Describe "Get-Matching-PHP-Versions" {
             $result = Get-Matching-PHP-Versions -version '8.1'
             $result | Should -Be $null
 
-            Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter {
+            Should -Invoke Log-Data -Exactly 1 -ParameterFilter {
                 $data.header -eq 'Get-Matching-PHP-Versions - Failed to check if PHP version 8.1 is installed'
             }
         }
@@ -419,7 +419,7 @@ Describe "Is-PHP-Version-Installed" {
             $result = Is-PHP-Version-Installed -version '8.1'
             $result | Should -Be $false
 
-            Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter {
+            Should -Invoke Log-Data -Exactly 1 -ParameterFilter {
                 $data.header -eq 'Is-PHP-Version-Installed - Failed to check if PHP version 8.1 is installed'
             }
         }
@@ -451,7 +451,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
 
             $null = Refresh-Installed-PHP-Versions-Cache
 
-            Assert-MockCalled Get-Installed-PHP-Versions-From-Disk -Exactly 1
+            Should -Invoke Get-Installed-PHP-Versions-From-Disk -Exactly 1
         }
 
         It "Should call Cache-Data with installed_php_versions file and depth 1" {
@@ -464,7 +464,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
 
             $null = Refresh-Installed-PHP-Versions-Cache
 
-            Assert-MockCalled Cache-Data -Exactly 1 -ParameterFilter {
+            Should -Invoke Cache-Data -Exactly 1 -ParameterFilter {
                 $cacheFileName -eq 'installed_php_versions' -and $depth -eq 1
             }
         }
@@ -479,7 +479,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
 
             $null = Refresh-Installed-PHP-Versions-Cache
 
-            Assert-MockCalled Cache-Data -Exactly 1 -ParameterFilter {
+            Should -Invoke Cache-Data -Exactly 1 -ParameterFilter {
                 $data.Count -eq 2 -and $data[0].Version -eq '7.4'
             }
         }
@@ -512,7 +512,7 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
 
             $null = Refresh-Installed-PHP-Versions-Cache
 
-            Assert-MockCalled Log-Data -Exactly 1 -ParameterFilter {
+            Should -Invoke Log-Data -Exactly 1 -ParameterFilter {
                 $data.header -eq 'Refresh-Installed-PHP-Versions-Cache - Failed to refresh installed PHP versions cache'
             }
         }
@@ -638,7 +638,7 @@ Describe "Get-Installed-PHP-Versions-From-Disk" {
 
             Get-Installed-PHP-Versions-From-Disk
 
-            Assert-MockCalled Get-All-Subdirectories -Exactly 1 -ParameterFilter {
+            Should -Invoke Get-All-Subdirectories -Exactly 1 -ParameterFilter {
                 $path -eq $PVMConfig.paths.php
             }
         }

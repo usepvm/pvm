@@ -176,11 +176,6 @@ function Invoke-Ini {
 function Invoke-Test {
     param ($arguments)
 
-    if (-not (Get-Module -Name Pester -ListAvailable)) {
-        Write-Host -Object "`nInstalling Pester..." -ForegroundColor Yellow
-        Install-Module -Name Pester -Force -SkipPublisherCheck
-    }
-
     $options = @{
         exclude   = $null
         verbosity = 'Normal'
@@ -191,6 +186,7 @@ function Invoke-Test {
         groupBy   = $null
     }
     $exclude = $null
+    $pesterVersion = $null
     $testsNames = $arguments | Where-Object {
         if (($_ -join (',') -match '^--exclude=(.+)$')) {
             $exclude = $Matches[1] -split ','
@@ -219,6 +215,10 @@ function Invoke-Test {
             $options.verbosity = $Matches[1]
             return $false
         }
+        if ($_ -match '^--pester=(.+)$') {
+            $pesterVersion = $Matches[1]
+            return $false
+        }
         if ($_ -match '^-{1,2}') {
             return $false
         }
@@ -230,7 +230,7 @@ function Invoke-Test {
         return -1
     }
 
-    return Prepare-Tests -testsNames $testsNames -options $options -exclude $exclude
+    return Prepare-Tests -testsNames $testsNames -options $options -exclude $exclude -pesterVersion $pesterVersion
 }
 
 function Invoke-Log {

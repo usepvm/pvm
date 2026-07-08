@@ -121,7 +121,7 @@ Describe "Get-PHP-List-To-Install" {
         $result | Should -Not -BeNullOrEmpty
         $result.Archives | Should -Not -BeNullOrEmpty
         $result.Releases | Should -Not -BeNullOrEmpty
-        Assert-MockCalled Get-Data-From-Cache -Exactly 1
+        Should -Invoke Get-Data-From-Cache -Exactly 1
     }
 
     It "Should fetch from source when cache is empty" {
@@ -139,8 +139,8 @@ Describe "Get-PHP-List-To-Install" {
         $result | Should -Not -BeNullOrEmpty
         $result.Archives | Should -Not -BeNullOrEmpty
         $result.Releases | Should -Not -BeNullOrEmpty
-        Assert-MockCalled Get-Data-From-Cache -Exactly 1
-        Assert-MockCalled Get-From-Source -Exactly 1
+        Should -Invoke Get-Data-From-Cache -Exactly 1
+        Should -Invoke Get-From-Source -Exactly 1
     }
 
     It "Should fetch from source" {
@@ -157,7 +157,7 @@ Describe "Get-PHP-List-To-Install" {
         $result | Should -Not -BeNullOrEmpty
         $result.Archives | Should -Not -BeNullOrEmpty
         $result.Releases | Should -Not -BeNullOrEmpty
-        Assert-MockCalled Get-From-Source -Exactly 1
+        Should -Invoke Get-From-Source -Exactly 1
     }
 
     It "Handles exceptions gracefully" {
@@ -464,7 +464,7 @@ Describe "Get-PHP-Versions-List" {
         $result = Get-PHP-Versions-List -available $true
 
         $result | Should -Be 0
-        Assert-MockCalled Get-Available-PHP-Versions -Exactly 1
+        Should -Invoke Get-Available-PHP-Versions -Exactly 1
     }
 
     It "Displays installed versions" {
@@ -473,6 +473,6 @@ Describe "Get-PHP-Versions-List" {
         $result = Get-PHP-Versions-List
 
         $result | Should -Be 0
-        Assert-MockCalled Display-Installed-PHP-Versions -Exactly 1
+        Should -Invoke Display-Installed-PHP-Versions -Exactly 1
     }
 }

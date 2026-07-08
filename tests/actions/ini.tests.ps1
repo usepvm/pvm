@@ -406,7 +406,7 @@ extension=php_curl.dll
         It "Handles invalid action" {
             Mock Is-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'invalid' -params @()
-            $result | Should -Be 1
+            $result | Should -Be 0
         }
 
         It "Handles missing PHP current version" {

@@ -211,26 +211,26 @@ Describe "List-PHP-Extensions" {
         $code = List-PHP-Extensions -iniPath $testIniPath
 
         $code | Should -Be 0
-        Assert-MockCalled Display-Extensions-States -Exactly 1
-        Assert-MockCalled Display-Installed-Extensions -Exactly 1
+        Should -Invoke Display-Extensions-States -Exactly 1
+        Should -Invoke Display-Installed-Extensions -Exactly 1
     }
 
     It "Displays installed extensions" {
         $code = List-PHP-Extensions -iniPath $testIniPath
         $code | Should -Be 0
-        Assert-MockCalled Get-All-PHPExtensionsStatus -Exactly 1
-        Assert-MockCalled Get-Matching-PHPExtensionsStatus -Exactly 0
-        Assert-MockCalled Display-Extensions-States -Exactly 1
-        Assert-MockCalled Display-Installed-Extensions -Exactly 1
+        Should -Invoke Get-All-PHPExtensionsStatus -Exactly 1
+        Should -Invoke Get-Matching-PHPExtensionsStatus -Exactly 0
+        Should -Invoke Display-Extensions-States -Exactly 1
+        Should -Invoke Display-Installed-Extensions -Exactly 1
     }
 
     It "Displays local extensions matching the filter" {
         $code = List-PHP-Extensions -iniPath $testIniPath -term 'pc'
         $code | Should -Be 0
-        Assert-MockCalled Get-All-PHPExtensionsStatus -Exactly 1
-        Assert-MockCalled Get-Matching-PHPExtensionsStatus -Exactly 1
-        Assert-MockCalled Display-Extensions-States -Exactly 1
-        Assert-MockCalled Display-Installed-Extensions -Exactly 1
+        Should -Invoke Get-All-PHPExtensionsStatus -Exactly 1
+        Should -Invoke Get-Matching-PHPExtensionsStatus -Exactly 1
+        Should -Invoke Display-Extensions-States -Exactly 1
+        Should -Invoke Display-Installed-Extensions -Exactly 1
     }
 
     It "Returns 0 when no local extensions matchs the filter" {
@@ -239,9 +239,9 @@ Describe "List-PHP-Extensions" {
         $code = List-PHP-Extensions -iniPath $testIniPath -term 'nonexistent'
 
         $code | Should -Be 0
-        Assert-MockCalled Get-Matching-PHPExtensionsStatus -Exactly 1
-        Assert-MockCalled Display-Extensions-States -Exactly 1
-        Assert-MockCalled Display-Installed-Extensions -Exactly 1
+        Should -Invoke Get-Matching-PHPExtensionsStatus -Exactly 1
+        Should -Invoke Display-Extensions-States -Exactly 1
+        Should -Invoke Display-Installed-Extensions -Exactly 1
     }
 
     It "Returns -1 when no extensions are found" {
@@ -249,8 +249,8 @@ Describe "List-PHP-Extensions" {
         Mock Get-PHPExtensions-From-Source { return @{} }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be -1
-        Assert-MockCalled Get-PHPExtensions-From-Source -Exactly 1
-        Assert-MockCalled Get-Data-From-Cache -Exactly 0
+        Should -Invoke Get-PHPExtensions-From-Source -Exactly 1
+        Should -Invoke Get-Data-From-Cache -Exactly 0
     }
 
     It "Displays available extensions from cache" {
@@ -270,8 +270,8 @@ Describe "List-PHP-Extensions" {
         }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be 0
-        Assert-MockCalled Get-Data-From-Cache -Exactly 1
-        Assert-MockCalled Get-PHPExtensions-From-Source -Exactly 0
+        Should -Invoke Get-Data-From-Cache -Exactly 1
+        Should -Invoke Get-PHPExtensions-From-Source -Exactly 0
     }
 
     It "Displays available extensions from source when cache is empty" {
@@ -279,8 +279,8 @@ Describe "List-PHP-Extensions" {
         Mock Get-Data-From-Cache { return @{} }
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be 0
-        Assert-MockCalled Get-Data-From-Cache -Exactly 1
-        Assert-MockCalled Get-PHPExtensions-From-Source -Exactly 1
+        Should -Invoke Get-Data-From-Cache -Exactly 1
+        Should -Invoke Get-PHPExtensions-From-Source -Exactly 1
     }
 
     It "Displays available extensions matching the filter" {
@@ -305,7 +305,7 @@ Describe "List-PHP-Extensions" {
         Mock Write-Host {}
         $code = List-PHP-Extensions -iniPath $testIniPath -available $true
         $code | Should -Be -1
-        Assert-MockCalled Write-Host -Times 1 -ParameterFilter {
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nNo extensions found"
         }
     }

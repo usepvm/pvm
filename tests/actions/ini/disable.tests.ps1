@@ -45,7 +45,7 @@ AfterAll {
 
 Describe "Disable-IniExtension" {
     BeforeEach {
-        Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
+        Mock Is-Directory-Exists -ParameterFilter { $path -eq $extDirectory } -MockWith { return $true }
         Reset-Ini-Content
         Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
     }
@@ -72,7 +72,7 @@ Describe "Disable-IniExtension" {
         Mock Set-Content { }
 
         Disable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
-        Assert-MockCalled Set-Content -Times 0
+        Should -Invoke Set-Content -Times 0
     }
 
     It "Returns -1 for non-existent extension" {
@@ -103,7 +103,7 @@ Describe "Disable-IniExtension" {
         Mock Set-Content { }
 
         Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
-        Assert-MockCalled Set-Content -Times 0
+        Should -Invoke Set-Content -Times 0
     }
 
     It "Prompts user to select extension if multiple matches found" {

@@ -58,8 +58,8 @@ jobs:
 
     - name: Install Pester
       run: |
-        Write-Host "Installing latest stable Pester..." -ForegroundColor Yellow
-        Install-Module -Name Pester -Force -Scope CurrentUser
+        Write-Host "Installing Pester..." -ForegroundColor Yellow
+        Install-Module -Name Pester -MaximumVersion 6.99.99 -Force -SkipPublisherCheck
         Import-Module Pester
         $installedVersion = Get-Module -Name Pester
         Write-Host "Pester version: $($installedVersion.Version)" -ForegroundColor Green

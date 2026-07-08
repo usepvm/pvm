@@ -207,7 +207,9 @@ Describe "Save-PHP-Profile Tests" {
 
     It "Should use default description when none provided" {
         $mockDate = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        $mockDate2 = Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ'
         Mock Get-Date { return $mockDate } -ParameterFilter { $Format -eq 'yyyy-MM-dd HH:mm:ss' }
+        Mock Get-Date { return $mockDate2 } -ParameterFilter { $Format -eq 'yyyy-MM-ddTHH:mm:ssZ' }
 
         $result = Save-PHP-Profile -profileName 'testprofile'
         $result | Should -Be 0
@@ -325,19 +327,19 @@ Describe "Load-PHP-Profile Tests" {
         $result = Load-PHP-Profile -profileName 'testprofile'
         $result | Should -Be 0
 
-        Assert-MockCalled Set-IniSetting-Direct -ParameterFilter {
+        Should -Invoke Set-IniSetting-Direct -ParameterFilter {
             $settingName -eq 'memory_limit' -and $value -eq '512M'
         } -Exactly 1
 
-        Assert-MockCalled Set-IniSetting-Direct -ParameterFilter {
+        Should -Invoke Set-IniSetting-Direct -ParameterFilter {
             $settingName -eq 'display_errors' -and $value -eq 'Off'
         } -Exactly 1
 
-        Assert-MockCalled Enable-IniExtension-Direct -ParameterFilter {
+        Should -Invoke Enable-IniExtension-Direct -ParameterFilter {
             $extName -eq 'curl'
         } -Exactly 1
 
-        Assert-MockCalled Disable-IniExtension-Direct -ParameterFilter {
+        Should -Invoke Disable-IniExtension-Direct -ParameterFilter {
             $extName -eq 'opcache'
         } -Exactly 1
     }
@@ -350,19 +352,19 @@ Describe "Load-PHP-Profile Tests" {
         $result = Load-PHP-Profile -profileName 'testprofile'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -eq '  Settings ignored (not popular): 1'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -eq '  Settings skipped: 1'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -eq '  Extensions ignored (not popular): 1'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -eq '  Extensions skipped: 2'
         } -Exactly 1
     }
@@ -398,7 +400,7 @@ Describe "Load-PHP-Profile Tests" {
         $result = Load-PHP-Profile -profileName 'notypefile'
         $result | Should -Be 0
 
-        Assert-MockCalled Enable-IniExtension-Direct -ParameterFilter {
+        Should -Invoke Enable-IniExtension-Direct -ParameterFilter {
             $extName -eq 'curl' -and $extType -eq 'extension'
         } -Exactly 1
     }
@@ -471,8 +473,8 @@ Describe "List-PHP-Profiles Tests" {
         $result = List-PHP-Profiles
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -match 'profile1' }
-        Assert-MockCalled Write-Host -ParameterFilter { $Object -match 'profile2' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -match 'profile1' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -match 'profile2' }
     }
 
     It "Should handle empty profiles directory" {
@@ -600,11 +602,11 @@ Describe "Show-PHP-Profile Tests" {
         $result = Show-PHP-Profile -profileName 'nonexistent'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Profile 'nonexistent' not found"
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Use 'pvm profile list' to see available profiles"
         } -Exactly 1
     }
@@ -616,11 +618,11 @@ Describe "Show-PHP-Profile Tests" {
         $result = Show-PHP-Profile -profileName 'invalid'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to show profile'
         } -Exactly 1
 
-        Assert-MockCalled Log-Data -Exactly 1
+        Should -Invoke Log-Data -Exactly 1
     }
 
     It "Should display profile with no settings and no extensions" {
@@ -637,19 +639,19 @@ Describe "Show-PHP-Profile Tests" {
         $result = Show-PHP-Profile -profileName 'emptyprofile'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Profile: emptyprofile'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Settings \(0\):'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Extensions \(0\):'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match '\(none\)'
         } -Exactly 2
     }
@@ -671,23 +673,23 @@ Describe "Show-PHP-Profile Tests" {
         $result = Show-PHP-Profile -profileName 'settingsonly'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Settings \(2\):'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Extensions \(0\):'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'memory_limit'
         }
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'display_errors'
         }
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match '\(none\)' -and $ForegroundColor -eq 'Gray'
         } -Exactly 1
     }
@@ -709,23 +711,23 @@ Describe "Show-PHP-Profile Tests" {
         $result = Show-PHP-Profile -profileName 'extensionsonly'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Settings \(0\):'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Extensions \(2\):'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'curl'
         }
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'opcache'
         }
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match '\(none\)' -and $ForegroundColor -eq 'Gray'
         } -Exactly 1
     }
@@ -750,11 +752,11 @@ Describe "Show-PHP-Profile Tests" {
         $result = Show-PHP-Profile -profileName 'fullprofile'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Settings \(2\):'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Extensions \(2\):'
         } -Exactly 1
     }
@@ -777,12 +779,12 @@ Describe "Show-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Check for enabled setting status with DarkGreen
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -eq 'Enabled' -and $ForegroundColor -eq 'DarkGreen'
         } -Exactly 1
 
         # Check for disabled setting status with DarkYellow
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -eq 'Disabled' -and $ForegroundColor -eq 'DarkYellow'
         } -Exactly 1
     }
@@ -805,12 +807,12 @@ Describe "Show-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Check for enabled extension status with DarkGreen
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -eq 'Enabled' -and $ForegroundColor -eq 'DarkGreen'
         } -Exactly 1
 
         # Check for disabled extension status with DarkYellow
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -eq 'Disabled' -and $ForegroundColor -eq 'DarkYellow'
         } -Exactly 1
     }
@@ -832,11 +834,11 @@ Describe "Show-PHP-Profile Tests" {
         $result = Show-PHP-Profile -profileName 'extensiontypes'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'regular_ext' -and $Object -match 'extension'
         }
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'zend_ext' -and $Object -match 'zend_extension'
         }
     }
@@ -856,7 +858,7 @@ Describe "Show-PHP-Profile Tests" {
         $result = Show-PHP-Profile -profileName 'nullsettings'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Settings \(0\):'
         } -Exactly 1
     }
@@ -876,7 +878,7 @@ Describe "Show-PHP-Profile Tests" {
         $result = Show-PHP-Profile -profileName 'nullextensions'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Extensions \(0\):'
         } -Exactly 1
     }
@@ -895,23 +897,23 @@ Describe "Show-PHP-Profile Tests" {
         $result = Show-PHP-Profile -profileName 'completeprofile'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "`nProfile: completeprofile"
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Description: Complete profile description'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Created: 01/01/2023 12:30:45'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'PHP Version: 8.2.0'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'PATH:'
         } -Exactly 1
     }
@@ -940,15 +942,15 @@ Describe "Show-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify settings are displayed (order is checked by the function using Sort-Object)
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'alpha'
         }
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'beta'
         }
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'zebra'
         }
     }
@@ -972,15 +974,15 @@ Describe "Show-PHP-Profile Tests" {
         $result | Should -Be 0
 
         # Verify extensions are displayed (order is checked by the function using Sort-Object)
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'alpha_ext'
         }
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'beta_ext'
         }
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'zebra_ext'
         }
     }
@@ -1002,11 +1004,11 @@ Describe "Show-PHP-Profile Tests" {
         $result = Show-PHP-Profile -profileName 'settingvalues'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'memory_limit' -and $Object -match '512M'
         }
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'max_execution_time' -and $Object -match '60'
         }
     }
@@ -1038,11 +1040,11 @@ Describe "Show-PHP-Profile Tests" {
         $result = Show-PHP-Profile -profileName 'largeprofile'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Settings \(10\):'
         } -Exactly 1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Extensions \(10\):'
         } -Exactly 1
     }
@@ -1061,7 +1063,7 @@ Describe "Delete-PHP-Profile Tests" {
         $result = Delete-PHP-Profile -profileName 'nonexistent'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Profile 'nonexistent' not found"
         } -Exactly 1
     }
@@ -1086,11 +1088,11 @@ Describe "Delete-PHP-Profile Tests" {
         # Verify file still exists
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Deletion cancelled'
         } -Exactly 1
 
-        Assert-MockCalled Read-Host -Exactly 1
+        Should -Invoke Read-Host -Exactly 1
     }
 
     It "Should return -1 when user cancels deletion with empty response" {
@@ -1113,7 +1115,7 @@ Describe "Delete-PHP-Profile Tests" {
         # Verify file still exists
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Deletion cancelled'
         } -Exactly 1
     }
@@ -1138,7 +1140,7 @@ Describe "Delete-PHP-Profile Tests" {
         # Verify file still exists
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Deletion cancelled'
         } -Exactly 1
     }
@@ -1163,11 +1165,11 @@ Describe "Delete-PHP-Profile Tests" {
         # Verify file is deleted
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $false
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Profile 'testprofile' deleted successfully"
         } -Exactly 1
 
-        Assert-MockCalled Read-Host -ParameterFilter {
+        Should -Invoke Read-Host -ParameterFilter {
             $Prompt -match "Are you sure you want to delete profile 'testprofile'"
         } -Exactly 1
     }
@@ -1192,7 +1194,7 @@ Describe "Delete-PHP-Profile Tests" {
         # Verify file is deleted
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $false
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Profile 'testprofile' deleted successfully"
         } -Exactly 1
     }
@@ -1245,7 +1247,7 @@ Describe "Delete-PHP-Profile Tests" {
 
         $result = Delete-PHP-Profile -profileName 'example' -skipConfirmation $true
         $result | Should -Be 0
-        Assert-MockCalled Read-Host -Exactly 0
+        Should -Invoke Read-Host -Exactly 0
         Test-Path "$($PVMConfig.paths.profiles)\example.json" | Should -Be $false
     }
 
@@ -1267,11 +1269,11 @@ Describe "Delete-PHP-Profile Tests" {
         $result = Delete-PHP-Profile -profileName 'testprofile'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to delete profile'
         } -Exactly 1
 
-        Assert-MockCalled Log-Data -Exactly 1
+        Should -Invoke Log-Data -Exactly 1
     }
 
     It "Should display correct confirmation prompt with profile name" {
@@ -1291,7 +1293,7 @@ Describe "Delete-PHP-Profile Tests" {
         $result = Delete-PHP-Profile -profileName 'myprofile'
         $result | Should -Be 0
 
-        Assert-MockCalled Read-Host -ParameterFilter {
+        Should -Invoke Read-Host -ParameterFilter {
             $Prompt -match "Are you sure you want to delete profile 'myprofile'" -and
             $Prompt -match '\(y/n\)'
         } -Exactly 1
@@ -1317,7 +1319,7 @@ Describe "Delete-PHP-Profile Tests" {
         # Verify file is deleted
         Test-Path "$script:PROFILES_PATH\test-profile_123.json" | Should -Be $false
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Profile 'test-profile_123' deleted successfully"
         } -Exactly 1
     }
@@ -1343,7 +1345,7 @@ Describe "Delete-PHP-Profile Tests" {
         # Verify file still exists
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Deletion cancelled'
         } -Exactly 1
     }
@@ -1361,7 +1363,7 @@ Describe "Clear-PHP-Profiles Tests" {
         $result = Clear-PHP-Profiles
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'No profiles found'
         } -Exactly 1
     }
@@ -1378,7 +1380,7 @@ Describe "Clear-PHP-Profiles Tests" {
         Test-Path "$($PVMConfig.paths.profiles)\example1.json" | Should -Be $true
         Test-Path "$($PVMConfig.paths.profiles)\example2.json" | Should -Be $true
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Deletion cancelled'
         } -Exactly 1
     }
@@ -1427,7 +1429,7 @@ Describe "Clear-PHP-Profiles Tests" {
 
         Test-Path "$($PVMConfig.paths.profiles)\example1.json" | Should -Be $false
         Test-Path "$($PVMConfig.paths.profiles)\example2.json" | Should -Be $false
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'All profiles deleted successfully'
         } -Exactly 1
     }
@@ -1460,7 +1462,7 @@ Describe "Clear-PHP-Profiles Tests" {
 
         $result = Clear-PHP-Profiles -skipConfirmation $true
         $result | Should -Be 0
-        Assert-MockCalled Read-Host -Exactly 0
+        Should -Invoke Read-Host -Exactly 0
         Test-Path "$($PVMConfig.paths.profiles)\example.json" | Should -Be $false
     }
 
@@ -1472,7 +1474,7 @@ Describe "Clear-PHP-Profiles Tests" {
         $result = Clear-PHP-Profiles
         $result | Should -Be 0
 
-        Assert-MockCalled Read-Host -ParameterFilter {
+        Should -Invoke Read-Host -ParameterFilter {
             $Prompt -match 'Are you sure you want to delete all profiles' -and
             $Prompt -match '\(y/n\)'
         } -Exactly 1
@@ -1498,11 +1500,11 @@ Describe "Clear-PHP-Profiles Tests" {
         $result = Clear-PHP-Profiles
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to clear profiles'
         } -Exactly 1
 
-        Assert-MockCalled Log-Data -Exactly 1
+        Should -Invoke Log-Data -Exactly 1
     }
 
     It "Should return -1 and log error when Get-Profile-Files throws" {
@@ -1511,11 +1513,11 @@ Describe "Clear-PHP-Profiles Tests" {
         $result = Clear-PHP-Profiles
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to clear profiles'
         } -Exactly 1
 
-        Assert-MockCalled Log-Data -Exactly 1
+        Should -Invoke Log-Data -Exactly 1
     }
 }
 
@@ -1540,7 +1542,7 @@ Describe "Export-PHP-Profile Tests" {
         $result = Export-PHP-Profile -profileName 'nonexistent'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Profile 'nonexistent' not found"
         } -Exactly 1
     }
@@ -1570,11 +1572,11 @@ Describe "Export-PHP-Profile Tests" {
         $exportedContent.name | Should -Be 'testprofile'
         $exportedContent.settings.memory_limit.value | Should -Be '256M'
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Profile 'testprofile' exported to:"
         } -Exactly 1
 
-        Assert-MockCalled Get-Location -Exactly 1
+        Should -Invoke Get-Location -Exactly 1
     }
 
     It "Should export profile to specified location when exportPath provided" {
@@ -1602,7 +1604,7 @@ Describe "Export-PHP-Profile Tests" {
         $exportedContent = Get-Content -Path $customExportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Profile 'testprofile' exported to:" -and $Object -match 'custom\\myprofile.json'
         } -Exactly 1
     }
@@ -1650,11 +1652,11 @@ Describe "Export-PHP-Profile Tests" {
         $result = Export-PHP-Profile -profileName 'testprofile' -exportPath 'TestDrive:\export.json'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to export profile'
         } -Exactly 1
 
-        Assert-MockCalled Log-Data -Exactly 1
+        Should -Invoke Log-Data -Exactly 1
     }
 
     It "Should export profile with complex name correctly" {
@@ -1675,7 +1677,7 @@ Describe "Export-PHP-Profile Tests" {
         $expectedPath = 'TestDrive:\export\test-profile_123.json'
         Test-Path $expectedPath | Should -Be $true
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Profile 'test-profile_123' exported to:"
         } -Exactly 1
     }
@@ -1742,7 +1744,7 @@ Describe "Import-PHP-Profile Tests" {
         $result = Import-PHP-Profile -importPath 'TestDrive:\nonexistent.json'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'File not found:'
         } -Exactly 1
     }
@@ -1754,7 +1756,7 @@ Describe "Import-PHP-Profile Tests" {
         $result = Import-PHP-Profile -importPath 'TestDrive:\invalid.json'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Invalid JSON file:'
         } -Exactly 1
     }
@@ -1770,7 +1772,7 @@ Describe "Import-PHP-Profile Tests" {
         $result = Import-PHP-Profile -importPath 'TestDrive:\missingname.json'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Invalid profile format' -and $Object -match 'name'
         } -Exactly 1
     }
@@ -1785,7 +1787,7 @@ Describe "Import-PHP-Profile Tests" {
         $result = Import-PHP-Profile -importPath 'TestDrive:\missingsettings.json'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Invalid profile format' -and $Object -match 'settings'
         } -Exactly 1
     }
@@ -1800,7 +1802,7 @@ Describe "Import-PHP-Profile Tests" {
         $result = Import-PHP-Profile -importPath 'TestDrive:\missingextensions.json'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Invalid profile format' -and $Object -match 'extensions'
         } -Exactly 1
     }
@@ -1830,7 +1832,7 @@ Describe "Import-PHP-Profile Tests" {
         $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'originalname'
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Profile imported successfully as 'originalname'"
         } -Exactly 1
     }
@@ -1856,7 +1858,7 @@ Describe "Import-PHP-Profile Tests" {
         $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'customname'
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Profile imported successfully as 'customname'"
         } -Exactly 1
     }
@@ -1920,7 +1922,7 @@ Describe "Import-PHP-Profile Tests" {
         $result = Import-PHP-Profile -importPath 'TestDrive:\testprofile.json'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to create profiles directory'
         } -Exactly 1
     }
@@ -1983,7 +1985,7 @@ Describe "Import-PHP-Profile Tests" {
         $result = Import-PHP-Profile -importPath 'TestDrive:\testprofile.json'
         $result | Should -Be 0
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match "Use 'pvm profile load testprofile' to apply it"
         } -Exactly 1
     }
@@ -2004,11 +2006,11 @@ Describe "Import-PHP-Profile Tests" {
         $result = Import-PHP-Profile -importPath 'TestDrive:\testprofile.json'
         $result | Should -Be -1
 
-        Assert-MockCalled Write-Host -ParameterFilter {
+        Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to import profile'
         } -Exactly 1
 
-        Assert-MockCalled Log-Data -Exactly 1
+        Should -Invoke Log-Data -Exactly 1
     }
 
     It "Should handle profile with empty settings and extensions" {

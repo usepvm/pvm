@@ -221,7 +221,7 @@ function Add-Missing-PHPExtension-To-Ini {
             return -1
         }
 
-        Backup-IniFile -iniPath $iniPath
+        $null = Backup-IniFile -iniPath $iniPath
 
         $phpDirectory = Split-Path -Path $iniPath -Parent
         $extDirectory = "$phpDirectory\ext"

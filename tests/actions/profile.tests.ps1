@@ -207,7 +207,9 @@ Describe "Save-PHP-Profile Tests" {
 
     It "Should use default description when none provided" {
         $mockDate = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        $mockDate2 = Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ'
         Mock Get-Date { return $mockDate } -ParameterFilter { $Format -eq 'yyyy-MM-dd HH:mm:ss' }
+        Mock Get-Date { return $mockDate2 } -ParameterFilter { $Format -eq 'yyyy-MM-ddTHH:mm:ssZ' }
 
         $result = Save-PHP-Profile -profileName 'testprofile'
         $result | Should -Be 0

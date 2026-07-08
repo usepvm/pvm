@@ -218,7 +218,7 @@ function Run-Test-File {
     $testResultData = @{ passedCount = 0; failedCount = 0; duration = 0; coverageRaw = $null }
     $root = Get-PVMRootDirectory
     $relativeFilePath = $file.FullName -replace [regex]::Escape("$root\tests\"), ''
-    $sortedName = if ($options -and $options.groupBy) { $file.Name } else { $relativeFilePath }
+    $sortedName = if ($options -and $options.groupBy -and $options.groupBy -eq 'folder') { $file.Name } else { $relativeFilePath }
 
     if (Is-File-Not-Exists -path $file.FullName) {
         return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = 'File not found!'; testResultData = $testResultData }

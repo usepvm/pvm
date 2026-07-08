@@ -212,7 +212,7 @@ extension=php_curl.dll
     Context "restore action" {
         It "Restores from backup" {
             # Create a backup first
-            Backup-IniFile -iniPath "$phpVersionPath\php.ini"
+            $null = Backup-IniFile -iniPath "$phpVersionPath\php.ini"
             $result = Invoke-IniAction -action 'restore' -params @()
             $result | Should -Be 0
         }

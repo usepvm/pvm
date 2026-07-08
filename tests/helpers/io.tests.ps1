@@ -200,12 +200,9 @@ Describe "Make-Symbolic-Link" {
             # Mock New-Item to simulate successful symbolic link creation
             Mock New-Item {
                 param ($ItemType, $Path, $Target)
-                if ($ItemType -eq 'SymbolicLink') {
-                    # Create a dummy file to simulate the link
-                    New-Item -Path $Path -ItemType File -Force | Out-Null
-                    return @{ FullName = $Path }
-                }
-            } -ParameterFilter { $ItemType -eq 'SymbolicLink' }
+
+                return @{ FullName = $Path }
+            }
 
             $linkPath = 'TestDrive:\test_link'
             $targetPath = "$STORAGE_PATH\php\8.1"
@@ -305,22 +302,20 @@ Describe "Make-Symbolic-Link" {
             Mock Test-Path { return $false }
             Mock New-Item {
                 param ($ItemType, $Path, $Target)
-                if ($ItemType -eq 'SymbolicLink') {
-                    # Create a dummy file to simulate the link
-                    New-Item -Path $Path -ItemType File -Force | Out-Null
-                    return @{ FullName = $Path }
-                }
-            } -ParameterFilter { $ItemType -eq 'SymbolicLink' }
+
+                return @{ FullName = $Path }
+            }
 
             $result = Make-Symbolic-Link -link $linkPath -target $targetPath
             $result.code | Should -Be 0
         }
 
         It "Returns -1 when symbolic link parent directory fails to create" {
-            Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq 'TestDrive:\test_parent' } -MockWith { return $true }
-            Mock Make-Directory -MockWith { return -1 }
             $linkPath = 'TestDrive:\test_parent\test_link'
             $targetPath = "$STORAGE_PATH\php\8.1"
+            Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq 'TestDrive:\test_parent' } -MockWith { return $true }
+            Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
+            Mock Make-Directory -MockWith { return -1 }
             $result = Make-Symbolic-Link -link $linkPath -target $targetPath
             $result.code | Should -Be -1
         }

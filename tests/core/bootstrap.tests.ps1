@@ -305,7 +305,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'cach' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -eq "`n'cach' is not a valid command. Did you mean 'cache'?"
             }
         }
@@ -321,7 +321,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'ali' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -eq "`n'ali' is not a valid command. Did you mean 'aliases'?"
             }
         }
@@ -338,7 +338,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'invalid-command' -arguments @()
 
             $result | Should -Be 0
-            Assert-MockCalled Write-Host -ParameterFilter {
+            Should -Invoke Write-Host -ParameterFilter {
                 $Object -eq "`n'invalid-command' is not a valid command."
             }
         }

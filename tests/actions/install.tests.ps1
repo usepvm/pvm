@@ -288,6 +288,14 @@ Describe "Get-Latest-PHP-Version Tests" {
 
         $result | Should -BeNullOrEmpty
     }
+
+    It "Should return empty array when exceptions occur in Get-Web-Response" {
+        Mock Get-Web-Response { throw 'Test exception' }
+
+        $result = Get-Latest-PHP-Version
+
+        $result | Should -BeNullOrEmpty
+    }
 }
 
 Describe "Get-PHP-Versions-From-Url Tests" {
@@ -377,6 +385,17 @@ Describe "Get-PHP-Versions Tests" {
         $result = Get-PHP-Versions -version '8.1'
 
         $result | Should -BeOfType [hashtable]
+        $result.Count | Should -Be 0
+    }
+
+    It "Should skip when fetched is empty after filtering" {
+        Mock Get-PHP-Versions-From-Url { return @(
+            @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0'; buildType = 'nts'; arch = 'x86' }
+            @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0'; buildType = 'ts'; arch = 'x86' }
+        ) }
+
+        $result = Get-PHP-Versions -version '8.1' -arch 'x64'
+
         $result.Count | Should -Be 0
     }
 }

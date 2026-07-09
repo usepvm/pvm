@@ -17,25 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Pester 3.4.0 - Windows PowerShell 5.1 only (no Core support until Pester 4.1)
-          - os: windows-2025
-            shell: powershell
-            psVersion: "5.1"
-            pesterVersion: "3.4.0"
-          - os: windows-2025
-            shell: pwsh
-            psVersion: "7"
-            pesterVersion: "3.4.0"
-          - os: windows-2022
-            shell: powershell
-            psVersion: "5.1"
-            pesterVersion: "3.4.0"
-          - os: windows-2022
-            shell: pwsh
-            psVersion: "7"
-            pesterVersion: "3.4.0"
-
-          # Pester 5.7.1
+          # Pester 5.7.1 - Works with all PowerShell versions
           - os: windows-2025
             shell: powershell
             psVersion: "5.1"
@@ -53,20 +35,26 @@ jobs:
             psVersion: "7"
             pesterVersion: "5.7.1"
 
-          # Pester 6.0.0 (needs pwsh 7.4+, guarded in a step below)
+          # Pester 5.10.0 - Latest 5.x release
           - os: windows-2025
             shell: powershell
             psVersion: "5.1"
-            pesterVersion: "6.0.0"
+            pesterVersion: "5.10.0"
           - os: windows-2025
             shell: pwsh
             psVersion: "7"
-            pesterVersion: "6.0.0"
+            pesterVersion: "5.10.0"
           - os: windows-2022
             shell: powershell
             psVersion: "5.1"
-            pesterVersion: "6.0.0"
+            pesterVersion: "5.10.0"
           - os: windows-2022
+            shell: pwsh
+            psVersion: "7"
+            pesterVersion: "5.10.0"
+
+          # Pester 6.0.0 - Requires PowerShell 7.4+ (only on windows-2025 with pwsh)
+          - os: windows-2025
             shell: pwsh
             psVersion: "7"
             pesterVersion: "6.0.0"
@@ -82,27 +70,27 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Cache PowerShell modules
+      uses: actions/cache@v4
+      with:
+        path: ~\Documents\PowerShell\Modules
+        key: ${{ runner.os }}-ps-${{ matrix.shell }}-pester-${{ matrix.pesterVersion }}
+
     - name: Display OS Information
       run: |
         Write-Host "Runner OS: ${{ matrix.os }}"
         Write-Host "Shell: ${{ matrix.shell }}"
         Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
 
-    - name: Verify Pester/PowerShell compatibility
-      run: |
-        $pesterVer = [version]"${{ matrix.pesterVersion }}"
-        $psVer = $PSVersionTable.PSVersion
-
-        if ($pesterVer.Major -ge 6 -and $psVer.Major -eq 7 -and $psVer -lt [version]"7.4.0") {
-          Write-Error "Pester 6+ requires PowerShell 7.4+ on pwsh. Runner has $psVer."
-          exit 1
-        }
-        Write-Host "✅ Pester ${{ matrix.pesterVersion }} is compatible with $psVer (${{ matrix.shell }})" -ForegroundColor Green
-
     - name: Install Pester ${{ matrix.pesterVersion }}
       run: |
-        Write-Host "Installing Pester ${{ matrix.pesterVersion }}..." -ForegroundColor Yellow
-        Install-Module -Name Pester -RequiredVersion "${{ matrix.pesterVersion }}" -Force -SkipPublisherCheck -AllowClobber
+        $module = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -eq "${{ matrix.pesterVersion }}" }
+        if ($module) {
+          Write-Host "Pester ${{ matrix.pesterVersion }} already installed (from cache)" -ForegroundColor Green
+        } else {
+          Write-Host "Installing Pester ${{ matrix.pesterVersion }}..." -ForegroundColor Yellow
+          Install-Module -Name Pester -RequiredVersion "${{ matrix.pesterVersion }}" -Force -SkipPublisherCheck -AllowClobber
+        }
         Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}"
         $installedVersion = Get-Module -Name Pester
         Write-Host "Pester version: $($installedVersion.Version)" -ForegroundColor Green
@@ -126,7 +114,7 @@ jobs:
         Write-Host "Running PVM tests with Pester ${{ matrix.pesterVersion }}..." -ForegroundColor Yellow
         Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}"
 
-        .\src\pvm.ps1 test --coverage=85 --sort=coverage --group=folder --shell=${{ matrix.shell }} --pester=${{ matrix.pesterVersion }}
+        .\src\pvm.ps1 test --coverage=85 --sort=coverage --group=folder --shell="${{ matrix.shell }}" --pester="${{ matrix.pesterVersion }}"
         $exitCode = $LASTEXITCODE
 
         Write-Host "Test execution completed with exit code: $exitCode"

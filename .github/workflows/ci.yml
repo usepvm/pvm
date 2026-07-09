@@ -16,34 +16,68 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025, windows-2022]
         include:
-          # Pester 3.4.0 - Windows PowerShell 5.1 only, no Core support until Pester 4.1
-          - shell: powershell
+          # Pester 3.4.0 - Windows PowerShell 5.1 only (no Core support until Pester 4.1)
+          - os: windows-2025
+            shell: powershell
+            psVersion: "5.1"
+            pesterVersion: "3.4.0"
+          - os: windows-2022
+            shell: powershell
             psVersion: "5.1"
             pesterVersion: "3.4.0"
 
-          # Pester 5.7.1 - both engines
-          - shell: powershell
+          # Pester 5.7.1
+          - os: windows-2025
+            shell: powershell
             psVersion: "5.1"
             pesterVersion: "5.7.1"
-          - shell: pwsh
+          - os: windows-2025
+            shell: pwsh
+            psVersion: "7"
+            pesterVersion: "5.7.1"
+          - os: windows-2022
+            shell: powershell
+            psVersion: "5.1"
+            pesterVersion: "5.7.1"
+          - os: windows-2022
+            shell: pwsh
             psVersion: "7"
             pesterVersion: "5.7.1"
 
-          # Pester 5.10.0 - both engines
-          - shell: powershell
+          # Pester 5.10.0
+          - os: windows-2025
+            shell: powershell
             psVersion: "5.1"
             pesterVersion: "5.10.0"
-          - shell: pwsh
+          - os: windows-2025
+            shell: pwsh
+            psVersion: "7"
+            pesterVersion: "5.10.0"
+          - os: windows-2022
+            shell: powershell
+            psVersion: "5.1"
+            pesterVersion: "5.10.0"
+          - os: windows-2022
+            shell: pwsh
             psVersion: "7"
             pesterVersion: "5.10.0"
 
-          # Pester 6.0.0 - both engines (needs pwsh 7.4+, guarded below)
-          - shell: powershell
+          # Pester 6.0.0 (needs pwsh 7.4+, guarded in a step below)
+          - os: windows-2025
+            shell: powershell
             psVersion: "5.1"
             pesterVersion: "6.0.0"
-          - shell: pwsh
+          - os: windows-2025
+            shell: pwsh
+            psVersion: "7"
+            pesterVersion: "6.0.0"
+          - os: windows-2022
+            shell: powershell
+            psVersion: "5.1"
+            pesterVersion: "6.0.0"
+          - os: windows-2022
+            shell: pwsh
             psVersion: "7"
             pesterVersion: "6.0.0"
 
@@ -69,15 +103,11 @@ jobs:
         $pesterVer = [version]"${{ matrix.pesterVersion }}"
         $psVer = $PSVersionTable.PSVersion
 
-        if ($pesterVer.Major -eq 3 -and "${{ matrix.shell }}" -eq "pwsh") {
-          Write-Error "Pester 3.x only supports Windows PowerShell, not pwsh/Core."
-          exit 1
-        }
         if ($pesterVer.Major -ge 6 -and $psVer.Major -eq 7 -and $psVer -lt [version]"7.4.0") {
           Write-Error "Pester 6+ requires PowerShell 7.4+ on pwsh. Runner has $psVer."
           exit 1
         }
-        Write-Host "✅ Pester ${{ matrix.pesterVersion }} is compatible with $($PSVersionTable.PSVersion) ($('${{ matrix.shell }}'))" -ForegroundColor Green
+        Write-Host "✅ Pester ${{ matrix.pesterVersion }} is compatible with $psVer (${{ matrix.shell }})" -ForegroundColor Green
 
     - name: Install Pester ${{ matrix.pesterVersion }}
       run: |

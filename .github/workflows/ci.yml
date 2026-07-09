@@ -126,3 +126,14 @@ jobs:
           Write-Host "❌ Tests failed with exit code: $exitCode" -ForegroundColor Red
           exit $exitCode
         }
+
+    - name: Dump error log on failure
+      if: failure()
+      run: |
+        $logPath = "storage\logs\error.log"
+        if (Test-Path $logPath) {
+          Write-Host "----- error.log -----" -ForegroundColor Red
+          Get-Content $logPath -Tail 200
+        } else {
+          Write-Host "No error.log found at $logPath"
+        }

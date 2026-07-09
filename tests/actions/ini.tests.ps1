@@ -389,7 +389,7 @@ extension=php_curl.dll
         }
     }
 
-    Context "list action" {
+    Context "ext action" {
         It "Lists extensions" {
             Mock Is-File-Not-Exists { return $false }
             Mock Get-Matching-PHPExtensionsStatus {
@@ -404,7 +404,7 @@ extension=php_curl.dll
                         color      = 'DarkYellow'
                     })
             }
-            $result = Invoke-IniAction -action 'list' -params @('--search=sql')
+            $result = Invoke-IniAction -action 'ext' -params @('--search=sql')
             $result | Should -Be 0
         }
     }

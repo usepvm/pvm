@@ -158,7 +158,7 @@ function Get-Actions {
                     'restore ........................................... Restore original php.ini from backup'
                     'add <extension> ................................... Install a PHP extension'
                     'remove <extension> ................................ Remove a PHP extension'
-                    "list [available] [--search=<term>] ................ Lists the PHP extensions. Type 'available' at the end to see what can be installed."
+                    "ext [available] [--search=<term>] ............. Lists the PHP extensions. Type 'available' at the end to see what can be installed."
                 )
                 EXAMPLES    = @(
                     'pvm ini set memory_limit=256M ..................... Sets memory limit to 256MB and enables the setting'
@@ -181,10 +181,10 @@ function Get-Actions {
                     "pvm ini add sql ................................... Shows matching extensions for 'sql' then installs the chosen one"
                     'pvm ini remove xdebug ............................. Removes the xdebug extension'
                     "pvm ini remove sql ................................ Shows matching extensions for 'sql' then removes the chosen one"
-                    'pvm ini list ...................................... Lists the PHP extensions'
-                    'pvm ini list available ............................ Lists available PHP extensions'
-                    "pvm ini list --search=zip ......................... Lists PHP extensions with 'zip' in their name"
-                    "pvm ini list available --search=zip ............... Lists available PHP extensions with 'zip' in their name"
+                    'pvm ini ext ....................................... Lists the PHP extensions'
+                    'pvm ini ext available ............................. Lists available PHP extensions'
+                    "pvm ini ext --search=zip .......................... Lists PHP extensions with 'zip' in their name"
+                    "pvm ini ext available --search=zip ................ Lists available PHP extensions with 'zip' in their name"
                 )
             }
             action      = { return Invoke-Ini -arguments $script:arguments }

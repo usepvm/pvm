@@ -118,7 +118,7 @@ jobs:
         Write-Host "Running PVM tests with Pester ${{ matrix.pesterVersion }}..." -ForegroundColor Yellow
         Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}"
 
-        .\src\pvm.ps1 test --coverage=85 --sort=coverage --group=folder --pester=${{ matrix.pesterVersion }}
+        .\src\pvm.ps1 test --coverage=85 --sort=coverage --group=folder --shell=${{ matrix.shell }} --pester=${{ matrix.pesterVersion }}
         $exitCode = $LASTEXITCODE
 
         Write-Host "Test execution completed with exit code: $exitCode"

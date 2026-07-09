@@ -82,7 +82,7 @@ jobs:
       run: |
         Write-Host "Installing Pester ${{ matrix.pesterVersion }}..." -ForegroundColor Yellow
         Install-Module -Name Pester -RequiredVersion "${{ matrix.pesterVersion }}" -Force -SkipPublisherCheck -AllowClobber
-        Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}"
+        Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}" -Force
         $installedVersion = Get-Module -Name Pester
         Write-Host "Pester version: $($installedVersion.Version)" -ForegroundColor Green
         
@@ -100,7 +100,7 @@ jobs:
     - name: Run tests
       run: |
         Write-Host "Running PVM tests with Pester ${{ matrix.pesterVersion }}..." -ForegroundColor Yellow
-        Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}"
+        Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}" -Force
 
         .\src\pvm.ps1 test --coverage=85 --sort=coverage --group=folder --pester=${{ matrix.pesterVersion }}
         $exitCode = $LASTEXITCODE

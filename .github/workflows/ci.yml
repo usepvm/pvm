@@ -110,6 +110,9 @@ jobs:
         }
         Write-Host "✅ PVM setup completed successfully" -ForegroundColor Green
         
+    - name: Debug installed Pester modules
+      run: Get-Module -ListAvailable -Name Pester | Format-Table Name, Version, ModuleBase
+      
     - name: Run tests
       run: |
         Write-Host "Running PVM tests with Pester ${{ matrix.pesterVersion }}..." -ForegroundColor Yellow

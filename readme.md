@@ -214,18 +214,18 @@ pvm ini remove <extension> [--yes|-y] # It shows all matching extensions then re
 # Example: pvm ini remove opcache -y # Skip confirmation
 
 # List installed extensions
-pvm ini list
+pvm ini ext
 
 # List available extensions from remote source
-pvm ini list available
+pvm ini ext available
 
 # List installed extensions with 'zip' in their name
-pvm ini list --search=<extension>
-# Example: pvm ini list --search=zip
+pvm ini ext --search=<extension>
+# Example: pvm ini ext --search=zip
 
 # List available extensions with 'zip' in their name
-pvm ini list available --search=<extension>
-# Example: pvm ini list available --search=zip
+pvm ini ext available --search=<extension>
+# Example: pvm ini ext available --search=zip
 
 # Restore backup
 pvm ini restore # PVM automatically creates php.ini backups before modifying settings or extensions.

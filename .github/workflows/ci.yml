@@ -16,13 +16,50 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025, windows-2022]
-        shell: [powershell, pwsh]
-        psVersion: ["5.1", "7"]
-        pesterVersion: ["5.7.1", "5.10.0", "6.0.0"]
-        exclude:
-          - shell: pwsh
+        include:
+          # Windows 2022 - PowerShell 5.1 with Pester 5.x
+          - os: windows-2022
+            shell: powershell
             psVersion: "5.1"
+            pesterVersion: "5.7.1"
+          - os: windows-2022
+            shell: powershell
+            psVersion: "5.1"
+            pesterVersion: "5.10.0"
+
+          # Windows 2022 - PowerShell 7 with Pester 5.x (PS 7.2 < 7.4, so no Pester 6)
+          - os: windows-2022
+            shell: pwsh
+            psVersion: "7"
+            pesterVersion: "5.7.1"
+          - os: windows-2022
+            shell: pwsh
+            psVersion: "7"
+            pesterVersion: "5.10.0"
+
+          # Windows 2025 - PowerShell 5.1 with Pester 5.x
+          - os: windows-2025
+            shell: powershell
+            psVersion: "5.1"
+            pesterVersion: "5.7.1"
+          - os: windows-2025
+            shell: powershell
+            psVersion: "5.1"
+            pesterVersion: "5.10.0"
+
+          # Windows 2025 - PowerShell 7 with Pester 5.x and 6.x (PS 7.4+ supports Pester 6)
+          - os: windows-2025
+            shell: pwsh
+            psVersion: "7"
+            pesterVersion: "5.7.1"
+          - os: windows-2025
+            shell: pwsh
+            psVersion: "7"
+            pesterVersion: "5.10.0"
+          - os: windows-2025
+            shell: pwsh
+            psVersion: "7"
+            pesterVersion: "6.0.0"
 
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os }} - ${{ matrix.shell }} - PS ${{ matrix.psVersion }} - Pester ${{ matrix.pesterVersion }}
@@ -40,17 +77,6 @@ jobs:
         Write-Host "Runner OS: ${{ matrix.os }}"
         Write-Host "Shell: ${{ matrix.shell }}"
         Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
-
-    - name: Verify Pester/PowerShell compatibility
-      run: |
-        $pesterVer = [version]"${{ matrix.pesterVersion }}"
-        $psVer = $PSVersionTable.PSVersion
-
-        if ($pesterVer.Major -ge 6 -and $psVer.Major -eq 7 -and $psVer -lt [version]"7.4.0") {
-          Write-Error "Pester 6+ requires PowerShell 7.4+ on pwsh. Runner has $psVer. Update the runner image or pin an older pwsh via matrix."
-          exit 1
-        }
-        Write-Host "✅ Pester ${{ matrix.pesterVersion }} is compatible with PowerShell $psVer" -ForegroundColor Green
 
     - name: Install Pester ${{ matrix.pesterVersion }}
       run: |

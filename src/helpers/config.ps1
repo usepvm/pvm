@@ -147,7 +147,6 @@ function Get-Config {
                 'a' = 'add'; '+' = 'add'; 'rm' = 'remove'; '-' = 'remove'
                 'del' = 'delete'; 'cls' = 'clear'
                 'logs' = 'log'; 'upgrade' = 'update'
-                'run' = 'test'
                 'fix' = 'repair';
             }
             flags          = [ordered]@{
@@ -155,6 +154,19 @@ function Get-Config {
                 '-v'        = 'version'
                 '--help'    = 'help'
                 '-h'        = 'help'
+            }
+            scripts        = [ordered]@{
+                'test'              = 'test'
+                'test:quiet'        = 'test --verbosity=None'
+                'test:coverage'    = 'test --coverage=75'
+                'test:coverage80'  = 'test --coverage=80'
+                'test:coverage85'  = 'test --coverage=85'
+                'test:ci'           = 'test --coverage=85 --sort=coverage --group=folder'
+                'test:full'         = 'test --coverage=85 --verbosity=Detailed'
+                'test:unit'         = 'test --tag=unit'
+                'test:integration'  = 'test --tag=integration'
+                'test:sorted'       = 'test --sort=coverage'
+                'test:grouped'      = 'test --group=folder'
             }
         }
     }

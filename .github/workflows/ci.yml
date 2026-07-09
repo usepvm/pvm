@@ -81,7 +81,7 @@ jobs:
         Import-Module Pester
 
         # Run pvm.ps1 directly and capture exit code
-        .\src\pvm.ps1 test --coverage=85 --sort=coverage --group=folder
+        .\src\pvm.ps1 run test:ci
         $exitCode = $LASTEXITCODE
 
         Write-Host "Test execution completed with exit code: $exitCode"

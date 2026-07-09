@@ -497,3 +497,54 @@ function Invoke-Update {
     Display-Msg-By-ExitCode -result $result
     return $result.code
 }
+
+function Invoke-Run {
+    param ($arguments)
+
+    $scriptName = $arguments[0]
+
+    if ([string]::IsNullOrWhiteSpace($scriptName)) {
+        Write-Host -Object "`nPlease provide a script name to run: pvm run <script-name>" -ForegroundColor Yellow
+        Write-Host -Object "`nAvailable scripts:`n" -ForegroundColor Cyan
+        $scripts = $PVMConfig.defaults.scripts
+        $maxNameLength = ($scripts.Keys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+        $scripts.Keys | ForEach-Object {
+            $name = "$_ ".PadRight($maxNameLength, '.')
+            $command = $scripts[$_]
+            Write-Host -Object "  $name $command"
+        }
+        return -1
+    }
+
+    $scripts = $PVMConfig.defaults.scripts
+
+    if (-not $scripts.Contains($scriptName)) {
+        Write-Host -Object "`nScript '$scriptName' not found." -ForegroundColor Yellow
+        Write-Host -Object "`nAvailable scripts:`n" -ForegroundColor Cyan
+        $maxNameLength = ($scripts.Keys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+        $scripts.Keys | ForEach-Object {
+            $name = "$_ ".PadRight($maxNameLength, '.')
+            $command = $scripts[$_]
+            Write-Host -Object "  $name $command"
+        }
+        return -1
+    }
+
+    $scriptCommand = $scripts[$scriptName]
+    Write-Host -Object "`nRunning script: $scriptName" -ForegroundColor Cyan
+    Write-Host -Object "Command: pvm $scriptCommand`n" -ForegroundColor Gray
+
+    $parts = $scriptCommand -split ' '
+    $command = $parts[0]
+    $scriptArgs = if ($parts.Count -gt 1) { $parts[1..($parts.Count - 1)] } else { @() }
+
+    $actions = Get-Actions -arguments $scriptArgs
+
+    if (-not $actions.Contains($command)) {
+        Write-Host -Object "`nInvalid command in script: $command" -ForegroundColor Yellow
+        return -1
+    }
+
+    $result = $($actions[$command].action.Invoke())
+    return $result
+}

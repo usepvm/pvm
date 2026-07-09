@@ -45,24 +45,6 @@ jobs:
             psVersion: "7"
             pesterVersion: "5.7.1"
 
-          # Pester 5.10.0
-          - os: windows-2025
-            shell: powershell
-            psVersion: "5.1"
-            pesterVersion: "5.10.0"
-          - os: windows-2025
-            shell: pwsh
-            psVersion: "7"
-            pesterVersion: "5.10.0"
-          - os: windows-2022
-            shell: powershell
-            psVersion: "5.1"
-            pesterVersion: "5.10.0"
-          - os: windows-2022
-            shell: pwsh
-            psVersion: "7"
-            pesterVersion: "5.10.0"
-
           # Pester 6.0.0 (needs pwsh 7.4+, guarded in a step below)
           - os: windows-2025
             shell: powershell

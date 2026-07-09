@@ -16,30 +16,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pesterVersion: ["3.4.6", "5.7.1", "6.0.0"]
-        include:
-          - os: windows-2025
-            name: "Windows Server 2025"
-            shell: powershell
+        os: [windows-2025, windows-2022]
+        shell: [powershell, pwsh]
+        psVersion: ["5.1", "7"]
+        pesterVersion: ["5.7.1", "5.10.0", "6.0.0"]
+        exclude:
+          - shell: pwsh
             psVersion: "5.1"
-
-          - os: windows-2025
-            name: "Windows Server 2025"
-            shell: pwsh
-            psVersion: "7"
-
-          - os: windows-2022
-            name: "Windows Server 2022"
-            shell: powershell
-            psVersion: "5.1"
-
-          - os: windows-2022
-            name: "Windows Server 2022"
-            shell: pwsh
-            psVersion: "7"
 
     runs-on: ${{ matrix.os }}
-    name: ${{ matrix.name }} - PS ${{ matrix.psVersion }} - Pester ${{ matrix.pesterVersion }}
+    name: ${{ matrix.os }} - ${{ matrix.shell }} - PS ${{ matrix.psVersion }} - Pester ${{ matrix.pesterVersion }}
 
     defaults:
       run:
@@ -51,8 +37,8 @@ jobs:
 
     - name: Display OS Information
       run: |
-        Write-Host "Testing on: ${{ matrix.name }}"
         Write-Host "Runner OS: ${{ matrix.os }}"
+        Write-Host "Shell: ${{ matrix.shell }}"
         Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
 
     - name: Install Pester ${{ matrix.pesterVersion }}

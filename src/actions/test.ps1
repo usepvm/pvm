@@ -40,7 +40,7 @@ function Find-Pester-Version {
 
     switch -Regex ($version) {
         '^\d+\.\d+\.\d+$' {
-            return $availableVersions | Where-Object { $_.Version -eq $version }
+            return $availableVersions | Where-Object { $_.Version -eq $version } | Select-Object -First 1
         }
         '^\d+\.\d+$' {
             return $availableVersions | Where-Object { $_.Version -like "$version.*" } | Sort-Object Version -Descending | Select-Object -First 1

@@ -16,48 +16,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [windows-2025, windows-2022]
         include:
-          # Windows 2022 - PowerShell 5.1 with Pester 5.x
-          - os: windows-2022
-            shell: powershell
+          # Pester 3.4.0 - Windows PowerShell 5.1 only, no Core support until Pester 4.1
+          - shell: powershell
+            psVersion: "5.1"
+            pesterVersion: "3.4.0"
+
+          # Pester 5.7.1 - both engines
+          - shell: powershell
             psVersion: "5.1"
             pesterVersion: "5.7.1"
-          - os: windows-2022
-            shell: powershell
+          - shell: pwsh
+            psVersion: "7"
+            pesterVersion: "5.7.1"
+
+          # Pester 5.10.0 - both engines
+          - shell: powershell
             psVersion: "5.1"
+            pesterVersion: "5.10.0"
+          - shell: pwsh
+            psVersion: "7"
             pesterVersion: "5.10.0"
 
-          # Windows 2022 - PowerShell 7 with Pester 5.x (PS 7.2 < 7.4, so no Pester 6)
-          - os: windows-2022
-            shell: pwsh
-            psVersion: "7"
-            pesterVersion: "5.7.1"
-          - os: windows-2022
-            shell: pwsh
-            psVersion: "7"
-            pesterVersion: "5.10.0"
-
-          # Windows 2025 - PowerShell 5.1 with Pester 5.x
-          - os: windows-2025
-            shell: powershell
+          # Pester 6.0.0 - both engines (needs pwsh 7.4+, guarded below)
+          - shell: powershell
             psVersion: "5.1"
-            pesterVersion: "5.7.1"
-          - os: windows-2025
-            shell: powershell
-            psVersion: "5.1"
-            pesterVersion: "5.10.0"
-
-          # Windows 2025 - PowerShell 7 with Pester 5.x and 6.x (PS 7.4+ supports Pester 6)
-          - os: windows-2025
-            shell: pwsh
-            psVersion: "7"
-            pesterVersion: "5.7.1"
-          - os: windows-2025
-            shell: pwsh
-            psVersion: "7"
-            pesterVersion: "5.10.0"
-          - os: windows-2025
-            shell: pwsh
+            pesterVersion: "6.0.0"
+          - shell: pwsh
             psVersion: "7"
             pesterVersion: "6.0.0"
 
@@ -78,11 +64,26 @@ jobs:
         Write-Host "Shell: ${{ matrix.shell }}"
         Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
 
+    - name: Verify Pester/PowerShell compatibility
+      run: |
+        $pesterVer = [version]"${{ matrix.pesterVersion }}"
+        $psVer = $PSVersionTable.PSVersion
+
+        if ($pesterVer.Major -eq 3 -and "${{ matrix.shell }}" -eq "pwsh") {
+          Write-Error "Pester 3.x only supports Windows PowerShell, not pwsh/Core."
+          exit 1
+        }
+        if ($pesterVer.Major -ge 6 -and $psVer.Major -eq 7 -and $psVer -lt [version]"7.4.0") {
+          Write-Error "Pester 6+ requires PowerShell 7.4+ on pwsh. Runner has $psVer."
+          exit 1
+        }
+        Write-Host "✅ Pester ${{ matrix.pesterVersion }} is compatible with $($PSVersionTable.PSVersion) ($('${{ matrix.shell }}'))" -ForegroundColor Green
+
     - name: Install Pester ${{ matrix.pesterVersion }}
       run: |
         Write-Host "Installing Pester ${{ matrix.pesterVersion }}..." -ForegroundColor Yellow
         Install-Module -Name Pester -RequiredVersion "${{ matrix.pesterVersion }}" -Force -SkipPublisherCheck -AllowClobber
-        Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}" -Force
+        Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}"
         $installedVersion = Get-Module -Name Pester
         Write-Host "Pester version: $($installedVersion.Version)" -ForegroundColor Green
         
@@ -100,7 +101,7 @@ jobs:
     - name: Run tests
       run: |
         Write-Host "Running PVM tests with Pester ${{ matrix.pesterVersion }}..." -ForegroundColor Yellow
-        Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}" -Force
+        Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}"
 
         .\src\pvm.ps1 test --coverage=85 --sort=coverage --group=folder --pester=${{ matrix.pesterVersion }}
         $exitCode = $LASTEXITCODE

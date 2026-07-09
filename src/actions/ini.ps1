@@ -106,12 +106,12 @@ function Invoke-IniAction {
 
                 $exitCode = Uninstall-Extension -iniPath $iniPath -extNames @($params) -skipConfirmation $skipConfirmation
             }
-            'list' {
+            'ext' {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
                 $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains 'available') -term $term
             }
             default {
-                Write-Host -Object "`nUnknown action '$action' use one of following: 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'list' or 'restore'."
+                Write-Host -Object "`nUnknown action '$action' use one of following: 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'ext' or 'restore'."
             }
         }
 

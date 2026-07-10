@@ -17,28 +17,37 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Pester 5.7.1 - Works with all PowerShell versions
           - os: windows-2025
             name: "Windows Server 2025"
             shell: powershell
             psVersion: "5.1"
-
+            pesterVersion: "5.7.1"
           - os: windows-2025
             name: "Windows Server 2025"
             shell: pwsh
             psVersion: "7"
-
+            pesterVersion: "5.7.1"
           - os: windows-2022
             name: "Windows Server 2022"
             shell: powershell
             psVersion: "5.1"
-
+            pesterVersion: "5.7.1"
           - os: windows-2022
             name: "Windows Server 2022"
             shell: pwsh
             psVersion: "7"
+            pesterVersion: "5.7.1"
+
+          # Pester 6.0.0 - Requires PowerShell 7.4+ (only on windows-2025 with pwsh)
+          - os: windows-2025
+            name: "Windows Server 2025"
+            shell: pwsh
+            psVersion: "7"
+            pesterVersion: "6.0.0"
 
     runs-on: ${{ matrix.os }}
-    name: ${{ matrix.name }} - PowerShell ${{ matrix.psVersion }}
+    name: ${{ matrix.name }} - PowerShell ${{ matrix.psVersion }} - Pester ${{ matrix.pesterVersion }}
 
     defaults:
       run:
@@ -48,19 +57,31 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Cache PowerShell modules
+      uses: actions/cache@v4
+      with:
+        path: ~\Documents\PowerShell\Modules
+        key: ${{ runner.os }}-ps-${{ matrix.shell }}-pester-${{ matrix.pesterVersion }}
+
     - name: Display OS Information
       run: |
         Write-Host "Testing on: ${{ matrix.name }}"
         Write-Host "Runner OS: ${{ matrix.os }}"
         Write-Host "OS Name: $(Get-ComputerInfo -Property WindowsProductName | Select-Object -ExpandProperty WindowsProductName)"
         Write-Host "OS Version: $(Get-ComputerInfo -Property WindowsVersion | Select-Object -ExpandProperty WindowsVersion)"
+        Write-Host "Shell: ${{ matrix.shell }}"
         Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
 
-    - name: Install Pester
+    - name: Install Pester ${{ matrix.pesterVersion }}
       run: |
-        Write-Host "Installing Pester..." -ForegroundColor Yellow
-        Install-Module -Name Pester -MaximumVersion 6.99.99 -Force -SkipPublisherCheck
-        Import-Module Pester
+        $module = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -eq "${{ matrix.pesterVersion }}" }
+        if ($module) {
+          Write-Host "Pester ${{ matrix.pesterVersion }} already installed (from cache)" -ForegroundColor Green
+        } else {
+          Write-Host "Installing Pester ${{ matrix.pesterVersion }}..." -ForegroundColor Yellow
+          Install-Module -Name Pester -RequiredVersion "${{ matrix.pesterVersion }}" -Force -SkipPublisherCheck -AllowClobber
+        }
+        Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}"
         $installedVersion = Get-Module -Name Pester
         Write-Host "Pester version: $($installedVersion.Version)" -ForegroundColor Green
         
@@ -75,13 +96,16 @@ jobs:
         }
         Write-Host "✅ PVM setup completed successfully" -ForegroundColor Green
         
+    - name: Debug installed Pester modules
+      run: Get-Module -ListAvailable -Name Pester | Format-Table Name, Version, ModuleBase
+        
     - name: Run tests
       run: |
-        Write-Host "Running PVM tests..." -ForegroundColor Yellow
-        Import-Module Pester
+        Write-Host "Running PVM tests with Pester ${{ matrix.pesterVersion }}..." -ForegroundColor Yellow
+        Import-Module Pester -RequiredVersion "${{ matrix.pesterVersion }}"
 
         # Run pvm.ps1 directly and capture exit code
-        .\src\pvm.ps1 run test:ci
+        .\src\pvm.ps1 test --coverage=85 --sort=coverage --group=folder --shell="${{ matrix.shell }}" --pester="${{ matrix.pesterVersion }}"
         $exitCode = $LASTEXITCODE
 
         Write-Host "Test execution completed with exit code: $exitCode"
@@ -91,4 +115,15 @@ jobs:
         } else {
           Write-Host "❌ Tests failed with exit code: $exitCode" -ForegroundColor Red
           exit $exitCode
+        }
+
+    - name: Dump error log on failure
+      if: failure()
+      run: |
+        $logPath = "storage\logs\error.log"
+        if (Test-Path $logPath) {
+          Write-Host "----- error.log -----" -ForegroundColor Red
+          Get-Content $logPath -Tail 200
+        } else {
+          Write-Host "No error.log found at $logPath"
         }

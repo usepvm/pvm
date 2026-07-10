@@ -502,11 +502,12 @@ function Invoke-Run {
     param ($arguments)
 
     $scriptName = $arguments[0]
+    $scripts = Get-Scripts
 
     if ([string]::IsNullOrWhiteSpace($scriptName)) {
         Write-Host -Object "`nPlease provide a script name to run: pvm run <script-name>" -ForegroundColor Yellow
         Write-Host -Object "`nAvailable scripts:`n" -ForegroundColor Cyan
-        $scripts = $PVMConfig.defaults.scripts
+
         $maxNameLength = ($scripts.Keys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $scripts.Keys | ForEach-Object {
             $name = "$_ ".PadRight($maxNameLength, '.')
@@ -515,8 +516,6 @@ function Invoke-Run {
         }
         return -1
     }
-
-    $scripts = $PVMConfig.defaults.scripts
 
     if (-not $scripts.Contains($scriptName)) {
         Write-Host -Object "`nScript '$scriptName' not found." -ForegroundColor Yellow

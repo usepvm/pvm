@@ -219,6 +219,13 @@ Describe "Get-FlagMap" {
     }
 }
 
+Describe "Get-Scripts" {
+    It "Returns PVMConfig.defaults.scripts" {
+        $result = Get-Scripts
+        $result.Count | Should -Be $PVMConfig.defaults.scripts.Count
+    }
+}
+
 Describe "Get-Config" {
     Context "When .env file exists" {
         BeforeAll {

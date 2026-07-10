@@ -69,6 +69,10 @@ function Get-FlagMap {
     return $PVMConfig.defaults.flags
 }
 
+function Get-Scripts {
+    return $PVMConfig.defaults.scripts
+}
+
 function Get-Config {
     param([string] $rootPath)
 

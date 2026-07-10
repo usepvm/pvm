@@ -22,6 +22,7 @@ Describe "Get-Actions Tests" {
         Mock Invoke-Cache { }
         Mock Invoke-Aliases { }
         Mock Invoke-Update { }
+        Mock Invoke-Run { }
     }
 
     It "Should return ordered hashtable with all actions" {
@@ -44,6 +45,7 @@ Describe "Get-Actions Tests" {
         $actions.Keys | Should -Contain 'test'
         $actions.Keys | Should -Contain 'log'
         $actions.Keys | Should -Contain 'update'
+        $actions.Keys | Should -Contain 'run'
     }
 
     It "Should set script-level arguments variable" {
@@ -173,6 +175,13 @@ Describe "Get-Actions Tests" {
             $actions['update'].action.Invoke()
 
             Should -Invoke Invoke-Update -Times 1
+        }
+
+        It "Should execute run action" {
+            $actions = Get-Actions -arguments @()
+            $actions['run'].action.Invoke()
+
+            Should -Invoke Invoke-Run -Times 1
         }
     }
 }

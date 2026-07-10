@@ -1422,3 +1422,43 @@ Describe "Invoke-Update Tests" {
         Should -Invoke Update-PVM -Times 1
     }
 }
+
+Describe "Invoke-Run Tests" {
+    BeforeAll {
+        Mock Get-Actions {
+            [ordered]@{
+                'install' = @{ action = { return 0 } }
+                'list' = @{ action = { return 0 } }
+                'ini' = @{ action = { return 0 } }
+                'cache' = @{ action = { return 0 } }
+                'test' = @{ action = { return 0 } }
+            }
+        }
+    }
+
+    It "Should return -1 when no arguments are provided" {
+        $result = Invoke-Run -arguments @()
+        $result | Should -Be -1
+    }
+
+    It "Should return -1 when an unknown script is provided" {
+        Mock Get-Scripts { return @{ 'script1' = 'command1'; 'script2' = 'command2' } }
+
+        $result = Invoke-Run -arguments @('unknown')
+        $result | Should -Be -1
+    }
+
+    It "Should return -1 when an unknown command is provided" {
+        Mock Get-Scripts { return @{ 'cmd1:arg1' = 'command1'; 'cmd2:arg2' = 'command2' } }
+
+        $result = Invoke-Run -arguments @('cmd1:arg1')
+        $result | Should -Be -1
+    }
+
+    It "Should return 0 when a valid script is provided" {
+        Mock Get-Scripts { return @{ 'test:cov' = 'test --coverage'; 'test:quiet' = 'test --verbosity=None' } }
+
+        $result = Invoke-Run -arguments @('test:cov')
+        $result | Should -Be 0
+    }
+}

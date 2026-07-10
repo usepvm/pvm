@@ -355,9 +355,10 @@ function Get-Actions {
                 )
                 EXAMPLES    = @(
                     'pvm run test ............... Runs all tests with default settings'
-                    'pvm run test:coverage ..... Runs tests with 80% coverage target'
-                    'pvm run test:ci ............ Runs tests with coverage for CI environments'
-                    'pvm run test:fast .......... Runs tests excluding slow tests'
+                    'pvm run test:quiet ......... Runs tests with 80% coverage target'
+                    'pvm run test:cov ........... Runs tests with 75% coverage target'
+                    'pvm run test:cov80 ......... Runs tests with 80% coverage target'
+                    'pvm run test:cov90 ......... Runs tests with 90% coverage target'
                     'pvm run test:full .......... Runs tests with coverage and detailed output'
                 )
             }

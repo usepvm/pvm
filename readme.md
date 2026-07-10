@@ -384,19 +384,16 @@ pvm cache:<subcommand>
 PVM includes predefined scripts for common test scenarios, similar to npm scripts in package.json or composer scripts in composer.json. These scripts provide shortcuts for running tests with specific configurations without typing all the options each time.
 
 ```sh
-# List all available scripts
-pvm run
-
 # Run a specific script
 pvm run <script-name>
 
 # Examples:
-pvm run test ....................... Runs all tests with default settings
-pvm run test:coverage ............... Runs tests with 80% coverage target
-pvm run test:ci ...................... Runs tests with coverage for CI environments
-pvm run test:full ................... Runs tests with coverage and detailed output
-pvm run test:unit ................... Runs only tests tagged as 'unit'
-pvm run test:integration ............ Runs only tests tagged as 'integration'
+pvm run test # ............... Runs all tests with default settings
+pvm run test:quiet # ......... Runs tests with verbosity set to None
+pvm run test:cov # ........... Runs tests with 80% coverage target
+pvm run test:cov80 # ......... Runs tests with 80% coverage target
+pvm run test:cov90 # ......... Runs tests with 90% coverage target                    
+pvm run test:full # .......... Runs tests with coverage and detailed output
 ```
 
 **Available Scripts:**
@@ -404,17 +401,11 @@ pvm run test:integration ............ Runs only tests tagged as 'integration'
 | Script Name | Command | Description |
 |-------------|---------|-------------|
 | `test` | `pvm test` | Runs all tests with default settings |
-| `test:minimal` | `pvm test --verbosity=None` | Runs tests with minimal output |
 | `test:quiet` | `pvm test --verbosity=None` | Alias for test:minimal |
-| `test:coverage` | `pvm test --coverage=75` | Runs tests with 75% coverage target |
-| `test:coverage80` | `pvm test --coverage=80` | Runs tests with 80% coverage target |
-| `test:coverage85` | `pvm test --coverage=85` | Runs tests with 85% coverage target |
-| `test:ci` | `pvm test --coverage=85 --sort=coverage --group=folder` | CI-optimized test run (matches GitHub Actions) |
+| `test:cov` | `pvm test --coverage=75` | Runs tests with 75% coverage target |
+| `test:cov80` | `pvm test --coverage=80` | Runs tests with 80% coverage target |
+| `test:cov90` | `pvm test --coverage=90` | Runs tests with 90% coverage target |
 | `test:full` | `pvm test --coverage=85 --verbosity=Detailed` | Runs tests with coverage and detailed output |
-| `test:unit` | `pvm test --tag=unit` | Runs only tests tagged as 'unit' |
-| `test:integration` | `pvm test --tag=integration` | Runs only tests tagged as 'integration' |
-| `test:sorted` | `pvm test --sort=coverage` | Runs tests and sorts results by coverage |
-| `test:grouped` | `pvm test --group=folder` | Runs tests and groups results by folder |
 
 **Customizing Scripts:**
 

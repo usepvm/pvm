@@ -162,15 +162,10 @@ function Get-Config {
             scripts        = [ordered]@{
                 'test'              = 'test'
                 'test:quiet'        = 'test --verbosity=None'
-                'test:coverage'    = 'test --coverage=75'
-                'test:coverage80'  = 'test --coverage=80'
-                'test:coverage85'  = 'test --coverage=85'
-                'test:ci'           = 'test --coverage=85 --sort=coverage --group=folder'
-                'test:full'         = 'test --coverage=85 --verbosity=Detailed'
-                'test:unit'         = 'test --tag=unit'
-                'test:integration'  = 'test --tag=integration'
-                'test:sorted'       = 'test --sort=coverage'
-                'test:grouped'      = 'test --group=folder'
+                'test:cov'          = 'test --coverage=75'
+                'test:cov80'        = 'test --coverage=80'
+                'test:cov90'        = 'test --coverage=90'
+                'test:full'         = 'test --coverage=85 --verbosity=Detailed --sort=coverage --group=folder'
             }
         }
     }

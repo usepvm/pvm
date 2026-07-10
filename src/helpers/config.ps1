@@ -69,7 +69,32 @@ function Get-FlagMap {
     return $PVMConfig.defaults.flags
 }
 
+function Set-Scripts-List {
+    try {
+        $jsonContent = $PVMConfig.defaults.scripts | ConvertTo-Json -Depth 10
+        Set-Content -Path $PVMConfig.paths.scriptsList -Value $jsonContent -Encoding UTF8
+
+        return 0
+    } catch {
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create scripts list"; exception = $_ }
+        return -1
+    }
+}
+
 function Get-Scripts {
+    try {
+        if (Is-File-Exists -path $PVMConfig.paths.scriptsList) {
+            $data = (Get-Content -Path $PVMConfig.paths.scriptsList -Raw | ConvertFrom-Json)
+            if ($null -ne $data) {
+                $ordered = [ordered]@{}
+                $data.PSObject.Properties | ForEach-Object { $ordered[$_.Name] = $_.Value }
+                if ($ordered.Count -gt 0) { return $ordered }
+            }
+        }
+    } catch {
+        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get scripts list"; exception = $_ }
+    }
+
     return $PVMConfig.defaults.scripts
 }
 
@@ -98,6 +123,7 @@ function Get-Config {
             profileTemplate    = "$templates\profile-template.json"
             zendExtensionsList = "$templates\zend_extensions.json"
             aliasesList        = "$templates\aliases.json"
+            scriptsList        = "$templates\scripts.json"
             log                = $logs
             logError           = "$logs\error.log"
             pathVarBackup      = "$logs\path.bak.log"

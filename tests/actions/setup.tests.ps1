@@ -221,6 +221,7 @@ Describe "Initialize-PVMFiles" {
         Mock Create-Profile-Template { return 0 }
         Mock Set-Zend-Extensions-List { return 0 }
         Mock Set-Aliases-List { return 0 }
+        Mock Set-Scripts-List { return 0 }
     }
 
     It "Returns -1 when the example profile creation fails" {
@@ -243,6 +244,12 @@ Describe "Initialize-PVMFiles" {
 
     It "Returns -1 when the aliases file creation fails" {
         Mock Set-Aliases-List { return -1 }
+        $result = Setup-Environment-Directories-And-Files
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when the scripts file creation fails" {
+        Mock Set-Scripts-List { return -1 }
         $result = Setup-Environment-Directories-And-Files
         $result | Should -Be -1
     }

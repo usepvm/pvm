@@ -160,7 +160,6 @@ function Get-Config {
                 '-h'        = 'help'
             }
             scripts        = [ordered]@{
-                'test'              = 'test'
                 'test:quiet'        = 'test --verbosity=None'
                 'test:cov'          = 'test --coverage=75'
                 'test:cov80'        = 'test --coverage=80'

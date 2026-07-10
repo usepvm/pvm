@@ -354,8 +354,7 @@ function Get-Actions {
                     'Scripts are shortcuts for common commands with predefined options.'
                 )
                 EXAMPLES    = @(
-                    'pvm run test ............... Runs all tests with default settings'
-                    'pvm run test:quiet ......... Runs tests with 80% coverage target'
+                    'pvm run test:quiet ......... Runs tests with verbosity set to None'
                     'pvm run test:cov ........... Runs tests with 75% coverage target'
                     'pvm run test:cov80 ......... Runs tests with 80% coverage target'
                     'pvm run test:cov90 ......... Runs tests with 90% coverage target'

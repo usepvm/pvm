@@ -400,8 +400,7 @@ pvm run test:full # .......... Runs tests with coverage and detailed output
 
 | Script Name | Command | Description |
 |-------------|---------|-------------|
-| `test` | `pvm test` | Runs all tests with default settings |
-| `test:quiet` | `pvm test --verbosity=None` | Alias for test:minimal |
+| `test:quiet` | `pvm test --verbosity=None` | Runs tests with verbosity set to None |
 | `test:cov` | `pvm test --coverage=75` | Runs tests with 75% coverage target |
 | `test:cov80` | `pvm test --coverage=80` | Runs tests with 80% coverage target |
 | `test:cov90` | `pvm test --coverage=90` | Runs tests with 90% coverage target |

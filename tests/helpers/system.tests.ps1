@@ -33,27 +33,6 @@ BeforeAll {
         }
     }
 
-    # Create wrapper functions that use our mock registry
-    Mock Get-All-EnvVars-Core {
-        if ($script:MockRegistryThrowException) {
-            throw $script:MockRegistryException
-        }
-
-        $result = @{}
-        $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
-        return $result
-    }
-
-    Mock Get-EnvVar-ByName-Core {
-        param ($name)
-
-        if ($script:MockRegistryThrowException) {
-            throw $script:MockRegistryException
-        }
-
-        return $script:MockRegistry.Machine[$name]
-    }
-
     Mock Set-EnvVar-Core {
         param ($name, $value)
 
@@ -74,7 +53,48 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
+Describe "Is-OS-64Bit" {
+    It "Returns a boolean value indicating OS architecture" {
+        $result = Is-OS-64Bit
+        $result | Should -BeOfType [bool]
+    }
+}
+
+Describe "Get-All-EnvVars-Core" {
+    It "Returns machine-level environment variables" {
+        $result = Get-All-EnvVars-Core
+        $result | Should -Not -BeNullOrEmpty
+        $result.GetType().Name | Should -Be 'Hashtable'
+    }
+}
+
+Describe "Get-EnvVar-ByName-Core" {
+    It "Returns environment variable value by name" {
+        # Test with a known system variable that should exist
+        $result = Get-EnvVar-ByName-Core -name 'Path'
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeOfType [string]
+    }
+
+    It "Returns null for non-existent variable" {
+        $result = Get-EnvVar-ByName-Core -name 'NONEXISTENT_VAR_12345'
+        $result | Should -BeNullOrEmpty
+    }
+}
+
 Describe "Get-All-EnvVars" {
+    BeforeAll {
+        Mock Get-All-EnvVars-Core {
+            if ($script:MockRegistryThrowException) {
+                throw $script:MockRegistryException
+            }
+
+            $result = @{}
+            $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
+            return $result
+        }
+    }
+
     Context "When retrieving environment variables" {
         It "Returns environment variables" {
             $result = Get-All-EnvVars
@@ -95,6 +115,24 @@ Describe "Get-All-EnvVars" {
 Describe "Get-EnvVar-ByName" {
     BeforeAll {
         Mock Is-Not-Admin { return $false }
+        Mock Get-All-EnvVars-Core {
+            if ($script:MockRegistryThrowException) {
+                throw $script:MockRegistryException
+            }
+
+            $result = @{}
+            $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
+            return $result
+        }
+        Mock Get-EnvVar-ByName-Core {
+            param ($name)
+
+            if ($script:MockRegistryThrowException) {
+                throw $script:MockRegistryException
+            }
+
+            return $script:MockRegistry.Machine[$name]
+        }
     }
 
     Context "When variable exists" {
@@ -144,6 +182,15 @@ Describe "Get-EnvVar-ByName" {
 Describe "Set-EnvVar" {
     BeforeAll {
         Mock Is-Not-Admin { return $false }
+        Mock Get-EnvVar-ByName-Core {
+            param ($name)
+
+            if ($script:MockRegistryThrowException) {
+                throw $script:MockRegistryException
+            }
+
+            return $script:MockRegistry.Machine[$name]
+        }
     }
 
     Context "When setting environment variables" {
@@ -185,6 +232,24 @@ Describe "Set-EnvVar" {
 Describe "Optimize-SystemPath" {
     BeforeAll {
         Mock Is-Not-Admin { return $false }
+        Mock Get-All-EnvVars-Core {
+            if ($script:MockRegistryThrowException) {
+                throw $script:MockRegistryException
+            }
+
+            $result = @{}
+            $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
+            return $result
+        }
+        Mock Get-EnvVar-ByName-Core {
+            param ($name)
+
+            if ($script:MockRegistryThrowException) {
+                throw $script:MockRegistryException
+            }
+
+            return $script:MockRegistry.Machine[$name]
+        }
     }
 
     Context "When optimizing system PATH" {

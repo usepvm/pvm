@@ -358,6 +358,22 @@ function Get-Coverage-Group-Rank {
     return $rank
 }
 
+function Get-Folder-Group-Name {
+    param ($item)
+
+    if ($item.Message -eq 'File not found!') {
+        return 'n/a'
+    }
+
+    $parent = Split-Path -Path $item.relativeFilePath -Parent
+
+    if (-not $parent) {
+        return '(root)'
+    }
+
+    return ($parent -replace '\\', '/')
+}
+
 function Write-Grouped-Results {
     param ($sorted, $groupExpr, $maxLineLength, $target, $groupBy = $null)
 
@@ -402,7 +418,7 @@ function Write-Tests-Summary {
 
     $groupExpr = switch ($options.groupBy) {
         'coverage' { { Get-Coverage-Group-Name -coverageRaw $_.testResultData.coverageRaw } }
-        'folder'   { { Get-Folder-Group-Name -relativeFilePath $_.relativeFilePath } }
+        'folder'   { { Get-Folder-Group-Name -item $_ } }
         default    { $null }
     }
 

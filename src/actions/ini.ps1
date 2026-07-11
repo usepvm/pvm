@@ -82,7 +82,7 @@ function Invoke-IniAction {
             }
             'add' {
                 if ($params.Count -eq 0) {
-                    Write-Host -Object "`nPlease specify at least one extension (pvm ini install xdebug)."
+                    Write-Host -Object "`nPlease specify at least one extension (pvm ini add xdebug)."
                     return -1
                 }
 
@@ -95,7 +95,7 @@ function Invoke-IniAction {
             }
             'remove' {
                 if ($params.Count -eq 0) {
-                    Write-Host -Object "`nPlease specify at least one extension (pvm ini uninstall xdebug)."
+                    Write-Host -Object "`nPlease specify at least one extension (pvm ini remove xdebug)."
                     return -1
                 }
 

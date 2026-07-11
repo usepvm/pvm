@@ -272,6 +272,37 @@ Describe "Make-Symbolic-Link" {
             Remove-Item -Path $existingPath -Force
         }
 
+        It "Deletes existing symbolic link and creates new one" {
+            # Use project storage path for testing
+            $STORAGE_PATH_TEMP = $PVMConfigBackup.paths.storage
+            $testDir = "$STORAGE_PATH_TEMP\tests\symlink_test"
+            $linkPath = "$testDir\test_link"
+            $targetPath = "$testDir\php\8.1"
+
+            try {
+                Mock Is-Admin { return $true }
+                Mock Make-Directory { return 0 }
+                Mock Get-Item { return @{ Attributes = 'ReparsePoint' } }
+
+                New-Item -ItemType Directory -Path $testDir -Force | Out-Null
+                New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
+                
+                # # Create a directory at the link path to simulate an existing item
+                New-Item -ItemType Directory -Path $linkPath -Force | Out-Null
+                New-Item -ItemType SymbolicLink -Path $linkPath -Target $targetPath | Out-Null
+
+                $result = Make-Symbolic-Link -link $linkPath -target $targetPath
+
+                $result.code | Should -Be 0
+                $result.message | Should -Match "Created symbolic link"
+            } finally {
+                # Cleanup
+                if (Test-Path $testDir) {
+                    Remove-Item -Path $testDir -Recurse -Force
+                }
+            }
+        }
+
         It "Handles exceptions gracefully" {
             Mock Is-Directory-Exists { throw 'Simulated exception' }
             $result = Make-Symbolic-Link -link 'TestDrive:\link' -target 'TestDrive:\target'
@@ -318,6 +349,42 @@ Describe "Make-Symbolic-Link" {
             Mock Make-Directory -MockWith { return -1 }
             $result = Make-Symbolic-Link -link $linkPath -target $targetPath
             $result.code | Should -Be -1
+        }
+    }
+}
+
+Describe "Extract-Zip-Core Tests" {
+    It "Loads System.IO.Compression.FileSystem assembly and extracts zip" {
+        # Use project storage path for testing
+        $STORAGE_PATH_TEMP = $PVMConfigBackup.paths.storage
+        $testDir = "$STORAGE_PATH_TEMP\tests\zip_test"
+        $zipPath = "$testDir\test.zip"
+        $extractPath = "$testDir\extract"
+        $testFile = "$testDir\source\test.txt"
+
+        try {
+            # Create source directory and file
+            New-Item -ItemType Directory -Path (Split-Path $testFile) -Force | Out-Null
+            'test content' | Set-Content -Path $testFile
+
+            # Create zip file using PowerShell's Compress-Archive
+            Compress-Archive -Path $testFile -DestinationPath $zipPath -Force
+
+            # Create extraction directory
+            New-Item -ItemType Directory -Path $extractPath -Force | Out-Null
+
+            # Call Extract-Zip-Core
+            { Extract-Zip-Core -zipPath $zipPath -extractPath $extractPath } | Should -Not -Throw
+
+            # Verify extraction worked
+            $extractedFile = "$extractPath\test.txt"
+            Test-Path $extractedFile | Should -Be $true
+            Get-Content $extractedFile | Should -Be 'test content'
+        } finally {
+            # Cleanup
+            if (Test-Path $testDir) {
+                Remove-Item -Path $testDir -Recurse -Force
+            }
         }
     }
 }

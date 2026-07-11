@@ -58,7 +58,7 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Cache PowerShell modules
-      uses: actions/cache@v4.2.0
+      uses: actions/cache@v5
       with:
         path: ~\Documents\PowerShell\Modules
         key: ${{ runner.os }}-ps-${{ matrix.shell }}-pester-${{ matrix.pesterVersion }}

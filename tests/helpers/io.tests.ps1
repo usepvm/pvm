@@ -289,7 +289,6 @@ Describe "Make-Symbolic-Link" {
                 
                 # # Create a directory at the link path to simulate an existing item
                 New-Item -ItemType Directory -Path $linkPath -Force | Out-Null
-                New-Item -ItemType SymbolicLink -Path $linkPath -Target $targetPath | Out-Null
 
                 $result = Make-Symbolic-Link -link $linkPath -target $targetPath
 

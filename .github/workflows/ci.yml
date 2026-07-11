@@ -55,10 +55,10 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Cache PowerShell modules
-      uses: actions/cache@v4
+      uses: actions/cache@v4.2.0
       with:
         path: ~\Documents\PowerShell\Modules
         key: ${{ runner.os }}-ps-${{ matrix.shell }}-pester-${{ matrix.pesterVersion }}

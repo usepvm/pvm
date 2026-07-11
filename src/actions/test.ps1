@@ -110,9 +110,23 @@ function Get-Tests-Files {
         return $allTests
     }
 
-    return $allTests | Where-Object {
+    $testsNames = @($testsNames | Select-Object -Unique)
+
+    $matchedTests = $allTests | Where-Object {
         $testsNames -contains ($_.Name -replace '\.tests\.ps1$', '')
     }
+
+    $foundNames = $matchedTests.Name -replace '\.tests\.ps1$', ''
+    $missingNames = $testsNames | Where-Object { $foundNames -notcontains $_ }
+
+    $missingFiles = $missingNames | ForEach-Object {
+        [PSCustomObject]@{
+            Name     = "$_.tests.ps1"
+            FullName = "$root\tests\$_.tests.ps1"
+        }
+    }
+
+    return @($matchedTests) + @($missingFiles)
 }
 
 function Get-All-Test-Names {
@@ -213,7 +227,7 @@ function Format-Test-Result-Message {
 }
 
 function Run-Test-File {
-    param ($config, $file, $options = $null, $separatorWidth = 60, $testsMap = $null)
+    param ($config, $file = $null, $options = $null, $separatorWidth = 60, $testsMap = $null)
 
     $testResultData = @{ passedCount = 0; failedCount = 0; duration = 0; coverageRaw = $null }
     $root = Get-PVMRootDirectory
@@ -344,6 +358,22 @@ function Get-Coverage-Group-Rank {
     return $rank
 }
 
+function Get-Folder-Group-Name {
+    param ($item)
+
+    if ($item.Message -eq 'File not found!') {
+        return 'n/a'
+    }
+
+    $parent = Split-Path -Path $item.relativeFilePath -Parent
+
+    if (-not $parent) {
+        return '(root)'
+    }
+
+    return ($parent -replace '\\', '/')
+}
+
 function Write-Grouped-Results {
     param ($sorted, $groupExpr, $maxLineLength, $target, $groupBy = $null)
 
@@ -388,7 +418,7 @@ function Write-Tests-Summary {
 
     $groupExpr = switch ($options.groupBy) {
         'coverage' { { Get-Coverage-Group-Name -coverageRaw $_.testResultData.coverageRaw } }
-        'folder'   { { Get-Folder-Group-Name -relativeFilePath $_.relativeFilePath } }
+        'folder'   { { Get-Folder-Group-Name -item $_ } }
         default    { $null }
     }
 

@@ -110,9 +110,23 @@ function Get-Tests-Files {
         return $allTests
     }
 
-    return $allTests | Where-Object {
+    $testsNames = @($testsNames | Select-Object -Unique)
+
+    $matchedTests = $allTests | Where-Object {
         $testsNames -contains ($_.Name -replace '\.tests\.ps1$', '')
     }
+
+    $foundNames = $matchedTests.Name -replace '\.tests\.ps1$', ''
+    $missingNames = $testsNames | Where-Object { $foundNames -notcontains $_ }
+
+    $missingFiles = $missingNames | ForEach-Object {
+        [PSCustomObject]@{
+            Name     = "$_.tests.ps1"
+            FullName = "$root\tests\$_.tests.ps1"
+        }
+    }
+
+    return @($matchedTests) + @($missingFiles)
 }
 
 function Get-All-Test-Names {
@@ -213,7 +227,7 @@ function Format-Test-Result-Message {
 }
 
 function Run-Test-File {
-    param ($config, $file, $options = $null, $separatorWidth = 60, $testsMap = $null)
+    param ($config, $file = $null, $options = $null, $separatorWidth = 60, $testsMap = $null)
 
     $testResultData = @{ passedCount = 0; failedCount = 0; duration = 0; coverageRaw = $null }
     $root = Get-PVMRootDirectory

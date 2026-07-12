@@ -266,6 +266,62 @@ MIN_LINE_LENGTH=50
             $result.paths.logError | Should -Be "$testRoot\storage\logs\error.log"
         }
 
+        It "Uses TEST_DRIVE from .env for fake storage when provided" {
+            $customRoot = "$TEST_DRIVE\custom-env"
+            New-Item -ItemType Directory -Path $customRoot -Force | Out-Null
+            @'
+PHP_CURRENT_VERSION_PATH=C:\pvm\php
+PVM_ENV_VAR_NAME=PVM
+CACHE_MAX_HOURS=168
+DEFAULT_LOG_PAGE_SIZE=5
+DEFAULT_PARTIAL_LIST_SIZE=10
+MIN_PAD_RIGHT_LENGTH=20
+MIN_LINE_LENGTH=50
+TEST_DRIVE=C:\fake-storage
+'@ | Set-Content -Path "$customRoot\.env"
+
+            $result = Get-Config -rootPath $customRoot
+
+            $result.paths.fakeStorage | Should -Be 'C:\fake-storage'
+        }
+
+        It "Falls back to storage/tests when TEST_DRIVE is not set" {
+            $fallbackRoot = "$TEST_DRIVE\fallback-env"
+            New-Item -ItemType Directory -Path $fallbackRoot -Force | Out-Null
+            @'
+PHP_CURRENT_VERSION_PATH=C:\pvm\php
+PVM_ENV_VAR_NAME=PVM
+CACHE_MAX_HOURS=168
+DEFAULT_LOG_PAGE_SIZE=5
+DEFAULT_PARTIAL_LIST_SIZE=10
+MIN_PAD_RIGHT_LENGTH=20
+MIN_LINE_LENGTH=50
+'@ | Set-Content -Path "$fallbackRoot\.env"
+
+            $result = Get-Config -rootPath $fallbackRoot
+
+            $result.paths.fakeStorage | Should -Be "$fallbackRoot\storage\tests"
+        }
+
+        It "Falls back to storage/tests when TEST_DRIVE is not a valid path" {
+            $invalidRoot = "$TEST_DRIVE\invalid-env"
+            New-Item -ItemType Directory -Path $invalidRoot -Force | Out-Null
+            @'
+PHP_CURRENT_VERSION_PATH=C:\pvm\php
+PVM_ENV_VAR_NAME=PVM
+CACHE_MAX_HOURS=168
+DEFAULT_LOG_PAGE_SIZE=5
+DEFAULT_PARTIAL_LIST_SIZE=10
+MIN_PAD_RIGHT_LENGTH=20
+MIN_LINE_LENGTH=50
+TEST_DRIVE=bad<path
+'@ | Set-Content -Path "$invalidRoot\.env"
+
+            $result = Get-Config -rootPath $invalidRoot
+
+            $result.paths.fakeStorage | Should -Be "$invalidRoot\storage\tests"
+        }
+
         It "Sets env variables from .env file" {
             $result = Get-Config -rootPath $testRoot
             $result.env.PHP_CURRENT_VERSION_PATH | Should -Be 'C:\pvm\php'

@@ -79,13 +79,22 @@ function Get-Config {
     $profiles = "$data\profiles"
     $templates = "$data\templates"
     $logs = "$storage\logs"
+    $fakeStorage = $envConfig['TEST_DRIVE']
+
+    $isValidPathFormat = -not [string]::IsNullOrWhiteSpace($fakeStorage) `
+        -and $fakeStorage -match '^[A-Za-z]+:' `
+        -and $fakeStorage.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -eq -1
+
+    if (-not $isValidPathFormat) {
+        $fakeStorage = "$storage\tests"
+    }
 
     return @{
         version  = '2.6' # PVM version
 
         paths    = [ordered]@{
             storage            = $storage
-            fakeStorage        = "$storage\tests"
+            fakeStorage        = $fakeStorage
             php                = "$storage\php"
             data               = $data
             templates          = $templates

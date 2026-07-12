@@ -1,11 +1,13 @@
 ﻿
 BeforeAll {
-    $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
-    $script:testIniPath = "$testDrivePath\php.ini"
-    $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
-
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-    $PVMConfig.paths.cache = 'TestDrive:\\cache'
+
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\ext-drive"
+    $script:testIniPath = "$TEST_DRIVE\php.ini"
+    $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
+    $script:CACHE_PATH = $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
     Mock Write-Host {}
 
@@ -40,6 +42,7 @@ BeforeAll {
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 

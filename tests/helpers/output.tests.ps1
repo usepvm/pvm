@@ -1,11 +1,15 @@
-
+﻿
 BeforeAll {
     Mock Write-Host {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\output-drive"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
 }
@@ -57,7 +61,7 @@ Describe "Display-Msg-By-ExitCode" {
 Describe "Log-Data" {
     Context "When logging data" {
         It "Logs data successfully" {
-            $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\test.log'
+            $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = "$TEST_DRIVE\logs\test.log"
             $result = Log-Data -data @{
                 header = 'Test message'
                 exception = @{
@@ -94,7 +98,7 @@ Describe "Log-Data" {
         }
 
         It "Accepts custom log path" {
-            $customLogPath = 'TestDrive:\logs\custom.log'
+            $customLogPath = "$TEST_DRIVE\logs\custom.log"
             $result = Log-Data -data @{
                 header = 'Test message'
                 logPath = $customLogPath

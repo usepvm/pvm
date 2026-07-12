@@ -1,18 +1,22 @@
-
+﻿
 BeforeAll {
     Mock Write-Host {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\update-check-drive"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-Last-Update-Check-Timestamp" {
     BeforeAll {
-        $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\storage\data\cache'
+        $script:CACHE_PATH = $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
         New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
         $script:TIMESTAMP_FILE = "$CACHE_PATH\last_update_check.txt"
     }
@@ -53,17 +57,20 @@ Describe "Get-Last-Update-Check-Timestamp" {
 
 Describe "Set-Last-Update-Check-Timestamp" {
     BeforeAll {
-        $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\storage\data\cache'
+        $script:CACHE_PATH = $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
         $script:TIMESTAMP_FILE = "$CACHE_PATH\last_update_check.txt"
     }
 
     Context "When writing succeeds" {
         It "Creates the cache directory" {
-            Mock Make-Directory { return 0 }
-            Mock Get-Date { return (Get-Date '2026-01-01') }
+            Mock Make-Directory {
+                return 0
+            }
+            Mock Get-Date { return [datetime]'2026-01-01' }
 
-            Set-Last-Update-Check-Timestamp
+            $result = Set-Last-Update-Check-Timestamp
 
+            $result | Should -Be 0
             Should -Invoke Make-Directory -Times 1 -ParameterFilter {
                 $path -eq $CACHE_PATH
             }
@@ -92,16 +99,6 @@ Describe "Set-Last-Update-Check-Timestamp" {
 }
 
 Describe "Should-Check-For-Updates" {
-    BeforeAll {
-        $script:ORIGINAL_ENABLE_UPDATE_CHECK = $PVMConfig.env.ENABLE_UPDATE_CHECK
-        $script:ORIGINAL_UPDATE_CHECK_INTERVAL_HOURS = $PVMConfig.env.UPDATE_CHECK_INTERVAL_HOURS
-    }
-
-    AfterAll {
-        $PVMConfig.env.ENABLE_UPDATE_CHECK = $ORIGINAL_ENABLE_UPDATE_CHECK
-        $PVMConfig.env.UPDATE_CHECK_INTERVAL_HOURS = $ORIGINAL_UPDATE_CHECK_INTERVAL_HOURS
-    }
-
     Context "When update checks are disabled" {
         It "Returns false without checking the last timestamp" {
             $PVMConfig.env.ENABLE_UPDATE_CHECK = $false

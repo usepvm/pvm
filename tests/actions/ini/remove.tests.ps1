@@ -1,9 +1,12 @@
 ﻿
 BeforeAll {
-    $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
-    $script:testIniPath = "$testDrivePath\php.ini"
-    $script:extDirectory = "$testDrivePath\ext"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\remove-drive"
+    $script:testIniPath = "$TEST_DRIVE\php.ini"
+    $script:extDirectory = "$TEST_DRIVE\ext"
     $script:testBackupPath = "$testIniPath.bak"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    New-Item -ItemType Directory -Path $extDirectory -Force | Out-Null
 
     Mock Write-Host {}
     Mock Log-Data { return 0 }
@@ -21,7 +24,10 @@ display_errors = On
 
     # Create initial ini content first
     Reset-Ini-Content
-    New-Item -ItemType Directory -Path $extDirectory -Force | Out-Null
+}
+
+AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
 }
 
 Describe "Remove-Extension-From-Ini-File" {

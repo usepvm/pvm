@@ -1,12 +1,16 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-    $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\cache'
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\store-drive"
+    $script:CACHE_PATH = $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $script:CACHE_PATH -Force | Out-Null
     Mock Write-Host {}
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -72,7 +76,6 @@ Describe "Get-Data-From-Cache" {
 
 Describe "Can-Use-Cache" {
     BeforeAll {
-        $script:CACHE_PATH = $PVMConfig.paths.cache = 'TestDrive:\cache'
         $script:CACHE_MAX_HOURS = $PVMConfig.env.CACHE_MAX_HOURS = 168
 
         New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null

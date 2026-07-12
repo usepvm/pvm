@@ -166,7 +166,7 @@ VALID=yes
 
 Describe "Set-Aliases-List" {
     BeforeAll {
-        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
     }
 

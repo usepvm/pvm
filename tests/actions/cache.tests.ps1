@@ -18,8 +18,8 @@ Describe "Get-Cache-Files Tests" {
     It "Should return a list of cache files" {
         Mock Get-ChildItem {
             return @(
-                @{ Name = 'cache1.json'; FullName = "$script:CACHE_PATH\cache1.json" }
-                @{ Name = 'cache2.json'; FullName = "$script:CACHE_PATH\cache2.json" }
+                @{ Name = 'cache1.json'; FullName = "$CACHE_PATH\cache1.json" }
+                @{ Name = 'cache2.json'; FullName = "$CACHE_PATH\cache2.json" }
             )
         }
 

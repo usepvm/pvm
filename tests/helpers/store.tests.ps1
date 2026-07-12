@@ -5,7 +5,7 @@ BeforeAll {
     $script:CACHE_PATH = $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    New-Item -ItemType Directory -Path $script:CACHE_PATH -Force | Out-Null
+    New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
     Mock Write-Host {}
 }
 

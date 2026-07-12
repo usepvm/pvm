@@ -59,7 +59,7 @@ BeforeAll {
         return $true
     }
 
-    function Get-Web-Response {
+    Mock Get-Web-Response {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
@@ -81,8 +81,8 @@ BeforeAll {
         throw "URL not mocked: $Uri"
     }
 
-    function Test-Path {
-        param ($Path, $PathType = $null)
+    Mock Test-Path {
+        param ([string]$Path, $PathType = $null)
 
         if ($PathType -eq 'Container') {
             return $script:MockFileSystem.Directories -contains $Path
@@ -90,47 +90,7 @@ BeforeAll {
         return $script:MockFileSystem.Files.ContainsKey($Path)
     }
 
-    function Remove-Item {
-        param ($Path)
-        if ($script:MockFileSystem.Files.ContainsKey($Path)) {
-            $script:MockFileSystem.Files.Remove($Path)
-        }
-    }
-
-    function Copy-Item {
-        param ($Path, $Destination)
-        $script:MockFileSystem.Files[$Destination] = 'Copied content'
-    }
-
-    function Get-Content {
-        param ($Path)
-        if ($script:MockFileSystem.Files.ContainsKey($Path)) {
-            $content = $script:MockFileSystem.Files[$Path]
-            return $content -split "`n"
-        }
-        throw "File not found in mock system: $Path"
-    }
-
-    function Set-Content {
-        param ($Path, $Value, $Encoding = $null)
-        $script:MockFileSystem.Files[$Path] = $Value -join "`n"
-    }
-
-    function Add-Content {
-        param ($Path, $Value)
-        if ($script:MockFileSystem.Files.ContainsKey($Path)) {
-            $script:MockFileSystem.Files[$Path] += "`n$Value"
-        } else {
-            $script:MockFileSystem.Files[$Path] = $Value
-        }
-    }
-
-    function Add-Type {
-        param ($AssemblyName)
-        # Mock for System.IO.Compression.FileSystem
-    }
-
-    function Read-Host {
+    Mock Read-Host {
         param ($Prompt)
         return $script:MockUserInput
     }
@@ -148,7 +108,7 @@ BeforeAll {
         return $result
     }
 
-    function Get-EnvVar-ByName-Core {
+    Mock Get-EnvVar-ByName-Core {
         param ($name)
 
         if ($script:MockRegistryThrowException) {
@@ -158,7 +118,7 @@ BeforeAll {
         return $script:MockRegistry.Machine[$name]
     }
 
-    function Set-EnvVar-Core {
+    Mock Set-EnvVar-Core {
         param ($name, $value)
 
         if ($script:MockRegistryThrowException) {
@@ -459,6 +419,20 @@ Describe "Download-PHP-From-Url Tests" {
 }
 
 Describe "Extract-And-Configure Tests" {
+    BeforeAll {
+        Mock Add-Type { param ($AssemblyName) }
+        Mock Copy-Item {
+            param ($Path, $Destination)
+            $script:MockFileSystem.Files[$Destination] = 'Copied content'
+        }
+        Mock Remove-Item {
+            param ($Path)
+            if ($script:MockFileSystem.Files.ContainsKey($Path)) {
+                $script:MockFileSystem.Files.Remove($Path)
+            }
+        }
+    }
+
     BeforeEach {
         Mock Write-Host { }
         Reset-MockState
@@ -466,6 +440,7 @@ Describe "Extract-And-Configure Tests" {
     }
 
     It "Should extract and configure PHP" {
+        Mock Extract-Zip { }
         { Extract-And-Configure -path "$TEST_DRIVE\php.zip" -fileNamePath "$TEST_DRIVE\php" } | Should -Not -Throw
         $script:MockFileSystem.Files.ContainsKey("$TEST_DRIVE\php\php.ini") | Should -Be $true
     }
@@ -478,6 +453,20 @@ Describe "Extract-And-Configure Tests" {
 }
 
 Describe "Configure-Opcache Tests" {
+    BeforeAll {
+        Mock Set-Content {
+            param ($Path, $Value, $Encoding = $null)
+            $script:MockFileSystem.Files[$Path] = $Value -join "`n"
+        }
+        Mock Get-Content {
+            param ([string]$Path)
+            if ($script:MockFileSystem.Files.ContainsKey($Path)) {
+                $content = $script:MockFileSystem.Files[$Path]
+                return $content -split "`n"
+            }
+            throw "File not found in mock system: $Path"
+        }
+    }
     BeforeEach {
         Mock Write-Host { }
         Reset-MockState

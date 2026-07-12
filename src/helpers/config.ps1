@@ -72,7 +72,7 @@ function Get-FlagMap {
 function Get-Config {
     param([string] $rootPath)
 
-    $env = Get-EnvConfig -rootPath $rootPath
+    $envConfig = Get-EnvConfig -rootPath $rootPath
 
     $storage = "$rootPath\storage"
     $data = "$storage\data"
@@ -114,15 +114,15 @@ function Get-Config {
         }
 
         env      = [ordered]@{
-            PHP_CURRENT_VERSION_PATH    = $env['PHP_CURRENT_VERSION_PATH']
-            PVM_ENV_VAR_NAME            = $env['PVM_ENV_VAR_NAME']
-            CACHE_MAX_HOURS             = [int] $env['CACHE_MAX_HOURS']
-            DEFAULT_LOG_PAGE_SIZE       = [int] $env['DEFAULT_LOG_PAGE_SIZE']
-            DEFAULT_PARTIAL_LIST_SIZE   = [int] $env['DEFAULT_PARTIAL_LIST_SIZE']
-            MIN_PAD_RIGHT_LENGTH        = [int] $env['MIN_PAD_RIGHT_LENGTH']
-            MIN_LINE_LENGTH             = [int] $env['MIN_LINE_LENGTH']
-            ENABLE_UPDATE_CHECK         = [bool] $env['ENABLE_UPDATE_CHECK']
-            UPDATE_CHECK_INTERVAL_HOURS = [int] $env['UPDATE_CHECK_INTERVAL_HOURS']
+            PHP_CURRENT_VERSION_PATH    = $envConfig['PHP_CURRENT_VERSION_PATH']
+            PVM_ENV_VAR_NAME            = $envConfig['PVM_ENV_VAR_NAME']
+            CACHE_MAX_HOURS             = [int] $envConfig['CACHE_MAX_HOURS']
+            DEFAULT_LOG_PAGE_SIZE       = [int] $envConfig['DEFAULT_LOG_PAGE_SIZE']
+            DEFAULT_PARTIAL_LIST_SIZE   = [int] $envConfig['DEFAULT_PARTIAL_LIST_SIZE']
+            MIN_PAD_RIGHT_LENGTH        = [int] $envConfig['MIN_PAD_RIGHT_LENGTH']
+            MIN_LINE_LENGTH             = [int] $envConfig['MIN_LINE_LENGTH']
+            ENABLE_UPDATE_CHECK         = [bool] $envConfig['ENABLE_UPDATE_CHECK']
+            UPDATE_CHECK_INTERVAL_HOURS = [int] $envConfig['UPDATE_CHECK_INTERVAL_HOURS']
         }
 
         defaults = @{

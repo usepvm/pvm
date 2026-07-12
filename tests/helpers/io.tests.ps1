@@ -278,7 +278,7 @@ Describe "Make-Symbolic-Link" {
 
         It "Deletes existing symbolic link and creates new one" {
             # Use project storage path for testing
-            $STORAGE_PATH_TEMP = $STORAGE_PATH
+            $STORAGE_PATH_TEMP = (Resolve-Path -Path $STORAGE_PATH).ProviderPath
             $testDir = "$STORAGE_PATH_TEMP\tests\symlink_test"
             $linkPath = "$testDir\test_link"
             $targetPath = "$testDir\php\8.1"
@@ -359,7 +359,7 @@ Describe "Make-Symbolic-Link" {
 Describe "Extract-Zip-Core Tests" {
     It "Loads System.IO.Compression.FileSystem assembly and extracts zip" {
         # Use project storage path for testing
-        $STORAGE_PATH_TEMP = $STORAGE_PATH
+        $STORAGE_PATH_TEMP = (Resolve-Path -Path $STORAGE_PATH).ProviderPath
         $testDir = "$STORAGE_PATH_TEMP\tests\zip_test"
         $zipPath = "$testDir\test.zip"
         $extractPath = "$testDir\extract"

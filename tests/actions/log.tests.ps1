@@ -1,9 +1,13 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\log-drive"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -90,7 +94,7 @@ Describe "Format-NiceTimestamp" {
 Describe "Show-Log" {
     BeforeAll {
         $script:DEFAULT_LOG_PAGE_SIZE = $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE = 3
-        $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
+        $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
         New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
         Mock Write-Host {}
 

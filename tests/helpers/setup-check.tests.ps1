@@ -1,19 +1,24 @@
-
+﻿
 BeforeAll {
     Mock Write-Host {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\setup-check-drive"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Is-PVM-Setup" {
     BeforeAll {
-        $global:PVMRoot = 'TestDrive:\pvm'
-        $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\pvm\php'
+        $global:PVMRoot = "$TEST_DRIVE\pvm"
+        $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$TEST_DRIVE\pvm\php"
         $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME
         New-Item -ItemType Directory -Path $global:PVMRoot -Force | Out-Null
     }

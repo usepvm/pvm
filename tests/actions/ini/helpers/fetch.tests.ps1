@@ -2,13 +2,17 @@
 BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\fetch-drive"
     Mock Write-Host {}
     $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -201,7 +205,7 @@ Describe "Get-Extension-Matching-Categories Tests" {
 
 Describe "Get-Extension-Links-From-URL Tests" {
     BeforeEach {
-        $PVMConfig.paths.cache = 'TestDrive:\cache'
+        $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
     }
 
     It "Returns filtered links" {
@@ -308,11 +312,6 @@ Describe "Get-Extension-Links-From-URL Tests" {
 }
 
 Describe "Get-Extension-From-URL Tests" {
-    BeforeEach {
-        $PVMConfig.paths.cache = 'TestDrive:\cache'
-        Mock Write-Host { }
-    }
-
     It "Should parse extension versions correctly" {
         Mock Can-Use-Cache { return $false }
         Mock Get-Extension-Links-From-URL {

@@ -40,6 +40,7 @@ function Setup-PVM {
 function Initialize-PVMDirectories {
     $dirs = @(
         $PVMConfig.paths.storage,
+        $PVMConfig.paths.fakeStorage,
         $PVMConfig.paths.php,
         $PVMConfig.paths.data,
         $PVMConfig.paths.templates,

@@ -1,9 +1,11 @@
-
+﻿
 BeforeAll {
-    $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
-    $script:testIniPath = "$testDrivePath\php.ini"
-    $script:extDirectory = "$testDrivePath\ext"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\restore-drive"
+    $script:testIniPath = "$TEST_DRIVE\php.ini"
+    $script:extDirectory = "$TEST_DRIVE\ext"
     $script:testBackupPath = "$testIniPath.bak"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
     Mock Write-Host {}
 
@@ -22,6 +24,10 @@ max_execution_time = 30
 
     # Create initial ini content first
     Reset-Ini-Content
+}
+
+AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
 }
 
 Describe "Restore-IniBackup" {

@@ -1,4 +1,4 @@
-
+﻿
 function Get-EnvConfig {
     param ($rootPath)
 
@@ -114,6 +114,7 @@ function Get-Config {
 
         paths    = [ordered]@{
             storage            = $storage
+            fakeStorage        = "$storage\tests"
             php                = "$storage\php"
             data               = $data
             templates          = $templates

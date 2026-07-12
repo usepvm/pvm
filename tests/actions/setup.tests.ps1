@@ -3,9 +3,13 @@ BeforeAll {
     Mock Write-Host {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\setup-drive"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
 }
@@ -15,9 +19,9 @@ Describe "Setup-PVM" {
         Mock Write-Host {}
         # Mock global variables that the function depends on
         $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'C:\php\8.2'
-        $script:PVMRoot = 'TestDrive:\PVM'
+        $script:PVMRoot = "$TEST_DRIVE\PVM"
         $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME = 'PVM'
-        $PVMConfig.paths.logError = 'TestDrive:\logs\error.log'
+        $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
 
         # Initialize mock registry
         $script:MockRegistry = @{
@@ -205,13 +209,13 @@ Describe "Initialize-PVMDirectories" {
     It "Returns 0 when all directories and files are created" {
         Mock Make-Directory { return 0 }
         $result = Initialize-PVMDirectories
-        $result | Should -Be @(0, 0, 0, 0, 0, 0, 0)
+        $result | Should -Be @(0, 0, 0, 0, 0, 0, 0, 0)
     }
 
     It "Returns -1 when a directory creation fails" {
         Mock Make-Directory { return -1 }
         $result = Initialize-PVMDirectories
-        $result | Should -Be @(-1, -1, -1, -1, -1, -1, -1)
+        $result | Should -Be @(-1, -1, -1, -1, -1, -1, -1, -1)
     }
 }
 
@@ -283,7 +287,7 @@ Describe "Setup-Environment-Directories-And-Files" {
 
 Describe "Create-Env-File" {
     BeforeAll {
-        $script:PVMRoot = 'TestDrive:\PVM'
+        $script:PVMRoot = "$TEST_DRIVE\PVM"
         Mock Copy-Item { }
     }
 

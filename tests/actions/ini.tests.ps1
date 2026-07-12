@@ -2,16 +2,17 @@
 BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 
-    $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
-    $script:testIniPath = "$testDrivePath\php.ini"
-    $script:extDirectory = "$testDrivePath\ext"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\ini-drive"
+    $script:testIniPath = "$TEST_DRIVE\php.ini"
+    $script:extDirectory = "$TEST_DRIVE\ext"
     $script:testBackupPath = "$testIniPath.bak"
 
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
+    $script:CACHE_PATH = $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
 
-    $PVMConfig.paths.cache = 'TestDrive:\cache'
-    New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
 
     Mock Write-Host {}
 
@@ -32,13 +33,13 @@ max_execution_time = 30
     Reset-Ini-Content
 
     # Mock global variables
-    $PVMConfig.paths.logError = "$testDrivePath\error.log"
-    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$testDrivePath\php"
+    $PVMConfig.paths.logError = "$TEST_DRIVE\error.log"
+    $script:PHP_CURRENT_DIR = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$TEST_DRIVE\php"
 
     # Create directory and symlink for current PHP version
-    $phpVersionPath = "$testDrivePath\php-8.2"
+    $phpVersionPath = "$TEST_DRIVE\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
-    New-Item -ItemType SymbolicLink -Path $$PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
+    New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_DIR -Target $phpVersionPath -Force
     Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
 
     # Mock Log-Data function
@@ -86,6 +87,7 @@ max_execution_time = 30
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -296,7 +298,7 @@ extension=php_curl.dll
                 if ($script:getRandomFile) {
                     return @( @{ Name = 'random_file' } )
                 }
-                return @( @{ Name = 'php_curl.dll'; FullName = 'TestDrive:\php_curl-1.4.0-7.4-ts-vc15-x86\php_curl.dll' } )
+                return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\php_curl-1.4.0-7.4-ts-vc15-x86\php_curl.dll" } )
             }
             Mock Extract-Zip { }
             Mock Remove-Item { }

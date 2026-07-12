@@ -1,18 +1,25 @@
-
+﻿
 BeforeAll {
     Mock Write-Host {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\config-drive"
+    $script:TEMPLATES_PATH = $PVMConfig.paths.templates = "$TEST_DRIVE\templates"
+    $script:ALIASES_LIST_PATH = $PVMConfig.paths.aliasesList = "$TEMPLATES_PATH\aliases.json"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-EnvConfig" {
     BeforeEach {
-        $script:envRoot = 'TestDrive:\envconfig'
+        $script:envRoot = "$TEST_DRIVE\envconfig"
         New-Item -ItemType Directory -Path $script:envRoot -Force | Out-Null
     }
 
@@ -159,9 +166,7 @@ VALID=yes
 
 Describe "Set-Aliases-List" {
     BeforeAll {
-        $script:TEMPLATES_PATH = $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
-        $PVMConfig.paths.aliasesList = "$TEMPLATES_PATH\aliases.json"
-        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
     }
 
@@ -182,9 +187,7 @@ Describe "Set-Aliases-List" {
 
 Describe "Get-Aliases" {
     BeforeAll {
-        $script:TEMPLATES_PATH = $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
-        $script:ALIASES_LIST_PATH = $PVMConfig.paths.aliasesList = "$TEMPLATES_PATH\aliases.json"
-        New-Item -ItemType Directory -Path $script:TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $testContent = [ordered]@{'?'  = 'help'; 'i'  = 'install'; 'init' = 'setup'}
         $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ALIASES_LIST_PATH
         $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
@@ -199,7 +202,7 @@ Describe "Get-Aliases" {
     }
 
     It "Falls back to DEFAULT_ALIASES value" {
-        Remove-Item -Path "$script:TEMPLATES_PATH\aliases.json"
+        Remove-Item -Path "$TEMPLATES_PATH\aliases.json"
         $result = Get-Aliases
         $result.Count | Should -Be $DEFAULT_ALIASES.Count
     }
@@ -222,7 +225,7 @@ Describe "Get-FlagMap" {
 Describe "Get-Config" {
     Context "When .env file exists" {
         BeforeAll {
-            $script:testRoot = 'TestDrive:\pvm'
+            $script:testRoot = "$TEST_DRIVE\pvm"
             New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
             @'
 PHP_CURRENT_VERSION_PATH=C:\pvm\php

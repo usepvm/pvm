@@ -3,8 +3,11 @@ BeforeAll {
     Mock Write-Host {}
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     # Global test variables
-    $PVMConfig.paths.logError = 'TestDrive:\error.log'
-    $PVMConfig.paths.storage = 'TestDrive:\storage'
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\install-drive"
+    $PVMConfig.paths.logError = "$TEST_DRIVE\error.log"
+    $PVMConfig.paths.storage = "$TEST_DRIVE\storage"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
     $script:PHP_WIN_ARCHIVES_URL = $PVMConfig.links.phpWinArchives
     $script:PHP_WIN_RELEASES_URL = $PVMConfig.links.phpWinReleases
@@ -171,6 +174,7 @@ BeforeAll {
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -403,12 +407,12 @@ Describe "Get-PHP-Versions Tests" {
 Describe "Download-PHP" {
     BeforeAll {
         Mock Make-Directory { return 0 }
-        Mock Download-PHP-From-Url { return 'TestDrive:\php' }
+        Mock Download-PHP-From-Url { return "$TEST_DRIVE\php" }
     }
 
     It "Should download PHP successfully" {
         $result = Download-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
-        $result | Should -Be 'TestDrive:\php'
+        $result | Should -Be "$TEST_DRIVE\php"
     }
 
     It "Returns null if directory creation fails" {
@@ -438,17 +442,17 @@ Describe "Download-PHP-From-Url Tests" {
         $expectedUrl = "$($urls['Archives'])/php-8.1.0-Win32-vs16-x64.zip"
         Set-MockWebResponse -url $expectedUrl -content 'Downloaded content'
 
-        $result = Download-PHP-From-Url -destination 'TestDrive:\php' -url $expectedUrl -versionObject $versionObject
+        $result = Download-PHP-From-Url -destination "$TEST_DRIVE\php" -url $expectedUrl -versionObject $versionObject
 
-        $result | Should -Be 'TestDrive:\php'
-        $script:MockFileSystem.Files.ContainsKey('TestDrive:\php\php-8.1.0-Win32-vs16-x64.zip') | Should -Be $true
+        $result | Should -Be "$TEST_DRIVE\php"
+        $script:MockFileSystem.Files.ContainsKey("$TEST_DRIVE\php\php-8.1.0-Win32-vs16-x64.zip") | Should -Be $true
     }
 
     It "Should handle download failure" {
         $script:MockFileSystem.DownloadFails = $true
         $versionObject = @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip' }
 
-        $result = Download-PHP-From-Url -destination 'TestDrive:\php' -url 'https://test.com/php.zip' -versionObject $versionObject
+        $result = Download-PHP-From-Url -destination "$TEST_DRIVE\php" -url 'https://test.com/php.zip' -versionObject $versionObject
 
         $result | Should -Be $null
     }
@@ -458,18 +462,18 @@ Describe "Extract-And-Configure Tests" {
     BeforeEach {
         Mock Write-Host { }
         Reset-MockState
-        $script:MockFileSystem.Files['TestDrive:\php\php.ini-development'] = 'development config'
+        $script:MockFileSystem.Files["$TEST_DRIVE\php\php.ini-development"] = 'development config'
     }
 
     It "Should extract and configure PHP" {
-        { Extract-And-Configure -path 'TestDrive:\php.zip' -fileNamePath 'TestDrive:\php' } | Should -Not -Throw
-        $script:MockFileSystem.Files.ContainsKey('TestDrive:\php\php.ini') | Should -Be $true
+        { Extract-And-Configure -path "$TEST_DRIVE\php.zip" -fileNamePath "$TEST_DRIVE\php" } | Should -Not -Throw
+        $script:MockFileSystem.Files.ContainsKey("$TEST_DRIVE\php\php.ini") | Should -Be $true
     }
 
     It "Should handle extraction failure" {
         Mock Remove-Item { throw 'Test exception' }
 
-        { Extract-And-Configure -path 'TestDrive:\php.zip' -fileNamePath 'TestDrive:\php' } | Should -Not -Throw
+        { Extract-And-Configure -path "$TEST_DRIVE\php.zip" -fileNamePath "$TEST_DRIVE\php" } | Should -Not -Throw
     }
 }
 
@@ -477,7 +481,7 @@ Describe "Configure-Opcache Tests" {
     BeforeEach {
         Mock Write-Host { }
         Reset-MockState
-        $script:MockFileSystem.Files['TestDrive:\php\php.ini'] = @"
+        $script:MockFileSystem.Files["$TEST_DRIVE\php\php.ini"] = @"
 ;extension_dir = "ext"
 ;zend_extension = opcache
 ;opcache.enable = 1
@@ -486,10 +490,10 @@ Describe "Configure-Opcache Tests" {
     }
 
     It "Should enable Opcache successfully" {
-        $code = Configure-Opcache -version '8.1' -phpPath 'TestDrive:\php'
+        $code = Configure-Opcache -version '8.1' -phpPath "$TEST_DRIVE\php"
 
         $code | Should -Be 0
-        $content = $script:MockFileSystem.Files['TestDrive:\php\php.ini']
+        $content = $script:MockFileSystem.Files["$TEST_DRIVE\php\php.ini"]
         $content | Should -Match 'extension_dir = "ext"'
         $content | Should -Match 'zend_extension = opcache'
         $content | Should -Match 'opcache\.enable = 1'
@@ -497,16 +501,16 @@ Describe "Configure-Opcache Tests" {
     }
 
     It "Should handle missing php.ini" {
-        $script:MockFileSystem.Files.Remove('TestDrive:\php\php.ini')
+        $script:MockFileSystem.Files.Remove("$TEST_DRIVE\php\php.ini")
 
-        $code = Configure-Opcache -version '8.1' -phpPath 'TestDrive:\php'
+        $code = Configure-Opcache -version '8.1' -phpPath "$TEST_DRIVE\php"
         $code | Should -Be -1
     }
 
     It "Should handle exception gracefully" {
         Mock Get-Content { throw 'Error reading file' }
 
-        $code = Configure-Opcache -version '8.1' -phpPath 'TestDrive:\php'
+        $code = Configure-Opcache -version '8.1' -phpPath "$TEST_DRIVE\php"
         $code | Should -Be -1
     }
 }
@@ -579,7 +583,7 @@ Describe "Install-PHP Integration Tests" {
         Mock Write-Host { }
         Reset-MockState
         $script:MockUserInput = ''
-        $script:MockFileSystem.Files['TestDrive:\pvm\pvm'] = 'PVM executable'
+        $script:MockFileSystem.Files["$TEST_DRIVE\pvm\pvm"] = 'PVM executable'
 
         # Mock PHP versions response
         $mockLinks = @(
@@ -592,7 +596,7 @@ Describe "Install-PHP Integration Tests" {
     It "Should install PHP successfully" {
         Mock Get-Matching-PHP-Versions { return $null }
 
-        Mock Download-PHP-From-Url { return 'TestDrive:\php'}
+        Mock Download-PHP-From-Url { return "$TEST_DRIVE\php" }
 
         $result = Install-PHP -version '8.1'
 
@@ -622,7 +626,7 @@ Describe "Install-PHP Integration Tests" {
 
     It "Installs PHP when user accepts family version install" {
         Mock Get-Matching-PHP-Versions { return $null }
-        Mock Download-PHP-From-Url { return 'TestDrive:\php' }
+        Mock Download-PHP-From-Url { return "$TEST_DRIVE\php" }
         Mock Get-Matching-PHP-Versions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
         $script:MockUserInput = 'y'
 
@@ -633,7 +637,7 @@ Describe "Install-PHP Integration Tests" {
 
     It "Returns -1 when user selection is null" {
         Mock Get-Matching-PHP-Versions { return $null }
-        Mock Download-PHP-From-Url { return 'TestDrive:\php'}
+        Mock Download-PHP-From-Url { return "$TEST_DRIVE\php" }
         Mock Select-Version { return $null }
 
         $result = Install-PHP -version '8.1'
@@ -643,7 +647,7 @@ Describe "Install-PHP Integration Tests" {
 
     It "Returns -1 when user selection is already installed" {
         Mock Get-Matching-PHP-Versions { return $null }
-        Mock Download-PHP-From-Url { return 'TestDrive:\php'}
+        Mock Download-PHP-From-Url { return "$TEST_DRIVE\php" }
         Mock Select-Version { return @{ version = '8.1.15'; fileName = 'php-8.1.15-Win32-vs16-x64.zip' } }
         Mock Is-PHP-Version-Installed { return $true }
 

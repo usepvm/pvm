@@ -2,10 +2,13 @@
 BeforeAll {
     # Create a test directory for PHP installations
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-    $PVMConfig.paths.cache = 'TestDrive:\\cache'
-    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\php\current'
-    $PVMConfig.paths.logError = 'TestDrive:\Logs\error.log'
-    $script:testPhpPath = 'TestDrive:\PHP'
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\uninstall-drive"
+    $script:CACHE_PATH = $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
+    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$TEST_DRIVE\php\current"
+    $PVMConfig.paths.logError = "$TEST_DRIVE\Logs\error.log"
+    $script:testPhpPath = "$TEST_DRIVE\PHP"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -Path "$testPhpPath\7.4" -ItemType Directory -Force
     New-Item -Path "$testPhpPath\8.0" -ItemType Directory -Force
 
@@ -19,6 +22,7 @@ BeforeAll {
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 

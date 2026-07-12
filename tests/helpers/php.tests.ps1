@@ -3,10 +3,15 @@ BeforeAll {
     Mock Write-Host {}
 
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-    $PVMConfig.paths.cache = 'TestDrive:\\cache'
 
-    $script:testDrivePath = Get-PSDrive TestDrive | Select-Object -ExpandProperty Root
-    $script:testIniPath = "$testDrivePath\php.ini"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\php-drive"
+    $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
+    $script:testIniPath = "$TEST_DRIVE\php.ini"
+    $script:TEMPLATES_PATH = $PVMConfig.paths.templates = "$TEST_DRIVE\storage\data\templates"
+    $script:ZEND_EXTENSIONS_LIST_PATH = $PVMConfig.paths.zendExtensionsList = "$TEMPLATES_PATH\zend_extensions.json"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+
     function Reset-Ini-Content {
     # Create a test php.ini file
     @"
@@ -25,13 +30,14 @@ max_execution_time = 30
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-PHPInstallInfo" {
     Context "When PHP DLL exists" {
         It "Returns PHP install info with NTS build type" {
-            $testPath = 'TestDrive:\php\8.3'
+            $testPath = "$TEST_DRIVE\php\8.3"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
 
             # Create a mock NTS DLL file
@@ -58,7 +64,7 @@ Describe "Get-PHPInstallInfo" {
         }
 
         It "Returns PHP install info with TS build type" {
-            $testPath = 'TestDrive:\php\8.2'
+            $testPath = "$TEST_DRIVE\php\8.2"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
 
             Mock Get-ChildItem {
@@ -79,7 +85,7 @@ Describe "Get-PHPInstallInfo" {
         }
 
         It "Returns first DLL when multiple match" {
-            $testPath = 'TestDrive:\php\8.1'
+            $testPath = "$TEST_DRIVE\php\8.1"
 
             Mock Get-ChildItem {
                 return @(
@@ -105,7 +111,7 @@ Describe "Get-PHPInstallInfo" {
 
     Context "When PHP DLL does not exist" {
         It "Returns null when no DLL found" {
-            $testPath = 'TestDrive:\php\empty'
+            $testPath = "$TEST_DRIVE\php\empty"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
 
             Mock Get-ChildItem { return $null }
@@ -532,24 +538,24 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
 
 Describe "Get-Installed-PHP-Versions-From-Disk" {
     BeforeAll {
-        $script:STORAGE_PATH = 'TestDrive:\storage'
+        $script:STORAGE_PATH = "$TEST_DRIVE\storage"
     }
 
     Context "When PHP versions exist" {
         It "Should return installed PHP versions with php.exe present" {
             Mock Get-All-Subdirectories {
                 return @(
-                    @{FullName = 'TestDrive:\storage\php\8.1'}
-                    @{FullName = 'TestDrive:\storage\php\8.2'}
+                    @{FullName = "$TEST_DRIVE\storage\php\8.1"}
+                    @{FullName = "$TEST_DRIVE\storage\php\8.2"}
                 )
             }
             Mock Test-Path { return $true }
             Mock Get-PHPInstallInfo {
                 param ($path)
-                if ($path -eq 'TestDrive:\storage\php\8.1') {
-                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = 'TestDrive:\storage\php\8.1'}
+                if ($path -eq "$TEST_DRIVE\storage\php\8.1") {
+                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = "$TEST_DRIVE\storage\php\8.1"}
                 } else {
-                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = 'TestDrive:\storage\php\8.2'}
+                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = "$TEST_DRIVE\storage\php\8.2"}
                 }
             }
 
@@ -560,9 +566,9 @@ Describe "Get-Installed-PHP-Versions-From-Disk" {
         It "Should skip directories without php.exe" {
             Mock Get-All-Subdirectories {
                 return @(
-                    @{FullName = 'TestDrive:\storage\php\8.1'}
-                    @{FullName = 'TestDrive:\storage\php\invalid'}
-                    @{FullName = 'TestDrive:\storage\php\8.2'}
+                    @{FullName = "$TEST_DRIVE\storage\php\8.1"}
+                    @{FullName = "$TEST_DRIVE\storage\php\invalid"}
+                    @{FullName = "$TEST_DRIVE\storage\php\8.2"}
                 )
             }
             Mock Test-Path {
@@ -571,9 +577,9 @@ Describe "Get-Installed-PHP-Versions-From-Disk" {
             }
             Mock Get-PHPInstallInfo {
                 param ($path)
-                if ($path -eq 'TestDrive:\storage\php\8.1') {
+                if ($path -eq "$TEST_DRIVE\storage\php\8.1") {
                     return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                } elseif ($path -eq 'TestDrive:\storage\php\8.2') {
+                } elseif ($path -eq "$TEST_DRIVE\storage\php\8.2") {
                     return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
                 }
             }
@@ -585,17 +591,17 @@ Describe "Get-Installed-PHP-Versions-From-Disk" {
         It "Should return versions sorted by version number" {
             Mock Get-All-Subdirectories {
                 return @(
-                    @{FullName = 'TestDrive:\storage\php\8.2'}
-                    @{FullName = 'TestDrive:\storage\php\7.4'}
-                    @{FullName = 'TestDrive:\storage\php\8.1'}
+                    @{FullName = "$TEST_DRIVE\storage\php\8.2"}
+                    @{FullName = "$TEST_DRIVE\storage\php\7.4"}
+                    @{FullName = "$TEST_DRIVE\storage\php\8.1"}
                 )
             }
             Mock Test-Path { return $true }
             Mock Get-PHPInstallInfo {
                 param ($path)
-                if ($path -eq 'TestDrive:\storage\php\8.2') {
+                if ($path -eq "$TEST_DRIVE\storage\php\8.2") {
                     return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
-                } elseif ($path -eq 'TestDrive:\storage\php\7.4') {
+                } elseif ($path -eq "$TEST_DRIVE\storage\php\7.4") {
                     return @{Version = '7.4'; Arch = 'x86'; BuildType = 'TS'}
                 } else {
                     return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
@@ -621,8 +627,8 @@ Describe "Get-Installed-PHP-Versions-From-Disk" {
         It "Should return empty array when no php.exe files are present" {
             Mock Get-All-Subdirectories {
                 return @(
-                    @{FullName = 'TestDrive:\storage\php\invalid1'}
-                    @{FullName = 'TestDrive:\storage\php\invalid2'}
+                    @{FullName = "$TEST_DRIVE\storage\php\invalid1"}
+                    @{FullName = "$TEST_DRIVE\storage\php\invalid2"}
                 )
             }
             Mock Test-Path { return $false }
@@ -815,7 +821,7 @@ Describe "Is-Two-PHP-Versions-Equal" {
 Describe "Get-BinaryArchitecture-From-DLL" {
     Context "Reading PE format from binary files" {
         It "Returns x64 architecture when machine type is 0x8664" {
-            $dllPath = 'TestDrive:\php\php8_x64.dll'
+            $dllPath = "$TEST_DRIVE\php\php8_x64.dll"
             New-Item -Path $dllPath -ItemType File -Force | Out-Null
 
             # Convert TestDrive path to actual filesystem path
@@ -849,7 +855,7 @@ Describe "Get-BinaryArchitecture-From-DLL" {
         }
 
         It "Returns x86 architecture when machine type is 0x014c" {
-            $dllPath = 'TestDrive:\php\php8_x86.dll'
+            $dllPath = "$TEST_DRIVE\php\php8_x86.dll"
             New-Item -Path $dllPath -ItemType File -Force | Out-Null
 
             # Convert TestDrive path to actual filesystem path
@@ -882,7 +888,7 @@ Describe "Get-BinaryArchitecture-From-DLL" {
         }
 
         It "Returns Unknown for unknown machine type" {
-            $dllPath = 'TestDrive:\php\php8_unknown.dll'
+            $dllPath = "$TEST_DRIVE\php\php8_unknown.dll"
             New-Item -Path $dllPath -ItemType File -Force | Out-Null
 
             # Convert TestDrive path to actual filesystem path
@@ -918,7 +924,7 @@ Describe "Get-BinaryArchitecture-From-DLL" {
     It "Returns Unknown when file does not exist" {
         Mock Is-File-Not-Exists { return $true }
 
-        $result = Get-BinaryArchitecture-From-DLL -path 'TestDrive:\php\php8.dll'
+        $result = Get-BinaryArchitecture-From-DLL -path "$TEST_DRIVE\php\php8.dll"
 
         $result | Should -Be 'Unknown'
     }
@@ -926,9 +932,7 @@ Describe "Get-BinaryArchitecture-From-DLL" {
 
 Describe "Set-Zend-Extensions-List" {
     BeforeAll {
-        $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
-        $PVMConfig.paths.zendExtensionsList = "$($PVMConfig.paths.templates)\zend_extensions.json"
-        New-Item -ItemType Directory -Force -Path $PVMConfig.paths.templates | Out-Null
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions
     }
     It "Creates zend_extensions.json" {
@@ -948,9 +952,7 @@ Describe "Set-Zend-Extensions-List" {
 
 Describe "Get-Zend-Extensions-List" {
     BeforeAll {
-        $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
-        $ZEND_EXTENSIONS_LIST_PATH = "$($PVMConfig.paths.templates)\zend_extensions.json"
-        New-Item -ItemType Directory -Path $PVMConfig.paths.templates | Out-Null
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $testContent = @('opcache', 'xdebug', 'swoole')
         $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ZEND_EXTENSIONS_LIST_PATH
         $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions
@@ -965,7 +967,7 @@ Describe "Get-Zend-Extensions-List" {
     }
 
     It "Falls back to DEFAULT_ZEND_EXTENSIONS value" {
-        Remove-Item -Path "$($PVMConfig.paths.templates)\zend_extensions.json"
+        Remove-Item -Path "$TEMPLATES_PATH\zend_extensions.json"
         $result = Get-Zend-Extensions-List
         $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
     }

@@ -2,9 +2,11 @@
 BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     # Mock data and helper functions for testing
-    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'TestDrive:\pvm\php'
-    $PVMConfig.paths.logError = 'C:\logs\error.log'
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\use-drive"
+    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$TEST_DRIVE\pvm\php"
+    $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
 
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
 
     Mock Write-Host {}
@@ -53,6 +55,7 @@ BeforeAll {
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -113,11 +116,11 @@ Describe "Update-PHP-Version" {
     It "Should return when switching to same current version" {
         Mock Get-UserSelected-PHP-Version { return @{
             code=0; version='8.2.0'; arch = 'x64';
-            buildType = 'TS'; path='TestDrive:\php\8.2.0'
+            buildType = 'TS'; path= "$TEST_DRIVE\php\8.2.0"
         }}
         Mock Get-Current-PHP-Version { return @{
             version = '8.2.0';
-            path = 'TestDrive:\php\8.2.0'
+            path = "$TEST_DRIVE\php\8.2.0"
             arch = 'x64'
             buildType = 'TS'
         }}

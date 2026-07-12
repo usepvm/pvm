@@ -2,8 +2,11 @@
 BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     # Mock global variables that would be defined in the main script
-    $PVMConfig.paths.data = "TestDrive:\storage\data"
-    $PVMConfig.paths.logError = "TestDrive:\storage\logs\error.log"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\list-drive"
+    $PVMConfig.paths.data = "$TEST_DRIVE\storage\data"
+    $PVMConfig.paths.logError = "$TEST_DRIVE\storage\logs\error.log"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
     $script:PHP_WIN_ARCHIVES_URL = $PVMConfig.links.phpWinArchives
     $script:PHP_WIN_RELEASES_URL = $PVMConfig.links.phpWinReleases
@@ -24,14 +27,15 @@ BeforeAll {
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Get-From-Source" {
     BeforeEach {
         # Clean test directory
-        if (Test-Path 'TestDrive:\data') {
-            Remove-Item -Path 'TestDrive:\data' -Recurse -Force
+        if (Test-Path "$TEST_DRIVE\data") {
+            Remove-Item -Path "$TEST_DRIVE\data" -Recurse -Force
         }
 
         Mock Is-OS-64Bit { return $true }
@@ -94,7 +98,7 @@ Describe "Get-From-Source" {
 
 Describe "Get-PHP-List-To-Install" {
     BeforeEach {
-        $PVMConfig.paths.cache = 'TestDrive:\storage\cache'
+        $PVMConfig.paths.cache = "$TEST_DRIVE\storage\cache"
     }
 
     It "Returns empty object when cache and/or source not working" {

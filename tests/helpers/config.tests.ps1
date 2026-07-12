@@ -187,7 +187,7 @@ Describe "Set-Aliases-List" {
 
 Describe "Get-Aliases" {
     BeforeAll {
-        New-Item -ItemType Directory -Path $TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $testContent = [ordered]@{'?'  = 'help'; 'i'  = 'install'; 'init' = 'setup'}
         $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ALIASES_LIST_PATH
         $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases

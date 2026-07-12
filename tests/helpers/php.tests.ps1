@@ -952,7 +952,7 @@ Describe "Set-Zend-Extensions-List" {
 
 Describe "Get-Zend-Extensions-List" {
     BeforeAll {
-        New-Item -ItemType Directory -Path $TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $testContent = @('opcache', 'xdebug', 'swoole')
         $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ZEND_EXTENSIONS_LIST_PATH
         $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions

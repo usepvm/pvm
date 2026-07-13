@@ -62,8 +62,8 @@ function Import-Pester-Version {
     Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
 
     Write-Host -Object "`nPester Info:" -ForegroundColor Cyan
-    Write-Host -Object "  Version: $($pesterVersion.Version)" -ForegroundColor Gray
-    Write-Host -Object "  Path: $($pesterVersion.Path)" -ForegroundColor Gray
+    Write-Host -Object "  Version: $($pesterVersion.Version)"
+    Write-Host -Object "  Path: $($pesterVersion.Path)"
 
     return $pesterVersion
 }
@@ -89,11 +89,11 @@ function Write-PowerShell-Info {
     param ($psInfo)
 
     Write-Host -Object "`nPowerShell Info:" -ForegroundColor Cyan
-    Write-Host -Object "  Engine: $($psInfo.Name)" -ForegroundColor Gray
-    Write-Host -Object "  Version: $($psInfo.Version)" -ForegroundColor Gray
-    Write-Host -Object "  Edition: $($psInfo.Edition)" -ForegroundColor Gray
-    Write-Host -Object "  Platform: $($psInfo.Platform)" -ForegroundColor Gray
-    Write-Host -Object "  Path: $($psInfo.Path)" -ForegroundColor Gray
+    Write-Host -Object "  Engine: $($psInfo.Name)"
+    Write-Host -Object "  Version: $($psInfo.Version)"
+    Write-Host -Object "  Edition: $($psInfo.Edition)"
+    Write-Host -Object "  Platform: $($psInfo.Platform)"
+    Write-Host -Object "  Path: $($psInfo.Path)"
 }
 
 function Get-PVMRootDirectory {

@@ -157,6 +157,7 @@ function Get-Extension-Links-From-URL {
         }
 
         $extName = $chosenItem.href -replace '/package/', ''
+        Write-Host -Object "`nLoading links for '$extName'..."
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
             Filter-Extension-Links-From-URL -extName $extName
         }

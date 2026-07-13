@@ -143,7 +143,7 @@ Describe "Invoke-Current Tests" {
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*Running version: PHP 8.2.0*' }
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*xdebug v3.2.0*' -and $ForegroundColor -eq 'DarkGreen' }
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*opcache v8.2.0*' -and $ForegroundColor -eq 'DarkYellow' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Path: C:\PHP\8.2.0*' -and $ForegroundColor -eq 'Gray' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Path: C:\PHP\8.2.0*' }
     }
 
     It "Should display current PHP version and extensions when version is not set" {
@@ -165,7 +165,7 @@ Describe "Invoke-Current Tests" {
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*Running version: PHP 8.2.0*' }
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*xdebug*' -and $ForegroundColor -eq 'DarkGreen' }
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*opcache*' -and $ForegroundColor -eq 'DarkYellow' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Path: C:\PHP\8.2.0*' -and $ForegroundColor -eq 'Gray' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Path: C:\PHP\8.2.0*' }
     }
 
     It "Should return -1 when no PHP version is set" {

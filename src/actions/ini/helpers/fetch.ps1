@@ -81,7 +81,7 @@ function Get-Extension-Matching-Categories {
 
         $page = 1
         $category = $matches[1] -replace '\+', ' '
-        Write-Host -Object "- Checking category '$category'..." -ForegroundColor Gray
+        Write-Host -Object "- Checking category '$category'..."
         do {
             $hasMore = $false
             $result = Get-Extension-Matching-Categories-By-Page -extName $extName -link $_.href -page $page

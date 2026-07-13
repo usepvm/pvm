@@ -50,7 +50,7 @@ function Show-Cache-Data {
         $cachePath = Get-Cache-FilePath -fileName $cacheName
         if (Is-File-Not-Exists -path $cachePath) {
             Write-Host -Object "`nCache file '$cacheName' not found." -ForegroundColor DarkYellow
-            Write-Host -Object "  Use 'pvm cache list' to see available cache files." -ForegroundColor Gray
+            Write-Host -Object "  Use 'pvm cache list' to see available cache files."
             return -1
         }
 
@@ -81,7 +81,7 @@ function Delete-Cache-File {
         $cachePath = Get-Cache-FilePath -fileName $cacheName
         if (Is-File-Not-Exists -path $cachePath) {
             Write-Host -Object "`nCache file '$cacheName' not found." -ForegroundColor DarkYellow
-            Write-Host -Object "  Use 'pvm cache list' to see available cache files." -ForegroundColor Gray
+            Write-Host -Object "  Use 'pvm cache list' to see available cache files."
             return -1
         }
 
@@ -89,7 +89,7 @@ function Delete-Cache-File {
             $response = Read-Host -Prompt "`nAre you sure you want to delete cache file '$cacheName'? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
-                Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
+                Write-Host -Object "`nDeletion cancelled."
                 return -1
             }
         }
@@ -120,7 +120,7 @@ function Clear-Cache-Files {
             $response = Read-Host -Prompt "`nAre you sure you want to delete all cache files? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
-                Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
+                Write-Host -Object "`nDeletion cancelled."
                 return -1
             }
         }

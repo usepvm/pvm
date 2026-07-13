@@ -249,9 +249,9 @@ function Save-PHP-Profile {
         Set-Content -Path $profilePath -Value $jsonContent -Encoding UTF8
 
         Write-Host -Object "`nProfile '$profileName' saved successfully." -ForegroundColor DarkGreen
-        Write-Host -Object "  Settings: $($userProfile.settings.Count) (popular/common only)" -ForegroundColor Gray
-        Write-Host -Object "  Extensions: $($userProfile.extensions.Count) (popular/common only)" -ForegroundColor Gray
-        Write-Host -Object "  Location: $profilePath" -ForegroundColor Gray
+        Write-Host -Object "  Settings: $($userProfile.settings.Count) (popular/common only)"
+        Write-Host -Object "  Extensions: $($userProfile.extensions.Count) (popular/common only)"
+        Write-Host -Object "  Location: $profilePath"
         Write-Host -Object "`nNote: Only popular/common settings and extensions are saved." -ForegroundColor DarkCyan
         Write-Host -Object "      You can manually add other settings/extensions using 'pvm ini' commands." -ForegroundColor DarkCyan
 
@@ -284,7 +284,7 @@ function Load-PHP-Profile {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
         if (Is-File-Not-Exists -path $profilePath) {
             Write-Host -Object "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
-            Write-Host -Object "  Use 'pvm profile list' to see available profiles." -ForegroundColor Gray
+            Write-Host -Object "  Use 'pvm profile list' to see available profiles."
             return -1
         }
 
@@ -292,9 +292,9 @@ function Load-PHP-Profile {
 
         Write-Host -Object "`nLoading profile '$($jsonContent.name)'..." -ForegroundColor Cyan
         if ($jsonContent.description) {
-            Write-Host -Object "  Description: $($jsonContent.description)" -ForegroundColor Gray
+            Write-Host -Object "  Description: $($jsonContent.description)"
         }
-        Write-Host -Object "  Created: $($jsonContent.created)" -ForegroundColor Gray
+        Write-Host -Object "  Created: $($jsonContent.created)"
 
         # Backup ini file before applying changes
         $null = Backup-IniFile -iniPath $iniPath
@@ -341,15 +341,15 @@ function Load-PHP-Profile {
         }
 
         Write-Host -Object "`nProfile applied successfully:" -ForegroundColor DarkGreen
-        Write-Host -Object "  Settings applied: $settingsApplied" -ForegroundColor Gray
+        Write-Host -Object "  Settings applied: $settingsApplied"
         if ($settingsSkipped -gt 0) {
             Write-Host -Object "  Settings skipped: $settingsSkipped" -ForegroundColor DarkYellow
         }
         if ($settingsIgnored -gt 0) {
             Write-Host -Object "  Settings ignored (not popular): $settingsIgnored" -ForegroundColor DarkCyan
         }
-        Write-Host -Object "  Extensions enabled: $extensionsEnabled" -ForegroundColor Gray
-        Write-Host -Object "  Extensions disabled: $extensionsDisabled" -ForegroundColor Gray
+        Write-Host -Object "  Extensions enabled: $extensionsEnabled"
+        Write-Host -Object "  Extensions disabled: $extensionsDisabled"
         if ($extensionsSkipped -gt 0) {
             Write-Host -Object "  Extensions skipped: $extensionsSkipped" -ForegroundColor DarkYellow
         }
@@ -444,7 +444,7 @@ function Show-PHP-Profile {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
         if (Is-File-Not-Exists -path $profilePath) {
             Write-Host -Object "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
-            Write-Host -Object "  Use 'pvm profile list' to see available profiles." -ForegroundColor Gray
+            Write-Host -Object "  Use 'pvm profile list' to see available profiles."
             return -1
         }
 
@@ -469,7 +469,7 @@ function Show-PHP-Profile {
 
         Write-Host -Object "`nSettings ($settingsCount):" -ForegroundColor Cyan
         if ($settingsCount -eq 0) {
-            Write-Host -Object '  (none)' -ForegroundColor Gray
+            Write-Host -Object '  (none)'
         } else {
             foreach ($settingName in ($userProfile.settings.PSObject.Properties.Name | Sort-Object)) {
                 $setting = $userProfile.settings.$settingName
@@ -484,7 +484,7 @@ function Show-PHP-Profile {
         $extensionsCount = if ($userProfile.extensions) { ($userProfile.extensions.PSObject.Properties | Measure-Object).Count } else { 0 }
         Write-Host -Object "`nExtensions ($extensionsCount):" -ForegroundColor Cyan
         if ($extensionsCount -eq 0) {
-            Write-Host -Object '  (none)' -ForegroundColor Gray
+            Write-Host -Object '  (none)'
         } else {
             foreach ($extName in ($userProfile.extensions.PSObject.Properties.Name | Sort-Object)) {
                 $ext = $userProfile.extensions.$extName
@@ -520,7 +520,7 @@ function Delete-PHP-Profile {
             $response = Read-Host -Prompt "`nAre you sure you want to delete profile '$profileName'? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
-                Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
+                Write-Host -Object "`nDeletion cancelled."
                 return -1
             }
         }
@@ -551,7 +551,7 @@ function Clear-PHP-Profiles {
             $response = Read-Host -Prompt "`nAre you sure you want to delete all profiles? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
-                Write-Host -Object "`nDeletion cancelled." -ForegroundColor Gray
+                Write-Host -Object "`nDeletion cancelled."
                 return -1
             }
         }
@@ -638,7 +638,7 @@ function Import-PHP-Profile {
         }
 
         Write-Host -Object "`nProfile imported successfully as '$finalName'." -ForegroundColor DarkGreen
-        Write-Host -Object "  Use 'pvm profile load $finalName' to apply it." -ForegroundColor Gray
+        Write-Host -Object "  Use 'pvm profile load $finalName' to apply it."
 
         return 0
     } catch {

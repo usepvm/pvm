@@ -692,7 +692,7 @@ Describe "Show-PHP-Profile Tests" {
         }
 
         Should -Invoke Write-Host -ParameterFilter {
-            $Object -match '\(none\)' -and $ForegroundColor -eq 'Gray'
+            $Object -match '\(none\)'
         } -Exactly 1
     }
 
@@ -730,7 +730,7 @@ Describe "Show-PHP-Profile Tests" {
         }
 
         Should -Invoke Write-Host -ParameterFilter {
-            $Object -match '\(none\)' -and $ForegroundColor -eq 'Gray'
+            $Object -match '\(none\)'
         } -Exactly 1
     }
 

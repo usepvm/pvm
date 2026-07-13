@@ -66,7 +66,7 @@ function Invoke-Current {
         Write-Host -Object "$textInfo $statusText" -ForegroundColor $color
     }
 
-    Write-Host -Object "`nPath: $($result.path)" -ForegroundColor Gray
+    Write-Host -Object "`nPath: $($result.path)"
     return 0
 }
 

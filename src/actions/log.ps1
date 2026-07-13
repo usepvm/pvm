@@ -176,10 +176,10 @@ function Show-Log {
                 $entry = $reversedEntries[$i]
 
                 # Display structured error format
-                Write-Host -Object 'Header  : ' -NoNewline -ForegroundColor Gray
+                Write-Host -Object 'Header  : ' -NoNewline
                 Write-Host -Object "$($entry.Header)" -ForegroundColor White
 
-                Write-Host -Object 'Message : ' -NoNewline -ForegroundColor Gray
+                Write-Host -Object 'Message : ' -NoNewline
                 # Handle multi-line error messages with proper indentation (23 spaces to align with "Message :")
                 $errorLines = $entry.ErrorMessage -split "`n"
                 foreach ($errorLine in $errorLines) {
@@ -189,11 +189,11 @@ function Show-Log {
                 }
 
                 # Display entry with nice formatting
-                Write-Host -Object 'When    : ' -NoNewline -ForegroundColor Gray
+                Write-Host -Object 'When    : ' -NoNewline
                 Write-Host -Object "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -NoNewline -ForegroundColor White
                 Write-Host -Object "($($entry.NiceTime.Relative))" -ForegroundColor DarkGray
 
-                Write-Host -Object 'Where   : ' -NoNewline -ForegroundColor Gray
+                Write-Host -Object 'Where   : ' -NoNewline
                 Write-Host -Object "$($entry.PositionDetail)" -ForegroundColor White
 
                 Write-Host ('-' * 80) -ForegroundColor DarkGray

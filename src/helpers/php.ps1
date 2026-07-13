@@ -226,6 +226,47 @@ function Get-Source-Urls {
     }
 }
 
+function Get-Zend-Extensions-Info {
+    param ($phpPath)
+
+    $extPath = "$phpPath\ext"
+    if (Is-Directory-Not-Exists -path $extPath) {
+        return @()
+    }
+
+    # Check php.ini for enabled status
+    $phpIniPath = "$phpPath\php.ini"
+    $enabledStatus = @{}
+    if (Is-File-Exists -path $phpIniPath) {
+        $iniContent = Get-Content -Path $phpIniPath
+        foreach ($line in $iniContent) {
+            $trimmed = $line.Trim()
+            if ($trimmed -match '^(;)?\s*zend_extension\s*=.*opcache.*$') {
+                $enabledStatus['opcache'] = -not $trimmed.StartsWith(';')
+            }
+            if ($trimmed -match '^(;)?\s*zend_extension\s*=.*xdebug.*$') {
+                $enabledStatus['xdebug'] = -not $trimmed.StartsWith(';')
+            }
+        }
+    }
+
+    $zendExtensions = @()
+
+    foreach ($name in @('opcache', 'xdebug')) {
+        $dll = Get-ChildItem -Path "$extPath\*$name*.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($dll) {
+            $zendExtensions += @{
+                Name      = $name
+                Version   = $dll.VersionInfo.ProductVersion
+                Copyright = if ($dll.VersionInfo.LegalCopyright) { $dll.VersionInfo.LegalCopyright } else { '' }
+                Enabled   = if ($enabledStatus.ContainsKey($name)) { $enabledStatus[$name] } else { $false }
+            }
+        }
+    }
+
+    return $zendExtensions
+}
+
 function Get-PHP-Data {
     param ($PhpIniPath)
 

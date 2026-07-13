@@ -93,7 +93,7 @@ function Install-XDebug-Extension {
     try {
         $currentVersionObj = Get-Current-PHP-Version
         $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
-        $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions_$currentVersion" -compute {
+        $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions_$currentVersion`_xdebug" -compute {
             Get-XDebug-FROM-URL -url $PVMConfig.links.xdebugHistorical -version $currentVersion
         }
 

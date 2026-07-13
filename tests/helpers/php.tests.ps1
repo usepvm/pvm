@@ -13,6 +13,7 @@ BeforeAll {
     $script:ZEND_EXTENSIONS_LIST_PATH = $PVMConfig.paths.zendExtensionsList = "$TEMPLATES_PATH\zend_extensions.json"
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    New-Item -ItemType Directory -Path $testPhpPath -Force | Out-Null
 
     function Reset-Ini-Content {
     # Create a test php.ini file

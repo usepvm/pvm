@@ -103,7 +103,7 @@ function Get-Extension-Links-From-URL {
     param ($extName, $version)
 
     try {
-        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version" -compute {
+        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
             Filter-Extension-Links-From-URL -extName $extName
         }
     } catch {
@@ -157,7 +157,8 @@ function Get-Extension-Links-From-URL {
         }
 
         $extName = $chosenItem.href -replace '/package/', ''
-        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version" -compute {
+        Write-Host -Object "`nLoading links for '$extName'..."
+        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
             Filter-Extension-Links-From-URL -extName $extName
         }
     }

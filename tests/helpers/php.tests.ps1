@@ -37,7 +37,219 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
+Describe "Get-ZendVersion" {
+    Context "When PHP executable exists and returns valid version" {
+        It "Returns the Zend version successfully" {
+            # Arrange
+            $mockPath = "C:\php"
+            $mockVersion = "2.10.0"
+
+            # Mock Get-Command to return a valid php.exe
+            Mock Get-Command {
+                return [PSCustomObject]@{
+                    Name = "php.exe"
+                    Source = "C:\php\php.exe"
+                }
+            } -ParameterFilter { $Name -eq "$mockPath\php.exe" }
+
+            # Mock the actual PHP execution
+            Mock Get-ZendVersion-Core {
+                return $mockVersion
+            }
+
+            # Act
+            $result = Get-ZendVersion -path $mockPath
+
+            # Assert
+            $result | Should -Be $mockVersion
+        }
+
+        It "Trims whitespace from the version string" {
+            # Arrange
+            $mockPath = "C:\php"
+            $mockVersionWithWhitespace = " 2.10.0 `n"
+
+            Mock Get-Command {
+                return [PSCustomObject]@{
+                    Name = "php.exe"
+                    Source = "C:\php\php.exe"
+                }
+            }
+
+            Mock Get-ZendVersion-Core {
+                return $mockVersionWithWhitespace
+            }
+
+            # Act
+            $result = Get-ZendVersion -path $mockPath
+
+            # Assert
+            $result | Should -Be "2.10.0"
+            $result | Should -Not -Be $mockVersionWithWhitespace
+        }
+    }
+
+    Context "When PHP executable does not exist" {
+        It "Returns null when php.exe is not found" {
+            # Arrange
+            $mockPath = "C:\nonexistent\path"
+
+            # Mock Get-Command to return nothing (PHP not found)
+            Mock Get-Command { return $null }
+
+            # Act
+            $result = Get-ZendVersion -path $mockPath
+
+            # Assert
+            $result | Should -Be $null
+        }
+
+        It "Returns null when Get-Command throws an error" {
+            # Arrange
+            $mockPath = "C:\invalid\path"
+
+            # Mock Get-Command to throw an exception
+            Mock Get-Command { throw "Command not found" }
+
+            # Act
+            $result = Get-ZendVersion -path $mockPath
+
+            # Assert
+            $result | Should -Be $null
+        }
+    }
+
+    Context "When PHP execution fails" {
+        It "Returns null when PHP returns an error" {
+            # Arrange
+            $mockPath = "C:\php"
+
+            Mock Get-Command {
+                return [PSCustomObject]@{
+                    Name = "php.exe"
+                    Source = "C:\php\php.exe"
+                }
+            }
+
+            # Mock PHP execution to return nothing (error case)
+            Mock Get-ZendVersion-Core {
+                return $null
+            }
+
+            # Act
+            $result = Get-ZendVersion -path $mockPath
+
+            # Assert
+            $result | Should -Be $null
+        }
+
+        It "Returns null when PHP execution throws an exception" {
+            # Arrange
+            $mockPath = "C:\php"
+
+            Mock Get-Command {
+                return [PSCustomObject]@{
+                    Name = "php.exe"
+                    Source = "C:\php\php.exe"
+                }
+            }
+
+            # Mock the call operator to throw an exception
+            Mock Get-ZendVersion-Core {
+                throw "Access denied"
+            }
+
+            # Act
+            $result = Get-ZendVersion -path $mockPath
+
+            # Assert
+            $result | Should -Be $null
+        }
+
+        It "Returns null when PHP returns an empty string" {
+            # Arrange
+            $mockPath = "C:\php"
+
+            Mock Get-Command {
+                return [PSCustomObject]@{
+                    Name = "php.exe"
+                    Source = "C:\php\php.exe"
+                }
+            }
+
+            Mock Get-ZendVersion-Core {
+                return ''
+            }
+
+            # Act
+            $result = Get-ZendVersion -path $mockPath
+
+            # Assert
+            $result | Should -Be $null
+            # Or if you want empty string: $result | Should -Be ""
+        }
+    }
+
+    Context "Edge cases" {
+        It "Handles paths with spaces correctly" {
+            # Arrange
+            $mockPath = "C:\Program Files\PHP"
+
+            Mock Get-Command {
+                return [PSCustomObject]@{
+                    Name = "php.exe"
+                    Source = "C:\Program Files\PHP\php.exe"
+                }
+            } -ParameterFilter { $Name -eq "$mockPath\php.exe" }
+
+            Mock Get-ZendVersion-Core {
+                return '2.10.0'
+            }
+
+            # Act
+            $result = Get-ZendVersion -path $mockPath
+
+            # Assert
+            $result | Should -Be "2.10.0"
+        }
+
+        It "Handles version numbers with different formats" {
+            # Arrange
+            $mockPath = "C:\php"
+            $testCases = @(
+                @{ Version = "2.10.0"; Expected = "2.10.0" }
+                @{ Version = "3.0.0-dev"; Expected = "3.0.0-dev" }
+                @{ Version = "2.5.1-p1"; Expected = "2.5.1-p1" }
+            )
+
+            Mock Get-Command {
+                return [PSCustomObject]@{
+                    Name = "php.exe"
+                    Source = "C:\php\php.exe"
+                }
+            }
+
+            foreach ($testCase in $testCases) {
+                Mock Get-ZendVersion-Core {
+                    return $testCase.Version
+                }
+
+                # Act
+                $result = Get-ZendVersion -path $mockPath
+
+                # Assert
+                $result | Should -Be $testCase.Expected
+            }
+        }
+    }
+}
+
 Describe "Get-PHPInstallInfo" {
+    BeforeAll {
+        Mock Get-ZendVersion {
+            return '4.0.0'
+        }
+    }
     Context "When PHP DLL exists" {
         It "Returns PHP install info with NTS build type" {
             $testPath = "$TEST_DRIVE\php\8.3"

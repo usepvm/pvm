@@ -127,11 +127,13 @@ Describe "Invoke-Repair Tests" {
 Describe "Invoke-Current Tests" {
     It "Should display current PHP version and extensions when version is set" {
         Mock Get-Current-PHP-Version { @{
-                version   = '8.2.0'
-                arch      = 'x64'
-                buildType = 'TS'
-                path      = 'C:\PHP\8.2.0'
-                status    = @(
+                legalCopyRight = 'Copyright (c) 1997-2022 The PHP Group'
+                zendVersion    = '3.2.0'
+                version        = '8.2.0'
+                arch           = 'x64'
+                buildType      = 'TS'
+                path           = 'C:\PHP\8.2.0'
+                status         = @(
                     @{ Name = 'xdebug'; Version = '3.2.0'; Copyright = 'Zend'; Enabled = $true }
                     @{ Name = 'opcache'; Version = '8.2.0'; Copyright = 'Zend'; Enabled = $false }
                 )

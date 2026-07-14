@@ -1,6 +1,36 @@
 ﻿
+function Get-ZendVersion-Core {
+    param ($phpExe)
+
+    return (& $phpExe -r "echo zend_version();" 2>$null)
+}
+
+function Get-ZendVersion {
+    param ($path)
+
+    try {
+        $phpExe = Get-Command -Name "$path\php.exe" -ErrorAction SilentlyContinue
+        if (-not $phpExe) {
+            return $null
+        }
+
+        $version = Get-ZendVersion-Core -phpExe $phpExe
+        $version = $version.Trim()
+
+        if ([string]::IsNullOrWhiteSpace($version)) {
+            return $null
+        }
+
+        return $version
+    } catch {
+        return $null
+    }
+}
+
 function Get-PHPInstallInfo {
     param ($path)
+
+    $zendVersion = Get-ZendVersion -path $path
 
     $tsDll = Get-ChildItem -Path "$path\php*ts.dll" -ErrorAction SilentlyContinue |
     Where-Object { $_.Name -notmatch 'nts\.dll$' } |
@@ -21,11 +51,14 @@ function Get-PHPInstallInfo {
     }
 
     return @{
-        Version     = $dll.VersionInfo.ProductVersion
-        Arch        = Get-BinaryArchitecture-From-DLL -path $dll.FullName
-        BuildType   = $buildType
-        Dll         = $dll.Name
-        InstallPath = $path
+        legalCopyRight = $dll.VersionInfo.LegalCopyright
+        CompanyName    = $dll.VersionInfo.CompanyName
+        ZendVersion    = $zendVersion
+        Version        = $dll.VersionInfo.ProductVersion
+        Arch           = Get-BinaryArchitecture-From-DLL -path $dll.FullName
+        BuildType      = $buildType
+        Dll            = $dll.Name
+        InstallPath    = $path
     }
 }
 

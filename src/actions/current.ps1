@@ -69,11 +69,14 @@ function Get-Current-PHP-Version {
         $phpInfo = Get-PHPInstallInfo -path $currentPhpVersionPath
 
         return @{
-            version   = $phpInfo.Version
-            arch      = $phpInfo.Arch
-            buildType = $phpInfo.BuildType
-            path      = $phpInfo.InstallPath
-            status    = Get-PHP-Status -phpPath $currentPhpVersionPath
+            legalCopyRight = $phpInfo.LegalCopyRight
+            CompanyName    = $phpInfo.CompanyName
+            zendVersion    = $phpInfo.ZendVersion
+            version        = $phpInfo.Version
+            arch           = $phpInfo.Arch
+            buildType      = $phpInfo.BuildType
+            path           = $phpInfo.InstallPath
+            status         = Get-PHP-Status -phpPath $currentPhpVersionPath
         }
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve current PHP version"; exception = $_ }

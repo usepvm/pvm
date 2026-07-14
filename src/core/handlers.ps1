@@ -50,6 +50,14 @@ function Invoke-Current {
         return -1
     }
 
+    if ($result.legalCopyRight) {
+        Write-Host -Object $($result.legalCopyRight)
+    }
+
+    if ($result.zendVersion) {
+        Write-Host -Object "Zend Engine v$($result.zendVersion)"
+    }
+
     # Display zend extensions
     $hasVersionInfo = $result.status | Where-Object { $_.Version }
     foreach ($ext in $result.status) {

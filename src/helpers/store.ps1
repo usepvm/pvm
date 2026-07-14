@@ -65,7 +65,7 @@ function Cache-Data {
             Write-Host -Object "Failed to create directory $(Split-Path -Path $path)"
             return -1
         }
-        Set-Content -Path $path -Value $jsonString
+        Set-Content -Path $path -Value $jsonString -Encoding UTF8
         return 0
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to cache data"; exception = $_ }

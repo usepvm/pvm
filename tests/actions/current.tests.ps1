@@ -14,7 +14,7 @@ BeforeAll {
     Mock Write-Host {}
 
     Mock Log-Data {
-        param ($logPath, $message, $data)
+        param ($data)
         return $true
     }
 }
@@ -25,6 +25,24 @@ AfterAll {
 }
 
 Describe "Get-PHP-Status Function Tests" {
+    BeforeEach {
+        Mock Get-Zend-Extensions-Info {
+            return @(
+                @{
+                    Name      = 'opcache'
+                    Version   = '8.2.0'
+                    Copyright = 'Zend'
+                    Enabled   = $true
+                },
+                @{
+                    Name      = 'xdebug'
+                    Version   = '3.2.0'
+                    Copyright = 'Zend'
+                    Enabled   = 'false'
+                }
+            )
+        }
+    }
     Context "When php.ini file exists and is valid" {
         It "Should detect enabled opcache extension" {
             # Arrange
@@ -41,8 +59,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            $result.opcache | Should -Be $true
-            $result.xdebug | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
 
         It "Should detect enabled xdebug extension" {
@@ -60,8 +78,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            $result.opcache | Should -Be $false
-            $result.xdebug | Should -Be $true
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $true
         }
 
         It "Should detect both opcache and xdebug when enabled" {
@@ -78,8 +96,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            $result.opcache | Should -Be $true
-            $result.xdebug | Should -Be $true
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $true
         }
 
         It "Should detect disabled (commented) opcache extension" {
@@ -97,8 +115,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            $result.opcache | Should -Be $false
-            $result.xdebug | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
 
         It "Should detect disabled (commented) xdebug extension" {
@@ -115,8 +133,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            $result.opcache | Should -Be $false
-            $result.xdebug | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
 
         It "Should handle mixed enabled/disabled extensions" {
@@ -133,8 +151,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            $result.opcache | Should -Be $true
-            $result.xdebug | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
 
         It "Should handle extensions with full paths" {
@@ -151,8 +169,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            $result.opcache | Should -Be $true
-            $result.xdebug | Should -Be $true
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $true
         }
 
         It "Should handle extensions with spaces in configuration" {
@@ -169,8 +187,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            $result.opcache | Should -Be $true
-            $result.xdebug | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
 
         It "Should return false for both when no zend_extensions found" {
@@ -188,8 +206,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            $result.opcache | Should -Be $false
-            $result.xdebug | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
 
         It "Should handle empty php.ini file" {
@@ -202,8 +220,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            $result.opcache | Should -Be $false
-            $result.xdebug | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
     }
 
@@ -216,8 +234,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            $result.opcache | Should -Be $false
-            $result.xdebug | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
     }
 
@@ -232,8 +250,8 @@ Describe "Get-PHP-Status Function Tests" {
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            $result.opcache | Should -Be $false
-            $result.xdebug | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
 
         It "Should handle Test-Path exceptions gracefully" {
@@ -247,8 +265,8 @@ Describe "Get-PHP-Status Function Tests" {
 
             # Assert
             Should -Invoke Log-Data -Times 1
-            $result.opcache | Should -Be $false
-            $result.xdebug | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
     }
 }
@@ -315,8 +333,8 @@ Describe "Get-Current-PHP-Version Function Tests" {
             # Assert
             $result.version | Should -Be $null
             $result.path | Should -Be $null
-            $result.status.opcache | Should -Be $false
-            $result.status.xdebug | Should -Be $false
+            ($result.status | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result.status | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
 
         It "Should return null values when path does not exist" {
@@ -329,8 +347,8 @@ Describe "Get-Current-PHP-Version Function Tests" {
             # Assert
             $result.version | Should -Be $null
             $result.path | Should -Be $null
-            $result.status.opcache | Should -Be $false
-            $result.status.xdebug | Should -Be $false
+            ($result.status | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result.status | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
 
         It "Should call Log-Data when exception occurs" {
@@ -360,8 +378,8 @@ Describe "Get-Current-PHP-Version Function Tests" {
             # Assert
             $result.version | Should -Be $null
             $result.path | Should -Be $null
-            $result.status.opcache | Should -Be $false
-            $result.status.xdebug | Should -Be $false
+            ($result.status | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result.status | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
     }
 
@@ -433,8 +451,8 @@ Describe "Integration Tests" {
             # Assert
             $result.version | Should -Be '8.2.0'
             $result.path | Should -Be $testPhpPath
-            $result.status.opcache | Should -Be $true
-            $result.status.xdebug | Should -Be $false
+            ($result.status | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
+            ($result.status | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
     }
 }

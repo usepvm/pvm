@@ -226,6 +226,47 @@ function Get-Source-Urls {
     }
 }
 
+function Get-Zend-Extensions-Info {
+    param ($phpPath)
+
+    $extPath = "$phpPath\ext"
+    if (Is-Directory-Not-Exists -path $extPath) {
+        return @()
+    }
+
+    # Check php.ini for enabled status
+    $phpIniPath = "$phpPath\php.ini"
+    $enabledStatus = @{}
+    $zendExtensionsList = Get-Zend-Extensions-List
+    if (Is-File-Exists -path $phpIniPath) {
+        $iniContent = Get-Content -Path $phpIniPath
+        foreach ($line in $iniContent) {
+            $trimmed = $line.Trim()
+            foreach ($zendExtensionItem in $zendExtensionsList) {
+                if ($trimmed -match "^(;)?\s*zend_extension\s*=.*$zendExtensionItem.*$") {
+                    $enabledStatus[$zendExtensionItem] = -not $trimmed.StartsWith(';')
+                }
+            }
+        }
+    }
+
+    $zendExtensions = @()
+
+    foreach ($name in $zendExtensionsList) {
+        $dll = Get-ChildItem -Path "$extPath\*$name*.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($dll) {
+            $zendExtensions += @{
+                Name      = $name
+                Version   = $dll.VersionInfo.ProductVersion
+                Copyright = if ($dll.VersionInfo.LegalCopyright) { $dll.VersionInfo.LegalCopyright } else { '' }
+                Enabled   = if ($enabledStatus.ContainsKey($name)) { $enabledStatus[$name] } else { $false }
+            }
+        }
+    }
+
+    return $zendExtensions
+}
+
 function Get-PHP-Data {
     param ($PhpIniPath)
 

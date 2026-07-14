@@ -2,7 +2,12 @@
 function Get-PHP-Status {
     param ($phpPath)
 
-    $status = @{ opcache = $false; xdebug = $false }
+    # Build zendExtensions list from ini status
+    $status = @(
+        @{ Name = 'opcache'; Version = $null; Copyright = $null; Enabled = $false }
+        @{ Name = 'xdebug'; Version = $null; Copyright = $null; Enabled = $false }
+    )
+
     try {
         $phpIniPath = "$phpPath\php.ini"
         if (Is-File-Not-Exists -path $phpIniPath) {
@@ -14,11 +19,25 @@ function Get-PHP-Status {
         foreach ($line in $iniContent) {
             $trimmed = $line.Trim()
             if ($trimmed -match '^(;)?\s*zend_extension\s*=.*opcache.*$') {
-                $status.opcache = -not $trimmed.StartsWith(';')
+                $opcacheStatus = $status | Where-Object { $_.Name -eq 'opcache' }
+                $opcacheStatus.Enabled = -not $trimmed.StartsWith(';')
             }
 
             if ($trimmed -match '^(;)?\s*zend_extension\s*=.*xdebug.*$') {
-                $status.xdebug = -not $trimmed.StartsWith(';')
+                $xdebugStatus = $status | Where-Object { $_.Name -eq 'xdebug' }
+                $xdebugStatus.Enabled = -not $trimmed.StartsWith(';')
+            }
+        }
+
+        # Get zend extension info from DLL files (adds version info)
+        $dllExtensions = Get-Zend-Extensions-Info -phpPath $phpPath
+
+        # Update with DLL version info if available
+        foreach ($dllExt in $dllExtensions) {
+            $extToUpdate = $status | Where-Object { $_.Name -eq $dllExt.Name }
+            if ($extToUpdate) {
+                $extToUpdate.Version = $dllExt.Version
+                $extToUpdate.Copyright = $dllExt.Copyright
             }
         }
     } catch {
@@ -31,7 +50,13 @@ function Get-PHP-Status {
 
 function Get-Current-PHP-Version {
     try {
-        $emptyResult = @{ version = $null; path = $null; status = @{ opcache = $false; xdebug = $false } }
+        $emptyResult = @{
+            version = $null; path = $null;
+            status = @(
+                @{ Name = 'opcache'; Version = $null; Copyright = $null; Enabled = $false }
+                @{ Name = 'xdebug'; Version = $null; Copyright = $null; Enabled = $false }
+            )
+        }
         $currentPhpVersionPath = Get-Item -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH
         if (-not $currentPhpVersionPath) {
             return $emptyResult

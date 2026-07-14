@@ -125,25 +125,46 @@ Describe "Invoke-Repair Tests" {
 }
 
 Describe "Invoke-Current Tests" {
-    BeforeEach {
+    It "Should display current PHP version and extensions when version is set" {
         Mock Get-Current-PHP-Version { @{
                 version   = '8.2.0'
                 arch      = 'x64'
                 buildType = 'TS'
                 path      = 'C:\PHP\8.2.0'
-                status    = @{ "xdebug" = $true; "opcache" = $false }
+                status    = @(
+                    @{ Name = 'xdebug'; Version = '3.2.0'; Copyright = 'Zend'; Enabled = $true }
+                    @{ Name = 'opcache'; Version = '8.2.0'; Copyright = 'Zend'; Enabled = $false }
+                )
             } }
-        Mock Write-Host { }
-    }
-
-    It "Should display current PHP version and extensions when version is set" {
         $result = Invoke-Current
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Should -Invoke Get-Current-PHP-Version -Times 1
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*Running version: PHP 8.2.0*' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*xdebug is enabled*' -and $ForegroundColor -eq 'DarkGreen' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*opcache is disabled*' -and $ForegroundColor -eq 'DarkYellow' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*xdebug v3.2.0*' -and $ForegroundColor -eq 'DarkGreen' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*opcache v8.2.0*' -and $ForegroundColor -eq 'DarkYellow' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Path: C:\PHP\8.2.0*' }
+    }
+
+    It "Should display current PHP version and extensions when version is not set" {
+        Mock Get-Current-PHP-Version { @{
+                version   = '8.2.0'
+                arch      = 'x64'
+                buildType = 'TS'
+                path      = 'C:\PHP\8.2.0'
+                status    = @(
+                    @{ Name = 'xdebug'; Version = $null; Enabled = $true }
+                    @{ Name = 'opcache'; Version = $null; Enabled = $false }
+                )
+            } }
+
+        $result = Invoke-Current
+
+        $result | Should -Be 0
+        Should -Invoke Get-Current-PHP-Version -Times 1
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Running version: PHP 8.2.0*' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*xdebug*' -and $ForegroundColor -eq 'DarkGreen' }
+        Should -Invoke Write-Host -ParameterFilter { $Object -like '*opcache*' -and $ForegroundColor -eq 'DarkYellow' }
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*Path: C:\PHP\8.2.0*' }
     }
 

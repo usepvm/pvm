@@ -6,11 +6,14 @@ BeforeAll {
 
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\php-drive"
     $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
-    $script:testIniPath = "$TEST_DRIVE\php.ini"
+    $script:testPhpPath = "$TEST_DRIVE\PHP"
+    $script:testExtPath = "$testPhpPath\ext"
+    $script:testIniPath = "$testPhpPath\php.ini"
     $script:TEMPLATES_PATH = $PVMConfig.paths.templates = "$TEST_DRIVE\storage\data\templates"
     $script:ZEND_EXTENSIONS_LIST_PATH = $PVMConfig.paths.zendExtensionsList = "$TEMPLATES_PATH\zend_extensions.json"
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    New-Item -ItemType Directory -Path $testPhpPath -Force | Out-Null
 
     function Reset-Ini-Content {
     # Create a test php.ini file
@@ -977,6 +980,32 @@ Describe "Get-Zend-Extensions-List" {
         Mock Get-Content { throw 'Test exception' }
         $result = Get-Zend-Extensions-List
         $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
+    }
+}
+
+Describe "Get-Zend-Extensions-Info" {
+    It "Returns empty list when ext directory does not exist" {
+        Mock Is-Directory-Not-Exists { return $true }
+
+        $result = Get-Zend-Extensions-Info -phpPath $testPhpPath
+        $result.Count | Should -Be 0
+    }
+
+    It "Returns list of zend extensions status" {
+        @"
+extension=php_curl.dll
+zend_extension=php_opcache.dll
+;upload_max_filesize = 2M
+"@ | Set-Content -Path $testIniPath -Encoding UTF8
+        New-Item -ItemType Directory -Force -Path $testExtPath | Out-Null
+        New-Item -Path "$testExtPath\opcache.dll" -ItemType File -Force | Out-Null
+        New-Item -Path "$testExtPath\php_xdebug.dll" -ItemType File -Force | Out-Null
+
+        $result = Get-Zend-Extensions-Info -phpPath $testPhpPath
+        $result.Count | Should -Be 2
+
+        ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
+        ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
     }
 }
 

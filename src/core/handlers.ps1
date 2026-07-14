@@ -50,12 +50,20 @@ function Invoke-Current {
         return -1
     }
 
-    foreach ($ext in $result.status.Keys) {
-        if ($result.status[$ext]) {
-            Write-Host -Object "- $ext is enabled" -ForegroundColor DarkGreen
+    # Display zend extensions
+    $hasVersionInfo = $result.status | Where-Object { $_.Version }
+    foreach ($ext in $result.status) {
+        $statusText = if ($ext.Enabled) { 'Enabled' } else { 'Disabled' }
+        $color = if ($ext.Enabled) { 'DarkGreen' } else { 'DarkYellow' }
+        $extName = if ($ext.Name -eq 'opcache') { 'Zend OPcache' } else { (Get-Culture).TextInfo.ToTitleCase($ext.Name) }
+
+        if ($hasVersionInfo) {
+            $textInfo = "  $extName v$($ext.Version) ".PadRight(($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 4), '.')
         } else {
-            Write-Host -Object "- $ext is disabled" -ForegroundColor DarkYellow
+            $textInfo = "  $extName ".PadRight(($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 4), '.')
         }
+
+        Write-Host -Object "$textInfo $statusText" -ForegroundColor $color
     }
 
     Write-Host -Object "`nPath: $($result.path)"

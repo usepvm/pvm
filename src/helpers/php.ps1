@@ -237,22 +237,22 @@ function Get-Zend-Extensions-Info {
     # Check php.ini for enabled status
     $phpIniPath = "$phpPath\php.ini"
     $enabledStatus = @{}
+    $zendExtensionsList = Get-Zend-Extensions-List
     if (Is-File-Exists -path $phpIniPath) {
         $iniContent = Get-Content -Path $phpIniPath
         foreach ($line in $iniContent) {
             $trimmed = $line.Trim()
-            if ($trimmed -match '^(;)?\s*zend_extension\s*=.*opcache.*$') {
-                $enabledStatus['opcache'] = -not $trimmed.StartsWith(';')
-            }
-            if ($trimmed -match '^(;)?\s*zend_extension\s*=.*xdebug.*$') {
-                $enabledStatus['xdebug'] = -not $trimmed.StartsWith(';')
+            foreach ($zendExtensionItem in $zendExtensionsList) {
+                if ($trimmed -match "^(;)?\s*zend_extension\s*=.*$zendExtensionItem.*$") {
+                    $enabledStatus[$zendExtensionItem] = -not $trimmed.StartsWith(';')
+                }
             }
         }
     }
 
     $zendExtensions = @()
 
-    foreach ($name in @('opcache', 'xdebug')) {
+    foreach ($name in $zendExtensionsList) {
         $dll = Get-ChildItem -Path "$extPath\*$name*.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($dll) {
             $zendExtensions += @{

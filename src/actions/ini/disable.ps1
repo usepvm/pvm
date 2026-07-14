@@ -80,7 +80,7 @@ function Disable-IniExtension {
             }
 
             $null = Backup-IniFile -iniPath $iniPath
-            Set-Content -Path $iniPath $updatedLines -Encoding UTF8
+            Set-Content -Path $iniPath -Value $updatedLines -Encoding UTF8
             $results += @{ name = $selected.name; status = 'Disabled'; color = 'DarkYellow' }
         }
 

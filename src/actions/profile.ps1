@@ -23,7 +23,7 @@ function Set-IniSetting-Direct {
             $lines += $newLine
         }
 
-        Set-Content -Path $iniPath $lines -Encoding UTF8
+        Set-Content -Path $iniPath -Value $lines -Encoding UTF8
         return 0
     } catch {
         return -1
@@ -85,7 +85,7 @@ function Enable-IniExtension-Direct {
             $lines += $newLine
         }
 
-        Set-Content -Path $iniPath $lines -Encoding UTF8
+        Set-Content -Path $iniPath -Value $lines -Encoding UTF8
         return 0
     } catch {
         return -1
@@ -143,7 +143,7 @@ function Disable-IniExtension-Direct {
             }
         }
 
-        Set-Content -Path $iniPath $lines -Encoding UTF8
+        Set-Content -Path $iniPath -Value $lines -Encoding UTF8
         return 0
     } catch {
         return -1

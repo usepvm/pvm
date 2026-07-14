@@ -1,7 +1,7 @@
 ﻿
 function Test-Git-Available {
     try {
-        $null = Get-Command git -ErrorAction Stop
+        $null = Get-Command -Name git -ErrorAction Stop
         return $true
     } catch {
         return $false

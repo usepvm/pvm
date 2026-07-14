@@ -58,14 +58,24 @@ function Cache-Data {
     param ($cacheFileName, $data, $depth = 3)
 
     try {
+        if ([string]::IsNullOrWhiteSpace($cacheFileName)) {
+            Write-Host -Object "Cache file name cannot be empty." -ForegroundColor DarkYellow
+            return -1
+        }
+
+        if ($null -eq $data) {
+            Write-Host -Object "Data cannot be null." -ForegroundColor DarkYellow
+            return -1
+        }
+
         $jsonString = $data | ConvertTo-Json -Depth $depth
         $path = Get-Cache-FilePath -filename $cacheFileName
         $created = Make-Directory -path (Split-Path -Path $path)
         if ($created -ne 0) {
-            Write-Host -Object "Failed to create directory $(Split-Path -Path $path)"
+            Write-Host -Object "Failed to create directory $(Split-Path -Path $path)" -ForegroundColor DarkYellow
             return -1
         }
-        Set-Content -Path $path -Value $jsonString
+        Set-Content -Path $path -Value $jsonString -Encoding UTF8
         return 0
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to cache data"; exception = $_ }

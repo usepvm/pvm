@@ -80,7 +80,7 @@ function Enable-IniExtension {
             }
 
             $null = Backup-IniFile -iniPath $iniPath
-            Set-Content -Path $iniPath $newLines -Encoding UTF8
+            Set-Content -Path $iniPath -Value $newLines -Encoding UTF8
 
             $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
             # Write-Host -Object "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen

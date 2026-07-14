@@ -205,6 +205,26 @@ Describe "Cache-Data" {
         $code | Should -Be -1
     }
 
+    It "Handles null data gracefully" {
+        $code = Cache-Data -cacheFileName $null -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+        $code | Should -Be -1
+    }
+
+    It "Handles empty cache file name gracefully" {
+        $code = Cache-Data -cacheFileName '' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+        $code | Should -Be -1
+    }
+
+    It "Handles whitespace cache file name gracefully" {
+        $code = Cache-Data -cacheFileName '   ' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+        $code | Should -Be -1
+    }
+
+    It "Handles null data gracefully" {
+        $code = Cache-Data -cacheFileName 'test' -data $null
+        $code | Should -Be -1
+    }
+
     It "Handles exceptions gracefully" {
         Mock ConvertTo-Json { throw 'Simulated exception' }
         $code = Cache-Data -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}

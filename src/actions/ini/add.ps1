@@ -251,7 +251,7 @@ function Add-Missing-PHPExtension-To-Ini {
         } else {
             $lines += "`n$commented" + "extension=$extFileName"
         }
-        Set-Content -Path $iniPath $lines -Encoding UTF8
+        Set-Content -Path $iniPath -Value $lines -Encoding UTF8
         Write-Host -Object "- '$extFileName' added successfully." -ForegroundColor DarkGreen
 
         return 0

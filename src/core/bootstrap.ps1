@@ -122,8 +122,10 @@ function Get-ClosestCommandSuggestion {
 
     $aliases = Get-Aliases
     $aliasCandidates = @()
+    $aliasTargets = @()
     if ($null -ne $aliases) {
         $aliasCandidates = $aliases.Keys | ForEach-Object { $_.ToLower() } | Select-Object -Unique
+        $aliasTargets = $aliases.Values | ForEach-Object { $_.ToLower() } | Select-Object -Unique
     }
 
     $bestDistance = [int]::MaxValue
@@ -145,6 +147,13 @@ function Get-ClosestCommandSuggestion {
 
     if ($bestDistance -ne -1) {
         foreach ($candidate in $aliasCandidates) {
+            $distance = Get-LevenshteinDistance -first $command -second $candidate
+            if ($distance -lt $bestDistance) {
+                $bestDistance = $distance
+                $bestCandidate = $candidate
+            }
+        }
+        foreach ($candidate in $aliasTargets) {
             $distance = Get-LevenshteinDistance -first $command -second $candidate
             if ($distance -lt $bestDistance) {
                 $bestDistance = $distance
@@ -200,6 +209,7 @@ function Start-PVM {
 
         $command, $arguments = Resolve-NestedCommand -command $command -arguments $arguments
 
+        $alias = $command
         $command = Resolve-Alias -alias $command
 
         if ([string]::IsNullOrWhiteSpace($command)) {
@@ -212,7 +222,7 @@ function Start-PVM {
         if (-not $actions.Contains($command)) {
             $suggestion = Get-ClosestCommandSuggestion -command $command -actions $actions
             if ([string]::IsNullOrWhiteSpace($suggestion)) {
-                Write-Host -Object "`n'$command' is not a valid command." -ForegroundColor DarkYellow
+                Write-Host -Object "`n'$alias' is not a valid command." -ForegroundColor DarkYellow
             } else {
                 Write-Host -Object "`n'$command' is not a valid command. Did you mean '$suggestion'?" -ForegroundColor DarkYellow
             }

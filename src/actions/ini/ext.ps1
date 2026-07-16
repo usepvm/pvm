@@ -127,7 +127,7 @@ function List-PHP-Extensions {
             $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxKeyLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3))
 
             Write-Host -Object "`nAvailable Extensions by Category:"
-            Write-Host    '--------------------------------'
+            Write-Host -Object '--------------------------------'
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
                 $key = "$($_.Key) "
                 $vals = ($_.Value | ForEach-Object { $_.extName }) -join ', '

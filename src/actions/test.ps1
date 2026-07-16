@@ -2,12 +2,12 @@
 function Use-Pester-Version {
     param ($version)
 
-    Write-Host "`nChecking for Pester version: $version" -ForegroundColor Yellow
+    Write-Host -Object "`nChecking for Pester version: $version" -ForegroundColor Yellow
 
     $availableVersions = Get-Module -Name Pester -ListAvailable
 
     if (-not $availableVersions) {
-        Write-Host "No Pester module found. Please install Pester first." -ForegroundColor Red
+        Write-Host -Object "No Pester module found. Please install Pester first." -ForegroundColor Red
         return $false
     }
 
@@ -15,7 +15,7 @@ function Use-Pester-Version {
 
     if (-not $targetVersion) {
         $availableList = $availableVersions.Version -join ', '
-        Write-Host "Pester version '$version' not found. Available versions: $availableList" -ForegroundColor Red
+        Write-Host -Object "Pester version '$version' not found. Available versions: $availableList" -ForegroundColor Red
         return $false
     }
 
@@ -23,7 +23,7 @@ function Use-Pester-Version {
 }
 
 function Use-Latest-Pester-Version {
-    Write-Host "`nChecking for latest Pester version" -ForegroundColor Yellow
+    Write-Host -Object "`nChecking for latest Pester version" -ForegroundColor Yellow
 
     $availableVersions = Get-Module -Name Pester -ListAvailable
     $targetVersion = Find-Pester-Version -version 'latest' -availableVersions $availableVersions
@@ -59,7 +59,7 @@ function Import-Pester-Version {
 
     Import-Module Pester -RequiredVersion $targetVersion.Version -Force
     $pesterVersion = Get-Module -Name Pester
-    Write-Host "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
+    Write-Host -Object "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
 
     Write-Host -Object "`nPester Info:" -ForegroundColor Cyan
     Write-Host -Object "  Version: $($pesterVersion.Version)"

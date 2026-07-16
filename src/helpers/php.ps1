@@ -96,7 +96,6 @@ function Refresh-Installed-PHP-Versions-Cache {
         return $code
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to refresh installed PHP versions cache"; exception = $_ }
-
         return -1
     }
 }

@@ -150,7 +150,7 @@ function Create-Env-File {
 }
 
 function Pause-ForEnvEdit {
-    Write-Host "`nEdit $PVMRoot\.env now if you want custom settings, then press Enter to continue..." -ForegroundColor Cyan
+    Write-Host -Object "`nEdit $PVMRoot\.env now if you want custom settings, then press Enter to continue..." -ForegroundColor Cyan
     Read-Host | Out-Null
     $Global:PVMConfig = Get-Config -rootPath $PVMRoot
 }

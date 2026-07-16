@@ -2,8 +2,8 @@
 function Show-Usage {
     param ($arguments)
 
-    Print-Host -message "`nRunning version : $($PVMConfig.version)"
-    Print-Host -message "`nUsage:`n"
+    Print-Message -message "`nRunning version : $($PVMConfig.version)"
+    Print-Message -message "`nUsage:`n"
 
     $actions = Get-Actions -arguments $arguments
     $maxLineLength = ($actions.GetEnumerator() | ForEach-Object { $_.Value.command.Length } | Measure-Object -Maximum).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
@@ -28,18 +28,18 @@ function Show-Usage {
         # First line (command + dots + description)
         $label = "  $command "
         $line = $label.PadRight($maxLineLength, '.') + " $($descLines[0])"
-        Print-Host -message $line
+        Print-Message -message $line
 
         # Remaining description lines aligned under description column
         $indent = ' ' * ($maxLineLength + 1)
         for ($i = 1; $i -lt $descLines.Count; $i++) {
-            Print-Host -message "$indent$($descLines[$i])"
+            Print-Message -message "$indent$($descLines[$i])"
         }
     }
 }
 
 function Show-PVM-Version {
-    Print-Host -message "`nPVM version $($PVMConfig.version)"
+    Print-Message -message "`nPVM version $($PVMConfig.version)"
 }
 
 function Get-NestedCommands {
@@ -233,7 +233,7 @@ function Start-PVM {
         $allowedCommands = Get-AllowedCommands
 
         if (($allowedCommands -notcontains $command) -and (Is-PVM-Not-Setup)) {
-            Print-Host -message "`nPVM is not setup. Please run 'pvm setup' first."
+            Print-Message -message "`nPVM is not setup. Please run 'pvm setup' first."
             return -1
         }
 

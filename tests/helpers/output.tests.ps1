@@ -288,7 +288,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints host message" {
-        Print-Host -message 'Test message'
+        Print-Message -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq $null

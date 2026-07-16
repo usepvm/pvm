@@ -31,7 +31,7 @@ function Invoke-IniAction {
                     return -1
                 }
 
-                Print-Host -message "`nRetrieving ini setting..."
+                Print-Message -message "`nRetrieving ini setting..."
 
                 $exitCode = Get-IniSetting -iniPath $iniPath -keys @($params)
             }
@@ -41,7 +41,7 @@ function Invoke-IniAction {
                     return -1
                 }
 
-                Print-Host -message "`nSetting ini value..."
+                Print-Message -message "`nSetting ini value..."
                 $enable = (-not ($params -contains '--disable'))
                 $params = $params | Where-Object { $_ -notmatch '^--disable$' }
 
@@ -53,7 +53,7 @@ function Invoke-IniAction {
                     return -1
                 }
 
-                Print-Host -message "`nEnabling extension(s): $($params -join ', ')"
+                Print-Message -message "`nEnabling extension(s): $($params -join ', ')"
 
                 $exitCode = Enable-IniExtension -iniPath $iniPath -extNames @($params)
             }
@@ -63,7 +63,7 @@ function Invoke-IniAction {
                     return -1
                 }
 
-                Print-Host -message "`nDisabling extension(s): $($params -join ', ')"
+                Print-Message -message "`nDisabling extension(s): $($params -join ', ')"
 
                 $exitCode = Disable-IniExtension -iniPath $iniPath -extNames @($params)
             }
@@ -73,7 +73,7 @@ function Invoke-IniAction {
                     return -1
                 }
 
-                Print-Host -message "`nChecking status of extension(s): $($params -join ', ')"
+                Print-Message -message "`nChecking status of extension(s): $($params -join ', ')"
 
                 $exitCode = Get-IniExtensionStatus -iniPath $iniPath -extNames @($params)
             }
@@ -86,7 +86,7 @@ function Invoke-IniAction {
                     return -1
                 }
 
-                Print-Host -message "`nInstalling extension(s): $($params -join ', ')"
+                Print-Message -message "`nInstalling extension(s): $($params -join ', ')"
 
                 $skipConfirmation = [bool]($params | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
                 $params = $params | Where-Object { @('-y', '--yes') -notcontains $_ }
@@ -99,7 +99,7 @@ function Invoke-IniAction {
                     return -1
                 }
 
-                Print-Host -message "`nUninstalling extension(s): $($params -join ', ')"
+                Print-Message -message "`nUninstalling extension(s): $($params -join ', ')"
 
                 $skipConfirmation = [bool]($params | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
                 $params = $params | Where-Object { @('-y', '--yes') -notcontains $_ }

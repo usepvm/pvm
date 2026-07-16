@@ -49,7 +49,7 @@ function Initialize-PVMDirectories {
         $PVMConfig.paths.log
     )
 
-    Print-Host -message "`nPVM environment directories:"
+    Print-Message -message "`nPVM environment directories:"
     $codes = @()
     $maxNameLength = ($dirs | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     foreach ($dir in $dirs) {
@@ -72,7 +72,7 @@ function Initialize-PVMFiles {
     $codes += $code = Create-Example-PHP-Profile
     if ($code -eq 0) {
         Print-Success -message "`nExample profile created successfully at '$($PVMConfig.paths.exampleProfile)'."
-        Print-Host -message "- Use 'pvm help profile' to learn more."
+        Print-Message -message "- Use 'pvm help profile' to learn more."
     } else {
         Print-Error -message "`nFailed to create example profile."
     }
@@ -80,7 +80,7 @@ function Initialize-PVMFiles {
     $codes += $code = Create-Profile-Template
     if ($code -eq 0) {
         Print-Success -message "`nProfile template created successfully at '$($PVMConfig.paths.profileTemplate)'."
-        Print-Host -message '- Feel free to modify it.'
+        Print-Message -message '- Feel free to modify it.'
     } else {
         Print-Error -message "`nFailed to create profile template."
     }
@@ -95,8 +95,8 @@ function Initialize-PVMFiles {
     $codes += $code = Set-Aliases-List
     if ($code -eq 0) {
         Print-Success -message "`nAliases list created successfully at '$($PVMConfig.paths.aliasesList)'."
-        Print-Host -message "- Use 'pvm aliases' to see available aliases."
-        Print-Host -message "- Feel free to modify it."
+        Print-Message -message "- Use 'pvm aliases' to see available aliases."
+        Print-Message -message "- Feel free to modify it."
     } else {
         Print-Error -message "`nFailed to create aliases list."
     }

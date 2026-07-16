@@ -26,7 +26,7 @@ function Enable-IniExtension {
                 $index = 0
                 $matchesListStatus | ForEach-Object {
                     $name = "$($_.name) ".PadRight($maxLineLength, '.')
-                    Print-Host -message "[$index] $name " -noNewLine
+                    Print-Message -message "[$index] $name " -noNewLine
                     Write-Color -message "$($_.status)" -foreColor $_.color
                     $index++
                 }
@@ -83,9 +83,9 @@ function Enable-IniExtension {
         }
 
         $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        Print-Host -message "`nResults:"
+        Print-Message -message "`nResults:"
         foreach ($item in $results) {
-            Print-Host -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
+            Print-Message -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
             Write-Color -message " $($item.status)" -foreColor $item.color
         }
 

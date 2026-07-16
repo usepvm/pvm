@@ -32,7 +32,7 @@ function Log-Data {
         $logPath = if ($data.logPath) { $data.logPath } else { $PVMConfig.paths.logError }
         $created = Make-Directory -path (Split-Path -Path $logPath)
         if ($created -ne 0) {
-            Print-Host -message "Failed to create directory $(Split-Path -Path $logPath)"
+            Print-Message -message "Failed to create directory $(Split-Path -Path $logPath)"
             return -1
         }
         $content = "`n--------------------------"
@@ -147,7 +147,7 @@ function Write-Gray {
 function Write-Default {
     param($message, [switch]$noNewLine)
 
-    Print-Host $message -noNewLine:$noNewLine
+    Print-Message $message -noNewLine:$noNewLine
 }
 
 function Print-Success {
@@ -204,7 +204,7 @@ function Print-Value {
     Write-White $message -noNewLine:$noNewLine
 }
 
-function Print-Host {
+function Print-Message {
     param($message, [switch]$noNewLine)
 
     Write-Host $message -NoNewline:$noNewLine

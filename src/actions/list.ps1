@@ -65,7 +65,7 @@ function Get-Available-PHP-Versions {
     param ($term = $null, $arch = $null, $buildType = $null)
 
     try {
-        Print-Host -message "`nLoading available PHP versions..."
+        Print-Message -message "`nLoading available PHP versions..."
 
         $fetchedVersionsGrouped = Get-PHP-List-To-Install
 
@@ -107,18 +107,18 @@ function Get-Available-PHP-Versions {
                 if ($fetchedVersionsGroupe.Length -eq 0) {
                     return
                 }
-                Print-Host -message "`n$key`n"
+                Print-Message -message "`n$key`n"
                 $maxNameLength = ($fetchedVersionsGroupe.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $fetchedVersionsGroupe | ForEach-Object {
                     $versionNumber = "$($_.Version) ".PadRight($maxNameLength, '.')
-                    Print-Host -message "  $versionNumber $($_.Arch) $($_.BuildType)"
+                    Print-Message -message "  $versionNumber $($_.Arch) $($_.BuildType)"
                 }
             }
 
         $msg = "`nThis is a partial list. For a complete list, visit:"
         $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
-        Print-Host -message $msg
+        Print-Message -message $msg
         return 0
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"; exception = $_ }
@@ -167,7 +167,7 @@ function Display-Installed-PHP-Versions {
                     $isCurrent = '(Current)'
                 }
                 $versionNumber = "$versionNumber ".PadRight($maxNameLength, '.')
-                Print-Host -message " $versionNumber $metaData $isCurrent"
+                Print-Message -message " $versionNumber $metaData $isCurrent"
             }
         }
         return 0

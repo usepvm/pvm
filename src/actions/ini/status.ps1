@@ -41,7 +41,7 @@ function Get-IniExtensionStatus {
 
         $allMatchesListStatus | ForEach-Object {
             $name = "$($_.name) ".PadRight($maxLineLength, '.')
-            Print-Host -message "- $name " -noNewLine
+            Print-Message -message "- $name " -noNewLine
             Write-Color -message "$($_.status)" -foreColor $_.color
         }
 

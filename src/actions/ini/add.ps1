@@ -142,13 +142,13 @@ function Install-XDebug-Extension {
         }
 
         $xDebugListGrouped.GetEnumerator() | ForEach-Object {
-            Print-Host -message "`nXDebug $($_.Key)"
+            Print-Message -message "`nXDebug $($_.Key)"
             $_.Value | ForEach-Object {
                 $text = "PHP XDebug $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
-                Print-Host -message " [$($_.index)] $text"
+                Print-Message -message " [$($_.index)] $text"
             }
         }
-        Print-Host -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.xdebugHistorical)"
+        Print-Message -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.xdebugHistorical)"
 
         $packageIndex = Read-Host -Prompt "`nInsert the [number] you want to install"
         $packageIndex = $packageIndex.Trim()
@@ -323,10 +323,10 @@ function Install-Extension {
             }
 
             $extensionLinksGrouped.GetEnumerator() | ForEach-Object {
-                Print-Host -message "`n$extName $($_.Key)"
+                Print-Message -message "`n$extName $($_.Key)"
                 $_.Value | ForEach-Object {
                     $text = "PHP $extName $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
-                    Print-Host -message " [$($_.index)] $text"
+                    Print-Message -message " [$($_.index)] $text"
                 }
             }
             Print-Info -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.peclPackageRoot)/$extName"

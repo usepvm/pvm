@@ -14,8 +14,8 @@ function Get-PHP-Info {
         return -1
     }
 
-    Print-Host -message "`n- Running PHP version`t: $($currentPHPVersion.version)"
-    Print-Host -message "`n- PHP path`t`t: $($currentPHPVersion.path)"
+    Print-Message -message "`n- Running PHP version`t: $($currentPHPVersion.version)"
+    Print-Message -message "`n- PHP path`t`t: $($currentPHPVersion.path)"
 
     $iniPath = "$($currentPHPVersion.path)\php.ini"
 

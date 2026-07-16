@@ -87,7 +87,7 @@ function List-PHP-Extensions {
             Display-Extensions-States -extensions $allExtensions
             Display-Installed-Extensions -extensions $filtered
         } else {
-            Print-Host -message "`nLoading available extensions..."
+            Print-Message -message "`nLoading available extensions..."
 
             $availableExtensions = Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
                 return [pscustomobject] (Get-PHPExtensions-From-Source)
@@ -149,14 +149,14 @@ function List-PHP-Extensions {
 
                 if ($descLines.Count -eq 0) {
                     $line = $label.PadRight($maxLineLength, '.')
-                    Print-Host -message $line
+                    Print-Message -message $line
                 } else {
                     $line = $label.PadRight($maxLineLength, '.') + " $($descLines[0])"
-                    Print-Host -message $line
+                    Print-Message -message $line
 
                     $indent = ' ' * ($maxLineLength + 1)
                     for ($i = 1; $i -lt $descLines.Count; $i++) {
-                        Print-Host -message "$indent$($descLines[$i])"
+                        Print-Message -message "$indent$($descLines[$i])"
                     }
                 }
             }
@@ -164,7 +164,7 @@ function List-PHP-Extensions {
             $msg = "`nThis is a partial list. For a complete list, visit:"
             $msg += "`nPHP Extensions : $($PVMConfig.links.peclPackages)"
             $msg += "`nXDebug : $($PVMConfig.links.xdebugHistorical)"
-            Print-Host -message $msg
+            Print-Message -message $msg
         }
 
         return 0

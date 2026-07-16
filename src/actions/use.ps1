@@ -72,7 +72,7 @@ function Auto-Select-PHP-Version {
         return @{ code = -1; message = 'Could not detect PHP version from .php-version or composer.json'; color = 'DarkYellow' }
     }
 
-    Print-Host -message "`nDetected PHP version from project: $version"
+    Print-Message -message "`nDetected PHP version from project: $version"
 
     $installedVersions = Get-Matching-PHP-Versions -version $version
     if (-not $installedVersions) {

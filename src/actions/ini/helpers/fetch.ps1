@@ -119,7 +119,7 @@ function Get-Extension-Links-From-URL {
         if ($linksMatchingExtName.Count -eq 1) {
             $chosenItem = $($linksMatchingExtName)
             $extName = $chosenItem.href -replace '/package/', ''
-            Write-Host -Object "`nMatching found : '$extName'"
+            Print-Message -message "`nMatching found : '$extName'"
         } else {
             Print-Info -message "`nMatching '$extName' extension:"
             $index = 0

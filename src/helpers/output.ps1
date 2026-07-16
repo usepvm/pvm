@@ -1,4 +1,4 @@
-
+﻿
 function Display-Msg-By-ExitCode {
     param ($result, $message = $null)
 
@@ -82,4 +82,130 @@ function Format-Seconds {
 
 function Get-Console-Width {
     return $Host.UI.RawUI.WindowSize.Width
+}
+
+function Print-Color {
+    param ($message, $foreColor)
+
+    Write-Host $message -ForegroundColor $foreColor
+}
+
+function Print-Success {
+    param($message)
+
+    Print-Color $message -foreColor DarkGreen
+}
+
+function Print-Error {
+    param($message)
+
+    Print-Color $message -foreColor DarkYellow
+}
+
+function Print-Warning {
+    param($message)
+
+    Print-Color $message -foreColor Yellow
+}
+
+function Print-Info {
+    param($message)
+
+    Print-Color $message -foreColor Cyan
+}
+
+function Print-Header {
+    param($message)
+
+    Print-Color $message -foreColor Magenta
+}
+
+function Print-Section {
+    param($message)
+
+    Print-Color $message -foreColor Blue
+}
+
+function Print-Debug {
+    param($message)
+
+    Print-Color $message -foreColor DarkGray
+}
+
+function Print-Verbose {
+    param($message)
+
+    Print-Color $message -foreColor Gray
+}
+
+function Print-Value {
+    param($message)
+
+    Print-Color $message -foreColor White
+}
+
+function Print-Host {
+    param($message)
+
+    Write-Host $message
+}
+
+function Write-White {
+    param($message)
+
+    Print-Color $message -foreColor White
+}
+
+function Write-DarkGreen {
+    param($message)
+
+    Print-Color $message -foreColor DarkGreen
+}
+
+function Write-DarkYellow {
+    param($message)
+
+    Print-Color $message -foreColor DarkYellow
+}
+
+function Write-Yellow {
+    param($message)
+
+    Print-Color $message -foreColor Yellow
+}
+
+function Write-Cyan {
+    param($message)
+
+    Print-Color $message -foreColor Cyan
+}
+
+function Write-Magenta {
+    param($message)
+
+    Print-Color $message -foreColor Magenta
+}
+
+function Write-Blue {
+    param($message)
+
+    Print-Color $message -foreColor Blue
+}
+
+function Write-DarkGray {
+    param($message)
+
+    Print-Color $message -foreColor DarkGray
+}
+
+function Write-Gray {
+    param($message)
+
+    Print-Color $message -foreColor Gray
+}
+
+function Write-Default {
+    param($message)
+
+    Print-Host $message
 }

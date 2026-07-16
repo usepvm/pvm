@@ -205,3 +205,181 @@ Describe "Get-Console-Width" {
         $result | Should -BeGreaterThan 0
     }
 }
+
+Describe "Print-* helpers Tests" {
+    It "Prints message with specified color" {
+        Print-Color -message 'Test message' -foreColor 'Red'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'Red'
+        } -Exactly 1
+    }
+
+    It "Prints success message" {
+        Print-Success -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGreen'
+        }
+    }
+
+    It "Prints error message" {
+        Print-Error -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkYellow'
+        }
+    }
+
+    It "Prints warning message" {
+        Print-Warning -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'Yellow'
+        }
+    }
+
+    It "Prints info message" {
+        Print-Info -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'Cyan'
+        }
+    }
+
+    It "Prints header message" {
+        Print-Header -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'Magenta'
+        }
+    }
+
+    It "Prints section message" {
+        Print-Section -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'Blue'
+        }
+    }
+
+    It "Prints debug message" {
+        Print-Debug -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGray'
+        }
+    }
+
+    It "Prints verbose message" {
+        Print-Verbose -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'Gray'
+        }
+    }
+
+    It "Prints value message" {
+        Print-Value -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'White'
+        }
+    }
+
+    It "Prints host message" {
+        Print-Host -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq $null
+        }
+    }
+
+    It "Prints white message" {
+        Write-White -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'White'
+        }
+    }
+
+    It "Prints dark green message" {
+        Write-DarkGreen -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGreen'
+        }
+    }
+
+    It "Prints dark green message" {
+        Write-DarkGreen -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGreen'
+        }
+    }
+
+    It "Prints dark yellow message" {
+        Write-DarkYellow -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkYellow'
+        }
+    }
+
+    It "Prints yellow message" {
+        Write-Yellow -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'Yellow'
+        }
+    }
+
+    It "Prints cyan message" {
+        Write-Cyan -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'Cyan'
+        }
+    }
+
+    It "Prints magenta message" {
+        Write-Magenta -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'Magenta'
+        }
+    }
+
+    It "Prints blue message" {
+        Write-Blue -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'Blue'
+        }
+    }
+
+    It "Prints dark gray message" {
+        Write-DarkGray -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGray'
+        }
+    }
+
+    It "Prints gray message" {
+        Write-Gray -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq 'Gray'
+        }
+    }
+
+    It "Prints default message" {
+        Write-Default -message 'Test message'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'Test message' -and $ForegroundColor -eq $null
+        }
+    }
+}

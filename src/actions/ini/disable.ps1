@@ -55,7 +55,6 @@ function Disable-IniExtension {
             }
 
             if ($selected.status -eq 'Disabled') {
-                # Write-Host -Object "- '$($selected.name)' disabled successfully." -ForegroundColor DarkGreen
                 $results += @{ name = $selected.name; status = 'Disabled'; color = 'DarkYellow' }
                 continue
             }
@@ -74,7 +73,6 @@ function Disable-IniExtension {
             }
 
             if (-not $modified) {
-                # Write-Host -Object "- '$($selected.name)' disabled successfully." -ForegroundColor DarkGreen
                 $results += @{ name = $selected.name; status = 'Disabled'; color = 'DarkYellow' }
                 continue
             }

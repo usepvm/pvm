@@ -118,7 +118,7 @@ function Update-PVM {
     }
 
     if (-not $quiet) {
-        Write-Host -Object "`nChecking for updates..." -ForegroundColor Cyan
+        Print-Info -message "`nChecking for updates..."
     }
 
     $latestCommit = Get-Latest-Git-Commit -branch $currentBranch
@@ -161,7 +161,7 @@ function Update-PVM {
         }
     }
 
-    Write-Host -Object "Update available. Pulling changes..." -ForegroundColor Yellow
+    Print-Warning -message "Update available. Pulling changes..."
 
     try {
         $oldVersion = $PVMConfig.version

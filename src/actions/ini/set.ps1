@@ -4,7 +4,7 @@ function Set-IniSetting {
 
     try {
         if ($keys -isnot [array] -or $keys.Count -eq 0) {
-            Write-Host -Object "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
+            Print-Warning -message "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
             return -1
         }
 
@@ -17,7 +17,7 @@ function Set-IniSetting {
                 $searchKey = $matches['k'].Trim()
                 $inputValue = if ($null -ne $matches['v']) { $matches['v'].Trim() } else { $null }
             } else {
-                Write-Host -Object 'Invalid input.' -ForegroundColor DarkGray
+                Print-Error -message 'Invalid input.'
                 $overallCode = -1
                 continue
             }
@@ -34,15 +34,15 @@ function Set-IniSetting {
             }
 
             if ($matchesList.Length -gt 1) {
-                Write-Host -Object "`nMultiple settings match '$searchKey':`n" -ForegroundColor Cyan
+                Print-Info -message "`nMultiple settings match '$searchKey':`n"
 
                 $maxLineLength = ($matchesList.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0
                 $matchesList | ForEach-Object {
                     $k = "$($_.name) ".PadRight($maxLineLength, '.')
                     $v = if ($_.value -eq '') { '(not set)' } else { $_.value }
-                    Write-Host -Object "[$index] $k $v " -NoNewline
-                    Write-Host -Object $_.status -ForegroundColor $_.color
+                    Print-Host -message "[$index] $k $v " -noNewLine
+                    Write-Color -message $_.status -foreColor $_.color
                     $index++
                 }
 
@@ -51,12 +51,12 @@ function Set-IniSetting {
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                        Write-Host -Object 'Please enter a valid positive number.' -ForegroundColor Yellow
+                        Print-Warning -message 'Please enter a valid positive number.'
                         continue
                     }
 
                     if ($choice -lt 0 -or $choice -gt $matchesList.Length - 1) {
-                        Write-Host -Object "Number must be between 0 and $($matchesList.Length - 1)." -ForegroundColor Yellow
+                        Print-Warning -message "Number must be between 0 and $($matchesList.Length - 1)."
                         continue
                     }
 
@@ -89,12 +89,12 @@ function Set-IniSetting {
         $updatedSettings = $notFound + $updatedSettings
 
         $maxLineLength = ($updatedSettings.Values | ForEach-Object { $_.key } | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        Write-Host -Object "`n" -NoNewline
+        Print-Host -message "`n" -noNewLine
         foreach ($key in $updatedSettings.Keys) {
             $item = $updatedSettings[$key]
             $name = "$($item.key) ".PadRight($maxLineLength, '.')
-            Write-Host -Object "- $name $($item.value) " -NoNewline
-            Write-Host -Object $item.status -ForegroundColor $item.color
+            Print-Host -message "- $name $($item.value) " -noNewLine
+            Write-Color -message $item.status -foreColor $item.color
         }
 
         return $overallCode

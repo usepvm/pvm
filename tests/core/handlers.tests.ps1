@@ -1070,7 +1070,7 @@ Describe "Invoke-Profile Tests" {
 
             Should -Invoke Write-Host -ParameterFilter {
                 $Object -like "*Unknown action 'unknown'*" -and
-                $ForegroundColor -eq "Yellow"
+                $ForegroundColor -eq "DarkYellow"
             }
         }
 
@@ -1264,7 +1264,7 @@ Describe "Invoke-Cache Tests" {
 
             Should -Invoke Write-Host -ParameterFilter {
                 $Object -like "*Unknown action 'unknown'*" -and
-                $ForegroundColor -eq "Yellow"
+                $ForegroundColor -eq "DarkYellow"
             }
         }
 

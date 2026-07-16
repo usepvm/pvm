@@ -49,7 +49,7 @@ function Initialize-PVMDirectories {
         $PVMConfig.paths.log
     )
 
-    Write-Host -Object "`nPVM environment directories:"
+    Print-Host -message "`nPVM environment directories:"
     $codes = @()
     $maxNameLength = ($dirs | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     foreach ($dir in $dirs) {
@@ -57,9 +57,9 @@ function Initialize-PVMDirectories {
 
         $dirName = "- $dir ".PadRight($maxNameLength, '.')
         if ($code -eq 0) {
-            Write-Host -Object "$dirName Created." -ForegroundColor DarkGreen
+            Print-Success -message "$dirName Created."
         } else {
-            Write-Host -Object "$dirName Not created." -ForegroundColor DarkYellow
+            Print-Error -message "$dirName Not created."
         }
     }
 
@@ -71,34 +71,34 @@ function Initialize-PVMFiles {
 
     $codes += $code = New-Example-PHP-Profile
     if ($code -eq 0) {
-        Write-Host -Object "`nExample profile created successfully at '$($PVMConfig.paths.exampleProfile)'." -ForegroundColor DarkGreen
-        Write-Host -Object "- Use 'pvm help profile' to learn more."
+        Print-Success -message "`nExample profile created successfully at '$($PVMConfig.paths.exampleProfile)'."
+        Print-Host -message "- Use 'pvm help profile' to learn more."
     } else {
-        Write-Host -Object "`nFailed to create example profile." -ForegroundColor DarkYellow
+        Print-Error -message "`nFailed to create example profile."
     }
 
     $codes += $code = New-Profile-Template
     if ($code -eq 0) {
-        Write-Host -Object "`nProfile template created successfully at '$($PVMConfig.paths.profileTemplate)'." -ForegroundColor DarkGreen
-        Write-Host -Object '- Feel free to modify it.'
+        Print-Success -message "`nProfile template created successfully at '$($PVMConfig.paths.profileTemplate)'."
+        Print-Host -message '- Feel free to modify it.'
     } else {
-        Write-Host -Object "`nFailed to create profile template." -ForegroundColor DarkYellow
+        Print-Error -message "`nFailed to create profile template."
     }
 
     $codes += $code = Set-Zend-Extensions-List
     if ($code -eq 0) {
-        Write-Host -Object "`nZend extensions list created successfully at '$($PVMConfig.paths.zendExtensionsList)'." -ForegroundColor DarkGreen
+        Print-Success -message "`nZend extensions list created successfully at '$($PVMConfig.paths.zendExtensionsList)'."
     } else {
-        Write-Host -Object "`nFailed to create zend extensions list." -ForegroundColor DarkYellow
+        Print-Error -message "`nFailed to create zend extensions list."
     }
 
     $codes += $code = Set-Aliases-List
     if ($code -eq 0) {
-        Write-Host -Object "`nAliases list created successfully at '$($PVMConfig.paths.aliasesList)'." -ForegroundColor DarkGreen
-        Write-Host -Object "- Use 'pvm aliases' to see available aliases."
-        Write-Host -Object "- Feel free to modify it."
+        Print-Success -message "`nAliases list created successfully at '$($PVMConfig.paths.aliasesList)'."
+        Print-Host -message "- Use 'pvm aliases' to see available aliases."
+        Print-Host -message "- Feel free to modify it."
     } else {
-        Write-Host -Object "`nFailed to create aliases list." -ForegroundColor DarkYellow
+        Print-Error -message "`nFailed to create aliases list."
     }
 
     return $codes
@@ -119,7 +119,7 @@ function New-Env-File {
 
     try {
         if (Test-File-Not-Exists -path "$PVMRoot\.env.example") {
-            Write-Host -Object "`nFailed to find .env.example file." -ForegroundColor DarkYellow
+            Print-Error -message "`nFailed to find .env.example file."
             return -1
         }
 
@@ -131,7 +131,7 @@ function New-Env-File {
             }
         }
         Copy-Item -Path "$PVMRoot\.env.example" -Destination "$PVMRoot\.env"
-        Write-Host -Object "`nCreated .env file." -ForegroundColor DarkGreen
+        Print-Success -message "`nCreated .env file."
 
         return 0
     } catch {
@@ -141,7 +141,7 @@ function New-Env-File {
 }
 
 function Wait-ForEnvEdit {
-    Write-Host -Object "`nEdit $PVMRoot\.env now if you want custom settings, then press Enter to continue..." -ForegroundColor Cyan
+    Print-Info -message "`nEdit $PVMRoot\.env now if you want custom settings, then press Enter to continue..."
     Read-Host | Out-Null
     $Global:PVMConfig = Get-Config -rootPath $PVMRoot
 }

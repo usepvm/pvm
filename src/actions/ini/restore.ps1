@@ -6,16 +6,16 @@ function Restore-IniBackup {
         $backupPath = "$iniPath.bak"
 
         if (Is-File-Not-Exists -path $backupPath) {
-            Write-Host -Object "`nBackup file not found: $backupPath"
+            Print-Host -message "`nBackup file not found: $backupPath"
             return -1
         }
 
         Copy-Item -Path $backupPath -Destination $iniPath -Force
-        Write-Host -Object "`nRestored php.ini from backup: $backupPath"
+        Print-Host -message "`nRestored php.ini from backup: $backupPath"
         return 0
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Restore-IniBackup: Failed to restore ini backup"; exception = $_ }
-        Write-Host -Object "`nFailed to restore backup: $($_.Exception.Message)"
+        Print-Host -message "`nFailed to restore backup: $($_.Exception.Message)"
         return -1
     }
 }

@@ -2,12 +2,12 @@
 function Use-Pester-Version {
     param ($version)
 
-    Write-Host -Object "`nChecking for Pester version: $version" -ForegroundColor Yellow
+    Print-Warning -message "`nChecking for Pester version: $version"
 
     $availableVersions = Get-Module -Name Pester -ListAvailable
 
     if (-not $availableVersions) {
-        Write-Host -Object "No Pester module found. Please install Pester first." -ForegroundColor Red
+        Print-Error -message "No Pester module found. Please install Pester first."
         return $false
     }
 
@@ -15,7 +15,7 @@ function Use-Pester-Version {
 
     if (-not $targetVersion) {
         $availableList = $availableVersions.Version -join ', '
-        Write-Host -Object "Pester version '$version' not found. Available versions: $availableList" -ForegroundColor Red
+        Print-Error -message "Pester version '$version' not found. Available versions: $availableList"
         return $false
     }
 
@@ -23,7 +23,7 @@ function Use-Pester-Version {
 }
 
 function Use-Latest-Pester-Version {
-    Write-Host -Object "`nChecking for latest Pester version" -ForegroundColor Yellow
+    Print-Warning -message "`nChecking for latest Pester version"
 
     $availableVersions = Get-Module -Name Pester -ListAvailable
     $targetVersion = Find-Pester-Version -version 'latest' -availableVersions $availableVersions
@@ -59,11 +59,11 @@ function Import-Pester-Version {
 
     Import-Module Pester -RequiredVersion $targetVersion.Version -Force
     $pesterVersion = Get-Module -Name Pester
-    Write-Host -Object "Using Pester version: $($pesterVersion.Version)" -ForegroundColor Green
+    Print-Info -message "Using Pester version: $($pesterVersion.Version)"
 
-    Write-Host -Object "`nPester Info:" -ForegroundColor Cyan
-    Write-Host -Object "  Version: $($pesterVersion.Version)"
-    Write-Host -Object "  Path: $($pesterVersion.Path)"
+    Print-Info -message "`nPester Info:"
+    Print-Host -message "  Version: $($pesterVersion.Version)"
+    Print-Host -message "  Path: $($pesterVersion.Path)"
 
     return $pesterVersion
 }
@@ -88,12 +88,12 @@ function Get-PowerShell-Info {
 function Write-PowerShell-Info {
     param ($psInfo)
 
-    Write-Host -Object "`nPowerShell Info:" -ForegroundColor Cyan
-    Write-Host -Object "  Engine: $($psInfo.Name)"
-    Write-Host -Object "  Version: $($psInfo.Version)"
-    Write-Host -Object "  Edition: $($psInfo.Edition)"
-    Write-Host -Object "  Platform: $($psInfo.Platform)"
-    Write-Host -Object "  Path: $($psInfo.Path)"
+    Print-Info -message "`nPowerShell Info:"
+    Print-Host -message "  Engine: $($psInfo.Name)"
+    Print-Host -message "  Version: $($psInfo.Version)"
+    Print-Host -message "  Edition: $($psInfo.Edition)"
+    Print-Host -message "  Platform: $($psInfo.Platform)"
+    Print-Host -message "  Path: $($psInfo.Path)"
 }
 
 function Get-PVMRootDirectory {
@@ -201,12 +201,12 @@ function Get-Separator-Width {
 function Write-Test-Header {
     param ($file, $coveredFile, $separatorWidth)
 
-    Write-Host -Object "`n`n$('-' * $separatorWidth)" -ForegroundColor Cyan
-    Write-Host -Object "- Running test: $($file.Name) | $($file.FullName)" -ForegroundColor Cyan
+    Print-Info -message "`n`n$('-' * $separatorWidth)"
+    Print-Info -message "- Running test: $($file.Name) | $($file.FullName)"
     if ($coveredFile) {
-        Write-Host -Object "- Covered file: $($coveredFile.Name) | $($coveredFile.FullName)" -ForegroundColor Cyan
+        Print-Info -message "- Covered file: $($coveredFile.Name) | $($coveredFile.FullName)"
     }
-    Write-Host -Object ('-' * $separatorWidth) -ForegroundColor Cyan
+    Print-Info -message ('-' * $separatorWidth)
 }
 
 function Format-Test-Result-Message {
@@ -386,12 +386,12 @@ function Write-Grouped-Results {
     }
 
     foreach ($group in $grouped) {
-        if ($group.Name) { Write-Host -Object "`n  [$($group.Name)]" -ForegroundColor DarkCyan }
+        if ($group.Name) { Print-Info -message "`n  [$($group.Name)]" }
 
         $group.Group | ForEach-Object {
             $label = "    - $($_.sortedName) "
             $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
-            Write-Host -Object $line -ForegroundColor (Get-Result-Color -item $_ -target $target)
+            Print-Color -message $line -foreColor (Get-Result-Color -item $_ -target $target)
         }
     }
 }
@@ -412,7 +412,7 @@ function Write-Tests-Summary {
     if ($totalDurationFormatted -ne -1) {
         $content += " | Total duration: $totalDurationFormatted"
     }
-    Write-Host -Object "$content`n" -ForegroundColor $color
+    Print-Color -message "$content`n" -foreColor $color
 
     $sorted = SortBy -data $testSummary -sortByColumn $options.sortBy
 
@@ -442,7 +442,7 @@ function Run-Tests {
         }
 
         if (-not $pesterInfo) {
-            Write-Host -Object "`nNo Pester module found. Please install Pester first." -ForegroundColor DarkYellow
+            Print-Error -message "`nNo Pester module found. Please install Pester first."
             return -1
         }
 
@@ -452,7 +452,7 @@ function Run-Tests {
 
         $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
         if ($verbosityOptions -notcontains $options.verbosity) {
-            Write-Host -Object "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')" -ForegroundColor DarkYellow
+            Print-Error -message "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')"
             return -1
         }
 
@@ -463,7 +463,7 @@ function Run-Tests {
 
         $psInfo = Get-PowerShell-Info
         Write-PowerShell-Info -psInfo $psInfo
-        Write-Host -Object "`nRunning tests with verbosity: $($options.verbosity)" -ForegroundColor Cyan
+        Print-Info -message "`nRunning tests with verbosity: $($options.verbosity)"
 
         $testSummary = $tests | ForEach-Object {
             Run-Test-File -config $config -file $_ -options $options -separatorWidth $separatorWidth -testsMap $testsMap
@@ -471,24 +471,24 @@ function Run-Tests {
 
         $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
 
-        Write-Host -Object "`n----------------------------------------------------------------"
-        Write-Host -Object "`n`nTests Settings:"
-        Write-Host -Object " PowerShell Engine ..... $($psInfo.Name)"
-        Write-Host -Object " PowerShell ............ $($psInfo.Version)"
-        Write-Host -Object " Pester ................ $($pesterInfo.Version)"
-        Write-Host -Object "`nTest Results Summary:"
-        Write-Host -Object " Coverage .............. $($options.target)%"
-        Write-Host -Object " Verbosity ............. $($options.verbosity)`n"
+        Print-Host -message "`n----------------------------------------------------------------"
+        Print-Host -message "`n`nTests Settings:"
+        Print-Host -message " PowerShell Engine ..... $($psInfo.Name)"
+        Print-Host -message " PowerShell ............ $($psInfo.Version)"
+        Print-Host -message " Pester ................ $($pesterInfo.Version)"
+        Print-Host -message "`nTest Results Summary:"
+        Print-Host -message " Coverage .............. $($options.target)%"
+        Print-Host -message " Verbosity ............. $($options.verbosity)`n"
 
         if ($testSummary.Count -eq 0) {
-            Write-Host -Object 'No tests found.' -ForegroundColor DarkYellow
+            Print-Error -message 'No tests found.'
             return -1
         }
 
         return Write-Tests-Summary -testSummary $testSummary -options $options -maxLineLength $maxLineLength
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
-        Write-Host -Object "`nFailed to run tests, check log: $($PVMConfig.paths.logError)" -ForegroundColor DarkYellow
+        Print-Error -message "`nFailed to run tests, check log: $($PVMConfig.paths.logError)"
         return -1
     }
 }

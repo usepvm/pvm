@@ -8,7 +8,7 @@ function Display-Msg-By-ExitCode {
                 if (-not $msg.color) {
                     $msg.color = 'White'
                 }
-                Write-Host -Object $($msg.content) -ForegroundColor $msg.color
+                Print-Color -message $($msg.content) -foreColor $msg.color
             }
         } else {
             if ($message) {
@@ -18,7 +18,7 @@ function Display-Msg-By-ExitCode {
                 $result.color = 'Gray'
             }
 
-            Write-Host -Object "`n$($result.message)" -ForegroundColor $result.color
+            Print-Color -message "`n$($result.message)" -foreColor $result.color
         }
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
@@ -32,7 +32,7 @@ function Log-Data {
         $logPath = if ($data.logPath) { $data.logPath } else { $PVMConfig.paths.logError }
         $created = Make-Directory -path (Split-Path -Path $logPath)
         if ($created -ne 0) {
-            Write-Host -Object "Failed to create directory $(Split-Path -Path $logPath)"
+            Print-Host -message "Failed to create directory $(Split-Path -Path $logPath)"
             return -1
         }
         $content = "`n--------------------------"

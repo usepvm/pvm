@@ -4,7 +4,7 @@ function Enable-IniExtension {
 
     try {
         if ($extNames -isnot [array] -or $extNames.Count -eq 0) {
-            Print-Warning -message "`nPlease provide at least one extension name to enable"
+            Show-Warning -message "`nPlease provide at least one extension name to enable"
             return -1
         }
 
@@ -20,13 +20,13 @@ function Enable-IniExtension {
             }
 
             if ($matchesListStatus.Length -gt 1) {
-                Print-Info -message "`nMultiple extensions match '$extName':`n"
+                Show-Info -message "`nMultiple extensions match '$extName':`n"
 
                 $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0
                 $matchesListStatus | ForEach-Object {
                     $name = "$($_.name) ".PadRight($maxLineLength, '.')
-                    Print-Host -message "[$index] $name " -noNewLine
+                    Show-Host -message "[$index] $name " -noNewLine
                     Write-Color -message "$($_.status)" -foreColor $_.color
                     $index++
                 }
@@ -36,12 +36,12 @@ function Enable-IniExtension {
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                        Print-Warning -message 'Please enter a valid positive number.'
+                        Show-Warning -message 'Please enter a valid positive number.'
                         continue
                     }
 
                     if ($choice -lt 0 -or $choice -gt $matchesListStatus.Length - 1) {
-                        Print-Warning -message "Number must be between 0 and $($matchesListStatus.Length - 1)."
+                        Show-Warning -message "Number must be between 0 and $($matchesListStatus.Length - 1)."
                         continue
                     }
 
@@ -83,9 +83,9 @@ function Enable-IniExtension {
         }
 
         $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        Print-Host -message "`nResults:"
+        Show-Host -message "`nResults:"
         foreach ($item in $results) {
-            Print-Host -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
+            Show-Host -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
             Write-Color -message " $($item.status)" -foreColor $item.color
         }
 

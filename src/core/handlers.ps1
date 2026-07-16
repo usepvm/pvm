@@ -11,7 +11,7 @@ function Invoke-Setup {
     }
     $optimized = Optimize-SystemPath
     if ($optimized -ne 0) {
-        Print-Error -Message "`nFailed to optimize system path."
+        Show-Error -Message "`nFailed to optimize system path."
     }
 
     Show-Msg-By-ExitCode -result $result
@@ -33,7 +33,7 @@ function Invoke-Repair {
 function Invoke-Current {
     $result = Get-Current-PHP-Version
     if (-not $result.version) {
-        Print-Warning -message "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
+        Show-Warning -message "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
         return -1
     }
     $text = "`nRunning version: PHP $($result.version)"
@@ -43,10 +43,10 @@ function Invoke-Current {
     if ($result.arch) {
         $text += " $($result.arch)"
     }
-    Print-Host -message $text
+    Show-Host -message $text
 
     if (-not $result.status) {
-        Print-Warning -message 'No status information available for the current PHP version.'
+        Show-Warning -message 'No status information available for the current PHP version.'
         return -1
     }
 
@@ -66,7 +66,7 @@ function Invoke-Current {
         Write-Color -message "$textInfo $statusText" -foreColor $color
     }
 
-    Print-Host -message "`nPath: $($result.path)"
+    Show-Host -message "`nPath: $($result.path)"
     return 0
 }
 
@@ -102,16 +102,16 @@ function Invoke-Install {
     } elseif ($version -eq 'latest') {
         $latestVersion = Get-Latest-PHP-Version -arch $arch -buildType $buildType
         if (-not $latestVersion) {
-            Print-Error -message "`nFailed to find the latest PHP version"
+            Show-Error -message "`nFailed to find the latest PHP version"
             return -1
         }
 
         $version = $latestVersion.version
-        Print-Host -message "`nLatest available PHP version is $version"
+        Show-Host -message "`nLatest available PHP version is $version"
     }
 
     if (-not $version) {
-        Print-Warning -message "`nPlease provide a PHP version to install"
+        Show-Warning -message "`nPlease provide a PHP version to install"
         return -1
     }
 
@@ -126,7 +126,7 @@ function Invoke-Uninstall {
     $version = $arguments[0]
 
     if (-not $version) {
-        Print-Warning -message "`nPlease provide a PHP version to uninstall"
+        Show-Warning -message "`nPlease provide a PHP version to uninstall"
         return -1
     }
 
@@ -145,7 +145,7 @@ function Invoke-Use {
     $version = $arguments[0]
 
     if (-not $version) {
-        Print-Warning -message "`nPlease provide a PHP version to use"
+        Show-Warning -message "`nPlease provide a PHP version to use"
         return -1
     }
 
@@ -169,7 +169,7 @@ function Invoke-Ini {
 
     $action = $arguments[0]
     if (-not $action) {
-        Print-Warning -message "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'list' or 'restore'."
+        Show-Warning -message "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'list' or 'restore'."
         return -1
     }
 
@@ -234,7 +234,7 @@ function Invoke-Test {
     }
 
     if ($options.target -lt 0 -or $options.target -gt 100) {
-        Print-Warning -message "`nInvalid coverage value : $($options.target) | Min: 0, Max: 100"
+        Show-Warning -message "`nInvalid coverage value : $($options.target) | Min: 0, Max: 100"
         return -1
     }
 
@@ -268,15 +268,15 @@ function Invoke-Help {
     if ($command) {
         $usage = $actions[$command].usage
         if ($null -eq $usage) {
-            Print-Warning -message "`nNo usage information available for the '$command' command."
+            Show-Warning -message "`nNo usage information available for the '$command' command."
             return -1
         }
         foreach ($key in $usage.Keys) {
-            Print-Info -message "`n$key`:"
+            Show-Info -message "`n$key`:"
             if ($usage[$key] -is [array]) {
-                $($usage.$key) | ForEach-Object { Print-Host -message "  $_" }
+                $($usage.$key) | ForEach-Object { Show-Host -message "  $_" }
             } else {
-                Print-Host -message "  $($usage[$key])"
+                Show-Host -message "  $($usage[$key])"
             }
         }
     } else {
@@ -292,7 +292,7 @@ function Invoke-Profile {
     $action = $arguments[0]
 
     if (-not $action) {
-        Print-Warning -message "`nPlease specify an action for 'pvm profile'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'."
+        Show-Warning -message "`nPlease specify an action for 'pvm profile'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'."
         return -1
     }
 
@@ -303,7 +303,7 @@ function Invoke-Profile {
     switch ($action.ToLower()) {
         'save' {
             if ($remainingArgs.Count -eq 0) {
-                Print-Warning -message "`nPlease provide a profile name: pvm profile save <name> [description]"
+                Show-Warning -message "`nPlease provide a profile name: pvm profile save <name> [description]"
                 return -1
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -312,7 +312,7 @@ function Invoke-Profile {
         }
         'load' {
             if ($remainingArgs.Count -eq 0) {
-                Print-Warning -message "`nPlease provide a profile name: pvm profile load <name>"
+                Show-Warning -message "`nPlease provide a profile name: pvm profile load <name>"
                 return -1
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -323,7 +323,7 @@ function Invoke-Profile {
         }
         'show' {
             if ($remainingArgs.Count -eq 0) {
-                Print-Warning -message "`nPlease provide a profile name: pvm profile show <name>"
+                Show-Warning -message "`nPlease provide a profile name: pvm profile show <name>"
                 return -1
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -332,7 +332,7 @@ function Invoke-Profile {
         }
         'delete' {
             if ($remainingArgs.Count -eq 0) {
-                Print-Warning -message "`nPlease provide a profile name: pvm profile delete <name>"
+                Show-Warning -message "`nPlease provide a profile name: pvm profile delete <name>"
                 return -1
             }
 
@@ -346,7 +346,7 @@ function Invoke-Profile {
         }
         'export' {
             if ($remainingArgs.Count -eq 0) {
-                Print-Warning -message "`nPlease provide a profile name: pvm profile export <name> [path]"
+                Show-Warning -message "`nPlease provide a profile name: pvm profile export <name> [path]"
                 return -1
             }
 
@@ -357,7 +357,7 @@ function Invoke-Profile {
         }
         'import' {
             if ($remainingArgs.Count -eq 0) {
-                Print-Warning -message "`nPlease provide a file path: pvm profile import <path> [name]"
+                Show-Warning -message "`nPlease provide a file path: pvm profile import <path> [name]"
                 return -1
             }
             $importPath = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -366,7 +366,7 @@ function Invoke-Profile {
             return (Import-PHP-Profile -importPath $importPath -profileName $profileName)
         }
         default {
-            Print-Error -message "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'."
+            Show-Error -message "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'."
             return -1
         }
     }
@@ -378,7 +378,7 @@ function Invoke-Cache {
     $action = $arguments[0]
 
     if (-not $action) {
-        Print-Warning -message "`nPlease specify an action for 'pvm cache'. Use 'list', 'show', 'delete', 'clear'."
+        Show-Warning -message "`nPlease specify an action for 'pvm cache'. Use 'list', 'show', 'delete', 'clear'."
         return -1
     }
 
@@ -392,7 +392,7 @@ function Invoke-Cache {
         }
         'show' {
             if ($remainingArgs.Count -eq 0) {
-                Print-Warning -message "`nPlease provide a cache name: pvm cache show <name>"
+                Show-Warning -message "`nPlease provide a cache name: pvm cache show <name>"
                 return -1
             }
             $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -400,7 +400,7 @@ function Invoke-Cache {
         }
         'delete' {
             if ($remainingArgs.Count -eq 0) {
-                Print-Warning -message "`nPlease provide a cache name: pvm cache delete <name>"
+                Show-Warning -message "`nPlease provide a cache name: pvm cache delete <name>"
                 return -1
             }
 
@@ -413,7 +413,7 @@ function Invoke-Cache {
             return (Clear-Cache-Files -skipConfirmation $skipConfirmation)
         }
         default {
-            Print-Error -message "`nUnknown action '$action'. Use 'list', 'show', 'delete', or 'clear'."
+            Show-Error -message "`nUnknown action '$action'. Use 'list', 'show', 'delete', or 'clear'."
             return -1
         }
     }
@@ -423,17 +423,17 @@ function Invoke-Aliases {
     $aliases = Get-Aliases
 
     if ($aliases.Count -eq 0) {
-        Print-Error -Message 'No aliases found.'
+        Show-Error -Message 'No aliases found.'
         return -1
     }
 
-    Print-Host -message "`n`nAvailable Aliases:`n"
+    Show-Host -message "`n`nAvailable Aliases:`n"
     $maxAliasLength = ($aliases.Keys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     $aliases.Keys | ForEach-Object {
         $alias = "$_ ".PadRight($maxAliasLength, '.')
         $command = $aliases[$_]
 
-        Print-Host -message "  $alias $command"
+        Show-Host -message "  $alias $command"
     }
 
     return 0
@@ -474,22 +474,22 @@ function Invoke-Info {
     $allKeys = $config.Keys + $PVMConfig.paths.Keys + $PVMConfig.env.Keys
     $maxNameLength = ($allKeys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
 
-    Print-Info -message "`n`nPVM status:`n"
+    Show-Info -message "`n`nPVM status:`n"
     foreach ($var in $config.GetEnumerator()) {
         $key = "$($var.Key) ".PadRight($maxNameLength, '.')
         $rel = $var.Value
-        Print-Host -message "- $key $rel"
+        Show-Host -message "- $key $rel"
     }
 
     if ($arguments -contains '--verbose') {
         $PVM_PATHS = $PVMConfig.paths
         $PVM_PATHS["Current PHP Path"] = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
 
-        Print-Info -message "`n`nPVM paths:`n"
+        Show-Info -message "`n`nPVM paths:`n"
         foreach ($entry in $PVM_PATHS.GetEnumerator()) {
             $key = "$($entry.Key) ".PadRight($maxNameLength, '.')
             $rel = $entry.Value.Replace("$PVMRoot\", '')
-            Print-Host -message "- $key $rel"
+            Show-Host -message "- $key $rel"
         }
     }
 

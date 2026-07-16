@@ -19,7 +19,7 @@ function Find-PHP-VersionFromProject {
                     }
                 }
             } catch {
-                Print-Error -message "`nFailed to parse composer.json: $_"
+                Show-Error -message "`nFailed to parse composer.json: $_"
                 throw $_
             }
         }
@@ -72,7 +72,7 @@ function Select-PHP-Version-Automatically {
         return @{ code = -1; message = 'Could not detect PHP version from .php-version or composer.json'; color = 'DarkYellow' }
     }
 
-    Print-Host -message "`nDetected PHP version from project: $version"
+    Show-Host -message "`nDetected PHP version from project: $version"
 
     $installedVersions = Get-Matching-PHP-Versions -version $version
     if (-not $installedVersions) {

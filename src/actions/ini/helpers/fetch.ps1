@@ -81,7 +81,7 @@ function Get-Extension-Matching-Categories {
 
         $page = 1
         $category = $matches[1] -replace '\+', ' '
-        Print-Host -message "- Checking category '$category'..."
+        Show-Host -message "- Checking category '$category'..."
         do {
             $hasMore = $false
             $result = Get-Extension-Matching-Categories-By-Page -extName $extName -link $_.href -page $page
@@ -107,12 +107,12 @@ function Get-Extension-Links-From-URL {
             Select-Extension-Links-From-URL -extName $extName
         }
     } catch {
-        Print-Host -message "`nExtension '$extName' not found, Loading matching extensions..."
+        Show-Host -message "`nExtension '$extName' not found, Loading matching extensions..."
 
         $linksMatchingExtName = Get-Extension-Matching-Categories -extName $extName
 
         if ($linksMatchingExtName.Count -eq 0) {
-            Print-Error -Message "`nExtension '$extName' not found"
+            Show-Error -Message "`nExtension '$extName' not found"
             return $null
         }
 
@@ -121,11 +121,11 @@ function Get-Extension-Links-From-URL {
             $extName = $chosenItem.href -replace '/package/', ''
             Write-Host -Object "`nMatching found : '$extName'"
         } else {
-            Print-Info -message "`nMatching '$extName' extension:"
+            Show-Info -message "`nMatching '$extName' extension:"
             $index = 0
             $linksMatchingExtName | ForEach-Object {
                 $extItem = $_.href -replace '/package/', ''
-                Print-Host -message "[$index] $extItem"
+                Show-Host -message "[$index] $extItem"
                 $index++
             }
 
@@ -139,12 +139,12 @@ function Get-Extension-Links-From-URL {
 
                 $choice = $null
                 if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Print-Warning -message 'Please enter a valid positive number.'
+                    Show-Warning -message 'Please enter a valid positive number.'
                     continue
                 }
 
                 if ($choice -lt 0 -or $choice -gt $linksMatchingExtName.Length - 1) {
-                    Print-Warning -message "Number must be between 0 and $($linksMatchingExtName.Length - 1)."
+                    Show-Warning -message "Number must be between 0 and $($linksMatchingExtName.Length - 1)."
                     continue
                 }
 
@@ -153,13 +153,13 @@ function Get-Extension-Links-From-URL {
 
             $chosenItem = $linksMatchingExtName[$choice]
             if (-not $chosenItem) {
-                Print-Error -Message "`nYou chose the wrong index: $choice"
+                Show-Error -Message "`nYou chose the wrong index: $choice"
                 return $null
             }
         }
 
         $extName = $chosenItem.href -replace '/package/', ''
-        Print-Host -message "`nLoading links for '$extName'..."
+        Show-Host -message "`nLoading links for '$extName'..."
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
             Select-Extension-Links-From-URL -extName $extName
         }
@@ -178,7 +178,7 @@ function Get-Extension-From-URL {
 
     if (($null -eq $linksObj) -or ($linksObj.Count -eq 0) -or ($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
         $extName = if ($linksObj -and $linksObj.extName) { $linksObj.extName } else { $extName }
-        Print-Error -Message "`nNo versions found for $extName"
+        Show-Error -Message "`nNo versions found for $extName"
         return @{ extName = $extName; data = $null }
     }
 

@@ -169,11 +169,11 @@ function Get-PHP {
         $destination = $PVMConfig.paths.php
         $created = New-Directory -path $destination
         if ($created -ne 0) {
-            Print-Error -message "Failed to create directory $destination"
+            Show-Error -message "Failed to create directory $destination"
             return $null
         }
 
-        Print-Info -message "`nDownloading PHP $version ($buildType $arch)..."
+        Show-Info -message "`nDownloading PHP $version ($buildType $arch)..."
 
         foreach ($key in $urls.Keys) {
             $_url = $urls[$key]
@@ -217,11 +217,11 @@ function Set-Opcache {
     param ($version, $phpPath)
 
     try {
-        Print-Host -message "`nConfiguring Opcache..."
+        Show-Host -message "`nConfiguring Opcache..."
 
         $phpIniPath = "$phpPath\php.ini"
         if (Test-File-Not-Exists -path $phpIniPath) {
-            Print-Error -message "php.ini not found at: $phpIniPath"
+            Show-Error -message "php.ini not found at: $phpIniPath"
             return -1
         }
 
@@ -232,12 +232,12 @@ function Set-Opcache {
                 -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
-        Print-Success -message "`nOpcache configured successfully for PHP version $version"
+        Show-Success -message "`nOpcache configured successfully for PHP version $version"
 
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable opcache for PHP at $phpPath"; exception = $_ }
-        Print-Error -message "`nFailed to enable opcache for PHP version $version"
+        Show-Error -message "`nFailed to enable opcache for PHP version $version"
         return -1
     }
 }
@@ -262,7 +262,7 @@ function Select-Version {
         if ($null -ne $buildType) {
             $text += " $buildType"
         }
-        Print-Host -message $text
+        Show-Host -message $text
         $index = 0
         $matchingVersionsPartialList.GetEnumerator() | ForEach-Object {
             $key = $_.Key
@@ -270,10 +270,10 @@ function Select-Version {
             if ($versionsList.Length -eq 0) {
                 return
             }
-            Print-Host -message "`n$key versions:`n"
+            Show-Host -message "`n$key versions:`n"
             $versionsList | ForEach-Object {
                 $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
-                Print-Host -message " [$index] $($_.version) $($_.arch) $($_.BuildType)"
+                Show-Host -message " [$index] $($_.version) $($_.arch) $($_.BuildType)"
                 $index++
             }
         }
@@ -281,7 +281,7 @@ function Select-Version {
         $msg = "`nThis is a partial list (latest matches only). For the complete list, visit:"
         $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
-        Print-Host -message $msg
+        Show-Host -message $msg
         $selectedVersionInput = Read-Host -Prompt "`nInsert the [number] matching the version to install (or press Enter to cancel)"
         $selectedVersionInput = $selectedVersionInput.Trim()
 
@@ -297,7 +297,7 @@ function Select-Version {
     }
 
     if (-not $selectedVersionObject) {
-        Print-Error -message "`nNo matching version found for '$selectedVersionInput'."
+        Show-Error -message "`nNo matching version found for '$selectedVersionInput'."
         return $null
     }
 
@@ -314,7 +314,7 @@ function Install-PHP {
             if ($version -match '^(\d+)(?:\.(\d+))?') {
                 $currentVersion = Get-Current-PHP-Version
                 $familyVersion = $matches[0]
-                Print-Host -message "`nOther versions from the $familyVersion.x family are available:"
+                Show-Host -message "`nOther versions from the $familyVersion.x family are available:"
                 $maxNameLength = ($foundInstalledVersions.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $foundInstalledVersions | ForEach-Object {
                     $versionNumber = $_.Version
@@ -331,7 +331,7 @@ function Install-PHP {
                     }
                     $metaData = $metaData.Trim()
                     $versionNumber = "$versionNumber ".PadRight($maxNameLength, '.')
-                    Print-Host -message " $versionNumber $metaData $isCurrent"
+                    Show-Host -message " $versionNumber $metaData $isCurrent"
                 }
                 $response = Read-Host -Prompt "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 $response = $response.Trim()
@@ -342,7 +342,7 @@ function Install-PHP {
             }
         }
 
-        Print-Host -message "`nLoading the matching versions..."
+        Show-Host -message "`nLoading the matching versions..."
         $matchingVersions = Get-PHP-Versions -version $version -arch $arch -buildType $buildType
 
         if ($matchingVersions.Count -eq 0) {
@@ -371,7 +371,7 @@ function Install-PHP {
             return @{ code = -1; message = "Failed to download PHP version $version"; color = 'DarkYellow' }
         }
 
-        Print-Host -message "`nExtracting the downloaded zip ..."
+        Show-Host -message "`nExtracting the downloaded zip ..."
         $phpDirectoryName = "$($selectedVersionObject.version)_$($selectedVersionObject.BuildType)_$($selectedVersionObject.arch)"
         Expand-And-Configure -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$phpDirectoryName"
 

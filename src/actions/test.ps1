@@ -2,12 +2,12 @@
 function Use-Pester-Version {
     param ($version)
 
-    Print-Info -message "`nChecking for Pester version: $version"
+    Show-Info -message "`nChecking for Pester version: $version"
 
     $availableVersions = Get-Module -Name Pester -ListAvailable
 
     if (-not $availableVersions) {
-        Print-Error -message "No Pester module found. Please install Pester first."
+        Show-Error -message "No Pester module found. Please install Pester first."
         return $false
     }
 
@@ -15,7 +15,7 @@ function Use-Pester-Version {
 
     if (-not $targetVersion) {
         $availableList = $availableVersions.Version -join ', '
-        Print-Error -message "Pester version '$version' not found. Available versions: $availableList"
+        Show-Error -message "Pester version '$version' not found. Available versions: $availableList"
         return $false
     }
 
@@ -23,7 +23,7 @@ function Use-Pester-Version {
 }
 
 function Use-Latest-Pester-Version {
-    Print-Info -message "`nChecking for latest Pester version"
+    Show-Info -message "`nChecking for latest Pester version"
 
     $availableVersions = Get-Module -Name Pester -ListAvailable
     $targetVersion = Find-Pester-Version -version 'latest' -availableVersions $availableVersions
@@ -59,11 +59,11 @@ function Import-Pester-Version {
 
     Import-Module Pester -RequiredVersion $targetVersion.Version -Force
     $pesterVersion = Get-Module -Name Pester
-    Print-Info -message "Using Pester version: $($pesterVersion.Version)"
+    Show-Info -message "Using Pester version: $($pesterVersion.Version)"
 
-    Print-Info -message "`nPester Info:"
-    Print-Host -message "  Version: $($pesterVersion.Version)"
-    Print-Host -message "  Path: $($pesterVersion.Path)"
+    Show-Info -message "`nPester Info:"
+    Show-Host -message "  Version: $($pesterVersion.Version)"
+    Show-Host -message "  Path: $($pesterVersion.Path)"
 
     return $pesterVersion
 }
@@ -88,12 +88,12 @@ function Get-PowerShell-Info {
 function Write-PowerShell-Info {
     param ($psInfo)
 
-    Print-Info -message "`nPowerShell Info:"
-    Print-Host -message "  Engine: $($psInfo.Name)"
-    Print-Host -message "  Version: $($psInfo.Version)"
-    Print-Host -message "  Edition: $($psInfo.Edition)"
-    Print-Host -message "  Platform: $($psInfo.Platform)"
-    Print-Host -message "  Path: $($psInfo.Path)"
+    Show-Info -message "`nPowerShell Info:"
+    Show-Host -message "  Engine: $($psInfo.Name)"
+    Show-Host -message "  Version: $($psInfo.Version)"
+    Show-Host -message "  Edition: $($psInfo.Edition)"
+    Show-Host -message "  Platform: $($psInfo.Platform)"
+    Show-Host -message "  Path: $($psInfo.Path)"
 }
 
 function Get-PVMRootDirectory {
@@ -201,12 +201,12 @@ function Get-Separator-Width {
 function Write-Test-Header {
     param ($file, $coveredFile, $separatorWidth)
 
-    Print-Info -message "`n`n$('-' * $separatorWidth)"
-    Print-Info -message "- Running test: $($file.Name) | $($file.FullName)"
+    Show-Info -message "`n`n$('-' * $separatorWidth)"
+    Show-Info -message "- Running test: $($file.Name) | $($file.FullName)"
     if ($coveredFile) {
-        Print-Info -message "- Covered file: $($coveredFile.Name) | $($coveredFile.FullName)"
+        Show-Info -message "- Covered file: $($coveredFile.Name) | $($coveredFile.FullName)"
     }
-    Print-Info -message ('-' * $separatorWidth)
+    Show-Info -message ('-' * $separatorWidth)
 }
 
 function Format-Test-Result-Message {
@@ -386,7 +386,7 @@ function Write-Grouped-Results {
     }
 
     foreach ($group in $grouped) {
-        if ($group.Name) { Print-Info -message "`n  [$($group.Name)]" }
+        if ($group.Name) { Show-Info -message "`n  [$($group.Name)]" }
 
         $group.Group | ForEach-Object {
             $label = "    - $($_.sortedName) "
@@ -442,7 +442,7 @@ function Invoke-Tests {
         }
 
         if (-not $pesterInfo) {
-            Print-Error -message "`nNo Pester module found. Please install Pester first."
+            Show-Error -message "`nNo Pester module found. Please install Pester first."
             return -1
         }
 
@@ -452,7 +452,7 @@ function Invoke-Tests {
 
         $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
         if ($verbosityOptions -notcontains $options.verbosity) {
-            Print-Error -message "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')"
+            Show-Error -message "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')"
             return -1
         }
 
@@ -463,7 +463,7 @@ function Invoke-Tests {
 
         $psInfo = Get-PowerShell-Info
         Write-PowerShell-Info -psInfo $psInfo
-        Print-Info -message "`nRunning tests with verbosity: $($options.verbosity)"
+        Show-Info -message "`nRunning tests with verbosity: $($options.verbosity)"
 
         $testSummary = $tests | ForEach-Object {
             Invoke-Test-File -config $config -file $_ -options $options -separatorWidth $separatorWidth -testsMap $testsMap
@@ -471,24 +471,24 @@ function Invoke-Tests {
 
         $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
 
-        Print-Host -message "`n----------------------------------------------------------------"
-        Print-Host -message "`n`nTests Settings:"
-        Print-Host -message " PowerShell Engine ..... $($psInfo.Name)"
-        Print-Host -message " PowerShell ............ $($psInfo.Version)"
-        Print-Host -message " Pester ................ $($pesterInfo.Version)"
-        Print-Host -message "`nTest Results Summary:"
-        Print-Host -message " Coverage .............. $($options.target)%"
-        Print-Host -message " Verbosity ............. $($options.verbosity)`n"
+        Show-Host -message "`n----------------------------------------------------------------"
+        Show-Host -message "`n`nTests Settings:"
+        Show-Host -message " PowerShell Engine ..... $($psInfo.Name)"
+        Show-Host -message " PowerShell ............ $($psInfo.Version)"
+        Show-Host -message " Pester ................ $($pesterInfo.Version)"
+        Show-Host -message "`nTest Results Summary:"
+        Show-Host -message " Coverage .............. $($options.target)%"
+        Show-Host -message " Verbosity ............. $($options.verbosity)`n"
 
         if ($testSummary.Count -eq 0) {
-            Print-Error -message 'No tests found.'
+            Show-Error -message 'No tests found.'
             return -1
         }
 
         return Write-Tests-Summary -testSummary $testSummary -options $options -maxLineLength $maxLineLength
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
-        Print-Error -message "`nFailed to run tests, check log: $($PVMConfig.paths.logError)"
+        Show-Error -message "`nFailed to run tests, check log: $($PVMConfig.paths.logError)"
         return -1
     }
 }

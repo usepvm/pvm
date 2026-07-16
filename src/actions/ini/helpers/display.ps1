@@ -6,14 +6,14 @@ function Show-Extensions-States {
     $enabledCount = @($extensions | Where-Object { $_.enabled }).Count
     $disabledCount = $extensions.Count - $enabledCount
 
-    Print-Host -message "`n- Total Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
+    Show-Host -message "`n- Total Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
 }
 
 function Show-Installed-Extensions {
     param ($extensions)
 
     if ($extensions.Count -eq 0) {
-        Print-Error -message '  No extensions found.'
+        Show-Error -message '  No extensions found.'
         return
     }
 
@@ -32,7 +32,7 @@ function Show-Installed-Extensions {
             $status = "$status - $($_.comment)"
         }
 
-        Print-Host -message "$label " -noNewLine
+        Show-Host -message "$label " -noNewLine
         Write-Color -message $status -foreColor $color
     }
 }
@@ -44,14 +44,14 @@ function Show-Settings-States {
     $enabledCount = @($settings | Where-Object { $_.enabled }).Count
     $disabledCount = $settings.Count - $enabledCount
 
-    Print-Host -message "`n- Total Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
+    Show-Host -message "`n- Total Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
 }
 
 function Show-Settings {
     param ($settings)
 
     if ($settings.Count -eq 0) {
-        Print-Error -message '  No settings found.'
+        Show-Error -message '  No settings found.'
         return
     }
 
@@ -71,7 +71,7 @@ function Show-Settings {
             $status = "$status - $($_.comment)"
         }
 
-        Print-Host -message "$line $value" -noNewLine
+        Show-Host -message "$line $value" -noNewLine
         Write-Color -message $status -foreColor $color
     }
 }

@@ -59,12 +59,12 @@ function Save-Cached-Data {
 
     try {
         if ([string]::IsNullOrWhiteSpace($cacheFileName)) {
-            Print-Error -Message "Cache file name cannot be empty."
+            Show-Error -Message "Cache file name cannot be empty."
             return -1
         }
 
         if ($null -eq $data) {
-            Print-Error -Message "Data cannot be null."
+            Show-Error -Message "Data cannot be null."
             return -1
         }
 
@@ -72,7 +72,7 @@ function Save-Cached-Data {
         $path = Get-Cache-FilePath -filename $cacheFileName
         $created = New-Directory -path (Split-Path -Path $path)
         if ($created -ne 0) {
-            Print-Error -Message "Failed to create directory $(Split-Path -Path $path)"
+            Show-Error -Message "Failed to create directory $(Split-Path -Path $path)"
             return -1
         }
         Set-Content -Path $path -Value $jsonString -Encoding UTF8

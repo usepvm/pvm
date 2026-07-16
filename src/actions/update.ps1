@@ -118,7 +118,7 @@ function Update-PVM {
     }
 
     if (-not $quiet) {
-        Print-Info -message "`nChecking for updates..."
+        Show-Info -message "`nChecking for updates..."
     }
 
     $latestCommit = Get-Latest-Git-Commit -branch $currentBranch
@@ -161,7 +161,7 @@ function Update-PVM {
         }
     }
 
-    Print-Warning -message "Update available. Pulling changes..."
+    Show-Warning -message "Update available. Pulling changes..."
 
     try {
         $oldVersion = $PVMConfig.version

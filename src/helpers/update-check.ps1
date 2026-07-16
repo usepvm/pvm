@@ -45,7 +45,7 @@ function Test-Check-For-Updates-Quietly {
         $null = Set-Last-Update-Check-Timestamp
 
         if ($result.code -eq 0 -and $result.message -like '*Update available*') {
-            Print-Error -Message "`n$($result.message) Run 'pvm update' to update."
+            Show-Error -Message "`n$($result.message) Run 'pvm update' to update."
         }
 
         return $result.code

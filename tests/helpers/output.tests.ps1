@@ -206,7 +206,7 @@ Describe "Get-Console-Width" {
     }
 }
 
-Describe "Print-* helpers Tests" {
+Describe "Show-* helpers Tests" {
     It "Prints message with specified color" {
         Write-Color -message 'Test message' -foreColor 'Red'
 
@@ -216,7 +216,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints success message" {
-        Print-Success -message 'Test message'
+        Show-Success -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGreen'
@@ -224,7 +224,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints error message" {
-        Print-Error -message 'Test message'
+        Show-Error -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'DarkYellow'
@@ -232,7 +232,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints warning message" {
-        Print-Warning -message 'Test message'
+        Show-Warning -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'Yellow'
@@ -240,7 +240,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints info message" {
-        Print-Info -message 'Test message'
+        Show-Info -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'Cyan'
@@ -248,7 +248,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints header message" {
-        Print-Header -message 'Test message'
+        Show-Header -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'Magenta'
@@ -256,7 +256,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints section message" {
-        Print-Section -message 'Test message'
+        Show-Section -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'Blue'
@@ -264,7 +264,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints debug message" {
-        Print-Debug -message 'Test message'
+        Show-Debug -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGray'
@@ -272,7 +272,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints verbose message" {
-        Print-Verbose -message 'Test message'
+        Show-Verbose -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'Gray'
@@ -280,7 +280,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints value message" {
-        Print-Value -message 'Test message'
+        Show-Value -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'White'
@@ -288,7 +288,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints host message" {
-        Print-Host -message 'Test message'
+        Show-Host -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq $null

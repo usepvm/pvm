@@ -4,7 +4,7 @@ function Get-IniExtensionStatus {
 
     try {
         if ($extNames -isnot [array] -or $extNames.Count -eq 0) {
-            Print-Warning -message "`nPlease provide at least one extension name to check status"
+            Show-Warning -message "`nPlease provide at least one extension name to check status"
             return -1
         }
 
@@ -35,13 +35,13 @@ function Get-IniExtensionStatus {
         }
 
         if ($allMatchesListStatus.Count -eq 0) {
-            Print-Error -message "`nNo extensions found matching the search term."
+            Show-Error -message "`nNo extensions found matching the search term."
             return -1
         }
 
         $allMatchesListStatus | ForEach-Object {
             $name = "$($_.name) ".PadRight($maxLineLength, '.')
-            Print-Host -message "- $name " -noNewLine
+            Show-Host -message "- $name " -noNewLine
             Write-Color -message "$($_.status)" -foreColor $_.color
         }
 

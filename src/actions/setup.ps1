@@ -49,7 +49,7 @@ function Initialize-PVMDirectories {
         $PVMConfig.paths.log
     )
 
-    Print-Host -message "`nPVM environment directories:"
+    Show-Host -message "`nPVM environment directories:"
     $codes = @()
     $maxNameLength = ($dirs | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     foreach ($dir in $dirs) {
@@ -57,9 +57,9 @@ function Initialize-PVMDirectories {
 
         $dirName = "- $dir ".PadRight($maxNameLength, '.')
         if ($code -eq 0) {
-            Print-Success -message "$dirName Created."
+            Show-Success -message "$dirName Created."
         } else {
-            Print-Error -message "$dirName Not created."
+            Show-Error -message "$dirName Not created."
         }
     }
 
@@ -71,34 +71,34 @@ function Initialize-PVMFiles {
 
     $codes += $code = New-Example-PHP-Profile
     if ($code -eq 0) {
-        Print-Success -message "`nExample profile created successfully at '$($PVMConfig.paths.exampleProfile)'."
-        Print-Host -message "- Use 'pvm help profile' to learn more."
+        Show-Success -message "`nExample profile created successfully at '$($PVMConfig.paths.exampleProfile)'."
+        Show-Host -message "- Use 'pvm help profile' to learn more."
     } else {
-        Print-Error -message "`nFailed to create example profile."
+        Show-Error -message "`nFailed to create example profile."
     }
 
     $codes += $code = New-Profile-Template
     if ($code -eq 0) {
-        Print-Success -message "`nProfile template created successfully at '$($PVMConfig.paths.profileTemplate)'."
-        Print-Host -message '- Feel free to modify it.'
+        Show-Success -message "`nProfile template created successfully at '$($PVMConfig.paths.profileTemplate)'."
+        Show-Host -message '- Feel free to modify it.'
     } else {
-        Print-Error -message "`nFailed to create profile template."
+        Show-Error -message "`nFailed to create profile template."
     }
 
     $codes += $code = Set-Zend-Extensions-List
     if ($code -eq 0) {
-        Print-Success -message "`nZend extensions list created successfully at '$($PVMConfig.paths.zendExtensionsList)'."
+        Show-Success -message "`nZend extensions list created successfully at '$($PVMConfig.paths.zendExtensionsList)'."
     } else {
-        Print-Error -message "`nFailed to create zend extensions list."
+        Show-Error -message "`nFailed to create zend extensions list."
     }
 
     $codes += $code = Set-Aliases-List
     if ($code -eq 0) {
-        Print-Success -message "`nAliases list created successfully at '$($PVMConfig.paths.aliasesList)'."
-        Print-Host -message "- Use 'pvm aliases' to see available aliases."
-        Print-Host -message "- Feel free to modify it."
+        Show-Success -message "`nAliases list created successfully at '$($PVMConfig.paths.aliasesList)'."
+        Show-Host -message "- Use 'pvm aliases' to see available aliases."
+        Show-Host -message "- Feel free to modify it."
     } else {
-        Print-Error -message "`nFailed to create aliases list."
+        Show-Error -message "`nFailed to create aliases list."
     }
 
     return $codes
@@ -119,7 +119,7 @@ function New-Env-File {
 
     try {
         if (Test-File-Not-Exists -path "$PVMRoot\.env.example") {
-            Print-Error -message "`nFailed to find .env.example file."
+            Show-Error -message "`nFailed to find .env.example file."
             return -1
         }
 
@@ -131,7 +131,7 @@ function New-Env-File {
             }
         }
         Copy-Item -Path "$PVMRoot\.env.example" -Destination "$PVMRoot\.env"
-        Print-Success -message "`nCreated .env file."
+        Show-Success -message "`nCreated .env file."
 
         return 0
     } catch {
@@ -141,7 +141,7 @@ function New-Env-File {
 }
 
 function Wait-ForEnvEdit {
-    Print-Info -message "`nEdit $PVMRoot\.env now if you want custom settings, then press Enter to continue..."
+    Show-Info -message "`nEdit $PVMRoot\.env now if you want custom settings, then press Enter to continue..."
     Read-Host | Out-Null
     $Global:PVMConfig = Get-Config -rootPath $PVMRoot
 }

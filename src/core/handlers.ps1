@@ -366,7 +366,7 @@ function Invoke-Profile {
             return (Import-PHP-Profile -importPath $importPath -profileName $profileName)
         }
         default {
-            Write-Host -Object "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'." -ForegroundColor Yellow
+            Write-Host -Object "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'." -ForegroundColor DarkYellow
             return -1
         }
     }
@@ -413,7 +413,7 @@ function Invoke-Cache {
             return (Clear-Cache-Files -skipConfirmation $skipConfirmation)
         }
         default {
-            Write-Host -Object "`nUnknown action '$action'. Use 'list', 'show', 'delete', or 'clear'." -ForegroundColor Yellow
+            Write-Host -Object "`nUnknown action '$action'. Use 'list', 'show', 'delete', or 'clear'." -ForegroundColor DarkYellow
             return -1
         }
     }

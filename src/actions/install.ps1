@@ -336,7 +336,7 @@ function Install-PHP {
                 $response = Read-Host -Prompt "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 $response = $response.Trim()
                 if ($response -ne 'y' -and $response -ne 'Y') {
-                    return @{ code = -1; message = 'Installation cancelled' }
+                    return @{ code = -1; message = 'Installation cancelled'; color = 'Gray' }
                 }
                 $version = $familyVersion
             }
@@ -351,18 +351,18 @@ function Install-PHP {
             $msg += "`n- Check your internet connection or the source URL."
             $msg += "`n- Use 'pvm list available' to see available versions."
             $msg += "`n- If you are trying to install a version that was announced recently, it may not be available for download yet."
-            return @{ code = -1; message = $msg }
+            return @{ code = -1; message = $msg; color = 'DarkYellow' }
         }
 
         $selectedVersionObject = Select-Version -matchingVersions $matchingVersions -version $version -arch $arch -buildType $buildType
         if (-not $selectedVersionObject) {
-            return @{ code = -1; message = 'Installation cancelled' }
+            return @{ code = -1; message = 'Installation cancelled'; color = 'Gray' }
         }
 
         if (Is-PHP-Version-Installed -version $selectedVersionObject) {
             $message = "Version '$($selectedVersionObject.version)' already installed"
             $message += "`nRun: pvm use $($selectedVersionObject.version)"
-            return @{ code = -1; message = $message }
+            return @{ code = -1; message = $message; color = 'Gray' }
         }
 
         $destination = Download-PHP -versionObject $selectedVersionObject

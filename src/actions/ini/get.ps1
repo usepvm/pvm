@@ -43,7 +43,7 @@ function Get-IniSetting {
                 $value = if ($item.value -eq '') { '(not set) ' } elseif ($null -eq $item.value) { '' } else { "$($item.value) " }
 
                 Print-Host -message "- $extensionName $value" -NoNewline
-                Print-Color -message "$($item.enabled)" -foreColor $item.color
+                Write-Color -message "$($item.enabled)" -foreColor $item.color
             }
         }
 

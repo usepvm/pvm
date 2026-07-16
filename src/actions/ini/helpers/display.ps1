@@ -33,7 +33,7 @@ function Display-Installed-Extensions {
         }
 
         Print-Host -message "$label " -NoNewline
-        Print-Color -message $status -foreColor $color
+        Write-Color -message $status -foreColor $color
     }
 }
 
@@ -72,6 +72,6 @@ function Display-Settings {
         }
 
         Print-Host -message "$line $value" -NoNewline
-        Print-Color -message $status -foreColor $color
+        Write-Color -message $status -foreColor $color
     }
 }

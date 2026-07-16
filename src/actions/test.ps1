@@ -391,7 +391,7 @@ function Write-Grouped-Results {
         $group.Group | ForEach-Object {
             $label = "    - $($_.sortedName) "
             $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
-            Print-Color -message $line -foreColor (Get-Result-Color -item $_ -target $target)
+            Write-Color -message $line -foreColor (Get-Result-Color -item $_ -target $target)
         }
     }
 }
@@ -412,7 +412,7 @@ function Write-Tests-Summary {
     if ($totalDurationFormatted -ne -1) {
         $content += " | Total duration: $totalDurationFormatted"
     }
-    Print-Color -message "$content`n" -foreColor $color
+    Write-Color -message "$content`n" -foreColor $color
 
     $sorted = SortBy -data $testSummary -sortByColumn $options.sortBy
 

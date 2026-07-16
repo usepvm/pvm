@@ -42,7 +42,7 @@ function Set-IniSetting {
                     $k = "$($_.name) ".PadRight($maxLineLength, '.')
                     $v = if ($_.value -eq '') { '(not set)' } else { $_.value }
                     Print-Host -message "[$index] $k $v " -NoNewline
-                    Print-Color -message $_.status -foreColor $_.color
+                    Write-Color -message $_.status -foreColor $_.color
                     $index++
                 }
 
@@ -94,7 +94,7 @@ function Set-IniSetting {
             $item = $updatedSettings[$key]
             $name = "$($item.key) ".PadRight($maxLineLength, '.')
             Print-Host -message "- $name $($item.value) " -NoNewline
-            Print-Color -message $item.status -foreColor $item.color
+            Write-Color -message $item.status -foreColor $item.color
         }
 
         return $overallCode

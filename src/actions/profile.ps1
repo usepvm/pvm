@@ -477,7 +477,7 @@ function Show-PHP-Profile {
                 $status = if ($setting.enabled) { 'Enabled' } else { 'Disabled' }
                 $color = if ($setting.enabled) { 'DarkGreen' } else { 'DarkYellow' }
                 Print-Host -message "  $name $($setting.value) " -NoNewline
-                Print-Color -message $status -foreColor $color
+                Write-Color -message $status -foreColor $color
             }
         }
 
@@ -493,7 +493,7 @@ function Show-PHP-Profile {
                 $color = if ($ext.enabled) { 'DarkGreen' } else { 'DarkYellow' }
                 $type = $ext.type
                 Print-Host -message "  $name $type " -NoNewline
-                Print-Color -message $status -foreColor $color
+                Write-Color -message $status -foreColor $color
             }
         }
 

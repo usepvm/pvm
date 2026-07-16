@@ -8,7 +8,7 @@ function Display-Msg-By-ExitCode {
                 if (-not $msg.color) {
                     $msg.color = 'White'
                 }
-                Print-Color -message $($msg.content) -foreColor $msg.color
+                Write-Color -message $($msg.content) -foreColor $msg.color
             }
         } else {
             if ($message) {
@@ -18,7 +18,7 @@ function Display-Msg-By-ExitCode {
                 $result.color = 'Gray'
             }
 
-            Print-Color -message "`n$($result.message)" -foreColor $result.color
+            Write-Color -message "`n$($result.message)" -foreColor $result.color
         }
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
@@ -84,128 +84,128 @@ function Get-Console-Width {
     return $Host.UI.RawUI.WindowSize.Width
 }
 
-function Print-Color {
+function Write-Color {
     param ($message, $foreColor)
 
     Write-Host $message -ForegroundColor $foreColor
 }
 
-function Print-Success {
-    param($message)
-
-    Print-Color $message -foreColor DarkGreen
-}
-
-function Print-Error {
-    param($message)
-
-    Print-Color $message -foreColor DarkYellow
-}
-
-function Print-Warning {
-    param($message)
-
-    Print-Color $message -foreColor Yellow
-}
-
-function Print-Info {
-    param($message)
-
-    Print-Color $message -foreColor Cyan
-}
-
-function Print-Header {
-    param($message)
-
-    Print-Color $message -foreColor Magenta
-}
-
-function Print-Section {
-    param($message)
-
-    Print-Color $message -foreColor Blue
-}
-
-function Print-Debug {
-    param($message)
-
-    Print-Color $message -foreColor DarkGray
-}
-
-function Print-Verbose {
-    param($message)
-
-    Print-Color $message -foreColor Gray
-}
-
-function Print-Value {
-    param($message)
-
-    Print-Color $message -foreColor White
-}
-
-function Print-Host {
-    param($message)
-
-    Write-Host $message
-}
-
 function Write-White {
     param($message)
 
-    Print-Color $message -foreColor White
+    Write-Color $message -foreColor White
 }
 
 function Write-DarkGreen {
     param($message)
 
-    Print-Color $message -foreColor DarkGreen
+    Write-Color $message -foreColor DarkGreen
 }
 
 function Write-DarkYellow {
     param($message)
 
-    Print-Color $message -foreColor DarkYellow
+    Write-Color $message -foreColor DarkYellow
 }
 
 function Write-Yellow {
     param($message)
 
-    Print-Color $message -foreColor Yellow
+    Write-Color $message -foreColor Yellow
 }
 
 function Write-Cyan {
     param($message)
 
-    Print-Color $message -foreColor Cyan
+    Write-Color $message -foreColor Cyan
 }
 
 function Write-Magenta {
     param($message)
 
-    Print-Color $message -foreColor Magenta
+    Write-Color $message -foreColor Magenta
 }
 
 function Write-Blue {
     param($message)
 
-    Print-Color $message -foreColor Blue
+    Write-Color $message -foreColor Blue
 }
 
 function Write-DarkGray {
     param($message)
 
-    Print-Color $message -foreColor DarkGray
+    Write-Color $message -foreColor DarkGray
 }
 
 function Write-Gray {
     param($message)
 
-    Print-Color $message -foreColor Gray
+    Write-Color $message -foreColor Gray
 }
 
 function Write-Default {
     param($message)
 
     Print-Host $message
+}
+
+function Print-Success {
+    param($message)
+
+    Write-DarkGreen $message
+}
+
+function Print-Error {
+    param($message)
+
+    Write-DarkYellow $message
+}
+
+function Print-Warning {
+    param($message)
+
+    Write-Yellow $message
+}
+
+function Print-Info {
+    param($message)
+
+    Write-Cyan $message
+}
+
+function Print-Header {
+    param($message)
+
+    Write-Magenta $message
+}
+
+function Print-Section {
+    param($message)
+
+    Write-Blue $message
+}
+
+function Print-Debug {
+    param($message)
+
+    Write-DarkGray $message
+}
+
+function Print-Verbose {
+    param($message)
+
+    Write-Gray $message
+}
+
+function Print-Value {
+    param($message)
+
+    Write-White $message
+}
+
+function Print-Host {
+    param($message)
+
+    Write-Host $message
 }

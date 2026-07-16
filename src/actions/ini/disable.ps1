@@ -27,7 +27,7 @@ function Disable-IniExtension {
                 $matchesListStatus | ForEach-Object {
                     $name = "$($_.name) ".PadRight($maxLineLength, '.')
                     Print-Host -message "[$index] $name " -NoNewline
-                    Print-Color -message "$($_.status)" -foreColor $_.color
+                    Write-Color -message "$($_.status)" -foreColor $_.color
                     $index++
                 }
 
@@ -87,7 +87,7 @@ function Disable-IniExtension {
         Print-Host -message "`nResults:"
         foreach ($item in $results) {
             Print-Host -message "- $($item.name) ".PadRight($maxLineLength, '.') -NoNewline
-            Print-Color -message " $($item.status)" -foreColor $item.color
+            Write-Color -message " $($item.status)" -foreColor $item.color
         }
 
         return $overallCode

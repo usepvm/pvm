@@ -208,7 +208,7 @@ Describe "Get-Console-Width" {
 
 Describe "Print-* helpers Tests" {
     It "Prints message with specified color" {
-        Print-Color -message 'Test message' -foreColor 'Red'
+        Write-Color -message 'Test message' -foreColor 'Red'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'Red'

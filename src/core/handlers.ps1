@@ -63,7 +63,7 @@ function Invoke-Current {
             $textInfo = "  $extName ".PadRight(($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 4), '.')
         }
 
-        Print-Color -message "$textInfo $statusText" -foreColor $color
+        Write-Color -message "$textInfo $statusText" -foreColor $color
     }
 
     Print-Host -message "`nPath: $($result.path)"

@@ -171,7 +171,7 @@ function Show-Log {
             # Display current page of entries
             $endIndex = [Math]::Min($currentIndex + $PageSize - 1, $totalEntries - 1)
 
-            Write-Host ('-' * 80) -ForegroundColor DarkGray
+            Write-Host -Object ('-' * 80) -ForegroundColor DarkGray
             for ($i = $currentIndex; $i -le $endIndex; $i++) {
                 $entry = $reversedEntries[$i]
 
@@ -196,7 +196,7 @@ function Show-Log {
                 Write-Host -Object 'Where   : ' -NoNewline
                 Write-Host -Object "$($entry.PositionDetail)" -ForegroundColor White
 
-                Write-Host ('-' * 80) -ForegroundColor DarkGray
+                Write-Host -Object ('-' * 80) -ForegroundColor DarkGray
             }
 
             $currentIndex += $PageSize

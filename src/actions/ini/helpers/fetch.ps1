@@ -81,7 +81,7 @@ function Get-Extension-Matching-Categories {
 
         $page = 1
         $category = $matches[1] -replace '\+', ' '
-        Show-Host -message "- Checking category '$category'..."
+        Show-Message -message "- Checking category '$category'..."
         do {
             $hasMore = $false
             $result = Get-Extension-Matching-Categories-By-Page -extName $extName -link $_.href -page $page
@@ -107,7 +107,7 @@ function Get-Extension-Links-From-URL {
             Select-Extension-Links-From-URL -extName $extName
         }
     } catch {
-        Show-Host -message "`nExtension '$extName' not found, Loading matching extensions..."
+        Show-Message -message "`nExtension '$extName' not found, Loading matching extensions..."
 
         $linksMatchingExtName = Get-Extension-Matching-Categories -extName $extName
 
@@ -125,7 +125,7 @@ function Get-Extension-Links-From-URL {
             $index = 0
             $linksMatchingExtName | ForEach-Object {
                 $extItem = $_.href -replace '/package/', ''
-                Show-Host -message "[$index] $extItem"
+                Show-Message -message "[$index] $extItem"
                 $index++
             }
 
@@ -159,7 +159,7 @@ function Get-Extension-Links-From-URL {
         }
 
         $extName = $chosenItem.href -replace '/package/', ''
-        Show-Host -message "`nLoading links for '$extName'..."
+        Show-Message -message "`nLoading links for '$extName'..."
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
             Select-Extension-Links-From-URL -extName $extName
         }

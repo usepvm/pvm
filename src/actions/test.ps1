@@ -62,8 +62,8 @@ function Import-Pester-Version {
     Show-Info -message "Using Pester version: $($pesterVersion.Version)"
 
     Show-Info -message "`nPester Info:"
-    Show-Host -message "  Version: $($pesterVersion.Version)"
-    Show-Host -message "  Path: $($pesterVersion.Path)"
+    Show-Message -message "  Version: $($pesterVersion.Version)"
+    Show-Message -message "  Path: $($pesterVersion.Path)"
 
     return $pesterVersion
 }
@@ -89,11 +89,11 @@ function Write-PowerShell-Info {
     param ($psInfo)
 
     Show-Info -message "`nPowerShell Info:"
-    Show-Host -message "  Engine: $($psInfo.Name)"
-    Show-Host -message "  Version: $($psInfo.Version)"
-    Show-Host -message "  Edition: $($psInfo.Edition)"
-    Show-Host -message "  Platform: $($psInfo.Platform)"
-    Show-Host -message "  Path: $($psInfo.Path)"
+    Show-Message -message "  Engine: $($psInfo.Name)"
+    Show-Message -message "  Version: $($psInfo.Version)"
+    Show-Message -message "  Edition: $($psInfo.Edition)"
+    Show-Message -message "  Platform: $($psInfo.Platform)"
+    Show-Message -message "  Path: $($psInfo.Path)"
 }
 
 function Get-PVMRootDirectory {
@@ -471,14 +471,14 @@ function Invoke-Tests {
 
         $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
 
-        Show-Host -message "`n----------------------------------------------------------------"
-        Show-Host -message "`n`nTests Settings:"
-        Show-Host -message " PowerShell Engine ..... $($psInfo.Name)"
-        Show-Host -message " PowerShell ............ $($psInfo.Version)"
-        Show-Host -message " Pester ................ $($pesterInfo.Version)"
-        Show-Host -message "`nTest Results Summary:"
-        Show-Host -message " Coverage .............. $($options.target)%"
-        Show-Host -message " Verbosity ............. $($options.verbosity)`n"
+        Show-Message -message "`n----------------------------------------------------------------"
+        Show-Message -message "`n`nTests Settings:"
+        Show-Message -message " PowerShell Engine ..... $($psInfo.Name)"
+        Show-Message -message " PowerShell ............ $($psInfo.Version)"
+        Show-Message -message " Pester ................ $($pesterInfo.Version)"
+        Show-Message -message "`nTest Results Summary:"
+        Show-Message -message " Coverage .............. $($options.target)%"
+        Show-Message -message " Verbosity ............. $($options.verbosity)`n"
 
         if ($testSummary.Count -eq 0) {
             Show-Error -message 'No tests found.'

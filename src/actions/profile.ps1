@@ -249,9 +249,9 @@ function Save-PHP-Profile {
         Set-Content -Path $profilePath -Value $jsonContent -Encoding UTF8
 
         Show-Success -message "`nProfile '$profileName' saved successfully."
-        Show-Host -message "  Settings: $($userProfile.settings.Count) (popular/common only)"
-        Show-Host -message "  Extensions: $($userProfile.extensions.Count) (popular/common only)"
-        Show-Host -message "  Location: $profilePath"
+        Show-Message -message "  Settings: $($userProfile.settings.Count) (popular/common only)"
+        Show-Message -message "  Extensions: $($userProfile.extensions.Count) (popular/common only)"
+        Show-Message -message "  Location: $profilePath"
         Show-Info -message "`nNote: Only popular/common settings and extensions are saved."
         Show-Info -message "      You can manually add other settings/extensions using 'pvm ini' commands."
 
@@ -284,7 +284,7 @@ function Use-PHP-Profile {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
         if (Test-File-Not-Exists -path $profilePath) {
             Show-Error -message "`nProfile '$profileName' not found."
-            Show-Host -message "  Use 'pvm profile list' to see available profiles."
+            Show-Message -message "  Use 'pvm profile list' to see available profiles."
             return -1
         }
 
@@ -292,9 +292,9 @@ function Use-PHP-Profile {
 
         Show-Info -message "`nLoading profile '$($jsonContent.name)'..."
         if ($jsonContent.description) {
-            Show-Host -message "  Description: $($jsonContent.description)"
+            Show-Message -message "  Description: $($jsonContent.description)"
         }
-        Show-Host -message "  Created: $($jsonContent.created)"
+        Show-Message -message "  Created: $($jsonContent.created)"
 
         # Backup ini file before applying changes
         $null = Backup-IniFile -iniPath $iniPath
@@ -341,15 +341,15 @@ function Use-PHP-Profile {
         }
 
         Show-Success -message "`nProfile applied successfully:"
-        Show-Host -message "  Settings applied: $settingsApplied"
+        Show-Message -message "  Settings applied: $settingsApplied"
         if ($settingsSkipped -gt 0) {
             Show-Warning -message "  Settings skipped: $settingsSkipped"
         }
         if ($settingsIgnored -gt 0) {
             Show-Info -message "  Settings ignored (not popular): $settingsIgnored"
         }
-        Show-Host -message "  Extensions enabled: $extensionsEnabled"
-        Show-Host -message "  Extensions disabled: $extensionsDisabled"
+        Show-Message -message "  Extensions enabled: $extensionsEnabled"
+        Show-Message -message "  Extensions disabled: $extensionsDisabled"
         if ($extensionsSkipped -gt 0) {
             Show-Warning -message "  Extensions skipped: $extensionsSkipped"
         }
@@ -420,13 +420,13 @@ function Show-PHP-Profiles {
         $maxNameLength = ($profiles.Name | Measure-Object -Maximum Length).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
 
         foreach ($userProfile in $profiles) {
-            Show-Host -message (' Name '.PadRight($maxNameLength, '.') + " $($userProfile.Name)")
-            Show-Host -message ('   Description '.PadRight($maxNameLength, '.') + " $($userProfile.Description)")
-            Show-Host -message ('   Created '.PadRight($maxNameLength, '.') + " $($userProfile.Created)")
-            Show-Host -message ('   PHP '.PadRight($maxNameLength, '.') + " $($userProfile.PHPVersion)")
-            Show-Host -message ('   Settings '.PadRight($maxNameLength, '.') + " $($userProfile.Settings)")
-            Show-Host -message ('   Extensions '.PadRight($maxNameLength, '.') + " $($userProfile.Extensions)")
-            Show-Host -message ('   Path '.PadRight($maxNameLength, '.') + " $($PVMConfig.paths.profiles)\$($userProfile.File)`n")
+            Show-Message -message (' Name '.PadRight($maxNameLength, '.') + " $($userProfile.Name)")
+            Show-Message -message ('   Description '.PadRight($maxNameLength, '.') + " $($userProfile.Description)")
+            Show-Message -message ('   Created '.PadRight($maxNameLength, '.') + " $($userProfile.Created)")
+            Show-Message -message ('   PHP '.PadRight($maxNameLength, '.') + " $($userProfile.PHPVersion)")
+            Show-Message -message ('   Settings '.PadRight($maxNameLength, '.') + " $($userProfile.Settings)")
+            Show-Message -message ('   Extensions '.PadRight($maxNameLength, '.') + " $($userProfile.Extensions)")
+            Show-Message -message ('   Path '.PadRight($maxNameLength, '.') + " $($PVMConfig.paths.profiles)\$($userProfile.File)`n")
         }
 
         return 0
@@ -444,7 +444,7 @@ function Show-PHP-Profile {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
         if (Test-File-Not-Exists -path $profilePath) {
             Show-Error -message "`nProfile '$profileName' not found."
-            Show-Host -message "  Use 'pvm profile list' to see available profiles."
+            Show-Message -message "  Use 'pvm profile list' to see available profiles."
             return -1
         }
 
@@ -455,7 +455,7 @@ function Show-PHP-Profile {
         $createdAtFormatted = $utc.ToString('dd/MM/yyyy HH:mm:ss')
 
         Show-Info -message "`nProfile: $($userProfile.name)"
-        Show-Host -message '========================='
+        Show-Message -message '========================='
         Show-Value -message "Description: $($userProfile.description)"
         Show-Value -message "Created: $createdAtFormatted"
         Show-Value -message "PHP Version: $($userProfile.phpVersion)"
@@ -469,14 +469,14 @@ function Show-PHP-Profile {
 
         Show-Info -message "`nSettings ($settingsCount):"
         if ($settingsCount -eq 0) {
-            Show-Host -message '  (none)'
+            Show-Message -message '  (none)'
         } else {
             foreach ($settingName in ($userProfile.settings.PSObject.Properties.Name | Sort-Object)) {
                 $setting = $userProfile.settings.$settingName
                 $name = "$settingName ".PadRight($maxNameLength, '.')
                 $status = if ($setting.enabled) { 'Enabled' } else { 'Disabled' }
                 $color = if ($setting.enabled) { 'DarkGreen' } else { 'DarkYellow' }
-                Show-Host -message "  $name $($setting.value) " -noNewLine
+                Show-Message -message "  $name $($setting.value) " -noNewLine
                 Write-Color -message $status -foreColor $color
             }
         }
@@ -484,7 +484,7 @@ function Show-PHP-Profile {
         $extensionsCount = if ($userProfile.extensions) { ($userProfile.extensions.PSObject.Properties | Measure-Object).Count } else { 0 }
         Show-Info -message "`nExtensions ($extensionsCount):"
         if ($extensionsCount -eq 0) {
-            Show-Host -message '  (none)'
+            Show-Message -message '  (none)'
         } else {
             foreach ($extName in ($userProfile.extensions.PSObject.Properties.Name | Sort-Object)) {
                 $ext = $userProfile.extensions.$extName
@@ -492,7 +492,7 @@ function Show-PHP-Profile {
                 $status = if ($ext.enabled) { 'Enabled' } else { 'Disabled' }
                 $color = if ($ext.enabled) { 'DarkGreen' } else { 'DarkYellow' }
                 $type = $ext.type
-                Show-Host -message "  $name $type " -noNewLine
+                Show-Message -message "  $name $type " -noNewLine
                 Write-Color -message $status -foreColor $color
             }
         }
@@ -638,7 +638,7 @@ function Import-PHP-Profile {
         }
 
         Show-Success -message "`nProfile imported successfully as '$finalName'."
-        Show-Host -message "  Use 'pvm profile load $finalName' to apply it."
+        Show-Message -message "  Use 'pvm profile load $finalName' to apply it."
 
         return 0
     } catch {

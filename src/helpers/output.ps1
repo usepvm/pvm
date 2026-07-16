@@ -32,7 +32,7 @@ function Add-LogEntry {
         $logPath = if ($data.logPath) { $data.logPath } else { $PVMConfig.paths.logError }
         $created = New-Directory -path (Split-Path -Path $logPath)
         if ($created -ne 0) {
-            Show-Host -message "Failed to create directory $(Split-Path -Path $logPath)"
+            Show-Message -message "Failed to create directory $(Split-Path -Path $logPath)"
             return -1
         }
         $content = "`n--------------------------"
@@ -147,7 +147,7 @@ function Write-Gray {
 function Write-Default {
     param($message, [switch]$noNewLine)
 
-    Show-Host $message -noNewLine:$noNewLine
+    Show-Message $message -noNewLine:$noNewLine
 }
 
 function Show-Success {
@@ -204,7 +204,7 @@ function Show-Value {
     Write-White $message -noNewLine:$noNewLine
 }
 
-function Show-Host {
+function Show-Message {
     param($message, [switch]$noNewLine)
 
     Write-Host $message -NoNewline:$noNewLine

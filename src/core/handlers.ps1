@@ -43,7 +43,7 @@ function Invoke-Current {
     if ($result.arch) {
         $text += " $($result.arch)"
     }
-    Show-Host -message $text
+    Show-Message -message $text
 
     if (-not $result.status) {
         Show-Warning -message 'No status information available for the current PHP version.'
@@ -66,7 +66,7 @@ function Invoke-Current {
         Write-Color -message "$textInfo $statusText" -foreColor $color
     }
 
-    Show-Host -message "`nPath: $($result.path)"
+    Show-Message -message "`nPath: $($result.path)"
     return 0
 }
 
@@ -107,7 +107,7 @@ function Invoke-Install {
         }
 
         $version = $latestVersion.version
-        Show-Host -message "`nLatest available PHP version is $version"
+        Show-Message -message "`nLatest available PHP version is $version"
     }
 
     if (-not $version) {
@@ -274,9 +274,9 @@ function Invoke-Help {
         foreach ($key in $usage.Keys) {
             Show-Info -message "`n$key`:"
             if ($usage[$key] -is [array]) {
-                $($usage.$key) | ForEach-Object { Show-Host -message "  $_" }
+                $($usage.$key) | ForEach-Object { Show-Message -message "  $_" }
             } else {
-                Show-Host -message "  $($usage[$key])"
+                Show-Message -message "  $($usage[$key])"
             }
         }
     } else {
@@ -427,13 +427,13 @@ function Invoke-Aliases {
         return -1
     }
 
-    Show-Host -message "`n`nAvailable Aliases:`n"
+    Show-Message -message "`n`nAvailable Aliases:`n"
     $maxAliasLength = ($aliases.Keys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     $aliases.Keys | ForEach-Object {
         $alias = "$_ ".PadRight($maxAliasLength, '.')
         $command = $aliases[$_]
 
-        Show-Host -message "  $alias $command"
+        Show-Message -message "  $alias $command"
     }
 
     return 0
@@ -478,7 +478,7 @@ function Invoke-Info {
     foreach ($var in $config.GetEnumerator()) {
         $key = "$($var.Key) ".PadRight($maxNameLength, '.')
         $rel = $var.Value
-        Show-Host -message "- $key $rel"
+        Show-Message -message "- $key $rel"
     }
 
     if ($arguments -contains '--verbose') {
@@ -489,7 +489,7 @@ function Invoke-Info {
         foreach ($entry in $PVM_PATHS.GetEnumerator()) {
             $key = "$($entry.Key) ".PadRight($maxNameLength, '.')
             $rel = $entry.Value.Replace("$PVMRoot\", '')
-            Show-Host -message "- $key $rel"
+            Show-Message -message "- $key $rel"
         }
     }
 

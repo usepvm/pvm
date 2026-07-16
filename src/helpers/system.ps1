@@ -135,7 +135,7 @@ function Optimize-SystemPath {
             header  = "Original PATH`n$oldPath"
         }
         if ($outputLog -eq 0) {
-            Show-Host -message "`nOriginal Path saved to '$($PVMConfig.paths.pathVarBackup)'"
+            Show-Message -message "`nOriginal Path saved to '$($PVMConfig.paths.pathVarBackup)'"
         }
 
         $output = 0

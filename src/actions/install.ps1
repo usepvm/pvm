@@ -217,7 +217,7 @@ function Set-Opcache {
     param ($version, $phpPath)
 
     try {
-        Show-Host -message "`nConfiguring Opcache..."
+        Show-Message -message "`nConfiguring Opcache..."
 
         $phpIniPath = "$phpPath\php.ini"
         if (Test-File-Not-Exists -path $phpIniPath) {
@@ -262,7 +262,7 @@ function Select-Version {
         if ($null -ne $buildType) {
             $text += " $buildType"
         }
-        Show-Host -message $text
+        Show-Message -message $text
         $index = 0
         $matchingVersionsPartialList.GetEnumerator() | ForEach-Object {
             $key = $_.Key
@@ -270,10 +270,10 @@ function Select-Version {
             if ($versionsList.Length -eq 0) {
                 return
             }
-            Show-Host -message "`n$key versions:`n"
+            Show-Message -message "`n$key versions:`n"
             $versionsList | ForEach-Object {
                 $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
-                Show-Host -message " [$index] $($_.version) $($_.arch) $($_.BuildType)"
+                Show-Message -message " [$index] $($_.version) $($_.arch) $($_.BuildType)"
                 $index++
             }
         }
@@ -281,7 +281,7 @@ function Select-Version {
         $msg = "`nThis is a partial list (latest matches only). For the complete list, visit:"
         $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
-        Show-Host -message $msg
+        Show-Message -message $msg
         $selectedVersionInput = Read-Host -Prompt "`nInsert the [number] matching the version to install (or press Enter to cancel)"
         $selectedVersionInput = $selectedVersionInput.Trim()
 
@@ -314,7 +314,7 @@ function Install-PHP {
             if ($version -match '^(\d+)(?:\.(\d+))?') {
                 $currentVersion = Get-Current-PHP-Version
                 $familyVersion = $matches[0]
-                Show-Host -message "`nOther versions from the $familyVersion.x family are available:"
+                Show-Message -message "`nOther versions from the $familyVersion.x family are available:"
                 $maxNameLength = ($foundInstalledVersions.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $foundInstalledVersions | ForEach-Object {
                     $versionNumber = $_.Version
@@ -331,7 +331,7 @@ function Install-PHP {
                     }
                     $metaData = $metaData.Trim()
                     $versionNumber = "$versionNumber ".PadRight($maxNameLength, '.')
-                    Show-Host -message " $versionNumber $metaData $isCurrent"
+                    Show-Message -message " $versionNumber $metaData $isCurrent"
                 }
                 $response = Read-Host -Prompt "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 $response = $response.Trim()
@@ -342,7 +342,7 @@ function Install-PHP {
             }
         }
 
-        Show-Host -message "`nLoading the matching versions..."
+        Show-Message -message "`nLoading the matching versions..."
         $matchingVersions = Get-PHP-Versions -version $version -arch $arch -buildType $buildType
 
         if ($matchingVersions.Count -eq 0) {
@@ -371,7 +371,7 @@ function Install-PHP {
             return @{ code = -1; message = "Failed to download PHP version $version"; color = 'DarkYellow' }
         }
 
-        Show-Host -message "`nExtracting the downloaded zip ..."
+        Show-Message -message "`nExtracting the downloaded zip ..."
         $phpDirectoryName = "$($selectedVersionObject.version)_$($selectedVersionObject.BuildType)_$($selectedVersionObject.arch)"
         Expand-And-Configure -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$phpDirectoryName"
 

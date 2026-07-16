@@ -6,7 +6,7 @@ function Show-Extensions-States {
     $enabledCount = @($extensions | Where-Object { $_.enabled }).Count
     $disabledCount = $extensions.Count - $enabledCount
 
-    Show-Host -message "`n- Total Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
+    Show-Message -message "`n- Total Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
 }
 
 function Show-Installed-Extensions {
@@ -32,7 +32,7 @@ function Show-Installed-Extensions {
             $status = "$status - $($_.comment)"
         }
 
-        Show-Host -message "$label " -noNewLine
+        Show-Message -message "$label " -noNewLine
         Write-Color -message $status -foreColor $color
     }
 }
@@ -44,7 +44,7 @@ function Show-Settings-States {
     $enabledCount = @($settings | Where-Object { $_.enabled }).Count
     $disabledCount = $settings.Count - $enabledCount
 
-    Show-Host -message "`n- Total Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
+    Show-Message -message "`n- Total Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
 }
 
 function Show-Settings {
@@ -71,7 +71,7 @@ function Show-Settings {
             $status = "$status - $($_.comment)"
         }
 
-        Show-Host -message "$line $value" -noNewLine
+        Show-Message -message "$line $value" -noNewLine
         Write-Color -message $status -foreColor $color
     }
 }

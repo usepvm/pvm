@@ -41,7 +41,7 @@ function Set-IniSetting {
                 $matchesList | ForEach-Object {
                     $k = "$($_.name) ".PadRight($maxLineLength, '.')
                     $v = if ($_.value -eq '') { '(not set)' } else { $_.value }
-                    Show-Host -message "[$index] $k $v " -noNewLine
+                    Show-Message -message "[$index] $k $v " -noNewLine
                     Write-Color -message $_.status -foreColor $_.color
                     $index++
                 }
@@ -89,11 +89,11 @@ function Set-IniSetting {
         $updatedSettings = $notFound + $updatedSettings
 
         $maxLineLength = ($updatedSettings.Values | ForEach-Object { $_.key } | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        Show-Host -message "`n" -noNewLine
+        Show-Message -message "`n" -noNewLine
         foreach ($key in $updatedSettings.Keys) {
             $item = $updatedSettings[$key]
             $name = "$($item.key) ".PadRight($maxLineLength, '.')
-            Show-Host -message "- $name $($item.value) " -noNewLine
+            Show-Message -message "- $name $($item.value) " -noNewLine
             Write-Color -message $item.status -foreColor $item.color
         }
 

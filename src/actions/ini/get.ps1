@@ -42,7 +42,7 @@ function Get-IniSetting {
                 $extensionName = "$($item.extensionName) ".PadRight($maxLineLength, '.')
                 $value = if ($item.value -eq '') { '(not set) ' } elseif ($null -eq $item.value) { '' } else { "$($item.value) " }
 
-                Show-Host -message "- $extensionName $value" -noNewLine
+                Show-Message -message "- $extensionName $value" -noNewLine
                 Write-Color -message "$($item.enabled)" -foreColor $item.color
             }
         }

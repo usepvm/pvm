@@ -32,7 +32,7 @@ function Show-Cache-Files {
         Write-Gray -message '-------------------'
 
         foreach ($cacheFile in $cacheFiles) {
-            Show-Host -message "  $($cacheFile.BaseName)"
+            Show-Message -message "  $($cacheFile.BaseName)"
         }
 
         return 0
@@ -50,7 +50,7 @@ function Show-Save-Cached-Data {
         $cachePath = Get-Cache-FilePath -fileName $cacheName
         if (Test-File-Not-Exists -path $cachePath) {
             Show-Error -message "`nCache file '$cacheName' not found."
-            Show-Host -message "  Use 'pvm cache list' to see available cache files."
+            Show-Message -message "  Use 'pvm cache list' to see available cache files."
             return -1
         }
 
@@ -64,7 +64,7 @@ function Show-Save-Cached-Data {
         Show-Info -message "`nCache Data for '$cacheName':"
         Write-Gray -message '--------------------------------'
 
-        Show-Host -message ($cacheData | ConvertTo-Json)
+        Show-Message -message ($cacheData | ConvertTo-Json)
 
         return 0
     } catch {
@@ -81,7 +81,7 @@ function Remove-Cache-File {
         $cachePath = Get-Cache-FilePath -fileName $cacheName
         if (Test-File-Not-Exists -path $cachePath) {
             Show-Error -message "`nCache file '$cacheName' not found."
-            Show-Host -message "  Use 'pvm cache list' to see available cache files."
+            Show-Message -message "  Use 'pvm cache list' to see available cache files."
             return -1
         }
 

@@ -83,7 +83,7 @@ function Uninstall-Extension {
                 $index = 0
                 $matchingExtensions | ForEach-Object {
                     $name = "$($_.name) ".PadRight($maxLineLength, '.')
-                    Show-Host -message "[$index] $name " -noNewLine
+                    Show-Message -message "[$index] $name " -noNewLine
                     Write-Color -message "$($_.status)" -foreColor $_.color
                     $index++
                 }
@@ -146,9 +146,9 @@ function Uninstall-Extension {
         }
 
         $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        Show-Host -message "`nResults:"
+        Show-Message -message "`nResults:"
         foreach ($item in $results) {
-            Show-Host -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
+            Show-Message -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
             Write-Color -message " $($item.status)" -foreColor $item.color
         }
 

@@ -10,7 +10,7 @@ function Get-PHP-Status {
 
     try {
         $phpIniPath = "$phpPath\php.ini"
-        if (Is-File-Not-Exists -path $phpIniPath) {
+        if (Test-File-Not-Exists -path $phpIniPath) {
             return $status
         }
 
@@ -41,7 +41,7 @@ function Get-PHP-Status {
             }
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve PHP status"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve PHP status"; exception = $_ }
         Write-Host -Object "An error occurred while checking PHP status: $_"
     }
 
@@ -63,7 +63,7 @@ function Get-Current-PHP-Version {
         }
 
         $currentPhpVersionPath = $currentPhpVersionPath.Target
-        if (Is-Directory-Not-Exists -path $currentPhpVersionPath) {
+        if (Test-Directory-Not-Exists -path $currentPhpVersionPath) {
             return $emptyResult
         }
         $phpInfo = Get-PHPInstallInfo -path $currentPhpVersionPath
@@ -76,7 +76,7 @@ function Get-Current-PHP-Version {
             status    = Get-PHP-Status -phpPath $currentPhpVersionPath
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve current PHP version"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve current PHP version"; exception = $_ }
         return $emptyResult
     }
 }

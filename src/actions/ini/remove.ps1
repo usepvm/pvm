@@ -21,7 +21,7 @@ function Remove-Extension-From-Ini-File {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to remove extension from php.ini"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to remove extension from php.ini"; exception = $_ }
         return -1
     }
 }
@@ -32,7 +32,7 @@ function Remove-Extension-From-Ext-Directory {
     try {
         $extensionFullPath = "$extensionDirectory\$($extensionObject.fileName)"
 
-        if (Is-File-Not-Exists -path $extensionFullPath) {
+        if (Test-File-Not-Exists -path $extensionFullPath) {
             return -1
         }
 
@@ -44,7 +44,7 @@ function Remove-Extension-From-Ext-Directory {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to remove extension '$($extensionObject.name)' from ext directory"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to remove extension '$($extensionObject.name)' from ext directory"; exception = $_ }
         return -1
     }
 }
@@ -61,7 +61,7 @@ function Uninstall-Extension {
         $phpDirectory = Split-Path -Path $iniPath -Parent
         $extDirectory = "$phpDirectory\ext"
 
-        if (Is-Directory-Not-Exists -path $extDirectory) {
+        if (Test-Directory-Not-Exists -path $extDirectory) {
             Write-Host -Object "`nExtensions directory not found: $extDirectory" -ForegroundColor DarkYellow
             return -1
         }
@@ -120,7 +120,7 @@ function Uninstall-Extension {
                 }
             }
 
-            if (Is-File-Not-Exists -path $selected.fullPath) {
+            if (Test-File-Not-Exists -path $selected.fullPath) {
                 $results += @{ name = $extName; status = 'Not Found'; color = 'DarkYellow' }
                 $overallCode = -1
                 continue
@@ -154,7 +154,7 @@ function Uninstall-Extension {
 
         return $overallCode
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install '$($extNames -join ', ')'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install '$($extNames -join ', ')'"; exception = $_ }
         return -1
     }
 }

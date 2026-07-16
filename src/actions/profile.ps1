@@ -153,14 +153,14 @@ function Disable-IniExtension-Direct {
 function Get-Popular-PHP-Settings {
     try {
         # Return list of popular/common PHP settings that should be included in profiles
-        if (Is-File-Exists -path $PVMConfig.paths.profileTemplate) {
+        if (Test-File-Exists -path $PVMConfig.paths.profileTemplate) {
             $data = (Get-Content -Path $PVMConfig.paths.profileTemplate -Raw | ConvertFrom-Json)
             if ($null -ne $data.settings -and $data.settings.Count -gt 0) {
                 return $data.settings
             }
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP settings"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP settings"; exception = $_ }
     }
 
     return $PVMConfig.defaults.settings
@@ -169,14 +169,14 @@ function Get-Popular-PHP-Settings {
 function Get-Popular-PHP-Extensions {
     try {
         # Return list of popular/common PHP extensions that should be included in profiles
-        if (Is-File-Exists -path $PVMConfig.paths.profileTemplate) {
+        if (Test-File-Exists -path $PVMConfig.paths.profileTemplate) {
             $data = (Get-Content -Path $PVMConfig.paths.profileTemplate -Raw | ConvertFrom-Json)
             if ($null -ne $data.extensions -and $data.extensions.Count -gt 0) {
                 return $data.extensions
             }
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP extensions"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP extensions"; exception = $_ }
     }
 
     return $PVMConfig.defaults.extensions
@@ -194,7 +194,7 @@ function Save-PHP-Profile {
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
-        if (Is-File-Not-Exists -path $iniPath) {
+        if (Test-File-Not-Exists -path $iniPath) {
             Write-Host -Object "`nphp.ini not found at: $($currentPhpVersion.path)" -ForegroundColor DarkYellow
             return -1
         }
@@ -238,7 +238,7 @@ function Save-PHP-Profile {
         }
 
         # Save to JSON file
-        $created = Make-Directory -path $PVMConfig.paths.profiles
+        $created = New-Directory -path $PVMConfig.paths.profiles
         if ($created -ne 0) {
             Write-Host -Object "`nFailed to create profiles directory." -ForegroundColor DarkYellow
             return -1
@@ -257,13 +257,13 @@ function Save-PHP-Profile {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to save profile '$profileName'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to save profile '$profileName'"; exception = $_ }
         Write-Host -Object "`nFailed to save profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
 }
 
-function Load-PHP-Profile {
+function Use-PHP-Profile {
     param ($profileName)
 
     try {
@@ -275,14 +275,14 @@ function Load-PHP-Profile {
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
-        if (Is-File-Not-Exists -path $iniPath) {
+        if (Test-File-Not-Exists -path $iniPath) {
             Write-Host -Object "`nphp.ini not found at: $($currentPhpVersion.path)" -ForegroundColor DarkYellow
             return -1
         }
 
         # Load profile JSON
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
-        if (Is-File-Not-Exists -path $profilePath) {
+        if (Test-File-Not-Exists -path $profilePath) {
             Write-Host -Object "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
             Write-Host -Object "  Use 'pvm profile list' to see available profiles."
             return -1
@@ -359,7 +359,7 @@ function Load-PHP-Profile {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to load profile '$profileName'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to load profile '$profileName'"; exception = $_ }
         Write-Host -Object "`nFailed to load profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -367,7 +367,7 @@ function Load-PHP-Profile {
 
 function Get-Profile-Files {
     try {
-        if (Is-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
+        if (Test-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
             return $null
         }
 
@@ -375,14 +375,14 @@ function Get-Profile-Files {
 
         return $files
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get profile files"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get profile files"; exception = $_ }
         return $null
     }
 }
 
-function List-PHP-Profiles {
+function Show-PHP-Profiles {
     try {
-        if (Is-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
+        if (Test-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
             Write-Host -Object "`nNo profiles directory found. Create a profile with 'pvm profile save <name>'." -ForegroundColor DarkYellow
             return -1
         }
@@ -431,7 +431,7 @@ function List-PHP-Profiles {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list profiles"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list profiles"; exception = $_ }
         Write-Host -Object "`nFailed to list profiles: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -442,7 +442,7 @@ function Show-PHP-Profile {
 
     try {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
-        if (Is-File-Not-Exists -path $profilePath) {
+        if (Test-File-Not-Exists -path $profilePath) {
             Write-Host -Object "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
             Write-Host -Object "  Use 'pvm profile list' to see available profiles."
             return -1
@@ -499,19 +499,19 @@ function Show-PHP-Profile {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show profile '$profileName'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show profile '$profileName'"; exception = $_ }
         Write-Host -Object "`nFailed to show profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
 }
 
-function Delete-PHP-Profile {
+function Remove-PHP-Profile {
     param ($profileName, $skipConfirmation = $false)
 
     try {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
 
-        if (Is-File-Not-Exists -path $profilePath) {
+        if (Test-File-Not-Exists -path $profilePath) {
             Write-Host -Object "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
             return -1
         }
@@ -530,7 +530,7 @@ function Delete-PHP-Profile {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete profile '$profileName'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete profile '$profileName'"; exception = $_ }
         Write-Host -Object "`nFailed to delete profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -564,7 +564,7 @@ function Clear-PHP-Profiles {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear profiles"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear profiles"; exception = $_ }
         Write-Host -Object "`nFailed to clear profiles." -ForegroundColor DarkYellow
         return -1
     }
@@ -576,7 +576,7 @@ function Export-PHP-Profile {
     try {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
 
-        if (Is-File-Not-Exists -path $profilePath) {
+        if (Test-File-Not-Exists -path $profilePath) {
             Write-Host -Object "`nProfile '$profileName' not found." -ForegroundColor DarkYellow
             return -1
         }
@@ -590,7 +590,7 @@ function Export-PHP-Profile {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to export profile '$profileName'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to export profile '$profileName'"; exception = $_ }
         Write-Host -Object "`nFailed to export profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -600,7 +600,7 @@ function Import-PHP-Profile {
     param ($importPath, $profileName = $null)
 
     try {
-        if (Is-File-Not-Exists -path $importPath) {
+        if (Test-File-Not-Exists -path $importPath) {
             Write-Host -Object "`nFile not found: $importPath" -ForegroundColor DarkYellow
             return -1
         }
@@ -620,7 +620,7 @@ function Import-PHP-Profile {
         # Use provided name or name from profile
         $finalName = if ($profileName) { $profileName } else { $userProfile.name }
 
-        $created = Make-Directory -path $PVMConfig.paths.profiles
+        $created = New-Directory -path $PVMConfig.paths.profiles
         if ($created -ne 0) {
             Write-Host -Object "`nFailed to create profiles directory." -ForegroundColor DarkYellow
             return -1
@@ -642,13 +642,13 @@ function Import-PHP-Profile {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to import profile from '$importPath'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to import profile from '$importPath'"; exception = $_ }
         Write-Host -Object "`nFailed to import profile: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
 }
 
-function Create-Example-PHP-Profile {
+function New-Example-PHP-Profile {
     try {
         $exampleProfile = [ordered]@{
             name        = "example-profile"
@@ -697,12 +697,12 @@ function Create-Example-PHP-Profile {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create example profile"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create example profile"; exception = $_ }
         return -1
     }
 }
 
-function Create-Profile-Template {
+function New-Profile-Template {
     try {
         $profileTemplate = [ordered]@{
             extensions = $PVMConfig.defaults.extensions
@@ -714,7 +714,7 @@ function Create-Profile-Template {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create profile template"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create profile template"; exception = $_ }
         return -1
     }
 }

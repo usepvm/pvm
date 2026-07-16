@@ -232,7 +232,7 @@ function Start-PVM {
 
         $allowedCommands = Get-AllowedCommands
 
-        if (($allowedCommands -notcontains $command) -and (Is-PVM-Not-Setup)) {
+        if (($allowedCommands -notcontains $command) -and (Test-PVM-Not-Setup)) {
             Write-Host -Object "`nPVM is not setup. Please run 'pvm setup' first."
             return -1
         }
@@ -241,12 +241,12 @@ function Start-PVM {
 
         # Check for updates after successful command execution (skip for update command itself)
         if ($result -eq 0 -and $command -ne 'update') {
-            $null = (Check-For-Updates-Quietly)
+            $null = (Test-Check-For-Updates-Quietly)
         }
 
         return $result
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during command '$command'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during command '$command'"; exception = $_ }
         Write-Host -Object "`nCommand canceled or failed to elevate privileges." -ForegroundColor DarkYellow
         return -1
     }

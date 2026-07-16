@@ -4,12 +4,12 @@ function Backup-IniFile {
 
     try {
         $backup = "$iniPath.bak"
-        if (Is-File-Not-Exists -path $backup) {
+        if (Test-File-Not-Exists -path $backup) {
             Copy-Item -Path $iniPath $backup
         }
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to backup ini file"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to backup ini file"; exception = $_ }
         return -1
     }
 }
@@ -40,7 +40,7 @@ function Get-All-PHPExtensionsStatus {
     $phpDirectory = Split-Path -Path $iniPath -Parent
     $extDirectory = "$phpDirectory\ext"
 
-    if (Is-Directory-Exists -path $extDirectory) {
+    if (Test-Directory-Exists -path $extDirectory) {
         $dllFiles = Get-ChildItem -Path $extDirectory -Filter '*.dll' -File -ErrorAction SilentlyContinue
         foreach ($file in $dllFiles) {
             $fileId = & $normalizeId $file.BaseName

@@ -27,8 +27,8 @@ function Get-PHP-Info {
         } else {
             $allExtensions
         }
-        Display-Extensions-States -extensions $allExtensions
-        Display-Installed-Extensions -extensions $filteredExtensions
+        Show-Extensions-States -extensions $allExtensions
+        Show-Installed-Extensions -extensions $filteredExtensions
     }
 
     if ($settings) {
@@ -38,8 +38,8 @@ function Get-PHP-Info {
         } else {
             $allSettings
         }
-        Display-Settings-States -settings $allSettings
-        Display-Settings -settings $filteredSettings
+        Show-Settings-States -settings $allSettings
+        Show-Settings -settings $filteredSettings
     }
 
     return 0

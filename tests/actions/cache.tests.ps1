@@ -28,7 +28,7 @@ Describe "Get-Cache-Files Tests" {
     }
 
     It "Should return null when cache directory does not exist" {
-        Mock Is-Directory-Not-Exists { return $true }
+        Mock Test-Directory-Not-Exists { return $true }
 
         $result = Get-Cache-Files
         $result | Should -Be $null
@@ -42,19 +42,19 @@ Describe "Get-Cache-Files Tests" {
     }
 }
 
-Describe "List-Cache-Files Tests" {
+Describe "Show-Cache-Files Tests" {
     BeforeEach {
         # Clean slate for each test
         Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
         Mock Write-Host {}
-        Mock Log-Data { return 0 }
+        Mock Add-LogEntry { return 0 }
     }
 
     It "Should return -1 when cache directory does not exist" {
-        Mock Is-Directory-Not-Exists { return $true }
+        Mock Test-Directory-Not-Exists { return $true }
 
-        $result = List-Cache-Files
+        $result = Show-Cache-Files
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -64,7 +64,7 @@ Describe "List-Cache-Files Tests" {
 
     It "Should return -1 when cache directory is empty" {
         # Directory exists but has no .json files
-        $result = List-Cache-Files
+        $result = Show-Cache-Files
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -76,7 +76,7 @@ Describe "List-Cache-Files Tests" {
         '{}' | Set-Content -Path "$CACHE_PATH\releases.json"
         '{}' | Set-Content -Path "$CACHE_PATH\versions.json"
 
-        $result = List-Cache-Files
+        $result = Show-Cache-Files
         $result | Should -Be 0
 
         Should -Invoke Write-Host -ParameterFilter { $Object -match 'releases' }
@@ -86,7 +86,7 @@ Describe "List-Cache-Files Tests" {
     It "Should return 0 and display header when at least one file exists" {
         '{}' | Set-Content -Path "$CACHE_PATH\data.json"
 
-        $result = List-Cache-Files
+        $result = Show-Cache-Files
         $result | Should -Be 0
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -98,7 +98,7 @@ Describe "List-Cache-Files Tests" {
         '{}' | Set-Content -Path "$CACHE_PATH\data.json"
         'text' | Set-Content -Path "$CACHE_PATH\readme.txt"
 
-        $result = List-Cache-Files
+        $result = Show-Cache-Files
         $result | Should -Be 0
 
         Should -Invoke Write-Host -ParameterFilter { $Object -match 'readme' } -Exactly 0
@@ -107,27 +107,27 @@ Describe "List-Cache-Files Tests" {
     It "Should return -1 and log error when Get-Cache-Files throws" {
         Mock Get-Cache-Files { throw 'Access denied' }
 
-        $result = List-Cache-Files
+        $result = Show-Cache-Files
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to list cache files'
         } -Exactly 1
 
-        Should -Invoke Log-Data -Exactly 1
+        Should -Invoke Add-LogEntry -Exactly 1
     }
 }
 
-Describe "Show-Cache-Data Tests" {
+Describe "Show-Save-Cached-Data Tests" {
     BeforeEach {
         Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
         Mock Write-Host {}
-        Mock Log-Data { return 0 }
+        Mock Add-LogEntry { return 0 }
     }
 
     It "Should return -1 when cache file does not exist" {
-        $result = Show-Cache-Data -cacheName 'nonexistent'
+        $result = Show-Save-Cached-Data -cacheName 'nonexistent'
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -142,9 +142,9 @@ Describe "Show-Cache-Data Tests" {
     It "Should return -1 when cache file exists but contains no data" {
         # Get-Data-From-Cache returns null / empty
         Mock Get-Data-From-Cache { return $null }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
 
-        $result = Show-Cache-Data -cacheName 'empty'
+        $result = Show-Save-Cached-Data -cacheName 'empty'
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -154,9 +154,9 @@ Describe "Show-Cache-Data Tests" {
 
     It "Should return -1 when cache data is an empty collection" {
         Mock Get-Data-From-Cache { return @() }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
 
-        $result = Show-Cache-Data -cacheName 'emptycol'
+        $result = Show-Save-Cached-Data -cacheName 'emptycol'
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -169,9 +169,9 @@ Describe "Show-Cache-Data Tests" {
         $cacheContent | ConvertTo-Json -Depth 5 | Set-Content -Path "$CACHE_PATH\releases.json"
 
         Mock Get-Data-From-Cache { return $cacheContent }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
 
-        $result = Show-Cache-Data -cacheName 'releases'
+        $result = Show-Save-Cached-Data -cacheName 'releases'
         $result | Should -Be 0
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -182,9 +182,9 @@ Describe "Show-Cache-Data Tests" {
     It "Should display the separator line" {
         $cacheContent = @{ key = 'value' }
         Mock Get-Data-From-Cache { return $cacheContent }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
 
-        $result = Show-Cache-Data -cacheName 'info'
+        $result = Show-Save-Cached-Data -cacheName 'info'
         $result | Should -Be 0
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -193,30 +193,30 @@ Describe "Show-Cache-Data Tests" {
     }
 
     It "Should return -1 and log error when an exception occurs" {
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Get-Data-From-Cache { throw 'Unexpected error' }
 
-        $result = Show-Cache-Data -cacheName 'broken'
+        $result = Show-Save-Cached-Data -cacheName 'broken'
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to show cache data'
         } -Exactly 1
 
-        Should -Invoke Log-Data -Exactly 1
+        Should -Invoke Add-LogEntry -Exactly 1
     }
 }
 
-Describe "Delete-Cache-File Tests" {
+Describe "Remove-Cache-File Tests" {
     BeforeEach {
         Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
         Mock Write-Host {}
-        Mock Log-Data { return 0 }
+        Mock Add-LogEntry { return 0 }
     }
 
     It "Should return -1 when cache file does not exist" {
-        $result = Delete-Cache-File -cacheName 'nonexistent'
+        $result = Remove-Cache-File -cacheName 'nonexistent'
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -233,7 +233,7 @@ Describe "Delete-Cache-File Tests" {
 
         Mock Read-Host { return 'n' }
 
-        $result = Delete-Cache-File -cacheName 'releases'
+        $result = Remove-Cache-File -cacheName 'releases'
         $result | Should -Be -1
 
         Test-Path "$CACHE_PATH\releases.json" | Should -Be $true
@@ -248,7 +248,7 @@ Describe "Delete-Cache-File Tests" {
 
         Mock Read-Host { return '' }
 
-        $result = Delete-Cache-File -cacheName 'releases'
+        $result = Remove-Cache-File -cacheName 'releases'
         $result | Should -Be -1
 
         Test-Path "$CACHE_PATH\releases.json" | Should -Be $true
@@ -263,7 +263,7 @@ Describe "Delete-Cache-File Tests" {
 
         Mock Read-Host { return 'no' }
 
-        $result = Delete-Cache-File -cacheName 'releases'
+        $result = Remove-Cache-File -cacheName 'releases'
         $result | Should -Be -1
 
         Test-Path "$CACHE_PATH\releases.json" | Should -Be $true
@@ -274,7 +274,7 @@ Describe "Delete-Cache-File Tests" {
 
         Mock Read-Host { return 'yes' }
 
-        $result = Delete-Cache-File -cacheName 'releases'
+        $result = Remove-Cache-File -cacheName 'releases'
         $result | Should -Be -1
 
         Test-Path "$CACHE_PATH\releases.json" | Should -Be $true
@@ -285,7 +285,7 @@ Describe "Delete-Cache-File Tests" {
 
         Mock Read-Host { return 'y' }
 
-        $result = Delete-Cache-File -cacheName 'releases'
+        $result = Remove-Cache-File -cacheName 'releases'
         $result | Should -Be 0
 
         Test-Path "$CACHE_PATH\releases.json" | Should -Be $false
@@ -300,7 +300,7 @@ Describe "Delete-Cache-File Tests" {
 
         Mock Read-Host { return 'Y' }
 
-        $result = Delete-Cache-File -cacheName 'releases'
+        $result = Remove-Cache-File -cacheName 'releases'
         $result | Should -Be 0
 
         Test-Path "$CACHE_PATH\releases.json" | Should -Be $false
@@ -311,7 +311,7 @@ Describe "Delete-Cache-File Tests" {
 
         Mock Read-Host { return '  y  ' }
 
-        $result = Delete-Cache-File -cacheName 'releases'
+        $result = Remove-Cache-File -cacheName 'releases'
         $result | Should -Be 0
 
         Test-Path "$CACHE_PATH\releases.json" | Should -Be $false
@@ -322,7 +322,7 @@ Describe "Delete-Cache-File Tests" {
 
         Mock Read-Host { return '  n  ' }
 
-        $result = Delete-Cache-File -cacheName 'releases'
+        $result = Remove-Cache-File -cacheName 'releases'
         $result | Should -Be -1
 
         Test-Path "$CACHE_PATH\releases.json" | Should -Be $true
@@ -333,7 +333,7 @@ Describe "Delete-Cache-File Tests" {
 
         Mock Read-Host { return 'y' }
 
-        $result = Delete-Cache-File -cacheName 'mydata'
+        $result = Remove-Cache-File -cacheName 'mydata'
         $result | Should -Be 0
 
         Should -Invoke Read-Host -ParameterFilter {
@@ -346,7 +346,7 @@ Describe "Delete-Cache-File Tests" {
         '{}' | Set-Content -Path "$CACHE_PATH\mydata.json"
         Mock Read-Host { }
 
-        $result = Delete-Cache-File -cacheName 'mydata' -skipConfirmation $true
+        $result = Remove-Cache-File -cacheName 'mydata' -skipConfirmation $true
         $result | Should -Be 0
         Should -Invoke Read-Host -Exactly 0
         Test-Path "$CACHE_PATH\mydata.json" | Should -Be $false
@@ -358,14 +358,14 @@ Describe "Delete-Cache-File Tests" {
         Mock Read-Host { return 'y' }
         Mock Remove-Item { throw 'Access denied' }
 
-        $result = Delete-Cache-File -cacheName 'releases'
+        $result = Remove-Cache-File -cacheName 'releases'
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to delete cache file'
         } -Exactly 1
 
-        Should -Invoke Log-Data -Exactly 1
+        Should -Invoke Add-LogEntry -Exactly 1
     }
 
     It "Should handle cache file with complex name" {
@@ -373,7 +373,7 @@ Describe "Delete-Cache-File Tests" {
 
         Mock Read-Host { return 'y' }
 
-        $result = Delete-Cache-File -cacheName 'php-releases_8x'
+        $result = Remove-Cache-File -cacheName 'php-releases_8x'
         $result | Should -Be 0
 
         Test-Path "$CACHE_PATH\php-releases_8x.json" | Should -Be $false
@@ -389,7 +389,7 @@ Describe "Clear-Cache-Files Tests" {
         Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
         Mock Write-Host {}
-        Mock Log-Data { return 0 }
+        Mock Add-LogEntry { return 0 }
     }
 
     It "Should return -1 when no cache files exist" {
@@ -553,7 +553,7 @@ Describe "Clear-Cache-Files Tests" {
             $Object -match 'Failed to clear cache files'
         } -Exactly 1
 
-        Should -Invoke Log-Data -Exactly 1
+        Should -Invoke Add-LogEntry -Exactly 1
     }
 
     It "Should return -1 and log error when Get-Cache-Files throws" {
@@ -566,6 +566,6 @@ Describe "Clear-Cache-Files Tests" {
             $Object -match 'Failed to clear cache files'
         } -Exactly 1
 
-        Should -Invoke Log-Data -Exactly 1
+        Should -Invoke Add-LogEntry -Exactly 1
     }
 }

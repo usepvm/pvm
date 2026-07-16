@@ -1,7 +1,7 @@
 ﻿
 function Get-Cache-Files {
     try {
-        if (Is-Directory-Not-Exists -path $PVMConfig.paths.cache) {
+        if (Test-Directory-Not-Exists -path $PVMConfig.paths.cache) {
             return $null
         }
 
@@ -9,14 +9,14 @@ function Get-Cache-Files {
 
         return $files
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get cache files"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get cache files"; exception = $_ }
         return $null
     }
 }
 
-function List-Cache-Files {
+function Show-Cache-Files {
     try {
-        if (Is-Directory-Not-Exists -path $PVMConfig.paths.cache) {
+        if (Test-Directory-Not-Exists -path $PVMConfig.paths.cache) {
             Write-Host -Object "`nNo cache directory found." -ForegroundColor DarkYellow
             return -1
         }
@@ -37,18 +37,18 @@ function List-Cache-Files {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list cache files"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list cache files"; exception = $_ }
         Write-Host -Object "`nFailed to list cache files." -ForegroundColor DarkYellow
         return -1
     }
 }
 
-function Show-Cache-Data {
+function Show-Save-Cached-Data {
     param ($cacheName)
 
     try {
         $cachePath = Get-Cache-FilePath -fileName $cacheName
-        if (Is-File-Not-Exists -path $cachePath) {
+        if (Test-File-Not-Exists -path $cachePath) {
             Write-Host -Object "`nCache file '$cacheName' not found." -ForegroundColor DarkYellow
             Write-Host -Object "  Use 'pvm cache list' to see available cache files."
             return -1
@@ -68,18 +68,18 @@ function Show-Cache-Data {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show cache data"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show cache data"; exception = $_ }
         Write-Host -Object "`nFailed to show cache data." -ForegroundColor DarkYellow
         return -1
     }
 }
 
-function Delete-Cache-File {
+function Remove-Cache-File {
     param ($cacheName, $skipConfirmation = $false)
 
     try {
         $cachePath = Get-Cache-FilePath -fileName $cacheName
-        if (Is-File-Not-Exists -path $cachePath) {
+        if (Test-File-Not-Exists -path $cachePath) {
             Write-Host -Object "`nCache file '$cacheName' not found." -ForegroundColor DarkYellow
             Write-Host -Object "  Use 'pvm cache list' to see available cache files."
             return -1
@@ -99,7 +99,7 @@ function Delete-Cache-File {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete cache file '$cacheName'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete cache file '$cacheName'"; exception = $_ }
         Write-Host -Object "`nFailed to delete cache file: $($_.Exception.Message)" -ForegroundColor DarkYellow
         return -1
     }
@@ -133,7 +133,7 @@ function Clear-Cache-Files {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear cache files"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear cache files"; exception = $_ }
         Write-Host -Object "`nFailed to clear cache files." -ForegroundColor DarkYellow
         return -1
     }

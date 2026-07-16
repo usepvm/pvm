@@ -85,7 +85,7 @@ function Show-Log {
         }
 
         # Check if log file exists
-        if (Is-File-Not-Exists -path $PVMConfig.paths.logError) {
+        if (Test-File-Not-Exists -path $PVMConfig.paths.logError) {
             Write-Host -Object "`nLog file not found: $($PVMConfig.paths.logError)" -ForegroundColor Red
             return -1
         }
@@ -225,7 +225,7 @@ function Show-Log {
         Clear-Host
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show log"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show log"; exception = $_ }
         return -1
     }
 }

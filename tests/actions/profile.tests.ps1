@@ -34,9 +34,9 @@ BeforeAll {
         }
     }
 
-    Mock Make-Directory { param ($path) return 0 }
+    Mock New-Directory { param ($path) return 0 }
 
-    Mock Log-Data { param ($data) return $true }
+    Mock Add-LogEntry { param ($data) return $true }
 
     # Create test profile directory
     New-Item -ItemType Directory -Path $PROFILES_PATH -Force | Out-Null
@@ -201,7 +201,7 @@ Describe "Save-PHP-Profile Tests" {
         }
 
         Mock Write-Host {}
-        Mock Log-Data { return 0 }
+        Mock Add-LogEntry { return 0 }
     }
 
     It "Returns -1 when php.ini file is missing" {
@@ -228,7 +228,7 @@ Describe "Save-PHP-Profile Tests" {
     }
 
     It "Should return -1 when profile directory cannot be created" {
-        Mock Make-Directory { return -1 }
+        Mock New-Directory { return -1 }
 
         $result = Save-PHP-Profile -profileName 'testprofile'
         $result | Should -Be -1
@@ -269,7 +269,7 @@ Describe "Save-PHP-Profile Tests" {
     }
 }
 
-Describe "Load-PHP-Profile Tests" {
+Describe "Use-PHP-Profile Tests" {
     BeforeEach {
         # Create test profile
         $testProfile = @{
@@ -312,25 +312,25 @@ Describe "Load-PHP-Profile Tests" {
         Mock Enable-IniExtension-Direct { return 0 }
         Mock Disable-IniExtension-Direct { return 0 }
         Mock Write-Host {}
-        Mock Log-Data { return 0 }
+        Mock Add-LogEntry { return 0 }
     }
 
     It "Should return -1 when current PHP version cannot be determined" {
         Mock Get-Current-PHP-Version { return $null }
 
-        $result = Load-PHP-Profile -profileName 'testprofile'
+        $result = Use-PHP-Profile -profileName 'testprofile'
         $result | Should -Be -1
     }
 
     It "Should return -1 when php.ini file is missing" {
         Mock Test-Path { return $false }
 
-        $result = Load-PHP-Profile -profileName 'testprofile'
+        $result = Use-PHP-Profile -profileName 'testprofile'
         $result | Should -Be -1
     }
 
     It "Should load and apply a profile" {
-        $result = Load-PHP-Profile -profileName 'testprofile'
+        $result = Use-PHP-Profile -profileName 'testprofile'
         $result | Should -Be 0
 
         Should -Invoke Set-IniSetting-Direct -ParameterFilter {
@@ -355,7 +355,7 @@ Describe "Load-PHP-Profile Tests" {
         Mock Enable-IniExtension-Direct -ParameterFilter {$extName -eq 'pdo_pgsql'} -MockWith { return -1 }
         Mock Disable-IniExtension-Direct -ParameterFilter {$extName -eq 'pdo_sqlite'} -MockWith { return -1 }
 
-        $result = Load-PHP-Profile -profileName 'testprofile'
+        $result = Use-PHP-Profile -profileName 'testprofile'
         $result | Should -Be 0
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -376,14 +376,14 @@ Describe "Load-PHP-Profile Tests" {
     }
 
     It "Should handle non-existent profile" {
-        $result = Load-PHP-Profile -profileName 'nonexistent'
+        $result = Use-PHP-Profile -profileName 'nonexistent'
         $result | Should -Be -1
     }
 
     It "Should handle exceptions gracefully when PHP version cannot be determined" {
         Mock Get-Current-PHP-Version { throw 'Failed to determine PHP version' }
 
-        $result = Load-PHP-Profile -profileName 'testprofile'
+        $result = Use-PHP-Profile -profileName 'testprofile'
         $result | Should -Be -1
     }
 
@@ -403,7 +403,7 @@ Describe "Load-PHP-Profile Tests" {
         New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
         $testProfileNoType | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\notypefile.json"
 
-        $result = Load-PHP-Profile -profileName 'notypefile'
+        $result = Use-PHP-Profile -profileName 'notypefile'
         $result | Should -Be 0
 
         Should -Invoke Enable-IniExtension-Direct -ParameterFilter {
@@ -426,7 +426,7 @@ Describe "Get-Profile-Files Tests" {
     }
 
     It "Should return null when profiles directory does not exist" {
-        Mock Is-Directory-Not-Exists { return $true }
+        Mock Test-Directory-Not-Exists { return $true }
 
         $result = Get-Profile-Files
         $result | Should -Be $null
@@ -440,7 +440,7 @@ Describe "Get-Profile-Files Tests" {
     }
 }
 
-Describe "List-PHP-Profiles Tests" {
+Describe "Show-PHP-Profiles Tests" {
     BeforeEach {
         # Create test profiles
         @{
@@ -471,12 +471,12 @@ Describe "List-PHP-Profiles Tests" {
     It "Returns -1 when profiles directory does not exist" {
         Mock Test-Path { return $false }
 
-        $result = List-PHP-Profiles
+        $result = Show-PHP-Profiles
         $result | Should -Be -1
     }
 
     It "Should list all available profiles" {
-        $result = List-PHP-Profiles
+        $result = Show-PHP-Profiles
         $result | Should -Be 0
 
         Should -Invoke Write-Host -ParameterFilter { $Object -match 'profile1' }
@@ -487,7 +487,7 @@ Describe "List-PHP-Profiles Tests" {
         # Remove all profiles
         Remove-Item -Path "$PROFILES_PATH\*" -Force
 
-        $result = List-PHP-Profiles
+        $result = Show-PHP-Profiles
         $result | Should -Be -1
     }
 
@@ -500,7 +500,7 @@ Describe "List-PHP-Profiles Tests" {
         }
         Mock Get-Content { throw 'Error' }
 
-        $result = List-PHP-Profiles
+        $result = Show-PHP-Profiles
         $result | Should -Be 0
     }
 
@@ -518,14 +518,14 @@ Describe "List-PHP-Profiles Tests" {
             throw 'Error'
         }
 
-        $result = List-PHP-Profiles
+        $result = Show-PHP-Profiles
         $result | Should -Be 0
     }
 
     It "Should handle exceptions gracefully when profiles cannot be listed" {
         Mock Get-Profile-Files { throw 'Error' }
 
-        $result = List-PHP-Profiles
+        $result = Show-PHP-Profiles
         $result | Should -Be -1
     }
 }
@@ -553,7 +553,7 @@ Describe "Get-Popular-PHP-Settings Tests" {
     }
 
     It "Returns default value when exception is thrown" {
-        Mock Is-File-Exists { return $true }
+        Mock Test-File-Exists { return $true }
         Mock Get-Content { throw 'Test exception' }
         $settings = Get-Popular-PHP-Settings
         $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
@@ -584,7 +584,7 @@ Describe "Get-Popular-PHP-Extensions Tests" {
     }
 
     It "Returns default value when exception is thrown" {
-        Mock Is-File-Exists { return $true }
+        Mock Test-File-Exists { return $true }
         Mock Get-Content { throw 'Test exception' }
         $extensions = Get-Popular-PHP-Extensions
         $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
@@ -594,7 +594,7 @@ Describe "Get-Popular-PHP-Extensions Tests" {
 Describe "Show-PHP-Profile Tests" {
     BeforeEach {
         Mock Write-Host {}
-        Mock Log-Data { return 0 }
+        Mock Add-LogEntry { return 0 }
 
         # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
@@ -624,7 +624,7 @@ Describe "Show-PHP-Profile Tests" {
             $Object -match 'Failed to show profile'
         } -Exactly 1
 
-        Should -Invoke Log-Data -Exactly 1
+        Should -Invoke Add-LogEntry -Exactly 1
     }
 
     It "Should display profile with no settings and no extensions" {
@@ -1052,17 +1052,17 @@ Describe "Show-PHP-Profile Tests" {
     }
 }
 
-Describe "Delete-PHP-Profile Tests" {
+Describe "Remove-PHP-Profile Tests" {
     BeforeEach {
         Mock Write-Host {}
-        Mock Log-Data { return 0 }
+        Mock Add-LogEntry { return 0 }
 
         # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
     }
 
     It "Should return -1 when profile file does not exist" {
-        $result = Delete-PHP-Profile -profileName 'nonexistent'
+        $result = Remove-PHP-Profile -profileName 'nonexistent'
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -1084,7 +1084,7 @@ Describe "Delete-PHP-Profile Tests" {
 
         Mock Read-Host { return 'n' }
 
-        $result = Delete-PHP-Profile -profileName 'testprofile'
+        $result = Remove-PHP-Profile -profileName 'testprofile'
         $result | Should -Be -1
 
         # Verify file still exists
@@ -1111,7 +1111,7 @@ Describe "Delete-PHP-Profile Tests" {
 
         Mock Read-Host { return '' }
 
-        $result = Delete-PHP-Profile -profileName 'testprofile'
+        $result = Remove-PHP-Profile -profileName 'testprofile'
         $result | Should -Be -1
 
         # Verify file still exists
@@ -1136,7 +1136,7 @@ Describe "Delete-PHP-Profile Tests" {
 
         Mock Read-Host { return 'no' }
 
-        $result = Delete-PHP-Profile -profileName 'testprofile'
+        $result = Remove-PHP-Profile -profileName 'testprofile'
         $result | Should -Be -1
 
         # Verify file still exists
@@ -1161,7 +1161,7 @@ Describe "Delete-PHP-Profile Tests" {
 
         Mock Read-Host { return 'y' }
 
-        $result = Delete-PHP-Profile -profileName 'testprofile'
+        $result = Remove-PHP-Profile -profileName 'testprofile'
         $result | Should -Be 0
 
         # Verify file is deleted
@@ -1190,7 +1190,7 @@ Describe "Delete-PHP-Profile Tests" {
 
         Mock Read-Host { return 'Y' }
 
-        $result = Delete-PHP-Profile -profileName 'testprofile'
+        $result = Remove-PHP-Profile -profileName 'testprofile'
         $result | Should -Be 0
 
         # Verify file is deleted
@@ -1215,7 +1215,7 @@ Describe "Delete-PHP-Profile Tests" {
 
         Mock Read-Host { return '  y  ' }
 
-        $result = Delete-PHP-Profile -profileName 'testprofile'
+        $result = Remove-PHP-Profile -profileName 'testprofile'
         $result | Should -Be 0
 
         # Verify file is deleted
@@ -1236,7 +1236,7 @@ Describe "Delete-PHP-Profile Tests" {
 
         Mock Read-Host { return '  n  ' }
 
-        $result = Delete-PHP-Profile -profileName 'testprofile'
+        $result = Remove-PHP-Profile -profileName 'testprofile'
         $result | Should -Be -1
 
         # Verify file still exists
@@ -1247,7 +1247,7 @@ Describe "Delete-PHP-Profile Tests" {
         '{}' | Set-Content -Path "$PROFILES_PATH\example.json"
         Mock Read-Host { }
 
-        $result = Delete-PHP-Profile -profileName 'example' -skipConfirmation $true
+        $result = Remove-PHP-Profile -profileName 'example' -skipConfirmation $true
         $result | Should -Be 0
         Should -Invoke Read-Host -Exactly 0
         Test-Path "$PROFILES_PATH\example.json" | Should -Be $false
@@ -1268,14 +1268,14 @@ Describe "Delete-PHP-Profile Tests" {
         Mock Read-Host { return 'y' }
         Mock Remove-Item { throw 'Access denied' }
 
-        $result = Delete-PHP-Profile -profileName 'testprofile'
+        $result = Remove-PHP-Profile -profileName 'testprofile'
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Failed to delete profile'
         } -Exactly 1
 
-        Should -Invoke Log-Data -Exactly 1
+        Should -Invoke Add-LogEntry -Exactly 1
     }
 
     It "Should display correct confirmation prompt with profile name" {
@@ -1292,7 +1292,7 @@ Describe "Delete-PHP-Profile Tests" {
 
         Mock Read-Host { return 'y' }
 
-        $result = Delete-PHP-Profile -profileName 'myprofile'
+        $result = Remove-PHP-Profile -profileName 'myprofile'
         $result | Should -Be 0
 
         Should -Invoke Read-Host -ParameterFilter {
@@ -1315,7 +1315,7 @@ Describe "Delete-PHP-Profile Tests" {
 
         Mock Read-Host { return 'y' }
 
-        $result = Delete-PHP-Profile -profileName 'test-profile_123'
+        $result = Remove-PHP-Profile -profileName 'test-profile_123'
         $result | Should -Be 0
 
         # Verify file is deleted
@@ -1341,7 +1341,7 @@ Describe "Delete-PHP-Profile Tests" {
         # Test that 'yes' (not just 'y') is rejected
         Mock Read-Host { return 'yes' }
 
-        $result = Delete-PHP-Profile -profileName 'testprofile'
+        $result = Remove-PHP-Profile -profileName 'testprofile'
         $result | Should -Be -1
 
         # Verify file still exists
@@ -1358,7 +1358,7 @@ Describe "Clear-PHP-Profiles Tests" {
         Remove-Item -Path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
 
         Mock Write-Host {}
-        Mock Log-Data { return 0 }
+        Mock Add-LogEntry { return 0 }
     }
 
     It "Should return -1 when no profiles exist" {
@@ -1506,7 +1506,7 @@ Describe "Clear-PHP-Profiles Tests" {
             $Object -match 'Failed to clear profiles'
         } -Exactly 1
 
-        Should -Invoke Log-Data -Exactly 1
+        Should -Invoke Add-LogEntry -Exactly 1
     }
 
     It "Should return -1 and log error when Get-Profile-Files throws" {
@@ -1519,14 +1519,14 @@ Describe "Clear-PHP-Profiles Tests" {
             $Object -match 'Failed to clear profiles'
         } -Exactly 1
 
-        Should -Invoke Log-Data -Exactly 1
+        Should -Invoke Add-LogEntry -Exactly 1
     }
 }
 
 Describe "Export-PHP-Profile Tests" {
     BeforeEach {
         Mock Write-Host {}
-        Mock Log-Data { return 0 }
+        Mock Add-LogEntry { return 0 }
 
         # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
@@ -1658,7 +1658,7 @@ Describe "Export-PHP-Profile Tests" {
             $Object -match 'Failed to export profile'
         } -Exactly 1
 
-        Should -Invoke Log-Data -Exactly 1
+        Should -Invoke Add-LogEntry -Exactly 1
     }
 
     It "Should export profile with complex name correctly" {
@@ -1735,8 +1735,8 @@ Describe "Export-PHP-Profile Tests" {
 Describe "Import-PHP-Profile Tests" {
     BeforeEach {
         Mock Write-Host {}
-        Mock Log-Data { return 0 }
-        Mock Make-Directory { return 0 }
+        Mock Add-LogEntry { return 0 }
+        Mock New-Directory { return 0 }
 
         # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
@@ -1908,7 +1908,7 @@ Describe "Import-PHP-Profile Tests" {
         Test-Path $importedPath | Should -Be $true
     }
 
-    It "Should return -1 when Make-Directory fails" {
+    It "Should return -1 when New-Directory fails" {
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -1919,7 +1919,7 @@ Describe "Import-PHP-Profile Tests" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$TEST_DRIVE\testprofile.json"
 
-        Mock Make-Directory { return -1 }
+        Mock New-Directory { return -1 }
 
         $result = Import-PHP-Profile -importPath "$TEST_DRIVE\testprofile.json"
         $result | Should -Be -1
@@ -2012,7 +2012,7 @@ Describe "Import-PHP-Profile Tests" {
             $Object -match 'Failed to import profile'
         } -Exactly 1
 
-        Should -Invoke Log-Data -Exactly 1
+        Should -Invoke Add-LogEntry -Exactly 1
     }
 
     It "Should handle profile with empty settings and extensions" {
@@ -2059,9 +2059,9 @@ Describe "Import-PHP-Profile Tests" {
     }
 }
 
-Describe "Create-Example-PHP-Profile Tests" {
+Describe "New-Example-PHP-Profile Tests" {
     It "Should create an example profile" {
-        $result = Create-Example-PHP-Profile
+        $result = New-Example-PHP-Profile
         $result | Should -Be 0
 
         Test-Path $PVMConfig.paths.exampleProfile | Should -Be $true
@@ -2069,15 +2069,15 @@ Describe "Create-Example-PHP-Profile Tests" {
 
     It "Returns -1 when exception is thrown" {
         Mock Set-Content { throw 'Test exception' }
-        $result = Create-Example-PHP-Profile
+        $result = New-Example-PHP-Profile
         $result | Should -Be -1
     }
 }
 
-Describe "Create-Profile-Template Tests" {
+Describe "New-Profile-Template Tests" {
     It "Should create a profile template" {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $result = Create-Profile-Template
+        $result = New-Profile-Template
         $result | Should -Be 0
 
         Test-Path $PROFILE_TEMPLATE_PATH | Should -Be $true
@@ -2085,7 +2085,7 @@ Describe "Create-Profile-Template Tests" {
 
     It "Returns -1 when exception is thrown" {
         Mock Set-Content { throw 'Test exception' }
-        $result = Create-Profile-Template
+        $result = New-Profile-Template
         $result | Should -Be -1
     }
 }

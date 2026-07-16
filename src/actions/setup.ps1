@@ -1,5 +1,5 @@
 ﻿
-function Setup-PVM {
+function Initialize-PVM {
     try {
         $path = Get-EnvVar-ByName -name 'Path' -optimized $true
         if ($null -eq $path) { $path = '' }
@@ -7,7 +7,7 @@ function Setup-PVM {
         $pathEntries = $path -split ';' | Where-Object { $_ -ne '' }
 
         $parent = Split-Path -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH
-        $created = Make-Directory -path $parent
+        $created = New-Directory -path $parent
         if ($created -ne 0) {
             return @{ code = -1; message = 'Failed to create directory for PHP version.'; color = 'DarkYellow' }
         }
@@ -32,7 +32,7 @@ function Setup-PVM {
 
         return $result
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set up PVM environment"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set up PVM environment"; exception = $_ }
         return @{ code = -1; message = 'Failed to set up PVM environment.'; color = 'DarkYellow' }
     }
 }
@@ -53,7 +53,7 @@ function Initialize-PVMDirectories {
     $codes = @()
     $maxNameLength = ($dirs | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     foreach ($dir in $dirs) {
-        $codes += $code = Make-Directory -path $dir
+        $codes += $code = New-Directory -path $dir
 
         $dirName = "- $dir ".PadRight($maxNameLength, '.')
         if ($code -eq 0) {
@@ -69,7 +69,7 @@ function Initialize-PVMDirectories {
 function Initialize-PVMFiles {
     $codes = @()
 
-    $codes += $code = Create-Example-PHP-Profile
+    $codes += $code = New-Example-PHP-Profile
     if ($code -eq 0) {
         Write-Host -Object "`nExample profile created successfully at '$($PVMConfig.paths.exampleProfile)'." -ForegroundColor DarkGreen
         Write-Host -Object "- Use 'pvm help profile' to learn more."
@@ -77,7 +77,7 @@ function Initialize-PVMFiles {
         Write-Host -Object "`nFailed to create example profile." -ForegroundColor DarkYellow
     }
 
-    $codes += $code = Create-Profile-Template
+    $codes += $code = New-Profile-Template
     if ($code -eq 0) {
         Write-Host -Object "`nProfile template created successfully at '$($PVMConfig.paths.profileTemplate)'." -ForegroundColor DarkGreen
         Write-Host -Object '- Feel free to modify it.'
@@ -104,7 +104,7 @@ function Initialize-PVMFiles {
     return $codes
 }
 
-function Setup-Environment-Directories-And-Files {
+function Initialize-Environment-Directories-And-Files {
     $codes = @()
 
     $codes += Initialize-PVMDirectories
@@ -114,16 +114,16 @@ function Setup-Environment-Directories-And-Files {
     return 0
 }
 
-function Create-Env-File {
+function New-Env-File {
     param ($overwrite = $false)
 
     try {
-        if (Is-File-Not-Exists -path "$PVMRoot\.env.example") {
+        if (Test-File-Not-Exists -path "$PVMRoot\.env.example") {
             Write-Host -Object "`nFailed to find .env.example file." -ForegroundColor DarkYellow
             return -1
         }
 
-        if ((Is-File-Exists -path "$PVMRoot\.env") -and ($overwrite -eq $false)) {
+        if ((Test-File-Exists -path "$PVMRoot\.env") -and ($overwrite -eq $false)) {
             $response = Read-Host -Prompt "`n.env file already exists. Overwrite? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
@@ -135,12 +135,12 @@ function Create-Env-File {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create .env file"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create .env file"; exception = $_ }
         return -1
     }
 }
 
-function Pause-ForEnvEdit {
+function Wait-ForEnvEdit {
     Write-Host -Object "`nEdit $PVMRoot\.env now if you want custom settings, then press Enter to continue..." -ForegroundColor Cyan
     Read-Host | Out-Null
     $Global:PVMConfig = Get-Config -rootPath $PVMRoot

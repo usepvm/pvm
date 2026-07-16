@@ -59,7 +59,7 @@ function Get-PVM-Version-From-Git {
     }
 }
 
-function Normalize-Version {
+function Format-Version {
     param($version)
 
     return ($version -replace '^v', '') -replace '(\.0)+$', ''
@@ -76,7 +76,7 @@ function Update-PVM {
         }
     }
 
-    if (Is-Directory-Not-Exists -path "$PVMRoot\.git") {
+    if (Test-Directory-Not-Exists -path "$PVMRoot\.git") {
         return @{
             code    = -1
             message = 'PVM is not installed from a git repository. Cannot update.'
@@ -147,8 +147,8 @@ function Update-PVM {
         if ($currentVersion -and $latestVersion) {
             $msg = "Update available"
 
-            $currentVersionNormalized = Normalize-Version -version $currentVersion
-            $latestVersionNormalized = Normalize-Version -version $latestVersion
+            $currentVersionNormalized = Format-Version -version $currentVersion
+            $latestVersionNormalized = Format-Version -version $latestVersion
 
             if ($currentVersionNormalized -lt $latestVersionNormalized) {
                 $msg += ": $currentVersion -> $latestVersion"
@@ -173,8 +173,8 @@ function Update-PVM {
         }
 
         # Normalize versions for comparison (remove 'v' prefix)
-        $oldVersionNormalized = Normalize-Version -version $oldVersion
-        $newVersionNormalized = Normalize-Version -version $newVersion
+        $oldVersionNormalized = Format-Version -version $oldVersion
+        $newVersionNormalized = Format-Version -version $newVersion
 
         if ($oldVersionNormalized -eq $newVersionNormalized) {
             return @{

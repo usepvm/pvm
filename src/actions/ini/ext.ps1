@@ -62,11 +62,11 @@ function Get-PHPExtensions-From-Source {
         )
         $dataToCache = [ordered] @{}
         $availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object { $dataToCache[$_.Key] = $_.Value }
-        $null = Cache-Data -cacheFileName 'available_extensions' -data $dataToCache -depth 3
+        $null = Save-Cached-Data -cacheFileName 'available_extensions' -data $dataToCache -depth 3
 
         return $availableExtensions
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"; exception = $_ }
         return @{}
     }
 }
@@ -84,8 +84,8 @@ function List-PHP-Extensions {
                 $allExtensions
             }
 
-            Display-Extensions-States -extensions $allExtensions
-            Display-Installed-Extensions -extensions $filtered
+            Show-Extensions-States -extensions $allExtensions
+            Show-Installed-Extensions -extensions $filtered
         } else {
             Write-Host -Object "`nLoading available extensions..."
 
@@ -170,7 +170,7 @@ function List-PHP-Extensions {
         return 0
     } catch {
         Write-Host -Object "`nFailed to list extensions"
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"; exception = $_ }
         return -1
     }
 }

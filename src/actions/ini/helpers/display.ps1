@@ -1,5 +1,5 @@
 ﻿
-function Display-Extensions-States {
+function Show-Extensions-States {
     param ($extensions)
 
     # Pre-count for summary
@@ -9,7 +9,7 @@ function Display-Extensions-States {
     Write-Host -Object "`n- Total Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
 }
 
-function Display-Installed-Extensions {
+function Show-Installed-Extensions {
     param ($extensions)
 
     if ($extensions.Count -eq 0) {
@@ -37,7 +37,7 @@ function Display-Installed-Extensions {
     }
 }
 
-function Display-Settings-States {
+function Show-Settings-States {
     param ($settings)
 
     # Pre-count for summary
@@ -47,7 +47,7 @@ function Display-Settings-States {
     Write-Host -Object "`n- Total Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
 }
 
-function Display-Settings {
+function Show-Settings {
     param ($settings)
 
     if ($settings.Count -eq 0) {

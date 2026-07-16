@@ -57,9 +57,9 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Is-OS-64Bit" {
+Describe "Test-OS-64Bit" {
     It "Returns a boolean value indicating OS architecture" {
-        $result = Is-OS-64Bit
+        $result = Test-OS-64Bit
         $result | Should -BeOfType [bool]
     }
 }
@@ -118,7 +118,7 @@ Describe "Get-All-EnvVars" {
 
 Describe "Get-EnvVar-ByName" {
     BeforeAll {
-        Mock Is-Not-Admin { return $false }
+        Mock Test-Not-Admin { return $false }
         Mock Get-All-EnvVars-Core {
             if ($script:MockRegistryThrowException) {
                 throw $script:MockRegistryException
@@ -185,7 +185,7 @@ Describe "Get-EnvVar-ByName" {
 
 Describe "Set-EnvVar" {
     BeforeAll {
-        Mock Is-Not-Admin { return $false }
+        Mock Test-Not-Admin { return $false }
         Mock Get-EnvVar-ByName-Core {
             param ($name)
 
@@ -217,8 +217,8 @@ Describe "Set-EnvVar" {
 
     Context "When running as not admin" {
         It "Elevates and sets a new variable successfully" {
-            Mock Is-Not-Admin { return $true }
-            Mock Run-PS-Command { return 0 }
+            Mock Test-Not-Admin { return $true }
+            Mock Invoke-PS-Command { return 0 }
             $result = Set-EnvVar -name 'SIMULATED_EXCEPTION' -value 'TEST_VALUE'
             $result | Should -Be 0
         }
@@ -235,7 +235,7 @@ Describe "Set-EnvVar" {
 
 Describe "Optimize-SystemPath" {
     BeforeAll {
-        Mock Is-Not-Admin { return $false }
+        Mock Test-Not-Admin { return $false }
         Mock Get-All-EnvVars-Core {
             if ($script:MockRegistryThrowException) {
                 throw $script:MockRegistryException
@@ -321,14 +321,14 @@ Describe "Optimize-SystemPath" {
     }
 }
 
-Describe "Run-Ps-Command" {
+Describe "Invoke-PS-Command" {
     Context "When executing PowerShell commands" {
         It "Passes -NoProfile and Bypass execution policy" {
             $mockProcess = @{ ExitCode = 0 }
             $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
             Mock Start-Process { return $mockProcess }
 
-            $result = Run-Ps-Command -command "Write-Host -Object 'hello'"
+            $result = Invoke-PS-Command -command "Write-Host -Object 'hello'"
 
             Should -Invoke Start-Process -Times 1 -ParameterFilter {
                 $FilePath -eq 'powershell.exe' -and
@@ -344,37 +344,37 @@ Describe "Run-Ps-Command" {
             $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
             Mock Start-Process { return $mockProcess }
 
-            $result = Run-Ps-Command -command "Write-Error 'fail'"
+            $result = Invoke-PS-Command -command "Write-Error 'fail'"
 
             $result | Should -Be 42
         }
     }
 }
 
-Describe "Is-Admin" {
+Describe "Test-Admin" {
     Context "When checking admin status" {
         It "Returns a boolean value" {
-            $result = Is-Admin
+            $result = Test-Admin
             $result | Should -BeOfType [bool]
         }
     }
 }
 
-Describe "Is-Not-Admin" {
+Describe "Test-Not-Admin" {
     It "Returns a boolean value" {
-        $result = Is-Not-Admin
+        $result = Test-Not-Admin
         $result | Should -BeOfType [bool]
     }
 
     It "Returns true when not running as admin" {
-        Mock Is-Admin { return $false }
-        $result = Is-Not-Admin
+        Mock Test-Admin { return $false }
+        $result = Test-Not-Admin
         $result | Should -Be $true
     }
 
     It "Returns false when running as admin" {
-        Mock Is-Admin { return $true }
-        $result = Is-Not-Admin
+        Mock Test-Admin { return $true }
+        $result = Test-Not-Admin
         $result | Should -Be $false
     }
 }

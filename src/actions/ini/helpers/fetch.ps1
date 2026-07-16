@@ -20,7 +20,7 @@ function Get-Extension-Matching-Categories-By-Page {
     }
 }
 
-function Filter-Extension-Links-From-URL {
+function Select-Extension-Links-From-URL {
     param ($extName)
 
     $html = Get-Web-Response -uri "$($PVMConfig.links.peclPackageRoot)/$extName"
@@ -60,7 +60,7 @@ function Get-Packages-From-Source-Links {
                 }
             }
         } catch {
-            $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to find packages for $extName v$extVersion"; exception = $_ }
+            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to find packages for $extName v$extVersion"; exception = $_ }
         }
     }
 
@@ -104,7 +104,7 @@ function Get-Extension-Links-From-URL {
 
     try {
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
-            Filter-Extension-Links-From-URL -extName $extName
+            Select-Extension-Links-From-URL -extName $extName
         }
     } catch {
         Write-Host -Object "`nExtension '$extName' not found, Loading matching extensions..."
@@ -159,7 +159,7 @@ function Get-Extension-Links-From-URL {
         $extName = $chosenItem.href -replace '/package/', ''
         Write-Host -Object "`nLoading links for '$extName'..."
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
-            Filter-Extension-Links-From-URL -extName $extName
+            Select-Extension-Links-From-URL -extName $extName
         }
     }
 

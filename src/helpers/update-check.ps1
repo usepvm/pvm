@@ -2,7 +2,7 @@
 function Get-Last-Update-Check-Timestamp {
     try {
         $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
-        if (Is-File-Exists -path $timestampFile) {
+        if (Test-File-Exists -path $timestampFile) {
             return [DateTime](Get-Content -Path $timestampFile)
         }
     } catch {
@@ -13,7 +13,7 @@ function Get-Last-Update-Check-Timestamp {
 function Set-Last-Update-Check-Timestamp {
     try {
         $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
-        $null = Make-Directory -path $PVMConfig.paths.cache
+        $null = New-Directory -path $PVMConfig.paths.cache
         Set-Content -Path $timestampFile -Value (Get-Date)
         return 0
     } catch {
@@ -21,7 +21,7 @@ function Set-Last-Update-Check-Timestamp {
     }
 }
 
-function Should-Check-For-Updates {
+function Test-Should-Check-For-Updates {
     if (-not $PVMConfig.env.ENABLE_UPDATE_CHECK) {
         return $false
     }
@@ -35,8 +35,8 @@ function Should-Check-For-Updates {
     return ($hoursSinceCheck -ge $PVMConfig.env.UPDATE_CHECK_INTERVAL_HOURS)
 }
 
-function Check-For-Updates-Quietly {
-    if (-not (Should-Check-For-Updates)) {
+function Test-Check-For-Updates-Quietly {
+    if (-not (Test-Should-Check-For-Updates)) {
         return 0
     }
 
@@ -50,7 +50,7 @@ function Check-For-Updates-Quietly {
 
         return $result.code
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check for updates"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check for updates"; exception = $_ }
         return -1
     }
 }

@@ -37,7 +37,7 @@ function Get-From-Source {
 
         return $fetchedVersionsGrouped
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch PHP versions from source"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch PHP versions from source"; exception = $_ }
         return @{}
     }
 }
@@ -56,7 +56,7 @@ function Get-PHP-List-To-Install {
 
         return $fetchedVersionsGrouped
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get fetch PHP versions"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get fetch PHP versions"; exception = $_ }
         return @{}
     }
 }
@@ -121,12 +121,12 @@ function Get-Available-PHP-Versions {
         Write-Host -Object $msg
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"; exception = $_ }
         return -1
     }
 }
 
-function Display-Installed-PHP-Versions {
+function Show-Installed-PHP-Versions {
     param ($term = $null, $arch = $null, $buildType = $null)
 
     try {
@@ -163,7 +163,7 @@ function Display-Installed-PHP-Versions {
                 if ($_.BuildType) {
                     $metaData += $_.BuildType
                 }
-                if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
+                if (Test-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
                     $isCurrent = '(Current)'
                 }
                 $versionNumber = "$versionNumber ".PadRight($maxNameLength, '.')
@@ -172,7 +172,7 @@ function Display-Installed-PHP-Versions {
         }
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display installed PHP versions"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display installed PHP versions"; exception = $_ }
         return -1
     }
 }
@@ -183,7 +183,7 @@ function Get-PHP-Versions-List {
     if ($available) {
         $result = Get-Available-PHP-Versions -term $term -arch $arch -buildType $buildType
     } else {
-        $result = Display-Installed-PHP-Versions -term $term -arch $arch -buildType $buildType
+        $result = Show-Installed-PHP-Versions -term $term -arch $arch -buildType $buildType
     }
 
     return $result

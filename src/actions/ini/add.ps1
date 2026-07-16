@@ -62,7 +62,7 @@ function Get-XDebug-FROM-URL {
 
         return $formattedList
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch xdebug versions from $url"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch xdebug versions from $url"; exception = $_ }
         return @()
     }
 }
@@ -171,7 +171,7 @@ function Install-XDebug-Extension {
         $phpPath = ($iniPath | Split-Path -Parent)
 
         if (-not $skipConfirmation) {
-            if (Is-File-Exists -path "$phpPath\ext\$($chosenItem.fileName)") {
+            if (Test-File-Exists -path "$phpPath\ext\$($chosenItem.fileName)") {
                 $response = Read-Host -Prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
                 $response = $response.Trim()
                 if ($response -ne 'y' -and $response -ne 'Y') {
@@ -207,7 +207,7 @@ function Install-XDebug-Extension {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install extension 'xdebug'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install extension 'xdebug'"; exception = $_ }
         return -1
     }
 }
@@ -216,7 +216,7 @@ function Add-Missing-PHPExtension-To-Ini {
     param ($iniPath, $extFileName, $enable = $true)
 
     try {
-        if (Is-File-Not-Exists -path $iniPath) {
+        if (Test-File-Not-Exists -path $iniPath) {
             Write-Host -Object "`nphp.ini file not found: $iniPath" -ForegroundColor DarkYellow
             return -1
         }
@@ -226,12 +226,12 @@ function Add-Missing-PHPExtension-To-Ini {
         $phpDirectory = Split-Path -Path $iniPath -Parent
         $extDirectory = "$phpDirectory\ext"
 
-        if (Is-Directory-Not-Exists -path $extDirectory) {
+        if (Test-Directory-Not-Exists -path $extDirectory) {
             Write-Host -Object "`nExtensions directory not found: $extDirectory" -ForegroundColor DarkYellow
             return -1
         }
 
-        if (Is-File-Not-Exists -path "$extDirectory\$extFileName") {
+        if (Test-File-Not-Exists -path "$extDirectory\$extFileName") {
             Write-Host -Object "`nExtension file not found: $extFileName" -ForegroundColor DarkYellow
             return -1
         }
@@ -256,7 +256,7 @@ function Add-Missing-PHPExtension-To-Ini {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to add extension '$extFileName'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to add extension '$extFileName'"; exception = $_ }
         return -1
     }
 }
@@ -349,7 +349,7 @@ function Install-Extension {
         $null = Get-Web-Response -uri $chosenItem.href -outFile $PVMConfig.paths.php
         $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip", '').Trim()
         $extractPath = "$($PVMConfig.paths.storage)\php\$fileNamePath"
-        Extract-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
+        Expand-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
         $files = Get-ChildItem -Path $extractPath
         $extFile = $files | Where-Object {
             ($_.Name -match "^php_$extName.*\.dll$")
@@ -362,7 +362,7 @@ function Install-Extension {
         $phpPath = ($iniPath | Split-Path -Parent)
 
         if (-not $skipConfirmation) {
-            if (Is-File-Exists -path "$phpPath\ext\$($extFile.Name)") {
+            if (Test-File-Exists -path "$phpPath\ext\$($extFile.Name)") {
                 $response = Read-Host -Prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
                 $response = $response.Trim()
                 if ($response -ne 'y' -and $response -ne 'Y') {
@@ -384,7 +384,7 @@ function Install-Extension {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install extension '$extName'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install extension '$extName'"; exception = $_ }
         return -1
     }
 }
@@ -409,7 +409,7 @@ function Install-IniExtension {
 
         return $overallCode
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install '$($extNames -join ', ')'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install '$($extNames -join ', ')'"; exception = $_ }
         return -1
     }
 }

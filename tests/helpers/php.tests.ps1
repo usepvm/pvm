@@ -151,8 +151,8 @@ Describe "Get-Installed-PHP-Versions" {
         It "Should return sorted PHP versions" {
             $script:STORAGE_PATH = 'C:\mock\path'
             $script:LOG_ERROR_PATH = 'C:\mock\error'
-            Mock Cache-Data { return 0 }
-            Mock Can-Use-Cache { return $false }
+            Mock Save-Cached-Data { return 0 }
+            Mock Test-Can-Use-Cache { return $false }
             Mock Get-Installed-PHP-Versions-From-Disk {
                 return @(
                     @{version = '5.6'; arch = 'x64'; buildType = 'nts'}
@@ -173,7 +173,7 @@ Describe "Get-Installed-PHP-Versions" {
         }
 
         It "Should return empty array when no PHP versions are found" {
-            Mock Can-Use-Cache { return $false }
+            Mock Test-Can-Use-Cache { return $false }
             Mock Get-Installed-PHP-Versions-From-Disk { return @() }
 
             $result = Get-Installed-PHP-Versions
@@ -181,8 +181,8 @@ Describe "Get-Installed-PHP-Versions" {
         }
 
         It "Should handle single digit versions" {
-            Mock Cache-Data { return 0 }
-            Mock Can-Use-Cache { return $false }
+            Mock Save-Cached-Data { return 0 }
+            Mock Test-Can-Use-Cache { return $false }
             Mock Get-Installed-PHP-Versions-From-Disk {
                 return @(
                     @{version = '7.4'; arch = 'x64'; buildType = 'nts'}
@@ -237,12 +237,12 @@ Describe "Get-Installed-PHP-Versions" {
     Context "When exceptions occur" {
         It "Should return empty array and log error when Get-Installed-PHP-Versions-From-Disk throws exception" {
             Mock Get-OrUpdateCache { throw 'Test exception' }
-            Mock Log-Data { return 0 }
+            Mock Add-LogEntry { return 0 }
 
             $result = Get-Installed-PHP-Versions
             $result.Count | Should -Be 0
 
-            Should -Invoke Log-Data -Exactly 1 -ParameterFilter {
+            Should -Invoke Add-LogEntry -Exactly 1 -ParameterFilter {
                 $data.header -eq 'Get-Installed-PHP-Versions - Failed to retrieve installed PHP versions'
             }
         }
@@ -359,7 +359,7 @@ Describe "Get-Matching-PHP-Versions" {
             Mock Get-Installed-PHP-Versions {
                 return @('php7.4', 'php8.0', 'php8.1')
             }
-            Mock Log-Data { return 0 }
+            Mock Add-LogEntry { return 0 }
 
             $result = Get-Matching-PHP-Versions -version '9'
             $result.Count | Should -Be 0
@@ -369,19 +369,19 @@ Describe "Get-Matching-PHP-Versions" {
     Context "When exceptions occur" {
         It "Should return null and log error when Get-Installed-PHP-Versions throws exception" {
             Mock Get-Installed-PHP-Versions { throw 'Test exception' }
-            Mock Log-Data { return 0 }
+            Mock Add-LogEntry { return 0 }
 
             $result = Get-Matching-PHP-Versions -version '8.1'
             $result | Should -Be $null
 
-            Should -Invoke Log-Data -Exactly 1 -ParameterFilter {
+            Should -Invoke Add-LogEntry -Exactly 1 -ParameterFilter {
                 $data.header -eq 'Get-Matching-PHP-Versions - Failed to check if PHP version 8.1 is installed'
             }
         }
     }
 }
 
-Describe "Is-PHP-Version-Installed" {
+Describe "Test-PHP-Version-Installed" {
     Context "When version exists" {
         It "Should return true for installed version" {
             Mock Get-Matching-PHP-Versions {
@@ -393,7 +393,7 @@ Describe "Is-PHP-Version-Installed" {
                 )
             }
 
-            $result = Is-PHP-Version-Installed -version @{version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+            $result = Test-PHP-Version-Installed -version @{version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
             $result | Should -Be $true
         }
 
@@ -406,7 +406,7 @@ Describe "Is-PHP-Version-Installed" {
                 )
             }
 
-            $result = Is-PHP-Version-Installed -version @{version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+            $result = Test-PHP-Version-Installed -version @{version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
             $result | Should -Be $null
         }
 
@@ -415,7 +415,7 @@ Describe "Is-PHP-Version-Installed" {
                 return @()
             }
 
-            $result = Is-PHP-Version-Installed -version '9.0'
+            $result = Test-PHP-Version-Installed -version '9.0'
             $result | Should -Be $null
         }
     }
@@ -423,19 +423,19 @@ Describe "Is-PHP-Version-Installed" {
     Context "When exceptions occur" {
         It "Should return false and log error when Get-Matching-PHP-Versions throws exception" {
             Mock Get-Matching-PHP-Versions { throw 'Test exception' }
-            Mock Log-Data { return 0 }
+            Mock Add-LogEntry { return 0 }
 
-            $result = Is-PHP-Version-Installed -version '8.1'
+            $result = Test-PHP-Version-Installed -version '8.1'
             $result | Should -Be $false
 
-            Should -Invoke Log-Data -Exactly 1 -ParameterFilter {
-                $data.header -eq 'Is-PHP-Version-Installed - Failed to check if PHP version 8.1 is installed'
+            Should -Invoke Add-LogEntry -Exactly 1 -ParameterFilter {
+                $data.header -eq 'Test-PHP-Version-Installed - Failed to check if PHP version 8.1 is installed'
             }
         }
     }
 }
 
-Describe "Refresh-Installed-PHP-Versions-Cache" {
+Describe "Update-Installed-PHP-Versions-Cache" {
     Context "When cache is successfully refreshed" {
         It "Should return 0 on success" {
             Mock Get-Installed-PHP-Versions-From-Disk {
@@ -444,9 +444,9 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
                     @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
                 )
             }
-            Mock Cache-Data { return 0 }
+            Mock Save-Cached-Data { return 0 }
 
-            $result = Refresh-Installed-PHP-Versions-Cache
+            $result = Update-Installed-PHP-Versions-Cache
             $result | Should -Be 0
         }
 
@@ -456,24 +456,24 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
                     @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
                 )
             }
-            Mock Cache-Data { return 0 }
+            Mock Save-Cached-Data { return 0 }
 
-            $null = Refresh-Installed-PHP-Versions-Cache
+            $null = Update-Installed-PHP-Versions-Cache
 
             Should -Invoke Get-Installed-PHP-Versions-From-Disk -Exactly 1
         }
 
-        It "Should call Cache-Data with installed_php_versions file and depth 1" {
+        It "Should call Save-Cached-Data with installed_php_versions file and depth 1" {
             Mock Get-Installed-PHP-Versions-From-Disk {
                 return @(
                     @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
                 )
             }
-            Mock Cache-Data { return 0 }
+            Mock Save-Cached-Data { return 0 }
 
-            $null = Refresh-Installed-PHP-Versions-Cache
+            $null = Update-Installed-PHP-Versions-Cache
 
-            Should -Invoke Cache-Data -Exactly 1 -ParameterFilter {
+            Should -Invoke Save-Cached-Data -Exactly 1 -ParameterFilter {
                 $cacheFileName -eq 'installed_php_versions' -and $depth -eq 1
             }
         }
@@ -484,56 +484,56 @@ Describe "Refresh-Installed-PHP-Versions-Cache" {
                 @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
             )
             Mock Get-Installed-PHP-Versions-From-Disk { return $mockVersions }
-            Mock Cache-Data { return 0 }
+            Mock Save-Cached-Data { return 0 }
 
-            $null = Refresh-Installed-PHP-Versions-Cache
+            $null = Update-Installed-PHP-Versions-Cache
 
-            Should -Invoke Cache-Data -Exactly 1 -ParameterFilter {
+            Should -Invoke Save-Cached-Data -Exactly 1 -ParameterFilter {
                 $data.Count -eq 2 -and $data[0].Version -eq '7.4'
             }
         }
     }
 
     Context "When exceptions occur" {
-        It "Should return -1 when Cache-Data returns -1" {
+        It "Should return -1 when Save-Cached-Data returns -1" {
             Mock Get-Installed-PHP-Versions-From-Disk {
                 return @(
                     @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
                 )
             }
-            Mock Cache-Data { return -1 }
+            Mock Save-Cached-Data { return -1 }
 
-            $result = Refresh-Installed-PHP-Versions-Cache
+            $result = Update-Installed-PHP-Versions-Cache
             $result | Should -Be -1
         }
 
         It "Should return -1 on exception" {
             Mock Get-Installed-PHP-Versions-From-Disk { throw 'Test exception' }
-            Mock Log-Data { return 0 }
+            Mock Add-LogEntry { return 0 }
 
-            $result = Refresh-Installed-PHP-Versions-Cache
+            $result = Update-Installed-PHP-Versions-Cache
             $result | Should -Be -1
         }
 
         It "Should log error when exception occurs" {
             Mock Get-Installed-PHP-Versions-From-Disk { throw 'Test exception' }
-            Mock Log-Data { return 0 }
+            Mock Add-LogEntry { return 0 }
 
-            $null = Refresh-Installed-PHP-Versions-Cache
+            $null = Update-Installed-PHP-Versions-Cache
 
-            Should -Invoke Log-Data -Exactly 1 -ParameterFilter {
-                $data.header -eq 'Refresh-Installed-PHP-Versions-Cache - Failed to refresh installed PHP versions cache'
+            Should -Invoke Add-LogEntry -Exactly 1 -ParameterFilter {
+                $data.header -eq 'Update-Installed-PHP-Versions-Cache - Failed to refresh installed PHP versions cache'
             }
         }
 
-        It "Should return -1 when Cache-Data throws exception" {
+        It "Should return -1 when Save-Cached-Data throws exception" {
             Mock Get-Installed-PHP-Versions-From-Disk {
                 return @(@{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'})
             }
-            Mock Cache-Data { throw 'Cache exception' }
-            Mock Log-Data { return 0 }
+            Mock Save-Cached-Data { throw 'Cache exception' }
+            Mock Add-LogEntry { return 0 }
 
-            $result = Refresh-Installed-PHP-Versions-Cache
+            $result = Update-Installed-PHP-Versions-Cache
             $result | Should -Be -1
         }
     }
@@ -654,7 +654,7 @@ Describe "Get-Installed-PHP-Versions-From-Disk" {
     }
 }
 
-Describe "Is-Two-PHP-Versions-Equal" {
+Describe "Test-Two-PHP-Versions-Equal" {
     Context "When both versions are equal" {
         It "Returns true when all properties match" {
             $version1 = @{
@@ -668,7 +668,7 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 buildType = 'NTS'
             }
 
-            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result = Test-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $true
         }
 
@@ -684,7 +684,7 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 buildType = 'TS'
             }
 
-            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result = Test-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $true
         }
     }
@@ -702,7 +702,7 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 buildType = 'NTS'
             }
 
-            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result = Test-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $false
         }
 
@@ -718,7 +718,7 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 buildType = 'NTS'
             }
 
-            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result = Test-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $false
         }
 
@@ -734,7 +734,7 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 buildType = 'TS'
             }
 
-            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result = Test-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $false
         }
     }
@@ -747,7 +747,7 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 buildType = 'NTS'
             }
 
-            $result = Is-Two-PHP-Versions-Equal -version1 $null -version2 $version2
+            $result = Test-Two-PHP-Versions-Equal -version1 $null -version2 $version2
             $result | Should -Be $false
         }
 
@@ -758,12 +758,12 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 buildType = 'NTS'
             }
 
-            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $null
+            $result = Test-Two-PHP-Versions-Equal -version1 $version1 -version2 $null
             $result | Should -Be $false
         }
 
         It "Returns false when both versions are null" {
-            $result = Is-Two-PHP-Versions-Equal -version1 $null -version2 $null
+            $result = Test-Two-PHP-Versions-Equal -version1 $null -version2 $null
             $result | Should -Be $false
         }
 
@@ -779,7 +779,7 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 buildType = 'NTS'
             }
 
-            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result = Test-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $false
         }
     }
@@ -799,7 +799,7 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 buildType = 'NTS'
             }
 
-            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result = Test-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $true
         }
 
@@ -815,7 +815,7 @@ Describe "Is-Two-PHP-Versions-Equal" {
                 buildType = 'NTS'
             }
 
-            $result = Is-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
+            $result = Test-Two-PHP-Versions-Equal -version1 $version1 -version2 $version2
             $result | Should -Be $false
         }
     }
@@ -925,7 +925,7 @@ Describe "Get-BinaryArchitecture-From-DLL" {
     }
 
     It "Returns Unknown when file does not exist" {
-        Mock Is-File-Not-Exists { return $true }
+        Mock Test-File-Not-Exists { return $true }
 
         $result = Get-BinaryArchitecture-From-DLL -path "$TEST_DRIVE\php\php8.dll"
 
@@ -976,7 +976,7 @@ Describe "Get-Zend-Extensions-List" {
     }
 
     It "Returns default value when exception is thrown" {
-        Mock Is-File-Exists { return $true }
+        Mock Test-File-Exists { return $true }
         Mock Get-Content { throw 'Test exception' }
         $result = Get-Zend-Extensions-List
         $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
@@ -985,7 +985,7 @@ Describe "Get-Zend-Extensions-List" {
 
 Describe "Get-Zend-Extensions-Info" {
     It "Returns empty list when ext directory does not exist" {
-        Mock Is-Directory-Not-Exists { return $true }
+        Mock Test-Directory-Not-Exists { return $true }
 
         $result = Get-Zend-Extensions-Info -phpPath $testPhpPath
         $result.Count | Should -Be 0

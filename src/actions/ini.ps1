@@ -13,7 +13,7 @@ function Invoke-IniAction {
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
-        if (Is-File-Not-Exists -path $iniPath) {
+        if (Test-File-Not-Exists -path $iniPath) {
             Write-Host -Object "php.ini not found at: $($currentPhpVersion.path)"
             return -1
         }
@@ -117,7 +117,7 @@ function Invoke-IniAction {
 
         return $exitCode
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to invoke ini action '$action'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to invoke ini action '$action'"; exception = $_ }
         Write-Host -Object "`nFailed to perform action '$action' on ini settings." -ForegroundColor Red
         return -1
     }

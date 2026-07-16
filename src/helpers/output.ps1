@@ -1,5 +1,5 @@
 
-function Display-Msg-By-ExitCode {
+function Show-Msg-By-ExitCode {
     param ($result, $message = $null)
 
     try {
@@ -21,16 +21,16 @@ function Display-Msg-By-ExitCode {
             Write-Host -Object "`n$($result.message)" -ForegroundColor $result.color
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
     }
 }
 
-function Log-Data {
+function Add-LogEntry {
     param ($data)
 
     try {
         $logPath = if ($data.logPath) { $data.logPath } else { $PVMConfig.paths.logError }
-        $created = Make-Directory -path (Split-Path -Path $logPath)
+        $created = New-Directory -path (Split-Path -Path $logPath)
         if ($created -ne 0) {
             Write-Host -Object "Failed to create directory $(Split-Path -Path $logPath)"
             return -1
@@ -75,7 +75,7 @@ function Format-Seconds {
 
         return '{0:D2}:{1:D2}' -f $minutes, $seconds
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to format seconds"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to format seconds"; exception = $_ }
         return -1
     }
 }

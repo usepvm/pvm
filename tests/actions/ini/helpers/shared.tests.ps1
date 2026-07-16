@@ -61,12 +61,12 @@ Describe "Get-All-PHPExtensionsStatus" {
     BeforeEach {
         Reset-Ini-Content
         Mock Backup-IniFile {}
-        Mock Is-Directory-Exists { return $true }
+        Mock Test-Directory-Exists { return $true }
         Mock Get-Zend-Extensions-List { return @('xdebug', 'opcache') }
     }
 
     It "Returns empty when ext directory does not exist" {
-        Mock Is-Directory-Exists { return $false }
+        Mock Test-Directory-Exists { return $false }
         $res = Get-All-PHPExtensionsStatus -iniPath $testIniPath
         $res | Should -Be @()
     }

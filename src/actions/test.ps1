@@ -161,7 +161,7 @@ function Get-Tests-Map {
     return $testsMap
 }
 
-function Build-Pester-Config {
+function Initialize-Pester-Config {
     param ($options)
 
     $config = New-PesterConfiguration
@@ -226,7 +226,7 @@ function Format-Test-Result-Message {
     return 'Passed : {0,-4} | Failed : {1,-3} | Duration : {2,-5}' -f $testResult.PassedCount, $testResult.FailedCount, $durationText
 }
 
-function Run-Test-File {
+function Invoke-Test-File {
     param ($config, $file = $null, $options = $null, $separatorWidth = 60, $testsMap = $null)
 
     $testResultData = @{ passedCount = 0; failedCount = 0; duration = 0; coverageRaw = $null }
@@ -234,7 +234,7 @@ function Run-Test-File {
     $relativeFilePath = $file.FullName -replace [regex]::Escape("$root\tests\"), ''
     $sortedName = if ($options -and $options.groupBy -and $options.groupBy -eq 'folder') { $file.Name } else { $relativeFilePath }
 
-    if (Is-File-Not-Exists -path $file.FullName) {
+    if (Test-File-Not-Exists -path $file.FullName) {
         return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = 'File not found!'; testResultData = $testResultData }
     }
 
@@ -274,12 +274,12 @@ function Run-Test-File {
 
         return @{ code = $code; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = $message; testResultData = $testResultData }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"; exception = $_ }
         return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = 'Failed to run test, check log.'; testResultData = $testResultData }
     }
 }
 
-function Prepare-Tests {
+function Initialize-Tests {
     param ($testsNames = $null, $options = $null, $exclude = $null, $pesterVersion = $null)
 
     if ($null -ne $exclude) {
@@ -288,7 +288,7 @@ function Prepare-Tests {
 
     $tests = Get-Tests-Files -testsNames $testsNames
 
-    return Run-Tests -tests $tests -options $options -pesterVersion $pesterVersion
+    return Invoke-Tests -tests $tests -options $options -pesterVersion $pesterVersion
 }
 
 function Get-Coverage-Group-Name {
@@ -431,7 +431,7 @@ function Write-Tests-Summary {
     }
 }
 
-function Run-Tests {
+function Invoke-Tests {
     param ($tests = $null, $options = $null, $pesterVersion = $null)
 
     try {
@@ -456,7 +456,7 @@ function Run-Tests {
             return -1
         }
 
-        $config = Build-Pester-Config -options $options
+        $config = Initialize-Pester-Config -options $options
         $separatorWidth = Get-Separator-Width -tests $tests
         $root = Get-PVMRootDirectory
         $testsMap = if ($options.coverage) { Get-Tests-Map -root $root } else { $null }
@@ -466,7 +466,7 @@ function Run-Tests {
         Write-Host -Object "`nRunning tests with verbosity: $($options.verbosity)" -ForegroundColor Cyan
 
         $testSummary = $tests | ForEach-Object {
-            Run-Test-File -config $config -file $_ -options $options -separatorWidth $separatorWidth -testsMap $testsMap
+            Invoke-Test-File -config $config -file $_ -options $options -separatorWidth $separatorWidth -testsMap $testsMap
         }
 
         $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
@@ -487,7 +487,7 @@ function Run-Tests {
 
         return Write-Tests-Summary -testSummary $testSummary -options $options -maxLineLength $maxLineLength
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
         Write-Host -Object "`nFailed to run tests, check log: $($PVMConfig.paths.logError)" -ForegroundColor DarkYellow
         return -1
     }

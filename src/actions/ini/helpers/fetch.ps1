@@ -81,7 +81,7 @@ function Get-Extension-Matching-Categories {
 
         $page = 1
         $category = $matches[1] -replace '\+', ' '
-        Write-Host -Object "- Checking category '$category'..."
+        Print-Host -message "- Checking category '$category'..."
         do {
             $hasMore = $false
             $result = Get-Extension-Matching-Categories-By-Page -extName $extName -link $_.href -page $page
@@ -107,12 +107,12 @@ function Get-Extension-Links-From-URL {
             Filter-Extension-Links-From-URL -extName $extName
         }
     } catch {
-        Write-Host -Object "`nExtension '$extName' not found, Loading matching extensions..."
+        Print-Host -message "`nExtension '$extName' not found, Loading matching extensions..."
 
         $linksMatchingExtName = Get-Extension-Matching-Categories -extName $extName
 
         if ($linksMatchingExtName.Count -eq 0) {
-            Write-Host -Object "`nExtension '$extName' not found" -ForegroundColor DarkYellow
+            Print-Error -Message "`nExtension '$extName' not found"
             return $null
         }
 
@@ -121,11 +121,11 @@ function Get-Extension-Links-From-URL {
             $extName = $chosenItem.href -replace '/package/', ''
             Write-Host -Object "`nMatching found : '$extName'"
         } else {
-            Write-Host -Object "`nMatching '$extName' extension:"
+            Print-Info -message "`nMatching '$extName' extension:"
             $index = 0
             $linksMatchingExtName | ForEach-Object {
                 $extItem = $_.href -replace '/package/', ''
-                Write-Host -Object "[$index] $extItem"
+                Print-Host -message "[$index] $extItem"
                 $index++
             }
 
@@ -133,18 +133,18 @@ function Get-Extension-Links-From-URL {
                 $choiceRaw = Read-Host -Prompt "`nInsert the [number] you want to install"
                 $choiceRaw = $choiceRaw.Trim()
                 if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
-                    Write-Host -Object "`nInstallation cancelled"
+                    Write-Gray -message "`nInstallation cancelled"
                     return $null
                 }
 
                 $choice = $null
                 if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Write-Host -Object 'Please enter a valid positive number.' -ForegroundColor Yellow
+                    Print-Warning -message 'Please enter a valid positive number.'
                     continue
                 }
 
                 if ($choice -lt 0 -or $choice -gt $linksMatchingExtName.Length - 1) {
-                    Write-Host -Object "Number must be between 0 and $($linksMatchingExtName.Length - 1)." -ForegroundColor Yellow
+                    Print-Warning -message "Number must be between 0 and $($linksMatchingExtName.Length - 1)."
                     continue
                 }
 
@@ -153,13 +153,13 @@ function Get-Extension-Links-From-URL {
 
             $chosenItem = $linksMatchingExtName[$choice]
             if (-not $chosenItem) {
-                Write-Host -Object "`nYou chose the wrong index: $choice" -ForegroundColor DarkYellow
+                Print-Error -Message "`nYou chose the wrong index: $choice"
                 return $null
             }
         }
 
         $extName = $chosenItem.href -replace '/package/', ''
-        Write-Host -Object "`nLoading links for '$extName'..."
+        Print-Host -message "`nLoading links for '$extName'..."
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
             Filter-Extension-Links-From-URL -extName $extName
         }
@@ -178,6 +178,7 @@ function Get-Extension-From-URL {
 
     if (($null -eq $linksObj) -or ($linksObj.Count -eq 0) -or ($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
         $extName = if ($linksObj -and $linksObj.extName) { $linksObj.extName } else { $extName }
+        Print-Error -Message "`nNo versions found for $extName"
         return @{ extName = $extName; data = $null }
     }
 

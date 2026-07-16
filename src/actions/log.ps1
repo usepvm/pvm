@@ -74,19 +74,19 @@ function Show-Log {
 
     try {
         if ($pageSize -notmatch '^-?\d+$') {
-            Write-Host -Object "`nInvalid page size: $pageSize" -ForegroundColor Red
+            Print-Error -message "`nInvalid page size: $pageSize"
             return -1
         }
 
         $pageSize = [int]$pageSize
         if ($pageSize -le 0) {
-            Write-Host -Object "`nPage size must be a positive integer." -ForegroundColor Red
+            Print-Error -message "`nPage size must be a positive integer."
             return -1
         }
 
         # Check if log file exists
         if (Is-File-Not-Exists -path $PVMConfig.paths.logError) {
-            Write-Host -Object "`nLog file not found: $($PVMConfig.paths.logError)" -ForegroundColor Red
+            Print-Error -message "`nLog file not found: $($PVMConfig.paths.logError)"
             return -1
         }
 
@@ -152,7 +152,7 @@ function Show-Log {
         $reversedEntries = $parsedEntries[-1.. - ($parsedEntries.Length)]
 
         if ($reversedEntries.Count -eq 0) {
-            Write-Host -Object "`nNo log entries found." -ForegroundColor Yellow
+            Print-Warning -message "`nNo log entries found."
             return -1
         }
 
@@ -165,44 +165,44 @@ function Show-Log {
             Clear-Host
 
             # Show header
-            Write-Host -Object "`n=== PVM Log Viewer ===" -ForegroundColor Cyan
-            Write-Host -Object "`nShowing entries $($currentIndex + 1)-$([Math]::Min($currentIndex + $PageSize, $totalEntries)) of $totalEntries (most recent first)`n" -ForegroundColor Green
+            Print-Info -message "`n=== PVM Log Viewer ==="
+            Print-Header -message "`nShowing entries $($currentIndex + 1)-$([Math]::Min($currentIndex + $PageSize, $totalEntries)) of $totalEntries (most recent first)`n"
 
             # Display current page of entries
             $endIndex = [Math]::Min($currentIndex + $PageSize - 1, $totalEntries - 1)
 
-            Write-Host -Object ('-' * 80) -ForegroundColor DarkGray
+            Print-Debug -message ('-' * 80)
             for ($i = $currentIndex; $i -le $endIndex; $i++) {
                 $entry = $reversedEntries[$i]
 
                 # Display structured error format
-                Write-Host -Object 'Header  : ' -NoNewline
-                Write-Host -Object "$($entry.Header)" -ForegroundColor White
+                Print-Host -message 'Header  : ' -noNewLine
+                Print-Value -message "$($entry.Header)"
 
-                Write-Host -Object 'Message : ' -NoNewline
+                Print-Host -message 'Message : ' -noNewLine
                 # Handle multi-line error messages with proper indentation (23 spaces to align with "Message :")
                 $errorLines = $entry.ErrorMessage -split "`n"
                 foreach ($errorLine in $errorLines) {
                     if ($errorLine.Trim() -ne '') {
-                        Write-Host -Object "$($errorLine)" -ForegroundColor White
+                        Print-Value -message "$($errorLine)"
                     }
                 }
 
                 # Display entry with nice formatting
-                Write-Host -Object 'When    : ' -NoNewline
-                Write-Host -Object "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -NoNewline -ForegroundColor White
-                Write-Host -Object "($($entry.NiceTime.Relative))" -ForegroundColor DarkGray
+                Print-Host -message 'When    : ' -noNewLine
+                Print-Value -message "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -noNewLine
+                Print-Debug -message "($($entry.NiceTime.Relative))"
 
-                Write-Host -Object 'Where   : ' -NoNewline
-                Write-Host -Object "$($entry.PositionDetail)" -ForegroundColor White
+                Print-Host -message 'Where   : ' -noNewLine
+                Print-Value -message "$($entry.PositionDetail)"
 
-                Write-Host -Object ('-' * 80) -ForegroundColor DarkGray
+                Print-Debug -message ('-' * 80)
             }
 
             $currentIndex += $PageSize
             # Show navigation prompt if there are more entries
             if ($currentIndex -lt $totalEntries) {
-                Write-Host -Object "`nPress Left/Up arrow for previous page, Right/Down arrow, [Enter] or [Space] for next page, [Q] to quit: " -NoNewline -ForegroundColor Yellow
+                Print-Warning -message "`nPress Left/Up arrow for previous page, Right/Down arrow, [Enter] or [Space] for next page, [Q] to quit: " -noNewLine
 
                 $key = Get-ConsoleKey
 
@@ -213,7 +213,7 @@ function Show-Log {
                     default { $currentIndex -= $PageSize }
                 }
             } else {
-                Write-Host -Object 'End of log reached. Press Left/Up arrow to go back or any other key to exit...' -ForegroundColor Green
+                Print-Warning -Object 'End of log reached. Press Left/Up arrow to go back or any other key to exit...'
                 $key = Get-ConsoleKey
                 if ($key.Key -in @('LeftArrow', 'UpArrow')) {
                     # Go back one page from the end

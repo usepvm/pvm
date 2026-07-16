@@ -6,14 +6,14 @@ function Display-Extensions-States {
     $enabledCount = @($extensions | Where-Object { $_.enabled }).Count
     $disabledCount = $extensions.Count - $enabledCount
 
-    Write-Host -Object "`n- Total Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
+    Print-Host -message "`n- Total Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
 }
 
 function Display-Installed-Extensions {
     param ($extensions)
 
     if ($extensions.Count -eq 0) {
-        Write-Host -Object '  No extensions found.' -ForegroundColor DarkGray
+        Print-Error -message '  No extensions found.'
         return
     }
 
@@ -32,8 +32,8 @@ function Display-Installed-Extensions {
             $status = "$status - $($_.comment)"
         }
 
-        Write-Host -Object "$label " -NoNewline
-        Write-Host -Object $status -ForegroundColor $color
+        Print-Host -message "$label " -noNewLine
+        Write-Color -message $status -foreColor $color
     }
 }
 
@@ -44,14 +44,14 @@ function Display-Settings-States {
     $enabledCount = @($settings | Where-Object { $_.enabled }).Count
     $disabledCount = $settings.Count - $enabledCount
 
-    Write-Host -Object "`n- Total Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
+    Print-Host -message "`n- Total Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
 }
 
 function Display-Settings {
     param ($settings)
 
     if ($settings.Count -eq 0) {
-        Write-Host -Object '  No settings found.' -ForegroundColor DarkGray
+        Print-Error -message '  No settings found.'
         return
     }
 
@@ -71,7 +71,7 @@ function Display-Settings {
             $status = "$status - $($_.comment)"
         }
 
-        Write-Host -Object "$line $value" -NoNewline
-        Write-Host -Object $status -ForegroundColor $color
+        Print-Host -message "$line $value" -noNewLine
+        Write-Color -message $status -foreColor $color
     }
 }

@@ -31,7 +31,7 @@ function Get-From-Source {
 
         if ($fetchedVersionsGrouped.Count -eq 0 -or
             ($fetchedVersionsGrouped['Archives'].Count -eq 0 -and $fetchedVersionsGrouped['Releases'].Count -eq 0)) {
-            Write-Host -Object "`nNo PHP versions found in the source."
+            Print-Error -message "`nNo PHP versions found in the source."
             return @{}
         }
 
@@ -65,12 +65,12 @@ function Get-Available-PHP-Versions {
     param ($term = $null, $arch = $null, $buildType = $null)
 
     try {
-        Write-Host -Object "`nLoading available PHP versions..."
+        Print-Host -message "`nLoading available PHP versions..."
 
         $fetchedVersionsGrouped = Get-PHP-List-To-Install
 
         if ($fetchedVersionsGrouped.Count -eq 0) {
-            Write-Host -Object "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
+            Print-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
             return -1
         }
 
@@ -92,12 +92,12 @@ function Get-Available-PHP-Versions {
         }
 
         if ($fetchedVersionsGroupedPartialList.Count -eq 0) {
-            Write-Host -Object "`nNo PHP versions found matching '$term'"
+            Print-Error -message "`nNo PHP versions found matching '$term'"
             return -1
         }
 
-        Write-Host -Object "`nAvailable Versions"
-        Write-Host -Object '------------------'
+        Print-Info -message "`nAvailable Versions"
+        Write-Gray -message '------------------'
 
         $fetchedVersionsGroupedPartialList.GetEnumerator() |
             Sort-Object Key |
@@ -107,18 +107,18 @@ function Get-Available-PHP-Versions {
                 if ($fetchedVersionsGroupe.Length -eq 0) {
                     return
                 }
-                Write-Host -Object "`n$key`n"
+                Print-Host -message "`n$key`n"
                 $maxNameLength = ($fetchedVersionsGroupe.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $fetchedVersionsGroupe | ForEach-Object {
                     $versionNumber = "$($_.Version) ".PadRight($maxNameLength, '.')
-                    Write-Host -Object "  $versionNumber $($_.Arch) $($_.BuildType)"
+                    Print-Host -message "  $versionNumber $($_.Arch) $($_.BuildType)"
                 }
             }
 
         $msg = "`nThis is a partial list. For a complete list, visit:"
         $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
-        Write-Host -Object $msg
+        Print-Host -message $msg
         return 0
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"; exception = $_ }
@@ -134,20 +134,20 @@ function Display-Installed-PHP-Versions {
         $installedPhp = Get-Installed-PHP-Versions -arch $arch -buildType $buildType
 
         if ($installedPhp.Count -eq 0) {
-            Write-Host -Object "`nNo PHP versions found"
+            Print-Error -message "`nNo PHP versions found"
             return -1
         }
 
         if ($term) {
             $installedPhp = $installedPhp | Where-Object { $_.Version -like "$term*" }
             if ($installedPhp.Count -eq 0) {
-                Write-Host -Object "`nNo PHP versions found matching '$term'"
+                Print-Error -message "`nNo PHP versions found matching '$term'"
                 return -1
             }
         }
 
-        Write-Host -Object "`nInstalled Versions"
-        Write-Host -Object '------------------'
+        Print-Info -message "`nInstalled Versions"
+        Write-Gray -message '------------------'
         $duplicates = @()
         $maxNameLength = ($installedPhp.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedPhp | ForEach-Object {
@@ -167,7 +167,7 @@ function Display-Installed-PHP-Versions {
                     $isCurrent = '(Current)'
                 }
                 $versionNumber = "$versionNumber ".PadRight($maxNameLength, '.')
-                Write-Host -Object " $versionNumber $metaData $isCurrent"
+                Print-Host -message " $versionNumber $metaData $isCurrent"
             }
         }
         return 0

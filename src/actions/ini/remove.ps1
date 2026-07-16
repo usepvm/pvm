@@ -54,7 +54,7 @@ function Uninstall-Extension {
 
     try {
         if ($extNames.Count -eq 0) {
-            Write-Host -Object "`nPlease provide at least one extension name to uninstall"
+            Print-Warning -message "`nPlease provide at least one extension name to uninstall"
             return -1
         }
 
@@ -62,7 +62,7 @@ function Uninstall-Extension {
         $extDirectory = "$phpDirectory\ext"
 
         if (Is-Directory-Not-Exists -path $extDirectory) {
-            Write-Host -Object "`nExtensions directory not found: $extDirectory" -ForegroundColor DarkYellow
+            Print-Error -Message "`nExtensions directory not found: $extDirectory"
             return -1
         }
 
@@ -77,14 +77,14 @@ function Uninstall-Extension {
             }
 
             if ($matchingExtensions.Length -gt 1) {
-                Write-Host -Object "`nMultiple extensions match '$extName':`n" -ForegroundColor Cyan
+                Print-Info -message "`nMultiple extensions match '$extName':`n"
 
                 $maxLineLength = ($matchingExtensions.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0
                 $matchingExtensions | ForEach-Object {
                     $name = "$($_.name) ".PadRight($maxLineLength, '.')
-                    Write-Host -Object "[$index] $name " -NoNewline
-                    Write-Host -Object "$($_.status)" -ForegroundColor $_.color
+                    Print-Host -message "[$index] $name " -noNewLine
+                    Write-Color -message "$($_.status)" -foreColor $_.color
                     $index++
                 }
 
@@ -93,12 +93,12 @@ function Uninstall-Extension {
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                        Write-Host -Object 'Please enter a valid positive number.' -ForegroundColor Yellow
+                        Print-Warning -message 'Please enter a valid positive number.'
                         continue
                     }
 
                     if ($choice -lt 0 -or $choice -gt $matchingExtensions.Length - 1) {
-                        Write-Host -Object "Number must be between 0 and $($matchingExtensions.Length - 1)." -ForegroundColor Yellow
+                        Print-Warning -message "Number must be between 0 and $($matchingExtensions.Length - 1)."
                         continue
                     }
 
@@ -146,10 +146,10 @@ function Uninstall-Extension {
         }
 
         $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        Write-Host -Object "`nResults:"
+        Print-Host -message "`nResults:"
         foreach ($item in $results) {
-            Write-Host -Object "- $($item.name) ".PadRight($maxLineLength, '.') -NoNewline
-            Write-Host -Object " $($item.status)" -ForegroundColor $item.color
+            Print-Host -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
+            Write-Color -message " $($item.status)" -foreColor $item.color
         }
 
         return $overallCode

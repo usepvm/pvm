@@ -19,7 +19,7 @@ function Detect-PHP-VersionFromProject {
                     }
                 }
             } catch {
-                Print-Host -message "`nFailed to parse composer.json: $_"
+                Print-Error -message "`nFailed to parse composer.json: $_"
                 throw $_
             }
         }

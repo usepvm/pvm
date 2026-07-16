@@ -33,7 +33,7 @@ function Invoke-Repair {
 function Invoke-Current {
     $result = Get-Current-PHP-Version
     if (-not $result.version) {
-        Print-Host -message "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
+        Print-Warning -message "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
         return -1
     }
     $text = "`nRunning version: PHP $($result.version)"
@@ -102,7 +102,7 @@ function Invoke-Install {
     } elseif ($version -eq 'latest') {
         $latestVersion = Get-Latest-PHP-Version -arch $arch -buildType $buildType
         if (-not $latestVersion) {
-            Print-Host -message "`nFailed to find the latest PHP version"
+            Print-Error -message "`nFailed to find the latest PHP version"
             return -1
         }
 
@@ -111,7 +111,7 @@ function Invoke-Install {
     }
 
     if (-not $version) {
-        Print-Host -message "`nPlease provide a PHP version to install"
+        Print-Warning -message "`nPlease provide a PHP version to install"
         return -1
     }
 
@@ -126,7 +126,7 @@ function Invoke-Uninstall {
     $version = $arguments[0]
 
     if (-not $version) {
-        Print-Host -message "`nPlease provide a PHP version to uninstall"
+        Print-Warning -message "`nPlease provide a PHP version to uninstall"
         return -1
     }
 
@@ -145,7 +145,7 @@ function Invoke-Use {
     $version = $arguments[0]
 
     if (-not $version) {
-        Print-Host -message "`nPlease provide a PHP version to use"
+        Print-Warning -message "`nPlease provide a PHP version to use"
         return -1
     }
 
@@ -169,7 +169,7 @@ function Invoke-Ini {
 
     $action = $arguments[0]
     if (-not $action) {
-        Print-Host -message "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'list' or 'restore'."
+        Print-Warning -message "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'list' or 'restore'."
         return -1
     }
 
@@ -413,7 +413,7 @@ function Invoke-Cache {
             return (Clear-Cache-Files -skipConfirmation $skipConfirmation)
         }
         default {
-            Print-Warning -message "`nUnknown action '$action'. Use 'list', 'show', 'delete', or 'clear'."
+            Print-Error -message "`nUnknown action '$action'. Use 'list', 'show', 'delete', or 'clear'."
             return -1
         }
     }

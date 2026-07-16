@@ -31,7 +31,7 @@ function Get-From-Source {
 
         if ($fetchedVersionsGrouped.Count -eq 0 -or
             ($fetchedVersionsGrouped['Archives'].Count -eq 0 -and $fetchedVersionsGrouped['Releases'].Count -eq 0)) {
-            Print-Host -message "`nNo PHP versions found in the source."
+            Print-Error -message "`nNo PHP versions found in the source."
             return @{}
         }
 
@@ -70,7 +70,7 @@ function Get-Available-PHP-Versions {
         $fetchedVersionsGrouped = Get-PHP-List-To-Install
 
         if ($fetchedVersionsGrouped.Count -eq 0) {
-            Print-Host -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
+            Print-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
             return -1
         }
 
@@ -92,12 +92,12 @@ function Get-Available-PHP-Versions {
         }
 
         if ($fetchedVersionsGroupedPartialList.Count -eq 0) {
-            Print-Host -message "`nNo PHP versions found matching '$term'"
+            Print-Error -message "`nNo PHP versions found matching '$term'"
             return -1
         }
 
-        Print-Host -message "`nAvailable Versions"
-        Print-Host -message '------------------'
+        Print-Info -message "`nAvailable Versions"
+        Write-Gray -message '------------------'
 
         $fetchedVersionsGroupedPartialList.GetEnumerator() |
             Sort-Object Key |
@@ -134,20 +134,20 @@ function Display-Installed-PHP-Versions {
         $installedPhp = Get-Installed-PHP-Versions -arch $arch -buildType $buildType
 
         if ($installedPhp.Count -eq 0) {
-            Print-Host -message "`nNo PHP versions found"
+            Print-Error -message "`nNo PHP versions found"
             return -1
         }
 
         if ($term) {
             $installedPhp = $installedPhp | Where-Object { $_.Version -like "$term*" }
             if ($installedPhp.Count -eq 0) {
-                Print-Host -message "`nNo PHP versions found matching '$term'"
+                Print-Error -message "`nNo PHP versions found matching '$term'"
                 return -1
             }
         }
 
-        Print-Host -message "`nInstalled Versions"
-        Print-Host -message '------------------'
+        Print-Info -message "`nInstalled Versions"
+        Write-Gray -message '------------------'
         $duplicates = @()
         $maxNameLength = ($installedPhp.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedPhp | ForEach-Object {

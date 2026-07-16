@@ -98,7 +98,7 @@ function Install-XDebug-Extension {
         }
 
         if ($null -eq $xDebugList -or $xDebugList.Count -eq 0) {
-            Print-Host -message "`nNo match was found, check the '$($PVMConfig.paths.logError)' for any potentiel errors"
+            Print-Error -message "`nNo match was found, check the '$($PVMConfig.paths.logError)' for any potentiel errors"
             return -1
         }
 
@@ -153,7 +153,7 @@ function Install-XDebug-Extension {
         $packageIndex = Read-Host -Prompt "`nInsert the [number] you want to install"
         $packageIndex = $packageIndex.Trim()
         if ([string]::IsNullOrWhiteSpace($packageIndex)) {
-            Print-Host -message "`nInstallation cancelled"
+            Write-Gray -message "`nInstallation cancelled"
             return -1
         }
 
@@ -176,7 +176,7 @@ function Install-XDebug-Extension {
                 $response = $response.Trim()
                 if ($response -ne 'y' -and $response -ne 'Y') {
                     Remove-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)"
-                    Print-Host -message "`nInstallation cancelled"
+                    Write-Gray -message "`nInstallation cancelled"
                     return -1
                 }
             }
@@ -329,12 +329,12 @@ function Install-Extension {
                     Print-Host -message " [$($_.index)] $text"
                 }
             }
-            Print-Host -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.peclPackageRoot)/$extName"
+            Print-Info -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.peclPackageRoot)/$extName"
 
             $packageIndex = Read-Host -Prompt "`nInsert the [number] you want to install"
             $packageIndex = $packageIndex.Trim()
             if ([string]::IsNullOrWhiteSpace($packageIndex)) {
-                Print-Host -message "`nInstallation cancelled"
+                Write-Gray -message "`nInstallation cancelled"
                 return -1
             }
 
@@ -367,7 +367,7 @@ function Install-Extension {
                 $response = $response.Trim()
                 if ($response -ne 'y' -and $response -ne 'Y') {
                     Remove-Item -Path "$($PVMConfig.paths.storage)\php\$fileNamePath" -Force -Recurse
-                    Print-Host -message "`nInstallation cancelled"
+                    Write-Gray -message "`nInstallation cancelled"
                     return -1
                 }
             }
@@ -394,7 +394,7 @@ function Install-IniExtension {
 
     try {
         if ($extNames.Count -eq 0) {
-            Print-Host -message "`nPlease provide at least one extension name to install"
+            Print-Warning -message "`nPlease provide at least one extension name to install"
             return -1
         }
 

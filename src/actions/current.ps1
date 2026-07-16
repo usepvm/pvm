@@ -42,7 +42,7 @@ function Get-PHP-Status {
         }
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve PHP status"; exception = $_ }
-        Print-Host -message "An error occurred while checking PHP status: $_"
+        Print-Error -message "An error occurred while checking PHP status: $_"
     }
 
     return $status

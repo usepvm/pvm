@@ -4,7 +4,7 @@ function Disable-IniExtension {
 
     try {
         if ($extNames -isnot [array] -or $extNames.Count -eq 0) {
-            Print-Host -message "`nPlease provide at least one extension name to disable"
+            Print-Warning -message "`nPlease provide at least one extension name to disable"
             return -1
         }
 

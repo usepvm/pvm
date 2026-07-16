@@ -169,11 +169,11 @@ function Download-PHP {
         $destination = $PVMConfig.paths.php
         $created = Make-Directory -path $destination
         if ($created -ne 0) {
-            Print-Host -message "Failed to create directory $destination"
+            Print-Error -message "Failed to create directory $destination"
             return $null
         }
 
-        Print-Host -message "`nDownloading PHP $version ($buildType $arch)..."
+        Print-Info -message "`nDownloading PHP $version ($buildType $arch)..."
 
         foreach ($key in $urls.Keys) {
             $_url = $urls[$key]
@@ -221,7 +221,7 @@ function Configure-Opcache {
 
         $phpIniPath = "$phpPath\php.ini"
         if (Is-File-Not-Exists -path $phpIniPath) {
-            Print-Host -message "php.ini not found at: $phpIniPath"
+            Print-Error -message "php.ini not found at: $phpIniPath"
             return -1
         }
 
@@ -232,12 +232,12 @@ function Configure-Opcache {
                 -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
         }
         Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
-        Print-Host -message "`nOpcache configured successfully for PHP version $version"
+        Print-Success -message "`nOpcache configured successfully for PHP version $version"
 
         return 0
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable opcache for PHP at $phpPath"; exception = $_ }
-        Print-Host -message "`nFailed to enable opcache for PHP version $version"
+        Print-Error -message "`nFailed to enable opcache for PHP version $version"
         return -1
     }
 }
@@ -297,7 +297,7 @@ function Select-Version {
     }
 
     if (-not $selectedVersionObject) {
-        Print-Host -message "`nNo matching version found for '$selectedVersionInput'."
+        Print-Error -message "`nNo matching version found for '$selectedVersionInput'."
         return $null
     }
 

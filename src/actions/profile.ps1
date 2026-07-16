@@ -343,7 +343,7 @@ function Load-PHP-Profile {
         Print-Success -message "`nProfile applied successfully:"
         Print-Host -message "  Settings applied: $settingsApplied"
         if ($settingsSkipped -gt 0) {
-            Print-Error -message "  Settings skipped: $settingsSkipped"
+            Print-Warning -message "  Settings skipped: $settingsSkipped"
         }
         if ($settingsIgnored -gt 0) {
             Print-Info -message "  Settings ignored (not popular): $settingsIgnored"
@@ -351,7 +351,7 @@ function Load-PHP-Profile {
         Print-Host -message "  Extensions enabled: $extensionsEnabled"
         Print-Host -message "  Extensions disabled: $extensionsDisabled"
         if ($extensionsSkipped -gt 0) {
-            Print-Error -message "  Extensions skipped: $extensionsSkipped"
+            Print-Warning -message "  Extensions skipped: $extensionsSkipped"
         }
         if ($extensionsIgnored -gt 0) {
             Print-Info -message "  Extensions ignored (not popular): $extensionsIgnored"
@@ -395,7 +395,7 @@ function List-PHP-Profiles {
         }
 
         Print-Info -message "`nAvailable Profiles:"
-        Print-Host -message '-------------------'
+        Write-Gray -message '-------------------'
 
         $profiles = @()
         foreach ($file in $profileFiles) {
@@ -520,7 +520,7 @@ function Delete-PHP-Profile {
             $response = Read-Host -Prompt "`nAre you sure you want to delete profile '$profileName'? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
-                Print-Host -message "`nDeletion cancelled."
+                Write-Gray -message "`nDeletion cancelled."
                 return -1
             }
         }
@@ -551,7 +551,7 @@ function Clear-PHP-Profiles {
             $response = Read-Host -Prompt "`nAre you sure you want to delete all profiles? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
-                Print-Host -message "`nDeletion cancelled."
+                Write-Gray -message "`nDeletion cancelled."
                 return -1
             }
         }

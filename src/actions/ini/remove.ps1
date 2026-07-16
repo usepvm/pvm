@@ -54,7 +54,7 @@ function Uninstall-Extension {
 
     try {
         if ($extNames.Count -eq 0) {
-            Print-Host -message "`nPlease provide at least one extension name to uninstall"
+            Print-Warning -message "`nPlease provide at least one extension name to uninstall"
             return -1
         }
 

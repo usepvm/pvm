@@ -4,7 +4,7 @@ function Enable-IniExtension {
 
     try {
         if ($extNames -isnot [array] -or $extNames.Count -eq 0) {
-            Print-Host -message "`nPlease provide at least one extension name to enable"
+            Print-Warning -message "`nPlease provide at least one extension name to enable"
             return -1
         }
 

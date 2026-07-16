@@ -14,7 +14,7 @@ function Invoke-IniAction {
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
         if (Is-File-Not-Exists -path $iniPath) {
-            Print-Host -message "php.ini not found at: $($currentPhpVersion.path)"
+            Print-Error -message "php.ini not found at: $($currentPhpVersion.path)"
             return -1
         }
 
@@ -27,7 +27,7 @@ function Invoke-IniAction {
             }
             'get' {
                 if ($params.Count -eq 0) {
-                    Print-Host -message "`nPlease specify at least one setting name ('pvm ini get memory_limit)."
+                    Print-Warning -message "`nPlease specify at least one setting name ('pvm ini get memory_limit)."
                     return -1
                 }
 
@@ -37,7 +37,7 @@ function Invoke-IniAction {
             }
             'set' {
                 if ($params.Count -eq 0) {
-                    Print-Host -message "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
+                    Print-Warning -message "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
                     return -1
                 }
 
@@ -49,7 +49,7 @@ function Invoke-IniAction {
             }
             'enable' {
                 if ($params.Count -eq 0) {
-                    Print-Host -message "`nPlease specify at least one extension (pvm ini enable curl)."
+                    Print-Warning -message "`nPlease specify at least one extension (pvm ini enable curl)."
                     return -1
                 }
 
@@ -59,7 +59,7 @@ function Invoke-IniAction {
             }
             'disable' {
                 if ($params.Count -eq 0) {
-                    Print-Host -message "`nPlease specify at least one extension (pvm ini disable xdebug)."
+                    Print-Warning -message "`nPlease specify at least one extension (pvm ini disable xdebug)."
                     return -1
                 }
 
@@ -69,7 +69,7 @@ function Invoke-IniAction {
             }
             'status' {
                 if ($params.Count -eq 0) {
-                    Print-Host -message "`nPlease specify at least one extension (pvm ini status opcache)."
+                    Print-Warning -message "`nPlease specify at least one extension (pvm ini status opcache)."
                     return -1
                 }
 
@@ -82,7 +82,7 @@ function Invoke-IniAction {
             }
             'add' {
                 if ($params.Count -eq 0) {
-                    Print-Host -message "`nPlease specify at least one extension (pvm ini add xdebug)."
+                    Print-Warning -message "`nPlease specify at least one extension (pvm ini add xdebug)."
                     return -1
                 }
 
@@ -95,7 +95,7 @@ function Invoke-IniAction {
             }
             'remove' {
                 if ($params.Count -eq 0) {
-                    Print-Host -message "`nPlease specify at least one extension (pvm ini remove xdebug)."
+                    Print-Warning -message "`nPlease specify at least one extension (pvm ini remove xdebug)."
                     return -1
                 }
 
@@ -111,7 +111,7 @@ function Invoke-IniAction {
                 $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains 'available') -term $term
             }
             default {
-                Print-Host -message "`nUnknown action '$action' use one of following: 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'ext' or 'restore'."
+                Print-Error -message "`nUnknown action '$action' use one of following: 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'ext' or 'restore'."
             }
         }
 

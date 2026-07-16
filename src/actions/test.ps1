@@ -2,7 +2,7 @@
 function Use-Pester-Version {
     param ($version)
 
-    Print-Warning -message "`nChecking for Pester version: $version"
+    Print-Info -message "`nChecking for Pester version: $version"
 
     $availableVersions = Get-Module -Name Pester -ListAvailable
 
@@ -23,7 +23,7 @@ function Use-Pester-Version {
 }
 
 function Use-Latest-Pester-Version {
-    Print-Warning -message "`nChecking for latest Pester version"
+    Print-Info -message "`nChecking for latest Pester version"
 
     $availableVersions = Get-Module -Name Pester -ListAvailable
     $targetVersion = Find-Pester-Version -version 'latest' -availableVersions $availableVersions

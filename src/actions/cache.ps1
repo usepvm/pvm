@@ -28,8 +28,8 @@ function List-Cache-Files {
             return -1
         }
 
-        Print-Value -message "`nAvailable Cache Files:"
-        Print-Host -message '-------------------'
+        Print-Info -message "`nAvailable Cache Files:"
+        Write-Gray -message '-------------------'
 
         foreach ($cacheFile in $cacheFiles) {
             Print-Host -message "  $($cacheFile.BaseName)"
@@ -61,8 +61,8 @@ function Show-Cache-Data {
             return -1
         }
 
-        Print-Host -message "`nCache Data for '$cacheName':"
-        Print-Host -message '--------------------------------'
+        Print-Info -message "`nCache Data for '$cacheName':"
+        Write-Gray -message '--------------------------------'
 
         Print-Host -message ($cacheData | ConvertTo-Json)
 
@@ -89,7 +89,7 @@ function Delete-Cache-File {
             $response = Read-Host -Prompt "`nAre you sure you want to delete cache file '$cacheName'? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
-                Print-Host -message "`nDeletion cancelled."
+                Write-Gray -message "`nDeletion cancelled."
                 return -1
             }
         }
@@ -120,7 +120,7 @@ function Clear-Cache-Files {
             $response = Read-Host -Prompt "`nAre you sure you want to delete all cache files? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {
-                Print-Host -message "`nDeletion cancelled."
+                Write-Gray -message "`nDeletion cancelled."
                 return -1
             }
         }

@@ -94,7 +94,7 @@ function List-PHP-Extensions {
             }
 
             if ($availableExtensions.Count -eq 0) {
-                Print-Host -message "`nNo extensions found"
+                Print-Error -message "`nNo extensions found"
                 return -1
             }
 
@@ -126,8 +126,8 @@ function List-PHP-Extensions {
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
             $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxKeyLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3))
 
-            Print-Host -message "`nAvailable Extensions by Category:"
-            Print-Debug -message '--------------------------------'
+            Print-Info -message "`nAvailable Extensions by Category:"
+            Write-Gray -message '--------------------------------'
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
                 $key = "$($_.Key) "
                 $vals = ($_.Value | ForEach-Object { $_.extName }) -join ', '
@@ -169,7 +169,7 @@ function List-PHP-Extensions {
 
         return 0
     } catch {
-        Print-Host -message "`nFailed to list extensions"
+        Print-Error -message "`nFailed to list extensions"
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"; exception = $_ }
         return -1
     }

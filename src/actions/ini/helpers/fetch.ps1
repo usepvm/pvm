@@ -119,7 +119,7 @@ function Get-Extension-Links-From-URL {
         if ($linksMatchingExtName.Count -eq 1) {
             $chosenItem = $($linksMatchingExtName)
         } else {
-            Print-Host -message "`nMatching '$extName' extension:"
+            Print-Info -message "`nMatching '$extName' extension:"
             $index = 0
             $linksMatchingExtName | ForEach-Object {
                 $extItem = $_.href -replace '/package/', ''
@@ -131,7 +131,7 @@ function Get-Extension-Links-From-URL {
                 $choiceRaw = Read-Host -Prompt "`nInsert the [number] you want to install"
                 $choiceRaw = $choiceRaw.Trim()
                 if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
-                    Print-Host -message "`nInstallation cancelled"
+                    Write-Gray -message "`nInstallation cancelled"
                     return $null
                 }
 

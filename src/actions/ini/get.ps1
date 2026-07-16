@@ -4,7 +4,7 @@ function Get-IniSetting {
 
     try {
         if ($keys -isnot [array] -or $keys.Count -eq 0) {
-            Print-Host -message "`nPlease specify at least one setting name ('pvm ini get memory_limit')."
+            Print-Warning -message "`nPlease specify at least one setting name ('pvm ini get memory_limit')."
             return -1
         }
 

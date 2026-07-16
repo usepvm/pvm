@@ -118,6 +118,8 @@ function Get-Extension-Links-From-URL {
 
         if ($linksMatchingExtName.Count -eq 1) {
             $chosenItem = $($linksMatchingExtName)
+            $extName = $chosenItem.href -replace '/package/', ''
+            Write-Host -Object "`nMatching found : '$extName'"
         } else {
             Write-Host -Object "`nMatching '$extName' extension:"
             $index = 0
@@ -176,7 +178,6 @@ function Get-Extension-From-URL {
 
     if (($null -eq $linksObj) -or ($linksObj.Count -eq 0) -or ($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
         $extName = if ($linksObj -and $linksObj.extName) { $linksObj.extName } else { $extName }
-        Write-Host -Object "`nNo versions found for $extName" -ForegroundColor DarkYellow
         return @{ extName = $extName; data = $null }
     }
 

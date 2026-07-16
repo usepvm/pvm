@@ -396,7 +396,7 @@ function Invoke-Cache {
                 return -1
             }
             $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
-            return (Show-Save-Cached-Data -cacheName $cacheName)
+            return (Show-Cached-Data -cacheName $cacheName)
         }
         'delete' {
             if ($remainingArgs.Count -eq 0) {

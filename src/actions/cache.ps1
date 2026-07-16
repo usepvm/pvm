@@ -43,7 +43,7 @@ function Show-Cache-Files {
     }
 }
 
-function Show-Save-Cached-Data {
+function Show-Cached-Data {
     param ($cacheName)
 
     try {

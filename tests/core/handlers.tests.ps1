@@ -1115,7 +1115,7 @@ Describe "Invoke-Cache Tests" {
     BeforeEach {
         Mock Write-Host { }
         Mock Show-Cache-Files { 0 }
-        Mock Show-Save-Cached-Data { 0 }
+        Mock Show-Cached-Data { 0 }
         Mock Remove-Cache-File { 0 }
         Mock Clear-Cache-Files { 0 }
     }
@@ -1163,7 +1163,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Show-Save-Cached-Data -Times 1 -ParameterFilter {
+            Should -Invoke Show-Cached-Data -Times 1 -ParameterFilter {
                 $cacheName -eq 'available_versions'
             }
         }
@@ -1174,7 +1174,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Show-Save-Cached-Data -Times 1 -ParameterFilter {
+            Should -Invoke Show-Cached-Data -Times 1 -ParameterFilter {
                 $cacheName -eq 'available_versions'
             }
         }

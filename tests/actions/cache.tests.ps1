@@ -118,7 +118,7 @@ Describe "Show-Cache-Files Tests" {
     }
 }
 
-Describe "Show-Save-Cached-Data Tests" {
+Describe "Show-Cached-Data Tests" {
     BeforeEach {
         Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
@@ -127,7 +127,7 @@ Describe "Show-Save-Cached-Data Tests" {
     }
 
     It "Should return -1 when cache file does not exist" {
-        $result = Show-Save-Cached-Data -cacheName 'nonexistent'
+        $result = Show-Cached-Data -cacheName 'nonexistent'
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -144,7 +144,7 @@ Describe "Show-Save-Cached-Data Tests" {
         Mock Get-Data-From-Cache { return $null }
         Mock Test-File-Not-Exists { return $false }
 
-        $result = Show-Save-Cached-Data -cacheName 'empty'
+        $result = Show-Cached-Data -cacheName 'empty'
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -156,7 +156,7 @@ Describe "Show-Save-Cached-Data Tests" {
         Mock Get-Data-From-Cache { return @() }
         Mock Test-File-Not-Exists { return $false }
 
-        $result = Show-Save-Cached-Data -cacheName 'emptycol'
+        $result = Show-Cached-Data -cacheName 'emptycol'
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -171,7 +171,7 @@ Describe "Show-Save-Cached-Data Tests" {
         Mock Get-Data-From-Cache { return $cacheContent }
         Mock Test-File-Not-Exists { return $false }
 
-        $result = Show-Save-Cached-Data -cacheName 'releases'
+        $result = Show-Cached-Data -cacheName 'releases'
         $result | Should -Be 0
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -184,7 +184,7 @@ Describe "Show-Save-Cached-Data Tests" {
         Mock Get-Data-From-Cache { return $cacheContent }
         Mock Test-File-Not-Exists { return $false }
 
-        $result = Show-Save-Cached-Data -cacheName 'info'
+        $result = Show-Cached-Data -cacheName 'info'
         $result | Should -Be 0
 
         Should -Invoke Write-Host -ParameterFilter {
@@ -196,7 +196,7 @@ Describe "Show-Save-Cached-Data Tests" {
         Mock Test-File-Not-Exists { return $false }
         Mock Get-Data-From-Cache { throw 'Unexpected error' }
 
-        $result = Show-Save-Cached-Data -cacheName 'broken'
+        $result = Show-Cached-Data -cacheName 'broken'
         $result | Should -Be -1
 
         Should -Invoke Write-Host -ParameterFilter {

@@ -366,7 +366,7 @@ function Invoke-Profile {
             return (Import-PHP-Profile -importPath $importPath -profileName $profileName)
         }
         default {
-            Print-Warning -message "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'."
+            Print-Error -message "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'."
             return -1
         }
     }

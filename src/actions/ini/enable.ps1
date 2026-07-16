@@ -54,7 +54,6 @@ function Enable-IniExtension {
             }
 
             if ($selected.status -eq 'Enabled') {
-                # Print-Success -message "- '$($selected.name)' enabled successfully."
                 $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
                 continue
             }
@@ -73,7 +72,6 @@ function Enable-IniExtension {
             }
 
             if (-not $modified) {
-                # Print-Success -message "- '$($selected.name)' enabled successfully."
                 $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
                 continue
             }
@@ -82,7 +80,6 @@ function Enable-IniExtension {
             Set-Content -Path $iniPath -Value $newLines -Encoding UTF8
 
             $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
-            # Print-Success -message "- '$($selected.name)' enabled successfully."
         }
 
         $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)

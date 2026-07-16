@@ -178,7 +178,7 @@ function Get-UserSelected-PHP-Version {
         $response = Read-Host -Prompt "`nInsert the [number] of the version you want to use (or press Enter to cancel)"
         $response = $response.Trim()
         if (-not $response) {
-            return @{ code = -1; message = 'Operation cancelled.'; color = 'DarkYellow' }
+            return @{ code = -1; message = 'Operation cancelled.'; color = 'Gray' }
         }
         $versionObj = $installedVersions | Where-Object { $_.index -eq $response }
     }

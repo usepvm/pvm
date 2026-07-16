@@ -54,7 +54,6 @@ function Disable-IniExtension {
             }
 
             if ($selected.status -eq 'Disabled') {
-                # Print-Success -message "- '$($selected.name)' disabled successfully."
                 $results += @{ name = $selected.name; status = 'Disabled'; color = 'DarkYellow' }
                 continue
             }
@@ -73,7 +72,6 @@ function Disable-IniExtension {
             }
 
             if (-not $modified) {
-                # Print-Success -message "- '$($selected.name)' disabled successfully."
                 $results += @{ name = $selected.name; status = 'Disabled'; color = 'DarkYellow' }
                 continue
             }

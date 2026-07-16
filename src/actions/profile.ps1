@@ -476,7 +476,7 @@ function Show-PHP-Profile {
                 $name = "$settingName ".PadRight($maxNameLength, '.')
                 $status = if ($setting.enabled) { 'Enabled' } else { 'Disabled' }
                 $color = if ($setting.enabled) { 'DarkGreen' } else { 'DarkYellow' }
-                Print-Host -message "  $name $($setting.value) " -NoNewline
+                Print-Host -message "  $name $($setting.value) " -noNewLine
                 Write-Color -message $status -foreColor $color
             }
         }
@@ -492,7 +492,7 @@ function Show-PHP-Profile {
                 $status = if ($ext.enabled) { 'Enabled' } else { 'Disabled' }
                 $color = if ($ext.enabled) { 'DarkGreen' } else { 'DarkYellow' }
                 $type = $ext.type
-                Print-Host -message "  $name $type " -NoNewline
+                Print-Host -message "  $name $type " -noNewLine
                 Write-Color -message $status -foreColor $color
             }
         }

@@ -85,127 +85,127 @@ function Get-Console-Width {
 }
 
 function Write-Color {
-    param ($message, $foreColor)
+    param ($message, $foreColor, [switch]$noNewLine)
 
-    Write-Host $message -ForegroundColor $foreColor
+    Write-Host $message -ForegroundColor $foreColor -NoNewline:$noNewLine
 }
 
 function Write-White {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor White
+    Write-Color $message -foreColor White -noNewLine:$noNewLine
 }
 
 function Write-DarkGreen {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor DarkGreen
+    Write-Color $message -foreColor DarkGreen -noNewLine:$noNewLine
 }
 
 function Write-DarkYellow {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor DarkYellow
+    Write-Color $message -foreColor DarkYellow -noNewLine:$noNewLine
 }
 
 function Write-Yellow {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor Yellow
+    Write-Color $message -foreColor Yellow -noNewLine:$noNewLine
 }
 
 function Write-Cyan {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor Cyan
+    Write-Color $message -foreColor Cyan -noNewLine:$noNewLine
 }
 
 function Write-Magenta {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor Magenta
+    Write-Color $message -foreColor Magenta -noNewLine:$noNewLine
 }
 
 function Write-Blue {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor Blue
+    Write-Color $message -foreColor Blue -noNewLine:$noNewLine
 }
 
 function Write-DarkGray {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor DarkGray
+    Write-Color $message -foreColor DarkGray -noNewLine:$noNewLine
 }
 
 function Write-Gray {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor Gray
+    Write-Color $message -foreColor Gray -noNewLine:$noNewLine
 }
 
 function Write-Default {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Print-Host $message
+    Print-Host $message -noNewLine:$noNewLine
 }
 
 function Print-Success {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-DarkGreen $message
+    Write-DarkGreen $message -noNewLine:$noNewLine
 }
 
 function Print-Error {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-DarkYellow $message
+    Write-DarkYellow $message -noNewLine:$noNewLine
 }
 
 function Print-Warning {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Yellow $message
+    Write-Yellow $message -noNewLine:$noNewLine
 }
 
 function Print-Info {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Cyan $message
+    Write-Cyan $message -noNewLine:$noNewLine
 }
 
 function Print-Header {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Magenta $message
+    Write-Magenta $message -noNewLine:$noNewLine
 }
 
 function Print-Section {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Blue $message
+    Write-Blue $message -noNewLine:$noNewLine
 }
 
 function Print-Debug {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-DarkGray $message
+    Write-DarkGray $message -noNewLine:$noNewLine
 }
 
 function Print-Verbose {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Gray $message
+    Write-Gray $message -noNewLine:$noNewLine
 }
 
 function Print-Value {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-White $message
+    Write-White $message -noNewLine:$noNewLine
 }
 
 function Print-Host {
-    param($message)
+    param($message, [switch]$noNewLine)
 
-    Write-Host $message
+    Write-Host $message -NoNewline:$noNewLine
 }

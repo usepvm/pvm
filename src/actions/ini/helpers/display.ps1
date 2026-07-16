@@ -32,7 +32,7 @@ function Display-Installed-Extensions {
             $status = "$status - $($_.comment)"
         }
 
-        Print-Host -message "$label " -NoNewline
+        Print-Host -message "$label " -noNewLine
         Write-Color -message $status -foreColor $color
     }
 }
@@ -71,7 +71,7 @@ function Display-Settings {
             $status = "$status - $($_.comment)"
         }
 
-        Print-Host -message "$line $value" -NoNewline
+        Print-Host -message "$line $value" -noNewLine
         Write-Color -message $status -foreColor $color
     }
 }

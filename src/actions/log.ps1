@@ -176,10 +176,10 @@ function Show-Log {
                 $entry = $reversedEntries[$i]
 
                 # Display structured error format
-                Print-Host -message 'Header  : ' -NoNewline
+                Print-Host -message 'Header  : ' -noNewLine
                 Print-Value -message "$($entry.Header)"
 
-                Print-Host -message 'Message : ' -NoNewline
+                Print-Host -message 'Message : ' -noNewLine
                 # Handle multi-line error messages with proper indentation (23 spaces to align with "Message :")
                 $errorLines = $entry.ErrorMessage -split "`n"
                 foreach ($errorLine in $errorLines) {
@@ -189,11 +189,11 @@ function Show-Log {
                 }
 
                 # Display entry with nice formatting
-                Print-Host -message 'When    : ' -NoNewline
-                Print-Value -message "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -NoNewline
+                Print-Host -message 'When    : ' -noNewLine
+                Print-Value -message "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -noNewLine
                 Print-Debug -message "($($entry.NiceTime.Relative))"
 
-                Print-Host -message 'Where   : ' -NoNewline
+                Print-Host -message 'Where   : ' -noNewLine
                 Print-Value -message "$($entry.PositionDetail)"
 
                 Print-Debug -message ('-' * 80)
@@ -202,7 +202,7 @@ function Show-Log {
             $currentIndex += $PageSize
             # Show navigation prompt if there are more entries
             if ($currentIndex -lt $totalEntries) {
-                Print-Warning -message "`nPress Left/Up arrow for previous page, Right/Down arrow, [Enter] or [Space] for next page, [Q] to quit: " -NoNewline
+                Print-Warning -message "`nPress Left/Up arrow for previous page, Right/Down arrow, [Enter] or [Space] for next page, [Q] to quit: " -noNewLine
 
                 $key = Get-ConsoleKey
 

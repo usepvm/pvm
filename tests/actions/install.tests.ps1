@@ -783,7 +783,6 @@ Describe "Environment Variable Tests" {
         }
 
         $result = Get-Installed-PHP-Versions
-        Write-Host ($result | ConvertTo-Json)
 
         $result[0].version | Should -Be '5.6'
         $result[1].version | Should -Be '7.4'

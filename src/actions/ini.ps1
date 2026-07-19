@@ -108,7 +108,7 @@ function Invoke-IniAction {
             }
             'ext' {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-                $exitCode = List-PHP-Extensions -iniPath $iniPath -available ($params -contains 'available') -term $term
+                $exitCode = Show-PHP-Extensions -iniPath $iniPath -available ($params -contains 'available') -term $term
             }
             default {
                 Show-Error -message "`nUnknown action '$action' use one of following: 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'ext' or 'restore'."

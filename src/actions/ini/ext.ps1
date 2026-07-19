@@ -71,7 +71,7 @@ function Get-PHPExtensions-From-Source {
     }
 }
 
-function List-PHP-Extensions {
+function Show-PHP-Extensions {
     param ($iniPath, $available = $false, $term = $null)
 
     try {

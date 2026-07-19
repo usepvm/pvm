@@ -209,3 +209,48 @@ function Print-Message {
 
     Write-Host $message -NoNewline:$noNewLine
 }
+
+function MakePlayer {
+    Add-Type -AssemblyName PresentationCore
+    $MediaPlayer = New-Object System.Windows.Media.MediaPlayer
+    
+    return $MediaPlayer
+}
+
+function Get-Sound-TotalSeconds {
+    param ($path)
+    
+    $folder = Split-Path $path
+    $file = Split-Path $path -Leaf
+    $shell = New-Object -ComObject Shell.Application
+    $shellFolder = $shell.Namespace($folder)
+    $shellFile = $shellFolder.ParseName($file)
+    
+    $duration = $shellFolder.GetDetailsOf($shellFile, 27)
+    $ts = [timespan]::Parse($duration)
+    $totalSeconds = $ts.TotalSeconds
+    
+    return $totalSeconds
+}
+
+function Play-Sound {
+    param ($path)
+ 
+    $MediaPlayer = MakePlayer
+    $MediaPlayer.Open($path)
+    $duration = Get-Sound-TotalSeconds -path $path
+    $MediaPlayer.Play()
+    Start-Sleep -Seconds $duration
+}
+
+function Play-Success {
+    Play-Sound "$PVMRoot\assets\sounds\success.mp3"
+}
+
+function Play-Error {
+    Play-Sound "$PVMRoot\assets\sounds\error.mp3"
+}
+
+function Play-Prompt {
+    Play-Sound "$PVMRoot\assets\sounds\prompt.mp3"
+}

@@ -107,7 +107,7 @@ function Get-Extension-Links-From-URL {
             Select-Extension-Links-From-URL -extName $extName
         }
     } catch {
-        Show-Message -message "`nExtension '$extName' not found, Loading matching extensions..."
+        Show-Message -message "`nDirect link for extension '$extName' not found, Loading matching extensions..."
 
         $linksMatchingExtName = Get-Extension-Matching-Categories -extName $extName
 
@@ -178,7 +178,6 @@ function Get-Extension-From-URL {
 
     if (($null -eq $linksObj) -or ($linksObj.Count -eq 0) -or ($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
         $extName = if ($linksObj -and $linksObj.extName) { $linksObj.extName } else { $extName }
-        Show-Error -Message "`nNo versions found for $extName"
         return @{ extName = $extName; data = $null }
     }
 

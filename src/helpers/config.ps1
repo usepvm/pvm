@@ -4,7 +4,7 @@ function Get-EnvConfig {
 
     $envFile = "$rootPath\.env"
 
-    if (Is-File-Not-Exists -path $envFile) {
+    if (Test-File-Not-Exists -path $envFile) {
         Copy-Item -Path "$rootPath\.env.example" -Destination $envFile
     } else {
         Write-Verbose "Using .env from: $envFile"
@@ -43,14 +43,14 @@ function Set-Aliases-List {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create aliases list"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create aliases list"; exception = $_ }
         return -1
     }
 }
 
 function Get-Aliases {
     try {
-        if (Is-File-Exists -path $PVMConfig.paths.aliasesList) {
+        if (Test-File-Exists -path $PVMConfig.paths.aliasesList) {
             $data = (Get-Content -Path $PVMConfig.paths.aliasesList -Raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}
@@ -59,7 +59,7 @@ function Get-Aliases {
             }
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get aliases list"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get aliases list"; exception = $_ }
     }
 
     return $PVMConfig.defaults.aliases

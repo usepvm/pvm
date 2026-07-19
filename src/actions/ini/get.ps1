@@ -4,7 +4,7 @@ function Get-IniSetting {
 
     try {
         if ($keys -isnot [array] -or $keys.Count -eq 0) {
-            Print-Warning -message "`nPlease specify at least one setting name ('pvm ini get memory_limit')."
+            Show-Warning -message "`nPlease specify at least one setting name ('pvm ini get memory_limit')."
             return -1
         }
 
@@ -36,20 +36,20 @@ function Get-IniSetting {
 
         $maxLineLength = ($results.Values | ForEach-Object { $_ } | ForEach-Object { $_.extensionName } | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         foreach ($key in $results.Keys) {
-            Print-Info -message "`nMatches for '$key'"
+            Show-Info -message "`nMatches for '$key'"
 
             foreach ($item in $results[$key]) {
                 $extensionName = "$($item.extensionName) ".PadRight($maxLineLength, '.')
                 $value = if ($item.value -eq '') { '(not set) ' } elseif ($null -eq $item.value) { '' } else { "$($item.value) " }
 
-                Print-Message -message "- $extensionName $value" -noNewLine
+                Show-Message -message "- $extensionName $value" -noNewLine
                 Write-Color -message "$($item.enabled)" -foreColor $item.color
             }
         }
 
         return $overallCode
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get ini setting '$($keys -join ', ')'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get ini setting '$($keys -join ', ')'"; exception = $_ }
         return -1
     }
 }

@@ -13,7 +13,7 @@ AfterAll {
 
 Describe "Update-PVM" {
     BeforeEach {
-        Mock Is-Directory-Not-Exists { return $false }
+        Mock Test-Directory-Not-Exists { return $false }
         Mock Test-Git-Available { return $true }
         Mock Get-Current-Git-Branch { return 'main' }
         Mock Get-Git-Status { return $null }
@@ -36,7 +36,7 @@ Describe "Update-PVM" {
 
     Context "Repository validation" {
         It "returns error when .git directory doesn't exist" {
-            Mock Is-Directory-Not-Exists { return $true }
+            Mock Test-Directory-Not-Exists { return $true }
 
             $result = Update-PVM -checkOnly $true
 
@@ -316,20 +316,20 @@ Describe "Get-PVM-Version-From-Git" {
     }
 }
 
-Describe "Normalize-Version" {
+Describe "Format-Version" {
     It "strips a leading 'v' prefix" {
-        Normalize-Version -version 'v1.2.3' | Should -Be '1.2.3'
+        Format-Version -version 'v1.2.3' | Should -Be '1.2.3'
     }
 
     It "strips a single trailing .0 segment" {
-        Normalize-Version -version 'v1.2.0' | Should -Be '1.2'
+        Format-Version -version 'v1.2.0' | Should -Be '1.2'
     }
 
     It "strips multiple trailing .0 segments" {
-        Normalize-Version -version 'v1.0.0' | Should -Be '1'
+        Format-Version -version 'v1.0.0' | Should -Be '1'
     }
 
     It "leaves a version with no prefix or trailing zeros unchanged" {
-        Normalize-Version -version '1.2.3' | Should -Be '1.2.3'
+        Format-Version -version '1.2.3' | Should -Be '1.2.3'
     }
 }

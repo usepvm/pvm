@@ -10,12 +10,12 @@ function Get-PHP-Info {
     $currentPHPVersion = Get-Current-PHP-Version
 
     if (-not $currentPHPVersion -or -not $currentPHPVersion.version -or -not $currentPHPVersion.path) {
-        Print-Error -Message "`nFailed to get current PHP version."
+        Show-Error -Message "`nFailed to get current PHP version."
         return -1
     }
 
-    Print-Message -message "`n- Running PHP version`t: $($currentPHPVersion.version)"
-    Print-Message -message "`n- PHP path`t`t: $($currentPHPVersion.path)"
+    Show-Message -message "`n- Running PHP version`t: $($currentPHPVersion.version)"
+    Show-Message -message "`n- PHP path`t`t: $($currentPHPVersion.path)"
 
     $iniPath = "$($currentPHPVersion.path)\php.ini"
 
@@ -27,8 +27,8 @@ function Get-PHP-Info {
         } else {
             $allExtensions
         }
-        Display-Extensions-States -extensions $allExtensions
-        Display-Installed-Extensions -extensions $filteredExtensions
+        Show-Extensions-States -extensions $allExtensions
+        Show-Installed-Extensions -extensions $filteredExtensions
     }
 
     if ($settings) {
@@ -38,8 +38,8 @@ function Get-PHP-Info {
         } else {
             $allSettings
         }
-        Display-Settings-States -settings $allSettings
-        Display-Settings -settings $filteredSettings
+        Show-Settings-States -settings $allSettings
+        Show-Settings -settings $filteredSettings
     }
 
     return 0

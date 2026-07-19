@@ -14,7 +14,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Display-Msg-By-ExitCode" {
+Describe "Show-Msg-By-ExitCode" {
     Context "When displaying messages" {
         It "Displays message without error" {
             Mock Write-Host {}
@@ -22,7 +22,7 @@ Describe "Display-Msg-By-ExitCode" {
                 message = 'Test message'
                 color = 'Gray'
             }
-            { Display-Msg-By-ExitCode -result $testResult } | Should -Not -Throw
+            { Show-Msg-By-ExitCode -result $testResult } | Should -Not -Throw
         }
 
         It "Displays custom message if provided" {
@@ -31,7 +31,7 @@ Describe "Display-Msg-By-ExitCode" {
                 message = 'Original message'
             }
             $customMessage = 'Custom message'
-            { Display-Msg-By-ExitCode -result $testResult -message $customMessage } | Should -Not -Throw
+            { Show-Msg-By-ExitCode -result $testResult -message $customMessage } | Should -Not -Throw
         }
 
         It "Displays list of messages if provided" {
@@ -44,7 +44,7 @@ Describe "Display-Msg-By-ExitCode" {
                     @{ content = 'Message 3' }
                 )
             }
-            { Display-Msg-By-ExitCode -result $testResults } | Should -Not -Throw
+            { Show-Msg-By-ExitCode -result $testResults } | Should -Not -Throw
         }
 
         It "Handles exceptions gracefully" {
@@ -53,16 +53,16 @@ Describe "Display-Msg-By-ExitCode" {
                 message = 'Test message'
                 color = 'Gray'
             }
-            { Display-Msg-By-ExitCode -result $testResult } | Should -Not -Throw
+            { Show-Msg-By-ExitCode -result $testResult } | Should -Not -Throw
         }
     }
 }
 
-Describe "Log-Data" {
+Describe "Add-LogEntry" {
     Context "When logging data" {
         It "Logs data successfully" {
             $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = "$TEST_DRIVE\logs\test.log"
-            $result = Log-Data -data @{
+            $result = Add-LogEntry -data @{
                 header = 'Test message'
                 exception = @{
                     Exception = @{ Message = 'Test data' }
@@ -88,9 +88,9 @@ Describe "Log-Data" {
         }
 
         It "Returns -1 when unable to create directory" {
-            Mock Make-Directory { throw 'Failed to create directory' }
+            Mock New-Directory { throw 'Failed to create directory' }
             # Try to log to a protected location
-            $result = Log-Data -data @{
+            $result = Add-LogEntry -data @{
                 header = 'Test message'
                 exception = 'Test data'
             }
@@ -99,7 +99,7 @@ Describe "Log-Data" {
 
         It "Accepts custom log path" {
             $customLogPath = "$TEST_DRIVE\logs\custom.log"
-            $result = Log-Data -data @{
+            $result = Add-LogEntry -data @{
                 header = 'Test message'
                 logPath = $customLogPath
             }
@@ -108,9 +108,9 @@ Describe "Log-Data" {
         }
 
         It "Returns -1 when unable to create log file" {
-            Mock Make-Directory { return -1 }
+            Mock New-Directory { return -1 }
             # Try to log to a protected location
-            $result = Log-Data -data @{
+            $result = Add-LogEntry -data @{
                 header = 'Test message'
                 exception = 'Test data'
             }
@@ -206,7 +206,7 @@ Describe "Get-Console-Width" {
     }
 }
 
-Describe "Print-* helpers Tests" {
+Describe "Show-* helpers Tests" {
     It "Prints message with specified color" {
         Write-Color -message 'Test message' -foreColor 'Red'
 
@@ -216,7 +216,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints success message" {
-        Print-Success -message 'Test message'
+        Show-Success -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGreen'
@@ -224,7 +224,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints error message" {
-        Print-Error -message 'Test message'
+        Show-Error -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'DarkYellow'
@@ -232,7 +232,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints warning message" {
-        Print-Warning -message 'Test message'
+        Show-Warning -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'Yellow'
@@ -240,7 +240,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints info message" {
-        Print-Info -message 'Test message'
+        Show-Info -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'Cyan'
@@ -248,7 +248,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints header message" {
-        Print-Header -message 'Test message'
+        Show-Header -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'Magenta'
@@ -256,7 +256,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints section message" {
-        Print-Section -message 'Test message'
+        Show-Section -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'Blue'
@@ -264,7 +264,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints debug message" {
-        Print-Debug -message 'Test message'
+        Show-Debug -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGray'
@@ -272,7 +272,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints verbose message" {
-        Print-Verbose -message 'Test message'
+        Show-Verbose -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'Gray'
@@ -280,7 +280,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints value message" {
-        Print-Value -message 'Test message'
+        Show-Value -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'White'
@@ -288,7 +288,7 @@ Describe "Print-* helpers Tests" {
     }
 
     It "Prints host message" {
-        Print-Message -message 'Test message'
+        Show-Message -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq $null

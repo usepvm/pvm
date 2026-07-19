@@ -62,11 +62,11 @@ function Get-PHPExtensions-From-Source {
         )
         $dataToCache = [ordered] @{}
         $availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object { $dataToCache[$_.Key] = $_.Value }
-        $null = Cache-Data -cacheFileName 'available_extensions' -data $dataToCache -depth 3
+        $null = Save-Cached-Data -cacheFileName 'available_extensions' -data $dataToCache -depth 3
 
         return $availableExtensions
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"; exception = $_ }
         return @{}
     }
 }
@@ -84,17 +84,17 @@ function List-PHP-Extensions {
                 $allExtensions
             }
 
-            Display-Extensions-States -extensions $allExtensions
-            Display-Installed-Extensions -extensions $filtered
+            Show-Extensions-States -extensions $allExtensions
+            Show-Installed-Extensions -extensions $filtered
         } else {
-            Print-Message -message "`nLoading available extensions..."
+            Show-Message -message "`nLoading available extensions..."
 
             $availableExtensions = Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
                 return [pscustomobject] (Get-PHPExtensions-From-Source)
             }
 
             if ($availableExtensions.Count -eq 0) {
-                Print-Error -message "`nNo extensions found"
+                Show-Error -message "`nNo extensions found"
                 return -1
             }
 
@@ -119,14 +119,14 @@ function List-PHP-Extensions {
                 if ($term) {
                     $msg += " matching '$term'"
                 }
-                Print-Error -message $msg
+                Show-Error -message $msg
                 return -1
             }
 
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
             $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxKeyLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3))
 
-            Print-Info -message "`nAvailable Extensions by Category:"
+            Show-Info -message "`nAvailable Extensions by Category:"
             Write-Gray -message '--------------------------------'
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
                 $key = "$($_.Key) "
@@ -149,14 +149,14 @@ function List-PHP-Extensions {
 
                 if ($descLines.Count -eq 0) {
                     $line = $label.PadRight($maxLineLength, '.')
-                    Print-Message -message $line
+                    Show-Message -message $line
                 } else {
                     $line = $label.PadRight($maxLineLength, '.') + " $($descLines[0])"
-                    Print-Message -message $line
+                    Show-Message -message $line
 
                     $indent = ' ' * ($maxLineLength + 1)
                     for ($i = 1; $i -lt $descLines.Count; $i++) {
-                        Print-Message -message "$indent$($descLines[$i])"
+                        Show-Message -message "$indent$($descLines[$i])"
                     }
                 }
             }
@@ -164,13 +164,13 @@ function List-PHP-Extensions {
             $msg = "`nThis is a partial list. For a complete list, visit:"
             $msg += "`nPHP Extensions : $($PVMConfig.links.peclPackages)"
             $msg += "`nXDebug : $($PVMConfig.links.xdebugHistorical)"
-            Print-Message -message $msg
+            Show-Message -message $msg
         }
 
         return 0
     } catch {
-        Print-Error -message "`nFailed to list extensions"
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"; exception = $_ }
+        Show-Error -message "`nFailed to list extensions"
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"; exception = $_ }
         return -1
     }
 }

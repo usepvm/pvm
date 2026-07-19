@@ -3,13 +3,13 @@ BeforeAll {
     Mock Write-Host {}
 }
 
-Describe "Display-Extensions-States" {
+Describe "Show-Extensions-States" {
     It "Displays correct counts when all extensions are enabled" {
         $extensions = @(
             @{ Extension = 'curl'; Enabled = $true }
             @{ Extension = 'opcache'; Enabled = $true }
         )
-        Display-Extensions-States -extensions $extensions
+        Show-Extensions-States -extensions $extensions
         Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -match 'Enabled: 2' -and
             $Object -match 'Disabled: 0' -and
@@ -21,7 +21,7 @@ Describe "Display-Extensions-States" {
         $extensions = @(
             @{ Extension = 'xdebug'; Enabled = $false }
         )
-        Display-Extensions-States -extensions $extensions
+        Show-Extensions-States -extensions $extensions
         Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -match 'Enabled: 0' -and
             $Object -match 'Disabled: 1' -and
@@ -35,7 +35,7 @@ Describe "Display-Extensions-States" {
             @{ Extension = 'xdebug'; Enabled = $false }
             @{ Extension = 'opcache'; Enabled = $true }
         )
-        Display-Extensions-States -extensions $extensions
+        Show-Extensions-States -extensions $extensions
         Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -match 'Enabled: 2' -and
             $Object -match 'Disabled: 1' -and
@@ -44,10 +44,10 @@ Describe "Display-Extensions-States" {
     }
 }
 
-Describe "Display-Installed-Extensions" {
+Describe "Show-Installed-Extensions" {
     It "Displays message when extensions array is empty" {
         $extensions = @()
-        Display-Installed-Extensions -extensions $extensions
+        Show-Installed-Extensions -extensions $extensions
         Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq '  No extensions found.'
         }
@@ -58,18 +58,18 @@ Describe "Display-Installed-Extensions" {
             @{ Extension = 'curl'; Enabled = $true }
             @{ Extension = 'opcache'; comment = 'Available (not configured)'; Enabled = $false }
         )
-        Display-Installed-Extensions -extensions $extensions
+        Show-Installed-Extensions -extensions $extensions
         Should -Invoke Write-Host -Times 2
     }
 }
 
-Describe "Display-Settings-States" {
+Describe "Show-Settings-States" {
     It "Displays correct counts when all settings are enabled" {
         $settings = @(
             @{ Name = 'display_errors'; Value = 'On'; Enabled = $true }
             @{ Name = 'short_open_tag'; Value = 'Off'; Enabled = $true }
         )
-        Display-Settings-States -settings $settings
+        Show-Settings-States -settings $settings
         Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -match 'Enabled: 2' -and
             $Object -match 'Disabled: 0' -and
@@ -81,7 +81,7 @@ Describe "Display-Settings-States" {
         $settings = @(
             @{ Name = 'display_errors'; Value = 'Off'; Enabled = $false }
         )
-        Display-Settings-States -settings $settings
+        Show-Settings-States -settings $settings
         Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -match 'Enabled: 0' -and
             $Object -match 'Disabled: 1' -and
@@ -95,7 +95,7 @@ Describe "Display-Settings-States" {
             @{ Name = 'short_open_tag'; Value = 'Off'; Enabled = $false }
             @{ Name = 'error_reporting'; Value = 'E_ALL'; Enabled = $true }
         )
-        Display-Settings-States -settings $settings
+        Show-Settings-States -settings $settings
         Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -match 'Enabled: 2' -and
             $Object -match 'Disabled: 1' -and
@@ -104,10 +104,10 @@ Describe "Display-Settings-States" {
     }
 }
 
-Describe "Display-Settings" {
+Describe "Show-Settings" {
     It "Displays message when settings array is empty" {
         $settings = @()
-        Display-Settings -settings $settings
+        Show-Settings -settings $settings
         Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq '  No settings found.'
         }
@@ -120,7 +120,7 @@ Describe "Display-Settings" {
             @{ Name = 'error_reporting'; Value = $null; Enabled = $false }
             @{ Name = 'error_log'; Value = ''; comment = 'Deprecated' ; Enabled = $false }
         )
-        Display-Settings -settings $settings
+        Show-Settings -settings $settings
         Should -Invoke Write-Host -Times 4
     }
 }

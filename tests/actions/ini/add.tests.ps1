@@ -45,8 +45,8 @@ max_execution_time = 30
     New-Item -ItemType SymbolicLink -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
     Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
 
-    # Mock Log-Data function
-    Mock Log-Data {
+    # Mock Add-LogEntry function
+    Mock Add-LogEntry {
         param ($logPath, $message, $data)
         return $true
     }
@@ -259,7 +259,7 @@ opcache.enable = 1
     }
 
     It "Returns -1 when no compatible extension version is found" {
-        Mock Can-Use-Cache { return $false }
+        Mock Test-Can-Use-Cache { return $false }
         Mock Get-XDebug-FROM-URL { return @() }
         $code = Install-XDebug-Extension -iniPath $testIniPath
         $code | Should -Be -1
@@ -435,11 +435,11 @@ opcache.enable = 1
     }
 
     It "Skips overwrite prompt and installs when skipConfirmation is true and file exists" {
-        Mock Can-Use-Cache { return $false }
+        Mock Test-Can-Use-Cache { return $false }
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-2.9.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Is-File-Exists { return $true }
+        Mock Test-File-Exists { return $true }
         Mock Remove-Item { }
         Mock Move-Item { }
         Mock Get-Content { return "zend_extension=opcache" }
@@ -456,7 +456,7 @@ opcache.enable = 1
     It "Prompts overwrite when skipConfirmation is false and file exists and user cancels" {
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Is-File-Exists { return $true }
+        Mock Test-File-Exists { return $true }
         Mock Read-Host -ParameterFilter { $Prompt -like '*already exists*' } -MockWith { return 'n' }
         Mock Remove-Item { }
 
@@ -469,11 +469,11 @@ opcache.enable = 1
     }
 
     It "Prompts overwrite when skipConfirmation is false and file exists and user confirms" {
-        Mock Can-Use-Cache { return $false }
+        Mock Test-Can-Use-Cache { return $false }
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-2.9.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Is-File-Exists { return $true }
+        Mock Test-File-Exists { return $true }
         Mock Read-Host -ParameterFilter { $Prompt -like '*already exists*' } -MockWith { return 'y' }
         Mock Remove-Item { }
         Mock Move-Item { }
@@ -598,7 +598,7 @@ extension=php_mbstring.dll
     }
 
     It "Handles exception gracefully" {
-        Mock Log-Data { return 0 }
+        Mock Add-LogEntry { return 0 }
         Mock Backup-IniFile { throw 'Access denied' }
         $result = Add-Missing-PHPExtension-To-Ini -iniPath $testIniPath -extFileName 'curl'
         $result | Should -Be -1
@@ -628,7 +628,7 @@ Describe "Install-Extension" {
             }
             return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\php_curl-1.4.0-7.4-ts-vc15-x86\php_curl.dll" } )
         }
-        Mock Extract-Zip { }
+        Mock Expand-Zip { }
         Mock Remove-Item { }
         Mock Move-Item { }
         Mock Test-Path { return $true }
@@ -1069,7 +1069,7 @@ Describe "Install-Extension" {
         Mock Get-ChildItem {
             return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\extracted\php_curl.dll" } )
         }
-        Mock Is-File-Exists { return $true }
+        Mock Test-File-Exists { return $true }
         Mock Move-Item { }
         Mock Remove-Item { }
         Mock Add-Missing-PHPExtension-To-Ini { return 0 }
@@ -1095,7 +1095,7 @@ Describe "Install-Extension" {
         Mock Get-ChildItem {
             return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\extracted\php_curl.dll" } )
         }
-        Mock Is-File-Exists { return $true }
+        Mock Test-File-Exists { return $true }
         Mock Read-Host -ParameterFilter { $Prompt -like '*already exists*' } -MockWith { return 'n' }
         Mock Remove-Item { }
 
@@ -1120,7 +1120,7 @@ Describe "Install-Extension" {
         Mock Get-ChildItem {
             return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\extracted\php_curl.dll" } )
         }
-        Mock Is-File-Exists { return $true }
+        Mock Test-File-Exists { return $true }
         Mock Read-Host -ParameterFilter { $Prompt -like '*already exists*' } -MockWith { return 'y' }
         Mock Move-Item { }
         Mock Remove-Item { }
@@ -1160,7 +1160,7 @@ Describe "Install-IniExtension" {
     }
 
     It "Handles thrown exception" {
-        Mock Log-Data { return 0 }
+        Mock Add-LogEntry { return 0 }
         Mock Install-Extension { throw 'Network error' }
         $code = Install-IniExtension -iniPath $testIniPath -extName 'curl'
         $code | Should -Be -1

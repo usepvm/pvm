@@ -2,8 +2,8 @@
 function Show-Usage {
     param ($arguments)
 
-    Print-Message -message "`nRunning version : $($PVMConfig.version)"
-    Print-Message -message "`nUsage:`n"
+    Show-Message -message "`nRunning version : $($PVMConfig.version)"
+    Show-Message -message "`nUsage:`n"
 
     $actions = Get-Actions -arguments $arguments
     $maxLineLength = ($actions.GetEnumerator() | ForEach-Object { $_.Value.command.Length } | Measure-Object -Maximum).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
@@ -28,18 +28,18 @@ function Show-Usage {
         # First line (command + dots + description)
         $label = "  $command "
         $line = $label.PadRight($maxLineLength, '.') + " $($descLines[0])"
-        Print-Message -message $line
+        Show-Message -message $line
 
         # Remaining description lines aligned under description column
         $indent = ' ' * ($maxLineLength + 1)
         for ($i = 1; $i -lt $descLines.Count; $i++) {
-            Print-Message -message "$indent$($descLines[$i])"
+            Show-Message -message "$indent$($descLines[$i])"
         }
     }
 }
 
 function Show-PVM-Version {
-    Print-Message -message "`nPVM version $($PVMConfig.version)"
+    Show-Message -message "`nPVM version $($PVMConfig.version)"
 }
 
 function Get-NestedCommands {
@@ -222,9 +222,9 @@ function Start-PVM {
         if (-not $actions.Contains($command)) {
             $suggestion = Get-ClosestCommandSuggestion -command $command -actions $actions
             if ([string]::IsNullOrWhiteSpace($suggestion)) {
-                Print-Error -Message "`n'$alias' is not a valid command."
+                Show-Error -Message "`n'$alias' is not a valid command."
             } else {
-                Print-Error -Message "`n'$command' is not a valid command. Did you mean '$suggestion'?"
+                Show-Error -Message "`n'$command' is not a valid command. Did you mean '$suggestion'?"
             }
             Show-Usage -arguments $arguments
             return 0
@@ -232,8 +232,8 @@ function Start-PVM {
 
         $allowedCommands = Get-AllowedCommands
 
-        if (($allowedCommands -notcontains $command) -and (Is-PVM-Not-Setup)) {
-            Print-Message -message "`nPVM is not setup. Please run 'pvm setup' first."
+        if (($allowedCommands -notcontains $command) -and (Test-PVM-Not-Setup)) {
+            Show-Message -message "`nPVM is not setup. Please run 'pvm setup' first."
             return -1
         }
 
@@ -241,13 +241,13 @@ function Start-PVM {
 
         # Check for updates after successful command execution (skip for update command itself)
         if ($result -eq 0 -and $command -ne 'update') {
-            $null = (Check-For-Updates-Quietly)
+            $null = (Test-Check-For-Updates-Quietly)
         }
 
         return $result
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during command '$command'"; exception = $_ }
-        Print-Error -Message "`nCommand canceled or failed to elevate privileges."
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during command '$command'"; exception = $_ }
+        Show-Error -Message "`nCommand canceled or failed to elevate privileges."
         return -1
     }
 }

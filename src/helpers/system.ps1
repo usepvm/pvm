@@ -1,5 +1,5 @@
 
-function Is-OS-64Bit {
+function Test-OS-64Bit {
     return [System.Environment]::Is64BitOperatingSystem
 }
 
@@ -11,7 +11,7 @@ function Get-All-EnvVars {
     try {
         return Get-All-EnvVars-Core
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get all environment variables"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get all environment variables"; exception = $_ }
         return $null
     }
 }
@@ -38,7 +38,7 @@ function Get-EnvVar-ByName {
 
         return $value
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get environment variable '$name'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get environment variable '$name'"; exception = $_ }
         return $null
     }
 }
@@ -58,16 +58,16 @@ function Set-EnvVar {
         }
         $name = $name.Trim()
 
-        if (Is-Not-Admin) {
+        if (Test-Not-Admin) {
             $command = "[System.Environment]::SetEnvironmentVariable('$name', '$value', [System.EnvironmentVariableTarget]::Machine)"
-            return (Run-PS-Command -command $command)
+            return (Invoke-PS-Command -command $command)
         }
 
         # We already have admin rights, proceed normally
         Set-EnvVar-Core -name $name -value $value
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set environment variable '$name'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set environment variable '$name'"; exception = $_ }
         return -1
     }
 }
@@ -91,12 +91,12 @@ function Get-Optimized-Env {
         $value = [regex]::Replace($value, $pattern, "%$envName%")
     }
 
-    $value = Reconstruct-EnvContent -value $value
+    $value = Format-EnvContent -value $value
 
     return $value
 }
 
-function Reconstruct-EnvContent {
+function Format-EnvContent {
     param ($value)
 
     $rebuiltValue = $value -split ';' |
@@ -130,30 +130,30 @@ function Optimize-SystemPath {
         $path = Remove-PathDuplicates -path $path
 
         # Saving Path to log
-        $outputLog = Log-Data -data @{
+        $outputLog = Add-LogEntry -data @{
             logPath = $PVMConfig.paths.pathVarBackup
             header  = "Original PATH`n$oldPath"
         }
         if ($outputLog -eq 0) {
-            Print-Message -message "`nOriginal Path saved to '$($PVMConfig.paths.pathVarBackup)'"
+            Show-Message -message "`nOriginal Path saved to '$($PVMConfig.paths.pathVarBackup)'"
         }
 
         $output = 0
         if ($path -ne $oldPath) {
             $output = Set-EnvVar -name 'Path' -value $path
             if ($output -eq 0) {
-                Print-Success -message "`nPath optimized successfully"
+                Show-Success -message "`nPath optimized successfully"
             }
         }
 
         return $output
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to optimize system PATH variable"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to optimize system PATH variable"; exception = $_ }
         return -1
     }
 }
 
-function Run-PS-Command {
+function Invoke-PS-Command {
     param ($command)
 
     $process = Start-Process `
@@ -171,7 +171,7 @@ function Run-PS-Command {
     return $process.ExitCode
 }
 
-function Is-Admin {
+function Test-Admin {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
     $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -179,6 +179,6 @@ function Is-Admin {
     return $isAdmin
 }
 
-function Is-Not-Admin {
-    return -not (Is-Admin)
+function Test-Not-Admin {
+    return -not (Test-Admin)
 }

@@ -1,7 +1,7 @@
 ﻿
 function Get-Cache-Files {
     try {
-        if (Is-Directory-Not-Exists -path $PVMConfig.paths.cache) {
+        if (Test-Directory-Not-Exists -path $PVMConfig.paths.cache) {
             return $null
         }
 
@@ -9,79 +9,79 @@ function Get-Cache-Files {
 
         return $files
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get cache files"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get cache files"; exception = $_ }
         return $null
     }
 }
 
-function List-Cache-Files {
+function Show-Cache-Files {
     try {
-        if (Is-Directory-Not-Exists -path $PVMConfig.paths.cache) {
-            Print-Error -message "`nNo cache directory found."
+        if (Test-Directory-Not-Exists -path $PVMConfig.paths.cache) {
+            Show-Error -message "`nNo cache directory found."
             return -1
         }
 
         $cacheFiles = Get-Cache-Files
 
         if ($cacheFiles.Count -eq 0) {
-            Print-Error -message "`nNo cache files found."
+            Show-Error -message "`nNo cache files found."
             return -1
         }
 
-        Print-Info -message "`nAvailable Cache Files:"
+        Show-Info -message "`nAvailable Cache Files:"
         Write-Gray -message '-------------------'
 
         foreach ($cacheFile in $cacheFiles) {
-            Print-Message -message "  $($cacheFile.BaseName)"
+            Show-Message -message "  $($cacheFile.BaseName)"
         }
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list cache files"; exception = $_ }
-        Print-Error -message "`nFailed to list cache files."
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list cache files"; exception = $_ }
+        Show-Error -message "`nFailed to list cache files."
         return -1
     }
 }
 
-function Show-Cache-Data {
+function Show-Cached-Data {
     param ($cacheName)
 
     try {
         $cachePath = Get-Cache-FilePath -fileName $cacheName
-        if (Is-File-Not-Exists -path $cachePath) {
-            Print-Error -message "`nCache file '$cacheName' not found."
-            Print-Message -message "  Use 'pvm cache list' to see available cache files."
+        if (Test-File-Not-Exists -path $cachePath) {
+            Show-Error -message "`nCache file '$cacheName' not found."
+            Show-Message -message "  Use 'pvm cache list' to see available cache files."
             return -1
         }
 
         $cacheData = Get-Data-From-Cache -cacheFileName $cacheName
 
         if ($null -eq $cacheData -or $cacheData.Count -eq 0) {
-            Print-Error -message "`nNo data found in cache file '$cacheName'."
+            Show-Error -message "`nNo data found in cache file '$cacheName'."
             return -1
         }
 
-        Print-Info -message "`nCache Data for '$cacheName':"
+        Show-Info -message "`nCache Data for '$cacheName':"
         Write-Gray -message '--------------------------------'
 
-        Print-Message -message ($cacheData | ConvertTo-Json)
+        Show-Message -message ($cacheData | ConvertTo-Json)
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show cache data"; exception = $_ }
-        Print-Error -message "`nFailed to show cache data."
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show cache data"; exception = $_ }
+        Show-Error -message "`nFailed to show cache data."
         return -1
     }
 }
 
-function Delete-Cache-File {
+function Remove-Cache-File {
     param ($cacheName, $skipConfirmation = $false)
 
     try {
         $cachePath = Get-Cache-FilePath -fileName $cacheName
-        if (Is-File-Not-Exists -path $cachePath) {
-            Print-Error -message "`nCache file '$cacheName' not found."
-            Print-Message -message "  Use 'pvm cache list' to see available cache files."
+        if (Test-File-Not-Exists -path $cachePath) {
+            Show-Error -message "`nCache file '$cacheName' not found."
+            Show-Message -message "  Use 'pvm cache list' to see available cache files."
             return -1
         }
 
@@ -95,12 +95,12 @@ function Delete-Cache-File {
         }
 
         Remove-Item -Path $cachePath -Force
-        Print-Success -message "`nCache file '$cacheName' deleted successfully."
+        Show-Success -message "`nCache file '$cacheName' deleted successfully."
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete cache file '$cacheName'"; exception = $_ }
-        Print-Error -message "`nFailed to delete cache file: $($_.Exception.Message)"
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete cache file '$cacheName'"; exception = $_ }
+        Show-Error -message "`nFailed to delete cache file: $($_.Exception.Message)"
         return -1
     }
 }
@@ -112,7 +112,7 @@ function Clear-Cache-Files {
         $cacheFiles = Get-Cache-Files
 
         if ($cacheFiles.Count -eq 0) {
-            Print-Error -message "`nNo cache files found."
+            Show-Error -message "`nNo cache files found."
             return -1
         }
 
@@ -129,12 +129,12 @@ function Clear-Cache-Files {
             Remove-Item -Path $cacheFile.FullName -Force
         }
 
-        Print-Success -message "`nAll cache files deleted successfully."
+        Show-Success -message "`nAll cache files deleted successfully."
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear cache files"; exception = $_ }
-        Print-Error -message "`nFailed to clear cache files."
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear cache files"; exception = $_ }
+        Show-Error -message "`nFailed to clear cache files."
         return -1
     }
 }

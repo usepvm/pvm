@@ -1,19 +1,19 @@
 ﻿
-function Display-Extensions-States {
+function Show-Extensions-States {
     param ($extensions)
 
     # Pre-count for summary
     $enabledCount = @($extensions | Where-Object { $_.enabled }).Count
     $disabledCount = $extensions.Count - $enabledCount
 
-    Print-Message -message "`n- Total Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
+    Show-Message -message "`n- Total Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
 }
 
-function Display-Installed-Extensions {
+function Show-Installed-Extensions {
     param ($extensions)
 
     if ($extensions.Count -eq 0) {
-        Print-Error -message '  No extensions found.'
+        Show-Error -message '  No extensions found.'
         return
     }
 
@@ -32,26 +32,26 @@ function Display-Installed-Extensions {
             $status = "$status - $($_.comment)"
         }
 
-        Print-Message -message "$label " -noNewLine
+        Show-Message -message "$label " -noNewLine
         Write-Color -message $status -foreColor $color
     }
 }
 
-function Display-Settings-States {
+function Show-Settings-States {
     param ($settings)
 
     # Pre-count for summary
     $enabledCount = @($settings | Where-Object { $_.enabled }).Count
     $disabledCount = $settings.Count - $enabledCount
 
-    Print-Message -message "`n- Total Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
+    Show-Message -message "`n- Total Settings`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($settings.Count)`n"
 }
 
-function Display-Settings {
+function Show-Settings {
     param ($settings)
 
     if ($settings.Count -eq 0) {
-        Print-Error -message '  No settings found.'
+        Show-Error -message '  No settings found.'
         return
     }
 
@@ -71,7 +71,7 @@ function Display-Settings {
             $status = "$status - $($_.comment)"
         }
 
-        Print-Message -message "$line $value" -noNewLine
+        Show-Message -message "$line $value" -noNewLine
         Write-Color -message $status -foreColor $color
     }
 }

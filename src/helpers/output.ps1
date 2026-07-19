@@ -1,4 +1,4 @@
-
+﻿
 function Display-Msg-By-ExitCode {
     param ($result, $message = $null)
 
@@ -8,7 +8,7 @@ function Display-Msg-By-ExitCode {
                 if (-not $msg.color) {
                     $msg.color = 'White'
                 }
-                Write-Host -Object $($msg.content) -ForegroundColor $msg.color
+                Write-Color -message $($msg.content) -foreColor $msg.color
             }
         } else {
             if ($message) {
@@ -18,7 +18,7 @@ function Display-Msg-By-ExitCode {
                 $result.color = 'Gray'
             }
 
-            Write-Host -Object "`n$($result.message)" -ForegroundColor $result.color
+            Write-Color -message "`n$($result.message)" -foreColor $result.color
         }
     } catch {
         $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
@@ -32,7 +32,7 @@ function Log-Data {
         $logPath = if ($data.logPath) { $data.logPath } else { $PVMConfig.paths.logError }
         $created = Make-Directory -path (Split-Path -Path $logPath)
         if ($created -ne 0) {
-            Write-Host -Object "Failed to create directory $(Split-Path -Path $logPath)"
+            Print-Message -message "Failed to create directory $(Split-Path -Path $logPath)"
             return -1
         }
         $content = "`n--------------------------"
@@ -82,4 +82,130 @@ function Format-Seconds {
 
 function Get-Console-Width {
     return $Host.UI.RawUI.WindowSize.Width
+}
+
+function Write-Color {
+    param ($message, $foreColor, [switch]$noNewLine)
+
+    Write-Host $message -ForegroundColor $foreColor -NoNewline:$noNewLine
+}
+
+function Write-White {
+    param($message, [switch]$noNewLine)
+
+    Write-Color $message -foreColor White -noNewLine:$noNewLine
+}
+
+function Write-DarkGreen {
+    param($message, [switch]$noNewLine)
+
+    Write-Color $message -foreColor DarkGreen -noNewLine:$noNewLine
+}
+
+function Write-DarkYellow {
+    param($message, [switch]$noNewLine)
+
+    Write-Color $message -foreColor DarkYellow -noNewLine:$noNewLine
+}
+
+function Write-Yellow {
+    param($message, [switch]$noNewLine)
+
+    Write-Color $message -foreColor Yellow -noNewLine:$noNewLine
+}
+
+function Write-Cyan {
+    param($message, [switch]$noNewLine)
+
+    Write-Color $message -foreColor Cyan -noNewLine:$noNewLine
+}
+
+function Write-Magenta {
+    param($message, [switch]$noNewLine)
+
+    Write-Color $message -foreColor Magenta -noNewLine:$noNewLine
+}
+
+function Write-Blue {
+    param($message, [switch]$noNewLine)
+
+    Write-Color $message -foreColor Blue -noNewLine:$noNewLine
+}
+
+function Write-DarkGray {
+    param($message, [switch]$noNewLine)
+
+    Write-Color $message -foreColor DarkGray -noNewLine:$noNewLine
+}
+
+function Write-Gray {
+    param($message, [switch]$noNewLine)
+
+    Write-Color $message -foreColor Gray -noNewLine:$noNewLine
+}
+
+function Write-Default {
+    param($message, [switch]$noNewLine)
+
+    Print-Message $message -noNewLine:$noNewLine
+}
+
+function Print-Success {
+    param($message, [switch]$noNewLine)
+
+    Write-DarkGreen $message -noNewLine:$noNewLine
+}
+
+function Print-Error {
+    param($message, [switch]$noNewLine)
+
+    Write-DarkYellow $message -noNewLine:$noNewLine
+}
+
+function Print-Warning {
+    param($message, [switch]$noNewLine)
+
+    Write-Yellow $message -noNewLine:$noNewLine
+}
+
+function Print-Info {
+    param($message, [switch]$noNewLine)
+
+    Write-Cyan $message -noNewLine:$noNewLine
+}
+
+function Print-Header {
+    param($message, [switch]$noNewLine)
+
+    Write-Magenta $message -noNewLine:$noNewLine
+}
+
+function Print-Section {
+    param($message, [switch]$noNewLine)
+
+    Write-Blue $message -noNewLine:$noNewLine
+}
+
+function Print-Debug {
+    param($message, [switch]$noNewLine)
+
+    Write-DarkGray $message -noNewLine:$noNewLine
+}
+
+function Print-Verbose {
+    param($message, [switch]$noNewLine)
+
+    Write-Gray $message -noNewLine:$noNewLine
+}
+
+function Print-Value {
+    param($message, [switch]$noNewLine)
+
+    Write-White $message -noNewLine:$noNewLine
+}
+
+function Print-Message {
+    param($message, [switch]$noNewLine)
+
+    Write-Host $message -NoNewline:$noNewLine
 }

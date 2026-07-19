@@ -10,12 +10,12 @@ function Get-PHP-Info {
     $currentPHPVersion = Get-Current-PHP-Version
 
     if (-not $currentPHPVersion -or -not $currentPHPVersion.version -or -not $currentPHPVersion.path) {
-        Write-Host -Object "`nFailed to get current PHP version." -ForegroundColor DarkYellow
+        Print-Error -Message "`nFailed to get current PHP version."
         return -1
     }
 
-    Write-Host -Object "`n- Running PHP version`t: $($currentPHPVersion.version)"
-    Write-Host -Object "`n- PHP path`t`t: $($currentPHPVersion.path)"
+    Print-Message -message "`n- Running PHP version`t: $($currentPHPVersion.version)"
+    Print-Message -message "`n- PHP path`t`t: $($currentPHPVersion.path)"
 
     $iniPath = "$($currentPHPVersion.path)\php.ini"
 

@@ -344,9 +344,6 @@ Describe "Get-Extension-From-URL Tests" {
 
         $result = Get-Extension-From-URL -extName 'cache' -version '8.2'
 
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nNo versions found for cache"
-        }
         $result.data | Should -Be $null
     }
 
@@ -357,9 +354,6 @@ Describe "Get-Extension-From-URL Tests" {
 
         $result = Get-Extension-From-URL -extName 'mem' -version '8.2'
 
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nNo versions found for memcache"
-        }
         $result.extName | Should -Be 'memcache'
         $result.data   | Should -Be $null
     }

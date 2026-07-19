@@ -4,7 +4,7 @@ function Enable-IniExtension {
 
     try {
         if ($extNames -isnot [array] -or $extNames.Count -eq 0) {
-            Write-Host -Object "`nPlease provide at least one extension name to enable"
+            Print-Warning -message "`nPlease provide at least one extension name to enable"
             return -1
         }
 
@@ -14,21 +14,20 @@ function Enable-IniExtension {
             $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
 
             if ($matchesListStatus.Length -eq 0) {
-                # Write-Host -Object "- '$extName': extension not found" -ForegroundColor DarkGray
                 $results += @{ name = $extName; status = 'Not found'; color = 'Gray' }
                 $overallCode = -1
                 continue
             }
 
             if ($matchesListStatus.Length -gt 1) {
-                Write-Host -Object "`nMultiple extensions match '$extName':`n" -ForegroundColor Cyan
+                Print-Info -message "`nMultiple extensions match '$extName':`n"
 
                 $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0
                 $matchesListStatus | ForEach-Object {
                     $name = "$($_.name) ".PadRight($maxLineLength, '.')
-                    Write-Host -Object "[$index] $name " -NoNewline
-                    Write-Host -Object "$($_.status)" -ForegroundColor $_.color
+                    Print-Message -message "[$index] $name " -noNewLine
+                    Write-Color -message "$($_.status)" -foreColor $_.color
                     $index++
                 }
 
@@ -37,12 +36,12 @@ function Enable-IniExtension {
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                        Write-Host -Object 'Please enter a valid positive number.' -ForegroundColor Yellow
+                        Print-Warning -message 'Please enter a valid positive number.'
                         continue
                     }
 
                     if ($choice -lt 0 -or $choice -gt $matchesListStatus.Length - 1) {
-                        Write-Host -Object "Number must be between 0 and $($matchesListStatus.Length - 1)." -ForegroundColor Yellow
+                        Print-Warning -message "Number must be between 0 and $($matchesListStatus.Length - 1)."
                         continue
                     }
 
@@ -55,7 +54,6 @@ function Enable-IniExtension {
             }
 
             if ($selected.status -eq 'Enabled') {
-                # Write-Host -Object "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
                 $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
                 continue
             }
@@ -74,7 +72,6 @@ function Enable-IniExtension {
             }
 
             if (-not $modified) {
-                # Write-Host -Object "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
                 $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
                 continue
             }
@@ -83,14 +80,13 @@ function Enable-IniExtension {
             Set-Content -Path $iniPath -Value $newLines -Encoding UTF8
 
             $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
-            # Write-Host -Object "- '$($selected.name)' enabled successfully." -ForegroundColor DarkGreen
         }
 
         $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        Write-Host -Object "`nResults:"
+        Print-Message -message "`nResults:"
         foreach ($item in $results) {
-            Write-Host -Object "- $($item.name) ".PadRight($maxLineLength, '.') -NoNewline
-            Write-Host -Object " $($item.status)" -ForegroundColor $item.color
+            Print-Message -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
+            Write-Color -message " $($item.status)" -foreColor $item.color
         }
 
         return $overallCode

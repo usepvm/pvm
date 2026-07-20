@@ -76,14 +76,14 @@ function Set-Scripts-List {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create scripts list"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create scripts list"; exception = $_ }
         return -1
     }
 }
 
 function Get-Scripts {
     try {
-        if (Is-File-Exists -path $PVMConfig.paths.scriptsList) {
+        if (Test-File-Exists -path $PVMConfig.paths.scriptsList) {
             $data = (Get-Content -Path $PVMConfig.paths.scriptsList -Raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}
@@ -92,7 +92,7 @@ function Get-Scripts {
             }
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get scripts list"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get scripts list"; exception = $_ }
     }
 
     return $PVMConfig.defaults.scripts

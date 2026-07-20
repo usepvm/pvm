@@ -254,7 +254,7 @@ Describe "Initialize-PVMFiles" {
 
     It "Returns -1 when the scripts file creation fails" {
         Mock Set-Scripts-List { return -1 }
-        $result = Setup-Environment-Directories-And-Files
+        $result = Initialize-Environment-Directories-And-Files
         $result | Should -Be -1
     }
 }

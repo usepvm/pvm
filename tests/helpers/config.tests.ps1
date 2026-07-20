@@ -269,7 +269,7 @@ Describe "Get-Scripts" {
     }
 
     It "Returns default value when exception is thrown" {
-        Mock Is-File-Exists { return $true }
+        Mock Test-File-Exists { return $true }
         Mock Get-Content { throw 'Test exception' }
         $result = Get-Scripts
         $result.Count | Should -Be $DEFAULT_SCRIPTS.Count

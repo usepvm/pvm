@@ -291,7 +291,7 @@ Describe "Show-* helpers Tests" {
         Show-Message -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq $null
+            $Object -match 'Test message' -and $ForegroundColor -eq 'White'
         }
     }
 
@@ -379,7 +379,7 @@ Describe "Show-* helpers Tests" {
         Write-Default -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq $null
+            $Object -match 'Test message' -and $ForegroundColor -eq 'White'
         }
     }
 }

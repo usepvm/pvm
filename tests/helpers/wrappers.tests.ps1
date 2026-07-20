@@ -1,4 +1,4 @@
-
+﻿
 
 BeforeAll {
     Mock Write-Host {}
@@ -6,8 +6,10 @@ BeforeAll {
     # Setup test environment
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-    
+
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\wrappers-drive"
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
 
 AfterAll {
@@ -31,7 +33,7 @@ Describe "Set-Content-Wrapper Tests" {
             $Encoding -is [System.Text.UTF8Encoding]
         }
     }
-    
+
     It "Throws when Set-Content throws" {
         Mock Set-Content { throw 'Test error' }
 

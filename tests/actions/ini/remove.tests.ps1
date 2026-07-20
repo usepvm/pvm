@@ -9,7 +9,7 @@ BeforeAll {
     New-Item -ItemType Directory -Path $extDirectory -Force | Out-Null
 
     Mock Write-Host {}
-    Mock Log-Data { return 0 }
+    Mock Add-LogEntry { return 0 }
 
     function Reset-Ini-Content {
         # Create a test php.ini file
@@ -72,13 +72,13 @@ Describe "Remove-Extension-From-Ini-File" {
         $result = Remove-Extension-From-Ini-File -iniPath $testIniPath -extensionObject $extension
 
         $result | Should -Be -1
-        Should -Invoke Log-Data -Times 1
+        Should -Invoke Add-LogEntry -Times 1
     }
 }
 
 Describe "Remove-Extension-From-Ext-Directory" {
     It "Removes the file and returns 0 when file exists and paths match" {
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Remove-Item { }
         $extensionObject = @{
             fileName = 'php_curl.dll'
@@ -93,7 +93,7 @@ Describe "Remove-Extension-From-Ext-Directory" {
     }
 
     It "Returns -1 when file does not exist on disk" {
-        Mock Is-File-Not-Exists { return $true }
+        Mock Test-File-Not-Exists { return $true }
 
         $extensionObject = @{
             fileName = 'php_curl.dll'
@@ -107,7 +107,7 @@ Describe "Remove-Extension-From-Ext-Directory" {
     }
 
     It "Returns -1 when fullPath does not match the constructed path" {
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
 
         $extensionObject = @{
             fileName = 'php_curl.dll'
@@ -121,7 +121,7 @@ Describe "Remove-Extension-From-Ext-Directory" {
     }
 
     It "Returns -1 and logs when Remove-Item throws" {
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Remove-Item { throw 'Access denied' }
 
         $extensionObject = @{
@@ -134,7 +134,7 @@ Describe "Remove-Extension-From-Ext-Directory" {
 
         $result | Should -Be -1
         Should -Invoke Remove-Item -Times 1
-        Should -Invoke Log-Data -Times 1
+        Should -Invoke Add-LogEntry -Times 1
     }
 }
 
@@ -145,8 +145,8 @@ Describe "Uninstall-Extension" {
         New-Item -ItemType File -Path "$extDirectory\php_xdebug.dll"  -Force | Out-Null
         New-Item -ItemType File -Path "$extDirectory\php_opcache.dll" -Force | Out-Null
 
-        Mock Is-Directory-Not-Exists { return $false }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-Directory-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Read-Host { return 'n' }
     }
 
@@ -164,7 +164,7 @@ Describe "Uninstall-Extension" {
     }
 
     It "Returns -1 when ext directory does not exist" {
-        Mock Is-Directory-Not-Exists { return $true }
+        Mock Test-Directory-Not-Exists { return $true }
 
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
 
@@ -186,7 +186,7 @@ Describe "Uninstall-Extension" {
     }
 
     It "Adds Not Found result and returns -1 when extension file is missing from disk" {
-        Mock Is-File-Not-Exists { return $true }
+        Mock Test-File-Not-Exists { return $true }
         Mock Get-Matching-PHPExtensionsStatus {
             return @(@{
                     fullPath   = "$extDirectory\php_curl.dll"
@@ -215,7 +215,7 @@ Describe "Uninstall-Extension" {
                 })
         }
         Mock Read-Host { return 'y' }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Remove-Extension-From-Ext-Directory { return -1 }
 
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
@@ -238,7 +238,7 @@ Describe "Uninstall-Extension" {
                 })
         }
         Mock Read-Host { return 'y' }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Remove-Extension-From-Ext-Directory { return 0 }
         Mock Remove-Extension-From-Ini-File { return -1 }
 
@@ -262,7 +262,7 @@ Describe "Uninstall-Extension" {
                 })
         }
         Mock Read-Host { return 'y' }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Remove-Extension-From-Ext-Directory { return 0 }
         Mock Remove-Extension-From-Ini-File { return 0 }
 
@@ -275,8 +275,8 @@ Describe "Uninstall-Extension" {
     }
 
     It "Returns 0 and skips ini removal for ext-only source extension" {
-        Mock Is-Directory-Not-Exists { return $false }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-Directory-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Get-Matching-PHPExtensionsStatus {
             return @(@{
                     fullPath   = "$extDirectory\php_curl.dll"
@@ -325,11 +325,11 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
 
         $result | Should -Be -1
-        Should -Invoke Log-Data -Times 1
+        Should -Invoke Add-LogEntry -Times 1
     }
 
     It "Skips extension removal for non-existent extension" {
-        Mock Is-Directory-Not-Exists { return $false }
+        Mock Test-Directory-Not-Exists { return $false }
         Mock Get-Matching-PHPExtensionsStatus {
             return @(@{
                     fullPath   = "$extDirectory\pdo_pgsql.dll"
@@ -343,7 +343,7 @@ Describe "Uninstall-Extension" {
                 })
         }
         Mock Read-Host { return 'y' }
-        Mock Is-File-Not-Exists { return $true }
+        Mock Test-File-Not-Exists { return $true }
 
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('sql')
 
@@ -351,8 +351,8 @@ Describe "Uninstall-Extension" {
     }
 
     It "Prints error message for non-valid number" {
-        Mock Is-Directory-Not-Exists { return $false }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-Directory-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Get-Matching-PHPExtensionsStatus {
             return @(@{
                     fullPath   = "$extDirectory\pdo_pgsql.dll"
@@ -408,7 +408,7 @@ Describe "Uninstall-Extension" {
                     lineNumber = 2
                 })
         }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Remove-Extension-From-Ext-Directory { return 0 }
         Mock Remove-Extension-From-Ini-File { return 0 }
 
@@ -431,7 +431,7 @@ Describe "Uninstall-Extension" {
                     lineNumber = 2
                 })
         }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Read-Host -ParameterFilter { $Prompt -like "*Are you sure*" } -MockWith { return 'n' }
         Mock Remove-Extension-From-Ext-Directory { return 0 }
 
@@ -455,7 +455,7 @@ Describe "Uninstall-Extension" {
                     lineNumber = 2
                 })
         }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Read-Host -ParameterFilter { $Prompt -like "*Are you sure*" } -MockWith { return 'y' }
         Mock Remove-Extension-From-Ext-Directory { return 0 }
         Mock Remove-Extension-From-Ini-File { return 0 }
@@ -489,7 +489,7 @@ Describe "Uninstall-Extension" {
                     lineNumber = 3
                 })
         }
-        Mock Is-File-Not-Exists { return $false }
+        Mock Test-File-Not-Exists { return $false }
         Mock Remove-Extension-From-Ext-Directory { return 0 }
         Mock Remove-Extension-From-Ini-File { return 0 }
 

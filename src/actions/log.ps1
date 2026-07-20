@@ -74,19 +74,19 @@ function Show-Log {
 
     try {
         if ($pageSize -notmatch '^-?\d+$') {
-            Print-Error -message "`nInvalid page size: $pageSize"
+            Show-Error -message "`nInvalid page size: $pageSize"
             return -1
         }
 
         $pageSize = [int]$pageSize
         if ($pageSize -le 0) {
-            Print-Error -message "`nPage size must be a positive integer."
+            Show-Error -message "`nPage size must be a positive integer."
             return -1
         }
 
         # Check if log file exists
-        if (Is-File-Not-Exists -path $PVMConfig.paths.logError) {
-            Print-Error -message "`nLog file not found: $($PVMConfig.paths.logError)"
+        if (Test-File-Not-Exists -path $PVMConfig.paths.logError) {
+            Show-Error -message "`nLog file not found: $($PVMConfig.paths.logError)"
             return -1
         }
 
@@ -152,7 +152,7 @@ function Show-Log {
         $reversedEntries = $parsedEntries[-1.. - ($parsedEntries.Length)]
 
         if ($reversedEntries.Count -eq 0) {
-            Print-Warning -message "`nNo log entries found."
+            Show-Warning -message "`nNo log entries found."
             return -1
         }
 
@@ -165,44 +165,44 @@ function Show-Log {
             Clear-Host
 
             # Show header
-            Print-Info -message "`n=== PVM Log Viewer ==="
-            Print-Header -message "`nShowing entries $($currentIndex + 1)-$([Math]::Min($currentIndex + $PageSize, $totalEntries)) of $totalEntries (most recent first)`n"
+            Show-Info -message "`n=== PVM Log Viewer ==="
+            Show-Header -message "`nShowing entries $($currentIndex + 1)-$([Math]::Min($currentIndex + $PageSize, $totalEntries)) of $totalEntries (most recent first)`n"
 
             # Display current page of entries
             $endIndex = [Math]::Min($currentIndex + $PageSize - 1, $totalEntries - 1)
 
-            Print-Debug -message ('-' * 80)
+            Show-Debug -message ('-' * 80)
             for ($i = $currentIndex; $i -le $endIndex; $i++) {
                 $entry = $reversedEntries[$i]
 
                 # Display structured error format
-                Print-Message -message 'Header  : ' -noNewLine
-                Print-Value -message "$($entry.Header)"
+                Show-Message -message 'Header  : ' -noNewLine
+                Show-Value -message "$($entry.Header)"
 
-                Print-Message -message 'Message : ' -noNewLine
+                Show-Message -message 'Message : ' -noNewLine
                 # Handle multi-line error messages with proper indentation (23 spaces to align with "Message :")
                 $errorLines = $entry.ErrorMessage -split "`n"
                 foreach ($errorLine in $errorLines) {
                     if ($errorLine.Trim() -ne '') {
-                        Print-Value -message "$($errorLine)"
+                        Show-Value -message "$($errorLine)"
                     }
                 }
 
                 # Display entry with nice formatting
-                Print-Message -message 'When    : ' -noNewLine
-                Print-Value -message "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -noNewLine
-                Print-Debug -message "($($entry.NiceTime.Relative))"
+                Show-Message -message 'When    : ' -noNewLine
+                Show-Value -message "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -noNewLine
+                Show-Debug -message "($($entry.NiceTime.Relative))"
 
-                Print-Message -message 'Where   : ' -noNewLine
-                Print-Value -message "$($entry.PositionDetail)"
+                Show-Message -message 'Where   : ' -noNewLine
+                Show-Value -message "$($entry.PositionDetail)"
 
-                Print-Debug -message ('-' * 80)
+                Show-Debug -message ('-' * 80)
             }
 
             $currentIndex += $PageSize
             # Show navigation prompt if there are more entries
             if ($currentIndex -lt $totalEntries) {
-                Print-Warning -message "`nPress Left/Up arrow for previous page, Right/Down arrow, [Enter] or [Space] for next page, [Q] to quit: " -noNewLine
+                Show-Warning -message "`nPress Left/Up arrow for previous page, Right/Down arrow, [Enter] or [Space] for next page, [Q] to quit: " -noNewLine
 
                 $key = Get-ConsoleKey
 
@@ -213,7 +213,7 @@ function Show-Log {
                     default { $currentIndex -= $PageSize }
                 }
             } else {
-                Print-Warning -Object 'End of log reached. Press Left/Up arrow to go back or any other key to exit...'
+                Show-Warning -Object 'End of log reached. Press Left/Up arrow to go back or any other key to exit...'
                 $key = Get-ConsoleKey
                 if ($key.Key -in @('LeftArrow', 'UpArrow')) {
                     # Go back one page from the end
@@ -225,7 +225,7 @@ function Show-Log {
         Clear-Host
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show log"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show log"; exception = $_ }
         return -1
     }
 }

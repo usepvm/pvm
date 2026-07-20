@@ -21,7 +21,7 @@ function Remove-Extension-From-Ini-File {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to remove extension from php.ini"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to remove extension from php.ini"; exception = $_ }
         return -1
     }
 }
@@ -32,7 +32,7 @@ function Remove-Extension-From-Ext-Directory {
     try {
         $extensionFullPath = "$extensionDirectory\$($extensionObject.fileName)"
 
-        if (Is-File-Not-Exists -path $extensionFullPath) {
+        if (Test-File-Not-Exists -path $extensionFullPath) {
             return -1
         }
 
@@ -44,7 +44,7 @@ function Remove-Extension-From-Ext-Directory {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to remove extension '$($extensionObject.name)' from ext directory"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to remove extension '$($extensionObject.name)' from ext directory"; exception = $_ }
         return -1
     }
 }
@@ -54,15 +54,15 @@ function Uninstall-Extension {
 
     try {
         if ($extNames.Count -eq 0) {
-            Print-Warning -message "`nPlease provide at least one extension name to uninstall"
+            Show-Warning -message "`nPlease provide at least one extension name to uninstall"
             return -1
         }
 
         $phpDirectory = Split-Path -Path $iniPath -Parent
         $extDirectory = "$phpDirectory\ext"
 
-        if (Is-Directory-Not-Exists -path $extDirectory) {
-            Print-Error -Message "`nExtensions directory not found: $extDirectory"
+        if (Test-Directory-Not-Exists -path $extDirectory) {
+            Show-Error -Message "`nExtensions directory not found: $extDirectory"
             return -1
         }
 
@@ -77,13 +77,13 @@ function Uninstall-Extension {
             }
 
             if ($matchingExtensions.Length -gt 1) {
-                Print-Info -message "`nMultiple extensions match '$extName':`n"
+                Show-Info -message "`nMultiple extensions match '$extName':`n"
 
                 $maxLineLength = ($matchingExtensions.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0
                 $matchingExtensions | ForEach-Object {
                     $name = "$($_.name) ".PadRight($maxLineLength, '.')
-                    Print-Message -message "[$index] $name " -noNewLine
+                    Show-Message -message "[$index] $name " -noNewLine
                     Write-Color -message "$($_.status)" -foreColor $_.color
                     $index++
                 }
@@ -93,12 +93,12 @@ function Uninstall-Extension {
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                        Print-Warning -message 'Please enter a valid positive number.'
+                        Show-Warning -message 'Please enter a valid positive number.'
                         continue
                     }
 
                     if ($choice -lt 0 -or $choice -gt $matchingExtensions.Length - 1) {
-                        Print-Warning -message "Number must be between 0 and $($matchingExtensions.Length - 1)."
+                        Show-Warning -message "Number must be between 0 and $($matchingExtensions.Length - 1)."
                         continue
                     }
 
@@ -120,7 +120,7 @@ function Uninstall-Extension {
                 }
             }
 
-            if (Is-File-Not-Exists -path $selected.fullPath) {
+            if (Test-File-Not-Exists -path $selected.fullPath) {
                 $results += @{ name = $extName; status = 'Not Found'; color = 'DarkYellow' }
                 $overallCode = -1
                 continue
@@ -146,15 +146,15 @@ function Uninstall-Extension {
         }
 
         $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        Print-Message -message "`nResults:"
+        Show-Message -message "`nResults:"
         foreach ($item in $results) {
-            Print-Message -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
+            Show-Message -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
             Write-Color -message " $($item.status)" -foreColor $item.color
         }
 
         return $overallCode
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install '$($extNames -join ', ')'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install '$($extNames -join ', ')'"; exception = $_ }
         return -1
     }
 }

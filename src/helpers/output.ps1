@@ -1,5 +1,5 @@
-﻿
-function Display-Msg-By-ExitCode {
+
+function Show-Msg-By-ExitCode {
     param ($result, $message = $null)
 
     try {
@@ -21,18 +21,18 @@ function Display-Msg-By-ExitCode {
             Write-Color -message "`n$($result.message)" -foreColor $result.color
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
     }
 }
 
-function Log-Data {
+function Add-LogEntry {
     param ($data)
 
     try {
         $logPath = if ($data.logPath) { $data.logPath } else { $PVMConfig.paths.logError }
-        $created = Make-Directory -path (Split-Path -Path $logPath)
+        $created = New-Directory -path (Split-Path -Path $logPath)
         if ($created -ne 0) {
-            Print-Message -message "Failed to create directory $(Split-Path -Path $logPath)"
+            Show-Message -message "Failed to create directory $(Split-Path -Path $logPath)"
             return -1
         }
         $content = "`n--------------------------"
@@ -75,7 +75,7 @@ function Format-Seconds {
 
         return '{0:D2}:{1:D2}' -f $minutes, $seconds
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to format seconds"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to format seconds"; exception = $_ }
         return -1
     }
 }
@@ -147,64 +147,64 @@ function Write-Gray {
 function Write-Default {
     param($message, [switch]$noNewLine)
 
-    Print-Message $message -noNewLine:$noNewLine
+    Show-Message $message -noNewLine:$noNewLine
 }
 
-function Print-Success {
+function Show-Success {
     param($message, [switch]$noNewLine)
 
     Write-DarkGreen $message -noNewLine:$noNewLine
 }
 
-function Print-Error {
+function Show-Error {
     param($message, [switch]$noNewLine)
 
     Write-DarkYellow $message -noNewLine:$noNewLine
 }
 
-function Print-Warning {
+function Show-Warning {
     param($message, [switch]$noNewLine)
 
     Write-Yellow $message -noNewLine:$noNewLine
 }
 
-function Print-Info {
+function Show-Info {
     param($message, [switch]$noNewLine)
 
     Write-Cyan $message -noNewLine:$noNewLine
 }
 
-function Print-Header {
+function Show-Header {
     param($message, [switch]$noNewLine)
 
     Write-Magenta $message -noNewLine:$noNewLine
 }
 
-function Print-Section {
+function Show-Section {
     param($message, [switch]$noNewLine)
 
     Write-Blue $message -noNewLine:$noNewLine
 }
 
-function Print-Debug {
+function Show-Debug {
     param($message, [switch]$noNewLine)
 
     Write-DarkGray $message -noNewLine:$noNewLine
 }
 
-function Print-Verbose {
+function Show-Verbose {
     param($message, [switch]$noNewLine)
 
     Write-Gray $message -noNewLine:$noNewLine
 }
 
-function Print-Value {
+function Show-Value {
     param($message, [switch]$noNewLine)
 
     Write-White $message -noNewLine:$noNewLine
 }
 
-function Print-Message {
+function Show-Message {
     param($message, [switch]$noNewLine)
 
     Write-Host $message -NoNewline:$noNewLine

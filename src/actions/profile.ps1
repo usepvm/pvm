@@ -153,14 +153,14 @@ function Disable-IniExtension-Direct {
 function Get-Popular-PHP-Settings {
     try {
         # Return list of popular/common PHP settings that should be included in profiles
-        if (Is-File-Exists -path $PVMConfig.paths.profileTemplate) {
+        if (Test-File-Exists -path $PVMConfig.paths.profileTemplate) {
             $data = (Get-Content -Path $PVMConfig.paths.profileTemplate -Raw | ConvertFrom-Json)
             if ($null -ne $data.settings -and $data.settings.Count -gt 0) {
                 return $data.settings
             }
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP settings"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP settings"; exception = $_ }
     }
 
     return $PVMConfig.defaults.settings
@@ -169,14 +169,14 @@ function Get-Popular-PHP-Settings {
 function Get-Popular-PHP-Extensions {
     try {
         # Return list of popular/common PHP extensions that should be included in profiles
-        if (Is-File-Exists -path $PVMConfig.paths.profileTemplate) {
+        if (Test-File-Exists -path $PVMConfig.paths.profileTemplate) {
             $data = (Get-Content -Path $PVMConfig.paths.profileTemplate -Raw | ConvertFrom-Json)
             if ($null -ne $data.extensions -and $data.extensions.Count -gt 0) {
                 return $data.extensions
             }
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP extensions"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP extensions"; exception = $_ }
     }
 
     return $PVMConfig.defaults.extensions
@@ -189,13 +189,13 @@ function Save-PHP-Profile {
         $currentPhpVersion = Get-Current-PHP-Version
 
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
-            Print-Error -message "`nFailed to get current PHP version."
+            Show-Error -message "`nFailed to get current PHP version."
             return -1
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
-        if (Is-File-Not-Exists -path $iniPath) {
-            Print-Error -message "`nphp.ini not found at: $($currentPhpVersion.path)"
+        if (Test-File-Not-Exists -path $iniPath) {
+            Show-Error -message "`nphp.ini not found at: $($currentPhpVersion.path)"
             return -1
         }
 
@@ -238,9 +238,9 @@ function Save-PHP-Profile {
         }
 
         # Save to JSON file
-        $created = Make-Directory -path $PVMConfig.paths.profiles
+        $created = New-Directory -path $PVMConfig.paths.profiles
         if ($created -ne 0) {
-            Print-Error -message "`nFailed to create profiles directory."
+            Show-Error -message "`nFailed to create profiles directory."
             return -1
         }
 
@@ -248,53 +248,53 @@ function Save-PHP-Profile {
         $jsonContent = $userProfile | ConvertTo-Json -Depth 10
         Set-Content -Path $profilePath -Value $jsonContent -Encoding UTF8
 
-        Print-Success -message "`nProfile '$profileName' saved successfully."
-        Print-Message -message "  Settings: $($userProfile.settings.Count) (popular/common only)"
-        Print-Message -message "  Extensions: $($userProfile.extensions.Count) (popular/common only)"
-        Print-Message -message "  Location: $profilePath"
-        Print-Info -message "`nNote: Only popular/common settings and extensions are saved."
-        Print-Info -message "      You can manually add other settings/extensions using 'pvm ini' commands."
+        Show-Success -message "`nProfile '$profileName' saved successfully."
+        Show-Message -message "  Settings: $($userProfile.settings.Count) (popular/common only)"
+        Show-Message -message "  Extensions: $($userProfile.extensions.Count) (popular/common only)"
+        Show-Message -message "  Location: $profilePath"
+        Show-Info -message "`nNote: Only popular/common settings and extensions are saved."
+        Show-Info -message "      You can manually add other settings/extensions using 'pvm ini' commands."
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to save profile '$profileName'"; exception = $_ }
-        Print-Error -message "`nFailed to save profile: $($_.Exception.Message)"
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to save profile '$profileName'"; exception = $_ }
+        Show-Error -message "`nFailed to save profile: $($_.Exception.Message)"
         return -1
     }
 }
 
-function Load-PHP-Profile {
+function Use-PHP-Profile {
     param ($profileName)
 
     try {
         $currentPhpVersion = Get-Current-PHP-Version
 
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
-            Print-Error -message "`nFailed to get current PHP version."
+            Show-Error -message "`nFailed to get current PHP version."
             return -1
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
-        if (Is-File-Not-Exists -path $iniPath) {
-            Print-Error -message "`nphp.ini not found at: $($currentPhpVersion.path)"
+        if (Test-File-Not-Exists -path $iniPath) {
+            Show-Error -message "`nphp.ini not found at: $($currentPhpVersion.path)"
             return -1
         }
 
         # Load profile JSON
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
-        if (Is-File-Not-Exists -path $profilePath) {
-            Print-Error -message "`nProfile '$profileName' not found."
-            Print-Message -message "  Use 'pvm profile list' to see available profiles."
+        if (Test-File-Not-Exists -path $profilePath) {
+            Show-Error -message "`nProfile '$profileName' not found."
+            Show-Message -message "  Use 'pvm profile list' to see available profiles."
             return -1
         }
 
         $jsonContent = Get-Content -Path $profilePath -Raw | ConvertFrom-Json
 
-        Print-Info -message "`nLoading profile '$($jsonContent.name)'..."
+        Show-Info -message "`nLoading profile '$($jsonContent.name)'..."
         if ($jsonContent.description) {
-            Print-Message -message "  Description: $($jsonContent.description)"
+            Show-Message -message "  Description: $($jsonContent.description)"
         }
-        Print-Message -message "  Created: $($jsonContent.created)"
+        Show-Message -message "  Created: $($jsonContent.created)"
 
         # Backup ini file before applying changes
         $null = Backup-IniFile -iniPath $iniPath
@@ -340,34 +340,34 @@ function Load-PHP-Profile {
             }
         }
 
-        Print-Success -message "`nProfile applied successfully:"
-        Print-Message -message "  Settings applied: $settingsApplied"
+        Show-Success -message "`nProfile applied successfully:"
+        Show-Message -message "  Settings applied: $settingsApplied"
         if ($settingsSkipped -gt 0) {
-            Print-Warning -message "  Settings skipped: $settingsSkipped"
+            Show-Warning -message "  Settings skipped: $settingsSkipped"
         }
         if ($settingsIgnored -gt 0) {
-            Print-Info -message "  Settings ignored (not popular): $settingsIgnored"
+            Show-Info -message "  Settings ignored (not popular): $settingsIgnored"
         }
-        Print-Message -message "  Extensions enabled: $extensionsEnabled"
-        Print-Message -message "  Extensions disabled: $extensionsDisabled"
+        Show-Message -message "  Extensions enabled: $extensionsEnabled"
+        Show-Message -message "  Extensions disabled: $extensionsDisabled"
         if ($extensionsSkipped -gt 0) {
-            Print-Warning -message "  Extensions skipped: $extensionsSkipped"
+            Show-Warning -message "  Extensions skipped: $extensionsSkipped"
         }
         if ($extensionsIgnored -gt 0) {
-            Print-Info -message "  Extensions ignored (not popular): $extensionsIgnored"
+            Show-Info -message "  Extensions ignored (not popular): $extensionsIgnored"
         }
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to load profile '$profileName'"; exception = $_ }
-        Print-Error -message "`nFailed to load profile: $($_.Exception.Message)"
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to load profile '$profileName'"; exception = $_ }
+        Show-Error -message "`nFailed to load profile: $($_.Exception.Message)"
         return -1
     }
 }
 
 function Get-Profile-Files {
     try {
-        if (Is-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
+        if (Test-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
             return $null
         }
 
@@ -375,26 +375,26 @@ function Get-Profile-Files {
 
         return $files
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get profile files"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get profile files"; exception = $_ }
         return $null
     }
 }
 
-function List-PHP-Profiles {
+function Show-PHP-Profiles {
     try {
-        if (Is-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
-            Print-Error -message "`nNo profiles directory found. Create a profile with 'pvm profile save <name>'."
+        if (Test-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
+            Show-Error -message "`nNo profiles directory found. Create a profile with 'pvm profile save <name>'."
             return -1
         }
 
         $profileFiles = Get-Profile-Files
 
         if ($profileFiles.Count -eq 0) {
-            Print-Error -message "`nNo profiles found. Create a profile with 'pvm profile save <name>'."
+            Show-Error -message "`nNo profiles found. Create a profile with 'pvm profile save <name>'."
             return -1
         }
 
-        Print-Info -message "`nAvailable Profiles:"
+        Show-Info -message "`nAvailable Profiles:"
         Write-Gray -message '-------------------'
 
         $profiles = @()
@@ -413,26 +413,26 @@ function List-PHP-Profiles {
                     File        = $file.Name
                 }
             } catch {
-                Print-Error -message "  Warning: Failed to parse $($file.Name)"
+                Show-Error -message "  Warning: Failed to parse $($file.Name)"
             }
         }
 
         $maxNameLength = ($profiles.Name | Measure-Object -Maximum Length).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
 
         foreach ($userProfile in $profiles) {
-            Print-Message -message (' Name '.PadRight($maxNameLength, '.') + " $($userProfile.Name)")
-            Print-Message -message ('   Description '.PadRight($maxNameLength, '.') + " $($userProfile.Description)")
-            Print-Message -message ('   Created '.PadRight($maxNameLength, '.') + " $($userProfile.Created)")
-            Print-Message -message ('   PHP '.PadRight($maxNameLength, '.') + " $($userProfile.PHPVersion)")
-            Print-Message -message ('   Settings '.PadRight($maxNameLength, '.') + " $($userProfile.Settings)")
-            Print-Message -message ('   Extensions '.PadRight($maxNameLength, '.') + " $($userProfile.Extensions)")
-            Print-Message -message ('   Path '.PadRight($maxNameLength, '.') + " $($PVMConfig.paths.profiles)\$($userProfile.File)`n")
+            Show-Message -message (' Name '.PadRight($maxNameLength, '.') + " $($userProfile.Name)")
+            Show-Message -message ('   Description '.PadRight($maxNameLength, '.') + " $($userProfile.Description)")
+            Show-Message -message ('   Created '.PadRight($maxNameLength, '.') + " $($userProfile.Created)")
+            Show-Message -message ('   PHP '.PadRight($maxNameLength, '.') + " $($userProfile.PHPVersion)")
+            Show-Message -message ('   Settings '.PadRight($maxNameLength, '.') + " $($userProfile.Settings)")
+            Show-Message -message ('   Extensions '.PadRight($maxNameLength, '.') + " $($userProfile.Extensions)")
+            Show-Message -message ('   Path '.PadRight($maxNameLength, '.') + " $($PVMConfig.paths.profiles)\$($userProfile.File)`n")
         }
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list profiles"; exception = $_ }
-        Print-Error -message "`nFailed to list profiles: $($_.Exception.Message)"
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list profiles"; exception = $_ }
+        Show-Error -message "`nFailed to list profiles: $($_.Exception.Message)"
         return -1
     }
 }
@@ -442,9 +442,9 @@ function Show-PHP-Profile {
 
     try {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
-        if (Is-File-Not-Exists -path $profilePath) {
-            Print-Error -message "`nProfile '$profileName' not found."
-            Print-Message -message "  Use 'pvm profile list' to see available profiles."
+        if (Test-File-Not-Exists -path $profilePath) {
+            Show-Error -message "`nProfile '$profileName' not found."
+            Show-Message -message "  Use 'pvm profile list' to see available profiles."
             return -1
         }
 
@@ -454,12 +454,12 @@ function Show-PHP-Profile {
         $utc = $dt.ToUniversalTime()
         $createdAtFormatted = $utc.ToString('dd/MM/yyyy HH:mm:ss')
 
-        Print-Info -message "`nProfile: $($userProfile.name)"
-        Print-Message -message '========================='
-        Print-Value -message "Description: $($userProfile.description)"
-        Print-Value -message "Created: $createdAtFormatted"
-        Print-Value -message "PHP Version: $($userProfile.phpVersion)"
-        Print-Value -message "PATH: $profilePath"
+        Show-Info -message "`nProfile: $($userProfile.name)"
+        Show-Message -message '========================='
+        Show-Value -message "Description: $($userProfile.description)"
+        Show-Value -message "Created: $createdAtFormatted"
+        Show-Value -message "PHP Version: $($userProfile.phpVersion)"
+        Show-Value -message "PATH: $profilePath"
 
         $settingsCount = if ($userProfile.settings) { ($userProfile.settings.PSObject.Properties | Measure-Object).Count } else { 0 }
         $maxNameLength = [Math]::Max(
@@ -467,24 +467,24 @@ function Show-PHP-Profile {
             ($userProfile.extensions.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
         )
 
-        Print-Info -message "`nSettings ($settingsCount):"
+        Show-Info -message "`nSettings ($settingsCount):"
         if ($settingsCount -eq 0) {
-            Print-Message -message '  (none)'
+            Show-Message -message '  (none)'
         } else {
             foreach ($settingName in ($userProfile.settings.PSObject.Properties.Name | Sort-Object)) {
                 $setting = $userProfile.settings.$settingName
                 $name = "$settingName ".PadRight($maxNameLength, '.')
                 $status = if ($setting.enabled) { 'Enabled' } else { 'Disabled' }
                 $color = if ($setting.enabled) { 'DarkGreen' } else { 'DarkYellow' }
-                Print-Message -message "  $name $($setting.value) " -noNewLine
+                Show-Message -message "  $name $($setting.value) " -noNewLine
                 Write-Color -message $status -foreColor $color
             }
         }
 
         $extensionsCount = if ($userProfile.extensions) { ($userProfile.extensions.PSObject.Properties | Measure-Object).Count } else { 0 }
-        Print-Info -message "`nExtensions ($extensionsCount):"
+        Show-Info -message "`nExtensions ($extensionsCount):"
         if ($extensionsCount -eq 0) {
-            Print-Message -message '  (none)'
+            Show-Message -message '  (none)'
         } else {
             foreach ($extName in ($userProfile.extensions.PSObject.Properties.Name | Sort-Object)) {
                 $ext = $userProfile.extensions.$extName
@@ -492,27 +492,27 @@ function Show-PHP-Profile {
                 $status = if ($ext.enabled) { 'Enabled' } else { 'Disabled' }
                 $color = if ($ext.enabled) { 'DarkGreen' } else { 'DarkYellow' }
                 $type = $ext.type
-                Print-Message -message "  $name $type " -noNewLine
+                Show-Message -message "  $name $type " -noNewLine
                 Write-Color -message $status -foreColor $color
             }
         }
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show profile '$profileName'"; exception = $_ }
-        Print-Error -message "`nFailed to show profile: $($_.Exception.Message)"
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show profile '$profileName'"; exception = $_ }
+        Show-Error -message "`nFailed to show profile: $($_.Exception.Message)"
         return -1
     }
 }
 
-function Delete-PHP-Profile {
+function Remove-PHP-Profile {
     param ($profileName, $skipConfirmation = $false)
 
     try {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
 
-        if (Is-File-Not-Exists -path $profilePath) {
-            Print-Error -message "`nProfile '$profileName' not found."
+        if (Test-File-Not-Exists -path $profilePath) {
+            Show-Error -message "`nProfile '$profileName' not found."
             return -1
         }
 
@@ -526,12 +526,12 @@ function Delete-PHP-Profile {
         }
 
         Remove-Item -Path $profilePath -Force
-        Print-Success -message "`nProfile '$profileName' deleted successfully."
+        Show-Success -message "`nProfile '$profileName' deleted successfully."
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete profile '$profileName'"; exception = $_ }
-        Print-Error -message "`nFailed to delete profile: $($_.Exception.Message)"
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete profile '$profileName'"; exception = $_ }
+        Show-Error -message "`nFailed to delete profile: $($_.Exception.Message)"
         return -1
     }
 }
@@ -543,7 +543,7 @@ function Clear-PHP-Profiles {
         $profileFiles = Get-Profile-Files
 
         if ($profileFiles.Count -eq 0) {
-            Print-Error -message "`nNo profiles found. Create a profile with 'pvm profile save <name>'."
+            Show-Error -message "`nNo profiles found. Create a profile with 'pvm profile save <name>'."
             return -1
         }
 
@@ -560,12 +560,12 @@ function Clear-PHP-Profiles {
             Remove-Item -Path $profileFile.FullName -Force
         }
 
-        Print-Success -message "`nAll profiles deleted successfully."
+        Show-Success -message "`nAll profiles deleted successfully."
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear profiles"; exception = $_ }
-        Print-Error -message "`nFailed to clear profiles."
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear profiles"; exception = $_ }
+        Show-Error -message "`nFailed to clear profiles."
         return -1
     }
 }
@@ -576,8 +576,8 @@ function Export-PHP-Profile {
     try {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
 
-        if (Is-File-Not-Exists -path $profilePath) {
-            Print-Error -message "`nProfile '$profileName' not found."
+        if (Test-File-Not-Exists -path $profilePath) {
+            Show-Error -message "`nProfile '$profileName' not found."
             return -1
         }
 
@@ -586,12 +586,12 @@ function Export-PHP-Profile {
         }
 
         Copy-Item -Path $profilePath -Destination $exportPath -Force
-        Print-Success -message "`nProfile '$profileName' exported to: $exportPath"
+        Show-Success -message "`nProfile '$profileName' exported to: $exportPath"
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to export profile '$profileName'"; exception = $_ }
-        Print-Error -message "`nFailed to export profile: $($_.Exception.Message)"
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to export profile '$profileName'"; exception = $_ }
+        Show-Error -message "`nFailed to export profile: $($_.Exception.Message)"
         return -1
     }
 }
@@ -600,8 +600,8 @@ function Import-PHP-Profile {
     param ($importPath, $profileName = $null)
 
     try {
-        if (Is-File-Not-Exists -path $importPath) {
-            Print-Error -message "`nFile not found: $importPath"
+        if (Test-File-Not-Exists -path $importPath) {
+            Show-Error -message "`nFile not found: $importPath"
             return -1
         }
 
@@ -609,20 +609,20 @@ function Import-PHP-Profile {
         try {
             $userProfile = Get-Content -Path $importPath -Raw | ConvertFrom-Json
             if (-not $userProfile.name -or -not $userProfile.settings -or -not $userProfile.extensions) {
-                Print-Error -message "`nInvalid profile format. Profile must contain 'name', 'settings', and 'extensions'."
+                Show-Error -message "`nInvalid profile format. Profile must contain 'name', 'settings', and 'extensions'."
                 return -1
             }
         } catch {
-            Print-Error -message "`nInvalid JSON file: $($_.Exception.Message)"
+            Show-Error -message "`nInvalid JSON file: $($_.Exception.Message)"
             return -1
         }
 
         # Use provided name or name from profile
         $finalName = if ($profileName) { $profileName } else { $userProfile.name }
 
-        $created = Make-Directory -path $PVMConfig.paths.profiles
+        $created = New-Directory -path $PVMConfig.paths.profiles
         if ($created -ne 0) {
-            Print-Error -message "`nFailed to create profiles directory."
+            Show-Error -message "`nFailed to create profiles directory."
             return -1
         }
 
@@ -637,18 +637,18 @@ function Import-PHP-Profile {
             Copy-Item -Path $importPath -Destination $targetPath -Force
         }
 
-        Print-Success -message "`nProfile imported successfully as '$finalName'."
-        Print-Message -message "  Use 'pvm profile load $finalName' to apply it."
+        Show-Success -message "`nProfile imported successfully as '$finalName'."
+        Show-Message -message "  Use 'pvm profile load $finalName' to apply it."
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to import profile from '$importPath'"; exception = $_ }
-        Print-Error -message "`nFailed to import profile: $($_.Exception.Message)"
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to import profile from '$importPath'"; exception = $_ }
+        Show-Error -message "`nFailed to import profile: $($_.Exception.Message)"
         return -1
     }
 }
 
-function Create-Example-PHP-Profile {
+function New-Example-PHP-Profile {
     try {
         $exampleProfile = [ordered]@{
             name        = "example-profile"
@@ -697,12 +697,12 @@ function Create-Example-PHP-Profile {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create example profile"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create example profile"; exception = $_ }
         return -1
     }
 }
 
-function Create-Profile-Template {
+function New-Profile-Template {
     try {
         $profileTemplate = [ordered]@{
             extensions = $PVMConfig.defaults.extensions
@@ -714,7 +714,7 @@ function Create-Profile-Template {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create profile template"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create profile template"; exception = $_ }
         return -1
     }
 }

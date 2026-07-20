@@ -12,7 +12,7 @@ BeforeAll {
     New-Item -Path "$testPhpPath\7.4" -ItemType Directory -Force
     New-Item -Path "$testPhpPath\8.0" -ItemType Directory -Force
 
-    Mock Log-Data -MockWith {
+    Mock Add-LogEntry -MockWith {
         param ($logPath, $message, $data)
         return 0
     }
@@ -32,7 +32,7 @@ Describe "Uninstall-PHP" {
             Mock Get-Matching-PHP-Versions -MockWith { }
             Mock Get-UserSelected-PHP-Version -MockWith { }
             Mock Remove-Item -MockWith { }
-            Mock Log-Data -MockWith { 0 }
+            Mock Add-LogEntry -MockWith { 0 }
             Mock Get-Current-PHP-Version { @{ version = $null } }
         }
 
@@ -89,7 +89,7 @@ Describe "Uninstall-PHP" {
                 return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\7.4" }
             }
             Mock Get-Current-PHP-Version { @{ version = '7.4'; arch = 'x64'; buildType = 'nts' } }
-            Mock Is-Two-PHP-Versions-Equal { $true }
+            Mock Test-Two-PHP-Versions-Equal { $true }
             # First call: general confirm 'y', second call: current-version prompt returns nothing (cancel)
             $script:readHostCalls = 0
             Mock Read-Host {
@@ -110,7 +110,7 @@ Describe "Uninstall-PHP" {
                 return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\7.4" }
             }
             Mock Get-Current-PHP-Version { @{ version = '7.4'; arch = 'x64'; buildType = 'nts' } }
-            Mock Is-Two-PHP-Versions-Equal { $true }
+            Mock Test-Two-PHP-Versions-Equal { $true }
             $script:readHostCalls = 0
             Mock Read-Host {
                 $script:readHostCalls++
@@ -131,7 +131,7 @@ Describe "Uninstall-PHP" {
                 return @{ code = 0; version = '8.0'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\8.0" }
             }
             Mock Get-Current-PHP-Version { @{ version = '8.0'; arch = 'x64'; buildType = 'nts' } }
-            Mock Is-Two-PHP-Versions-Equal { $true }
+            Mock Test-Two-PHP-Versions-Equal { $true }
             Mock Read-Host { 'y' }
 
             $result = Uninstall-PHP -version '8.0' -skipConfirmation $false
@@ -165,7 +165,7 @@ Describe "Uninstall-PHP" {
                 @{ code = 0; version = '8.0'; path = "$testPhpPath\8.0" }
             }
             Mock Remove-Item -MockWith { }
-            Mock Log-Data -MockWith { 0 }
+            Mock Add-LogEntry -MockWith { 0 }
             Mock Get-Current-PHP-Version { @{ version = $null } }
         }
 
@@ -191,7 +191,7 @@ Describe "Uninstall-PHP" {
             }
             Mock Get-UserSelected-PHP-Version -MockWith { }
             Mock Remove-Item -MockWith { }
-            Mock Log-Data -MockWith { 0 }
+            Mock Add-LogEntry -MockWith { 0 }
         }
 
         It "Should return version not found message" {
@@ -215,7 +215,7 @@ Describe "Uninstall-PHP" {
                 @{ code = -1; message = 'User cancelled the selection'; color = 'DarkYellow' }
             }
             Mock Remove-Item -MockWith { }
-            Mock Log-Data -MockWith { 0 }
+            Mock Add-LogEntry -MockWith { 0 }
         }
 
         It "Should return the user selection error" {
@@ -236,7 +236,7 @@ Describe "Uninstall-PHP" {
             Mock Get-Matching-PHP-Versions -MockWith { return $null }
             Mock Get-UserSelected-PHP-Version -MockWith { return $null }
             Mock Remove-Item -MockWith { }
-            Mock Log-Data -MockWith { 0 }
+            Mock Add-LogEntry -MockWith { 0 }
         }
 
         It "Should return version not found message" {
@@ -264,7 +264,7 @@ Describe "Uninstall-PHP" {
             Mock Get-UserSelected-PHP-Version -MockWith {
                 return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\7.4" }
             }
-            Mock Refresh-Installed-PHP-Versions-Cache { throw 'Error' }
+            Mock Update-Installed-PHP-Versions-Cache { throw 'Error' }
 
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $true
 
@@ -273,7 +273,7 @@ Describe "Uninstall-PHP" {
             $result.color | Should -Be 'DarkYellow'
 
             Should -Invoke Remove-Item -Exactly 1
-            Should -Invoke Log-Data -Exactly 1
+            Should -Invoke Add-LogEntry -Exactly 1
         }
     }
 

@@ -63,7 +63,7 @@ Describe "Set-Last-Update-Check-Timestamp" {
 
     Context "When writing succeeds" {
         It "Creates the cache directory" {
-            Mock Make-Directory {
+            Mock New-Directory {
                 return 0
             }
             Mock Get-Date { return [datetime]'2026-01-01' }
@@ -71,7 +71,7 @@ Describe "Set-Last-Update-Check-Timestamp" {
             $result = Set-Last-Update-Check-Timestamp
 
             $result | Should -Be 0
-            Should -Invoke Make-Directory -Times 1 -ParameterFilter {
+            Should -Invoke New-Directory -Times 1 -ParameterFilter {
                 $path -eq $CACHE_PATH
             }
         }
@@ -98,13 +98,13 @@ Describe "Set-Last-Update-Check-Timestamp" {
     }
 }
 
-Describe "Should-Check-For-Updates" {
+Describe "Test-Should-Check-For-Updates" {
     Context "When update checks are disabled" {
         It "Returns false without checking the last timestamp" {
             $PVMConfig.env.ENABLE_UPDATE_CHECK = $false
             Mock Get-Last-Update-Check-Timestamp {}
 
-            $result = Should-Check-For-Updates
+            $result = Test-Should-Check-For-Updates
 
             $result | Should -Be $false
             Should -Invoke Get-Last-Update-Check-Timestamp -Times 0
@@ -120,7 +120,7 @@ Describe "Should-Check-For-Updates" {
         It "Returns true when there is no previous check timestamp" {
             Mock Get-Last-Update-Check-Timestamp { return $null }
 
-            $result = Should-Check-For-Updates
+            $result = Test-Should-Check-For-Updates
 
             $result | Should -Be $true
         }
@@ -128,7 +128,7 @@ Describe "Should-Check-For-Updates" {
         It "Returns true when enough hours have passed since the last check" {
             Mock Get-Last-Update-Check-Timestamp { return (Get-Date).AddHours(-25) }
 
-            $result = Should-Check-For-Updates
+            $result = Test-Should-Check-For-Updates
 
             $result | Should -Be $true
         }
@@ -136,7 +136,7 @@ Describe "Should-Check-For-Updates" {
         It "Returns false when not enough hours have passed since the last check" {
             Mock Get-Last-Update-Check-Timestamp { return (Get-Date).AddHours(-1) }
 
-            $result = Should-Check-For-Updates
+            $result = Test-Should-Check-For-Updates
 
             $result | Should -Be $false
         }
@@ -144,21 +144,21 @@ Describe "Should-Check-For-Updates" {
         It "Returns true when the elapsed time exactly equals the interval" {
             Mock Get-Last-Update-Check-Timestamp { return (Get-Date).AddHours(-24) }
 
-            $result = Should-Check-For-Updates
+            $result = Test-Should-Check-For-Updates
 
             $result | Should -Be $true
         }
     }
 }
 
-Describe "Check-For-Updates-Quietly" {
+Describe "Test-Check-For-Updates-Quietly" {
     Context "When an update check is not due" {
         It "Returns without calling Update-PVM" {
-            Mock Should-Check-For-Updates { return $false }
+            Mock Test-Should-Check-For-Updates { return $false }
             Mock Update-PVM {}
             Mock Set-Last-Update-Check-Timestamp {}
 
-            $result = Check-For-Updates-Quietly
+            $result = Test-Check-For-Updates-Quietly
 
             $result | Should -Be 0
             Should -Invoke Update-PVM -Times 0
@@ -168,11 +168,11 @@ Describe "Check-For-Updates-Quietly" {
 
     Context "When an update check is due" {
         It "Calls Update-PVM with checkOnly and records the timestamp" {
-            Mock Should-Check-For-Updates { return $true }
+            Mock Test-Should-Check-For-Updates { return $true }
             Mock Update-PVM { return @{ code = 0; message = 'No update available' } }
             Mock Set-Last-Update-Check-Timestamp {}
 
-            $result = Check-For-Updates-Quietly
+            $result = Test-Check-For-Updates-Quietly
 
             $result | Should -Be 0
             Should -Invoke Update-PVM -Times 1 -ParameterFilter {
@@ -182,12 +182,12 @@ Describe "Check-For-Updates-Quietly" {
         }
 
         It "Writes a message to the host when an update is available" {
-            Mock Should-Check-For-Updates { return $true }
+            Mock Test-Should-Check-For-Updates { return $true }
             Mock Update-PVM { return @{ code = 0; message = 'Update available: v2.7.0' } }
             Mock Set-Last-Update-Check-Timestamp {}
             Mock Write-Host {}
 
-            $result = Check-For-Updates-Quietly
+            $result = Test-Check-For-Updates-Quietly
 
             $result | Should -Be 0
             Should -Invoke Write-Host -Times 1 -ParameterFilter {
@@ -196,39 +196,39 @@ Describe "Check-For-Updates-Quietly" {
         }
 
         It "Does not write to the host when the result code is not 0" {
-            Mock Should-Check-For-Updates { return $true }
+            Mock Test-Should-Check-For-Updates { return $true }
             Mock Update-PVM { return @{ code = -1; message = 'Update available: v2.7.0' } }
             Mock Set-Last-Update-Check-Timestamp {}
             Mock Write-Host {}
 
-            $result = Check-For-Updates-Quietly
+            $result = Test-Check-For-Updates-Quietly
 
             $result | Should -Be -1
             Should -Invoke Write-Host -Times 0
         }
 
         It "Does not write to the host when no update is available" {
-            Mock Should-Check-For-Updates { return $true }
+            Mock Test-Should-Check-For-Updates { return $true }
             Mock Update-PVM { return @{ code = 0; message = 'PVM is already up to date' } }
             Mock Set-Last-Update-Check-Timestamp {}
             Mock Write-Host {}
 
-            $result = Check-For-Updates-Quietly
+            $result = Test-Check-For-Updates-Quietly
 
             $result | Should -Be 0
             Should -Invoke Write-Host -Times 0
         }
 
         It "Returns -1 and logs error when Update-PVM throws exception" {
-            Mock Should-Check-For-Updates { return $true }
+            Mock Test-Should-Check-For-Updates { return $true }
             Mock Update-PVM { throw 'Network error' }
             Mock Set-Last-Update-Check-Timestamp {}
-            Mock Log-Data {}
+            Mock Add-LogEntry {}
 
-            $result = Check-For-Updates-Quietly
+            $result = Test-Check-For-Updates-Quietly
 
             $result | Should -Be -1
-            Should -Invoke Log-Data -Times 1
+            Should -Invoke Add-LogEntry -Times 1
         }
     }
 }

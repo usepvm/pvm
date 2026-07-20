@@ -10,10 +10,10 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PHP_CURRENT_DIR -Force | Out-Null
 
-    # Mock Log-Data function
+    # Mock Add-LogEntry function
     Mock Write-Host {}
 
-    Mock Log-Data {
+    Mock Add-LogEntry {
         param ($data)
         return $true
     }
@@ -256,15 +256,15 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should handle Test-Path exceptions gracefully" {
             # Arrange
-            Mock Is-File-Not-Exists { throw 'Access Denied' }
-            Mock Log-Data { return 0 }
+            Mock Test-File-Not-Exists { throw 'Access Denied' }
+            Mock Add-LogEntry { return 0 }
             $testPath = $PHP_DIR
 
             # Act
             $result = Get-PHP-Status -phpPath $testPath
 
             # Assert
-            Should -Invoke Log-Data -Times 1
+            Should -Invoke Add-LogEntry -Times 1
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
             ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
@@ -295,7 +295,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
                 BuildType = 'ts'
                 InstallPath = 'C:\php\8.2.0'
             }}
-            Mock Is-Directory-Exists { return $true }
+            Mock Test-Directory-Exists { return $true }
             $result = Get-Current-PHP-Version
 
             # Assert
@@ -313,7 +313,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
                 BuildType = 'ts'
                 InstallPath = 'C:\php\8.2.0'
             }}
-            Mock Is-Directory-Exists { return $true }
+            Mock Test-Directory-Exists { return $true }
             $null = Get-Current-PHP-Version
 
             # Assert
@@ -325,7 +325,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
         It "returns empty result when path does not exist" {
             # Arrange
             Mock Get-Item { return @{ Target = 'C:\php\8.2.0' } }
-            Mock Is-Directory-Exists { return $false }
+            Mock Test-Directory-Exists { return $false }
 
             # Act
             $result = Get-Current-PHP-Version
@@ -351,16 +351,16 @@ Describe "Get-Current-PHP-Version Function Tests" {
             ($result.status | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
 
-        It "Should call Log-Data when exception occurs" {
+        It "Should call Add-LogEntry when exception occurs" {
             # Arrange
             Mock Get-Item { throw 'Path does not exist' }
-            Mock Log-Data { return 0 }
+            Mock Add-LogEntry { return 0 }
 
             # Act
             $null = Get-Current-PHP-Version
 
             # Assert
-            Should -Invoke Log-Data -Times 1
+            Should -Invoke Add-LogEntry -Times 1
         }
     }
 
@@ -404,7 +404,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
                 BuildType = 'ts'
                 InstallPath = 'C:\php\8.1.0'
             }}
-            Mock Is-Directory-Exists { return $true }
+            Mock Test-Directory-Exists { return $true }
             # Act
             $result = Get-Current-PHP-Version
 

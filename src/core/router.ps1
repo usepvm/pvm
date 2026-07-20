@@ -6,10 +6,10 @@ function Get-Actions {
 
     return [ordered]@{
         'help'      = @{
-            command     = 'pvm help [command]';
+            command     = 'pvm help <command>';
             description = 'Display help for a command.';
             usage       = [ordered]@{
-                USAGE       = 'pvm help [command]';
+                USAGE       = 'pvm help <command>';
                 DESCRIPTION = @(
                     'Displays help for a command.',
                     'If no command is provided, displays help for all commands.'
@@ -71,7 +71,7 @@ function Get-Actions {
             action      = { return Invoke-List -arguments $script:arguments }
         }
         'install'   = @{
-            command     = 'pvm install <version>|[auto] [x86|x64] [ts|nts]';
+            command     = 'pvm install <version>|[auto]|[latest] [x86|x64] [ts|nts]';
             description = "Install a specific PHP version, 'latest', or use 'auto' to install the version from composer.json or .php-version.";
             usage       = [ordered]@{
                 USAGE       = 'pvm install <version> (alias: pvm i <version>) | pvm install auto | pvm install latest'
@@ -141,10 +141,10 @@ function Get-Actions {
             action      = { return Invoke-Info -arguments $script:arguments }
         }
         'ini'       = @{
-            command     = 'pvm ini <action> [<args>]';
+            command     = 'pvm ini <action> <args>';
             description = "Manage php.ini settings and extensions for the active PHP version.";
             usage       = [ordered]@{
-                USAGE       = 'pvm ini <action> [arguments]'
+                USAGE       = 'pvm ini <action> <args>'
                 DESCRIPTION = @(
                     'Manage PHP configuration (php.ini) settings and extensions for the currently active PHP version.'
                 )
@@ -190,10 +190,10 @@ function Get-Actions {
             action      = { return Invoke-Ini -arguments $script:arguments }
         }
         'profile'   = @{
-            command     = 'pvm profile <action> [<args>]';
+            command     = 'pvm profile <action> <args>';
             description = 'Save, load, inspect, import, and export PHP configuration profiles.';
             usage       = [ordered]@{
-                USAGE       = 'pvm profile <action> [arguments]'
+                USAGE       = 'pvm profile <action> [args]'
                 DESCRIPTION = @(
                     'Manage PHP configuration profiles stored as JSON files.',
                     'Profiles contain popular/common PHP settings and extension states that can be saved and loaded.',
@@ -206,8 +206,8 @@ function Get-Actions {
                     'show <name> .................................. Show detailed profile contents'
                     'delete <name> ................................ Delete a profile'
                     'clear ........................................ Delete all profiles files'
-                    'export <name> [path] ......................... Export profile to a JSON file'
-                    'import <path> [name] ......................... Import profile from a JSON file'
+                    'export <name> <path> ......................... Export profile to a JSON file'
+                    'import <path> <name> ......................... Import profile from a JSON file'
                 )
                 EXAMPLES    = @(
                     "pvm profile save development ................. Saves current config as 'development' profile"
@@ -226,10 +226,10 @@ function Get-Actions {
             action      = { return Invoke-Profile -arguments $script:arguments }
         }
         'cache'     = @{
-            command     = 'pvm cache <action> [<args>]';
+            command     = 'pvm cache <action> <args>';
             description = 'List, inspect, delete, or clear PVM cache files.';
             usage       = [ordered]@{
-                USAGE       = 'pvm cache <action> [arguments]'
+                USAGE       = 'pvm cache <action> <args>'
                 DESCRIPTION = @(
                     'Manage PVM cache files stored in the cache directory.'
                 )
@@ -273,10 +273,10 @@ function Get-Actions {
             action      = { return Invoke-Repair -arguments $script:arguments }
         }
         'log'       = @{
-            command     = 'pvm log';
+            command     = 'pvm log <options>';
             description = 'Display recent PVM log entries.';
             usage       = [ordered]@{
-                USAGE       = "pvm log --pageSize=[number] [--search=<term>] (default is $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE))"
+                USAGE       = "pvm log [--pageSize=<number>] [--search=<term>] (default is $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE))"
                 DESCRIPTION = @(
                     'Displays the PVM log file contents, showing recent errors,'
                     'and system messages. Useful for troubleshooting issues.'
@@ -290,10 +290,10 @@ function Get-Actions {
             action      = { return Invoke-Log -arguments $script:arguments }
         }
         'test'      = @{
-            command     = 'pvm test';
+            command     = 'pvm test <options>';
             description = 'Run the PVM test suite.';
             usage       = [ordered]@{
-                USAGE       = 'pvm test [files] [--exclude=files] [--coverage[=<number>]] [--verbosity=<verbosity] [--tag=<tag>] [--sort=<sort>] [--group=<group>] [--shell=<shell>] [--pester=<version>]'
+                USAGE       = 'pvm test <files> [--exclude=<files>] [--coverage[=<number>]] [--verbosity=<verbosity] [--tag=<tag>] [--sort=<sort>] [--group=<group>] [--shell=<shell>] [--pester=<version>]'
                 DESCRIPTION = @(
                     'Runs the PVM test suite to verify that the installation and configuration'
                     'are working correctly. This includes testing PHP version switching,'

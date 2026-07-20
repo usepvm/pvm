@@ -2,12 +2,12 @@
 function Use-Pester-Version {
     param ($version)
 
-    Print-Info -message "`nChecking for Pester version: $version"
+    Show-Info -message "`nChecking for Pester version: $version"
 
     $availableVersions = Get-Module -Name Pester -ListAvailable
 
     if (-not $availableVersions) {
-        Print-Error -message "No Pester module found. Please install Pester first."
+        Show-Error -message "No Pester module found. Please install Pester first."
         return $false
     }
 
@@ -15,7 +15,7 @@ function Use-Pester-Version {
 
     if (-not $targetVersion) {
         $availableList = $availableVersions.Version -join ', '
-        Print-Error -message "Pester version '$version' not found. Available versions: $availableList"
+        Show-Error -message "Pester version '$version' not found. Available versions: $availableList"
         return $false
     }
 
@@ -23,7 +23,7 @@ function Use-Pester-Version {
 }
 
 function Use-Latest-Pester-Version {
-    Print-Info -message "`nChecking for latest Pester version"
+    Show-Info -message "`nChecking for latest Pester version"
 
     $availableVersions = Get-Module -Name Pester -ListAvailable
     $targetVersion = Find-Pester-Version -version 'latest' -availableVersions $availableVersions
@@ -59,11 +59,11 @@ function Import-Pester-Version {
 
     Import-Module Pester -RequiredVersion $targetVersion.Version -Force
     $pesterVersion = Get-Module -Name Pester
-    Print-Info -message "Using Pester version: $($pesterVersion.Version)"
+    Show-Info -message "Using Pester version: $($pesterVersion.Version)"
 
-    Print-Info -message "`nPester Info:"
-    Print-Message -message "  Version: $($pesterVersion.Version)"
-    Print-Message -message "  Path: $($pesterVersion.Path)"
+    Show-Info -message "`nPester Info:"
+    Show-Message -message "  Version: $($pesterVersion.Version)"
+    Show-Message -message "  Path: $($pesterVersion.Path)"
 
     return $pesterVersion
 }
@@ -88,12 +88,12 @@ function Get-PowerShell-Info {
 function Write-PowerShell-Info {
     param ($psInfo)
 
-    Print-Info -message "`nPowerShell Info:"
-    Print-Message -message "  Engine: $($psInfo.Name)"
-    Print-Message -message "  Version: $($psInfo.Version)"
-    Print-Message -message "  Edition: $($psInfo.Edition)"
-    Print-Message -message "  Platform: $($psInfo.Platform)"
-    Print-Message -message "  Path: $($psInfo.Path)"
+    Show-Info -message "`nPowerShell Info:"
+    Show-Message -message "  Engine: $($psInfo.Name)"
+    Show-Message -message "  Version: $($psInfo.Version)"
+    Show-Message -message "  Edition: $($psInfo.Edition)"
+    Show-Message -message "  Platform: $($psInfo.Platform)"
+    Show-Message -message "  Path: $($psInfo.Path)"
 }
 
 function Get-PVMRootDirectory {
@@ -161,7 +161,7 @@ function Get-Tests-Map {
     return $testsMap
 }
 
-function Build-Pester-Config {
+function Initialize-Pester-Config {
     param ($options)
 
     $config = New-PesterConfiguration
@@ -201,12 +201,12 @@ function Get-Separator-Width {
 function Write-Test-Header {
     param ($file, $coveredFile, $separatorWidth)
 
-    Print-Info -message "`n`n$('-' * $separatorWidth)"
-    Print-Info -message "- Running test: $($file.Name) | $($file.FullName)"
+    Show-Info -message "`n`n$('-' * $separatorWidth)"
+    Show-Info -message "- Running test: $($file.Name) | $($file.FullName)"
     if ($coveredFile) {
-        Print-Info -message "- Covered file: $($coveredFile.Name) | $($coveredFile.FullName)"
+        Show-Info -message "- Covered file: $($coveredFile.Name) | $($coveredFile.FullName)"
     }
-    Print-Info -message ('-' * $separatorWidth)
+    Show-Info -message ('-' * $separatorWidth)
 }
 
 function Format-Test-Result-Message {
@@ -226,7 +226,7 @@ function Format-Test-Result-Message {
     return 'Passed : {0,-4} | Failed : {1,-3} | Duration : {2,-5}' -f $testResult.PassedCount, $testResult.FailedCount, $durationText
 }
 
-function Run-Test-File {
+function Invoke-Test-File {
     param ($config, $file = $null, $options = $null, $separatorWidth = 60, $testsMap = $null)
 
     $testResultData = @{ passedCount = 0; failedCount = 0; duration = 0; coverageRaw = $null }
@@ -234,7 +234,7 @@ function Run-Test-File {
     $relativeFilePath = $file.FullName -replace [regex]::Escape("$root\tests\"), ''
     $sortedName = if ($options -and $options.groupBy -and $options.groupBy -eq 'folder') { $file.Name } else { $relativeFilePath }
 
-    if (Is-File-Not-Exists -path $file.FullName) {
+    if (Test-File-Not-Exists -path $file.FullName) {
         return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = 'File not found!'; testResultData = $testResultData }
     }
 
@@ -274,12 +274,12 @@ function Run-Test-File {
 
         return @{ code = $code; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = $message; testResultData = $testResultData }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"; exception = $_ }
         return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = 'Failed to run test, check log.'; testResultData = $testResultData }
     }
 }
 
-function Prepare-Tests {
+function Initialize-Tests {
     param ($testsNames = $null, $options = $null, $exclude = $null, $pesterVersion = $null)
 
     if ($null -ne $exclude) {
@@ -288,7 +288,7 @@ function Prepare-Tests {
 
     $tests = Get-Tests-Files -testsNames $testsNames
 
-    return Run-Tests -tests $tests -options $options -pesterVersion $pesterVersion
+    return Invoke-Tests -tests $tests -options $options -pesterVersion $pesterVersion
 }
 
 function Get-Coverage-Group-Name {
@@ -386,7 +386,7 @@ function Write-Grouped-Results {
     }
 
     foreach ($group in $grouped) {
-        if ($group.Name) { Print-Info -message "`n  [$($group.Name)]" }
+        if ($group.Name) { Show-Info -message "`n  [$($group.Name)]" }
 
         $group.Group | ForEach-Object {
             $label = "    - $($_.sortedName) "
@@ -431,7 +431,7 @@ function Write-Tests-Summary {
     }
 }
 
-function Run-Tests {
+function Invoke-Tests {
     param ($tests = $null, $options = $null, $pesterVersion = $null)
 
     try {
@@ -442,7 +442,7 @@ function Run-Tests {
         }
 
         if (-not $pesterInfo) {
-            Print-Error -message "`nNo Pester module found. Please install Pester first."
+            Show-Error -message "`nNo Pester module found. Please install Pester first."
             return -1
         }
 
@@ -452,43 +452,43 @@ function Run-Tests {
 
         $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
         if ($verbosityOptions -notcontains $options.verbosity) {
-            Print-Error -message "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')"
+            Show-Error -message "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')"
             return -1
         }
 
-        $config = Build-Pester-Config -options $options
+        $config = Initialize-Pester-Config -options $options
         $separatorWidth = Get-Separator-Width -tests $tests
         $root = Get-PVMRootDirectory
         $testsMap = if ($options.coverage) { Get-Tests-Map -root $root } else { $null }
 
         $psInfo = Get-PowerShell-Info
         Write-PowerShell-Info -psInfo $psInfo
-        Print-Info -message "`nRunning tests with verbosity: $($options.verbosity)"
+        Show-Info -message "`nRunning tests with verbosity: $($options.verbosity)"
 
         $testSummary = $tests | ForEach-Object {
-            Run-Test-File -config $config -file $_ -options $options -separatorWidth $separatorWidth -testsMap $testsMap
+            Invoke-Test-File -config $config -file $_ -options $options -separatorWidth $separatorWidth -testsMap $testsMap
         }
 
         $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
 
-        Print-Message -message "`n----------------------------------------------------------------"
-        Print-Message -message "`n`nTests Settings:"
-        Print-Message -message " PowerShell Engine ..... $($psInfo.Name)"
-        Print-Message -message " PowerShell ............ $($psInfo.Version)"
-        Print-Message -message " Pester ................ $($pesterInfo.Version)"
-        Print-Message -message "`nTest Results Summary:"
-        Print-Message -message " Coverage .............. $($options.target)%"
-        Print-Message -message " Verbosity ............. $($options.verbosity)`n"
+        Show-Message -message "`n----------------------------------------------------------------"
+        Show-Message -message "`n`nTests Settings:"
+        Show-Message -message " PowerShell Engine ..... $($psInfo.Name)"
+        Show-Message -message " PowerShell ............ $($psInfo.Version)"
+        Show-Message -message " Pester ................ $($pesterInfo.Version)"
+        Show-Message -message "`nTest Results Summary:"
+        Show-Message -message " Coverage .............. $($options.target)%"
+        Show-Message -message " Verbosity ............. $($options.verbosity)`n"
 
         if ($testSummary.Count -eq 0) {
-            Print-Error -message 'No tests found.'
+            Show-Error -message 'No tests found.'
             return -1
         }
 
         return Write-Tests-Summary -testSummary $testSummary -options $options -maxLineLength $maxLineLength
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
-        Print-Error -message "`nFailed to run tests, check log: $($PVMConfig.paths.logError)"
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
+        Show-Error -message "`nFailed to run tests, check log: $($PVMConfig.paths.logError)"
         return -1
     }
 }

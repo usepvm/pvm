@@ -42,8 +42,8 @@ max_execution_time = 30
     New-Item -ItemType SymbolicLink -Path $PHP_CURRENT_DIR -Target $phpVersionPath -Force
     Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
 
-    # Mock Log-Data function
-    Mock Log-Data {
+    # Mock Add-LogEntry function
+    Mock Add-LogEntry {
         param ($logPath, $message, $data)
         return $true
     }
@@ -100,7 +100,7 @@ Describe "Invoke-IniAction" {
 
     Context "info action" {
         It "Executes info action successfully" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'info' -params @('--search=cache')
             $result | Should -Be 0
         }
@@ -108,20 +108,20 @@ Describe "Invoke-IniAction" {
 
     Context "get action" {
         It "Gets single setting" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'get' -params @('memory_limit')
 
             $result | Should -Be 0
         }
 
         It "Gets multiple settings" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'get' -params @('memory_limit', 'display_errors')
             $result | Should -Be 0
         }
 
         It "Requires at least one parameter" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'get' -params @()
             $result | Should -Be -1
         }
@@ -129,14 +129,14 @@ Describe "Invoke-IniAction" {
 
     Context "set action" {
         It "Sets single setting" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             Mock Read-Host { return '256M' }
             $result = Invoke-IniAction -action 'set' -params @('memory_limit')
             $result | Should -Be 0
         }
 
         It "Sets multiple settings" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'memory_limit'" } -MockWith { '512M' }
             Mock Read-Host -ParameterFilter { $Prompt -eq "Enter new value for 'max_execution_time'" } -MockWith { '60' }
 
@@ -145,7 +145,7 @@ Describe "Invoke-IniAction" {
         }
 
         It "Requires at least one parameter" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'set' -params @()
             $result | Should -Be -1
         }
@@ -153,7 +153,7 @@ Describe "Invoke-IniAction" {
 
     Context "enable action" {
         It "Enables single extension" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             Mock Get-ChildItem {
                 param ($Path)
                 return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" } )
@@ -163,7 +163,7 @@ Describe "Invoke-IniAction" {
         }
 
         It "Enables multiple extensions" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             @"
 ;extension=php_xdebug.dll
 ;extension=php_gd.dll
@@ -183,7 +183,7 @@ extension=php_curl.dll
         }
 
         It "Requires at least one parameter" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'enable' -params @()
             $result | Should -Be -1
         }
@@ -191,7 +191,7 @@ extension=php_curl.dll
 
     Context "disable action" {
         It "Disables single extension" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             Mock Get-ChildItem {
                 param ($Path)
                 return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
@@ -201,7 +201,7 @@ extension=php_curl.dll
         }
 
         It "Requires at least one parameter" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'disable' -params @()
             $result | Should -Be -1
         }
@@ -209,7 +209,7 @@ extension=php_curl.dll
 
     Context "status action" {
         It "Checks single extension status" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             Mock Get-ChildItem {
                 param ($Path)
                 return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
@@ -219,7 +219,7 @@ extension=php_curl.dll
         }
 
         It "Requires at least one parameter" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'status' -params @()
             $result | Should -Be -1
         }
@@ -227,10 +227,10 @@ extension=php_curl.dll
 
     Context "restore action" {
         It "Restores from backup" {
-            Mock Is-File-Not-Exists { return $false } -ParameterFilter { $Path -eq "$phpVersionPath\php.ini" }
+            Mock Test-File-Not-Exists { return $false } -ParameterFilter { $Path -eq "$phpVersionPath\php.ini" }
 
             $script:callCount = 0
-            Mock Is-File-Not-Exists {
+            Mock Test-File-Not-Exists {
                 $script:callCount++
                 if ($script:callCount -eq 1) { return $true }
                 else { return $false }
@@ -300,7 +300,7 @@ extension=php_curl.dll
                 }
                 return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\php_curl-1.4.0-7.4-ts-vc15-x86\php_curl.dll" } )
             }
-            Mock Extract-Zip { }
+            Mock Expand-Zip { }
             Mock Remove-Item { }
             Mock Move-Item { }
             Mock Read-Host -ParameterFilter { $Prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
@@ -311,25 +311,25 @@ extension=php_curl.dll
         }
 
         It "Installs extension" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'add' -params @('curl')
             $result | Should -Be 0
         }
 
         It "Installs xdebug extension" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'add' -params @('xdebug')
             $result | Should -Be 0
         }
 
         It "Requires at least one parameter" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'add' -params @()
             $result | Should -Be -1
         }
 
         It "Installs extension with skip confirmation" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'add' -params @('pdo_mysql', '-y')
 
             $result | Should -Be 0
@@ -339,7 +339,7 @@ extension=php_curl.dll
         }
 
         It "Installs extension with skip confirmation" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'add' -params @('xdebug', '-y')
 
             $result | Should -Be 0
@@ -351,7 +351,7 @@ extension=php_curl.dll
 
     Context "remove action" {
         It "Uninstalls extension" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             Mock Uninstall-Extension { return 0 }
 
             $result = Invoke-IniAction -action 'remove' -params @('curl', 'xdebug')
@@ -367,7 +367,7 @@ extension=php_curl.dll
         }
 
         It "Requires at least one parameter" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             Mock Uninstall-Extension { return 0 }
 
             $result = Invoke-IniAction -action 'remove' -params @()
@@ -378,7 +378,7 @@ extension=php_curl.dll
         }
 
         It "Uninstalls extension with skip confirmation" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             Mock Uninstall-Extension { return 0 }
 
             $result = Invoke-IniAction -action 'remove' -params @('xdebug', 'curl', '-y')
@@ -393,7 +393,7 @@ extension=php_curl.dll
 
     Context "ext action" {
         It "Lists extensions" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             Mock Get-Matching-PHPExtensionsStatus {
                 return @(@{
                         fullPath   = "$extDirectory\pdo_mysql.dll"
@@ -413,7 +413,7 @@ extension=php_curl.dll
 
     Context "error handling" {
         It "Handles invalid action" {
-            Mock Is-File-Not-Exists { return $false }
+            Mock Test-File-Not-Exists { return $false }
             $result = Invoke-IniAction -action 'invalid' -params @()
             $result | Should -Be 0
         }

@@ -20,7 +20,7 @@ function Get-Extension-Matching-Categories-By-Page {
     }
 }
 
-function Filter-Extension-Links-From-URL {
+function Select-Extension-Links-From-URL {
     param ($extName)
 
     $html = Get-Web-Response -uri "$($PVMConfig.links.peclPackageRoot)/$extName"
@@ -60,7 +60,7 @@ function Get-Packages-From-Source-Links {
                 }
             }
         } catch {
-            $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to find packages for $extName v$extVersion"; exception = $_ }
+            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to find packages for $extName v$extVersion"; exception = $_ }
         }
     }
 
@@ -81,7 +81,7 @@ function Get-Extension-Matching-Categories {
 
         $page = 1
         $category = $matches[1] -replace '\+', ' '
-        Print-Message -message "- Checking category '$category'..."
+        Show-Message -message "- Checking category '$category'..."
         do {
             $hasMore = $false
             $result = Get-Extension-Matching-Categories-By-Page -extName $extName -link $_.href -page $page
@@ -104,28 +104,28 @@ function Get-Extension-Links-From-URL {
 
     try {
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
-            Filter-Extension-Links-From-URL -extName $extName
+            Select-Extension-Links-From-URL -extName $extName
         }
     } catch {
-        Print-Message -message "`nDirect link for extension '$extName' not found, Loading matching extensions..."
+        Show-Message -message "`nDirect link for extension '$extName' not found, Loading matching extensions..."
 
         $linksMatchingExtName = Get-Extension-Matching-Categories -extName $extName
 
         if ($linksMatchingExtName.Count -eq 0) {
-            Print-Error -Message "`nExtension '$extName' not found"
+            Show-Error -Message "`nExtension '$extName' not found"
             return $null
         }
 
         if ($linksMatchingExtName.Count -eq 1) {
             $chosenItem = $($linksMatchingExtName)
             $extName = $chosenItem.href -replace '/package/', ''
-            Print-Message -message "`nMatching found : '$extName'"
+            Show-Message -message "`nMatching found : '$extName'"
         } else {
-            Print-Info -message "`nMatching '$extName' extension:"
+            Show-Info -message "`nMatching '$extName' extension:"
             $index = 0
             $linksMatchingExtName | ForEach-Object {
                 $extItem = $_.href -replace '/package/', ''
-                Print-Message -message "[$index] $extItem"
+                Show-Message -message "[$index] $extItem"
                 $index++
             }
 
@@ -139,12 +139,12 @@ function Get-Extension-Links-From-URL {
 
                 $choice = $null
                 if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Print-Warning -message 'Please enter a valid positive number.'
+                    Show-Warning -message 'Please enter a valid positive number.'
                     continue
                 }
 
                 if ($choice -lt 0 -or $choice -gt $linksMatchingExtName.Length - 1) {
-                    Print-Warning -message "Number must be between 0 and $($linksMatchingExtName.Length - 1)."
+                    Show-Warning -message "Number must be between 0 and $($linksMatchingExtName.Length - 1)."
                     continue
                 }
 
@@ -153,15 +153,15 @@ function Get-Extension-Links-From-URL {
 
             $chosenItem = $linksMatchingExtName[$choice]
             if (-not $chosenItem) {
-                Print-Error -Message "`nYou chose the wrong index: $choice"
+                Show-Error -Message "`nYou chose the wrong index: $choice"
                 return $null
             }
         }
 
         $extName = $chosenItem.href -replace '/package/', ''
-        Print-Message -message "`nLoading links for '$extName'..."
+        Show-Message -message "`nLoading links for '$extName'..."
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
-            Filter-Extension-Links-From-URL -extName $extName
+            Select-Extension-Links-From-URL -extName $extName
         }
     }
 

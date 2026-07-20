@@ -32,7 +32,7 @@ function Get-PHPInstallInfo {
 function Get-BinaryArchitecture-From-DLL {
     param ($path)
 
-    if (Is-File-Not-Exists -path $path) {
+    if (Test-File-Not-Exists -path $path) {
         return 'Unknown'
     }
 
@@ -49,7 +49,7 @@ function Get-BinaryArchitecture-From-DLL {
     }
 }
 
-function Is-Two-PHP-Versions-Equal {
+function Test-Two-PHP-Versions-Equal {
     param ($version1, $version2)
 
     if ($null -eq $version1 -or $null -eq $version2) {
@@ -68,34 +68,34 @@ function Set-Zend-Extensions-List {
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create zend extensions list"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create zend extensions list"; exception = $_ }
         return -1
     }
 }
 
 function Get-Zend-Extensions-List {
     try {
-        if (Is-File-Exists -path $PVMConfig.paths.zendExtensionsList) {
+        if (Test-File-Exists -path $PVMConfig.paths.zendExtensionsList) {
             $data = (Get-Content -Path $PVMConfig.paths.zendExtensionsList -Raw | ConvertFrom-Json)
             if ($null -ne $data -and $data.Count -gt 0) {
                 return $data
             }
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get zend extensions list"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get zend extensions list"; exception = $_ }
     }
 
     return $PVMConfig.defaults.zendExtensions
 }
 
-function Refresh-Installed-PHP-Versions-Cache {
+function Update-Installed-PHP-Versions-Cache {
     try {
         $installedVersions = Get-Installed-PHP-Versions-From-Disk
-        $code = Cache-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
+        $code = Save-Cached-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
 
         return $code
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to refresh installed PHP versions cache"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to refresh installed PHP versions cache"; exception = $_ }
         return -1
     }
 }
@@ -103,7 +103,7 @@ function Refresh-Installed-PHP-Versions-Cache {
 function Get-Installed-PHP-Versions-From-Disk {
     $directories = Get-All-Subdirectories -path $PVMConfig.paths.php
     $installedVersions = $directories | ForEach-Object {
-        if (Is-File-Exists -path "$($_.FullName)\php.exe") {
+        if (Test-File-Exists -path "$($_.FullName)\php.exe") {
             $phpInfo = Get-PHPInstallInfo -path $_.FullName
 
             return $phpInfo
@@ -140,7 +140,7 @@ function Get-Installed-PHP-Versions {
 
         return $installedVersions
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve installed PHP versions"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve installed PHP versions"; exception = $_ }
         return @()
     }
 }
@@ -156,12 +156,12 @@ function Get-UserSelected-PHP-Version {
     } else {
         $currentVersion = Get-Current-PHP-Version
         $index = 0
-        Print-Message -message "`nInstalled versions :"
+        Show-Message -message "`nInstalled versions :"
         $maxNameLength = ($installedVersions.version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedVersions | ForEach-Object {
             $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
             $isCurrent = ''
-            if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
+            if (Test-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
                 $isCurrent = '(Current)'
             }
             $metaData = ''
@@ -172,7 +172,7 @@ function Get-UserSelected-PHP-Version {
                 $metaData += $_.BuildType
             }
             $versionNumber = "$($_.version) ".PadRight($maxNameLength, '.')
-            Print-Message -message " [$index] $versionNumber $metaData $isCurrent"
+            Show-Message -message " [$index] $versionNumber $metaData $isCurrent"
             $index++
         }
         $response = Read-Host -Prompt "`nInsert the [number] of the version you want to use (or press Enter to cancel)"
@@ -196,12 +196,12 @@ function Get-Matching-PHP-Versions {
 
         return $matchingVersions
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
         return $null
     }
 }
 
-function Is-PHP-Version-Installed {
+function Test-PHP-Version-Installed {
     param ($version)
 
     try {
@@ -213,7 +213,7 @@ function Is-PHP-Version-Installed {
             }
         )
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
         return $false
     }
 }
@@ -229,7 +229,7 @@ function Get-Zend-Extensions-Info {
     param ($phpPath)
 
     $extPath = "$phpPath\ext"
-    if (Is-Directory-Not-Exists -path $extPath) {
+    if (Test-Directory-Not-Exists -path $extPath) {
         return @()
     }
 
@@ -237,7 +237,7 @@ function Get-Zend-Extensions-Info {
     $phpIniPath = "$phpPath\php.ini"
     $enabledStatus = @{}
     $zendExtensionsList = Get-Zend-Extensions-List
-    if (Is-File-Exists -path $phpIniPath) {
+    if (Test-File-Exists -path $phpIniPath) {
         $iniContent = Get-Content -Path $phpIniPath
         foreach ($line in $iniContent) {
             $trimmed = $line.Trim()

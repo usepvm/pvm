@@ -164,14 +164,14 @@ VALID=yes
     }
 }
 
-Describe "Set-Aliases-List" {
+Describe "Set-AliasesList" {
     BeforeAll {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
     }
 
     It "Creates aliases.json" {
-        $result = Set-Aliases-List
+        $result = Set-AliasesList
         $result | Should -Be 0
 
         $result = Get-Aliases
@@ -180,7 +180,7 @@ Describe "Set-Aliases-List" {
 
     It "Returns -1 when exception is thrown" {
         Mock Set-Content { throw 'Test exception' }
-        $result = Set-Aliases-List
+        $result = Set-AliasesList
         $result | Should -Be -1
     }
 }
@@ -208,7 +208,7 @@ Describe "Get-Aliases" {
     }
 
     It "Returns default value when exception is thrown" {
-        Mock Test-File-Exists { return $true }
+        Mock Test-FileExists { return $true }
         Mock Get-Content { throw 'Test exception' }
         $result = Get-Aliases
         $result.Count | Should -Be $DEFAULT_ALIASES.Count

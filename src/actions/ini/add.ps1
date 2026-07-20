@@ -1,5 +1,5 @@
 ﻿
-function Get-Xdebug-Config-V2 {
+function Get-XdebugConfigV2 {
     param ($XDebugPath)
 
     return @"
@@ -12,7 +12,7 @@ function Get-Xdebug-Config-V2 {
 "@
 }
 
-function Get-Xdebug-Config-V3 {
+function Get-XdebugConfigV3 {
     param ($XDebugPath)
 
     return @"
@@ -25,11 +25,11 @@ function Get-Xdebug-Config-V3 {
 "@
 }
 
-function Get-XDebug-FROM-URL {
+function Get-XDebugFromUrl {
     param ($url, $version)
 
     try {
-        $html = Get-Web-Response -uri $url
+        $html = Get-WebResponse -uri $url
         $links = $html.Links
 
         # Return the filtered links (PHP version names)
@@ -87,14 +87,14 @@ function Get-PrereleaseSortKey {
     return ($versionScore * 100000) + ($weight * 10000) + $number
 }
 
-function Install-XDebug-Extension {
+function Install-XDebugExtension {
     param ($iniPath, $skipConfirmation = $false)
 
     try {
-        $currentVersionObj = Get-Current-PHP-Version
+        $currentVersionObj = Get-CurrentPHPVersion
         $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
         $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions_$currentVersion`_xdebug" -compute {
-            Get-XDebug-FROM-URL -url $PVMConfig.links.xdebugHistorical -version $currentVersion
+            Get-XDebugFromUrl -url $PVMConfig.links.xdebugHistorical -version $currentVersion
         }
 
         if ($null -eq $xDebugList -or $xDebugList.Count -eq 0) {
@@ -167,11 +167,11 @@ function Install-XDebug-Extension {
             return -1
         }
 
-        $null = Get-Web-Response -uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -outFile $PVMConfig.paths.php
+        $null = Get-WebResponse -uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -outFile $PVMConfig.paths.php
         $phpPath = ($iniPath | Split-Path -Parent)
 
         if (-not $skipConfirmation) {
-            if (Test-File-Exists -path "$phpPath\ext\$($chosenItem.fileName)") {
+            if (Test-FileExists -path "$phpPath\ext\$($chosenItem.fileName)") {
                 $response = Read-Host -Prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
                 $response = $response.Trim()
                 if ($response -ne 'y' -and $response -ne 'Y') {
@@ -183,9 +183,9 @@ function Install-XDebug-Extension {
         }
 
         Move-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)" -Destination "$phpPath\ext"
-        $xDebugConfig = Get-Xdebug-Config-V2 -XDebugPath $($chosenItem.fileName)
+        $xDebugConfig = Get-XdebugConfigV2 -XDebugPath $($chosenItem.fileName)
         if ($chosenItem.xDebugVersion -like '3.*') {
-            $xDebugConfig = Get-Xdebug-Config-V3 -XDebugPath $($chosenItem.fileName)
+            $xDebugConfig = Get-XdebugConfigV3 -XDebugPath $($chosenItem.fileName)
         }
         # check existence of previous xdebug
         $iniContent = Get-Content -Path $iniPath
@@ -212,11 +212,11 @@ function Install-XDebug-Extension {
     }
 }
 
-function Add-Missing-PHPExtension-To-Ini {
+function Add-MissingPHPExtensionToIni {
     param ($iniPath, $extFileName, $enable = $true)
 
     try {
-        if (Test-File-Not-Exists -path $iniPath) {
+        if (Test-FileNotExists -path $iniPath) {
             Show-Error -Message "`nphp.ini file not found: $iniPath"
             return -1
         }
@@ -226,12 +226,12 @@ function Add-Missing-PHPExtension-To-Ini {
         $phpDirectory = Split-Path -Path $iniPath -Parent
         $extDirectory = "$phpDirectory\ext"
 
-        if (Test-Directory-Not-Exists -path $extDirectory) {
+        if (Test-DirectoryNotExists -path $extDirectory) {
             Show-Error -Message "`nExtensions directory not found: $extDirectory"
             return -1
         }
 
-        if (Test-File-Not-Exists -path "$extDirectory\$extFileName") {
+        if (Test-FileNotExists -path "$extDirectory\$extFileName") {
             Show-Error -Message "`nExtension file not found: $extFileName"
             return -1
         }
@@ -245,7 +245,7 @@ function Add-Missing-PHPExtension-To-Ini {
         }
 
         $commented = if ($enable) { '' } else { ';' }
-        $isZendExtension = Get-Zend-Extensions-List | Where-Object { $extFileName -like "*$_*" }
+        $isZendExtension = Get-ZendExtensionsList | Where-Object { $extFileName -like "*$_*" }
         if ($isZendExtension) {
             $lines += "`n$commented" + "zend_extension=$extFileName"
         } else {
@@ -265,9 +265,9 @@ function Install-Extension {
     param ($iniPath, $extName, $skipConfirmation = $false)
 
     try {
-        $currentVersionObj = Get-Current-PHP-Version
+        $currentVersionObj = Get-CurrentPHPVersion
         $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
-        $extensionLinksObj = Get-Extension-From-URL -extName $extName -version $currentVersion
+        $extensionLinksObj = Get-ExtensionFromURL -extName $extName -version $currentVersion
 
         if (($null -eq $extensionLinksObj) -or ($extensionLinksObj.Count -eq 0) -or ($null -eq $extensionLinksObj.data) -or ($extensionLinksObj.data.Count -eq 0)) {
             $extName = if ($extensionLinksObj) { $extensionLinksObj.extName } else { $extName }
@@ -346,7 +346,7 @@ function Install-Extension {
             return -1
         }
 
-        $null = Get-Web-Response -uri $chosenItem.href -outFile $PVMConfig.paths.php
+        $null = Get-WebResponse -uri $chosenItem.href -outFile $PVMConfig.paths.php
         $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip", '').Trim()
         $extractPath = "$($PVMConfig.paths.storage)\php\$fileNamePath"
         Expand-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
@@ -362,7 +362,7 @@ function Install-Extension {
         $phpPath = ($iniPath | Split-Path -Parent)
 
         if (-not $skipConfirmation) {
-            if (Test-File-Exists -path "$phpPath\ext\$($extFile.Name)") {
+            if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
                 $response = Read-Host -Prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
                 $response = $response.Trim()
                 if ($response -ne 'y' -and $response -ne 'Y') {
@@ -375,7 +375,7 @@ function Install-Extension {
 
         Move-Item -Path $extFile.FullName -Destination "$phpPath\ext"
         Remove-Item -Path $extractPath -Force -Recurse
-        $code = Add-Missing-PHPExtension-To-Ini -iniPath $iniPath -extFileName $extFile.Name -enable $false
+        $code = Add-MissingPHPExtensionToIni -iniPath $iniPath -extFileName $extFile.Name -enable $false
         if ($code -ne 0) {
             Show-Error -Message "`nFailed to add $extName"
             return -1
@@ -401,7 +401,7 @@ function Install-IniExtension {
         $overallCode = 0
         foreach ($extName in $extNames) {
             if ($extName -like '*xdebug*') {
-                $overallCode = Install-XDebug-Extension -iniPath $iniPath -skipConfirmation $skipConfirmation
+                $overallCode = Install-XDebugExtension -iniPath $iniPath -skipConfirmation $skipConfirmation
             } else {
                 $overallCode = Install-Extension -iniPath $iniPath -extName $extName -skipConfirmation $skipConfirmation
             }

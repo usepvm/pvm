@@ -13,7 +13,7 @@ BeforeAll {
 
     Mock Write-Host {}
 
-    function Reset-Ini-Content {
+    function Reset-IniContent {
         # Create a test php.ini file
         @"
 memory_limit = 128M
@@ -29,7 +29,7 @@ max_execution_time = 30
     }
 
     # Create initial ini content first
-    Reset-Ini-Content
+    Reset-IniContent
 
     # Mock global variables
     $PVMConfig.paths.logError = "$TEST_DRIVE\error.log"
@@ -41,8 +41,8 @@ max_execution_time = 30
     New-Item -ItemType SymbolicLink -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
     Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
 
-    # Mock Get-Current-PHP-Version function
-    Mock Get-Current-PHP-Version {
+    # Mock Get-CurrentPHPVersion function
+    Mock Get-CurrentPHPVersion {
         return @{
             version = '8.2.0'
             path    = $phpVersionPath
@@ -55,24 +55,24 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Get-PHP-Info" {
+Describe "Get-PHPInfo" {
     BeforeEach {
-        Reset-Ini-Content
+        Reset-IniContent
     }
 
     It "Returns PHP version info successfully" {
-        $result = Get-PHP-Info
+        $result = Get-PHPInfo
         $result | Should -Be 0
     }
 
     It "Handles missing PHP version gracefully" {
-        Mock Get-Current-PHP-Version { return @{ version = $null; path = $null } }
-        $result = Get-PHP-Info
+        Mock Get-CurrentPHPVersion { return @{ version = $null; path = $null } }
+        $result = Get-PHPInfo
         $result | Should -Be -1
     }
 
     It "Displays only matching extensions and settings" {
-        $result = Get-PHP-Info -term 'sql'
+        $result = Get-PHPInfo -term 'sql'
 
         $result | Should -Be 0
     }

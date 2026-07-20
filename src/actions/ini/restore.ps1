@@ -5,7 +5,7 @@ function Restore-IniBackup {
     try {
         $backupPath = "$iniPath.bak"
 
-        if (Test-File-Not-Exists -path $backupPath) {
+        if (Test-FileNotExists -path $backupPath) {
             Show-Error -message "`nBackup file not found: $backupPath"
             return -1
         }

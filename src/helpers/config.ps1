@@ -4,7 +4,7 @@ function Get-EnvConfig {
 
     $envFile = "$rootPath\.env"
 
-    if (Test-File-Not-Exists -path $envFile) {
+    if (Test-FileNotExists -path $envFile) {
         Copy-Item -Path "$rootPath\.env.example" -Destination $envFile
     } else {
         Write-Verbose "Using .env from: $envFile"
@@ -36,7 +36,7 @@ function Get-EnvConfig {
     return $config
 }
 
-function Set-Aliases-List {
+function Set-AliasesList {
     try {
         $jsonContent = $PVMConfig.defaults.aliases | ConvertTo-Json -Depth 10
         Set-Content -Path $PVMConfig.paths.aliasesList -Value $jsonContent -Encoding UTF8
@@ -50,7 +50,7 @@ function Set-Aliases-List {
 
 function Get-Aliases {
     try {
-        if (Test-File-Exists -path $PVMConfig.paths.aliasesList) {
+        if (Test-FileExists -path $PVMConfig.paths.aliasesList) {
             $data = (Get-Content -Path $PVMConfig.paths.aliasesList -Raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}

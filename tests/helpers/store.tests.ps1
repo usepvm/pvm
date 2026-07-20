@@ -14,9 +14,9 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Get-Data-From-Cache" {
+Describe "Get-DataFromCache" {
     It "Returns data from cache file" {
-        Mock Test-File-Not-Exists { return $false }
+        Mock Test-FileNotExists { return $false }
         Mock Get-Content { return @'
             {
                 'Releases': [
@@ -31,50 +31,50 @@ Describe "Get-Data-From-Cache" {
             }
 '@
         }
-        $list = Get-Data-From-Cache -cacheFileName 'test.json'
+        $list = Get-DataFromCache -cacheFileName 'test.json'
         $list.Releases[0] | Should -Be '/downloads/releases/php-7.4.33-Win32-vc15-x64.zip'
         $list.Archives[0] | Should -Be '/downloads/releases/archives/php-5.5.0-Win32-VC11-x64.zip'
     }
 
     It "Returns empty list when cache file name is null or empty" {
-        Mock Test-File-Not-Exists { return $false }
-        $list = Get-Data-From-Cache -cacheFileName ''
+        Mock Test-FileNotExists { return $false }
+        $list = Get-DataFromCache -cacheFileName ''
         $list.Count | Should -Be 0
 
-        $list = Get-Data-From-Cache -cacheFileName $null
+        $list = Get-DataFromCache -cacheFileName $null
         $list.Count | Should -Be 0
     }
 
     It "Returns empty list when cache file doesn't exist" {
-        Mock Test-File-Not-Exists { return $true }
+        Mock Test-FileNotExists { return $true }
 
-        $list = Get-Data-From-Cache -cacheFileName 'test.json'
+        $list = Get-DataFromCache -cacheFileName 'test.json'
         $list.Count | Should -Be 0
     }
 
     It "Returns empty list when cache file content returns null" {
-        Mock Test-File-Not-Exists { return $false }
+        Mock Test-FileNotExists { return $false }
         Mock Get-Content { return $null }
-        $list = Get-Data-From-Cache -cacheFileName 'test.json'
+        $list = Get-DataFromCache -cacheFileName 'test.json'
         $list.Count | Should -Be 0
     }
 
     It "Returns empty list when cache file is empty" {
-        Mock Test-File-Not-Exists { return $false }
+        Mock Test-FileNotExists { return $false }
         Mock Get-Content { return '' }
-        $list = Get-Data-From-Cache -cacheFileName 'test.json'
+        $list = Get-DataFromCache -cacheFileName 'test.json'
         $list.Count | Should -Be 0
     }
 
     It "Handles exceptions gracefully" {
-        Mock Test-File-Not-Exists { return $false }
+        Mock Test-FileNotExists { return $false }
         Mock Get-Content { throw 'Simulated exception' }
-        $list = Get-Data-From-Cache -cacheFileName 'test.json'
+        $list = Get-DataFromCache -cacheFileName 'test.json'
         $list.Count | Should -Be 0
     }
 }
 
-Describe "Test-Can-Use-Cache" {
+Describe "Test-CanUseCache" {
     BeforeAll {
         $script:CACHE_MAX_HOURS = $PVMConfig.env.CACHE_MAX_HOURS = 168
 
@@ -90,7 +90,7 @@ Describe "Test-Can-Use-Cache" {
             New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
             Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
 
-            $result = Test-Can-Use-Cache -cacheFileName $cacheFileName
+            $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $true
         }
 
@@ -106,7 +106,7 @@ Describe "Test-Can-Use-Cache" {
             $oldTime = (Get-Date).AddHours(-200)
             (Get-Item -Path "$CACHE_PATH\$cacheFile").LastWriteTime = $oldTime
 
-            $result = Test-Can-Use-Cache -cacheFileName $cacheFileName
+            $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $false
         }
 
@@ -122,7 +122,7 @@ Describe "Test-Can-Use-Cache" {
             $boundaryTime = (Get-Date).AddHours(-$CACHE_MAX_HOURS)
             (Get-Item -Path "$CACHE_PATH\$cacheFile").LastWriteTime = $boundaryTime
 
-            $result = Test-Can-Use-Cache -cacheFileName $cacheFileName
+            $result = Test-CanUseCache -cacheFileName $cacheFileName
             # Since the function uses -lt (less than), equality should return false
             $result | Should -Be $false
         }
@@ -132,27 +132,27 @@ Describe "Test-Can-Use-Cache" {
         It "Returns false when cache file does not exist" {
             $cacheFileName = 'nonexistent_cache'
 
-            $result = Test-Can-Use-Cache -cacheFileName $cacheFileName
+            $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $false
         }
     }
 
     Context "With edge cases" {
         It "Returns false for empty cache file name" {
-            $result = Test-Can-Use-Cache -cacheFileName ''
+            $result = Test-CanUseCache -cacheFileName ''
             $result | Should -Be $false
         }
 
         It "Returns false for null cache file name" {
-            $result = Test-Can-Use-Cache -cacheFileName $null
+            $result = Test-CanUseCache -cacheFileName $null
             $result | Should -Be $false
         }
 
         It "Handles exceptions gracefully" {
-            Mock Test-File-Exists { return $true }
+            Mock Test-FileExists { return $true }
             Mock New-TimeSpan { throw 'Error' }
-            { Test-Can-Use-Cache -cacheFileName 'test' } | Should -Not -Throw
-            $result = Test-Can-Use-Cache -cacheFileName 'test'
+            { Test-CanUseCache -cacheFileName 'test' } | Should -Not -Throw
+            $result = Test-CanUseCache -cacheFileName 'test'
             $result | Should -Be $false
         }
     }
@@ -165,7 +165,7 @@ Describe "Test-Can-Use-Cache" {
             New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
             Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
 
-            $result = Test-Can-Use-Cache -cacheFileName $cacheFileName
+            $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $true
         }
 
@@ -176,24 +176,24 @@ Describe "Test-Can-Use-Cache" {
             New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
             Set-Content -Path "$CACHE_PATH\$cacheFile" -Value '{"test": "data"}'
 
-            $result = Test-Can-Use-Cache -cacheFileName $cacheFileName
+            $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $true
         }
     }
 
     It "Handles exceptions gracefully" {
-        Mock Get-Cache-FilePath { throw 'Error' }
-        $result = Test-Can-Use-Cache -cacheFileName 'test'
+        Mock Get-CacheFilePath { throw 'Error' }
+        $result = Test-CanUseCache -cacheFileName 'test'
         $result | Should -Be $false
     }
 }
 
-Describe "Save-Cached-Data" {
+Describe "Save-CachedData" {
     It "Caches data successfully" {
         Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
         Mock New-Directory { return 0 }
         Mock Set-Content { }
-        $code = Save-Cached-Data -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+        $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be 0
     }
 
@@ -201,33 +201,33 @@ Describe "Save-Cached-Data" {
         Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
         Mock New-Directory { return -1 }
         Mock Set-Content { }
-        $code = Save-Cached-Data -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+        $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be -1
     }
 
     It "Handles null data gracefully" {
-        $code = Save-Cached-Data -cacheFileName $null -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+        $code = Save-CachedData -cacheFileName $null -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be -1
     }
 
     It "Handles empty cache file name gracefully" {
-        $code = Save-Cached-Data -cacheFileName '' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+        $code = Save-CachedData -cacheFileName '' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be -1
     }
 
     It "Handles whitespace cache file name gracefully" {
-        $code = Save-Cached-Data -cacheFileName '   ' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+        $code = Save-CachedData -cacheFileName '   ' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be -1
     }
 
     It "Handles null data gracefully" {
-        $code = Save-Cached-Data -cacheFileName 'test' -data $null
+        $code = Save-CachedData -cacheFileName 'test' -data $null
         $code | Should -Be -1
     }
 
     It "Handles exceptions gracefully" {
         Mock ConvertTo-Json { throw 'Simulated exception' }
-        $code = Save-Cached-Data -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+        $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be -1
     }
 }
@@ -236,9 +236,9 @@ Describe "Get-OrUpdateCache" {
     It "Reads from cache first" {
         function Example { return @{} }
         Mock Example { return @{} }
-        Mock Test-Can-Use-Cache { return $true }
-        Mock Save-Cached-Data { return 0 }
-        Mock Get-Data-From-Cache {
+        Mock Test-CanUseCache { return $true }
+        Mock Save-CachedData { return 0 }
+        Mock Get-DataFromCache {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
                 'Releases' = @('php-8.2.0-Win32-x64.zip')
@@ -249,9 +249,9 @@ Describe "Get-OrUpdateCache" {
             Example
         }
 
-        Should -Invoke Get-Data-From-Cache -Exactly 1
+        Should -Invoke Get-DataFromCache -Exactly 1
         Should -Invoke Example -Exactly 0
-        Should -Invoke Save-Cached-Data -Exactly 0
+        Should -Invoke Save-CachedData -Exactly 0
     }
 
     It "Runs the passed command when can't read from cache" {
@@ -262,14 +262,14 @@ Describe "Get-OrUpdateCache" {
                 'Releases' = @('php-8.2.0-Win32-x64.zip')
             }
         }
-        Mock Save-Cached-Data { return 0 }
-        Mock Test-Can-Use-Cache { return $false }
+        Mock Save-CachedData { return 0 }
+        Mock Test-CanUseCache { return $false }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
             Example
         }
 
         Should -Invoke Example -Exactly 1
-        Should -Invoke Save-Cached-Data -Exactly 1
+        Should -Invoke Save-CachedData -Exactly 1
     }
 }

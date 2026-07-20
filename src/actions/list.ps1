@@ -1,10 +1,10 @@
 ﻿
-function Get-From-Source {
+function Get-FromSource {
     try {
-        $urls = Get-Source-Urls
+        $urls = Get-SourceUrls
         $fetchedVersionsGrouped = @{}
         foreach ($key in $urls.Keys) {
-            $html = Get-Web-Response -uri $urls[$key]
+            $html = Get-WebResponse -uri $urls[$key]
             $links = $html.Links
 
             # Filter the links to find versions that match the given version
@@ -42,10 +42,10 @@ function Get-From-Source {
     }
 }
 
-function Get-PHP-List-To-Install {
+function Get-PHPListToInstall {
     try {
         $fetchedVersionsGrouped = Get-OrUpdateCache -cacheFileName 'available_php_versions' -compute {
-            Get-From-Source
+            Get-FromSource
         }
 
         if (-not $fetchedVersionsGrouped) {
@@ -61,13 +61,13 @@ function Get-PHP-List-To-Install {
     }
 }
 
-function Get-Available-PHP-Versions {
+function Get-AvailablePHPVersions {
     param ($term = $null, $arch = $null, $buildType = $null)
 
     try {
         Show-Message -message "`nLoading available PHP versions..."
 
-        $fetchedVersionsGrouped = Get-PHP-List-To-Install
+        $fetchedVersionsGrouped = Get-PHPListToInstall
 
         if ($fetchedVersionsGrouped.Count -eq 0) {
             Show-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
@@ -126,12 +126,12 @@ function Get-Available-PHP-Versions {
     }
 }
 
-function Show-Installed-PHP-Versions {
+function Show-InstalledPHPVersions {
     param ($term = $null, $arch = $null, $buildType = $null)
 
     try {
-        $currentVersion = Get-Current-PHP-Version
-        $installedPhp = Get-Installed-PHP-Versions -arch $arch -buildType $buildType
+        $currentVersion = Get-CurrentPHPVersion
+        $installedPhp = Get-InstalledPHPVersions -arch $arch -buildType $buildType
 
         if ($installedPhp.Count -eq 0) {
             Show-Error -message "`nNo PHP versions found"
@@ -163,7 +163,7 @@ function Show-Installed-PHP-Versions {
                 if ($_.BuildType) {
                     $metaData += $_.BuildType
                 }
-                if (Test-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
+                if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $_) {
                     $isCurrent = '(Current)'
                 }
                 $versionNumber = "$versionNumber ".PadRight($maxNameLength, '.')
@@ -177,13 +177,13 @@ function Show-Installed-PHP-Versions {
     }
 }
 
-function Get-PHP-Versions-List {
+function Get-PHPVersionsList {
     param ($available = $false, $term = $null, $arch = $null, $buildType = $null)
 
     if ($available) {
-        $result = Get-Available-PHP-Versions -term $term -arch $arch -buildType $buildType
+        $result = Get-AvailablePHPVersions -term $term -arch $arch -buildType $buildType
     } else {
-        $result = Show-Installed-PHP-Versions -term $term -arch $arch -buildType $buildType
+        $result = Show-InstalledPHPVersions -term $term -arch $arch -buildType $buildType
     }
 
     return $result

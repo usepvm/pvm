@@ -1,5 +1,5 @@
 ﻿
-function Test-Git-Available {
+function Test-GitAvailable {
     try {
         $null = Get-Command -Name git -ErrorAction Stop
         return $true
@@ -8,7 +8,7 @@ function Test-Git-Available {
     }
 }
 
-function Get-Git-Status {
+function Get-GitStatus {
     try {
         $status = git -C $PVMRoot status --porcelain
         return $status
@@ -17,7 +17,7 @@ function Get-Git-Status {
     }
 }
 
-function Get-Current-Git-Branch {
+function Get-CurrentGitBranch {
     try {
         $branch = git -C $PVMRoot rev-parse --abbrev-ref HEAD
         return $branch.Trim()
@@ -26,7 +26,7 @@ function Get-Current-Git-Branch {
     }
 }
 
-function Get-Current-Git-Commit {
+function Get-CurrentGitCommit {
     try {
         $commit = git -C $PVMRoot rev-parse HEAD
         return $commit.Trim()
@@ -35,7 +35,7 @@ function Get-Current-Git-Commit {
     }
 }
 
-function Get-Latest-Git-Commit {
+function Get-LatestGitCommit {
     param ($branch = 'main')
 
     try {
@@ -47,7 +47,7 @@ function Get-Latest-Git-Commit {
     }
 }
 
-function Get-PVM-Version-From-Git {
+function Get-PVMVersionFromGit {
     try {
         $version = git -C $PVMRoot describe --tags --abbrev=0 2>$null
         if ($version) {
@@ -68,7 +68,7 @@ function Format-Version {
 function Update-PVM {
     param ($checkOnly = $false, $quiet = $false)
 
-    if (-not (Test-Git-Available)) {
+    if (-not (Test-GitAvailable)) {
         return @{
             code    = -1
             message = 'Git is not installed or not available in PATH. Please install Git to use the update feature.'
@@ -76,7 +76,7 @@ function Update-PVM {
         }
     }
 
-    if (Test-Directory-Not-Exists -path "$PVMRoot\.git") {
+    if (Test-DirectoryNotExists -path "$PVMRoot\.git") {
         return @{
             code    = -1
             message = 'PVM is not installed from a git repository. Cannot update.'
@@ -84,7 +84,7 @@ function Update-PVM {
         }
     }
 
-    $currentBranch = Get-Current-Git-Branch
+    $currentBranch = Get-CurrentGitBranch
     if (-not $currentBranch) {
         return @{
             code    = -1
@@ -93,7 +93,7 @@ function Update-PVM {
         }
     }
 
-    $gitStatus = Get-Git-Status
+    $gitStatus = Get-GitStatus
     if ($gitStatus) {
         $gitStatusText = $gitStatus | ForEach-Object {
             $_.Trim().Replace('  ', ' ')
@@ -108,7 +108,7 @@ function Update-PVM {
         }
     }
 
-    $currentCommit = Get-Current-Git-Commit
+    $currentCommit = Get-CurrentGitCommit
     if (-not $currentCommit) {
         return @{
             code    = -1
@@ -121,7 +121,7 @@ function Update-PVM {
         Show-Info -message "`nChecking for updates..."
     }
 
-    $latestCommit = Get-Latest-Git-Commit -branch $currentBranch
+    $latestCommit = Get-LatestGitCommit -branch $currentBranch
     if (-not $latestCommit) {
         return @{
             code    = -1
@@ -139,7 +139,7 @@ function Update-PVM {
         }
     }
 
-    $currentVersion = Get-PVM-Version-From-Git
+    $currentVersion = Get-PVMVersionFromGit
     $latestVersion = git -C $PVMRoot describe --tags --abbrev=0 origin/$currentBranch 2>$null
 
     if ($checkOnly) {
@@ -167,7 +167,7 @@ function Update-PVM {
         $oldVersion = $PVMConfig.version
         git -C $PVMRoot pull origin $currentBranch 2>$null
 
-        $newVersion = Get-PVM-Version-From-Git
+        $newVersion = Get-PVMVersionFromGit
         if (-not $newVersion) {
             $newVersion = $PVMConfig.version
         }

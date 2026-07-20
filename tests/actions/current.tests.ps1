@@ -24,9 +24,9 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Get-PHP-Status Function Tests" {
+Describe "Get-PHPStatus Function Tests" {
     BeforeEach {
-        Mock Get-Zend-Extensions-Info {
+        Mock Get-ZendExtensionsInfo {
             return @(
                 @{
                     Name      = 'opcache'
@@ -56,7 +56,7 @@ Describe "Get-PHP-Status Function Tests" {
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
@@ -75,7 +75,7 @@ Describe "Get-PHP-Status Function Tests" {
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
@@ -93,7 +93,7 @@ Describe "Get-PHP-Status Function Tests" {
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
@@ -112,7 +112,7 @@ Describe "Get-PHP-Status Function Tests" {
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
@@ -130,7 +130,7 @@ Describe "Get-PHP-Status Function Tests" {
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
@@ -148,7 +148,7 @@ Describe "Get-PHP-Status Function Tests" {
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
@@ -166,7 +166,7 @@ Describe "Get-PHP-Status Function Tests" {
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
@@ -184,7 +184,7 @@ Describe "Get-PHP-Status Function Tests" {
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
@@ -203,7 +203,7 @@ Describe "Get-PHP-Status Function Tests" {
             $phpIniContent | Out-File -FilePath "$testPath\php.ini"
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
@@ -217,7 +217,7 @@ Describe "Get-PHP-Status Function Tests" {
             '' | Out-File -FilePath "$testPath\php.ini"
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
@@ -231,7 +231,7 @@ Describe "Get-PHP-Status Function Tests" {
             $testPath = "$TEST_DRIVE\nonexistent"
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
@@ -247,7 +247,7 @@ Describe "Get-PHP-Status Function Tests" {
             New-Item -Path "$testPath\php.ini" -ItemType Directory -Force
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
@@ -256,12 +256,12 @@ Describe "Get-PHP-Status Function Tests" {
 
         It "Should handle Test-Path exceptions gracefully" {
             # Arrange
-            Mock Test-File-Not-Exists { throw 'Access Denied' }
+            Mock Test-FileNotExists { throw 'Access Denied' }
             Mock Add-LogEntry { return 0 }
             $testPath = $PHP_DIR
 
             # Act
-            $result = Get-PHP-Status -phpPath $testPath
+            $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
             Should -Invoke Add-LogEntry -Times 1
@@ -271,7 +271,7 @@ Describe "Get-PHP-Status Function Tests" {
     }
 }
 
-Describe "Get-Current-PHP-Version Function Tests" {
+Describe "Get-CurrentPHPVersion Function Tests" {
     Context "When PHP current version symlink exists and is valid" {
         BeforeEach {
             # Mock Get-Item to return a symlink object
@@ -281,8 +281,8 @@ Describe "Get-Current-PHP-Version Function Tests" {
                 }
             } -ParameterFilter { $Path -eq $PHP_CURRENT_DIR }
 
-            # Mock Get-PHP-Status
-            Mock Get-PHP-Status {
+            # Mock Get-PHPStatus
+            Mock Get-PHPStatus {
                 return @{ opcache = $true; xdebug = $false }
             }
         }
@@ -295,8 +295,8 @@ Describe "Get-Current-PHP-Version Function Tests" {
                 BuildType = 'ts'
                 InstallPath = 'C:\php\8.2.0'
             }}
-            Mock Test-Directory-Exists { return $true }
-            $result = Get-Current-PHP-Version
+            Mock Test-DirectoryExists { return $true }
+            $result = Get-CurrentPHPVersion
 
             # Assert
             $result.version | Should -Be '8.2.0'
@@ -305,7 +305,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
             $result.status.xdebug | Should -Be $false
         }
 
-        It "Should call Get-PHP-Status with correct path" {
+        It "Should call Get-PHPStatus with correct path" {
             # Act
             Mock Get-PHPInstallInfo {@{
                 Version = '8.2.0'
@@ -313,11 +313,11 @@ Describe "Get-Current-PHP-Version Function Tests" {
                 BuildType = 'ts'
                 InstallPath = 'C:\php\8.2.0'
             }}
-            Mock Test-Directory-Exists { return $true }
-            $null = Get-Current-PHP-Version
+            Mock Test-DirectoryExists { return $true }
+            $null = Get-CurrentPHPVersion
 
             # Assert
-            Should -Invoke Get-PHP-Status -Times 1 -ParameterFilter { $phpPath -eq 'C:\php\8.2.0' }
+            Should -Invoke Get-PHPStatus -Times 1 -ParameterFilter { $phpPath -eq 'C:\php\8.2.0' }
         }
     }
 
@@ -325,10 +325,10 @@ Describe "Get-Current-PHP-Version Function Tests" {
         It "returns empty result when path does not exist" {
             # Arrange
             Mock Get-Item { return @{ Target = 'C:\php\8.2.0' } }
-            Mock Test-Directory-Exists { return $false }
+            Mock Test-DirectoryExists { return $false }
 
             # Act
-            $result = Get-Current-PHP-Version
+            $result = Get-CurrentPHPVersion
 
             # Assert
             $result.version | Should -Be $null
@@ -342,7 +342,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
             Mock Get-Item { throw 'Path does not exist' }
 
             # Act
-            $result = Get-Current-PHP-Version
+            $result = Get-CurrentPHPVersion
 
             # Assert
             $result.version | Should -Be $null
@@ -357,7 +357,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
             Mock Add-LogEntry { return 0 }
 
             # Act
-            $null = Get-Current-PHP-Version
+            $null = Get-CurrentPHPVersion
 
             # Assert
             Should -Invoke Add-LogEntry -Times 1
@@ -373,7 +373,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
 
         It "Should handle null Get-Item result" {
             # Act
-            $result = Get-Current-PHP-Version
+            $result = Get-CurrentPHPVersion
 
             # Assert
             $result.version | Should -Be $null
@@ -383,7 +383,7 @@ Describe "Get-Current-PHP-Version Function Tests" {
         }
     }
 
-    Context "When Get-PHP-Status fails" {
+    Context "When Get-PHPStatus fails" {
         BeforeEach {
             Mock Get-Item {
                 return @{
@@ -391,22 +391,22 @@ Describe "Get-Current-PHP-Version Function Tests" {
                 }
             } -ParameterFilter { $Path -eq $PHP_CURRENT_DIR }
 
-            # Mock Get-PHP-Status to return -1 (error case)
-            Mock Get-PHP-Status {
+            # Mock Get-PHPStatus to return -1 (error case)
+            Mock Get-PHPStatus {
                 return @{ opcache = $false; xdebug = $false }
             }
         }
 
-        It "Should handle Get-PHP-Status error gracefully" {
+        It "Should handle Get-PHPStatus error gracefully" {
             Mock Get-PHPInstallInfo {@{
                 Version = '8.1.0'
                 Arch = 'x64'
                 BuildType = 'ts'
                 InstallPath = 'C:\php\8.1.0'
             }}
-            Mock Test-Directory-Exists { return $true }
+            Mock Test-DirectoryExists { return $true }
             # Act
-            $result = Get-Current-PHP-Version
+            $result = Get-CurrentPHPVersion
 
             # Assert
             $result.version | Should -Be '8.1.0'
@@ -446,7 +446,7 @@ Describe "Integration Tests" {
             } -ParameterFilter { $Path -eq $testCurrentPath }
 
             # Act
-            $result = Get-Current-PHP-Version
+            $result = Get-CurrentPHPVersion
 
             # Assert
             $result.version | Should -Be '8.2.0'

@@ -1,5 +1,5 @@
 
-function Get-All-Subdirectories {
+function Get-AllSubdirectories {
     param ($path)
 
     try {
@@ -14,7 +14,7 @@ function Get-All-Subdirectories {
     }
 }
 
-function Test-Directory-Exists {
+function Test-DirectoryExists {
     param ($path)
 
     try {
@@ -28,13 +28,13 @@ function Test-Directory-Exists {
     }
 }
 
-function Test-Directory-Not-Exists {
+function Test-DirectoryNotExists {
     param ($path)
 
-    return -not (Test-Directory-Exists -path $path)
+    return -not (Test-DirectoryExists -path $path)
 }
 
-function Test-File-Exists {
+function Test-FileExists {
     param ($path)
 
     try {
@@ -48,10 +48,10 @@ function Test-File-Exists {
     }
 }
 
-function Test-File-Not-Exists {
+function Test-FileNotExists {
     param ($path)
 
-    return -not (Test-File-Exists -path $path)
+    return -not (Test-FileExists -path $path)
 }
 
 function New-Directory {
@@ -63,7 +63,7 @@ function New-Directory {
         }
 
         $path = $path.Trim()
-        if (Test-Directory-Not-Exists -path $path) {
+        if (Test-DirectoryNotExists -path $path) {
             New-Item -ItemType Directory -Path $path -Force | Out-Null
         }
 
@@ -73,7 +73,7 @@ function New-Directory {
     }
 }
 
-function New-Symbolic-Link {
+function New-SymbolicLink {
     param ($link, $target)
 
     try {
@@ -84,13 +84,13 @@ function New-Symbolic-Link {
         $link = $link.Trim()
         $target = $target.Trim()
 
-        if (Test-Directory-Not-Exists -path $target) {
+        if (Test-DirectoryNotExists -path $target) {
             return @{ code = -1; message = "Target directory '$target' does not exist!"; color = 'DarkYellow' }
         }
 
         # Make sure parent directory exists
         $parent = Split-Path -Path $link
-        if (Test-Directory-Not-Exists -path $parent) {
+        if (Test-DirectoryNotExists -path $parent) {
             $created = New-Directory -path $parent
             if ($created -ne 0) {
                 return @{ code = -1; message = "Failed to create parent directory '$parent'"; color = 'DarkYellow' }
@@ -106,9 +106,9 @@ function New-Symbolic-Link {
             }
         }
 
-        if (Test-Not-Admin) {
+        if (Test-NotAdmin) {
             $command = "New-Item -ItemType SymbolicLink -Path '$link' -Target '$target'"
-            $exitCode = (Invoke-PS-Command -command $command)
+            $exitCode = (Invoke-PSCommand -command $command)
             if ($exitCode -ne 0) {
                 return @{ code = -1; message = "Failed to create symbolic link '$link' -> '$target'"; color = 'DarkYellow' }
             }
@@ -123,7 +123,7 @@ function New-Symbolic-Link {
     }
 }
 
-function Expand-Zip-Core {
+function Expand-ZipCore {
     param ($zipPath, $extractPath)
 
     Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -134,7 +134,7 @@ function Expand-Zip {
     param ($zipPath, $extractPath, $deleteZipAfter = $false)
 
     try {
-        Expand-Zip-Core -zipPath $zipPath -extractPath $extractPath
+        Expand-ZipCore -zipPath $zipPath -extractPath $extractPath
 
         if ($deleteZipAfter) {
             Remove-Item -Path $zipPath -Force
@@ -144,7 +144,7 @@ function Expand-Zip {
     }
 }
 
-function Get-Web-Response {
+function Get-WebResponse {
     param ($uri, $outFile = $null, $useBasicParsing = $true)
 
     $uri = $uri.Trim()

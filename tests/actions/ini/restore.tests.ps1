@@ -9,7 +9,7 @@ BeforeAll {
 
     Mock Write-Host {}
 
-    function Reset-Ini-Content {
+    function Reset-IniContent {
     # Create a test php.ini file
     @"
 memory_limit = 128M
@@ -23,7 +23,7 @@ max_execution_time = 30
     }
 
     # Create initial ini content first
-    Reset-Ini-Content
+    Reset-IniContent
 }
 
 AfterAll {
@@ -32,7 +32,7 @@ AfterAll {
 
 Describe "Restore-IniBackup" {
     It "Creates backup and restores successfully" {
-        Reset-Ini-Content
+        Reset-IniContent
         # Create backup first
         $null = Backup-IniFile -iniPath $testIniPath
 

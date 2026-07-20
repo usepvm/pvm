@@ -22,17 +22,17 @@ function Get-PHPInstallInfo {
 
     return @{
         Version     = $dll.VersionInfo.ProductVersion
-        Arch        = Get-BinaryArchitecture-From-DLL -path $dll.FullName
+        Arch        = Get-BinaryArchitectureFromDLL -path $dll.FullName
         BuildType   = $buildType
         Dll         = $dll.Name
         InstallPath = $path
     }
 }
 
-function Get-BinaryArchitecture-From-DLL {
+function Get-BinaryArchitectureFromDLL {
     param ($path)
 
-    if (Test-File-Not-Exists -path $path) {
+    if (Test-FileNotExists -path $path) {
         return 'Unknown'
     }
 
@@ -49,7 +49,7 @@ function Get-BinaryArchitecture-From-DLL {
     }
 }
 
-function Test-Two-PHP-Versions-Equal {
+function Test-TwoPHPVersionsEqual {
     param ($version1, $version2)
 
     if ($null -eq $version1 -or $null -eq $version2) {
@@ -61,7 +61,7 @@ function Test-Two-PHP-Versions-Equal {
         ($version1.buildType -eq $version2.buildType))
 }
 
-function Set-Zend-Extensions-List {
+function Set-ZendExtensionsList {
     try {
         $jsonContent = $PVMConfig.defaults.zendExtensions | ConvertTo-Json -Depth 10
         Set-Content -Path $PVMConfig.paths.zendExtensionsList -Value $jsonContent -Encoding UTF8
@@ -73,9 +73,9 @@ function Set-Zend-Extensions-List {
     }
 }
 
-function Get-Zend-Extensions-List {
+function Get-ZendExtensionsList {
     try {
-        if (Test-File-Exists -path $PVMConfig.paths.zendExtensionsList) {
+        if (Test-FileExists -path $PVMConfig.paths.zendExtensionsList) {
             $data = (Get-Content -Path $PVMConfig.paths.zendExtensionsList -Raw | ConvertFrom-Json)
             if ($null -ne $data -and $data.Count -gt 0) {
                 return $data
@@ -88,10 +88,10 @@ function Get-Zend-Extensions-List {
     return $PVMConfig.defaults.zendExtensions
 }
 
-function Update-Installed-PHP-Versions-Cache {
+function Update-InstalledPHPVersionsCache {
     try {
-        $installedVersions = Get-Installed-PHP-Versions-From-Disk
-        $code = Save-Cached-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
+        $installedVersions = Get-InstalledPHPVersionsFromDisk
+        $code = Save-CachedData -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
 
         return $code
     } catch {
@@ -100,10 +100,10 @@ function Update-Installed-PHP-Versions-Cache {
     }
 }
 
-function Get-Installed-PHP-Versions-From-Disk {
-    $directories = Get-All-Subdirectories -path $PVMConfig.paths.php
+function Get-InstalledPHPVersionsFromDisk {
+    $directories = Get-AllSubdirectories -path $PVMConfig.paths.php
     $installedVersions = $directories | ForEach-Object {
-        if (Test-File-Exists -path "$($_.FullName)\php.exe") {
+        if (Test-FileExists -path "$($_.FullName)\php.exe") {
             $phpInfo = Get-PHPInstallInfo -path $_.FullName
 
             return $phpInfo
@@ -116,12 +116,12 @@ function Get-Installed-PHP-Versions-From-Disk {
     return $installedVersions
 }
 
-function Get-Installed-PHP-Versions {
+function Get-InstalledPHPVersions {
     param ($arch = $null, $buildType = $null)
 
     try {
         $installedVersions = Get-OrUpdateCache -cacheFileName 'installed_php_versions' -depth 1 -compute {
-            Get-Installed-PHP-Versions-From-Disk
+            Get-InstalledPHPVersionsFromDisk
         }
 
         if ($null -eq $installedVersions) {
@@ -145,7 +145,7 @@ function Get-Installed-PHP-Versions {
     }
 }
 
-function Get-UserSelected-PHP-Version {
+function Get-UserSelectedPHPVersion {
     param ($installedVersions)
 
     if (-not $installedVersions -or $installedVersions.Count -eq 0) {
@@ -154,14 +154,14 @@ function Get-UserSelected-PHP-Version {
     if ($installedVersions.Length -eq 1) {
         $versionObj = $($installedVersions)
     } else {
-        $currentVersion = Get-Current-PHP-Version
+        $currentVersion = Get-CurrentPHPVersion
         $index = 0
         Show-Message -message "`nInstalled versions :"
         $maxNameLength = ($installedVersions.version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedVersions | ForEach-Object {
             $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
             $isCurrent = ''
-            if (Test-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
+            if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $_) {
                 $isCurrent = '(Current)'
             }
             $metaData = ''
@@ -186,11 +186,11 @@ function Get-UserSelected-PHP-Version {
     return @{ code = 0; version = $versionObj.version; arch = $versionObj.arch; buildType = $versionObj.BuildType; path = $versionObj.InstallPath }
 }
 
-function Get-Matching-PHP-Versions {
+function Get-MatchingPHPVersions {
     param ($version)
 
     try {
-        $installedVersions = Get-Installed-PHP-Versions
+        $installedVersions = Get-InstalledPHPVersions
 
         $matchingVersions = $installedVersions | Where-Object { $_.Version -like "$version*" }
 
@@ -201,11 +201,11 @@ function Get-Matching-PHP-Versions {
     }
 }
 
-function Test-PHP-Version-Installed {
+function Test-PHPVersionInstalled {
     param ($version)
 
     try {
-        $installedVersions = Get-Matching-PHP-Versions -version $version.version
+        $installedVersions = Get-MatchingPHPVersions -version $version.version
         return ($installedVersions | Where-Object {
                 $_.Version -eq $version.version -and
                 $_.Arch -eq $version.arch -and
@@ -218,26 +218,26 @@ function Test-PHP-Version-Installed {
     }
 }
 
-function Get-Source-Urls {
+function Get-SourceUrls {
     return [ordered]@{
         'Archives' = $PVMConfig.links.phpWinArchives
         'Releases' = $PVMConfig.links.phpWinReleases
     }
 }
 
-function Get-Zend-Extensions-Info {
+function Get-ZendExtensionsInfo {
     param ($phpPath)
 
     $extPath = "$phpPath\ext"
-    if (Test-Directory-Not-Exists -path $extPath) {
+    if (Test-DirectoryNotExists -path $extPath) {
         return @()
     }
 
     # Check php.ini for enabled status
     $phpIniPath = "$phpPath\php.ini"
     $enabledStatus = @{}
-    $zendExtensionsList = Get-Zend-Extensions-List
-    if (Test-File-Exists -path $phpIniPath) {
+    $zendExtensionsList = Get-ZendExtensionsList
+    if (Test-FileExists -path $phpIniPath) {
         $iniContent = Get-Content -Path $phpIniPath
         foreach ($line in $iniContent) {
             $trimmed = $line.Trim()
@@ -266,7 +266,7 @@ function Get-Zend-Extensions-Info {
     return $zendExtensions
 }
 
-function Get-PHP-Data {
+function Get-PHPData {
     param ($PhpIniPath)
 
     $iniContent = Get-Content -Path $PhpIniPath

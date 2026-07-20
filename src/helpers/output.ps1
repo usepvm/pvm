@@ -1,5 +1,5 @@
 
-function Show-Msg-By-ExitCode {
+function Show-MsgByExitCode {
     param ($result, $message = $null)
 
     try {
@@ -80,7 +80,7 @@ function Format-Seconds {
     }
 }
 
-function Get-Console-Width {
+function Get-ConsoleWidth {
     return $Host.UI.RawUI.WindowSize.Width
 }
 

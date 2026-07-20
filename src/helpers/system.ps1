@@ -1,28 +1,28 @@
 
-function Test-OS-64Bit {
+function Test-OS64Bit {
     return [System.Environment]::Is64BitOperatingSystem
 }
 
-function Get-All-EnvVars-Core {
+function Get-AllEnvVarsCore {
     return [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
 }
 
-function Get-All-EnvVars {
+function Get-AllEnvVars {
     try {
-        return Get-All-EnvVars-Core
+        return Get-AllEnvVarsCore
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get all environment variables"; exception = $_ }
         return $null
     }
 }
 
-function Get-EnvVar-ByName-Core {
+function Get-EnvVarByNameCore {
     param ($name)
 
     return [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Machine)
 }
 
-function Get-EnvVar-ByName {
+function Get-EnvVarByName {
     param ($name, $optimized = $false)
 
     try {
@@ -30,10 +30,10 @@ function Get-EnvVar-ByName {
             return $null
         }
         $name = $name.Trim()
-        $value = Get-EnvVar-ByName-Core -name $name
+        $value = Get-EnvVarByNameCore -name $name
 
         if ($optimized -eq $true) {
-            $value = Get-Optimized-Env -name $name -value $value
+            $value = Get-OptimizedEnv -name $name -value $value
         }
 
         return $value
@@ -43,7 +43,7 @@ function Get-EnvVar-ByName {
     }
 }
 
-function Set-EnvVar-Core {
+function Set-EnvVarCore {
     param ($name, $value)
 
     [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Machine)
@@ -58,13 +58,13 @@ function Set-EnvVar {
         }
         $name = $name.Trim()
 
-        if (Test-Not-Admin) {
+        if (Test-NotAdmin) {
             $command = "[System.Environment]::SetEnvironmentVariable('$name', '$value', [System.EnvironmentVariableTarget]::Machine)"
-            return (Invoke-PS-Command -command $command)
+            return (Invoke-PSCommand -command $command)
         }
 
         # We already have admin rights, proceed normally
-        Set-EnvVar-Core -name $name -value $value
+        Set-EnvVarCore -name $name -value $value
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set environment variable '$name'"; exception = $_ }
@@ -72,10 +72,10 @@ function Set-EnvVar {
     }
 }
 
-function Get-Optimized-Env {
+function Get-OptimizedEnv {
     param ($name, $value)
 
-    $envVars = Get-All-EnvVars
+    $envVars = Get-AllEnvVars
 
     $envVars.Keys | ForEach-Object {
         $envName = $_
@@ -121,7 +121,7 @@ function Remove-PathDuplicates {
 
 function Optimize-SystemPath {
     try {
-        $path = Get-EnvVar-ByName -name 'Path' -optimized $true
+        $path = Get-EnvVarByName -name 'Path' -optimized $true
         if ($null -eq $path) {
             $path = ''
         }
@@ -153,7 +153,7 @@ function Optimize-SystemPath {
     }
 }
 
-function Invoke-PS-Command {
+function Invoke-PSCommand {
     param ($command)
 
     $process = Start-Process `
@@ -179,6 +179,6 @@ function Test-Admin {
     return $isAdmin
 }
 
-function Test-Not-Admin {
+function Test-NotAdmin {
     return -not (Test-Admin)
 }

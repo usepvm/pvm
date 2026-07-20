@@ -90,8 +90,7 @@ pvm help <command>
 # Example: pvm help setup
 
 # Displays information about the environment including PVM version, currently active PHP version, paths, and environment variables.
-pvm info
-pvm info --verbose
+pvm info [--verbose]
 
 # Display active PHP version
 pvm current
@@ -246,7 +245,7 @@ pvm ini info --search=<term>
 ### Check logs
 
 ```sh
-pvm log --pageSize=[number] --search=<term> # Default value is 5
+pvm log --pageSize=<number> --search=<term> # Default value is 5
 # Example: pvm log --pageSize=3 --search=error
 ```
 
@@ -281,12 +280,12 @@ pvm profile clear [--yes|-y]
 # Example: pvm profile clear -y # Skip confirmation
 
 # Export profile to a JSON file
-pvm profile export <name> [path]
+pvm profile export <name> <path>
 # Example: pvm profile export development
 # Example: pvm profile export dev ./backup.json
 
 # Import profile from a JSON file
-pvm profile import <path> [name]
+pvm profile import <path> <name>
 # Example: pvm profile import ./my-profile.json
 # Example: pvm profile import ./profile.json custom-name
 ```
@@ -414,7 +413,7 @@ Get-Module -ListAvailable Pester
 By default, pvm test auto-detects pwsh if available, falling back to powershell. Use --shell=powershell or --shell=pwsh to force a specific engine — useful for verifying PS 5.1/7 cross-version compatibility.
 
 ```sh
-pvm test [files = (files inside the tests/ directory)] [--exclude=files] [--coverage[=<number>]] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=<tag>] [--sort=[coverage|duration|file|-coverage|-duration|-file]] [--group=[coverage|folder]] [--shell=[powershell|pwsh]] [--pester=<version>]
+pvm test <files> [--exclude=<files>] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>] [--sort=<sort>] [--group=<group>] [--shell=<shell>] [--pester=<version>]
 
 # Examples:
 pvm test # .............................. Runs all tests with Normal (default) verbosity.

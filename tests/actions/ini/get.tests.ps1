@@ -13,7 +13,7 @@ BeforeAll {
 
     Mock Write-Host {}
 
-    function Reset-Ini-Content {
+    function Reset-IniContent {
     # Create a test php.ini file
     @"
 memory_limit = 128M
@@ -27,7 +27,7 @@ max_execution_time = 30
     }
 
     # Create initial ini content first
-    Reset-Ini-Content
+    Reset-IniContent
 
     # Mock global variables
     $PVMConfig.paths.logError = "$TEST_DRIVE\error.log"

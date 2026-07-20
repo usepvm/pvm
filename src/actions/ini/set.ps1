@@ -22,7 +22,7 @@ function Set-IniSetting {
                 continue
             }
 
-            $matchesList = Get-Matching-PHPSettings -iniPath $iniPath -searchKey $searchKey
+            $matchesList = Get-MatchingPHPSettings -iniPath $iniPath -searchKey $searchKey
 
             if ($matchesList.Count -eq 0) {
                 if ($notFound.Keys -notcontains $key) {

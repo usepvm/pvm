@@ -1,9 +1,9 @@
 
-function Get-Extension-Categories-By-Page {
+function Get-ExtensionCategoriesByPage {
     param ($extCategory, $link, $page = 1)
 
     $availableExtensions = @()
-    $html = Get-Web-Response -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
+    $html = Get-WebResponse -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
     $null = $html.Links | Where-Object {
         if (-not $_.href) { return $false }
@@ -27,10 +27,10 @@ function Get-Extension-Categories-By-Page {
     }
 }
 
-function Get-PHPExtensions-From-Source {
+function Get-PHPExtensionsFromSource {
     $availableExtensions = @{}
     try {
-        $html_cat = Get-Web-Response -uri $PVMConfig.links.peclPackages
+        $html_cat = Get-WebResponse -uri $PVMConfig.links.peclPackages
         $null = $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
 
@@ -42,7 +42,7 @@ function Get-PHPExtensions-From-Source {
             $extCategory = $matches[1] -replace '\+', ' '
             do {
                 $hasMore = $false
-                $result = Get-Extension-Categories-By-Page -extCategory $extCategory -link $_.href -page $page
+                $result = Get-ExtensionCategoriesByPage -extCategory $extCategory -link $_.href -page $page
                 $availableExtensions[$extCategory] += $result.availableExtensions
                 $hasMore = $result.hasMore
                 $page++
@@ -62,7 +62,7 @@ function Get-PHPExtensions-From-Source {
         )
         $dataToCache = [ordered] @{}
         $availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object { $dataToCache[$_.Key] = $_.Value }
-        $null = Save-Cached-Data -cacheFileName 'available_extensions' -data $dataToCache -depth 3
+        $null = Save-CachedData -cacheFileName 'available_extensions' -data $dataToCache -depth 3
 
         return $availableExtensions
     } catch {
@@ -71,26 +71,26 @@ function Get-PHPExtensions-From-Source {
     }
 }
 
-function Show-PHP-Extensions {
+function Show-PHPExtensions {
     param ($iniPath, $available = $false, $term = $null)
 
     try {
         if (-not $available) {
-            $allExtensions = Get-All-PHPExtensionsStatus -iniPath $iniPath -includeIniOnly $true
+            $allExtensions = Get-AllPHPExtensionsStatus -iniPath $iniPath -includeIniOnly $true
 
             $filtered = if ($term) {
-                Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $term -includeIniOnly $true
+                Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $term -includeIniOnly $true
             } else {
                 $allExtensions
             }
 
-            Show-Extensions-States -extensions $allExtensions
-            Show-Installed-Extensions -extensions $filtered
+            Show-ExtensionsStates -extensions $allExtensions
+            Show-InstalledExtensions -extensions $filtered
         } else {
             Show-Message -message "`nLoading available extensions..."
 
             $availableExtensions = Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
-                return [pscustomobject] (Get-PHPExtensions-From-Source)
+                return [pscustomobject] (Get-PHPExtensionsFromSource)
             }
 
             if ($availableExtensions.Count -eq 0) {
@@ -134,7 +134,7 @@ function Show-PHP-Extensions {
 
                 $label = "  $key"
 
-                $maxDescLength = (Get-Console-Width) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH) * 2)
+                $maxDescLength = (Get-ConsoleWidth) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH) * 2)
                 if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
                 $descLines = @()

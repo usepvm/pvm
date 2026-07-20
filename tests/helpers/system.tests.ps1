@@ -36,7 +36,7 @@ BeforeAll {
         }
     }
 
-    Mock Set-EnvVar-Core {
+    Mock Set-EnvVarCore {
         param ($name, $value)
 
         if ($script:MockRegistryThrowException) {
@@ -57,38 +57,38 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Test-OS-64Bit" {
+Describe "Test-OS64Bit" {
     It "Returns a boolean value indicating OS architecture" {
-        $result = Test-OS-64Bit
+        $result = Test-OS64Bit
         $result | Should -BeOfType [bool]
     }
 }
 
-Describe "Get-All-EnvVars-Core" {
+Describe "Get-AllEnvVarsCore" {
     It "Returns machine-level environment variables" {
-        $result = Get-All-EnvVars-Core
+        $result = Get-AllEnvVarsCore
         $result | Should -Not -BeNullOrEmpty
         $result.GetType().Name | Should -Be 'Hashtable'
     }
 }
 
-Describe "Get-EnvVar-ByName-Core" {
+Describe "Get-EnvVarByNameCore" {
     It "Returns environment variable value by name" {
         # Test with a known system variable that should exist
-        $result = Get-EnvVar-ByName-Core -name 'Path'
+        $result = Get-EnvVarByNameCore -name 'Path'
         $result | Should -Not -BeNullOrEmpty
         $result | Should -BeOfType [string]
     }
 
     It "Returns null for non-existent variable" {
-        $result = Get-EnvVar-ByName-Core -name 'NONEXISTENT_VAR_12345'
+        $result = Get-EnvVarByNameCore -name 'NONEXISTENT_VAR_12345'
         $result | Should -BeNullOrEmpty
     }
 }
 
-Describe "Get-All-EnvVars" {
+Describe "Get-AllEnvVars" {
     BeforeAll {
-        Mock Get-All-EnvVars-Core {
+        Mock Get-AllEnvVarsCore {
             if ($script:MockRegistryThrowException) {
                 throw $script:MockRegistryException
             }
@@ -101,7 +101,7 @@ Describe "Get-All-EnvVars" {
 
     Context "When retrieving environment variables" {
         It "Returns environment variables" {
-            $result = Get-All-EnvVars
+            $result = Get-AllEnvVars
             $result | Should -Not -BeNullOrEmpty
             $result.GetType().Name | Should -Be 'Hashtable'
         }
@@ -109,17 +109,17 @@ Describe "Get-All-EnvVars" {
 
     Context "When an exception occurs" {
         It "Returns null" {
-            Mock Get-All-EnvVars-Core { throw $script:MockRegistryException }
-            $result = Get-All-EnvVars
+            Mock Get-AllEnvVarsCore { throw $script:MockRegistryException }
+            $result = Get-AllEnvVars
             $result | Should -BeNullOrEmpty
         }
     }
 }
 
-Describe "Get-EnvVar-ByName" {
+Describe "Get-EnvVarByName" {
     BeforeAll {
-        Mock Test-Not-Admin { return $false }
-        Mock Get-All-EnvVars-Core {
+        Mock Test-NotAdmin { return $false }
+        Mock Get-AllEnvVarsCore {
             if ($script:MockRegistryThrowException) {
                 throw $script:MockRegistryException
             }
@@ -128,7 +128,7 @@ Describe "Get-EnvVar-ByName" {
             $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
             return $result
         }
-        Mock Get-EnvVar-ByName-Core {
+        Mock Get-EnvVarByNameCore {
             param ($name)
 
             if ($script:MockRegistryThrowException) {
@@ -144,7 +144,7 @@ Describe "Get-EnvVar-ByName" {
             # Set a test variable
             Set-EnvVar -name 'TEST_VAR' -value 'TEST_VALUE'
 
-            $result = Get-EnvVar-ByName -name 'TEST_VAR'
+            $result = Get-EnvVarByName -name 'TEST_VAR'
             $result | Should -Be 'TEST_VALUE'
 
             # Cleanup
@@ -154,30 +154,30 @@ Describe "Get-EnvVar-ByName" {
 
     Context "When variable doesn't exist" {
         It "Returns null for non-existent variable" {
-            $result = Get-EnvVar-ByName -name 'NON_EXISTENT_VAR'
+            $result = Get-EnvVarByName -name 'NON_EXISTENT_VAR'
             $result | Should -Be $null
         }
 
         It "Returns null for empty name" {
-            $result = Get-EnvVar-ByName -name ''
+            $result = Get-EnvVarByName -name ''
             $result | Should -Be $null
         }
 
         It "Returns null for whitespace name" {
-            $result = Get-EnvVar-ByName -name '   '
+            $result = Get-EnvVarByName -name '   '
             $result | Should -Be $null
         }
 
         It "Returns null for null name" {
-            $result = Get-EnvVar-ByName -name $null
+            $result = Get-EnvVarByName -name $null
             $result | Should -Be $null
         }
     }
 
     Context "When an exception occurs" {
         It "Returns null when an exception occurs" {
-            Mock Get-EnvVar-ByName-Core { throw 'Simulated exception' }
-            $result = Get-EnvVar-ByName -name 'SIMULATED_EXCEPTION'
+            Mock Get-EnvVarByNameCore { throw 'Simulated exception' }
+            $result = Get-EnvVarByName -name 'SIMULATED_EXCEPTION'
             $result | Should -Be $null
         }
     }
@@ -185,8 +185,8 @@ Describe "Get-EnvVar-ByName" {
 
 Describe "Set-EnvVar" {
     BeforeAll {
-        Mock Test-Not-Admin { return $false }
-        Mock Get-EnvVar-ByName-Core {
+        Mock Test-NotAdmin { return $false }
+        Mock Get-EnvVarByNameCore {
             param ($name)
 
             if ($script:MockRegistryThrowException) {
@@ -202,7 +202,7 @@ Describe "Set-EnvVar" {
             $result = Set-EnvVar -name 'TEST_VAR_SET' -value 'TEST_VALUE'
             $result | Should -Be 0
 
-            $value = Get-EnvVar-ByName -name 'TEST_VAR_SET'
+            $value = Get-EnvVarByName -name 'TEST_VAR_SET'
             $value | Should -Be 'TEST_VALUE'
 
             # Cleanup
@@ -217,8 +217,8 @@ Describe "Set-EnvVar" {
 
     Context "When running as not admin" {
         It "Elevates and sets a new variable successfully" {
-            Mock Test-Not-Admin { return $true }
-            Mock Invoke-PS-Command { return 0 }
+            Mock Test-NotAdmin { return $true }
+            Mock Invoke-PSCommand { return 0 }
             $result = Set-EnvVar -name 'SIMULATED_EXCEPTION' -value 'TEST_VALUE'
             $result | Should -Be 0
         }
@@ -226,7 +226,7 @@ Describe "Set-EnvVar" {
 
     Context "When an exception occurs" {
         It "Returns -1 when an exception occurs" {
-            Mock Set-EnvVar-Core { throw 'Simulated exception' }
+            Mock Set-EnvVarCore { throw 'Simulated exception' }
             $result = Set-EnvVar -name 'SIMULATED_EXCEPTION' -value 'TEST_VALUE'
             $result | Should -Be -1
         }
@@ -235,8 +235,8 @@ Describe "Set-EnvVar" {
 
 Describe "Optimize-SystemPath" {
     BeforeAll {
-        Mock Test-Not-Admin { return $false }
-        Mock Get-All-EnvVars-Core {
+        Mock Test-NotAdmin { return $false }
+        Mock Get-AllEnvVarsCore {
             if ($script:MockRegistryThrowException) {
                 throw $script:MockRegistryException
             }
@@ -245,7 +245,7 @@ Describe "Optimize-SystemPath" {
             $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
             return $result
         }
-        Mock Get-EnvVar-ByName-Core {
+        Mock Get-EnvVarByNameCore {
             param ($name)
 
             if ($script:MockRegistryThrowException) {
@@ -275,7 +275,7 @@ Describe "Optimize-SystemPath" {
             $result = Optimize-SystemPath
             $result | Should -Be 0
 
-            $newPath = Get-EnvVar-ByName -name 'Path' -optimized $true
+            $newPath = Get-EnvVarByName -name 'Path' -optimized $true
             $newPath | Should -Match '%TEST_PATH1%'
             $newPath | Should -Match '%TEST_PATH2%'
             $newPath | Should -Not -Match 'C:\\Test1'
@@ -292,7 +292,7 @@ Describe "Optimize-SystemPath" {
         }
 
         It "Handles exceptions gracefully" {
-            Mock Get-EnvVar-ByName { throw 'Simulated exception' }
+            Mock Get-EnvVarByName { throw 'Simulated exception' }
             $result = Optimize-SystemPath
             $result | Should -Be -1
 
@@ -302,7 +302,7 @@ Describe "Optimize-SystemPath" {
         }
 
         It "Sets Path variable successfully after optimization" {
-            Mock Get-EnvVar-ByName { return 'C:\Test1;C:\Test2;%var1%;C:\Windows\System32;%var1%' }
+            Mock Get-EnvVarByName { return 'C:\Test1;C:\Test2;%var1%;C:\Windows\System32;%var1%' }
             Mock Set-EnvVar { return 0 }
 
             $result = Optimize-SystemPath
@@ -311,7 +311,7 @@ Describe "Optimize-SystemPath" {
         }
 
         It "Handles missing Path variable gracefully" {
-            Mock Get-EnvVar-ByName { return $null }
+            Mock Get-EnvVarByName { return $null }
             Mock Remove-PathDuplicates { return '' }
 
             $result = Optimize-SystemPath
@@ -321,14 +321,14 @@ Describe "Optimize-SystemPath" {
     }
 }
 
-Describe "Invoke-PS-Command" {
+Describe "Invoke-PSCommand" {
     Context "When executing PowerShell commands" {
         It "Passes -NoProfile and Bypass execution policy" {
             $mockProcess = @{ ExitCode = 0 }
             $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
             Mock Start-Process { return $mockProcess }
 
-            $result = Invoke-PS-Command -command "Write-Host -Object 'hello'"
+            $result = Invoke-PSCommand -command "Write-Host -Object 'hello'"
 
             Should -Invoke Start-Process -Times 1 -ParameterFilter {
                 $FilePath -eq 'powershell.exe' -and
@@ -344,7 +344,7 @@ Describe "Invoke-PS-Command" {
             $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
             Mock Start-Process { return $mockProcess }
 
-            $result = Invoke-PS-Command -command "Write-Error 'fail'"
+            $result = Invoke-PSCommand -command "Write-Error 'fail'"
 
             $result | Should -Be 42
         }
@@ -360,21 +360,21 @@ Describe "Test-Admin" {
     }
 }
 
-Describe "Test-Not-Admin" {
+Describe "Test-NotAdmin" {
     It "Returns a boolean value" {
-        $result = Test-Not-Admin
+        $result = Test-NotAdmin
         $result | Should -BeOfType [bool]
     }
 
     It "Returns true when not running as admin" {
         Mock Test-Admin { return $false }
-        $result = Test-Not-Admin
+        $result = Test-NotAdmin
         $result | Should -Be $true
     }
 
     It "Returns false when running as admin" {
         Mock Test-Admin { return $true }
-        $result = Test-Not-Admin
+        $result = Test-NotAdmin
         $result | Should -Be $false
     }
 }

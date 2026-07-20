@@ -1,7 +1,7 @@
 ﻿
-function Get-Cache-Files {
+function Get-CacheFiles {
     try {
-        if (Test-Directory-Not-Exists -path $PVMConfig.paths.cache) {
+        if (Test-DirectoryNotExists -path $PVMConfig.paths.cache) {
             return $null
         }
 
@@ -14,14 +14,14 @@ function Get-Cache-Files {
     }
 }
 
-function Show-Cache-Files {
+function Show-CacheFiles {
     try {
-        if (Test-Directory-Not-Exists -path $PVMConfig.paths.cache) {
+        if (Test-DirectoryNotExists -path $PVMConfig.paths.cache) {
             Show-Error -message "`nNo cache directory found."
             return -1
         }
 
-        $cacheFiles = Get-Cache-Files
+        $cacheFiles = Get-CacheFiles
 
         if ($cacheFiles.Count -eq 0) {
             Show-Error -message "`nNo cache files found."
@@ -43,18 +43,18 @@ function Show-Cache-Files {
     }
 }
 
-function Show-Cached-Data {
+function Show-CachedData {
     param ($cacheName)
 
     try {
-        $cachePath = Get-Cache-FilePath -fileName $cacheName
-        if (Test-File-Not-Exists -path $cachePath) {
+        $cachePath = Get-CacheFilePath -fileName $cacheName
+        if (Test-FileNotExists -path $cachePath) {
             Show-Error -message "`nCache file '$cacheName' not found."
             Show-Message -message "  Use 'pvm cache list' to see available cache files."
             return -1
         }
 
-        $cacheData = Get-Data-From-Cache -cacheFileName $cacheName
+        $cacheData = Get-DataFromCache -cacheFileName $cacheName
 
         if ($null -eq $cacheData -or $cacheData.Count -eq 0) {
             Show-Error -message "`nNo data found in cache file '$cacheName'."
@@ -74,12 +74,12 @@ function Show-Cached-Data {
     }
 }
 
-function Remove-Cache-File {
+function Remove-CacheFile {
     param ($cacheName, $skipConfirmation = $false)
 
     try {
-        $cachePath = Get-Cache-FilePath -fileName $cacheName
-        if (Test-File-Not-Exists -path $cachePath) {
+        $cachePath = Get-CacheFilePath -fileName $cacheName
+        if (Test-FileNotExists -path $cachePath) {
             Show-Error -message "`nCache file '$cacheName' not found."
             Show-Message -message "  Use 'pvm cache list' to see available cache files."
             return -1
@@ -105,11 +105,11 @@ function Remove-Cache-File {
     }
 }
 
-function Clear-Cache-Files {
+function Clear-CacheFiles {
     param ($skipConfirmation = $false)
 
     try {
-        $cacheFiles = Get-Cache-Files
+        $cacheFiles = Get-CacheFiles
 
         if ($cacheFiles.Count -eq 0) {
             Show-Error -message "`nNo cache files found."

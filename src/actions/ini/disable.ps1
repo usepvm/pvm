@@ -11,7 +11,7 @@ function Disable-IniExtension {
         $results = @()
         $overallCode = 0
         foreach ($extName in $extNames) {
-            $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
+            $matchesListStatus = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $extName
 
             if ($matchesListStatus.Length -eq 0) {
                 $results += @{ name = $extName; status = 'Not found'; color = 'Gray' }

@@ -4,7 +4,7 @@ function Backup-IniFile {
 
     try {
         $backup = "$iniPath.bak"
-        if (Test-File-Not-Exists -path $backup) {
+        if (Test-FileNotExists -path $backup) {
             Copy-Item -Path $iniPath $backup
         }
         return 0
@@ -14,7 +14,7 @@ function Backup-IniFile {
     }
 }
 
-function Get-All-PHPExtensionsStatus {
+function Get-AllPHPExtensionsStatus {
     param ($iniPath, $includeIniOnly = $false)
 
     $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*)\2\s*(;.*)?$"
@@ -40,7 +40,7 @@ function Get-All-PHPExtensionsStatus {
     $phpDirectory = Split-Path -Path $iniPath -Parent
     $extDirectory = "$phpDirectory\ext"
 
-    if (Test-Directory-Exists -path $extDirectory) {
+    if (Test-DirectoryExists -path $extDirectory) {
         $dllFiles = Get-ChildItem -Path $extDirectory -Filter '*.dll' -File -ErrorAction SilentlyContinue
         foreach ($file in $dllFiles) {
             $fileId = & $normalizeId $file.BaseName
@@ -109,7 +109,7 @@ function Get-All-PHPExtensionsStatus {
                 fileName   = $extMatch.fileName
             }
         } else {
-            $isZendExtension = Get-Zend-Extensions-List | Where-Object { $extMatch.name -like "*$_*" }
+            $isZendExtension = Get-ZendExtensionsList | Where-Object { $extMatch.name -like "*$_*" }
             $extensionLine = if ($isZendExtension) { ";zend_extension=$($extMatch.name).dll" } else { ";extension=$($extMatch.name).dll" }
 
             try {
@@ -169,7 +169,7 @@ function Get-All-PHPExtensionsStatus {
     return $matchesList
 }
 
-function Get-Matching-PHPExtensionsStatus {
+function Get-MatchingPHPExtensionsStatus {
     param ($iniPath, $extName, $includeIniOnly = $false)
 
     if ([string]::IsNullOrWhiteSpace($extName)) {
@@ -178,12 +178,12 @@ function Get-Matching-PHPExtensionsStatus {
 
     $searchId = $extName.Trim('"', "'").ToLower() -replace '^php_', '' -replace '\.dll$', ''
 
-    return Get-All-PHPExtensionsStatus -iniPath $iniPath -includeIniOnly $includeIniOnly | Where-Object {
+    return Get-AllPHPExtensionsStatus -iniPath $iniPath -includeIniOnly $includeIniOnly | Where-Object {
         $_.name -like "*$extName*" -or $_.id -like "*$searchId*"
     }
 }
 
-function Get-All-PHPSettings {
+function Get-AllPHPSettings {
     param ($iniPath)
 
     $pattern = '^(?<comment>[#;])?\s*(?<key>[^=\s]+)\s*=\s*(?<value>.*)$'
@@ -211,14 +211,14 @@ function Get-All-PHPSettings {
     return $results
 }
 
-function Get-Matching-PHPSettings {
+function Get-MatchingPHPSettings {
     param ($iniPath, $searchKey = '')
 
     if (-not $searchKey) {
         return @()
     }
 
-    return @(Get-All-PHPSettings -iniPath $iniPath) | Where-Object {
+    return @(Get-AllPHPSettings -iniPath $iniPath) | Where-Object {
         $_.name -like "*$searchKey*"
     }
 }

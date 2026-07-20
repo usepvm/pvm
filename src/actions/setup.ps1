@@ -1,7 +1,7 @@
 ﻿
 function Initialize-PVM {
     try {
-        $path = Get-EnvVar-ByName -name 'Path' -optimized $true
+        $path = Get-EnvVarByName -name 'Path' -optimized $true
         if ($null -eq $path) { $path = '' }
         $newPath = $path
         $pathEntries = $path -split ';' | Where-Object { $_ -ne '' }
@@ -12,7 +12,7 @@ function Initialize-PVM {
             return @{ code = -1; message = 'Failed to create directory for PHP version.'; color = 'DarkYellow' }
         }
 
-        $pvmEnvVarContent = Get-EnvVar-ByName -name 'PVM'
+        $pvmEnvVarContent = Get-EnvVarByName -name 'PVM'
 
         if (($null -eq $pvmEnvVarContent) -or ($pvmEnvVarContent -ne "$PVMRoot;$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)")) {
             $null = Set-EnvVar -name $PVMConfig.env.PVM_ENV_VAR_NAME -value "$PVMRoot;$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)"
@@ -69,7 +69,7 @@ function Initialize-PVMDirectories {
 function Initialize-PVMFiles {
     $codes = @()
 
-    $codes += $code = New-Example-PHP-Profile
+    $codes += $code = New-ExamplePHPProfile
     if ($code -eq 0) {
         Show-Success -message "`nExample profile created successfully at '$($PVMConfig.paths.exampleProfile)'."
         Show-Message -message "- Use 'pvm help profile' to learn more."
@@ -77,7 +77,7 @@ function Initialize-PVMFiles {
         Show-Error -message "`nFailed to create example profile."
     }
 
-    $codes += $code = New-Profile-Template
+    $codes += $code = New-ProfileTemplate
     if ($code -eq 0) {
         Show-Success -message "`nProfile template created successfully at '$($PVMConfig.paths.profileTemplate)'."
         Show-Message -message '- Feel free to modify it.'
@@ -85,14 +85,14 @@ function Initialize-PVMFiles {
         Show-Error -message "`nFailed to create profile template."
     }
 
-    $codes += $code = Set-Zend-Extensions-List
+    $codes += $code = Set-ZendExtensionsList
     if ($code -eq 0) {
         Show-Success -message "`nZend extensions list created successfully at '$($PVMConfig.paths.zendExtensionsList)'."
     } else {
         Show-Error -message "`nFailed to create zend extensions list."
     }
 
-    $codes += $code = Set-Aliases-List
+    $codes += $code = Set-AliasesList
     if ($code -eq 0) {
         Show-Success -message "`nAliases list created successfully at '$($PVMConfig.paths.aliasesList)'."
         Show-Message -message "- Use 'pvm aliases' to see available aliases."
@@ -104,7 +104,7 @@ function Initialize-PVMFiles {
     return $codes
 }
 
-function Initialize-Environment-Directories-And-Files {
+function Initialize-EnvironmentDirectoriesAndFiles {
     $codes = @()
 
     $codes += Initialize-PVMDirectories
@@ -114,16 +114,16 @@ function Initialize-Environment-Directories-And-Files {
     return 0
 }
 
-function New-Env-File {
+function New-EnvFile {
     param ($overwrite = $false)
 
     try {
-        if (Test-File-Not-Exists -path "$PVMRoot\.env.example") {
+        if (Test-FileNotExists -path "$PVMRoot\.env.example") {
             Show-Error -message "`nFailed to find .env.example file."
             return -1
         }
 
-        if ((Test-File-Exists -path "$PVMRoot\.env") -and ($overwrite -eq $false)) {
+        if ((Test-FileExists -path "$PVMRoot\.env") -and ($overwrite -eq $false)) {
             $response = Read-Host -Prompt "`n.env file already exists. Overwrite? (y/n)"
             $response = $response.Trim()
             if ($response -ne 'y' -and $response -ne 'Y') {

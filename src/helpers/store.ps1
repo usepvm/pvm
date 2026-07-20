@@ -1,5 +1,5 @@
 ﻿
-function Get-Data-From-Cache {
+function Get-DataFromCache {
     param ($cacheFileName)
 
     try {
@@ -7,8 +7,8 @@ function Get-Data-From-Cache {
             return @{}
         }
 
-        $path = Get-Cache-FilePath -filename $cacheFileName
-        if (Test-File-Not-Exists -path $path) {
+        $path = Get-CacheFilePath -filename $cacheFileName
+        if (Test-FileNotExists -path $path) {
             return @{}
         }
 
@@ -25,7 +25,7 @@ function Get-Data-From-Cache {
     }
 }
 
-function Test-Can-Use-Cache {
+function Test-CanUseCache {
     param ($cacheFileName)
 
     try {
@@ -33,10 +33,10 @@ function Test-Can-Use-Cache {
             return $false
         }
 
-        $path = Get-Cache-FilePath -filename $cacheFileName
+        $path = Get-CacheFilePath -filename $cacheFileName
         $useCache = $false
 
-        if (Test-File-Exists -path $path) {
+        if (Test-FileExists -path $path) {
             $cacheFile = Get-Item -Path $path -ErrorAction SilentlyContinue
             if ($null -eq $cacheFile) {
                 return $false
@@ -54,7 +54,7 @@ function Test-Can-Use-Cache {
     }
 }
 
-function Save-Cached-Data {
+function Save-CachedData {
     param ($cacheFileName, $data, $depth = 3)
 
     try {
@@ -69,7 +69,7 @@ function Save-Cached-Data {
         }
 
         $jsonString = $data | ConvertTo-Json -Depth $depth
-        $path = Get-Cache-FilePath -filename $cacheFileName
+        $path = Get-CacheFilePath -filename $cacheFileName
         $created = New-Directory -path (Split-Path -Path $path)
         if ($created -ne 0) {
             Show-Error -Message "Failed to create directory $(Split-Path -Path $path)"
@@ -83,7 +83,7 @@ function Save-Cached-Data {
     }
 }
 
-function Get-Cache-FilePath {
+function Get-CacheFilePath {
     param ($filename)
 
     if ($filename -notmatch '\.json$') {
@@ -96,10 +96,10 @@ function Get-Cache-FilePath {
 function Get-OrUpdateCache {
     param ($cacheFileName, $compute, $depth = 3)
 
-    $useCache = Test-Can-Use-Cache -cacheFileName $cacheFileName
+    $useCache = Test-CanUseCache -cacheFileName $cacheFileName
 
     if ($useCache) {
-        $data = Get-Data-From-Cache -cacheFileName $cacheFileName
+        $data = Get-DataFromCache -cacheFileName $cacheFileName
         if ($null -ne $data -and $data.Count -gt 0) {
             return $data
         }
@@ -108,7 +108,7 @@ function Get-OrUpdateCache {
     $data = & $compute
 
     if ($null -ne $data) {
-        $null = Save-Cached-Data -cacheFileName $cacheFileName -data $data -depth $depth
+        $null = Save-CachedData -cacheFileName $cacheFileName -data $data -depth $depth
     }
 
     return $data

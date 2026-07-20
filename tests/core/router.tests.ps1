@@ -181,15 +181,15 @@ Describe "Integration Tests" {
     Context "Command Flow Integration" {
         BeforeEach {
             # Setup comprehensive mocks for integration testing
-            Mock Test-PVM-Setup { $true }
-            Mock Initialize-Environment-Directories-And-Files { 0 }
-            Mock New-Env-File { 0 }
+            Mock Test-PVMSetup { $true }
+            Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
+            Mock New-EnvFile { 0 }
             Mock Initialize-PVM { @{ code = 0; message = 'Setup completed' } }
             Mock Optimize-SystemPath { 0 }
-            Mock Show-Msg-By-ExitCode { }
-            Mock Get-Current-PHP-Version { @{ version = '8.2.0'; status = @{ 'xdebug' = $true }; path = 'C:\PHP\8.2.0' } }
+            Mock Show-MsgByExitCode { }
+            Mock Get-CurrentPHPVersion { @{ version = '8.2.0'; status = @{ 'xdebug' = $true }; path = 'C:\PHP\8.2.0' } }
             Mock Install-PHP { 0 }
-            Mock Update-PHP-Version { @{ code = 0; message = 'Version updated' } }
+            Mock Update-PHPVersion { @{ code = 0; message = 'Version updated' } }
             Mock Write-Host { }
         }
 
@@ -211,21 +211,21 @@ Describe "Integration Tests" {
             $result | Should -Be 0
 
             # Verify all functions were called
-            Should -Invoke Test-PVM-Setup -Times 1
+            Should -Invoke Test-PVMSetup -Times 1
             Should -Invoke Install-PHP -Times 1
-            Should -Invoke Update-PHP-Version -Times 1
-            Should -Invoke Get-Current-PHP-Version -Times 1
+            Should -Invoke Update-PHPVersion -Times 1
+            Should -Invoke Get-CurrentPHPVersion -Times 1
         }
     }
 
     Context "Error Handling Integration" {
         It "Should handle cascading failures gracefully" {
-            Mock Test-PVM-Setup { $false }
-            Mock Initialize-Environment-Directories-And-Files { -1 }
-            Mock New-Env-File { -1 }
+            Mock Test-PVMSetup { $false }
+            Mock Initialize-EnvironmentDirectoriesAndFiles { -1 }
+            Mock New-EnvFile { -1 }
             Mock Initialize-PVM { @{ code = 1; message = 'Setup failed' } }
             Mock Optimize-SystemPath { -1 }
-            Mock Show-Msg-By-ExitCode { }
+            Mock Show-MsgByExitCode { }
             Mock Write-Host { }
 
             $result = Invoke-Setup
@@ -233,7 +233,7 @@ Describe "Integration Tests" {
 
             Should -Invoke Initialize-PVM -Times 1
             Should -Invoke Write-Host -ParameterFilter { $Object -like '*Failed to optimize system path*' }
-            Should -Invoke Show-Msg-By-ExitCode -Times 1
+            Should -Invoke Show-MsgByExitCode -Times 1
         }
     }
 }

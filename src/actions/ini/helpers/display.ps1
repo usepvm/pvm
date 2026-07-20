@@ -1,5 +1,5 @@
 ﻿
-function Show-Extensions-States {
+function Show-ExtensionsStates {
     param ($extensions)
 
     # Pre-count for summary
@@ -9,7 +9,7 @@ function Show-Extensions-States {
     Show-Message -message "`n- Total Extensions`t`t: Enabled: $enabledCount  |  Disabled: $disabledCount  |  Total: $($extensions.Count)`n"
 }
 
-function Show-Installed-Extensions {
+function Show-InstalledExtensions {
     param ($extensions)
 
     if ($extensions.Count -eq 0) {
@@ -37,7 +37,7 @@ function Show-Installed-Extensions {
     }
 }
 
-function Show-Settings-States {
+function Show-SettingsStates {
     param ($settings)
 
     # Pre-count for summary

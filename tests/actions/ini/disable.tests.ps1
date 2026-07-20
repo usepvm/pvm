@@ -13,7 +13,7 @@ BeforeAll {
 
     Mock Write-Host {}
 
-    function Reset-Ini-Content {
+    function Reset-IniContent {
     # Create a test php.ini file
     @"
 memory_limit = 128M
@@ -27,7 +27,7 @@ max_execution_time = 30
     }
 
     # Create initial ini content first
-    Reset-Ini-Content
+    Reset-IniContent
 
     # Mock global variables
     $PVMConfig.paths.logError = "$TEST_DRIVE\error.log"
@@ -47,8 +47,8 @@ AfterAll {
 
 Describe "Disable-IniExtension" {
     BeforeEach {
-        Mock Test-Directory-Exists -ParameterFilter { $path -eq $extDirectory } -MockWith { return $true }
-        Reset-Ini-Content
+        Mock Test-DirectoryExists -ParameterFilter { $path -eq $extDirectory } -MockWith { return $true }
+        Reset-IniContent
         Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
     }
 
@@ -66,7 +66,7 @@ Describe "Disable-IniExtension" {
     }
 
     It "Returns 0 immediately when extension is already disabled" {
-        Mock Get-Matching-PHPExtensionsStatus {
+        Mock Get-MatchingPHPExtensionsStatus {
             return @(
                 @{ name = 'php_xdebug'; status = 'Disabled'; color = 'DarkYellow'; line = ';extension=php_xdebug.dll'; lineNumber = 1 }
             )
@@ -96,7 +96,7 @@ Describe "Disable-IniExtension" {
     }
 
     It "Returns 0 when no line modification occurs while disabling extension" {
-        Mock Get-Matching-PHPExtensionsStatus {
+        Mock Get-MatchingPHPExtensionsStatus {
             return @(
                 @{ name = 'php_curl'; status = 'Enabled'; color = 'DarkGreen'; line = 'extension=php_curl.dll'; lineNumber = 10 }
             )

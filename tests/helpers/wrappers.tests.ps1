@@ -30,7 +30,7 @@ Describe "Set-Content-Wrapper Tests" {
         Should -Invoke Set-Content -Times 1 -ParameterFilter {
             $Path -eq $path -and
             $Value -eq $content -and
-            $Encoding -is [System.Text.UTF8Encoding]
+            ($Encoding -eq 'UTF8') -or ($Encoding.WebName -eq 'utf-8')
         }
     }
 

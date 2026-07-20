@@ -114,7 +114,7 @@ function Get-AllPHPExtensionsStatus {
 
             try {
                 $lines += $extensionLine
-                Set-Content -Path $iniPath -Value $lines -Encoding UTF8
+                Set-Content-Wrapper -path $iniPath -value $lines
                 $matchesList += @{
                     name       = $extMatch.name
                     id         = $id

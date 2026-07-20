@@ -143,20 +143,3 @@ function Expand-Zip {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to expand zip file from $zipPath"; exception = $_ }
     }
 }
-
-function Get-WebResponse {
-    param ($uri, $outFile = $null, $useBasicParsing = $true)
-
-    $uri = $uri.Trim()
-
-    $params = @{
-        Uri = $uri
-        UseBasicParsing = $useBasicParsing
-    }
-
-    if ($outFile) {
-        $params.OutFile = $outFile
-    }
-
-    return Invoke-WebRequest @params
-}

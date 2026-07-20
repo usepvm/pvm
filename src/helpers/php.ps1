@@ -64,7 +64,7 @@ function Test-TwoPHPVersionsEqual {
 function Set-ZendExtensionsList {
     try {
         $jsonContent = $PVMConfig.defaults.zendExtensions | ConvertTo-Json -Depth 10
-        Set-Content -Path $PVMConfig.paths.zendExtensionsList -Value $jsonContent -Encoding UTF8
+        Set-Content-Wrapper -path $PVMConfig.paths.zendExtensionsList -value $jsonContent
 
         return 0
     } catch {

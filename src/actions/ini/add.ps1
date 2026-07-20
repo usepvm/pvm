@@ -197,7 +197,7 @@ function Install-XDebugExtension {
             }
         }
         if ($dllXDebugExists) {
-            Set-Content -Path $iniPath -Value $iniContent -Encoding UTF8
+            Set-Content-Wrapper -path $iniPath -value $iniContent
         } else {
             $xDebugConfig = $xDebugConfig -replace '\ +'
             Add-Content -Path $iniPath -Value $xDebugConfig
@@ -251,7 +251,7 @@ function Add-MissingPHPExtensionToIni {
         } else {
             $lines += "`n$commented" + "extension=$extFileName"
         }
-        Set-Content -Path $iniPath -Value $lines -Encoding UTF8
+        Set-Content-Wrapper -path $iniPath -value $lines
         Show-Success -message "- '$extFileName' added successfully."
 
         return 0

@@ -17,7 +17,7 @@ function Remove-ExtensionFromIniFile {
             return -1
         }
 
-        Set-Content -Path $iniPath -Value $newLines -Encoding UTF8
+        Set-Content-Wrapper -path $iniPath -value $newLines
 
         return 0
     } catch {

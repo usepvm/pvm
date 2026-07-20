@@ -39,7 +39,7 @@ function Get-EnvConfig {
 function Set-AliasesList {
     try {
         $jsonContent = $PVMConfig.defaults.aliases | ConvertTo-Json -Depth 10
-        Set-Content -Path $PVMConfig.paths.aliasesList -Value $jsonContent -Encoding UTF8
+        Set-Content-Wrapper -path $PVMConfig.paths.aliasesList -value $jsonContent
 
         return 0
     } catch {

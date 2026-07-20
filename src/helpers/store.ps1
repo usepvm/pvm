@@ -75,7 +75,7 @@ function Save-CachedData {
             Show-Error -Message "Failed to create directory $(Split-Path -Path $path)"
             return -1
         }
-        Set-Content -Path $path -Value $jsonString -Encoding UTF8
+        Set-Content-Wrapper -path $path -value $jsonString
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to cache data"; exception = $_ }

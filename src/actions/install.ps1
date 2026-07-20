@@ -231,7 +231,7 @@ function Set-Opcache {
                 -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `
                 -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
         }
-        Set-Content -Path $phpIniPath -Value $phpIniContent -Encoding UTF8
+        Set-Content-Wrapper -path $phpIniPath -value $phpIniContent
         Show-Success -message "`nOpcache configured successfully for PHP version $version"
 
         return 0

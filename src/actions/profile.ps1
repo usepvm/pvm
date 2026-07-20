@@ -23,7 +23,7 @@ function Set-IniSettingDirect {
             $lines += $newLine
         }
 
-        Set-Content -Path $iniPath -Value $lines -Encoding UTF8
+        Set-Content-Wrapper -path $iniPath -value $lines
         return 0
     } catch {
         return -1
@@ -85,7 +85,7 @@ function Enable-IniExtensionDirect {
             $lines += $newLine
         }
 
-        Set-Content -Path $iniPath -Value $lines -Encoding UTF8
+        Set-Content-Wrapper -path $iniPath -value $lines
         return 0
     } catch {
         return -1
@@ -143,7 +143,7 @@ function Disable-IniExtensionDirect {
             }
         }
 
-        Set-Content -Path $iniPath -Value $lines -Encoding UTF8
+        Set-Content-Wrapper -path $iniPath -value $lines
         return 0
     } catch {
         return -1
@@ -246,7 +246,7 @@ function Save-PHPProfile {
 
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
         $jsonContent = $userProfile | ConvertTo-Json -Depth 10
-        Set-Content -Path $profilePath -Value $jsonContent -Encoding UTF8
+        Set-Content-Wrapper -path $profilePath -value $jsonContent
 
         Show-Success -message "`nProfile '$profileName' saved successfully."
         Show-Message -message "  Settings: $($userProfile.settings.Count) (popular/common only)"
@@ -632,7 +632,7 @@ function Import-PHPProfile {
         if ($finalName -ne $userProfile.name) {
             $userProfile.name = $finalName
             $jsonContent = $userProfile | ConvertTo-Json -Depth 10
-            Set-Content -Path $targetPath -Value $jsonContent -Encoding UTF8
+            Set-Content-Wrapper -path $targetPath -value $jsonContent
         } else {
             Copy-Item -Path $importPath -Destination $targetPath -Force
         }
@@ -693,7 +693,7 @@ function New-ExamplePHPProfile {
         }
 
         $jsonContent = $exampleProfile | ConvertTo-Json -Depth 10
-        Set-Content -Path $PVMConfig.paths.exampleProfile -Value $jsonContent -Encoding UTF8
+        Set-Content-Wrapper -path $PVMConfig.paths.exampleProfile -value $jsonContent
 
         return 0
     } catch {
@@ -710,7 +710,7 @@ function New-ProfileTemplate {
         }
 
         $jsonContent = $profileTemplate | ConvertTo-Json -Depth 10
-        Set-Content -Path $PVMConfig.paths.profileTemplate -Value $jsonContent -Encoding UTF8
+        Set-Content-Wrapper -path $PVMConfig.paths.profileTemplate -value $jsonContent
 
         return 0
     } catch {

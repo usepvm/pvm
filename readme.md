@@ -245,8 +245,13 @@ pvm ini info --search=<term>
 ### Check logs
 
 ```sh
-pvm log --pageSize=<number> --search=<term> # Default value is 5
-# Example: pvm log --pageSize=3 --search=error
+pvm log # Default value for pagination is 5
+
+pvm log --pageSize=<number>
+# Example: pvm log --pageSize=3
+
+pvm log  --search=<term>
+# Example: pvm log --search=error
 ```
 
 ### Manage PHP Configuration Profiles

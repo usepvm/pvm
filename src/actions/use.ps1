@@ -1,14 +1,14 @@
 ﻿
-function Find-PHP-VersionFromProject {
+function Find-PHPVersionFromProject {
     try {
         # 1. Check .php-version
-        if (Test-File-Exists -path '.php-version') {
+        if (Test-FileExists -path '.php-version') {
             $version = Get-Content -Path '.php-version' | Select-Object -First 1
             return $version.Trim()
         }
 
         # 2. Check composer.json
-        if (Test-File-Exists -path 'composer.json') {
+        if (Test-FileExists -path 'composer.json') {
             try {
                 $json = Get-Content -Path 'composer.json' -Raw | ConvertFrom-Json
                 if ($json.require.php) {
@@ -30,12 +30,12 @@ function Find-PHP-VersionFromProject {
     return $null
 }
 
-function Update-PHP-Version {
+function Update-PHPVersion {
     param ($version)
 
     try {
-        $installedVersions = Get-Matching-PHP-Versions -version $version
-        $pathVersionObject = Get-UserSelected-PHP-Version -installedVersions $installedVersions
+        $installedVersions = Get-MatchingPHPVersions -version $version
+        $pathVersionObject = Get-UserSelectedPHPVersion -installedVersions $installedVersions
 
         if (-not $pathVersionObject) {
             return @{ code = -1; message = "PHP version $version was not found!"; color = 'DarkYellow' }
@@ -45,14 +45,14 @@ function Update-PHP-Version {
             return $pathVersionObject
         }
 
-        $currentVersion = Get-Current-PHP-Version
+        $currentVersion = Get-CurrentPHPVersion
         if ($currentVersion -and $currentVersion.version) {
-            if (Test-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $pathVersionObject) {
+            if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $pathVersionObject) {
                 return @{ code = 0; message = "Already using PHP $($pathVersionObject.version)"; color = 'DarkCyan' }
             }
         }
 
-        $linkCreated = New-Symbolic-Link -link $PVMConfig.env.PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
+        $linkCreated = New-SymbolicLink -link $PVMConfig.env.PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
         if ($linkCreated.code -ne 0) {
             return $linkCreated
         }
@@ -65,8 +65,8 @@ function Update-PHP-Version {
     }
 }
 
-function Select-PHP-Version-Automatically {
-    $version = Find-PHP-VersionFromProject
+function Select-PHPVersionAutomatically {
+    $version = Find-PHPVersionFromProject
 
     if (-not $version) {
         return @{ code = -1; message = 'Could not detect PHP version from .php-version or composer.json'; color = 'DarkYellow' }
@@ -74,7 +74,7 @@ function Select-PHP-Version-Automatically {
 
     Show-Message -message "`nDetected PHP version from project: $version"
 
-    $installedVersions = Get-Matching-PHP-Versions -version $version
+    $installedVersions = Get-MatchingPHPVersions -version $version
     if (-not $installedVersions) {
         $message = "PHP '$version' is not installed."
         $message += "`nRun: pvm install $version"

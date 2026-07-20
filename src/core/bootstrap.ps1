@@ -7,7 +7,7 @@ function Show-Usage {
 
     $actions = Get-Actions -arguments $arguments
     $maxLineLength = ($actions.GetEnumerator() | ForEach-Object { $_.Value.command.Length } | Measure-Object -Maximum).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
-    $maxDescLength = (Get-Console-Width) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2))
+    $maxDescLength = (Get-ConsoleWidth) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2))
     if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
     $actions.GetEnumerator() | ForEach-Object {
@@ -38,7 +38,7 @@ function Show-Usage {
     }
 }
 
-function Show-PVM-Version {
+function Show-PVMVersion {
     Show-Message -message "`nPVM version $($PVMConfig.version)"
 }
 
@@ -232,7 +232,7 @@ function Start-PVM {
 
         $allowedCommands = Get-AllowedCommands
 
-        if (($allowedCommands -notcontains $command) -and (Test-PVM-Not-Setup)) {
+        if (($allowedCommands -notcontains $command) -and (Test-PVMNotSetup)) {
             Show-Message -message "`nPVM is not setup. Please run 'pvm setup' first."
             return -1
         }
@@ -241,7 +241,7 @@ function Start-PVM {
 
         # Check for updates after successful command execution (skip for update command itself)
         if ($result -eq 0 -and $command -ne 'update') {
-            $null = (Test-Check-For-Updates-Quietly)
+            $null = (Test-CheckForUpdatesQuietly)
         }
 
         return $result

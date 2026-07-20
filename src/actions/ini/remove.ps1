@@ -1,5 +1,5 @@
 ﻿
-function Remove-Extension-From-Ini-File {
+function Remove-ExtensionFromIniFile {
     param ($iniPath, $extensionObject)
 
     try {
@@ -17,7 +17,7 @@ function Remove-Extension-From-Ini-File {
             return -1
         }
 
-        Set-Content -Path $iniPath -Value $newLines -Encoding UTF8
+        Set-Content-Wrapper -path $iniPath -value $newLines
 
         return 0
     } catch {
@@ -26,13 +26,13 @@ function Remove-Extension-From-Ini-File {
     }
 }
 
-function Remove-Extension-From-Ext-Directory {
+function Remove-ExtensionFromExtDirectory {
     param ($extensionDirectory, $extensionObject)
 
     try {
         $extensionFullPath = "$extensionDirectory\$($extensionObject.fileName)"
 
-        if (Test-File-Not-Exists -path $extensionFullPath) {
+        if (Test-FileNotExists -path $extensionFullPath) {
             return -1
         }
 
@@ -61,7 +61,7 @@ function Uninstall-Extension {
         $phpDirectory = Split-Path -Path $iniPath -Parent
         $extDirectory = "$phpDirectory\ext"
 
-        if (Test-Directory-Not-Exists -path $extDirectory) {
+        if (Test-DirectoryNotExists -path $extDirectory) {
             Show-Error -Message "`nExtensions directory not found: $extDirectory"
             return -1
         }
@@ -69,7 +69,7 @@ function Uninstall-Extension {
         $overallCode = 0
         $results = @()
         foreach ($extName in $extNames) {
-            $matchingExtensions = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
+            $matchingExtensions = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $extName
             if ($matchingExtensions.Length -eq 0) {
                 $results += @{ name = $extName; status = 'Not Found'; color = 'DarkYellow' }
                 $overallCode = -1
@@ -120,13 +120,13 @@ function Uninstall-Extension {
                 }
             }
 
-            if (Test-File-Not-Exists -path $selected.fullPath) {
+            if (Test-FileNotExists -path $selected.fullPath) {
                 $results += @{ name = $extName; status = 'Not Found'; color = 'DarkYellow' }
                 $overallCode = -1
                 continue
             }
 
-            $code = Remove-Extension-From-Ext-Directory -extensionDirectory $extDirectory -extensionObject $selected
+            $code = Remove-ExtensionFromExtDirectory -extensionDirectory $extDirectory -extensionObject $selected
             if ($code -ne 0) {
                 $results += @{ name = $extName; status = "Failed to remove '$($selected.name)' from ext directory"; color = 'DarkYellow' }
                 $overallCode = -1
@@ -134,7 +134,7 @@ function Uninstall-Extension {
             }
 
             if ($selected.source -like '*ini*') {
-                $code = Remove-Extension-From-Ini-File -iniPath $iniPath -extensionObject $selected
+                $code = Remove-ExtensionFromIniFile -iniPath $iniPath -extensionObject $selected
                 if ($code -ne 0) {
                     $results += @{ name = $extName; status = "Failed to remove '$($selected.name)' from php.ini"; color = 'DarkYellow' }
                     $overallCode = -1

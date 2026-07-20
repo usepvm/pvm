@@ -203,7 +203,7 @@ Describe "Resolve-Arch" {
 
     Context "With default choice" {
         It "Returns x64 as default when 64-bit OS and choseDefault is true" {
-            Mock Test-OS-64Bit { return $true }
+            Mock Test-OS64Bit { return $true }
             $arguments = @('some_arg', 'other_arg')
 
             $result = Resolve-Arch -arguments $arguments -choseDefault $true
@@ -211,7 +211,7 @@ Describe "Resolve-Arch" {
         }
 
         It "Returns x86 as default when 32-bit OS and choseDefault is true" {
-            Mock Test-OS-64Bit { return $false }
+            Mock Test-OS64Bit { return $false }
             $arguments = @('some_arg', 'other_arg')
 
             $result = Resolve-Arch -arguments $arguments -choseDefault $true
@@ -219,7 +219,7 @@ Describe "Resolve-Arch" {
         }
 
         It "Returns argument arch even when choseDefault is true" {
-            Mock Test-OS-64Bit { return $true }
+            Mock Test-OS64Bit { return $true }
             $arguments = @('x86', 'some_arg')
 
             $result = Resolve-Arch -arguments $arguments -choseDefault $true
@@ -235,7 +235,7 @@ Describe "Resolve-Arch" {
         }
 
         It "Returns default when arguments array is empty and choseDefault is true" {
-            Mock Test-OS-64Bit { return $true }
+            Mock Test-OS64Bit { return $true }
             $arguments = @()
 
             $result = Resolve-Arch -arguments $arguments -choseDefault $true

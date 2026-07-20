@@ -1,5 +1,5 @@
 ﻿
-function Get-PHP-Status {
+function Get-PHPStatus {
     param ($phpPath)
 
     # Build zendExtensions list from ini status
@@ -10,7 +10,7 @@ function Get-PHP-Status {
 
     try {
         $phpIniPath = "$phpPath\php.ini"
-        if (Test-File-Not-Exists -path $phpIniPath) {
+        if (Test-FileNotExists -path $phpIniPath) {
             return $status
         }
 
@@ -30,7 +30,7 @@ function Get-PHP-Status {
         }
 
         # Get zend extension info from DLL files (adds version info)
-        $dllExtensions = Get-Zend-Extensions-Info -phpPath $phpPath
+        $dllExtensions = Get-ZendExtensionsInfo -phpPath $phpPath
 
         # Update with DLL version info if available
         foreach ($dllExt in $dllExtensions) {
@@ -48,7 +48,7 @@ function Get-PHP-Status {
     return $status
 }
 
-function Get-Current-PHP-Version {
+function Get-CurrentPHPVersion {
     try {
         $emptyResult = @{
             version = $null; path = $null;
@@ -63,7 +63,7 @@ function Get-Current-PHP-Version {
         }
 
         $currentPhpVersionPath = $currentPhpVersionPath.Target
-        if (Test-Directory-Not-Exists -path $currentPhpVersionPath) {
+        if (Test-DirectoryNotExists -path $currentPhpVersionPath) {
             return $emptyResult
         }
         $phpInfo = Get-PHPInstallInfo -path $currentPhpVersionPath
@@ -73,7 +73,7 @@ function Get-Current-PHP-Version {
             arch      = $phpInfo.Arch
             buildType = $phpInfo.BuildType
             path      = $phpInfo.InstallPath
-            status    = Get-PHP-Status -phpPath $currentPhpVersionPath
+            status    = Get-PHPStatus -phpPath $currentPhpVersionPath
         }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve current PHP version"; exception = $_ }

@@ -85,7 +85,7 @@ function Show-Log {
         }
 
         # Check if log file exists
-        if (Test-File-Not-Exists -path $PVMConfig.paths.logError) {
+        if (Test-FileNotExists -path $PVMConfig.paths.logError) {
             Show-Error -message "`nLog file not found: $($PVMConfig.paths.logError)"
             return -1
         }

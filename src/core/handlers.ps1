@@ -1,9 +1,9 @@
 ﻿
 function Invoke-Setup {
     $result = @{ code = 0; message = 'PVM is already setup' }
-    if (Test-PVM-Not-Setup) {
-        $null = Initialize-Environment-Directories-And-Files
-        $envCode = New-Env-File -overwrite $true
+    if (Test-PVMNotSetup) {
+        $null = Initialize-EnvironmentDirectoriesAndFiles
+        $envCode = New-EnvFile -overwrite $true
 
         if ($envCode -eq 0) { Wait-ForEnvEdit }
 
@@ -14,15 +14,15 @@ function Invoke-Setup {
         Show-Error -Message "`nFailed to optimize system path."
     }
 
-    Show-Msg-By-ExitCode -result $result
+    Show-MsgByExitCode -result $result
     return 0
 }
 
 function Invoke-Repair {
     $codes = @()
-    $codes += Initialize-Environment-Directories-And-Files
+    $codes += Initialize-EnvironmentDirectoriesAndFiles
 
-    $envCode = New-Env-File
+    $envCode = New-EnvFile
     if ($envCode -eq 0) { Wait-ForEnvEdit }
     $codes += if ($envCode -eq -1) { -1 } else { 0 }
 
@@ -31,7 +31,7 @@ function Invoke-Repair {
 }
 
 function Invoke-Current {
-    $result = Get-Current-PHP-Version
+    $result = Get-CurrentPHPVersion
     if (-not $result.version) {
         Show-Warning -message "`nNo PHP version is currently set. Please use 'pvm use <version>' to set a version."
         return -1
@@ -77,7 +77,7 @@ function Invoke-List {
     $buildType = Resolve-BuildType -arguments $arguments
 
     $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-    $result = Get-PHP-Versions-List -available ($arguments -contains 'available') -term $term -arch $arch -buildType $buildType
+    $result = Get-PHPVersionsList -available ($arguments -contains 'available') -term $term -arch $arch -buildType $buildType
 
     return $result
 }
@@ -90,17 +90,17 @@ function Invoke-Install {
     $buildType = Resolve-BuildType -arguments $arguments
 
     if ($version -eq 'auto') {
-        $result = Select-PHP-Version-Automatically
+        $result = Select-PHPVersionAutomatically
 
         if ($result.code -eq 0) {
             $version = $result.version
-            Show-Msg-By-ExitCode -result $result -message "php $version is already installed!"
+            Show-MsgByExitCode -result $result -message "php $version is already installed!"
             return -1
         }
 
         $version = $result.version
     } elseif ($version -eq 'latest') {
-        $latestVersion = Get-Latest-PHP-Version -arch $arch -buildType $buildType
+        $latestVersion = Get-LatestPHPVersion -arch $arch -buildType $buildType
         if (-not $latestVersion) {
             Show-Error -message "`nFailed to find the latest PHP version"
             return -1
@@ -116,7 +116,7 @@ function Invoke-Install {
     }
 
     $result = Install-PHP -version $version -arch $arch -buildType $buildType
-    Show-Msg-By-ExitCode -result $result
+    Show-MsgByExitCode -result $result
     return 0
 }
 
@@ -135,7 +135,7 @@ function Invoke-Uninstall {
 
     $result = Uninstall-PHP -version $version -skipConfirmation $skipConfirmation
 
-    Show-Msg-By-ExitCode -result $result
+    Show-MsgByExitCode -result $result
     return 0
 }
 
@@ -150,17 +150,17 @@ function Invoke-Use {
     }
 
     if ($version -eq 'auto') {
-        $result = Select-PHP-Version-Automatically
+        $result = Select-PHPVersionAutomatically
         if ($result.code -ne 0) {
-            Show-Msg-By-ExitCode -result $result
+            Show-MsgByExitCode -result $result
             return -1
         }
         $version = $result.version
     }
 
-    $result = Update-PHP-Version -version $version
+    $result = Update-PHPVersion -version $version
 
-    Show-Msg-By-ExitCode -result $result
+    Show-MsgByExitCode -result $result
     return 0
 }
 
@@ -257,7 +257,7 @@ function Invoke-Log {
 }
 
 function Invoke-Version {
-    Show-PVM-Version
+    Show-PVMVersion
     return 0
 }
 
@@ -308,7 +308,7 @@ function Invoke-Profile {
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
             $description = if ($remainingArgs.Count -gt 1) { ($remainingArgs[1..($remainingArgs.Count - 1)] -join ' ') } else { $null }
-            return (Save-PHP-Profile -profileName $profileName -description $description)
+            return (Save-PHPProfile -profileName $profileName -description $description)
         }
         'load' {
             if ($remainingArgs.Count -eq 0) {
@@ -316,10 +316,10 @@ function Invoke-Profile {
                 return -1
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
-            return (Use-PHP-Profile -profileName $profileName)
+            return (Use-PHPProfile -profileName $profileName)
         }
         'list' {
-            return (Show-PHP-Profiles)
+            return (Show-PHPProfiles)
         }
         'show' {
             if ($remainingArgs.Count -eq 0) {
@@ -328,7 +328,7 @@ function Invoke-Profile {
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
 
-            return (Show-PHP-Profile -profileName $profileName)
+            return (Show-PHPProfile -profileName $profileName)
         }
         'delete' {
             if ($remainingArgs.Count -eq 0) {
@@ -338,11 +338,11 @@ function Invoke-Profile {
 
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
             $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
-            return (Remove-PHP-Profile -profileName $profileName -skipConfirmation $skipConfirmation)
+            return (Remove-PHPProfile -profileName $profileName -skipConfirmation $skipConfirmation)
         }
         'clear' {
             $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
-            return (Clear-PHP-Profiles -skipConfirmation $skipConfirmation)
+            return (Clear-PHPProfiles -skipConfirmation $skipConfirmation)
         }
         'export' {
             if ($remainingArgs.Count -eq 0) {
@@ -353,7 +353,7 @@ function Invoke-Profile {
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
             $exportPath = if ($remainingArgs.Count -gt 1) { $remainingArgs[1] } else { $null }
 
-            return (Export-PHP-Profile -profileName $profileName -exportPath $exportPath)
+            return (Export-PHPProfile -profileName $profileName -exportPath $exportPath)
         }
         'import' {
             if ($remainingArgs.Count -eq 0) {
@@ -363,7 +363,7 @@ function Invoke-Profile {
             $importPath = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[1] } else { $null }
 
-            return (Import-PHP-Profile -importPath $importPath -profileName $profileName)
+            return (Import-PHPProfile -importPath $importPath -profileName $profileName)
         }
         default {
             Show-Error -message "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'."
@@ -388,7 +388,7 @@ function Invoke-Cache {
 
     switch ($action.ToLower()) {
         'list' {
-            return (Show-Cache-Files)
+            return (Show-CacheFiles)
         }
         'show' {
             if ($remainingArgs.Count -eq 0) {
@@ -396,7 +396,7 @@ function Invoke-Cache {
                 return -1
             }
             $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
-            return (Show-Cached-Data -cacheName $cacheName)
+            return (Show-CachedData -cacheName $cacheName)
         }
         'delete' {
             if ($remainingArgs.Count -eq 0) {
@@ -406,11 +406,11 @@ function Invoke-Cache {
 
             $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
             $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
-            return (Remove-Cache-File -cacheName $cacheName -skipConfirmation $skipConfirmation)
+            return (Remove-CacheFile -cacheName $cacheName -skipConfirmation $skipConfirmation)
         }
         'clear' {
             $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
-            return (Clear-Cache-Files -skipConfirmation $skipConfirmation)
+            return (Clear-CacheFiles -skipConfirmation $skipConfirmation)
         }
         default {
             Show-Error -message "`nUnknown action '$action'. Use 'list', 'show', 'delete', or 'clear'."
@@ -442,8 +442,8 @@ function Invoke-Aliases {
 function Invoke-Info {
     param ($arguments)
 
-    $currentPHP = Get-Current-PHP-Version
-    $installedPHP = Get-Installed-PHP-Versions-From-Disk
+    $currentPHP = Get-CurrentPHPVersion
+    $installedPHP = Get-InstalledPHPVersionsFromDisk
     $currentPhpVersion = 'Not Set'
     $currentPhpPath = 'Not Set'
     if ($currentPHP) {
@@ -468,8 +468,8 @@ function Invoke-Info {
         'Active PHP Path'  = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
         'Installed PHPs'   = @($installedPHP).Count
         'Cache TTL'        = "$($PVMConfig.env.CACHE_MAX_HOURS) hours"
-        'Profiles'         = @(Get-Profile-Files).Count
-        'Cached Files'     = @(Get-Cache-Files).Count
+        'Profiles'         = @(Get-ProfileFiles).Count
+        'Cached Files'     = @(Get-CacheFiles).Count
     }
     $allKeys = $config.Keys + $PVMConfig.paths.Keys + $PVMConfig.env.Keys
     $maxNameLength = ($allKeys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
@@ -502,7 +502,7 @@ function Invoke-Update {
     $checkOnly = $arguments -contains '--check'
 
     $result = Update-PVM -checkOnly $checkOnly
-    Show-Msg-By-ExitCode -result $result
+    Show-MsgByExitCode -result $result
     return $result.code
 }
 

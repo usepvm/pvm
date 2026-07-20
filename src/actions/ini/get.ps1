@@ -12,7 +12,7 @@ function Get-IniSetting {
         $results = [ordered]@{}
         $notFound = [ordered]@{}
         foreach ($key in $keys) {
-            $matchesList = Get-Matching-PHPSettings -iniPath $iniPath -searchKey $key
+            $matchesList = Get-MatchingPHPSettings -iniPath $iniPath -searchKey $key
 
             if ($matchesList.Count -eq 0) {
                 $notFound[$key] = @(

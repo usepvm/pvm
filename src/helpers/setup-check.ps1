@@ -1,7 +1,7 @@
 ﻿
-function Test-PVM-Setup {
+function Test-PVMSetup {
     try {
-        $pvmEnvVarContent = Get-EnvVar-ByName -name $PVMConfig.env.PVM_ENV_VAR_NAME
+        $pvmEnvVarContent = Get-EnvVarByName -name $PVMConfig.env.PVM_ENV_VAR_NAME
 
         if ($null -eq $pvmEnvVarContent) {
             return $false
@@ -12,7 +12,7 @@ function Test-PVM-Setup {
             return $false
         }
 
-        $path = Get-EnvVar-ByName -name 'Path' -optimized $true
+        $path = Get-EnvVarByName -name 'Path' -optimized $true
         if ($null -eq $path) {
             $path = ''
         }
@@ -24,7 +24,7 @@ function Test-PVM-Setup {
                 ($path -notlike "*$pvmEnvVarContent*") -and
                 ($pathEntries -notcontains "%$($PVMConfig.env.PVM_ENV_VAR_NAME)%")
             ) -or
-            (Test-Directory-Not-Exists -path $parent)
+            (Test-DirectoryNotExists -path $parent)
         ) {
             return $false
         }
@@ -36,6 +36,6 @@ function Test-PVM-Setup {
     }
 }
 
-function Test-PVM-Not-Setup {
-    return -not (Test-PVM-Setup)
+function Test-PVMNotSetup {
+    return -not (Test-PVMSetup)
 }

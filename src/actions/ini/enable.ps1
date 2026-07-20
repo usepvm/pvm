@@ -11,7 +11,7 @@ function Enable-IniExtension {
         $results = @()
         $overallCode = 0
         foreach ($extName in $extNames) {
-            $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
+            $matchesListStatus = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $extName
 
             if ($matchesListStatus.Length -eq 0) {
                 $results += @{ name = $extName; status = 'Not found'; color = 'Gray' }
@@ -77,7 +77,7 @@ function Enable-IniExtension {
             }
 
             $null = Backup-IniFile -iniPath $iniPath
-            Set-Content -Path $iniPath -Value $newLines -Encoding UTF8
+            Set-Content-Wrapper -path $iniPath -value $newLines
 
             $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
         }

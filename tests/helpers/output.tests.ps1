@@ -14,7 +14,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Show-Msg-By-ExitCode" {
+Describe "Show-MsgByExitCode" {
     Context "When displaying messages" {
         It "Displays message without error" {
             Mock Write-Host {}
@@ -22,7 +22,7 @@ Describe "Show-Msg-By-ExitCode" {
                 message = 'Test message'
                 color = 'Gray'
             }
-            { Show-Msg-By-ExitCode -result $testResult } | Should -Not -Throw
+            { Show-MsgByExitCode -result $testResult } | Should -Not -Throw
         }
 
         It "Displays custom message if provided" {
@@ -31,7 +31,7 @@ Describe "Show-Msg-By-ExitCode" {
                 message = 'Original message'
             }
             $customMessage = 'Custom message'
-            { Show-Msg-By-ExitCode -result $testResult -message $customMessage } | Should -Not -Throw
+            { Show-MsgByExitCode -result $testResult -message $customMessage } | Should -Not -Throw
         }
 
         It "Displays list of messages if provided" {
@@ -44,7 +44,7 @@ Describe "Show-Msg-By-ExitCode" {
                     @{ content = 'Message 3' }
                 )
             }
-            { Show-Msg-By-ExitCode -result $testResults } | Should -Not -Throw
+            { Show-MsgByExitCode -result $testResults } | Should -Not -Throw
         }
 
         It "Handles exceptions gracefully" {
@@ -53,7 +53,7 @@ Describe "Show-Msg-By-ExitCode" {
                 message = 'Test message'
                 color = 'Gray'
             }
-            { Show-Msg-By-ExitCode -result $testResult } | Should -Not -Throw
+            { Show-MsgByExitCode -result $testResult } | Should -Not -Throw
         }
     }
 }
@@ -198,9 +198,9 @@ Describe "Format-Seconds" {
     }
 }
 
-Describe "Get-Console-Width" {
+Describe "Get-ConsoleWidth" {
     It "Returns the console width as an integer" {
-        $result = Get-Console-Width
+        $result = Get-ConsoleWidth
         $result | Should -BeOfType [int]
         $result | Should -BeGreaterThan 0
     }
@@ -291,7 +291,7 @@ Describe "Show-* helpers Tests" {
         Show-Message -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq $null
+            $Object -match 'Test message' -and $ForegroundColor -eq 'White'
         }
     }
 
@@ -379,7 +379,7 @@ Describe "Show-* helpers Tests" {
         Write-Default -message 'Test message'
 
         Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq $null
+            $Object -match 'Test message' -and $ForegroundColor -eq 'White'
         }
     }
 }

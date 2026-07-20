@@ -1,5 +1,5 @@
 ﻿
-function Set-IniSetting-Direct {
+function Set-IniSettingDirect {
     param ($iniPath, $settingName, $value, $enabled = $true)
 
     try {
@@ -23,14 +23,14 @@ function Set-IniSetting-Direct {
             $lines += $newLine
         }
 
-        Set-Content -Path $iniPath -Value $lines -Encoding UTF8
+        Set-Content-Wrapper -path $iniPath -value $lines
         return 0
     } catch {
         return -1
     }
 }
 
-function Enable-IniExtension-Direct {
+function Enable-IniExtensionDirect {
     param ($iniPath, $extName, $extType = 'extension')
 
     try {
@@ -85,14 +85,14 @@ function Enable-IniExtension-Direct {
             $lines += $newLine
         }
 
-        Set-Content -Path $iniPath -Value $lines -Encoding UTF8
+        Set-Content-Wrapper -path $iniPath -value $lines
         return 0
     } catch {
         return -1
     }
 }
 
-function Disable-IniExtension-Direct {
+function Disable-IniExtensionDirect {
     param ($iniPath, $extName, $extType = 'extension')
 
     try {
@@ -143,17 +143,17 @@ function Disable-IniExtension-Direct {
             }
         }
 
-        Set-Content -Path $iniPath -Value $lines -Encoding UTF8
+        Set-Content-Wrapper -path $iniPath -value $lines
         return 0
     } catch {
         return -1
     }
 }
 
-function Get-Popular-PHP-Settings {
+function Get-PopularPHPSettings {
     try {
         # Return list of popular/common PHP settings that should be included in profiles
-        if (Test-File-Exists -path $PVMConfig.paths.profileTemplate) {
+        if (Test-FileExists -path $PVMConfig.paths.profileTemplate) {
             $data = (Get-Content -Path $PVMConfig.paths.profileTemplate -Raw | ConvertFrom-Json)
             if ($null -ne $data.settings -and $data.settings.Count -gt 0) {
                 return $data.settings
@@ -166,10 +166,10 @@ function Get-Popular-PHP-Settings {
     return $PVMConfig.defaults.settings
 }
 
-function Get-Popular-PHP-Extensions {
+function Get-PopularPHPExtensions {
     try {
         # Return list of popular/common PHP extensions that should be included in profiles
-        if (Test-File-Exists -path $PVMConfig.paths.profileTemplate) {
+        if (Test-FileExists -path $PVMConfig.paths.profileTemplate) {
             $data = (Get-Content -Path $PVMConfig.paths.profileTemplate -Raw | ConvertFrom-Json)
             if ($null -ne $data.extensions -and $data.extensions.Count -gt 0) {
                 return $data.extensions
@@ -182,11 +182,11 @@ function Get-Popular-PHP-Extensions {
     return $PVMConfig.defaults.extensions
 }
 
-function Save-PHP-Profile {
+function Save-PHPProfile {
     param ($profileName, $description = $null)
 
     try {
-        $currentPhpVersion = Get-Current-PHP-Version
+        $currentPhpVersion = Get-CurrentPHPVersion
 
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
             Show-Error -message "`nFailed to get current PHP version."
@@ -194,13 +194,13 @@ function Save-PHP-Profile {
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
-        if (Test-File-Not-Exists -path $iniPath) {
+        if (Test-FileNotExists -path $iniPath) {
             Show-Error -message "`nphp.ini not found at: $($currentPhpVersion.path)"
             return -1
         }
 
         # Get current PHP configuration
-        $phpIniData = Get-PHP-Data -PhpIniPath $iniPath
+        $phpIniData = Get-PHPData -PhpIniPath $iniPath
 
         # Build profile structure
         $userProfile = [ordered]@{
@@ -213,8 +213,8 @@ function Save-PHP-Profile {
         }
 
         # Get popular settings and extensions lists
-        $popularSettings = Get-Popular-PHP-Settings
-        $popularExtensions = Get-Popular-PHP-Extensions
+        $popularSettings = Get-PopularPHPSettings
+        $popularExtensions = Get-PopularPHPExtensions
 
         # Extract only popular settings
         foreach ($setting in $phpIniData.settings) {
@@ -246,7 +246,7 @@ function Save-PHP-Profile {
 
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
         $jsonContent = $userProfile | ConvertTo-Json -Depth 10
-        Set-Content -Path $profilePath -Value $jsonContent -Encoding UTF8
+        Set-Content-Wrapper -path $profilePath -value $jsonContent
 
         Show-Success -message "`nProfile '$profileName' saved successfully."
         Show-Message -message "  Settings: $($userProfile.settings.Count) (popular/common only)"
@@ -263,11 +263,11 @@ function Save-PHP-Profile {
     }
 }
 
-function Use-PHP-Profile {
+function Use-PHPProfile {
     param ($profileName)
 
     try {
-        $currentPhpVersion = Get-Current-PHP-Version
+        $currentPhpVersion = Get-CurrentPHPVersion
 
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
             Show-Error -message "`nFailed to get current PHP version."
@@ -275,14 +275,14 @@ function Use-PHP-Profile {
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
-        if (Test-File-Not-Exists -path $iniPath) {
+        if (Test-FileNotExists -path $iniPath) {
             Show-Error -message "`nphp.ini not found at: $($currentPhpVersion.path)"
             return -1
         }
 
         # Load profile JSON
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
-        if (Test-File-Not-Exists -path $profilePath) {
+        if (Test-FileNotExists -path $profilePath) {
             Show-Error -message "`nProfile '$profileName' not found."
             Show-Message -message "  Use 'pvm profile list' to see available profiles."
             return -1
@@ -300,8 +300,8 @@ function Use-PHP-Profile {
         $null = Backup-IniFile -iniPath $iniPath
 
         # Get popular lists to validate profile contents
-        $popularSettings = Get-Popular-PHP-Settings
-        $popularExtensions = Get-Popular-PHP-Extensions
+        $popularSettings = Get-PopularPHPSettings
+        $popularExtensions = Get-PopularPHPExtensions
 
         # Apply only popular settings (filter out any non-popular ones that might be in old profiles)
         # Use direct functions for exact name matching (no fuzzy matching or user interaction)
@@ -311,7 +311,7 @@ function Use-PHP-Profile {
         foreach ($settingName in $jsonContent.settings.PSObject.Properties.Name) {
             if ($popularSettings -contains $settingName) {
                 $setting = $jsonContent.settings.$settingName
-                $result = Set-IniSetting-Direct -iniPath $iniPath -settingName $settingName -value $setting.value -enabled $setting.enabled
+                $result = Set-IniSettingDirect -iniPath $iniPath -settingName $settingName -value $setting.value -enabled $setting.enabled
                 if ($result -eq 0) { $settingsApplied++ } else { $settingsSkipped++ }
             } else {
                 $settingsIgnored++
@@ -329,10 +329,10 @@ function Use-PHP-Profile {
                 $ext = $jsonContent.extensions.$extName
                 $extType = if ($ext.type) { $ext.type } else { 'extension' }
                 if ($ext.enabled) {
-                    $result = Enable-IniExtension-Direct -iniPath $iniPath -extName $extName -extType $extType
+                    $result = Enable-IniExtensionDirect -iniPath $iniPath -extName $extName -extType $extType
                     if ($result -eq 0) { $extensionsEnabled++ } else { $extensionsSkipped++ }
                 } else {
-                    $result = Disable-IniExtension-Direct -iniPath $iniPath -extName $extName -extType $extType
+                    $result = Disable-IniExtensionDirect -iniPath $iniPath -extName $extName -extType $extType
                     if ($result -eq 0) { $extensionsDisabled++ } else { $extensionsSkipped++ }
                 }
             } else {
@@ -365,9 +365,9 @@ function Use-PHP-Profile {
     }
 }
 
-function Get-Profile-Files {
+function Get-ProfileFiles {
     try {
-        if (Test-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
+        if (Test-DirectoryNotExists -path $PVMConfig.paths.profiles) {
             return $null
         }
 
@@ -380,14 +380,14 @@ function Get-Profile-Files {
     }
 }
 
-function Show-PHP-Profiles {
+function Show-PHPProfiles {
     try {
-        if (Test-Directory-Not-Exists -path $PVMConfig.paths.profiles) {
+        if (Test-DirectoryNotExists -path $PVMConfig.paths.profiles) {
             Show-Error -message "`nNo profiles directory found. Create a profile with 'pvm profile save <name>'."
             return -1
         }
 
-        $profileFiles = Get-Profile-Files
+        $profileFiles = Get-ProfileFiles
 
         if ($profileFiles.Count -eq 0) {
             Show-Error -message "`nNo profiles found. Create a profile with 'pvm profile save <name>'."
@@ -437,12 +437,12 @@ function Show-PHP-Profiles {
     }
 }
 
-function Show-PHP-Profile {
+function Show-PHPProfile {
     param ($profileName)
 
     try {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
-        if (Test-File-Not-Exists -path $profilePath) {
+        if (Test-FileNotExists -path $profilePath) {
             Show-Error -message "`nProfile '$profileName' not found."
             Show-Message -message "  Use 'pvm profile list' to see available profiles."
             return -1
@@ -505,13 +505,13 @@ function Show-PHP-Profile {
     }
 }
 
-function Remove-PHP-Profile {
+function Remove-PHPProfile {
     param ($profileName, $skipConfirmation = $false)
 
     try {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
 
-        if (Test-File-Not-Exists -path $profilePath) {
+        if (Test-FileNotExists -path $profilePath) {
             Show-Error -message "`nProfile '$profileName' not found."
             return -1
         }
@@ -536,11 +536,11 @@ function Remove-PHP-Profile {
     }
 }
 
-function Clear-PHP-Profiles {
+function Clear-PHPProfiles {
     param ($skipConfirmation = $false)
 
     try {
-        $profileFiles = Get-Profile-Files
+        $profileFiles = Get-ProfileFiles
 
         if ($profileFiles.Count -eq 0) {
             Show-Error -message "`nNo profiles found. Create a profile with 'pvm profile save <name>'."
@@ -570,13 +570,13 @@ function Clear-PHP-Profiles {
     }
 }
 
-function Export-PHP-Profile {
+function Export-PHPProfile {
     param ($profileName, $exportPath = $null)
 
     try {
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
 
-        if (Test-File-Not-Exists -path $profilePath) {
+        if (Test-FileNotExists -path $profilePath) {
             Show-Error -message "`nProfile '$profileName' not found."
             return -1
         }
@@ -596,11 +596,11 @@ function Export-PHP-Profile {
     }
 }
 
-function Import-PHP-Profile {
+function Import-PHPProfile {
     param ($importPath, $profileName = $null)
 
     try {
-        if (Test-File-Not-Exists -path $importPath) {
+        if (Test-FileNotExists -path $importPath) {
             Show-Error -message "`nFile not found: $importPath"
             return -1
         }
@@ -632,7 +632,7 @@ function Import-PHP-Profile {
         if ($finalName -ne $userProfile.name) {
             $userProfile.name = $finalName
             $jsonContent = $userProfile | ConvertTo-Json -Depth 10
-            Set-Content -Path $targetPath -Value $jsonContent -Encoding UTF8
+            Set-Content-Wrapper -path $targetPath -value $jsonContent
         } else {
             Copy-Item -Path $importPath -Destination $targetPath -Force
         }
@@ -648,7 +648,7 @@ function Import-PHP-Profile {
     }
 }
 
-function New-Example-PHP-Profile {
+function New-ExamplePHPProfile {
     try {
         $exampleProfile = [ordered]@{
             name        = "example-profile"
@@ -693,7 +693,7 @@ function New-Example-PHP-Profile {
         }
 
         $jsonContent = $exampleProfile | ConvertTo-Json -Depth 10
-        Set-Content -Path $PVMConfig.paths.exampleProfile -Value $jsonContent -Encoding UTF8
+        Set-Content-Wrapper -path $PVMConfig.paths.exampleProfile -value $jsonContent
 
         return 0
     } catch {
@@ -702,7 +702,7 @@ function New-Example-PHP-Profile {
     }
 }
 
-function New-Profile-Template {
+function New-ProfileTemplate {
     try {
         $profileTemplate = [ordered]@{
             extensions = $PVMConfig.defaults.extensions
@@ -710,7 +710,7 @@ function New-Profile-Template {
         }
 
         $jsonContent = $profileTemplate | ConvertTo-Json -Depth 10
-        Set-Content -Path $PVMConfig.paths.profileTemplate -Value $jsonContent -Encoding UTF8
+        Set-Content-Wrapper -path $PVMConfig.paths.profileTemplate -value $jsonContent
 
         return 0
     } catch {

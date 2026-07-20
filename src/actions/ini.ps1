@@ -5,7 +5,7 @@ function Invoke-IniAction {
     try {
         $exitCode = 0
 
-        $currentPhpVersion = Get-Current-PHP-Version
+        $currentPhpVersion = Get-CurrentPHPVersion
 
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
             Show-Error -message "`nFailed to get current PHP version."
@@ -13,7 +13,7 @@ function Invoke-IniAction {
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
-        if (Test-File-Not-Exists -path $iniPath) {
+        if (Test-FileNotExists -path $iniPath) {
             Show-Error -message "php.ini not found at: $($currentPhpVersion.path)"
             return -1
         }
@@ -23,7 +23,7 @@ function Invoke-IniAction {
         switch ($action.ToLower()) {
             'info' {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-                $exitCode = Get-PHP-Info -term $term -extensions ($params -contains 'extensions') -settings ($params -contains 'settings')
+                $exitCode = Get-PHPInfo -term $term -extensions ($params -contains 'extensions') -settings ($params -contains 'settings')
             }
             'get' {
                 if ($params.Count -eq 0) {
@@ -108,7 +108,7 @@ function Invoke-IniAction {
             }
             'ext' {
                 $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-                $exitCode = Show-PHP-Extensions -iniPath $iniPath -available ($params -contains 'available') -term $term
+                $exitCode = Show-PHPExtensions -iniPath $iniPath -available ($params -contains 'available') -term $term
             }
             default {
                 Show-Error -message "`nUnknown action '$action' use one of following: 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'ext' or 'restore'."

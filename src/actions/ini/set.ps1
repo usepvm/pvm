@@ -22,7 +22,7 @@ function Set-IniSetting {
                 continue
             }
 
-            $matchesList = Get-Matching-PHPSettings -iniPath $iniPath -searchKey $searchKey
+            $matchesList = Get-MatchingPHPSettings -iniPath $iniPath -searchKey $searchKey
 
             if ($matchesList.Count -eq 0) {
                 if ($notFound.Keys -notcontains $key) {
@@ -78,7 +78,7 @@ function Set-IniSetting {
 
             $lines = Get-Content -Path $iniPath
             $lines[$selected.lineNo] = $newLine
-            Set-Content -Path $iniPath -Value $lines -Encoding UTF8
+            Set-Content-Wrapper -path $iniPath -value $lines
 
             $status = if ($enable) { 'Enabled' } else { 'Disabled' }
             $color = if ($enable) { 'DarkGreen' } else { 'DarkYellow' }

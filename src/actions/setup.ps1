@@ -135,7 +135,7 @@ function New-EnvFile {
         if ((Test-FileExists -path "$PVMRoot\.env") -and ($overwrite -eq $false)) {
             $response = Read-Host -Prompt "`n.env file already exists. Overwrite? (y/n)"
             $response = $response.Trim()
-            if ($response -ne 'y' -and $response -ne 'Y') {
+            if (Test-NoResponse -response $response) {
                 return -1
             }
         }

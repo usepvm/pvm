@@ -94,7 +94,7 @@ function Invoke-Install {
 
         if ($result.code -eq 0) {
             $version = $result.version
-            Show-MsgByExitCode -result $result -message "php $version is already installed!"
+            Show-MsgByExitCode -result $result -message "PHP $version is already installed!"
             return -1
         }
 

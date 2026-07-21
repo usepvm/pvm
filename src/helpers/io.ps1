@@ -143,3 +143,15 @@ function Expand-Zip {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to expand zip file from $zipPath"; exception = $_ }
     }
 }
+
+function Test-YesResponse {
+    param ($response)
+    
+    return ($response -eq 'y' -or $response -eq 'Y')
+}
+
+function Test-NoResponse {
+    param ($response)
+    
+    return -not (Test-YesResponse -response $response)
+}

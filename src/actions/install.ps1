@@ -335,7 +335,7 @@ function Install-PHP {
                 }
                 $response = Read-Host -Prompt "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 $response = $response.Trim()
-                if ($response -ne 'y' -and $response -ne 'Y') {
+                if (Test-NoResponse -response $response) {
                     return @{ code = -1; message = 'Installation cancelled'; color = 'Gray' }
                 }
                 $version = $familyVersion

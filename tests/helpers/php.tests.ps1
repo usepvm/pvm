@@ -1007,6 +1007,41 @@ zend_extension=php_opcache.dll
         ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
         ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
     }
+
+    It "Returns Copyright from DLL VersionInfo" {
+        New-Item -ItemType Directory -Force -Path $testExtPath | Out-Null
+        New-Item -Path "$testExtPath\opcache.dll" -ItemType File -Force | Out-Null
+        Mock Get-ChildItem {
+            return @{
+                VersionInfo = @{
+                    ProductVersion = '8.3.0'
+                    LegalCopyright = 'Copyright (c) PHP Group'
+                }
+            }
+        }
+
+        $result = Get-ZendExtensionsInfo -phpPath $testPhpPath
+        $result.Count | Should -Be 2
+        $result[0].Copyright | Should -Be 'Copyright (c) PHP Group'
+    }
+
+    It "Returns empty string when LegalCopyright is null" {
+        New-Item -ItemType Directory -Force -Path $testExtPath | Out-Null
+        New-Item -Path "$testExtPath\opcache.dll" -ItemType File -Force | Out-Null
+
+        Mock Get-ChildItem {
+            return @{
+                VersionInfo = @{
+                    ProductVersion = '8.3.0'
+                    LegalCopyright = $null
+                }
+            }
+        }
+
+        $result = Get-ZendExtensionsInfo -phpPath $testPhpPath
+        $result.Count | Should -Be 2
+        $result[0].Copyright | Should -Be ''
+    }
 }
 
 Describe "Get-PHPData" {

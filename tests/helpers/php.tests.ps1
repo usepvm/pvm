@@ -1032,3 +1032,49 @@ Describe "Get-PHPData" {
         $extensions.Count | Should -Be 0
     }
 }
+
+Describe "Test-PHPVersionFormat" {
+    It 'accepts major version only' {
+        Test-PHPVersionFormat -version '8' | Should -BeTrue
+    }
+
+    It 'accepts major.minor' {
+        Test-PHPVersionFormat -version '8.2' | Should -BeTrue
+    }
+
+    It 'accepts major.minor.patch' {
+        Test-PHPVersionFormat -version '8.2.10' | Should -BeTrue
+    }
+
+    It 'rejects trailing dot' {
+        Test-PHPVersionFormat -version '8.' | Should -BeFalse
+    }
+
+    It 'rejects leading dot' {
+        Test-PHPVersionFormat -version '.8' | Should -BeFalse
+    }
+
+    It 'rejects four segments' {
+        Test-PHPVersionFormat -version '8.2.3.4' | Should -BeFalse
+    }
+
+    It 'rejects non-numeric input' {
+        Test-PHPVersionFormat -version 'abc' | Should -BeFalse
+    }
+
+    It 'rejects empty string' {
+        Test-PHPVersionFormat -version '' | Should -BeFalse
+    }
+
+    It 'rejects null' {
+        Test-PHPVersionFormat -version $null | Should -BeFalse
+    }
+
+    It 'rejects double-digit segments' {
+        Test-PHPVersionFormat -version '8.10' | Should -BeTrue
+    }
+
+    It 'rejects negative numbers' {
+        Test-PHPVersionFormat -version '-8.2' | Should -BeFalse
+    }
+}

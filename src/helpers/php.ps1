@@ -300,3 +300,9 @@ function Get-PHPData {
 
     return $phpIniData
 }
+
+function Test-PHPVersionFormat {
+    param($version)
+
+    return $version -match '^\d+(\.\d+){0,2}$'
+}

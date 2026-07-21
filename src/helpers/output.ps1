@@ -209,3 +209,7 @@ function Show-Message {
 
     Write-White -message $message -noNewLine:$noNewLine
 }
+
+function New-Line {
+    Show-Message -message "`n" -noNewLine
+}

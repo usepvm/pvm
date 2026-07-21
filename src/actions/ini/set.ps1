@@ -89,7 +89,7 @@ function Set-IniSetting {
         $updatedSettings = $notFound + $updatedSettings
 
         $maxLineLength = ($updatedSettings.Values | ForEach-Object { $_.key } | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        Show-Message -message "`n" -noNewLine
+        New-Line
         foreach ($key in $updatedSettings.Keys) {
             $item = $updatedSettings[$key]
             $name = "$($item.key) ".PadRight($maxLineLength, '.')

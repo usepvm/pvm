@@ -382,4 +382,12 @@ Describe "Show-* helpers Tests" {
             $Object -match 'Test message' -and $ForegroundColor -eq 'White'
         }
     }
+    
+    It "Prints new line" {
+        New-Line
+        
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -eq "`n" -and $NoNewline
+        }
+    }
 }

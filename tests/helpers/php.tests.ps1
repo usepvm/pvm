@@ -1007,6 +1007,41 @@ zend_extension=php_opcache.dll
         ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
         ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
     }
+
+    It "Returns Copyright from DLL VersionInfo" {
+        New-Item -ItemType Directory -Force -Path $testExtPath | Out-Null
+        New-Item -Path "$testExtPath\opcache.dll" -ItemType File -Force | Out-Null
+        Mock Get-ChildItem {
+            return @{
+                VersionInfo = @{
+                    ProductVersion = '8.3.0'
+                    LegalCopyright = 'Copyright (c) PHP Group'
+                }
+            }
+        }
+
+        $result = Get-ZendExtensionsInfo -phpPath $testPhpPath
+        $result.Count | Should -Be 2
+        $result[0].Copyright | Should -Be 'Copyright (c) PHP Group'
+    }
+
+    It "Returns empty string when LegalCopyright is null" {
+        New-Item -ItemType Directory -Force -Path $testExtPath | Out-Null
+        New-Item -Path "$testExtPath\opcache.dll" -ItemType File -Force | Out-Null
+
+        Mock Get-ChildItem {
+            return @{
+                VersionInfo = @{
+                    ProductVersion = '8.3.0'
+                    LegalCopyright = $null
+                }
+            }
+        }
+
+        $result = Get-ZendExtensionsInfo -phpPath $testPhpPath
+        $result.Count | Should -Be 2
+        $result[0].Copyright | Should -Be ''
+    }
 }
 
 Describe "Get-PHPData" {
@@ -1030,5 +1065,51 @@ Describe "Get-PHPData" {
         '' | Set-Content -Path $testIniPath
         $extensions = (Get-PHPData -PhpIniPath $testIniPath).extensions
         $extensions.Count | Should -Be 0
+    }
+}
+
+Describe "Test-PHPVersionFormat" {
+    It 'accepts major version only' {
+        Test-PHPVersionFormat -version '8' | Should -BeTrue
+    }
+
+    It 'accepts major.minor' {
+        Test-PHPVersionFormat -version '8.2' | Should -BeTrue
+    }
+
+    It 'accepts major.minor.patch' {
+        Test-PHPVersionFormat -version '8.2.10' | Should -BeTrue
+    }
+
+    It 'rejects trailing dot' {
+        Test-PHPVersionFormat -version '8.' | Should -BeFalse
+    }
+
+    It 'rejects leading dot' {
+        Test-PHPVersionFormat -version '.8' | Should -BeFalse
+    }
+
+    It 'rejects four segments' {
+        Test-PHPVersionFormat -version '8.2.3.4' | Should -BeFalse
+    }
+
+    It 'rejects non-numeric input' {
+        Test-PHPVersionFormat -version 'abc' | Should -BeFalse
+    }
+
+    It 'rejects empty string' {
+        Test-PHPVersionFormat -version '' | Should -BeFalse
+    }
+
+    It 'rejects null' {
+        Test-PHPVersionFormat -version $null | Should -BeFalse
+    }
+
+    It 'rejects double-digit segments' {
+        Test-PHPVersionFormat -version '8.10' | Should -BeTrue
+    }
+
+    It 'rejects negative numbers' {
+        Test-PHPVersionFormat -version '-8.2' | Should -BeFalse
     }
 }

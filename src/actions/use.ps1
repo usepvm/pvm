@@ -3,20 +3,19 @@ function Find-PHPVersionFromProject {
     try {
         # 1. Check .php-version
         if (Test-FileExists -path '.php-version') {
-            $version = Get-Content -Path '.php-version' | Select-Object -First 1
-            return $version.Trim()
+            $version = (Get-Content -Path '.php-version' | Select-Object -First 1).Trim()
+            if (Test-PHPVersionFormat -version $version) {
+                return $version
+            }
+            Show-Error -message "`nInvalid version '$version' in .php-version"
         }
 
         # 2. Check composer.json
         if (Test-FileExists -path 'composer.json') {
             try {
                 $json = Get-Content -Path 'composer.json' -Raw | ConvertFrom-Json
-                if ($json.require.php) {
-                    $constraint = $json.require.php.Trim()
-                    # Extract first PHP version number in the string (e.g. from "^8.3" or ">=8.1 <8.3")
-                    if ($constraint -match '(\d+(\.\d+(\.\d+)?)?)') {
-                        return $matches[1]
-                    }
+                if ($json.require.php -and $json.require.php.Trim() -match '(\d+(\.\d+(\.\d+)?)?)') {
+                    return $matches[1]
                 }
             } catch {
                 Show-Error -message "`nFailed to parse composer.json: $_"
@@ -69,10 +68,20 @@ function Select-PHPVersionAutomatically {
     $version = Find-PHPVersionFromProject
 
     if (-not $version) {
-        return @{ code = -1; message = 'Could not detect PHP version from .php-version or composer.json'; color = 'DarkYellow' }
+        $version = Read-Host -Prompt "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)"
+
+        if (-not (Test-PHPVersionFormat -version $version)) {
+            return @{ code = -1; message = "Invalid version format: '$version'. Expected e.g. 8, 8.3 or 8.3.1"; color = 'DarkYellow' }
+        }
+
+        $response = Read-Host -Prompt "`nSave as project default in .php-version? (y/n)"
+        $response = $response.Trim()
+        if (Test-YesResponse -response $response) {
+            Set-Content-Wrapper -path '.php-version' -value $version
+        }
     }
 
-    Show-Message -message "`nDetected PHP version from project: $version"
+    Show-Message -message "`nUsing PHP version: $version"
 
     $installedVersions = Get-MatchingPHPVersions -version $version
     if (-not $installedVersions) {
@@ -81,5 +90,5 @@ function Select-PHPVersionAutomatically {
         return @{ code = -1; version = $version; message = $message; }
     }
 
-    return @{ code = 0; version = $version; }
+    return @{ code = 0; version = $version }
 }

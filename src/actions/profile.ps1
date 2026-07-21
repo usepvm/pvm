@@ -519,7 +519,7 @@ function Remove-PHPProfile {
         if (-not $skipConfirmation) {
             $response = Read-Host -Prompt "`nAre you sure you want to delete profile '$profileName'? (y/n)"
             $response = $response.Trim()
-            if ($response -ne 'y' -and $response -ne 'Y') {
+            if (Test-NoResponse -response $response) {
                 Write-Gray -message "`nDeletion cancelled."
                 return -1
             }
@@ -550,7 +550,7 @@ function Clear-PHPProfiles {
         if (-not $skipConfirmation) {
             $response = Read-Host -Prompt "`nAre you sure you want to delete all profiles? (y/n)"
             $response = $response.Trim()
-            if ($response -ne 'y' -and $response -ne 'Y') {
+            if (Test-NoResponse -response $response) {
                 Write-Gray -message "`nDeletion cancelled."
                 return -1
             }

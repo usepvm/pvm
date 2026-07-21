@@ -113,7 +113,7 @@ function Uninstall-Extension {
             if (-not $skipConfirmation) {
                 $response = Read-Host -Prompt "`nAre you sure you want to uninstall '$($selected.name)'? (y/n)"
                 $response = $response.Trim()
-                if ($response -ne 'y' -and $response -ne 'Y') {
+                if (Test-NoResponse -response $response) {
                     $results += @{ name = $selected.name; status = 'Uninstallation cancelled'; color = 'Gray' }
                     $overallCode = -1
                     continue

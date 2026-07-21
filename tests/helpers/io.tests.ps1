@@ -422,3 +422,27 @@ Describe "Expand-Zip Tests" {
         Should -Invoke Add-LogEntry -Times 1
     }
 }
+
+Describe "Test-YesResponse Tests" {
+    It "Should return true for 'y' and 'Y' responses" {
+        Test-YesResponse -response 'y' | Should -Be $true
+        Test-YesResponse -response 'Y' | Should -Be $true
+    }
+
+    It "Should return false for other responses" {
+        Test-YesResponse -response 'n' | Should -Be $false
+        Test-YesResponse -response 'N' | Should -Be $false
+    }
+}
+
+Describe "Test-NoResponse Tests" {
+    It "Should return true for 'n' and 'N' responses" {
+        Test-NoResponse -response 'n' | Should -Be $true
+        Test-NoResponse -response 'N' | Should -Be $true
+    }
+
+    It "Should return false for other responses" {
+        Test-NoResponse -response 'y' | Should -Be $false
+        Test-NoResponse -response 'Y' | Should -Be $false
+    }
+}

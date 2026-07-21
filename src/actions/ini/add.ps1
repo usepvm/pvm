@@ -174,7 +174,7 @@ function Install-XDebugExtension {
             if (Test-FileExists -path "$phpPath\ext\$($chosenItem.fileName)") {
                 $response = Read-Host -Prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
                 $response = $response.Trim()
-                if ($response -ne 'y' -and $response -ne 'Y') {
+                if (Test-NoResponse -response $response) {
                     Remove-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)"
                     Write-Gray -message "`nInstallation cancelled"
                     return -1
@@ -365,7 +365,7 @@ function Install-Extension {
             if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
                 $response = Read-Host -Prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
                 $response = $response.Trim()
-                if ($response -ne 'y' -and $response -ne 'Y') {
+                if (Test-NoResponse -response $response) {
                     Remove-Item -Path "$($PVMConfig.paths.storage)\php\$fileNamePath" -Force -Recurse
                     Write-Gray -message "`nInstallation cancelled"
                     return -1

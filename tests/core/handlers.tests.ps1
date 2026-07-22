@@ -1446,6 +1446,7 @@ Describe "Invoke-Update Tests" {
 
 Describe "Invoke-Run Tests" {
     BeforeAll {
+        Mock Show-Scripts { }
         Mock Get-Actions {
             [ordered]@{
                 'install' = @{ action = { return 0 } }
@@ -1466,13 +1467,16 @@ Describe "Invoke-Run Tests" {
         Mock Get-Scripts { return @{ 'script1' = 'command1'; 'script2' = 'command2' } }
 
         $result = Invoke-Run -arguments @('unknown')
+
         $result | Should -Be -1
+        Should -Invoke Show-Scripts -Times 1
     }
 
     It "Should return -1 when an unknown command is provided" {
         Mock Get-Scripts { return @{ 'cmd1:arg1' = 'command1'; 'cmd2:arg2' = 'command2' } }
 
         $result = Invoke-Run -arguments @('cmd1:arg1')
+
         $result | Should -Be -1
     }
 
@@ -1480,6 +1484,16 @@ Describe "Invoke-Run Tests" {
         Mock Get-Scripts { return @{ 'test:cov' = 'test --coverage'; 'test:quiet' = 'test --verbosity=None' } }
 
         $result = Invoke-Run -arguments @('test:cov')
+
         $result | Should -Be 0
+    }
+
+    It "Should return 0 when 'list' is provided" {
+        Mock Get-Scripts { return @{ 'script1' = 'command1'; 'script2' = 'command2' } }
+
+        $result = Invoke-Run -arguments @('list')
+
+        $result | Should -Be 0
+        Should -Invoke Show-Scripts -Times 1
     }
 }

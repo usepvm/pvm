@@ -59,13 +59,24 @@ function Import-PesterVersion {
 
     Import-Module Pester -RequiredVersion $targetVersion.Version -Force
     $pesterVersion = Get-Module -Name Pester
+
+    return $pesterVersion
+}
+
+function Show-PesterVersion {
+    param ($pesterVersion)
+
     Show-Info -message "Using Pester version: $($pesterVersion.Version)"
 
     Show-Info -message "`nPester Info:"
     Show-Message -message "  Version: $($pesterVersion.Version)"
     Show-Message -message "  Path: $($pesterVersion.Path)"
+}
 
-    return $pesterVersion
+function Show-PesterVersionShort {
+    param ($pesterVersion)
+
+    Show-Message -message "Pester Version: $($pesterVersion.Version)"
 }
 
 function Get-PowerShellInfo {
@@ -85,7 +96,7 @@ function Get-PowerShellInfo {
     return $psInfo
 }
 
-function Write-PowerShellInfo {
+function Show-PowerShellInfo {
     param ($psInfo)
 
     Show-Info -message "`nPowerShell Info:"
@@ -94,6 +105,12 @@ function Write-PowerShellInfo {
     Show-Message -message "  Edition: $($psInfo.Edition)"
     Show-Message -message "  Platform: $($psInfo.Platform)"
     Show-Message -message "  Path: $($psInfo.Path)"
+}
+
+function Show-PowerShellInfoShort {
+    param ($psInfo)
+
+    Show-Message -message "PowerShell Version: $($psInfo.Version)"
 }
 
 function Get-PVMRootDirectory {
@@ -249,7 +266,9 @@ function Invoke-TestFile {
         $config = $coverageConfig.config
     }
 
-    Write-TestHeader -file $file -coveredFile $coveredFile -separatorWidth $separatorWidth
+    if (Test-IsNotQuiet -options $options) {
+        Write-TestHeader -file $file -coveredFile $coveredFile -separatorWidth $separatorWidth
+    }
 
     try {
         $config.Run.Path = $file.FullName
@@ -456,13 +475,20 @@ function Invoke-Tests {
             return -1
         }
 
+        $psInfo = Get-PowerShellInfo
+        if (Test-IsNotQuiet -options $options) {
+            Show-PesterVersion -pesterVersion $pesterInfo
+            Show-PowerShellInfo -psInfo $psInfo
+        } else {
+            Show-PesterVersionShort -pesterVersion $pesterInfo
+            Show-PowerShellInfoShort -psInfo $psInfo
+        }
+
         $config = Initialize-PesterConfig -options $options
         $separatorWidth = Get-SeparatorWidth -tests $tests
         $root = Get-PVMRootDirectory
         $testsMap = if ($options.coverage) { Get-TestsMap -root $root } else { $null }
 
-        $psInfo = Get-PowerShellInfo
-        Write-PowerShellInfo -psInfo $psInfo
         Show-Info -message "`nRunning tests with verbosity: $($options.verbosity)"
 
         $testSummary = $tests | ForEach-Object {

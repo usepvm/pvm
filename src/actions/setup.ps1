@@ -103,11 +103,11 @@ function Initialize-PVMFiles {
 
     $codes += $code = Set-Scripts-List
     if ($code -eq 0) {
-        Write-Host -Object "`nScripts list created successfully at '$($PVMConfig.paths.scriptsList)'." -ForegroundColor DarkGreen
-        Write-Host -Object "- Use 'pvm scripts' to see available scripts." -ForegroundColor Gray
-        Write-Host -Object "- Feel free to modify it." -ForegroundColor Gray
+        Show-Success -message "`nScripts list created successfully at '$($PVMConfig.paths.scriptsList)'."
+        Show-Message -message "- Use 'pvm scripts' to see available scripts."
+        Show-Message -message "- Feel free to modify it."
     } else {
-        Write-Host -Object "`nFailed to create scripts list." -ForegroundColor DarkYellow
+        Show-Message -message "`nFailed to create scripts list." -ForegroundColor DarkYellow
     }
 
     return $codes

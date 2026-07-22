@@ -57,7 +57,7 @@ function Find-PesterVersion {
 function Import-PesterVersion {
     param ($targetVersion)
 
-    Import-Module Pester -RequiredVersion $targetVersion.Version -Force
+    Import-Module -Name Pester -RequiredVersion $targetVersion.Version
     $pesterVersion = Get-Module -Name Pester
 
     return $pesterVersion

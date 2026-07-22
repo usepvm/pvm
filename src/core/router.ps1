@@ -351,21 +351,22 @@ function Get-Actions {
             action      = { return Invoke-Update -arguments $script:arguments }
         }
         'run'       = @{
-            command     = 'pvm run <script-name>';
+            command     = 'pvm run <script-name> [--shell=<shell>]';
             description = 'Run a predefined script from the scripts configuration.';
             usage       = [ordered]@{
-                USAGE       = 'pvm run <script-name>'
+                USAGE       = 'pvm run <script-name> [--shell=<shell>]'
                 DESCRIPTION = @(
                     'Runs a predefined script from the scripts configuration.',
                     'Scripts are shortcuts for common commands with predefined options.'
                 )
                 EXAMPLES    = @(
-                    'pvm run test:quiet .......... Runs tests with verbosity set to None'
-                    'pvm run test:cov80 .......... Runs tests with 80% coverage target'
-                    'pvm run test:cov90 .......... Runs tests with 90% coverage target'
-                    'pvm run test:duration ....... Runs tests with duration descending sort'
-                    'pvm run test:verbose ........ Runs tests with coverage and detailed output'
-                    'pvm run test:pester ......... Runs tests with Pester 5.7 and 6.0'
+                    'pvm run test:quiet ......................... Runs tests with verbosity set to None'
+                    'pvm run test:cov80 ......................... Runs tests with 80% coverage target'
+                    'pvm run test:cov90 ......................... Runs tests with 90% coverage target'
+                    'pvm run test:duration ...................... Runs tests with duration descending sort'
+                    'pvm run test:verbose ....................... Runs tests with coverage and detailed output'
+                    'pvm run test:pester ........................ Runs tests with Pester 5.7 and 6.0'
+                    'pvm run test:cov80 --shell=powershell ...... Runs tests with Windows PowerShell (powershell.exe)'
                 )
             }
             action      = { return Invoke-Run -arguments $script:arguments }

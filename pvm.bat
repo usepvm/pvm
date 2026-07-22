@@ -7,7 +7,7 @@ set "ENGINE_OVERRIDE="
 set "ARGS=%*"
 set "NEW_ARGS="
 
-if /I not "%~1"=="test" goto :skip_shell_parse
+if /I not "%~1"=="test" if /I not "%~1"=="run" goto :skip_shell_parse
 
 set "REST=!ARGS!"
 

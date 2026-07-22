@@ -201,10 +201,8 @@ function Get-Config {
                 'test:cov90'        = @('test --coverage=90 --sort=coverage --group=folder')
                 'test:duration'     = @('test --sort=-duration --group=folder')
                 'test:verbose'      = @('test --coverage=85 --verbosity=Detailed --sort=coverage --group=folder')
-                'test:pester'       = @(
-                    'test --coverage=85 --verbosity=None --sort=coverage --group=folder --pester=5.7.1',
-                    'test --coverage=85 --verbosity=None --sort=coverage --group=folder --pester=6.0.0'
-                )
+                'test:pester5'      = @('test --coverage=85 --verbosity=None --sort=coverage --group=folder --pester=5.7.1')
+                'test:pester6'      = @('test --coverage=85 --verbosity=None --sort=coverage --group=folder --pester=6.0.0')
             }
         }
     }

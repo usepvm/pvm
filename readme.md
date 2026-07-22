@@ -451,9 +451,7 @@ pvm run test:cov80 # ......... Runs tests with 80% coverage target
 pvm run test:cov90 # ......... Runs tests with 90% coverage target
 pvm run test:duration # ...... Runs tests with duration descending sort
 pvm run test:verbose # ....... Runs tests with coverage and detailed output
-pvm run test:shell # ......... Runs tests with both pwsh and powershell
 pvm run test:pester # ........ Runs tests with Pester 5.7 and 6.0
-pvm run test:matrix # ........ Runs tests with all combinations of Pester and shell
 ```
 
 **Available Scripts:**

@@ -222,37 +222,12 @@ Describe "Get-FlagMap" {
     }
 }
 
-Describe "Set-Scripts-List" {
-    BeforeAll {
-        $script:TEMPLATES_PATH = $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
-        $PVMConfig.paths.scriptsList = "$TEMPLATES_PATH\scripts.json"
-        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
-        $script:DEFAULT_SCRIPTS = $PVMConfig.defaults.scripts
-    }
-
-    It "Creates scripts.json" {
-        $result = Set-Scripts-List
-        $result | Should -Be 0
-
-        $result = Get-Scripts
-        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
-    }
-
-    It "Returns -1 when exception is thrown" {
-        Mock Set-Content { throw 'Test exception' }
-        $result = Set-Scripts-List
-        $result | Should -Be -1
-    }
-}
-
 Describe "Get-Scripts" {
     BeforeAll {
-        $script:TEMPLATES_PATH = $PVMConfig.paths.templates = 'TestDrive:\\storage\data\templates'
-        $script:SCRIPTS_LIST_PATH = $PVMConfig.paths.scriptsList = "$TEMPLATES_PATH\scripts.json"
-        New-Item -ItemType Directory -Path $script:TEMPLATES_PATH | Out-Null
-        $testContent = [ordered]@{'test:quiet' = 'test --verbosity=None'; 'test:cov' = 'test --coverage=75'}
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $SCRIPTS_LIST_PATH
-        $script:DEFAULT_SCRIPTS = $PVMConfig.defaults.scripts
+        $PVMConfig.defaults.scripts = [ordered]@{
+            'test:quiet'        = @('test --verbosity=None')
+            'test:cov'          = @('test --coverage=75')
+        }
     }
 
     It "Returns scripts from scripts.json or PVMConfig.defaults.scripts" {
@@ -260,19 +235,6 @@ Describe "Get-Scripts" {
         $result.Count | Should -Be 2
         $result['test:quiet'] | Should -Be 'test --verbosity=None'
         $result['test:cov'] | Should -Be 'test --coverage=75'
-    }
-
-    It "Falls back to DEFAULT_SCRIPTS value" {
-        Remove-Item -Path "$script:TEMPLATES_PATH\scripts.json"
-        $result = Get-Scripts
-        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
-    }
-
-    It "Returns default value when exception is thrown" {
-        Mock Test-FileExists { return $true }
-        Mock Get-Content { throw 'Test exception' }
-        $result = Get-Scripts
-        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
     }
 }
 

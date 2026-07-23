@@ -101,15 +101,6 @@ function Initialize-PVMFiles {
         Show-Error -message "`nFailed to create aliases list."
     }
 
-    $codes += $code = Set-Scripts-List
-    if ($code -eq 0) {
-        Show-Success -message "`nScripts list created successfully at '$($PVMConfig.paths.scriptsList)'."
-        Show-Message -message "- Use 'pvm scripts' to see available scripts."
-        Show-Message -message "- Feel free to modify it."
-    } else {
-        Show-Message -message "`nFailed to create scripts list." -ForegroundColor DarkYellow
-    }
-
     return $codes
 }
 

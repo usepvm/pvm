@@ -1431,46 +1431,24 @@ Describe "Invoke-Info Tests" {
 }
 
 Describe "Invoke-Update Tests" {
-    BeforeEach {
-        Mock Write-Host { }
+    It "Should call Update-PVM and return 0" {
         Mock Update-PVM { @{ code = 0; message = 'Updated' } }
+
+        $result = Invoke-Update -arguments @()
+
+        $result | Should -Be 0
+        Should -Invoke Update-PVM -Times 1
     }
 
-    It "Should call Update-PVM and return 0" {
-        $result = Invoke-Update -arguments @()
-        $result | Should -Be 0
+    It "Should call Update-PVM and return -1" {
+        Mock Update-PVM { @{ code = -1; message = 'Failed' } }
 
+        $result = Invoke-Update -arguments @()
+
+        $result | Should -Be -1
         Should -Invoke Update-PVM -Times 1
     }
 }
-
-Describe "Invoke-Run Tests" {
-    BeforeAll {
-        Mock Show-Scripts { }
-        Mock Get-Actions {
-            [ordered]@{
-                'install' = @{ action = { return 0 } }
-                'list' = @{ action = { return 0 } }
-                'ini' = @{ action = { return 0 } }
-                'cache' = @{ action = { return 0 } }
-                'test' = @{ action = { return 0 } }
-            }
-        }
-    }
-
-    It "Should return -1 when no arguments are provided" {
-        $result = Invoke-Run -arguments @()
-        $result | Should -Be -1
-    }
-
-    It "Should return -1 when an unknown script is provided" {
-        Mock Get-Scripts { return @{ 'script1' = 'command1'; 'script2' = 'command2' } }
-
-        $result = Invoke-Run -arguments @('unknown')
-
-        $result | Should -Be -1
-        Should -Invoke Show-Scripts -Times 1
-    }
 
 Describe "Invoke-Run Tests" {
     It "Should call Invoke-RunScripts and return 0" {

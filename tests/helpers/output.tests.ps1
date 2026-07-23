@@ -390,4 +390,10 @@ Describe "Show-* helpers Tests" {
             $Object -eq "`n" -and $NoNewline
         }
     }
+
+    It "Prints new lines" {
+        New-Lines -count 5
+
+        Should -Invoke Write-Host -Exactly 5
+    }
 }

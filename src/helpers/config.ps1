@@ -108,7 +108,6 @@ function Get-Config {
             profileTemplate    = "$templates\profile-template.json"
             zendExtensionsList = "$templates\zend_extensions.json"
             aliasesList        = "$templates\aliases.json"
-            scriptsList        = "$templates\scripts.json"
             log                = $logs
             logError           = "$logs\error.log"
             pathVarBackup      = "$logs\path.bak.log"

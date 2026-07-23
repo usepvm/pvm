@@ -223,14 +223,12 @@ Describe "Get-FlagMap" {
 }
 
 Describe "Get-Scripts" {
-    BeforeAll {
+    It "Returns scripts from PVMConfig.defaults.scripts" {
         $PVMConfig.defaults.scripts = [ordered]@{
             'test:quiet'        = @('test --verbosity=None')
             'test:cov'          = @('test --coverage=75')
         }
-    }
 
-    It "Returns scripts from scripts.json or PVMConfig.defaults.scripts" {
         $result = Get-Scripts
         $result.Count | Should -Be 2
         $result['test:quiet'] | Should -Be 'test --verbosity=None'

@@ -510,50 +510,8 @@ function Invoke-Run {
     param ($arguments)
 
     $scriptName = $arguments[0]
-    $scripts = Get-Scripts
 
-    if ([string]::IsNullOrWhiteSpace($scriptName)) {
-        Write-Yellow -message "`nPlease provide a script name to run: pvm run <script-name>"
-        Show-Scripts
-        return -1
-    }
+    $code = Invoke-RunScripts -scriptName $scriptName
 
-    if ($scriptName -eq 'list') {
-        Show-Scripts
-        return 0
-    }
-
-    if (-not $scripts.Contains($scriptName)) {
-        Write-Yellow -message "`nScript '$scriptName' not found."
-        Show-Scripts
-        return -1
-    }
-
-    $scriptCommands = $scripts[$scriptName]
-
-    Write-Cyan -message "`nRunning script: $scriptName ($($scriptCommands.Count) commands)`n"
-
-    $results = @()
-    foreach ($cmd in $scriptCommands) {
-        Write-Gray -message "Command: pvm $cmd"
-        $parts = $cmd -split ' '
-        $command = $parts[0]
-        $scriptArgs = if ($parts.Count -gt 1) { $parts[1..($parts.Count - 1)] } else { @() }
-
-        $actions = Get-Actions -arguments $scriptArgs
-
-        if (-not $actions.Contains($command)) {
-            Write-Yellow -message "`nInvalid command in script: $command"
-            $results += -1
-            continue
-        }
-
-        $result = $($actions[$command].action.Invoke())
-        $results += $result
-        New-Line
-    }
-
-    # Return 0 only if all commands succeeded
-    if ($results | Where-Object { $_ -ne 0 }) { return -1 }
-    return 0
+    return $code
 }

@@ -87,7 +87,15 @@ function Get-ConsoleWidth {
 function Write-Color {
     param ($message, $foreColor, [switch]$noNewLine)
 
-    Write-Host -Object $message -ForegroundColor $foreColor -NoNewline:$noNewLine
+    if ($script:PVMSubprocessMode) {
+        $script:StructuredOutput += @{
+            message = $message
+            color = $foreColor
+            noNewLine = $noNewLine.IsPresent
+        }
+    } else {
+        Write-Host -Object $message -ForegroundColor $foreColor -NoNewline:$noNewLine
+    }
 }
 
 function Write-White {

@@ -1472,28 +1472,22 @@ Describe "Invoke-Run Tests" {
         Should -Invoke Show-Scripts -Times 1
     }
 
-    It "Should return -1 when an unknown command is provided" {
-        Mock Get-Scripts { return @{ 'cmd1:arg1' = 'command1'; 'cmd2:arg2' = 'command2' } }
+Describe "Invoke-Run Tests" {
+    It "Should call Invoke-RunScripts and return 0" {
+        Mock Invoke-RunScripts { 0 }
 
-        $result = Invoke-Run -arguments @('cmd1:arg1')
+        $result = Invoke-Run -arguments @('script.ps1')
+
+        $result | Should -Be 0
+        Should -Invoke Invoke-RunScripts -Times 1
+    }
+
+    It "Should call Invoke-RunScripts and return -1" {
+        Mock Invoke-RunScripts { -1 }
+
+        $result = Invoke-Run -arguments @('script.ps1')
 
         $result | Should -Be -1
-    }
-
-    It "Should return 0 when a valid script is provided" {
-        Mock Get-Scripts { return @{ 'test:cov' = 'test --coverage'; 'test:quiet' = 'test --verbosity=None' } }
-
-        $result = Invoke-Run -arguments @('test:cov')
-
-        $result | Should -Be 0
-    }
-
-    It "Should return 0 when 'list' is provided" {
-        Mock Get-Scripts { return @{ 'script1' = 'command1'; 'script2' = 'command2' } }
-
-        $result = Invoke-Run -arguments @('list')
-
-        $result | Should -Be 0
-        Should -Invoke Show-Scripts -Times 1
+        Should -Invoke Invoke-RunScripts -Times 1
     }
 }

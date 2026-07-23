@@ -5,6 +5,14 @@ param ($command)
 
 $ProgressPreference = 'SilentlyContinue'
 
+# Check if running in subprocess mode
+$params = $args
+$script:PVMSubprocessMode = $params -contains '--pvm-subprocess'
+if ($script:PVMSubprocessMode) {
+    $params = $params | Where-Object { $_ -ne '--pvm-subprocess' }
+    $script:StructuredOutput = @()
+}
+
 # Load functions scripts
 Get-ChildItem -Path "$PSScriptRoot\helpers\*.ps1" -Recurse -File | ForEach-Object { . $_.FullName }
 
@@ -14,5 +22,11 @@ Get-ChildItem -Path "$PSScriptRoot\core\*.ps1" -Recurse -File | ForEach-Object {
 # Load actions scripts
 Get-ChildItem -Path "$PSScriptRoot\actions\*.ps1" -Recurse -File | ForEach-Object { . $_.FullName }
 
-$exitCode = Start-PVM -command $command -arguments $args
+$exitCode = Start-PVM -command $command -arguments $params
+
+# If in subprocess mode, output structured data
+if ($script:PVMSubprocessMode) {
+    $script:StructuredOutput | ConvertTo-Json -Depth 10
+}
+
 exit $exitCode

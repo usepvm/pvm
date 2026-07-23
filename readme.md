@@ -460,14 +460,14 @@ pvm run test:matrix # .............. Runs tests with all supported PowerShell ve
 
 | Script Name | Command | Description |
 |-------------|---------|-------------|
-| `test:quiet` | `pvm test --verbosity=None --sort=coverage --group=folder` | Runs tests with verbosity set to None |
-| `test:cov80` | `pvm test --coverage=80 --sort=coverage --group=folder` | Runs tests with 80% coverage target |
-| `test:cov90` | `pvm test --coverage=90 --sort=coverage --group=folder` | Runs tests with 90% coverage target |
-| `test:duration` | `pvm test --sort=-duration --group=folder` | Runs tests with duration descending sort |
-| `test:verbose` | `pvm test --coverage=85 --verbosity=Detailed --sort=coverage --group=folder` | Runs tests with coverage and detailed output |
+| `test:quiet` | `pvm test --coverage=85 --sort=coverage --group=folder --verbosity=None` | Runs tests with verbosity set to None |
+| `test:cov80` | `pvm test --coverage=80 --sort=coverage --group=folder --verbosity=None` | Runs tests with 80% coverage target |
+| `test:cov90` | `pvm test --coverage=90 --sort=coverage --group=folder --verbosity=None` | Runs tests with 90% coverage target |
+| `test:duration` | `pvm test --sort=-duration --group=folder --verbosity=None` | Runs tests with duration descending sort |
+| `test:verbose` | `pvm test --coverage=85 --sort=coverage --group=folder --verbosity=Detailed` | Runs tests with coverage and detailed output |
 | `test:shell` | `pvm test --coverage=85 --verbosity=None --sort=coverage --group=folder --shell=powershell` and `--shell=pwsh` | Runs tests with both pwsh and powershell |
 | `test:pester` | `pvm test --coverage=85 --verbosity=None --sort=coverage --group=folder --pester=5.7.1` and `--pester=6.0.0` | Runs tests with Pester 5.7 and 6.0 |
-| `test:matrix` | `pvm test` with all combinations of `--shell=powershell/pwsh` and `--pester=5.7.1/6.0.0` | Runs tests with all combinations of Pester and shell |
+| `test:matrix` | `pvm test --coverage=85 --verbosity=None --sort=coverage --group=folder` with all combinations of `--shell=powershell/pwsh` and `--pester=5.7.1/6.0.0` | Runs tests with all combinations of Pester and shell |
 
 **Customizing Scripts:**
 

@@ -188,7 +188,7 @@ Describe "Set-AliasesList" {
 Describe "Get-Aliases" {
     BeforeAll {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $testContent = [ordered]@{'?'  = 'help'; 'i'  = 'install'; 'init' = 'setup'}
+        $testContent = [ordered]@{'?' = 'help'; 'i' = 'install'; 'init' = 'setup'}
         $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ALIASES_LIST_PATH
         $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
     }
@@ -219,6 +219,20 @@ Describe "Get-FlagMap" {
     It "Returns PVMConfig.defaults.flags" {
         $result = Get-FlagMap
         $result.Count | Should -Be $PVMConfig.defaults.flags.Count
+    }
+}
+
+Describe "Get-Scripts" {
+    It "Returns scripts from PVMConfig.defaults.scripts" {
+        $PVMConfig.defaults.scripts = [ordered]@{
+            'test:quiet'        = @('test --verbosity=None')
+            'test:cov'          = @('test --coverage=75')
+        }
+
+        $result = Get-Scripts
+        $result.Count | Should -Be 2
+        $result['test:quiet'] | Should -Be 'test --verbosity=None'
+        $result['test:cov'] | Should -Be 'test --coverage=75'
     }
 }
 

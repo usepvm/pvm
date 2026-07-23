@@ -182,3 +182,76 @@ function Test-Admin {
 function Test-NotAdmin {
     return -not (Test-Admin)
 }
+
+function Resolve-PVMEngine {
+    param ($shell)
+
+    switch ($shell) {
+        'powershell' { return 'powershell.exe' }
+        'pwsh' { return 'pwsh.exe' }
+        default {
+            if (Get-Command pwsh -ErrorAction SilentlyContinue) {
+                return 'pwsh.exe'
+            }
+
+            return 'powershell.exe'
+        }
+    }
+}
+
+function Split-ShellFromArguments {
+    param ($arguments)
+
+    $shell = $null
+    $remaining = [System.Collections.Generic.List[string]]::new()
+
+    foreach ($arg in @($arguments)) {
+        if ($arg -match '^--shell=(.+)$') {
+            $shell = $Matches[1].ToLower()
+        } else {
+            $remaining.Add($arg)
+        }
+    }
+
+    return @{
+        shell     = $shell
+        arguments = $remaining.ToArray()
+    }
+}
+
+function Invoke-PVMSubprocess {
+    param ($command, $arguments = @())
+
+    $shellSplit = Split-ShellFromArguments -arguments $arguments
+    $shell = $shellSplit.shell
+    $remainingArgs = $shellSplit.arguments
+
+    if ($shell -and $shell -notin @('pwsh', 'powershell')) {
+        Show-Error -message "`nInvalid value for --shell: '$shell' (expected 'pwsh' or 'powershell')"
+        return @{ output = $null; code = -1 }
+    }
+
+    $engine = Resolve-PVMEngine -shell $shell
+
+    if (-not (Get-Command $engine -ErrorAction SilentlyContinue)) {
+        Show-Error -message "`nShell '$engine' not found."
+        return @{ output = $null; code = -1 }
+    }
+
+    $pvmScript = "$PVMRoot\src\pvm.ps1"
+    $processArgs = @(
+        '-NoProfile'
+        '-ExecutionPolicy', 'Bypass'
+        '-File', $pvmScript
+        $command
+        '--pvm-subprocess'
+    ) + $remainingArgs
+
+    $outputText = & $engine @processArgs | Out-String
+
+    if ($null -ne $LASTEXITCODE) {
+        return @{ output = $outputText; code = [int]$LASTEXITCODE }
+    }
+
+    return @{ output = $outputText; code = 0 }
+}

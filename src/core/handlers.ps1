@@ -505,3 +505,13 @@ function Invoke-Update {
     Show-MsgByExitCode -result $result
     return $result.code
 }
+
+function Invoke-Run {
+    param ($arguments)
+
+    $scriptName = $arguments[0]
+
+    $code = Invoke-RunScripts -scriptName $scriptName
+
+    return $code
+}

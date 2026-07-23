@@ -378,3 +378,102 @@ Describe "Test-NotAdmin" {
         $result | Should -Be $false
     }
 }
+
+Describe "Resolve-PVMEngine" {
+    It "Returns powershell.exe when shell is powershell" {
+        Resolve-PVMEngine -shell 'powershell' | Should -Be 'powershell.exe'
+    }
+
+    It "Returns pwsh.exe when shell is pwsh" {
+        Resolve-PVMEngine -shell 'pwsh' | Should -Be 'pwsh.exe'
+    }
+
+    It "Returns pwsh.exe when shell is invalid but pwsh is available" {
+        Mock Get-Command { return @{ Name = 'pwsh' } }
+        Resolve-PVMEngine -shell 'invalid' | Should -Be 'pwsh.exe'
+    }
+
+    It "Returns powershell.exe when shell is invalid and pwsh is not available" {
+        Mock Get-Command { return $null }
+        Resolve-PVMEngine -shell 'invalid' | Should -Be 'powershell.exe'
+    }
+}
+
+Describe "Split-ShellFromArguments" {
+    It "Extracts --shell and returns remaining arguments" {
+        $result = Split-ShellFromArguments -arguments @('--coverage=85', '--shell=pwsh', '--pester=5.7.1')
+
+        $result.shell | Should -Be 'pwsh'
+        $result.arguments | Should -Be @('--coverage=85', '--pester=5.7.1')
+    }
+
+    It "Returns null shell when --shell is not provided" {
+        $result = Split-ShellFromArguments -arguments @('--coverage=85')
+
+        $result.shell | Should -BeNullOrEmpty
+        $result.arguments | Should -Be @('--coverage=85')
+    }
+}
+
+Describe "Invoke-PVMSubprocess" {
+    BeforeAll {
+        Mock Show-Error { }
+    }
+
+    It "Returns -1 for invalid shell value" {
+        $result = Invoke-PVMSubprocess -command 'test' -arguments @('--shell=bash')
+
+        $result.code | Should -Be -1
+    }
+
+    It "Invokes pvm.ps1 with stripped shell argument and returns exit code" {
+        Mock Get-Command { return @{ Name = 'pwsh.exe' } } -ParameterFilter { $Name -eq 'pwsh.exe' }
+        Mock Resolve-PVMEngine { return 'pwsh.exe' }
+
+        Mock pwsh.exe {
+            $global:LASTEXITCODE = 0
+        } -Verifiable
+
+        $result = Invoke-PVMSubprocess -command 'test' -arguments @('--coverage=85', '--shell=pwsh')
+
+        $result.code | Should -Be 0
+        Should -Invoke pwsh.exe -Times 1 -ParameterFilter {
+            $args -contains '-File' -and
+            $args -contains 'test' -and
+            $args -contains '--coverage=85' -and
+            $args -notcontains '--shell=pwsh'
+        }
+    }
+
+    It "Returns subprocess exit code on failure" {
+        Mock Get-Command { return @{ Name = 'pwsh.exe' } } -ParameterFilter { $Name -eq 'pwsh.exe' }
+        Mock Resolve-PVMEngine { return 'pwsh.exe' }
+
+        Mock pwsh.exe {
+            $global:LASTEXITCODE = 1
+        }
+
+        $result = Invoke-PVMSubprocess -command 'test' -arguments @('--pester=6.0.0')
+
+        $result.code | Should -Be 1
+    }
+
+    It "Returns -1 when pwsh.exe is not found" {
+        Mock Get-Command { return $null }
+
+        $result = Invoke-PVMSubprocess -command 'test' -arguments @('--pester=6.0.0')
+
+        $result.code | Should -Be -1
+    }
+
+    It "Returns 0 when pwsh.exe is found and last exit code is null" {
+        Mock Get-Command { return @{ Name = 'pwsh.exe' } }
+        Mock pwsh.exe {
+            $global:LASTEXITCODE = $null
+        }
+
+        $result = Invoke-PVMSubprocess -command 'test' -arguments @('--pester=6.0.0')
+
+        $result.code | Should -Be 0
+    }
+}

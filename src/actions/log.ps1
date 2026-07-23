@@ -213,7 +213,7 @@ function Show-Log {
                     default { $currentIndex -= $PageSize }
                 }
             } else {
-                Show-Warning -Object 'End of log reached. Press Left/Up arrow to go back or any other key to exit...'
+                Show-Warning -message 'End of log reached. Press Left/Up arrow to go back or any other key to exit...'
                 $key = Get-ConsoleKey
                 if ($key.Key -in @('LeftArrow', 'UpArrow')) {
                     # Go back one page from the end

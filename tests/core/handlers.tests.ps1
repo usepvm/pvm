@@ -1431,15 +1431,41 @@ Describe "Invoke-Info Tests" {
 }
 
 Describe "Invoke-Update Tests" {
-    BeforeEach {
-        Mock Write-Host { }
+    It "Should call Update-PVM and return 0" {
         Mock Update-PVM { @{ code = 0; message = 'Updated' } }
+
+        $result = Invoke-Update -arguments @()
+
+        $result | Should -Be 0
+        Should -Invoke Update-PVM -Times 1
     }
 
-    It "Should call Update-PVM and return 0" {
-        $result = Invoke-Update -arguments @()
-        $result | Should -Be 0
+    It "Should call Update-PVM and return -1" {
+        Mock Update-PVM { @{ code = -1; message = 'Failed' } }
 
+        $result = Invoke-Update -arguments @()
+
+        $result | Should -Be -1
         Should -Invoke Update-PVM -Times 1
+    }
+}
+
+Describe "Invoke-Run Tests" {
+    It "Should call Invoke-RunScripts and return 0" {
+        Mock Invoke-RunScripts { 0 }
+
+        $result = Invoke-Run -arguments @('script.ps1')
+
+        $result | Should -Be 0
+        Should -Invoke Invoke-RunScripts -Times 1
+    }
+
+    It "Should call Invoke-RunScripts and return -1" {
+        Mock Invoke-RunScripts { -1 }
+
+        $result = Invoke-Run -arguments @('script.ps1')
+
+        $result | Should -Be -1
+        Should -Invoke Invoke-RunScripts -Times 1
     }
 }

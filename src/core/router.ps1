@@ -350,5 +350,27 @@ function Get-Actions {
             }
             action      = { return Invoke-Update -arguments $script:arguments }
         }
+        'run'       = @{
+            command     = 'pvm run <script-name>';
+            description = 'Run a predefined script from the scripts configuration.';
+            usage       = [ordered]@{
+                USAGE       = 'pvm run <script-name>'
+                DESCRIPTION = @(
+                    'Runs a predefined script from the scripts configuration.',
+                    'Scripts are shortcuts for common commands with predefined options.'
+                )
+                EXAMPLES    = @(
+                    'pvm run test:quiet ......................... Runs tests with verbosity set to None'
+                    'pvm run test:cov80 ......................... Runs tests with 80% coverage target'
+                    'pvm run test:cov90 ......................... Runs tests with 90% coverage target'
+                    'pvm run test:duration ...................... Runs tests with duration descending sort'
+                    'pvm run test:verbose ....................... Runs tests with coverage and detailed output'
+                    'pvm run test:shell ......................... Runs tests with Windows PowerShell and PowerShell Core'
+                    'pvm run test:pester ........................ Runs tests with Pester 5.7.1 and 6.0.0'
+                    'pvm run test:matrix ........................ Runs tests with all supported PowerShell versions and Pester versions'
+                )
+            }
+            action      = { return Invoke-Run -arguments $script:arguments }
+        }
     }
 }

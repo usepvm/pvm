@@ -206,13 +206,23 @@ Describe "Get-ConsoleWidth" {
     }
 }
 
-Describe "Show-* helpers Tests" {
+Describe "Write-Host helpers Tests" {
     It "Prints message with specified color" {
         Write-Color -message 'Test message' -foreColor 'Red'
 
         Should -Invoke Write-Host -ParameterFilter {
             $Object -match 'Test message' -and $ForegroundColor -eq 'Red'
         } -Exactly 1
+    }
+
+    It "Stores structured output when subprocess mode is enabled" {
+        $script:StructuredOutput = @()
+        $script:PVMSubprocessMode = $true
+
+        Write-Color -message 'Test message' -foreColor 'Red'
+
+        $script:StructuredOutput.Count | Should -Be 1
+        $script:PVMSubprocessMode = $false
     }
 
     It "Prints success message" {
@@ -382,12 +392,18 @@ Describe "Show-* helpers Tests" {
             $Object -match 'Test message' -and $ForegroundColor -eq 'White'
         }
     }
-    
+
     It "Prints new line" {
         New-Line
-        
+
         Should -Invoke Write-Host -ParameterFilter {
             $Object -eq "`n" -and $NoNewline
         }
+    }
+
+    It "Prints new lines" {
+        New-Lines -count 5
+
+        Should -Invoke Write-Host -Exactly 5
     }
 }

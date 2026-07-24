@@ -697,13 +697,13 @@ Describe "Invoke-Test Tests" {
             $result.target | Should -Be 85
         }
 
-        It "Should parse --coverage argument without target (default 75)" {
+        It "Should parse --coverage argument without target (default $($PVMConfig.test.coverage.default))" {
             Mock Initialize-Tests { param($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--coverage')
 
             $result.coverage | Should -Be $true
-            $result.target | Should -Be 75
+            $result.target | Should -Be $PVMConfig.test.coverage.default
         }
 
         It "Should parse --verbosity argument correctly" {

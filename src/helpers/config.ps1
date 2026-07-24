@@ -190,5 +190,15 @@ function Get-Config {
                 )
             }
         }
+        test    = @{
+            verbosity = @{
+                default = 'Normal'
+                options = @('None', 'Normal', 'Detailed', 'Diagnostic')
+            }
+            coverage = @{
+                default = 75
+                enabled = $false
+            }
+        }
     }
 }

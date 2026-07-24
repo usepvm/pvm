@@ -256,7 +256,7 @@ function Invoke-TestFile {
     }
 
     if (-not $options) {
-        $options = @{ coverage = $false; target = 75 }
+        $options = @{ coverage = $PVMConfig.test.coverage.enabled; target = $PVMConfig.test.coverage.default }
     }
 
     $coveredFile = $null
@@ -466,10 +466,16 @@ function Invoke-Tests {
         }
 
         if (-not $options) {
-            $options = @{ verbosity = 'Normal'; coverage = $false; tag = $null; target = 75; groupBy = $null }
+            $options = @{
+                verbosity = $PVMConfig.test.verbosity.default;
+                coverage = $PVMConfig.test.coverage.enabled; 
+                target = $PVMConfig.test.coverage.default; 
+                tag = $null;
+                groupBy = $null
+            }
         }
 
-        $verbosityOptions = @('None', 'Normal', 'Detailed', 'Diagnostic')
+        $verbosityOptions = $PVMConfig.test.verbosity.options
         if ($verbosityOptions -notcontains $options.verbosity) {
             Show-Error -message "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')"
             return -1

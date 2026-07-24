@@ -186,10 +186,10 @@ function Invoke-Test {
 
     $options = @{
         exclude   = $null
-        verbosity = 'Normal'
-        coverage  = $false
+        verbosity = $PVMConfig.test.verbosity.default
+        coverage  = $PVMConfig.test.coverage.enabled
+        target    = $PVMConfig.test.coverage.default
         tag       = $null
-        target    = 75
         sortBy    = $null
         groupBy   = $null
     }

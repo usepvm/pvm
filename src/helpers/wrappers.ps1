@@ -1,4 +1,4 @@
-
+﻿
 function Set-Content-Wrapper {
     param ($path, $value)
 

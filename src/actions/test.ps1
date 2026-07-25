@@ -468,8 +468,8 @@ function Invoke-Tests {
         if (-not $options) {
             $options = @{
                 verbosity = $PVMConfig.test.verbosity.default;
-                coverage = $PVMConfig.test.coverage.enabled; 
-                target = $PVMConfig.test.coverage.default; 
+                coverage = $PVMConfig.test.coverage.enabled;
+                target = $PVMConfig.test.coverage.default;
                 tag = $null;
                 groupBy = $null
             }

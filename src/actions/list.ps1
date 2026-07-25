@@ -45,7 +45,7 @@ function Get-FromSource {
 function Get-PHPListToInstall {
     try {
         $fetchedVersionsGrouped = Get-OrUpdateCache -cacheFileName 'available_php_versions' -compute {
-            Get-FromSource
+            return Get-FromSource
         }
 
         if (-not $fetchedVersionsGrouped) {

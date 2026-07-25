@@ -104,7 +104,7 @@ function Get-ExtensionLinksFromURL {
 
     try {
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
-            Select-ExtensionLinksFromURL -extName $extName
+            return Select-ExtensionLinksFromURL -extName $extName
         }
     } catch {
         Show-Message -message "`nDirect link for extension '$extName' not found, Loading matching extensions..."
@@ -161,7 +161,7 @@ function Get-ExtensionLinksFromURL {
         $extName = $chosenItem.href -replace '/package/', ''
         Show-Message -message "`nLoading links for '$extName'..."
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
-            Select-ExtensionLinksFromURL -extName $extName
+            return Select-ExtensionLinksFromURL -extName $extName
         }
     }
 
@@ -182,7 +182,7 @@ function Get-ExtensionFromURL {
     }
 
     $formattedList = Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_php_$version" -compute {
-        Get-PackagesFromSourceLinks -extName $linksObj.extName -version $version -links $linksObj.links
+        return Get-PackagesFromSourceLinks -extName $linksObj.extName -version $version -links $linksObj.links
     }
 
     return @{

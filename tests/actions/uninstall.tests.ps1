@@ -73,6 +73,7 @@ Describe "Uninstall-PHP" {
                 return @{ code = 0; version = '7.4'; arch = 'x86'; buildType = 'nts'; path = "$testPhpPath\7.4" }
             }
             Mock Read-Host { 'y' }
+            Mock Update-InstalledPHPVersionsCache { 0 }
 
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $false
 
@@ -133,6 +134,7 @@ Describe "Uninstall-PHP" {
             Mock Get-CurrentPHPVersion { @{ version = '8.0'; arch = 'x64'; buildType = 'nts' } }
             Mock Test-TwoPHPVersionsEqual { $true }
             Mock Read-Host { 'y' }
+            Mock Update-InstalledPHPVersionsCache { 0 }
 
             $result = Uninstall-PHP -version '8.0' -skipConfirmation $false
 
@@ -147,6 +149,7 @@ Describe "Uninstall-PHP" {
             }
             Mock Get-CurrentPHPVersion { @{ version = '8.0'; arch = 'x64'; buildType = 'nts' } }
             Mock Read-Host { }
+            Mock Update-InstalledPHPVersionsCache { 0 }
 
             $result = Uninstall-PHP -version '8.0' -skipConfirmation $true
 

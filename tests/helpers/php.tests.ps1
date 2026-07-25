@@ -471,8 +471,9 @@ Describe "Update-InstalledPHPVersionsCache" {
             }
             Mock Save-CachedData { return 0 }
 
-            $null = Update-InstalledPHPVersionsCache
+            $code = Update-InstalledPHPVersionsCache
 
+            $code | Should -Be 0
             Should -Invoke Save-CachedData -Exactly 1 -ParameterFilter {
                 $cacheFileName -eq 'installed_php_versions' -and $depth -eq 1
             }

@@ -71,8 +71,7 @@ Describe "Get-WebResponse Tests" {
         }
 
         It "Returns the result from Invoke-WebRequest" {
-            $mockResponse = @{ StatusCode = 200; Content = 'test content' }
-            Mock Invoke-WebRequest { return $mockResponse }
+            Mock Invoke-WebRequest { return @{ StatusCode = 200; Content = 'test content' } }
 
             $result = Get-WebResponse -uri 'https://example.com'
 

@@ -443,7 +443,9 @@ function Invoke-Info {
     param ($arguments)
 
     $currentPHP = Get-CurrentPHPVersion
-    $installedPHP = Get-InstalledPHPVersionsFromDisk
+    $installedPHP = Get-OrUpdateCache -cacheFileName 'installed_php_versions' -depth 1 -compute {
+        return Get-InstalledPHPVersionsFromDisk
+    }
     $currentPhpVersion = 'Not Set'
     $currentPhpPath = 'Not Set'
     if ($currentPHP) {

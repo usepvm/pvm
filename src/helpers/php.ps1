@@ -121,7 +121,7 @@ function Get-InstalledPHPVersions {
 
     try {
         $installedVersions = Get-OrUpdateCache -cacheFileName 'installed_php_versions' -depth 1 -compute {
-            Get-InstalledPHPVersionsFromDisk
+            return Get-InstalledPHPVersionsFromDisk
         }
 
         if ($null -eq $installedVersions) {

@@ -8,29 +8,9 @@ function Get-LatestPHPVersion {
             $allVersions = @()
 
             foreach ($key in $urls.Keys) {
-                $url = $urls[$key]
                 try {
-                    $html = Get-WebResponse -uri $url
-                    $links = $html.Links
-
-                    $filteredLinks = $links | Where-Object {
-                        $_.href -match 'php-\d+(\.\d+)*-(?:nts-)?win.*\.zip$' -and
-                        $_.href -notmatch 'php-debug' -and
-                        $_.href -notmatch 'php-devel'
-                    }
-
-                    $filteredLinks | ForEach-Object {
-                        $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
-                        $fileName = $_.href -split '/'
-                        $fileName = $fileName[$fileName.Count - 1]
-                        $allVersions += @{
-                            href      = $_.href
-                            version   = $version
-                            fileName  = $fileName
-                            BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
-                            arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
-                        }
-                    }
+                    $url = $urls[$key]
+                    $allVersions += Get-LatestPHPVersionFromUrl -url $url
                 } catch {
                     continue
                 }
@@ -54,6 +34,35 @@ function Get-LatestPHPVersion {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get latest PHP version"; exception = $_ }
         return $null
     }
+}
+
+function Get-LatestPHPVersionFromUrl {
+    param ($url)
+
+    $html = Get-WebResponse -uri $url
+    $links = $html.Links
+
+    $filteredLinks = $links | Where-Object {
+        $_.href -match 'php-\d+(\.\d+)*-(?:nts-)?win.*\.zip$' -and
+        $_.href -notmatch 'php-debug' -and
+        $_.href -notmatch 'php-devel'
+    }
+
+    $allUrlVersions = @()
+    $filteredLinks | ForEach-Object {
+        $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
+        $fileName = $_.href -split '/'
+        $fileName = $fileName[$fileName.Count - 1]
+        $allUrlVersions += @{
+            href      = $_.href
+            version   = $version
+            fileName  = $fileName
+            BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
+            arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+        }
+    }
+
+    return $allUrlVersions
 }
 
 function Get-PHPVersionsFromUrl {

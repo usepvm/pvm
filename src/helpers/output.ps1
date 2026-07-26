@@ -85,7 +85,7 @@ function Get-ConsoleWidth {
 }
 
 function Show-SpinnerWhileJob {
-    param($scriptBlock, $message = "Working", [switch]$noClear, $argumentList = @(), $rethrow = $false)
+    param ($scriptBlock, $message = "Working", [switch]$noClear, $argumentList = @(), $rethrow = $false)
 
     $spinner = @('|', '/', '-', '\')
 

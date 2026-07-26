@@ -1,4 +1,4 @@
-
+﻿
 function Get-ExtensionCategoriesByPage {
     param ($extCategory, $link, $page = 1)
 
@@ -34,23 +34,32 @@ function Get-PHPExtensionsFromSource {
         $null = $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
 
-            if ($_.href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
+            $href = $_.href
+            if ($href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
                 return $false
             }
 
-            $page = 1
             $extCategory = $matches[1] -replace '\+', ' '
-            do {
-                $hasMore = $false
-                $result = Get-ExtensionCategoriesByPage -extCategory $extCategory -link $_.href -page $page
-                $availableExtensions[$extCategory] += $result.availableExtensions
-                $hasMore = $result.hasMore
-                $page++
-            } while ($hasMore)
 
-            if ($availableExtensions[$extCategory].Count -eq 0) {
-                $availableExtensions.Remove($extCategory)
-            }
+            $availableExtensions = Show-SpinnerWhileJob -argumentList @($availableExtensions, $extCategory, $href) -scriptBlock {
+                param ($availableExtensions, $extCategory, $href)
+
+                $page = 1
+                do {
+                    $hasMore = $false
+                    $result = Get-ExtensionCategoriesByPage -extCategory $extCategory -link $href -page $page
+                    $availableExtensions[$extCategory] += $result.availableExtensions
+                    $hasMore = $result.hasMore
+                    $page++
+                } while ($hasMore)
+
+                if ($availableExtensions[$extCategory].Count -eq 0) {
+                    $availableExtensions.Remove($extCategory)
+                }
+
+                return @{ pvmData = $availableExtensions }
+            } -message "- Checking category '$extCategory'..." -rethrow $true
+
             return $true
         }
         $availableExtensions['XDebug'] = @(
@@ -89,9 +98,7 @@ function Show-PHPExtensions {
             Show-Message -message "`nLoading available extensions..."
 
             $availableExtensions = Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
-                return Show-SpinnerWhileJob -scriptBlock {
-                    return [pscustomobject] (Get-PHPExtensionsFromSource)
-                } -rethrow $true
+                return [pscustomobject] (Get-PHPExtensionsFromSource)
             }
 
             if ($availableExtensions.Count -eq 0) {

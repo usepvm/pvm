@@ -92,7 +92,7 @@ function Show-PHPExtensions {
                 return Show-SpinnerWhileJob -scriptBlock {
                     return [pscustomobject] (Get-PHPExtensionsFromSource)
                 } -rethrow $true
-            } -depth 3
+            }
 
             if ($availableExtensions.Count -eq 0) {
                 Show-Error -message "`nNo extensions found"

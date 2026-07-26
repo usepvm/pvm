@@ -1,6 +1,6 @@
 ﻿
 function Read-Host-Wrapper {
-    param ($prompt)
+    param ($prompt = $null)
     
     $response = Read-Host -Prompt $prompt
     

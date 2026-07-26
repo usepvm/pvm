@@ -19,6 +19,17 @@ AfterAll {
 }
 
 Describe "Read-Host-Wrapper" {
+    It "Calls Read-Host with no parameters" {
+        Mock Read-Host { }
+        
+        $result = Read-Host-Wrapper
+        
+        $result | Should -BeNullOrEmpty
+        Should -Invoke Read-Host -Times 1 -ParameterFilter {
+            $Prompt -eq $null
+        }
+    }
+    
     It "Calls Read-Host with the correct parameters" {
         Mock Read-Host { return 'Test response' }
 

@@ -1,33 +1,37 @@
 ﻿
 function Get-FromSource {
     try {
-        $urls = Get-SourceUrls
-        $fetchedVersionsGrouped = @{}
-        foreach ($key in $urls.Keys) {
-            $html = Get-WebResponse -uri $urls[$key]
-            $links = $html.Links
+        $fetchedVersionsGrouped = Show-SpinnerWhileJob -scriptBlock {
+            $urls = Get-SourceUrls
+            $fetchedVersionsGrouped = @{}
+            foreach ($key in $urls.Keys) {
+                $html = Get-WebResponse -uri $urls[$key]
+                $links = $html.Links
 
-            # Filter the links to find versions that match the given version
-            $filteredLinks = @()
-            $links | ForEach-Object {
-                if ($_.href -match "php-\d+\.\d+\.\d+(?:-\d+)?-(?:nts-)?Win32.*\.zip$" -and
-                    $_.href -notmatch 'php-debug' -and
-                    $_.href -notmatch 'php-devel' # -and $_.href -notmatch "nts"
-                ) {
-                    $fileName = $_.href -split '/'
-                    $fileName = $fileName[$fileName.Count - 1]
+                # Filter the links to find versions that match the given version
+                $filteredLinks = @()
+                $links | ForEach-Object {
+                    if ($_.href -match "php-\d+\.\d+\.\d+(?:-\d+)?-(?:nts-)?Win32.*\.zip$" -and
+                        $_.href -notmatch 'php-debug' -and
+                        $_.href -notmatch 'php-devel' # -and $_.href -notmatch "nts"
+                    ) {
+                        $fileName = $_.href -split '/'
+                        $fileName = $fileName[$fileName.Count - 1]
 
-                    $filteredLinks += @{
-                        Version   = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
-                        Arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
-                        BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
-                        Link      = $_.href
+                        $filteredLinks += @{
+                            Version   = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
+                            Arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                            BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
+                            Link      = $_.href
+                        }
                     }
                 }
+                # Return the filtered links (PHP version names)
+                $fetchedVersionsGrouped[$key] = $filteredLinks
             }
-            # Return the filtered links (PHP version names)
-            $fetchedVersionsGrouped[$key] = $filteredLinks
-        }
+            
+            return @{ pvmData = $fetchedVersionsGrouped }
+        } -rethrow $true
 
         if ($fetchedVersionsGrouped.Count -eq 0 -or
             ($fetchedVersionsGrouped['Archives'].Count -eq 0 -and $fetchedVersionsGrouped['Releases'].Count -eq 0)) {
@@ -45,9 +49,7 @@ function Get-FromSource {
 function Get-PHPListToInstall {
     try {
         $fetchedVersionsGrouped = Get-OrUpdateCache -cacheFileName 'available_php_versions' -compute {
-            return Show-SpinnerWhileJob -scriptBlock {
-                return @{ pvmData = Get-FromSource }
-            } -rethrow $true
+            return Get-FromSource
         }
 
         if (-not $fetchedVersionsGrouped) {

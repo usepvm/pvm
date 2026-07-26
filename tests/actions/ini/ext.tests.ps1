@@ -208,6 +208,13 @@ Describe "Show-PHPExtensions" {
         Mock Show-InstalledExtensions {}
     }
 
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            return & $scriptBlock @argumentList
+        }
+    }
+
     It "Returns 0 when no extensions are installed" {
         Mock Get-AllPHPExtensionsStatus { return @() }
 

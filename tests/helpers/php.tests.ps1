@@ -545,6 +545,13 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
         $script:STORAGE_PATH = "$TEST_DRIVE\storage"
     }
 
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            return & $scriptBlock @argumentList
+        }
+    }
+
     Context "When PHP versions exist" {
         It "Should return installed PHP versions with php.exe present" {
             Mock Get-AllSubdirectories {

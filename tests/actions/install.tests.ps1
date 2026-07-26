@@ -152,6 +152,10 @@ Describe "Get-LatestPHPVersion Tests" {
     BeforeEach {
         Reset-MockState
         Mock Write-Host {}
+        Mock Show-SpinnerWhileJob {
+            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            return & $scriptBlock @argumentList
+        }
     }
 
     It "Should return the latest available version" {
@@ -370,6 +374,13 @@ Describe "Get-PHP" {
         Mock Get-PHPFromUrl { return "$TEST_DRIVE\php" }
     }
 
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            return & $scriptBlock @argumentList
+        }
+    }
+
     It "Should download PHP successfully" {
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
         $result | Should -Be "$TEST_DRIVE\php"
@@ -569,6 +580,10 @@ Describe "Select-Version Tests" {
 
 Describe "Install-PHP Integration Tests" {
     BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            return & $scriptBlock @argumentList
+        }
         Mock Write-Host { }
         Reset-MockState
         $script:MockUserInput = ''
@@ -643,6 +658,19 @@ Describe "Install-PHP Integration Tests" {
         $result = Install-PHP -version '8.1'
 
         $result.code | Should -Be -1
+    }
+
+    It "Returns -1 when user selection cannot be installed" {
+        Mock Get-MatchingPHPVersions { return $null }
+        Mock Get-PHPFromUrl { return "$TEST_DRIVE\php" }
+        Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
+        $script:MockUserInput = 'y'
+        Mock Get-PHP { return $null }
+
+        $result = Install-PHP -version '8'
+
+        $result.code | Should -Be -1
+        $result.message | Should -Be "Failed to download PHP version 8"
     }
 
     It "Handles exception gracefully" {
@@ -721,6 +749,10 @@ Describe "Environment Variable Tests" {
     BeforeEach {
         Mock Write-Host { }
         Reset-MockState
+        Mock Show-SpinnerWhileJob {
+            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            return & $scriptBlock @argumentList
+        }
     }
 
     It "Get-AllEnvVars should handle registry errors" {
@@ -788,8 +820,10 @@ Describe "Environment Variable Tests" {
         $result[1].version | Should -Be '7.4'
     }
 
-    It "Get-InstalledPHPVersions should handle registry errors" {
-        $script:MockRegistryThrowException = $true
+    It "Get-InstalledPHPVersions should return empty array when no directories found" {
+        $PVMConfig.paths.php = "$($PVMConfig.paths.fakeStorage)\install-drive\storage\installed-php"        
+        Remove-Item -Path $PVMConfig.paths.php -Recurse -Force
+        New-Item -Path $PVMConfig.paths.php -ItemType Directory -Force
 
         $result = Get-InstalledPHPVersions
 

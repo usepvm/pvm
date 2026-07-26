@@ -99,6 +99,10 @@ Describe "Get-FromSource" {
 Describe "Get-PHPListToInstall" {
     BeforeEach {
         $PVMConfig.paths.cache = "$TEST_DRIVE\storage\cache"
+        Mock Show-SpinnerWhileJob {
+            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            return & $scriptBlock @argumentList
+        }
     }
 
     It "Returns empty object when cache and/or source not working" {
@@ -174,6 +178,10 @@ Describe "Get-PHPListToInstall" {
 Describe "Get-AvailablePHPVersions" {
     BeforeEach {
         Mock Write-Host { }
+        Mock Show-SpinnerWhileJob {
+            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            return & $scriptBlock @argumentList
+        }
     }
 
     It "Should handle x86 architecture" {

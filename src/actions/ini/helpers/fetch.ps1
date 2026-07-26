@@ -1,4 +1,4 @@
-
+﻿
 function Get-ExtensionMatchingCategoriesByPage {
     param ($extName, $link, $page = 1)
 
@@ -109,7 +109,11 @@ function Get-ExtensionLinksFromURL {
     } catch {
         Show-Message -message "`nDirect link for extension '$extName' not found, Loading matching extensions..."
 
-        $linksMatchingExtName = Get-ExtensionMatchingCategories -extName $extName
+        $linksMatchingExtName = Show-SpinnerWhileJob -argumentList @($extName) -scriptBlock {
+            param ($extName)
+
+            return Get-ExtensionMatchingCategories -extName $extName
+        }
 
         if ($linksMatchingExtName.Count -eq 0) {
             Show-Error -Message "`nExtension '$extName' not found"
@@ -182,7 +186,11 @@ function Get-ExtensionFromURL {
     }
 
     $formattedList = Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_php_$version" -compute {
-        return Get-PackagesFromSourceLinks -extName $linksObj.extName -version $version -links $linksObj.links
+        return Show-SpinnerWhileJob -argumentList @($linksObj, $version) -scriptBlock {
+            param ($linksObj, $version)
+
+            return Get-PackagesFromSourceLinks -extName $linksObj.extName -version $version -links $linksObj.links
+        }
     }
 
     return @{

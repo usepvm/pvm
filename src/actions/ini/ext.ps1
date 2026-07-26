@@ -90,8 +90,10 @@ function Show-PHPExtensions {
             Show-Message -message "`nLoading available extensions..."
 
             $availableExtensions = Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
-                return [pscustomobject] (Get-PHPExtensionsFromSource)
-            }
+                return Show-SpinnerWhileJob -scriptBlock {
+                    return [pscustomobject] (Get-PHPExtensionsFromSource)
+                } -rethrow $true
+            } -depth 3
 
             if ($availableExtensions.Count -eq 0) {
                 Show-Error -message "`nNo extensions found"

@@ -212,7 +212,7 @@ Describe "Show-SpinnerWhileJob" {
         $script:keepRunning = $true
         Mock Start-Job -ParameterFilter { $true } {
             param ($scriptBlock)
-            
+
             $script:job = & $RealStartJob -ScriptBlock { $scriptBlock }
             $script:job | Wait-Job | Out-Null   # let it actually finish first
 

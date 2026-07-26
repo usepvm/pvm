@@ -1,4 +1,4 @@
-
+﻿
 function Show-MsgByExitCode {
     param ($result, $message = $null)
 
@@ -114,7 +114,7 @@ function Show-SpinnerWhileJob {
 
         $result = Receive-Job -Job $job -Wait -AutoRemoveJob -ErrorAction Stop
         Remove-Item Env:\PVM_ROOT_FOR_JOB -ErrorAction SilentlyContinue
-        
+
         return $result.pvmData
     } catch {
         Write-Yellow -message "`r$(' ' * ($message.Length + 2))`r" -NoNewline

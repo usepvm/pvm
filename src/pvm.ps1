@@ -3,8 +3,6 @@
 
 param ($command)
 
-$ProgressPreference = 'SilentlyContinue'
-
 # Check if running in subprocess mode
 $params = $args
 $script:PVMSubprocessMode = $params -contains '--pvm-subprocess'
@@ -14,13 +12,7 @@ if ($script:PVMSubprocessMode) {
 }
 
 # Load functions scripts
-Get-ChildItem -Path "$PSScriptRoot\helpers\*.ps1" -Recurse -File | ForEach-Object { . $_.FullName }
-
-# Load configuration
-Get-ChildItem -Path "$PSScriptRoot\core\*.ps1" -Recurse -File | ForEach-Object { . $_.FullName }
-
-# Load actions scripts
-Get-ChildItem -Path "$PSScriptRoot\actions\*.ps1" -Recurse -File | ForEach-Object { . $_.FullName }
+. "$PSScriptRoot\import.ps1"
 
 $exitCode = Start-PVM -command $command -arguments $params
 

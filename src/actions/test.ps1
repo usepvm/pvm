@@ -427,7 +427,7 @@ function Write-TestsSummary {
     } else {
         $color = 'DarkGreen'
     }
-    $content = " Files tested : $($testSummary.Count) | Total failed tests: $totalFailedTests"
+    $content = " Files tested : $($testSummary.Length) | Total failed tests: $totalFailedTests"
     if ($totalDurationFormatted -ne -1) {
         $content += " | Total duration: $totalDurationFormatted"
     }
@@ -512,7 +512,7 @@ function Invoke-Tests {
         Show-Message -message " Coverage .............. $($options.target)%"
         Show-Message -message " Verbosity ............. $($options.verbosity)`n"
 
-        if ($testSummary.Count -eq 0) {
+        if ($testSummary.Length -eq 0) {
             Show-Error -message 'No tests found.'
             return -1
         }

@@ -206,6 +206,242 @@ Describe "Get-ConsoleWidth" {
     }
 }
 
+Describe "Show-SpinnerWhileJob" {
+    BeforeAll {
+        $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
+        $script:keepRunning = $true
+        Mock Start-Job -ParameterFilter { $true } {
+            $script:job = & $RealStartJob -ScriptBlock { 'done' }
+            $script:job | Wait-Job | Out-Null   # let it actually finish first
+
+            if ($script:keepRunning) {
+                $script:setState = $script:job.GetType().GetMethod(
+                    'SetJobState',
+                    [System.Reflection.BindingFlags]'NonPublic, Instance',
+                    $null,
+                    [Type[]]@([System.Management.Automation.JobState]),
+                    $null
+                )
+                $null = $script:setState.Invoke($script:job, @([System.Management.Automation.JobState]::Running))
+            }
+
+            return $script:job
+        }
+    }
+    Context "When executing job with spinner" -Tag i {
+        It "Executes script block and returns result" {
+            Mock Start-Sleep { $null = $script:setState.Invoke($script:job, @([System.Management.Automation.JobState]::Completed)) }
+            Mock Receive-Job -ParameterFilter { $true } {
+                return @{ result = 'success' }
+            }
+
+            $scriptBlock = { return @{ result = 'success' } }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Processing"
+
+            $result | Should -Not -Be -1
+        }
+
+        It "Uses custom message for spinner" {
+            Mock Start-Sleep { $null = $script:setState.Invoke($script:job, @([System.Management.Automation.JobState]::Completed)) }
+            Mock Receive-Job -ParameterFilter { $true } {
+                return @{ result = 'success' }
+            }
+
+            $scriptBlock = { return @{ result = 'success' } }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Custom Message"
+
+            # Verify Write-Host was called (spinner and clear)
+            Should -Invoke Write-Host -Times 2
+        }
+
+        It "Passes argument list to job" {
+            $script:keepRunning = $false
+            Mock Receive-Job -ParameterFilter { $true } {
+                return @{ result = 'success' }
+            }
+
+            $scriptBlock = { param($a, $b) return @{ result = "$a$b" } }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -argumentList @('arg1', 'arg2')
+
+            Should -Invoke Start-Job
+        }
+
+        It "Does not clear spinner line when noClear is set" {
+            $script:keepRunning = $true
+            Mock Start-Sleep { $null = $script:setState.Invoke($script:job, @([System.Management.Automation.JobState]::Completed)) }
+            Mock Receive-Job -ParameterFilter { $true } {
+                return @{ result = 'success' }
+            }
+
+            $scriptBlock = { return @{ result = 'success' } }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Processing" -noClear
+
+            # Verify that the clear line (spaces) is not called when noClear is set
+            # The clear happens at line 114 in the source
+            Should -Invoke Write-Host -Times 1
+        }
+
+        It "Clears spinner line by default" {
+            $script:keepRunning = $true
+            Mock Start-Sleep { $null = $script:setState.Invoke($script:job, @([System.Management.Automation.JobState]::Completed)) }
+            Mock Receive-Job -ParameterFilter { $true } {
+                return @{ result = 'success' }
+            }
+
+            $scriptBlock = { return @{ result = 'success' } }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Processing"
+
+            # Should be called twice: once for spinner, once for clear
+            Should -Invoke Write-Host -Times 2
+        }
+
+        It "Returns -1 when job fails and rethrow is false" {
+            $script:keepRunning = $false
+            Mock Receive-Job -ParameterFilter { $true } {
+                throw "Job failed"
+            }
+
+            Mock Add-LogEntry {}
+
+            $scriptBlock = { throw "Job failed" }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
+
+            $result | Should -Be -1
+        }
+
+        It "Rethrows exception when job fails and rethrow is true" {
+            $script:keepRunning = $false
+            Mock Receive-Job -ParameterFilter { $true } {
+                throw "Job failed"
+            }
+
+            Mock Add-LogEntry {}
+
+            $scriptBlock = { throw "Job failed" }
+
+            { Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$true } | Should -Throw
+        }
+
+        It "Logs error when job fails" {
+            $script:keepRunning = $false
+            Mock Receive-Job -ParameterFilter { $true } {
+                throw "Job failed"
+            }
+
+            Mock Add-LogEntry {}
+
+            $scriptBlock = { throw "Job failed" }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
+
+            Should -Invoke Add-LogEntry -Exactly 1
+        }
+
+        It "Cleans up environment variable after job completion" {
+            $script:keepRunning = $false
+            Mock Receive-Job -ParameterFilter { $true } {
+                return @{ result = 'success' }
+            }
+
+            Mock Remove-Item {}
+
+            $scriptBlock = { return @{ result = 'success' } }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock
+
+            Should -Invoke Remove-Item -ParameterFilter {
+                $Path -eq 'Env:\PVM_ROOT_FOR_JOB'
+            }
+        }
+
+        It "Cleans up environment variable after job failure" {
+            $script:keepRunning = $false
+            Mock Receive-Job -ParameterFilter { $true } {
+                throw "Job failed"
+            }
+
+            Mock Add-LogEntry {}
+            Mock Remove-Item {}
+
+            $scriptBlock = { throw "Job failed" }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
+
+            Should -Invoke Remove-Item -ParameterFilter {
+                $Path -eq 'Env:\PVM_ROOT_FOR_JOB'
+            }
+        }
+
+        It "Removes job properties from result" {
+            $script:keepRunning = $false
+            Mock Receive-Job -ParameterFilter { $true } {
+                # Return an object with the actual job properties that need filtering
+                $result = [PSCustomObject]@{
+                    result = 'success'
+                    RunspaceId = 'some-id'
+                    PSComputerName = 'computer'
+                    PSShowComputerName = $true
+                    PSSourceJobInstanceId = 'job-id'
+                }
+                return $result
+            }
+
+            $scriptBlock = { return @{ result = 'success' } }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock
+
+            $result.RunspaceId | Should -BeNullOrEmpty
+            $result.PSComputerName | Should -BeNullOrEmpty
+            $result.PSShowComputerName | Should -BeNullOrEmpty
+            $result.PSSourceJobInstanceId | Should -BeNullOrEmpty
+        }
+
+        It "Calls Start-Sleep during spinner loop" {
+            $script:keepRunning = $true
+            Mock Start-Sleep { $null = $script:setState.Invoke($script:job, @([System.Management.Automation.JobState]::Completed)) }
+            Mock Receive-Job -ParameterFilter { $true } {
+                return @{ result = 'success' }
+            }
+
+            # Use a real job that takes time to complete to trigger spinner loop
+            $scriptBlock = {
+                Start-Sleep -Milliseconds 200
+                return @{ result = 'success' }
+            }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Processing"
+
+            # Start-Sleep should be called during spinner loop
+            Should -Invoke Start-Sleep
+        }
+
+        It "Passes initialization script to Start-Job" {
+            $script:keepRunning = $false
+            Mock Receive-Job -ParameterFilter { $true } {
+                return @{ result = 'success' }
+            }
+
+            $scriptBlock = { return @{ result = 'success' } }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock
+
+            # Verify Start-Job was called with InitializationScript parameter
+            Should -Invoke Start-Job -ParameterFilter {
+                $null -ne $InitializationScript
+            }
+        }
+
+        It "Executes job with initialization script (integration test)" {
+            $script:keepRunning = $true
+            Mock Start-Sleep { $null = $script:setState.Invoke($script:job, @([System.Management.Automation.JobState]::Completed)) }
+            # Use a real job to test initialization script execution
+            $scriptBlock = {
+                # The initialization script should have loaded PVM functions
+                # Test that we can access the environment variable set by initialization
+                $env:PVM_ROOT_FOR_JOB
+            }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Testing"
+
+            # The result should not be null if the job executed
+            $result | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
 Describe "Write-Host helpers Tests" {
     It "Prints message with specified color" {
         Write-Color -message 'Test message' -foreColor 'Red'

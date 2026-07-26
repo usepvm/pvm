@@ -141,6 +141,6 @@ function New-EnvFile {
 
 function Wait-ForEnvEdit {
     Show-Info -message "`nEdit $PVMRoot\.env now if you want custom settings, then press Enter to continue..."
-    Read-Host | Out-Null
+    Read-Host-Wrapper | Out-Null
     $Global:PVMConfig = Get-Config -rootPath $PVMRoot
 }

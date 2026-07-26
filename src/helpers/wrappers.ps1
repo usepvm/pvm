@@ -1,4 +1,22 @@
 ﻿
+function Read-Host-Wrapper {
+    param ($prompt)
+    
+    $response = Read-Host -Prompt $prompt
+    
+    if ([string]::IsNullOrWhiteSpace($response)) {
+        return $null
+    }
+    
+    return $response.Trim()
+}
+
+function Add-Content-Wrapper {
+    param ($path, $value)
+
+    Add-Content -Path $path -Value $value -Encoding UTF8
+}
+
 function Set-Content-Wrapper {
     param ($path, $value)
 

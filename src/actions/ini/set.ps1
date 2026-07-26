@@ -47,7 +47,7 @@ function Set-IniSetting {
                 }
 
                 do {
-                    $choiceRaw = Read-Host -Prompt "`nSelect a number"
+                    $choiceRaw = Read-Host-Wrapper -prompt "`nSelect a number"
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
@@ -69,7 +69,7 @@ function Set-IniSetting {
             }
 
             if (-not $inputValue) {
-                $inputValue = Read-Host -Prompt "Enter new value for '$($selected.name)'"
+                $inputValue = Read-Host-Wrapper -prompt "Enter new value for '$($selected.name)'"
             }
 
             $newLine = if ($enable) { "$($selected.name) = $inputValue" } else { ";$($selected.name) = $inputValue" }

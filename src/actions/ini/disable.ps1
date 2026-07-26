@@ -32,7 +32,7 @@ function Disable-IniExtension {
                 }
 
                 do {
-                    $choiceRaw = Read-Host -Prompt "`nSelect a number"
+                    $choiceRaw = Read-Host-Wrapper -prompt "`nSelect a number"
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {

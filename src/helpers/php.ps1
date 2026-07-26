@@ -177,8 +177,7 @@ function Get-UserSelectedPHPVersion {
             Show-Message -message " [$index] $versionNumber $metaData $isCurrent"
             $index++
         }
-        $response = Read-Host -Prompt "`nInsert the [number] of the version you want to use (or press Enter to cancel)"
-        $response = $response.Trim()
+        $response = Read-Host-Wrapper -prompt "`nInsert the [number] of the version you want to use (or press Enter to cancel)"
         if (-not $response) {
             return @{ code = -1; message = 'Operation cancelled.'; color = 'Gray' }
         }

@@ -18,6 +18,85 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
+Describe "Read-Host-Wrapper" {
+    It "Calls Read-Host with the correct parameters" {
+        Mock Read-Host { return 'Test response' }
+
+        $prompt = "Test prompt"
+
+        $result = Read-Host-Wrapper -prompt $prompt
+        
+        $result | Should -Be 'Test response'
+        Should -Invoke Read-Host -Times 1 -ParameterFilter {
+            $Prompt -eq $prompt
+        }
+    }
+    
+    It "Returns null when Read-Host returns empty string" {
+        Mock Read-Host { return '' }
+
+        $result = Read-Host-Wrapper -prompt "Test prompt"
+
+        $result | Should -BeNullOrEmpty
+    }
+    
+    It "Returns null when Read-Host returns null" {
+        Mock Read-Host { return $null }
+
+        $result = Read-Host-Wrapper -prompt "Test prompt"
+
+        $result | Should -BeNullOrEmpty
+    }
+    
+    It "Returns null when Read-Host returns whitespace only" {
+        Mock Read-Host { return '   ' }
+
+        $result = Read-Host-Wrapper -prompt "Test prompt"
+
+        $result | Should -BeNullOrEmpty
+    }
+    
+    It "Returns trimmed value when Read-Host returns whitespace" {
+        Mock Read-Host { return ' Test response  ' }
+
+        $result = Read-Host-Wrapper -prompt "Test prompt"
+        
+        $result | Should -Be 'Test response'
+    }
+    
+    It "Throws when Read-Host throws" {
+        Mock Read-Host { throw 'Test error' }
+
+        { Read-Host-Wrapper -prompt "Test prompt" } | Should -Throw 'Test error'
+    }
+}
+
+Describe "Add-Content-Wrapper" {
+    It "Calls Add-Content with the correct parameters and UTF8 encoding" {
+        Mock Add-Content {}
+
+        $path = "$TEST_DRIVE\test.txt"
+        $content = "Test content"
+
+        Add-Content-Wrapper -path $path -value $content
+
+        Should -Invoke Add-Content -Times 1 -ParameterFilter {
+            $Path -eq $path -and
+            $Value -eq $content -and
+            ($Encoding -eq 'UTF8') -or ($Encoding.WebName -eq 'utf-8')
+        }
+    }
+    
+    It "Throws when Add-Content throws" {
+        Mock Add-Content { throw 'Test error' }
+
+        $path = "$TEST_DRIVE\test.txt"
+        $content = "Test content"
+
+        { Add-Content-Wrapper -path $path -value $content } | Should -Throw 'Test error'
+    }
+}
+
 Describe "Set-Content-Wrapper Tests" {
     It "Calls Set-Content with the correct parameters and UTF8 encoding" {
         Mock Set-Content {}

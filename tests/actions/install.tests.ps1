@@ -822,8 +822,8 @@ Describe "Environment Variable Tests" {
 
     It "Get-InstalledPHPVersions should return empty array when no directories found" {
         $PVMConfig.paths.php = "$($PVMConfig.paths.fakeStorage)\install-drive\storage\installed-php"        
-        Remove-Item -Path $PVMConfig.paths.php -Recurse -Force
         New-Item -Path $PVMConfig.paths.php -ItemType Directory -Force
+        Remove-Item -Path "$($PVMConfig.paths.php)\*" -Recurse -Force
 
         $result = Get-InstalledPHPVersions
 

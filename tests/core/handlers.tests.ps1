@@ -536,7 +536,7 @@ Describe "Invoke-Test Tests" {
     }
 
     It "Should keep grouping disabled by default" {
-        Mock Initialize-Tests { param($testsNames, $options, $exclude) return $options }
+        Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
         $result = Invoke-Test -arguments @()
 
@@ -544,7 +544,7 @@ Describe "Invoke-Test Tests" {
     }
 
     It "Should pass coverage grouping option to Initialize-Tests" {
-        Mock Initialize-Tests { param($testsNames, $options, $exclude) return $options }
+        Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
         $result = Invoke-Test -arguments @('--group=coverage')
 
@@ -603,7 +603,7 @@ Describe "Invoke-Test Tests" {
 
     Context "Pester version parsing" {
         It "Should parse --pester argument correctly" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
 
             $result = Invoke-Test -arguments @('--pester=5.5')
 
@@ -611,7 +611,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should pass null when no --pester argument" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
 
             $result = Invoke-Test -arguments @()
 
@@ -619,7 +619,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should pass 'latest' when --pester=latest is specified" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
 
             $result = Invoke-Test -arguments @('--pester=latest')
 
@@ -627,7 +627,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should pass pesterVersion to Initialize-Tests" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
 
             $result = Invoke-Test -arguments @('--pester=5.6.0')
 
@@ -637,7 +637,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should pass null pesterVersion when no --pester argument" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
 
             $result = Invoke-Test -arguments @()
 
@@ -649,7 +649,7 @@ Describe "Invoke-Test Tests" {
 
     Context "Test argument parsing" {
         It "Should filter out --pester argument from test names" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude) return $testsNames }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $testsNames }
 
             $result = Invoke-Test -arguments @('TestFile.ps1', '--pester=5.5')
 
@@ -657,7 +657,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should parse --exclude argument correctly" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude) return $exclude }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $exclude }
 
             $result = Invoke-Test -arguments @('--exclude=TestFile1.ps1,TestFile2.ps1')
 
@@ -665,7 +665,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should parse --sort argument correctly" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude) return $options }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--sort=coverage')
 
@@ -673,7 +673,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should parse --group argument correctly" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude) return $options }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--group=folder')
 
@@ -681,7 +681,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should parse --tag argument correctly" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude) return $options }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--tag=unit')
 
@@ -689,7 +689,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should parse --coverage argument with custom target" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude) return $options }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--coverage=85')
 
@@ -698,7 +698,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should parse --coverage argument without target (default $($PVMConfig.test.coverage.default))" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude) return $options }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--coverage')
 
@@ -707,7 +707,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should parse --verbosity argument correctly" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude) return $options }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--verbosity=detailed')
 
@@ -715,7 +715,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should filter out flag arguments from test names" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude) return $testsNames }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $testsNames }
 
             $result = Invoke-Test -arguments @('TestFile.ps1', '--unknown', '-x')
 
@@ -723,7 +723,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should pass non-flag arguments as test names" {
-            Mock Initialize-Tests { param($testsNames, $options, $exclude) return $testsNames }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $testsNames }
 
             $result = Invoke-Test -arguments @('TestFile1.ps1', 'TestFile2.ps1')
 

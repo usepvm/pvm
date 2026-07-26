@@ -60,7 +60,7 @@ function Get-PVMVersionFromGit {
 }
 
 function Format-Version {
-    param($version)
+    param ($version)
 
     return ($version -replace '^v', '') -replace '(\.0)+$', ''
 }

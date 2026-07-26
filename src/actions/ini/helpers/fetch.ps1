@@ -75,23 +75,29 @@ function Get-ExtensionMatchingCategories {
     $null = $html_cat.Links | Where-Object {
         if (-not $_.href) { return $false }
 
-        if ($_.href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
+        $href = $_.href
+        if ($href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
             return $false
         }
 
-        $page = 1
         $category = $matches[1] -replace '\+', ' '
-        Show-Message -message "- Checking category '$category'..."
-        do {
-            $hasMore = $false
-            $result = Get-ExtensionMatchingCategoriesByPage -extName $extName -link $_.href -page $page
-            $hasMore = $result.hasMore
-            $page++
+        $linksMatchingExtName = Show-SpinnerWhileJob -argumentList @($linksMatchingExtName, $extName, $href) -scriptBlock {
+            param ($linksMatchingExtName, $extName, $href)
 
-            if ($result.resultLinks.Count -gt 0) {
-                $linksMatchingExtName += $result.resultLinks
-            }
-        } while ($hasMore)
+            $page = 1
+            do {
+                $hasMore = $false
+                $result = Get-ExtensionMatchingCategoriesByPage -extName $extName -link $href -page $page
+                $hasMore = $result.hasMore
+                $page++
+
+                if ($result.resultLinks.Count -gt 0) {
+                    $linksMatchingExtName += $result.resultLinks
+                }
+            } while ($hasMore)
+            
+            return @{ pvmData = $linksMatchingExtName }
+        } -message "- Checking category '$category'..." -rethrow $true
 
         return $false
     }
@@ -109,12 +115,7 @@ function Get-ExtensionLinksFromURL {
     } catch {
         Show-Message -message "`nDirect link for extension '$extName' not found, Loading matching extensions..."
 
-        $linksMatchingExtName = Show-SpinnerWhileJob -argumentList @($extName) -scriptBlock {
-            param ($extName)
-
-            $data = Get-ExtensionMatchingCategories -extName $extName
-            return @{ pvmData = $data }
-        } -rethrow $true
+        $linksMatchingExtName = Get-ExtensionMatchingCategories -extName $extName
 
         if ($linksMatchingExtName.Count -eq 0) {
             Show-Error -Message "`nExtension '$extName' not found"

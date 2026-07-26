@@ -178,6 +178,14 @@ Describe "Get-ExtensionMatchingCategories Tests" {
         }
     }
 
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
+
     It "Returns matching categories links" {
         $result = Get-ExtensionMatchingCategories -extName 'mem'
 
@@ -206,11 +214,6 @@ Describe "Get-ExtensionMatchingCategories Tests" {
 Describe "Get-ExtensionLinksFromURL Tests" {
     BeforeEach {
         $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
-        Mock Show-SpinnerWhileJob {
-            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            $result = & $scriptBlock @argumentList
-            return $result.pvmData
-        }
     }
 
     It "Returns filtered links" {

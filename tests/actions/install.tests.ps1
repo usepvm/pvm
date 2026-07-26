@@ -153,8 +153,9 @@ Describe "Get-LatestPHPVersion Tests" {
         Reset-MockState
         Mock Write-Host {}
         Mock Show-SpinnerWhileJob {
-            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            return & $scriptBlock @argumentList
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
         }
     }
 
@@ -376,8 +377,9 @@ Describe "Get-PHP" {
 
     BeforeEach {
         Mock Show-SpinnerWhileJob {
-            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            return & $scriptBlock @argumentList
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
         }
     }
 
@@ -581,8 +583,9 @@ Describe "Select-Version Tests" {
 Describe "Install-PHP Integration Tests" {
     BeforeEach {
         Mock Show-SpinnerWhileJob {
-            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            return & $scriptBlock @argumentList
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
         }
         Mock Write-Host { }
         Reset-MockState
@@ -750,8 +753,9 @@ Describe "Environment Variable Tests" {
         Mock Write-Host { }
         Reset-MockState
         Mock Show-SpinnerWhileJob {
-            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            return & $scriptBlock @argumentList
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
         }
     }
 

@@ -46,7 +46,7 @@ function Get-PHPListToInstall {
     try {
         $fetchedVersionsGrouped = Get-OrUpdateCache -cacheFileName 'available_php_versions' -compute {
             return Show-SpinnerWhileJob -scriptBlock {
-                return Get-FromSource
+                return @{ pvmData = Get-FromSource }
             } -rethrow $true
         }
 

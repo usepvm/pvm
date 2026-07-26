@@ -113,10 +113,9 @@ function Show-SpinnerWhileJob {
         }
 
         $result = Receive-Job -Job $job -Wait -AutoRemoveJob -ErrorAction Stop
-        $result = $result | Select-Object -Property * -ExcludeProperty RunspaceId, PSComputerName, PSShowComputerName, PSSourceJobInstanceId
         Remove-Item Env:\PVM_ROOT_FOR_JOB -ErrorAction SilentlyContinue
-
-        return $result
+        
+        return $result.pvmData
     } catch {
         Write-Yellow -message "`r$(' ' * ($message.Length + 2))`r" -NoNewline
         Remove-Item Env:\PVM_ROOT_FOR_JOB -ErrorAction SilentlyContinue

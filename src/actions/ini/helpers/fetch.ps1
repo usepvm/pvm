@@ -112,8 +112,9 @@ function Get-ExtensionLinksFromURL {
         $linksMatchingExtName = Show-SpinnerWhileJob -argumentList @($extName) -scriptBlock {
             param ($extName)
 
-            return Get-ExtensionMatchingCategories -extName $extName
-        }
+            $data = Get-ExtensionMatchingCategories -extName $extName
+            return @{ pvmData = $data }
+        } -rethrow $true
 
         if ($linksMatchingExtName.Count -eq 0) {
             Show-Error -Message "`nExtension '$extName' not found"
@@ -189,8 +190,9 @@ function Get-ExtensionFromURL {
         return Show-SpinnerWhileJob -argumentList @($linksObj, $version) -scriptBlock {
             param ($linksObj, $version)
 
-            return Get-PackagesFromSourceLinks -extName $linksObj.extName -version $version -links $linksObj.links
-        }
+            $data = Get-PackagesFromSourceLinks -extName $linksObj.extName -version $version -links $linksObj.links
+            return @{ pvmData = $data }
+        } -rethrow $true
     }
 
     return @{

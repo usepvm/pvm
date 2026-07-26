@@ -17,7 +17,7 @@ function Get-LatestPHPVersion {
                     }
                 }
 
-                return $allVersions
+                return @{ pvmData = $allVersions }
             } -rethrow $true
         }
 
@@ -194,11 +194,11 @@ function Get-PHP {
                 $downloadUrl = "$_url/$fileName"
                 $downloadedFilePath = Get-PHPFromUrl -destination $destination -url $downloadUrl -version $versionObject
                 if ($downloadedFilePath) {
-                    return $downloadedFilePath
+                    return @{ pvmData = $downloadedFilePath }
                 }
             }
-            return $null
-        }
+            return @{ pvmData = $null }
+        } -rethrow $true
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP version $($versionObject.version)"; exception = $_ }
     }
@@ -361,8 +361,9 @@ function Install-PHP {
         $matchingVersions = Show-SpinnerWhileJob -argumentList @($version, $arch, $buildType) -scriptBlock {
             param ($version, $arch, $buildType)
 
-            return Get-PHPVersions -version $version -arch $arch -buildType $buildType
-        }
+            $data = Get-PHPVersions -version $version -arch $arch -buildType $buildType
+            return @{ pvmData = $data }
+        } -rethrow $true
 
         if ($matchingVersions.Count -eq 0) {
             $msg = "No matching PHP versions found for '$version', Check one of the following:"

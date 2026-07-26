@@ -547,8 +547,9 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
 
     BeforeEach {
         Mock Show-SpinnerWhileJob {
-            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            return & $scriptBlock @argumentList
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
         }
     }
 

@@ -100,8 +100,9 @@ Describe "Get-PHPListToInstall" {
     BeforeEach {
         $PVMConfig.paths.cache = "$TEST_DRIVE\storage\cache"
         Mock Show-SpinnerWhileJob {
-            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            return & $scriptBlock @argumentList
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
         }
     }
 
@@ -179,8 +180,9 @@ Describe "Get-AvailablePHPVersions" {
     BeforeEach {
         Mock Write-Host { }
         Mock Show-SpinnerWhileJob {
-            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            return & $scriptBlock @argumentList
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
         }
     }
 

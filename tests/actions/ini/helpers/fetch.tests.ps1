@@ -207,8 +207,9 @@ Describe "Get-ExtensionLinksFromURL Tests" {
     BeforeEach {
         $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
         Mock Show-SpinnerWhileJob {
-            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            return & $scriptBlock @argumentList
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
         }
     }
 
@@ -318,8 +319,9 @@ Describe "Get-ExtensionLinksFromURL Tests" {
 Describe "Get-ExtensionFromURL Tests" {
     BeforeEach {
         Mock Show-SpinnerWhileJob {
-            param($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            return & $scriptBlock @argumentList
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
         }
     }
 

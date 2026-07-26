@@ -97,8 +97,9 @@ function Install-XDebugExtension {
             return Show-SpinnerWhileJob -argumentList @($currentVersion) -scriptBlock {
                 param ($currentVersion)
 
-                return Get-XDebugFromUrl -url $PVMConfig.links.xdebugHistorical -version $currentVersion
-            }
+                $data = Get-XDebugFromUrl -url $PVMConfig.links.xdebugHistorical -version $currentVersion
+                return @{ pvmData = $data }
+            } -rethrow $true
         }
 
         if ($null -eq $xDebugList -or $xDebugList.Count -eq 0) {

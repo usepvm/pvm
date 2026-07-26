@@ -170,8 +170,6 @@ function Get-PHP {
     param ($versionObject)
 
     try {
-        $urls = Get-SourceUrls
-
         $fileName = $versionObject.fileName
         $version = $versionObject.version
         $buildType = $versionObject.BuildType
@@ -186,9 +184,10 @@ function Get-PHP {
 
         Show-Info -message "`nDownloading PHP $version ($buildType $arch)..."
 
-        return Show-SpinnerWhileJob -argumentList @($urls, $fileName, $destination, $versionObject) -scriptBlock {
-            param ($urls, $fileName, $destination, $versionObject)
+        return Show-SpinnerWhileJob -argumentList @($fileName, $destination, $versionObject) -scriptBlock {
+            param ($fileName, $destination, $versionObject)
 
+            $urls = Get-SourceUrls
             foreach ($key in $urls.Keys) {
                 $_url = $urls[$key]
                 $downloadUrl = "$_url/$fileName"

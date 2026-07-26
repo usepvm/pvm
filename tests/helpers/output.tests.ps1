@@ -211,7 +211,11 @@ Describe "Show-SpinnerWhileJob" {
         $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
         $script:keepRunning = $true
         Mock Start-Job -ParameterFilter { $true } {
-            param ($scriptBlock)
+            param ($scriptBlock, $initializationScript, $argumentList)
+
+            if ($initializationScript) {
+                $null = & $initializationScript
+            }
 
             $script:job = & $RealStartJob -ScriptBlock { $scriptBlock }
             $script:job | Wait-Job | Out-Null   # let it actually finish first
@@ -422,9 +426,9 @@ Describe "Show-SpinnerWhileJob" {
             $scriptBlock = { return @{ result = 'success' } }
             $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock
 
-            # Verify Start-Job was called with InitializationScript parameter
+            # Verify Start-Job was called with initializationScript parameter
             Should -Invoke Start-Job -ParameterFilter {
-                $null -ne $InitializationScript
+                $null -ne $initializationScript
             }
         }
     }

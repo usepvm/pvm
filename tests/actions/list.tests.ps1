@@ -275,15 +275,11 @@ Describe "Get-AvailablePHPVersions" {
         Mock Get-PHPListToInstall { return @{
             'Archives' = @(@{
                 Link = 'php-7.1.0-Win32-x64.zip'
-                BuildType = 'TS'
-                Arch = 'x64'
-                Version = '7.1.0'
+                BuildType = 'TS'; Arch = 'x64'; Version = '7.1.0'
             })
             'Releases' = @(@{
                 Link = 'php-7.2.0-Win32-x64.zip'
-                BuildType = 'TS'
-                Arch = 'x64'
-                Version = '7.2.0'
+                BuildType = 'TS'; Arch = 'x64'; Version = '7.2.0'
             })
         }}
         $code = Get-AvailablePHPVersions -term '7.1'
@@ -291,6 +287,16 @@ Describe "Get-AvailablePHPVersions" {
     }
 
     It "Return -1 when no available versions matching filter" {
+        Mock Get-PHPListToInstall { return @{
+            'Archives' = @(@{
+                Link = 'php-7.1.0-Win32-x64.zip'
+                BuildType = 'TS'; Arch = 'x64'; Version = '7.1.0'
+            })
+            'Releases' = @(@{
+                Link = 'php-7.2.0-Win32-x64.zip'
+                BuildType = 'TS'; Arch = 'x64'; Version = '7.2.0'
+            })
+        }}
         $code = Get-AvailablePHPVersions -term '9.1'
         $code | Should -Be -1
     }

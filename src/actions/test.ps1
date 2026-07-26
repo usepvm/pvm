@@ -433,7 +433,7 @@ function Write-TestsSummary {
     }
     Write-Color -message "$content`n" -foreColor $color
 
-    $sorted = Sort-Tests -data $testSummary -by $options.sortBy
+    $sorted = Get-SortedTests -data $testSummary -by $options.sortBy
 
     $groupExpr = switch ($options.groupBy) {
         'coverage' { { Get-CoverageGroupName -coverageRaw $_.testResultData.coverageRaw } }

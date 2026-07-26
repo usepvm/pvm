@@ -525,7 +525,7 @@ function Invoke-Tests {
     }
 }
 
-function Sort-Tests {
+function Get-SortedTests {
     param ($data, $by = $null)
 
     if ($null -ne $by) {

@@ -95,7 +95,7 @@ function Get-ExtensionMatchingCategories {
                     $linksMatchingExtName += $result.resultLinks
                 }
             } while ($hasMore)
-            
+
             return @{ pvmData = $linksMatchingExtName }
         } -message "- Checking category '$category'..." -rethrow $true
 

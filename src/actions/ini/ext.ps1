@@ -58,7 +58,7 @@ function Get-PHPExtensionsFromSource {
                 }
 
                 return @{ pvmData = $availableExtensions }
-            } -message "- Checking category '$extCategory'..." -rethrow $true
+            } -message "- Loading category '$extCategory'..." -rethrow $true
 
             return $true
         }

@@ -160,7 +160,7 @@ Describe 'Invoke-RunScripts' {
     It 'Handles mixed success and failure in subprocess' {
         Mock Get-Scripts { @{'testscript' = @('test arg1', 'test arg2')} }
         Mock Invoke-PVMSubprocess {
-            param($command, $arguments)
+            param ($command, $arguments)
             if ($arguments -eq 'arg1') { return @{ code = 0; output = '' } }
             return @{ code = 1; output = '' }
         }

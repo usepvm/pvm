@@ -99,121 +99,121 @@ function Write-Color {
 }
 
 function Write-White {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Color -message $message -foreColor White -noNewLine:$noNewLine
 }
 
 function Write-DarkGreen {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Color -message $message -foreColor DarkGreen -noNewLine:$noNewLine
 }
 
 function Write-DarkYellow {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Color -message $message -foreColor DarkYellow -noNewLine:$noNewLine
 }
 
 function Write-Yellow {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Color -message $message -foreColor Yellow -noNewLine:$noNewLine
 }
 
 function Write-Cyan {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Color -message $message -foreColor Cyan -noNewLine:$noNewLine
 }
 
 function Write-Magenta {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Color -message $message -foreColor Magenta -noNewLine:$noNewLine
 }
 
 function Write-Blue {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Color -message $message -foreColor Blue -noNewLine:$noNewLine
 }
 
 function Write-DarkGray {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Color -message $message -foreColor DarkGray -noNewLine:$noNewLine
 }
 
 function Write-Gray {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Color -message $message -foreColor Gray -noNewLine:$noNewLine
 }
 
 function Write-Default {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Show-Message -message $message -noNewLine:$noNewLine
 }
 
 function Show-Success {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-DarkGreen -message $message -noNewLine:$noNewLine
 }
 
 function Show-Error {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-DarkYellow -message $message -noNewLine:$noNewLine
 }
 
 function Show-Warning {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Yellow -message $message -noNewLine:$noNewLine
 }
 
 function Show-Info {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Cyan -message $message -noNewLine:$noNewLine
 }
 
 function Show-Header {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Magenta -message $message -noNewLine:$noNewLine
 }
 
 function Show-Section {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Blue -message $message -noNewLine:$noNewLine
 }
 
 function Show-Debug {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-DarkGray -message $message -noNewLine:$noNewLine
 }
 
 function Show-Verbose {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-Gray -message $message -noNewLine:$noNewLine
 }
 
 function Show-Value {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-White -message $message -noNewLine:$noNewLine
 }
 
 function Show-Message {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
     Write-White -message $message -noNewLine:$noNewLine
 }
@@ -223,7 +223,7 @@ function New-Line {
 }
 
 function New-Lines {
-    param($count)
+    param ($count)
 
     for ($i = 0; $i -lt $count; $i++) {
         New-Line

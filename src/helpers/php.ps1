@@ -302,7 +302,7 @@ function Get-PHPData {
 }
 
 function Test-PHPVersionFormat {
-    param($version)
+    param ($version)
 
     return $version -match '^\d+(\.\d+){0,2}$'
 }

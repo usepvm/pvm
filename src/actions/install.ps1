@@ -291,8 +291,7 @@ function Select-Version {
         $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
         Show-Message -message $msg
-        $selectedVersionInput = Read-Host -Prompt "`nInsert the [number] matching the version to install (or press Enter to cancel)"
-        $selectedVersionInput = $selectedVersionInput.Trim()
+        $selectedVersionInput = Read-Host-Wrapper -prompt "`nInsert the [number] matching the version to install (or press Enter to cancel)"
 
         if (-not $selectedVersionInput) {
             return $null
@@ -342,8 +341,7 @@ function Install-PHP {
                     $versionNumber = "$versionNumber ".PadRight($maxNameLength, '.')
                     Show-Message -message " $versionNumber $metaData $isCurrent"
                 }
-                $response = Read-Host -Prompt "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
-                $response = $response.Trim()
+                $response = Read-Host-Wrapper -prompt "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 if (Test-NoResponse -response $response) {
                     return @{ code = -1; message = 'Installation cancelled'; color = 'Gray' }
                 }

@@ -150,8 +150,7 @@ function Install-XDebugExtension {
         }
         Show-Message -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.xdebugHistorical)"
 
-        $packageIndex = Read-Host -Prompt "`nInsert the [number] you want to install"
-        $packageIndex = $packageIndex.Trim()
+        $packageIndex = Read-Host-Wrapper -prompt "`nInsert the [number] you want to install"
         if ([string]::IsNullOrWhiteSpace($packageIndex)) {
             Write-Gray -message "`nInstallation cancelled"
             return -1
@@ -172,8 +171,7 @@ function Install-XDebugExtension {
 
         if (-not $skipConfirmation) {
             if (Test-FileExists -path "$phpPath\ext\$($chosenItem.fileName)") {
-                $response = Read-Host -Prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
-                $response = $response.Trim()
+                $response = Read-Host-Wrapper -prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
                 if (Test-NoResponse -response $response) {
                     Remove-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)"
                     Write-Gray -message "`nInstallation cancelled"
@@ -331,8 +329,7 @@ function Install-Extension {
             }
             Show-Info -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.peclPackageRoot)/$extName"
 
-            $packageIndex = Read-Host -Prompt "`nInsert the [number] you want to install"
-            $packageIndex = $packageIndex.Trim()
+            $packageIndex = Read-Host-Wrapper -prompt "`nInsert the [number] you want to install"
             if ([string]::IsNullOrWhiteSpace($packageIndex)) {
                 Write-Gray -message "`nInstallation cancelled"
                 return -1
@@ -363,8 +360,7 @@ function Install-Extension {
 
         if (-not $skipConfirmation) {
             if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
-                $response = Read-Host -Prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
-                $response = $response.Trim()
+                $response = Read-Host-Wrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
                 if (Test-NoResponse -response $response) {
                     Remove-Item -Path "$($PVMConfig.paths.storage)\php\$fileNamePath" -Force -Recurse
                     Write-Gray -message "`nInstallation cancelled"

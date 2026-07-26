@@ -130,8 +130,7 @@ function Get-ExtensionLinksFromURL {
             }
 
             do {
-                $choiceRaw = Read-Host -Prompt "`nInsert the [number] you want to install"
-                $choiceRaw = $choiceRaw.Trim()
+                $choiceRaw = Read-Host-Wrapper -prompt "`nInsert the [number] you want to install"
                 if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
                     Write-Gray -message "`nInstallation cancelled"
                     return $null

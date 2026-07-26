@@ -41,7 +41,7 @@ function Add-LogEntry {
             $content += "`nMessage: $($data.exception.Exception.Message)"
             $content += "`nPosition: $($data.exception.InvocationInfo.PositionMessage)"
         }
-        Add-Content -Path $logPath -Value $content
+        Add-Content-Wrapper -path $logPath -value $content
         return 0
     } catch {
         return -1

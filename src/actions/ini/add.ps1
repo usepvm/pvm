@@ -200,7 +200,7 @@ function Install-XDebugExtension {
             Set-Content-Wrapper -path $iniPath -value $iniContent
         } else {
             $xDebugConfig = $xDebugConfig -replace '\ +'
-            Add-Content -Path $iniPath -Value $xDebugConfig
+            Add-Content-Wrapper -path $iniPath -value $xDebugConfig
         }
 
         Show-Success -message "`nXDebug installed successfully"

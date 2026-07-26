@@ -1,4 +1,10 @@
 ﻿
+function Add-Content-Wrapper {
+    param ($path, $value)
+
+    Add-Content -Path $path -Value $value -Encoding UTF8
+}
+
 function Set-Content-Wrapper {
     param ($path, $value)
 

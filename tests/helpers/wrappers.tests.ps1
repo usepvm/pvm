@@ -18,6 +18,32 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
+Describe "Add-Content-Wrapper" {
+    It "Calls Add-Content with the correct parameters and UTF8 encoding" {
+        Mock Add-Content {}
+
+        $path = "$TEST_DRIVE\test.txt"
+        $content = "Test content"
+
+        Add-Content-Wrapper -path $path -value $content
+
+        Should -Invoke Add-Content -Times 1 -ParameterFilter {
+            $Path -eq $path -and
+            $Value -eq $content -and
+            ($Encoding -eq 'UTF8') -or ($Encoding.WebName -eq 'utf-8')
+        }
+    }
+    
+    It "Throws when Add-Content throws" {
+        Mock Add-Content { throw 'Test error' }
+
+        $path = "$TEST_DRIVE\test.txt"
+        $content = "Test content"
+
+        { Add-Content-Wrapper -path $path -value $content } | Should -Throw 'Test error'
+    }
+}
+
 Describe "Set-Content-Wrapper Tests" {
     It "Calls Set-Content with the correct parameters and UTF8 encoding" {
         Mock Set-Content {}

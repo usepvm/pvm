@@ -100,6 +100,7 @@ Describe "Get-PackagesFromSourceLinks Tests" {
 
 Describe "Get-ExtensionMatchingCategories Tests" {
     BeforeAll {
+        Mock Save-CachedData { return 0 }
         Mock Get-WebResponse -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'

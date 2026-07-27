@@ -153,6 +153,7 @@ Describe "Get-PHPExtensionsFromSource" {
 
 Describe "Show-PHPExtensions" {
     BeforeAll {
+        Mock Save-CachedData { return 0 }
         Mock Get-AllPHPExtensionsStatus {
             return @(
                 @{ name = 'curl'; enabled = $true; status = 'Enabled' }

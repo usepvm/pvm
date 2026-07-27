@@ -179,6 +179,25 @@ Describe "Get-LatestPHPVersion Tests" {
         $result.BuildType | Should -Be 'TS'
     }
 
+    It "Should filter by valid url" {
+        $mockLinks = @(
+            @{ href = '/downloads/releases/php-8.3.32-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-debug-pack-8.3.32-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-devel-pack-8.3.32-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-test-pack-8.3.32.zip' }
+        )
+
+        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
+        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
+
+        $result = Get-LatestPHPVersion
+
+        $result | Should -Not -BeNullOrEmpty
+        $result.version | Should -Be '8.3.32'
+        $result.arch | Should -Be 'x64'
+        $result.BuildType | Should -Be 'ts'
+    }
+
     It "Should filter by architecture and build type" {
         $mockLinks = @(
             @{ href = '/downloads/releases/php-8.3.0-Win32-vs16-x64.zip' },

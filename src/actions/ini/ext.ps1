@@ -14,9 +14,15 @@ function Get-ExtensionCategoriesByPage {
         if ($_.href -notmatch '^/package/[A-Za-z0-9_]+$') {
             return $false
         }
+
+        $null = $_.outerHTML -match '(?s)<strong>(?<package>.*?)</strong>.*?<td[^>]*>(?<description>.*?)</td>'
+        $description = $matches['description']
+
         $extName = ($_.href -replace '/package/', '').Trim()
         $_ | Add-Member -NotePropertyName 'extName' -NotePropertyValue $extName -Force
         $_ | Add-Member -NotePropertyName 'extCategory' -NotePropertyValue $extCategory -Force
+        $_ | Add-Member -NotePropertyName 'description' -NotePropertyValue $description -Force
+
         $availableExtensions += $_
         return $true
     }

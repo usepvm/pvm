@@ -167,7 +167,7 @@ Describe "Show-PHPExtensions" {
         }
 
         function Get-ExtensionList {
-            return @{
+            return [pscustomobject] @{
                 Authentication = @(
                     @{
                         outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
@@ -175,6 +175,7 @@ Describe "Show-PHPExtensions" {
                         href        = '/package/courierauth';
                         extName     = 'courierauth';
                         extCategory = 'Authentication';
+                        description = 'Courier Authentication'
                     },
                     @{
                         outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
@@ -182,6 +183,7 @@ Describe "Show-PHPExtensions" {
                         href        = '/package/krb5';
                         extName     = 'krb5';
                         extCategory = 'Authentication'
+                        description = 'Kerberos 5'
                     }
                 )
                 Caching        = @(
@@ -191,6 +193,7 @@ Describe "Show-PHPExtensions" {
                         href        = '/package/APC';
                         extName     = 'APC';
                         extCategory = 'Caching'
+                        description = 'APC'
                     }
                     @{
                         outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
@@ -198,6 +201,7 @@ Describe "Show-PHPExtensions" {
                         href        = '/package/APCu';
                         extName     = 'APCu';
                         extCategory = 'Caching'
+                        description = 'APCu'
                     }
                 )
             }
@@ -305,8 +309,9 @@ Describe "Show-PHPExtensions" {
     It "Returns -1 when available extensions count is 0" {
         Mock Test-CanUseCache { return $false }
         Mock Get-OrUpdateCache -ParameterFilter { $cacheFileName -eq 'available_extensions' } { return @{} }
-        Mock Write-Host {}
+
         $code = Show-PHPExtensions -iniPath $testIniPath -available $true
+
         $code | Should -Be -1
         Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nNo extensions found"

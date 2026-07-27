@@ -101,7 +101,7 @@ function Show-PHPExtensions {
             $availableExtensions.PSObject.Properties | ForEach-Object {
                 $searchResult = $_.Value
                 if ($term) {
-                    if ($_.Key -notlike "*$term*") {
+                    if ($_.Name -notlike "*$term*") {
                         # Search the list if the category doesn't match
                         $searchResult = $searchResult | Where-Object {
                             $_.extName -like "*$term*"

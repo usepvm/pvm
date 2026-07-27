@@ -272,4 +272,42 @@ Describe "Get-OrUpdateCache" {
         Should -Invoke Example -Exactly 1
         Should -Invoke Save-CachedData -Exactly 1
     }
+
+    It "Checks for data type 'array' before saving to cache" {
+        function Example { return @{} }
+        Mock Example {
+            return @(
+                @('php-8.1.0-Win32-x64.zip')
+                @('php-8.2.0-Win32-x64.zip')
+            )
+        }
+        Mock Save-CachedData { return 0 }
+        Mock Test-CanUseCache { return $false }
+
+        $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
+            Example
+        }
+
+        Should -Invoke Example -Exactly 1
+        Should -Invoke Save-CachedData -Exactly 1
+    }
+
+    It "Checks for data type 'pscustomobject' before saving to cache" {
+        function Example { return @{} }
+        Mock Example {
+            return [pscustomobject] @{
+                'Archives' = @('php-8.1.0-Win32-x64.zip')
+                'Releases' = @('php-8.2.0-Win32-x64.zip')
+            }
+        }
+        Mock Save-CachedData { return 0 }
+        Mock Test-CanUseCache { return $false }
+
+        $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
+            Example
+        }
+
+        Should -Invoke Example -Exactly 1
+        Should -Invoke Save-CachedData -Exactly 1
+    }
 }

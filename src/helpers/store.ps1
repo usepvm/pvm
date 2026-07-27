@@ -108,7 +108,15 @@ function Get-OrUpdateCache {
     $data = & $compute
 
     if ($null -ne $data) {
-        $null = Save-CachedData -cacheFileName $cacheFileName -data $data -depth $depth
+        $hasData = if ($data -is [hashtable] -or $data -is [array]) {
+            $data.Count -gt 0
+        } else {
+            $data.PSObject.Properties.Count -gt 0
+        }
+
+        if ($hasData) {
+            $null = Save-CachedData -cacheFileName $cacheFileName -data $data -depth $depth
+        }
     }
 
     return $data

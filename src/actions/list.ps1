@@ -29,12 +29,6 @@ function Get-FromSource {
             $fetchedVersionsGrouped[$key] = $filteredLinks
         }
 
-        if ($fetchedVersionsGrouped.Count -eq 0 -or
-            ($fetchedVersionsGrouped['Archives'].Count -eq 0 -and $fetchedVersionsGrouped['Releases'].Count -eq 0)) {
-            Show-Error -message "`nNo PHP versions found in the source."
-            return @{}
-        }
-
         return $fetchedVersionsGrouped
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch PHP versions from source"; exception = $_ }
@@ -45,14 +39,8 @@ function Get-FromSource {
 function Get-PHPListToInstall {
     try {
         $fetchedVersionsGrouped = Get-OrUpdateCache -cacheFileName 'available_php_versions' -compute {
-            return Get-FromSource
+            return [pscustomobject] (Get-FromSource)
         }
-
-        if (-not $fetchedVersionsGrouped) {
-            return @{}
-        }
-
-        $fetchedVersionsGrouped = [pscustomobject] $fetchedVersionsGrouped
 
         return $fetchedVersionsGrouped
     } catch {
@@ -69,7 +57,9 @@ function Get-AvailablePHPVersions {
 
         $fetchedVersionsGrouped = Get-PHPListToInstall
 
-        if ($fetchedVersionsGrouped.Count -eq 0) {
+        if (-not $fetchedVersionsGrouped -or
+            $fetchedVersionsGrouped.Count -eq 0 -or
+            ($fetchedVersionsGrouped.Archives.Count -eq 0 -and $fetchedVersionsGrouped.Releases.Count -eq 0)) {
             Show-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
             return -1
         }

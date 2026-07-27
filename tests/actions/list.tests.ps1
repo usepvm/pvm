@@ -82,7 +82,9 @@ Describe "Get-FromSource" {
         $result = Get-FromSource
 
         $result | Should -BeOfType [hashtable]
-        $result.Count | Should -Be 0
+        $result.Count | Should -Be 2
+        $result['Archives'].Count | Should -Be 0
+        $result['Releases'].Count | Should -Be 0
     }
 
     It "Should handle web request failure" {

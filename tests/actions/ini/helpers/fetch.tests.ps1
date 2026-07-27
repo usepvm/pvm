@@ -16,49 +16,6 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Get-ExtensionMatchingCategoriesByPage Tests" {
-    It "Returns matching categories links by page" {
-        Mock Get-WebResponse -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
-            return @{
-                Content = 'Mocked PHP extension Caching content'
-                Links = @(
-                    @{ href = '/package/APC' }
-                    @{ href = '/package/APCu' }
-                    @{ href = '/package/memcache' }
-                    @{ href = '/package/memcached' }
-                )
-            }
-        }
-
-        $result = Get-ExtensionMatchingCategoriesByPage -extName 'mem' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
-
-        $result.resultLinks.Count | Should -Be 2
-        $result.resultLinks[0].href | Should -Be '/package/memcache'
-        $result.resultLinks[1].href | Should -Be '/package/memcached'
-        $result.hasMore | Should -Be $false
-    }
-
-    It "Sets hasMore to true when next page link exists" {
-        Mock Get-WebResponse -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
-            return @{
-                Content = 'Mocked PHP extension Caching content'
-                Links = @(
-                    @{ href = $null }
-                    @{ href = '/packages.php?catpid=3&amp;catname=Caching&pageID=2' }
-                    @{ href = '/package/APC' }
-                    @{ href = '/package/APCu' }
-                    @{ href = '/package/memcache' }
-                    @{ href = '/package/memcached' }
-                )
-            }
-        }
-
-        $result = Get-ExtensionMatchingCategoriesByPage -extName 'mem' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
-
-        $result.hasMore | Should -Be $true
-    }
-}
-
 Describe "Select-ExtensionLinksFromURL" {
     It "Returns filtered links for given extension" {
         Mock Get-WebResponse -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
@@ -158,24 +115,66 @@ Describe "Get-ExtensionMatchingCategories Tests" {
                 )
             }
         }
-        Mock Get-ExtensionMatchingCategoriesByPage {
-            param ($link)
-            if ($link -eq '/packages.php?catpid=1&amp;catname=Authentication') {
-                return @{ hasMore = $false; resultLinks = @() }
-            }
-            if ($link -eq '/packages.php?catpid=3&amp;catname=Caching') {
-                return @{
-                    hasMore = $false
-                    resultLinks = @(
-                        @{ href = '/package/memcache' }
-                        @{ href = '/package/memcached' }
-                    )
-                }
-            }
-            if ($link -eq '/packages.php?catpid=7&amp;catname=EmptyCat') {
-                return @{ hasMore = $false; resultLinks = @() }
+
+        function Get-ExtensionList {
+            return [pscustomobject] @{
+                Authentication = @(
+                    @{
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/courierauth';
+                        extName     = 'courierauth';
+                        extCategory = 'Authentication';
+                        description = 'Courier Authentication'
+                    },
+                    @{
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/krb5';
+                        extName     = 'krb5';
+                        extCategory = 'Authentication'
+                        description = 'Kerberos 5'
+                    }
+                )
+                Caching        = @(
+                    @{
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/APC';
+                        extName     = 'APC';
+                        extCategory = 'Caching'
+                        description = 'APC'
+                    }
+                    @{
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/APCu';
+                        extName     = 'APCu';
+                        extCategory = 'Caching'
+                        description = 'APCu'
+                    }
+                    @{
+                        outerHTML   = '<a href="/package/memcache"><strong>memcache</strong></a>';
+                        tagName     = 'A';
+                        href = '/package/memcache'
+                        extName     = 'memcache';
+                        extCategory = 'Caching'
+                        description = 'memcache'
+                    }
+                    @{
+                        outerHTML   = '<a href="/package/memcached"><strong>memcached</strong></a>';
+                        tagName     = 'A';
+                        href = '/package/memcached'
+                        extName     = 'memcached';
+                        extCategory = 'Caching'
+                        description = 'memcached'
+                    }
+
+                )
             }
         }
+        Mock Get-DataFromCache { return Get-ExtensionList }
+        Mock Get-PHPExtensionsFromSource -MockWith { return Get-ExtensionList }
     }
 
     It "Returns matching categories links" {
@@ -186,20 +185,15 @@ Describe "Get-ExtensionMatchingCategories Tests" {
         $result[1].href | Should -Be '/package/memcached'
     }
 
-    It "Loops for next page when hasMore is true" {
-        Mock Get-ExtensionMatchingCategoriesByPage {
-            if ($link -eq '/packages.php?catpid=3&amp;catname=Caching') {
-                if ($page -eq 1) {
-                    return @{ hasMore = $true; resultLinks = @( @{ href = '/package/memcache' } ) }
-                } else {
-                    return @{ hasMore = $false; resultLinks = @( @{ href = '/package/memcached' } ) }
-                }
-            }
-        }
+    It "Displays matching extensions from source when cache is empty" {
+        Mock Test-CanUseCache { return $true }
+        Mock Get-DataFromCache { return @{} }
 
         $result = Get-ExtensionMatchingCategories -extName 'mem'
 
         $result.Count | Should -Be 2
+        Should -Invoke Get-DataFromCache -Exactly 1
+        Should -Invoke Get-PHPExtensionsFromSource -Exactly 1
     }
 }
 
@@ -243,7 +237,7 @@ Describe "Get-ExtensionLinksFromURL Tests" {
         }
 
         It "Takes the only link found" {
-            Mock Get-ExtensionMatchingCategories { return @( @{ href = '/package/memcache' } ) }
+            Mock Get-ExtensionMatchingCategories { return @( @{ href = '/package/memcache'; extName = 'memcache' } ) }
 
             $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
 
@@ -255,9 +249,14 @@ Describe "Get-ExtensionLinksFromURL Tests" {
     Context "When multiple matching categories links found" {
         BeforeEach {
             Mock Get-ExtensionMatchingCategories { return @(
-                @{ href = '/package/memcache' },
-                @{ href = '/package/memcached' }
+                @{ href = '/package/memcache'; extName = 'memcache' },
+                @{ href = '/package/memcached'; extName = 'memcached' }
             ) }
+            Mock Select-ExtensionLinksFromURL -ParameterFilter { $extName -eq 'memcache' } {
+                @{ href = '/package/memcache/3.4.0/windows' },
+                @{ href = '/package/memcache/3.3.0/windows' },
+                @{ href = '/package/memcache/3.2.0/windows' }
+            }
         }
 
         It "Prompts user to select link when multiple found and returns selected" {

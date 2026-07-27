@@ -1,24 +1,3 @@
-﻿
-function Get-ExtensionMatchingCategoriesByPage {
-    param ($extName, $link, $page = 1)
-
-    $html = Get-WebResponse -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
-    $hasMore = $false
-    $resultLinks = $html.Links | Where-Object {
-        if (-not $_.href) { return $false }
-        if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+&pageID=(\d+)$') {
-            $hasMore = ($page -eq ($matches[1] - 1))
-            return $false
-        }
-
-        return ($_.href -like "/package/*$extName*")
-    }
-
-    return @{
-        hasMore     = $hasMore
-        resultLinks = $resultLinks
-    }
-}
 
 function Select-ExtensionLinksFromURL {
     param ($extName)
@@ -70,36 +49,21 @@ function Get-PackagesFromSourceLinks {
 function Get-ExtensionMatchingCategories {
     param ($extName)
 
-    $html_cat = Get-WebResponse -uri $PVMConfig.links.peclPackages
+    $availableExtensions = Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
+        return [pscustomobject] (Get-PHPExtensionsFromSource)
+    }
     $linksMatchingExtName = @()
-    $null = $html_cat.Links | Where-Object {
-        if (-not $_.href) { return $false }
-
-        $href = $_.href
-        if ($href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
-            return $false
+    $availableExtensions.PSObject.Properties | ForEach-Object {
+        $extensionsList = $_.Value
+        if ($extensionsList.Count -eq 0) {
+            return
         }
 
-        $category = $matches[1] -replace '\+', ' '
-        $linksMatchingExtName = Show-SpinnerWhileJob -argumentList @($linksMatchingExtName, $extName, $href) -scriptBlock {
-            param ($linksMatchingExtName, $extName, $href)
-
-            $page = 1
-            do {
-                $hasMore = $false
-                $result = Get-ExtensionMatchingCategoriesByPage -extName $extName -link $href -page $page
-                $hasMore = $result.hasMore
-                $page++
-
-                if ($result.resultLinks.Count -gt 0) {
-                    $linksMatchingExtName += $result.resultLinks
-                }
-            } while ($hasMore)
-
-            return @{ pvmData = $linksMatchingExtName }
-        } -message "- Checking category '$category'..." -rethrow $true
-
-        return $false
+        return $extensionsList | Where-Object {
+            if ($_.extName -like "*$extName*" -or $_.description -like "*$extName*") {
+                $linksMatchingExtName += $_
+            }
+        }
     }
 
     return $linksMatchingExtName
@@ -117,20 +81,20 @@ function Get-ExtensionLinksFromURL {
 
         $linksMatchingExtName = Get-ExtensionMatchingCategories -extName $extName
 
-        if ($linksMatchingExtName.Count -eq 0) {
+        if ($linksMatchingExtName.Length -eq 0) {
             Show-Error -Message "`nExtension '$extName' not found"
             return $null
         }
 
-        if ($linksMatchingExtName.Count -eq 1) {
+        if ($linksMatchingExtName.Length -eq 1) {
             $chosenItem = $($linksMatchingExtName)
-            $extName = $chosenItem.href -replace '/package/', ''
+            $extName = $chosenItem.extName
             Show-Message -message "`nMatching found : '$extName'"
         } else {
             Show-Info -message "`nMatching '$extName' extension:"
             $index = 0
             $linksMatchingExtName | ForEach-Object {
-                $extItem = $_.href -replace '/package/', ''
+                $extItem = $_.extName
                 Show-Message -message "[$index] $extItem"
                 $index++
             }
@@ -163,7 +127,7 @@ function Get-ExtensionLinksFromURL {
             }
         }
 
-        $extName = $chosenItem.href -replace '/package/', ''
+        $extName = $chosenItem.extName
         Show-Message -message "`nLoading links for '$extName'..."
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
             return Select-ExtensionLinksFromURL -extName $extName

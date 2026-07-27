@@ -152,6 +152,7 @@ Describe "Get-LatestPHPVersion Tests" {
     BeforeEach {
         Reset-MockState
         Mock Write-Host {}
+        Mock Save-CachedData { return 0 }
         Mock Show-SpinnerWhileJob {
             param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
             $result = & $scriptBlock @argumentList

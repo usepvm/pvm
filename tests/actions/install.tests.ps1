@@ -285,6 +285,14 @@ Describe "Get-LatestPHPVersion Tests" {
 
         $result | Should -BeNullOrEmpty
     }
+
+    It "Should return empty array when exceptions occur in Get-LatestPHPVersionFromUrl" {
+        Mock Get-LatestPHPVersionFromUrl { throw 'Test exception' }
+
+        $result = Get-LatestPHPVersion
+
+        $result | Should -BeNullOrEmpty
+    }
 }
 
 Describe "Get-PHPVersionsFromUrl Tests" {

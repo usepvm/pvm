@@ -41,28 +41,33 @@ function Get-LatestPHPVersion {
 function Get-LatestPHPVersionFromUrl {
     param ($url)
 
-    $html = Get-WebResponse -uri $url
-    $links = $html.Links
+    try {
+        $html = Get-WebResponse -uri $url
+        $links = $html.Links
 
-    $allUrlVersions = @()
-    $null = $links | Where-Object {
-        if ($_.href -match 'php-debug') { return $false }
-        if ($_.href -match 'php-devel') { return $false }
-        if ($_.href -notmatch 'php-\d+(\.\d+)*-(?:nts-)?win.*\.zip$') { return $false }
+        $allUrlVersions = @()
+        $null = $links | Where-Object {
+            if ($_.href -match 'php-debug') { return $false }
+            if ($_.href -match 'php-devel') { return $false }
+            if ($_.href -notmatch 'php-\d+(\.\d+)*-(?:nts-)?win.*\.zip$') { return $false }
 
-        $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
-        $fileName = $_.href -split '/'
-        $fileName = $fileName[$fileName.Count - 1]
-        $allUrlVersions += @{
-            href      = $_.href
-            version   = $version
-            fileName  = $fileName
-            BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
-            arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+            $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
+            $fileName = $_.href -split '/'
+            $fileName = $fileName[$fileName.Count - 1]
+            $allUrlVersions += @{
+                href      = $_.href
+                version   = $version
+                fileName  = $fileName
+                BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
+                arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+            }
         }
-    }
 
-    return $allUrlVersions
+        return $allUrlVersions
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get latest PHP version from $url"; exception = $_ }
+        return @()
+    }
 }
 
 function Get-PHPVersionsFromUrl {

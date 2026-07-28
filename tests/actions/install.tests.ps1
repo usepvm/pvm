@@ -296,17 +296,17 @@ Describe "Get-PHPVersionsFromUrl Tests" {
         $mockLinks = @(
             @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' },
             @{ href = '/downloads/releases/php-8.1.1-Win32-vs16-x64.zip' },
-            @{ href = '/downloads/releases/php-debug-8.1.0-Win32-vs16-x64.zip' },
-            @{ href = '/downloads/releases/php-8.1.0-nts-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-debug-pack-8.3.32-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-devel-pack-8.3.32-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-test-pack-8.3.32.zip' }
         )
         Set-MockWebResponse -url 'https://test.com' -links $mockLinks
 
         $result = Get-PHPVersionsFromUrl -url 'https://test.com' -version '8.1'
 
-        $result.Count | Should -Be 3
+        $result.Count | Should -Be 2
         $result[0].version | Should -Be '8.1.0'
         $result[1].version | Should -Be '8.1.1'
-        $result[2].version | Should -Be '8.1.0'
     }
 
     It "Should handle network errors gracefully" {

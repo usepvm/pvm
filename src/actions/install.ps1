@@ -72,22 +72,18 @@ function Get-PHPVersionsFromUrl {
         $html = Get-WebResponse -uri $url
         $links = $html.Links
 
-        # Filter the links to find versions that match the given version
-        $filteredLinks = $links | Where-Object {
-            $_.href -match "php-$version(\.\d+)*-(?:nts-)?win.*\.zip$" -and
-            $_.href -notmatch 'php-debug' -and
-            $_.href -notmatch 'php-devel' # -and $_.href -notmatch "nts"
-        }
-
-        # Return the filtered links (PHP version names)
         $formattedList = @()
-        $filteredLinks = $filteredLinks | ForEach-Object {
-            $version = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
+        $null = $links | Where-Object {
+            if ($_.href -match 'php-debug')  { return $false }
+            if ($_.href -match 'php-devel')  { return $false }
+            if ($_.href -notmatch "php-$version(\.\d+)*-(?:nts-)?win.*\.zip$") { return $false }
+
+            $fileVersion = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
             $fileName = $_.href -split '/'
             $fileName = $fileName[$fileName.Count - 1]
             $formattedList += @{
                 href      = $_.href
-                version   = $version
+                version   = $fileVersion
                 fileName  = $fileName
                 BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
                 arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')

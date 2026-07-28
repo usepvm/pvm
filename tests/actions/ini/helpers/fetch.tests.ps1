@@ -178,6 +178,14 @@ Describe "Get-ExtensionMatchingCategories Tests" {
         Mock Get-PHPExtensionsFromSource -MockWith { return Get-ExtensionList }
     }
 
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
+
     It "Returns matching categories links" {
         $result = Get-ExtensionMatchingCategories -extName 'mem'
 
@@ -312,6 +320,14 @@ Describe "Get-ExtensionLinksFromURL Tests" {
 }
 
 Describe "Get-ExtensionFromURL Tests" {
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
+
     It "Should parse extension versions correctly" {
         Mock Test-CanUseCache { return $false }
         Mock Get-ExtensionLinksFromURL {

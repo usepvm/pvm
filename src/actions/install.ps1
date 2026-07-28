@@ -4,19 +4,21 @@ function Get-LatestPHPVersion {
 
     try {
         $versionsList = Get-OrUpdateCache -cacheFileName 'latest_php_versions' -compute {
-            $urls = Get-SourceUrls
-            $allVersions = @()
+            return Show-SpinnerWhileJob -scriptBlock {
+                $urls = Get-SourceUrls
+                $allVersions = @()
 
-            foreach ($key in $urls.Keys) {
-                try {
-                    $url = $urls[$key]
-                    $allVersions += Get-LatestPHPVersionFromUrl -url $url
-                } catch {
-                    continue
+                foreach ($key in $urls.Keys) {
+                    try {
+                        $url = $urls[$key]
+                        $allVersions += Get-LatestPHPVersionFromUrl -url $url
+                    } catch {
+                        continue
+                    }
                 }
-            }
 
-            return $allVersions
+                return @{ pvmData = $allVersions }
+            } -rethrow $true
         }
 
         if ($arch) {
@@ -166,8 +168,6 @@ function Get-PHP {
     param ($versionObject)
 
     try {
-        $urls = Get-SourceUrls
-
         $fileName = $versionObject.fileName
         $version = $versionObject.version
         $buildType = $versionObject.BuildType
@@ -182,15 +182,20 @@ function Get-PHP {
 
         Show-Info -message "`nDownloading PHP $version ($buildType $arch)..."
 
-        foreach ($key in $urls.Keys) {
-            $_url = $urls[$key]
-            $downloadUrl = "$_url/$fileName"
-            $downloadedFilePath = Get-PHPFromUrl -destination $destination -url $downloadUrl -version $versionObject
+        return Show-SpinnerWhileJob -argumentList @($fileName, $destination, $versionObject) -scriptBlock {
+            param ($fileName, $destination, $versionObject)
 
-            if ($downloadedFilePath) {
-                return $downloadedFilePath
+            $urls = Get-SourceUrls
+            foreach ($key in $urls.Keys) {
+                $_url = $urls[$key]
+                $downloadUrl = "$_url/$fileName"
+                $downloadedFilePath = Get-PHPFromUrl -destination $destination -url $downloadUrl -version $versionObject
+                if ($downloadedFilePath) {
+                    return @{ pvmData = $downloadedFilePath }
+                }
             }
-        }
+            return @{ pvmData = $null }
+        } -rethrow $true
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP version $($versionObject.version)"; exception = $_ }
     }
@@ -348,7 +353,12 @@ function Install-PHP {
         }
 
         Show-Message -message "`nLoading the matching versions..."
-        $matchingVersions = Get-PHPVersions -version $version -arch $arch -buildType $buildType
+        $matchingVersions = Show-SpinnerWhileJob -argumentList @($version, $arch, $buildType) -scriptBlock {
+            param ($version, $arch, $buildType)
+
+            $data = Get-PHPVersions -version $version -arch $arch -buildType $buildType
+            return @{ pvmData = $data }
+        } -rethrow $true
 
         if ($matchingVersions.Count -eq 0) {
             $msg = "No matching PHP versions found for '$version', Check one of the following:"

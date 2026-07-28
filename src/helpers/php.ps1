@@ -101,19 +101,21 @@ function Update-InstalledPHPVersionsCache {
 }
 
 function Get-InstalledPHPVersionsFromDisk {
-    $directories = Get-AllSubdirectories -path $PVMConfig.paths.php
-    $installedVersions = $directories | ForEach-Object {
-        if (Test-FileExists -path "$($_.FullName)\php.exe") {
-            $phpInfo = Get-PHPInstallInfo -path $_.FullName
+    return Show-SpinnerWhileJob -scriptBlock {
+        $directories = Get-AllSubdirectories -path $PVMConfig.paths.php
+        $installedVersions = $directories | ForEach-Object {
+            if (Test-FileExists -path "$($_.FullName)\php.exe") {
+                $phpInfo = Get-PHPInstallInfo -path $_.FullName
 
-            return $phpInfo
+                return $phpInfo
+            }
+            return $null
         }
-        return $null
+
+        $installedVersions = ($installedVersions | Sort-Object { [version]$_.Version })
+
+        return @{ pvmData = $installedVersions }
     }
-
-    $installedVersions = ($installedVersions | Sort-Object { [version]$_.Version })
-
-    return $installedVersions
 }
 
 function Get-InstalledPHPVersions {

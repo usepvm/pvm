@@ -1,4 +1,4 @@
-﻿
+
 function Select-ExtensionLinksFromURL {
     param ($extName)
 
@@ -151,7 +151,12 @@ function Get-ExtensionFromURL {
     }
 
     $formattedList = Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_php_$version" -compute {
-        return Get-PackagesFromSourceLinks -extName $linksObj.extName -version $version -links $linksObj.links
+        return Show-SpinnerWhileJob -argumentList @($linksObj, $version) -scriptBlock {
+            param ($linksObj, $version)
+
+            $data = Get-PackagesFromSourceLinks -extName $linksObj.extName -version $version -links $linksObj.links
+            return @{ pvmData = $data }
+        } -rethrow $true
     }
 
     return @{

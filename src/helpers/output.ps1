@@ -1,4 +1,4 @@
-
+﻿
 function Show-MsgByExitCode {
     param ($result, $message = $null)
 
@@ -82,6 +82,50 @@ function Format-Seconds {
 
 function Get-ConsoleWidth {
     return $Host.UI.RawUI.WindowSize.Width
+}
+
+function Show-SpinnerWhileJob {
+    param ($scriptBlock, $message = "Working", [switch]$noClear, $argumentList = @(), $rethrow = $false)
+
+    $spinner = @('|', '/', '-', '\')
+
+    try {
+        # Create initialization script to load all PVM functions into the job
+        $env:PVM_ROOT_FOR_JOB = $PVMRoot
+        $initScript = {
+            . "$($env:PVM_ROOT_FOR_JOB)\src\import.ps1"
+        }
+
+        # $job = Start-Job -ScriptBlock $scriptBlock -InitializationScript $initScript -ArgumentList (,$argumentList)
+        $job = Start-Job -ScriptBlock $scriptBlock -InitializationScript $initScript -ArgumentList $argumentList
+
+        $i = 0
+        while ($job.State -eq 'Running') {
+            Show-Message -message "`r$message $($spinner[$i % $spinner.Length])" -NoNewline
+            Start-Sleep -Milliseconds 100
+            $i++
+        }
+
+        # Clear the spinner line
+        if (-not $noClear) {
+            Show-Message -message "`r$(' ' * ($message.Length + 2))`r" -NoNewline
+        }
+
+        $result = Receive-Job -Job $job -Wait -AutoRemoveJob -ErrorAction Stop
+        Remove-Item Env:\PVM_ROOT_FOR_JOB -ErrorAction SilentlyContinue
+
+        return $result.pvmData
+    } catch {
+        Write-Yellow -message "`r$(' ' * ($message.Length + 2))`r" -NoNewline
+        Remove-Item Env:\PVM_ROOT_FOR_JOB -ErrorAction SilentlyContinue
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show spinner while job"; exception = $_ }
+
+        if ($rethrow) {
+            throw $_
+        }
+
+        return -1
+    }
 }
 
 function Write-Color {

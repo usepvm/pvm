@@ -161,6 +161,11 @@ Describe "Get-XDebugFromUrl Tests" {
 
 Describe "Install-XDebugExtension" {
     BeforeAll {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
         Mock Get-CurrentPHPVersion { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.1.0" } }
         Mock Get-XDebugFromUrl {
             return @(
@@ -635,6 +640,11 @@ Describe "Install-Extension" {
     }
 
     BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
         $script:getRandomFile = $false
         $script:MockFileSystem.DownloadFails = $false
         $script:MockFileSystem.WebResponses = @{

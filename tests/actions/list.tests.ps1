@@ -33,6 +33,11 @@ AfterAll {
 
 Describe "Get-FromSource" {
     BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
         # Clean test directory
         if (Test-Path "$TEST_DRIVE\data") {
             Remove-Item -Path "$TEST_DRIVE\data" -Recurse -Force
@@ -176,6 +181,11 @@ Describe "Get-PHPListToInstall" {
 Describe "Get-AvailablePHPVersions" {
     BeforeEach {
         Mock Write-Host { }
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
     }
 
     It "Should handle x86 architecture" {

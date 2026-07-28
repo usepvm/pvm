@@ -139,6 +139,14 @@ Describe "Get-PHPExtensionsFromSource" {
         }
     }
 
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
+
     It "Returns list of available extensions" {
         $list = Get-PHPExtensionsFromSource
         $list.Count | Should -Be 3 # include xdebug category

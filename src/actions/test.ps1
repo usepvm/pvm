@@ -151,11 +151,11 @@ function Get-AllTestNames {
 
     $root = Get-PVMRootDirectory
 
-    return Get-ChildItem -Path "$root\tests\*.tests.ps1" -Recurse -File | Where-Object {
-        $name = $_.Name -replace '\.tests\.ps1$', ''
-        -not ($exclude -contains $name)
-    } | ForEach-Object {
-        $_.Name -replace '\.tests\.ps1$', ''
+    return Get-ChildItem -Path "$root\tests" -Recurse -File -Filter '*.tests.ps1' | ForEach-Object {
+        $name = $_.BaseName -replace '\.tests$'
+        if ($name -notin $exclude) {
+            return $name
+        }
     }
 }
 

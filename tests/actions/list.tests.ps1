@@ -49,12 +49,14 @@ Describe "Get-FromSource" {
     It "Should fetch and filter PHP versions from source" {
         # Mock web response
         $mockLinks = @(
+            @{ href = $null },
             @{ href = 'php-8.2.0-Win32-x64.zip' },
             @{ href = 'php-8.1.5-Win32-x64.zip' },
             @{ href = 'php-7.4.33-Win32-x64.zip' },
             @{ href = 'php-8.2.0-Win32-x86.zip' },
             @{ href = 'php-debug-8.2.0-Win32-x64.zip' },
             @{ href = 'php-devel-8.2.0-Win32-x64.zip' },
+            @{ href = 'php-test-pack-8.3.32.zip' }
             @{ href = 'php-8.2.0-nts-Win32-x64.zip' }
         )
 

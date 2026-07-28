@@ -10,26 +10,26 @@ function Get-FromSource {
 
                 # Filter the links to find versions that match the given version
                 $filteredLinks = @()
-                $links | ForEach-Object {
-                    if ($_.href -match "php-\d+\.\d+\.\d+(?:-\d+)?-(?:nts-)?Win32.*\.zip$" -and
-                        $_.href -notmatch 'php-debug' -and
-                        $_.href -notmatch 'php-devel' # -and $_.href -notmatch "nts"
-                    ) {
-                        $fileName = $_.href -split '/'
-                        $fileName = $fileName[$fileName.Count - 1]
+                $null = $links | Where-Object {
+                    if (-not $_.href) { return $false }
+                    if ($_.href -match 'php-debug') { return $false }
+                    if ($_.href -match 'php-devel') { return $false }
+                    if ($_.href -notmatch "php-\d+\.\d+\.\d+(?:-\d+)?-(?:nts-)?Win32.*\.zip$") { return $false }
 
-                        $filteredLinks += @{
-                            Version   = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
-                            Arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
-                            BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
-                            Link      = $_.href
-                        }
+                    $fileName = $_.href -split '/'
+                    $fileName = $fileName[$fileName.Count - 1]
+
+                    $filteredLinks += @{
+                        Version   = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
+                        Arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                        BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
+                        Link      = $_.href
                     }
                 }
                 # Return the filtered links (PHP version names)
                 $fetchedVersionsGrouped[$key] = $filteredLinks
             }
-            
+
             return @{ pvmData = $fetchedVersionsGrouped }
         } -rethrow $true
 

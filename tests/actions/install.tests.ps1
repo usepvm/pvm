@@ -148,6 +148,54 @@ Describe "Get-SourceUrls Tests" {
     }
 }
 
+Describe "Get-LatestPHPVersionFromUrl Tests" {
+    BeforeEach {
+        Reset-MockState
+    }
+
+    It "Should parse PHP versions correctly" {
+        $mockLinks = @(
+            @{ href = $null },
+            @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-8.1.1-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-debug-pack-8.3.32-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-devel-pack-8.3.32-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-test-pack-8.3.32.zip' }
+        )
+        Set-MockWebResponse -url 'https://test.com' -links $mockLinks
+
+        $result = Get-LatestPHPVersionFromUrl -url 'https://test.com'
+
+        $result.Count | Should -Be 2
+        $result[0].version | Should -Be '8.1.0'
+        $result[1].version | Should -Be '8.1.1'
+    }
+
+    It "Should handle network errors gracefully" {
+        $script:MockFileSystem.DownloadFails = $true
+
+        $result = Get-LatestPHPVersionFromUrl -url 'https://test.com'
+
+        $result | Should -Be @()
+    }
+
+    It "Should filter out debug and nts versions" {
+        $mockLinks = @(
+            @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-debug-8.1.0-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-devel-8.1.0-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-8.1.0-nts-Win32-vs16-x64.zip' }
+        )
+        Set-MockWebResponse -url 'https://test.com' -links $mockLinks
+
+        $result = Get-LatestPHPVersionFromUrl -url 'https://test.com'
+
+        $result.Length | Should -Be 2
+        $result[0].version | Should -Be '8.1.0'
+        $result[1].version | Should -Be '8.1.0'
+    }
+}
+
 Describe "Get-LatestPHPVersion Tests" {
     BeforeEach {
         Reset-MockState

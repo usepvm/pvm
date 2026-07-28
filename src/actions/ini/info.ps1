@@ -1,5 +1,5 @@
 
-function Get-PHP-Info {
+function Get-PHPInfo {
     param ($term = $null, $extensions = $false, $settings = $false)
 
     if (-not $extensions -and -not $settings) {
@@ -7,39 +7,39 @@ function Get-PHP-Info {
         $settings = $true
     }
 
-    $currentPHPVersion = Get-Current-PHP-Version
+    $currentPHPVersion = Get-CurrentPHPVersion
 
     if (-not $currentPHPVersion -or -not $currentPHPVersion.version -or -not $currentPHPVersion.path) {
-        Print-Error -Message "`nFailed to get current PHP version."
+        Show-Error -Message "`nFailed to get current PHP version."
         return -1
     }
 
-    Print-Message -message "`n- Running PHP version`t: $($currentPHPVersion.version)"
-    Print-Message -message "`n- PHP path`t`t: $($currentPHPVersion.path)"
+    Show-Message -message "`n- Running PHP version`t: $($currentPHPVersion.version)"
+    Show-Message -message "`n- PHP path`t`t: $($currentPHPVersion.path)"
 
     $iniPath = "$($currentPHPVersion.path)\php.ini"
 
     if ($extensions) {
-        $allExtensions = Get-All-PHPExtensionsStatus -iniPath $iniPath -includeIniOnly $true
+        $allExtensions = Get-AllPHPExtensionsStatus -iniPath $iniPath -includeIniOnly $true
 
         $filteredExtensions = if ($term) {
-            Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $term -includeIniOnly $true
+            Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $term -includeIniOnly $true
         } else {
             $allExtensions
         }
-        Display-Extensions-States -extensions $allExtensions
-        Display-Installed-Extensions -extensions $filteredExtensions
+        Show-ExtensionsStates -extensions $allExtensions
+        Show-InstalledExtensions -extensions $filteredExtensions
     }
 
     if ($settings) {
-        $allSettings = Get-All-PHPSettings -iniPath $iniPath
+        $allSettings = Get-AllPHPSettings -iniPath $iniPath
         $filteredSettings = if ($term) {
-            Get-Matching-PHPSettings -iniPath $iniPath -searchKey $term
+            Get-MatchingPHPSettings -iniPath $iniPath -searchKey $term
         } else {
             $allSettings
         }
-        Display-Settings-States -settings $allSettings
-        Display-Settings -settings $filteredSettings
+        Show-SettingsStates -settings $allSettings
+        Show-Settings -settings $filteredSettings
     }
 
     return 0

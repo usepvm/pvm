@@ -22,17 +22,17 @@ function Get-PHPInstallInfo {
 
     return @{
         Version     = $dll.VersionInfo.ProductVersion
-        Arch        = Get-BinaryArchitecture-From-DLL -path $dll.FullName
+        Arch        = Get-BinaryArchitectureFromDLL -path $dll.FullName
         BuildType   = $buildType
         Dll         = $dll.Name
         InstallPath = $path
     }
 }
 
-function Get-BinaryArchitecture-From-DLL {
+function Get-BinaryArchitectureFromDLL {
     param ($path)
 
-    if (Is-File-Not-Exists -path $path) {
+    if (Test-FileNotExists -path $path) {
         return 'Unknown'
     }
 
@@ -49,7 +49,7 @@ function Get-BinaryArchitecture-From-DLL {
     }
 }
 
-function Is-Two-PHP-Versions-Equal {
+function Test-TwoPHPVersionsEqual {
     param ($version1, $version2)
 
     if ($null -eq $version1 -or $null -eq $version2) {
@@ -61,67 +61,69 @@ function Is-Two-PHP-Versions-Equal {
         ($version1.buildType -eq $version2.buildType))
 }
 
-function Set-Zend-Extensions-List {
+function Set-ZendExtensionsList {
     try {
         $jsonContent = $PVMConfig.defaults.zendExtensions | ConvertTo-Json -Depth 10
-        Set-Content -Path $PVMConfig.paths.zendExtensionsList -Value $jsonContent -Encoding UTF8
+        Set-Content-Wrapper -path $PVMConfig.paths.zendExtensionsList -value $jsonContent
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create zend extensions list"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create zend extensions list"; exception = $_ }
         return -1
     }
 }
 
-function Get-Zend-Extensions-List {
+function Get-ZendExtensionsList {
     try {
-        if (Is-File-Exists -path $PVMConfig.paths.zendExtensionsList) {
+        if (Test-FileExists -path $PVMConfig.paths.zendExtensionsList) {
             $data = (Get-Content -Path $PVMConfig.paths.zendExtensionsList -Raw | ConvertFrom-Json)
             if ($null -ne $data -and $data.Count -gt 0) {
                 return $data
             }
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get zend extensions list"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get zend extensions list"; exception = $_ }
     }
 
     return $PVMConfig.defaults.zendExtensions
 }
 
-function Refresh-Installed-PHP-Versions-Cache {
+function Update-InstalledPHPVersionsCache {
     try {
-        $installedVersions = Get-Installed-PHP-Versions-From-Disk
-        $code = Cache-Data -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
+        $installedVersions = Get-InstalledPHPVersionsFromDisk
+        $code = Save-CachedData -cacheFileName 'installed_php_versions' -data $installedVersions -depth 1
 
         return $code
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to refresh installed PHP versions cache"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to refresh installed PHP versions cache"; exception = $_ }
         return -1
     }
 }
 
-function Get-Installed-PHP-Versions-From-Disk {
-    $directories = Get-All-Subdirectories -path $PVMConfig.paths.php
-    $installedVersions = $directories | ForEach-Object {
-        if (Is-File-Exists -path "$($_.FullName)\php.exe") {
-            $phpInfo = Get-PHPInstallInfo -path $_.FullName
+function Get-InstalledPHPVersionsFromDisk {
+    return Show-SpinnerWhileJob -scriptBlock {
+        $directories = Get-AllSubdirectories -path $PVMConfig.paths.php
+        $installedVersions = $directories | ForEach-Object {
+            if (Test-FileExists -path "$($_.FullName)\php.exe") {
+                $phpInfo = Get-PHPInstallInfo -path $_.FullName
 
-            return $phpInfo
+                return $phpInfo
+            }
+            return $null
         }
-        return $null
+
+        $installedVersions = ($installedVersions | Sort-Object { [version]$_.Version })
+
+        return @{ pvmData = $installedVersions }
     }
-
-    $installedVersions = ($installedVersions | Sort-Object { [version]$_.Version })
-
-    return $installedVersions
 }
 
-function Get-Installed-PHP-Versions {
+function Get-InstalledPHPVersions {
     param ($arch = $null, $buildType = $null)
 
     try {
         $installedVersions = Get-OrUpdateCache -cacheFileName 'installed_php_versions' -depth 1 -compute {
-            Get-Installed-PHP-Versions-From-Disk
+            return Get-InstalledPHPVersionsFromDisk
         }
 
         if ($null -eq $installedVersions) {
@@ -140,12 +142,12 @@ function Get-Installed-PHP-Versions {
 
         return $installedVersions
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve installed PHP versions"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve installed PHP versions"; exception = $_ }
         return @()
     }
 }
 
-function Get-UserSelected-PHP-Version {
+function Get-UserSelectedPHPVersion {
     param ($installedVersions)
 
     if (-not $installedVersions -or $installedVersions.Count -eq 0) {
@@ -154,14 +156,14 @@ function Get-UserSelected-PHP-Version {
     if ($installedVersions.Length -eq 1) {
         $versionObj = $($installedVersions)
     } else {
-        $currentVersion = Get-Current-PHP-Version
+        $currentVersion = Get-CurrentPHPVersion
         $index = 0
-        Print-Message -message "`nInstalled versions :"
+        Show-Message -message "`nInstalled versions :"
         $maxNameLength = ($installedVersions.version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedVersions | ForEach-Object {
             $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
             $isCurrent = ''
-            if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
+            if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $_) {
                 $isCurrent = '(Current)'
             }
             $metaData = ''
@@ -172,11 +174,10 @@ function Get-UserSelected-PHP-Version {
                 $metaData += $_.BuildType
             }
             $versionNumber = "$($_.version) ".PadRight($maxNameLength, '.')
-            Print-Message -message " [$index] $versionNumber $metaData $isCurrent"
+            Show-Message -message " [$index] $versionNumber $metaData $isCurrent"
             $index++
         }
-        $response = Read-Host -Prompt "`nInsert the [number] of the version you want to use (or press Enter to cancel)"
-        $response = $response.Trim()
+        $response = Read-Host-Wrapper -prompt "`nInsert the [number] of the version you want to use (or press Enter to cancel)"
         if (-not $response) {
             return @{ code = -1; message = 'Operation cancelled.'; color = 'Gray' }
         }
@@ -186,26 +187,26 @@ function Get-UserSelected-PHP-Version {
     return @{ code = 0; version = $versionObj.version; arch = $versionObj.arch; buildType = $versionObj.BuildType; path = $versionObj.InstallPath }
 }
 
-function Get-Matching-PHP-Versions {
+function Get-MatchingPHPVersions {
     param ($version)
 
     try {
-        $installedVersions = Get-Installed-PHP-Versions
+        $installedVersions = Get-InstalledPHPVersions
 
         $matchingVersions = $installedVersions | Where-Object { $_.Version -like "$version*" }
 
         return $matchingVersions
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
         return $null
     }
 }
 
-function Is-PHP-Version-Installed {
+function Test-PHPVersionInstalled {
     param ($version)
 
     try {
-        $installedVersions = Get-Matching-PHP-Versions -version $version.version
+        $installedVersions = Get-MatchingPHPVersions -version $version.version
         return ($installedVersions | Where-Object {
                 $_.Version -eq $version.version -and
                 $_.Arch -eq $version.arch -and
@@ -213,31 +214,31 @@ function Is-PHP-Version-Installed {
             }
         )
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check if PHP version $version is installed"; exception = $_ }
         return $false
     }
 }
 
-function Get-Source-Urls {
+function Get-SourceUrls {
     return [ordered]@{
         'Archives' = $PVMConfig.links.phpWinArchives
         'Releases' = $PVMConfig.links.phpWinReleases
     }
 }
 
-function Get-Zend-Extensions-Info {
+function Get-ZendExtensionsInfo {
     param ($phpPath)
 
     $extPath = "$phpPath\ext"
-    if (Is-Directory-Not-Exists -path $extPath) {
+    if (Test-DirectoryNotExists -path $extPath) {
         return @()
     }
 
     # Check php.ini for enabled status
     $phpIniPath = "$phpPath\php.ini"
     $enabledStatus = @{}
-    $zendExtensionsList = Get-Zend-Extensions-List
-    if (Is-File-Exists -path $phpIniPath) {
+    $zendExtensionsList = Get-ZendExtensionsList
+    if (Test-FileExists -path $phpIniPath) {
         $iniContent = Get-Content -Path $phpIniPath
         foreach ($line in $iniContent) {
             $trimmed = $line.Trim()
@@ -266,7 +267,7 @@ function Get-Zend-Extensions-Info {
     return $zendExtensions
 }
 
-function Get-PHP-Data {
+function Get-PHPData {
     param ($PhpIniPath)
 
     $iniContent = Get-Content -Path $PhpIniPath
@@ -299,4 +300,10 @@ function Get-PHP-Data {
     }
 
     return $phpIniData
+}
+
+function Test-PHPVersionFormat {
+    param ($version)
+
+    return $version -match '^\d+(\.\d+){0,2}$'
 }

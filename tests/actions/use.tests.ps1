@@ -11,7 +11,7 @@ BeforeAll {
 
     Mock Write-Host {}
 
-    Mock Get-Matching-PHP-Versions {
+    Mock Get-MatchingPHPVersions {
         param ($version)
         # Mock implementation
         if ($version -like '8.*') {
@@ -23,7 +23,7 @@ BeforeAll {
         return @()
     }
 
-    Mock Get-UserSelected-PHP-Version {
+    Mock Get-UserSelectedPHPVersion {
         param ($installedVersions)
         # If we're in the Auto-Select test and a specific version was detected
         if ($script:TestScenario -eq 'composer' -or $script:TestScenario -eq '.php-version' -and $installedVersions) {
@@ -41,13 +41,13 @@ BeforeAll {
         return $null
     }
 
-    Mock Make-Symbolic-Link {
+    Mock New-SymbolicLink {
         param ($link, $target)
         # Mock implementation
         return @{ code = 0 }
     }
 
-    Mock Log-Data {
+    Mock Add-LogEntry {
         param ($logPath, $message, $data)
         # Mock implementation
         return $true
@@ -59,12 +59,23 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Detect-PHP-VersionFromProject" {
+Describe "Find-PHPVersionFromProject" {
     It "Should detect PHP version from .php-version" {
         Mock Test-Path { return $true }
         Mock Get-Content { return '7.4' }
-        $result = Detect-PHP-VersionFromProject
+        $result = Find-PHPVersionFromProject
         $result | Should -Be '7.4'
+    }
+
+    It "Should not detect PHP version if does not exist in .php-version" {
+        Mock Test-FileExists -ParameterFilter { $path -eq '.php-version'} -MockWith { return $true }
+        Mock Test-FileExists -ParameterFilter { $path -eq 'composer.json'} -MockWith { return $false }
+        Mock Get-Content { return '' }
+        Mock Show-Error { }
+
+        $result = Find-PHPVersionFromProject
+
+        $result | Should -BeNullOrEmpty
     }
 
     It "Should detect PHP version from composer.json" {
@@ -74,7 +85,7 @@ Describe "Detect-PHP-VersionFromProject" {
             return $false
         }
         Mock Get-Content { return '{"require": {"php": "^8.4"}}' }
-        $result = Detect-PHP-VersionFromProject
+        $result = Find-PHPVersionFromProject
         $result | Should -Be '8.4'
     }
 
@@ -85,114 +96,153 @@ Describe "Detect-PHP-VersionFromProject" {
             return $false
         }
         Mock Get-Content { throw 'Simulated parse error' }
-        { Detect-PHP-VersionFromProject } | Should -Not -Throw
+        { Find-PHPVersionFromProject } | Should -Not -Throw
     }
 }
 
-# Test Cases for Update-PHP-Version
-Describe "Update-PHP-Version" {
+Describe "Update-PHPVersion" {
     BeforeEach {
         $script:TestScenario = $null
     }
 
     It "Should successfully update to an exact version match" {
-        $result = Update-PHP-Version -version '8.1'
+        $result = Update-PHPVersion -version '8.1'
         $result.code | Should -Be 0
         $result.message | Should -BeExactly 'Now using PHP 8.1'
     }
 
     It "Should handle version not found when exact path doesn't exist" {
-        $result = Update-PHP-Version -version '7.4'
+        $result = Update-PHPVersion -version '7.4'
         $result.code | Should -Be -1
         $result.message | Should -BeExactly 'PHP version 7.4 was not found!'
     }
 
     It "Should handle when no matching versions are found" {
-        $result = Update-PHP-Version -version '5.6'
+        $result = Update-PHPVersion -version '5.6'
         $result.code | Should -Be -1
         $result.message | Should -BeExactly 'PHP version 5.6 was not found!'
     }
 
     It "Should return when switching to same current version" {
-        Mock Get-UserSelected-PHP-Version { return @{
+        Mock Get-UserSelectedPHPVersion { return @{
             code=0; version='8.2.0'; arch = 'x64';
             buildType = 'TS'; path= "$TEST_DRIVE\php\8.2.0"
         }}
-        Mock Get-Current-PHP-Version { return @{
+        Mock Get-CurrentPHPVersion { return @{
             version = '8.2.0';
             path = "$TEST_DRIVE\php\8.2.0"
             arch = 'x64'
             buildType = 'TS'
         }}
-        $result = Update-PHP-Version -version '8.2.0'
+        $result = Update-PHPVersion -version '8.2.0'
         $result.code | Should -Be 0
         $result.message | Should -BeExactly 'Already using PHP 8.2.0'
     }
 
-    It "Should handle when Make-Symbolic-Link fails" {
-        Mock Make-Symbolic-Link { return @{ code = -1; message = 'Failed to create link'; color = 'DarkYellow' } }
-        $result = Update-PHP-Version -version '8.1'
+    It "Should handle when New-SymbolicLink fails" {
+        Mock New-SymbolicLink { return @{ code = -1; message = 'Failed to create link'; color = 'DarkYellow' } }
+        $result = Update-PHPVersion -version '8.1'
         $result.code | Should -Be -1
         $result.message | Should -BeExactly 'Failed to create link'
         $result.color | Should -Be 'DarkYellow'
     }
 
     It "Should handle exceptions gracefully" {
-        # Force an exception by mocking Get-Matching-PHP-Versions to throw
-        Mock Get-Matching-PHP-Versions { throw 'Test exception' }
-        $result = Update-PHP-Version -version '8.1'
+        # Force an exception by mocking Get-MatchingPHPVersions to throw
+        Mock Get-MatchingPHPVersions { throw 'Test exception' }
+        $result = Update-PHPVersion -version '8.1'
         $result.code | Should -Be -1
         $result.message | Should -Match 'No matching PHP versions found'
     }
 
     It "Should return error when pathVersionObject is null" {
-        Mock Get-UserSelected-PHP-Version { return $null }
-        $result = Update-PHP-Version -version '8.x'
+        Mock Get-UserSelectedPHPVersion { return $null }
+        $result = Update-PHPVersion -version '8.x'
         $result.code | Should -Be -1
         $result.message | Should -Match 'was not found'
     }
 
     It "Should return error when pathVersionObject has non-zero code" {
-        Mock Get-UserSelected-PHP-Version { return @{code=-1; message='Test error'} }
-        $result = Update-PHP-Version -version '8.x'
+        Mock Get-UserSelectedPHPVersion { return @{code=-1; message='Test error'} }
+        $result = Update-PHPVersion -version '8.x'
         $result.code | Should -Be -1
     }
 }
 
-# Test Cases for Auto-Select-PHP-Version
-Describe "Auto-Select-PHP-Version" {
+Describe "Select-PHPVersionAutomatically" {
     BeforeEach {
         $script:TestScenario = $null
-        Mock Detect-PHP-VersionFromProject {
+        Mock Find-PHPVersionFromProject {
             return '8.1'
         }
     }
 
     It "Should detect version from .php-version file" {
         $script:TestScenario = '.php-version'
-        $result = Auto-Select-PHP-Version
+        $result = Select-PHPVersionAutomatically
         $result.code | Should -Be 0
         $result.version | Should -Be '8.1'
     }
 
     It "Should detect version from composer.json" {
         $script:TestScenario = 'composer'
-        $result = Auto-Select-PHP-Version
+        $result = Select-PHPVersionAutomatically
         $result.code | Should -Be 0
         $result.version | Should -Be '8.1'
     }
 
-    It "Should return error when no version can be detected" {
-        Mock Detect-PHP-VersionFromProject { return $null }
-        $result = Auto-Select-PHP-Version
+    It "Should return error if no version can be detected and user enters invalid version format" {
+        Mock Find-PHPVersionFromProject { return $null }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return 'abc' }
+
+        $result = Select-PHPVersionAutomatically
+
         $result.code | Should -Be -1
-        $result.message | Should -Match 'Could not detect PHP version'
+        $result.message | Should -Match "Invalid version format: 'abc'. Expected e.g. 8, 8.3 or 8.3.1"
+    }
+
+    It "Should return valid version entered by user if no version can be detected" {
+        Mock Find-PHPVersionFromProject { return $null }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSave as project default in .php-version? (y/n)" } -MockWith { return 'n' }
+        Mock Set-Content-Wrapper { }
+        Mock Get-MatchingPHPVersions {
+            return @(
+                @{version='8.5.1'; path='C:\php\8.5.1'},
+                @{version='8.5.2'; path='C:\php\8.5.2'}
+            )
+        }
+
+        $result = Select-PHPVersionAutomatically
+
+        $result.code | Should -Be 0
+        $result.version | Should -Be '8.5'
+        Should -Invoke Set-Content-Wrapper -Exactly 0
+    }
+
+    It "Should return valid version entered by user and save to .php-version if no version can be detected" {
+        Mock Find-PHPVersionFromProject { return $null }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
+        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSave as project default in .php-version? (y/n)" } -MockWith { return 'y' }
+        Mock Set-Content-Wrapper { }
+        Mock Get-MatchingPHPVersions {
+            return @(
+                @{version='8.5.1'; path='C:\php\8.5.1'},
+                @{version='8.5.2'; path='C:\php\8.5.2'}
+            )
+        }
+
+        $result = Select-PHPVersionAutomatically
+
+        $result.code | Should -Be 0
+        $result.version | Should -Be '8.5'
+        Should -Invoke Set-Content-Wrapper -Exactly 1
     }
 
     It "Should return error when detected version is not installed" {
         $script:TestScenario = '.php-version'
-        Mock Get-Matching-PHP-Versions { return @() }
-        $result = Auto-Select-PHP-Version
+        Mock Get-MatchingPHPVersions { return @() }
+        $result = Select-PHPVersionAutomatically
         $result.code | Should -Be -1
         $result.message | Should -Match "PHP '8.1' is not installed"
     }

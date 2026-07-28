@@ -1,5 +1,5 @@
 ﻿
-function Get-Data-From-Cache {
+function Get-DataFromCache {
     param ($cacheFileName)
 
     try {
@@ -7,8 +7,8 @@ function Get-Data-From-Cache {
             return @{}
         }
 
-        $path = Get-Cache-FilePath -filename $cacheFileName
-        if (Is-File-Not-Exists -path $path) {
+        $path = Get-CacheFilePath -filename $cacheFileName
+        if (Test-FileNotExists -path $path) {
             return @{}
         }
 
@@ -20,12 +20,12 @@ function Get-Data-From-Cache {
         $jsonData = $jsonString | ConvertFrom-Json
         return $jsonData
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"; exception = $_ }
         return @{}
     }
 }
 
-function Can-Use-Cache {
+function Test-CanUseCache {
     param ($cacheFileName)
 
     try {
@@ -33,10 +33,10 @@ function Can-Use-Cache {
             return $false
         }
 
-        $path = Get-Cache-FilePath -filename $cacheFileName
+        $path = Get-CacheFilePath -filename $cacheFileName
         $useCache = $false
 
-        if (Is-File-Exists -path $path) {
+        if (Test-FileExists -path $path) {
             $cacheFile = Get-Item -Path $path -ErrorAction SilentlyContinue
             if ($null -eq $cacheFile) {
                 return $false
@@ -48,42 +48,42 @@ function Can-Use-Cache {
 
         return $useCache
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get data from cache"; exception = $_ }
 
         return $false
     }
 }
 
-function Cache-Data {
+function Save-CachedData {
     param ($cacheFileName, $data, $depth = 3)
 
     try {
         if ([string]::IsNullOrWhiteSpace($cacheFileName)) {
-            Print-Error -Message "Cache file name cannot be empty."
+            Show-Error -Message "Cache file name cannot be empty."
             return -1
         }
 
         if ($null -eq $data) {
-            Print-Error -Message "Data cannot be null."
+            Show-Error -Message "Data cannot be null."
             return -1
         }
 
         $jsonString = $data | ConvertTo-Json -Depth $depth
-        $path = Get-Cache-FilePath -filename $cacheFileName
-        $created = Make-Directory -path (Split-Path -Path $path)
+        $path = Get-CacheFilePath -filename $cacheFileName
+        $created = New-Directory -path (Split-Path -Path $path)
         if ($created -ne 0) {
-            Print-Error -Message "Failed to create directory $(Split-Path -Path $path)"
+            Show-Error -Message "Failed to create directory $(Split-Path -Path $path)"
             return -1
         }
-        Set-Content -Path $path -Value $jsonString -Encoding UTF8
+        Set-Content-Wrapper -path $path -value $jsonString
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to cache data"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to cache data"; exception = $_ }
         return -1
     }
 }
 
-function Get-Cache-FilePath {
+function Get-CacheFilePath {
     param ($filename)
 
     if ($filename -notmatch '\.json$') {
@@ -96,10 +96,10 @@ function Get-Cache-FilePath {
 function Get-OrUpdateCache {
     param ($cacheFileName, $compute, $depth = 3)
 
-    $useCache = Can-Use-Cache -cacheFileName $cacheFileName
+    $useCache = Test-CanUseCache -cacheFileName $cacheFileName
 
     if ($useCache) {
-        $data = Get-Data-From-Cache -cacheFileName $cacheFileName
+        $data = Get-DataFromCache -cacheFileName $cacheFileName
         if ($null -ne $data -and $data.Count -gt 0) {
             return $data
         }
@@ -108,7 +108,15 @@ function Get-OrUpdateCache {
     $data = & $compute
 
     if ($null -ne $data) {
-        $null = Cache-Data -cacheFileName $cacheFileName -data $data -depth $depth
+        $hasData = if ($data -is [hashtable] -or $data -is [array]) {
+            $data.Count -gt 0
+        } else {
+            $data.PSObject.Properties.Count -gt 0
+        }
+
+        if ($hasData) {
+            $null = Save-CachedData -cacheFileName $cacheFileName -data $data -depth $depth
+        }
     }
 
     return $data

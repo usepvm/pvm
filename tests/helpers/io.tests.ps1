@@ -34,10 +34,10 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Get-All-Subdirectories" {
+Describe "Get-AllSubdirectories" {
     Context "When path is valid" {
         It "Returns subdirectories for an existing path" {
-            $result = Get-All-Subdirectories -path $STORAGE_PATH
+            $result = Get-AllSubdirectories -path $STORAGE_PATH
             $result | Should -Not -BeNullOrEmpty
             $result.Count | Should -BeGreaterThan 0
         }
@@ -45,161 +45,161 @@ Describe "Get-All-Subdirectories" {
 
     Context "When path is invalid" {
         It "Returns null for empty path" {
-            $result = Get-All-Subdirectories -path ''
+            $result = Get-AllSubdirectories -path ''
             $result | Should -Be $null
         }
 
         It "Returns null for whitespace path" {
-            $result = Get-All-Subdirectories -path '   '
+            $result = Get-AllSubdirectories -path '   '
             $result | Should -Be $null
         }
 
         It "Returns null for non-existent path" {
-            $result = Get-All-Subdirectories -path "$TEST_DRIVE\Nonexistent\Path"
+            $result = Get-AllSubdirectories -path "$TEST_DRIVE\Nonexistent\Path"
             $result | Should -Be $null
         }
 
         It "Returns null when an exception occurs" {
             # Simulate an exception by passing a path that causes an error
             Mock Get-ChildItem { throw 'Simulated exception' }
-            $result = Get-All-Subdirectories -path $STORAGE_PATH
+            $result = Get-AllSubdirectories -path $STORAGE_PATH
             $result | Should -Be $null
         }
     }
 }
 
-Describe "Is-Directory-Exists" {
+Describe "Test-DirectoryExists" {
     Context "When checking directory existence" {
         It "Returns true for existing directory" {
-            $result = Is-Directory-Exists -path $STORAGE_PATH
+            $result = Test-DirectoryExists -path $STORAGE_PATH
             $result | Should -Be $true
         }
 
         It "Returns false for non-existent directory" {
-            $result = Is-Directory-Exists -path "$TEST_DRIVE\Nonexistent\Path"
+            $result = Test-DirectoryExists -path "$TEST_DRIVE\Nonexistent\Path"
             $result | Should -Be $false
         }
 
         It "Returns false for empty path" {
-            $result = Is-Directory-Exists -path ''
+            $result = Test-DirectoryExists -path ''
             $result | Should -Be $false
         }
 
         It "Returns false for whitespace path" {
-            $result = Is-Directory-Exists -path '   '
+            $result = Test-DirectoryExists -path '   '
             $result | Should -Be $false
         }
 
         It "Handles exceptions gracefully" {
             Mock Test-Path { throw 'Error' }
 
-            $result = Is-Directory-Exists -path "$TEST_DRIVE\Nonexistent\Path"
+            $result = Test-DirectoryExists -path "$TEST_DRIVE\Nonexistent\Path"
             $result | Should -Be $false
         }
     }
 }
 
-Describe "Is-Directory-Not-Exists" {
+Describe "Test-DirectoryNotExists" {
     It "Returns true for non-existent directory" {
-        Mock Is-Directory-Exists { return $false }
+        Mock Test-DirectoryExists { return $false }
 
-        $result = Is-Directory-Not-Exists -path "$TEST_DRIVE\Nonexistent\Path"
+        $result = Test-DirectoryNotExists -path "$TEST_DRIVE\Nonexistent\Path"
         $result | Should -Be $true
     }
 
     It "Returns false for existing directory" {
-        Mock Is-Directory-Exists { return $true }
+        Mock Test-DirectoryExists { return $true }
 
-        $result = Is-Directory-Not-Exists -path 'C:\Directory\Exists'
+        $result = Test-DirectoryNotExists -path 'C:\Directory\Exists'
         $result | Should -Be $false
     }
 }
 
-Describe "Is-File-Exists" {
+Describe "Test-FileExists" {
     Context "When checking file existence" {
         It "Returns true for an existing file" {
             $filePath = "$TEST_DRIVE\existing_file_exists.txt"
             New-Item -Path $filePath -ItemType File -Force | Out-Null
 
-            $result = Is-File-Exists -path $filePath
+            $result = Test-FileExists -path $filePath
             $result | Should -Be $true
 
             Remove-Item -Path $filePath -Force
         }
 
         It "Returns false for non-existent file" {
-            $result = Is-File-Exists -path "$TEST_DRIVE\Nonexistent\file.txt"
+            $result = Test-FileExists -path "$TEST_DRIVE\Nonexistent\file.txt"
             $result | Should -Be $false
         }
 
         It "Returns false for empty path" {
-            $result = Is-File-Exists -path ''
+            $result = Test-FileExists -path ''
             $result | Should -Be $false
         }
 
         It "Returns false for whitespace path" {
-            $result = Is-File-Exists -path '   '
+            $result = Test-FileExists -path '   '
             $result | Should -Be $false
         }
 
         It "Handles exceptions gracefully" {
             Mock Test-Path { throw 'Error' }
 
-            $result = Is-File-Exists -path "$TEST_DRIVE\Nonexistent\file.txt"
+            $result = Test-FileExists -path "$TEST_DRIVE\Nonexistent\file.txt"
             $result | Should -Be $false
         }
     }
 }
 
-Describe "Is-File-Not-Exists" {
+Describe "Test-FileNotExists" {
     It "Returns true for non-existent file" {
-        Mock Is-File-Exists { return $false }
+        Mock Test-FileExists { return $false }
 
-        $result = Is-File-Not-Exists -path "$TEST_DRIVE\Nonexistent\file.txt"
+        $result = Test-FileNotExists -path "$TEST_DRIVE\Nonexistent\file.txt"
         $result | Should -Be $true
     }
 
     It "Returns false for existing file" {
-        Mock Is-File-Exists { return $true }
+        Mock Test-FileExists { return $true }
 
-        $result = Is-File-Not-Exists -path 'C:\File\Exists.txt'
+        $result = Test-FileNotExists -path 'C:\File\Exists.txt'
         $result | Should -Be $false
     }
 }
 
-Describe "Make-Directory" {
+Describe "New-Directory" {
     Context "When creating directories" {
         It "Creates a new directory successfully" {
             $newDir = "$TEST_DRIVE\new_dir"
-            $result = Make-Directory -path $newDir
+            $result = New-Directory -path $newDir
             $result | Should -Be 0
             Test-Path $newDir | Should -Be $true
         }
 
         It "Returns 0 for existing directory" {
-            $result = Make-Directory -path $STORAGE_PATH
+            $result = New-Directory -path $STORAGE_PATH
             $result | Should -Be 0
         }
 
         It "Returns -1 for empty path" {
-            $result = Make-Directory -path ''
+            $result = New-Directory -path ''
             $result | Should -Be -1
         }
 
         It "Returns -1 when exception is thrown" {
-            Mock Is-Directory-Not-Exists { return $true }
+            Mock Test-DirectoryNotExists { return $true }
             Mock New-Item { throw 'Error' }
-            $result = Make-Directory -path "$TEST_DRIVE\new_dir"
+            $result = New-Directory -path "$TEST_DRIVE\new_dir"
             $result | Should -Be -1
         }
     }
 }
 
-Describe "Make-Symbolic-Link" {
+Describe "New-SymbolicLink" {
     Context "When creating symbolic links" {
         It "Creates a symbolic link successfully when running as admin" {
-            # Mock Is-Admin to return true
-            Mock Is-Admin { return $true }
+            # Mock Test-Admin to return true
+            Mock Test-Admin { return $true }
 
             # Mock New-Item to simulate successful symbolic link creation
             Mock New-Item {
@@ -211,7 +211,7 @@ Describe "Make-Symbolic-Link" {
             $linkPath = "$TEST_DRIVE\test_link"
             $targetPath = "$STORAGE_PATH\php\8.1"
 
-            $result = Make-Symbolic-Link -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath
             $result.code | Should -Be 0
             $result.message | Should -Match 'Created symbolic link'
             $result.color | Should -Be 'DarkGreen'
@@ -225,30 +225,30 @@ Describe "Make-Symbolic-Link" {
         }
 
         It "Returns -1 if fails to create symbolic link" {
-            Mock Is-Not-Admin { return $true }
-            Mock Run-Ps-Command { return -1 }
+            Mock Test-NotAdmin { return $true }
+            Mock Invoke-PSCommand { return -1 }
             $linkPath = "$TEST_DRIVE\test_link_fail"
             $targetPath = "$STORAGE_PATH\php\8.1"
-            $result = Make-Symbolic-Link -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath
             $result.code | Should -Be -1
-            $result.message | Should -Be "Failed to make symbolic link '$linkPath' -> '$targetPath'"
+            $result.message | Should -Be "Failed to create symbolic link '$linkPath' -> '$targetPath'"
             $result.color | Should -Be 'DarkYellow'
         }
 
         It "Creates a symbolic link successfully using elevated command" {
-            Mock Is-Not-Admin { return $true }
-            Mock Run-Ps-Command { return 0 }
+            Mock Test-NotAdmin { return $true }
+            Mock Invoke-PSCommand { return 0 }
 
             $linkPath = "$TEST_DRIVE\test_link_2"
             $targetPath = "$STORAGE_PATH\php\8.1"
 
-            $result = Make-Symbolic-Link -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath
 
             $result.code | Should -Be 0
             $result.message | Should -Match 'Created symbolic link'
             $result.color | Should -Be 'DarkGreen'
 
-            Should -Invoke Run-Ps-Command -ParameterFilter {
+            Should -Invoke Invoke-PSCommand -ParameterFilter {
                 $command -like '*New-Item -ItemType SymbolicLink*' -and
                 $command -like "*$linkPath*" -and
                 $command -like "*$targetPath*"
@@ -256,7 +256,7 @@ Describe "Make-Symbolic-Link" {
         }
 
         It "Returns -1 if target directory does not exist" {
-            $result = Make-Symbolic-Link -link "$TEST_DRIVE\link" -target "$TEST_DRIVE\Nonexistent\Target"
+            $result = New-SymbolicLink -link "$TEST_DRIVE\link" -target "$TEST_DRIVE\Nonexistent\Target"
             $result.code | Should -Be -1
             $result.message | Should -Match "Target directory "$TEST_DRIVE\\Nonexistent\\Target" does not exist!"
             $result.color | Should -Be 'DarkYellow'
@@ -267,7 +267,7 @@ Describe "Make-Symbolic-Link" {
             $existingPath = "$TEST_DRIVE\existing_file"
             New-Item -Path $existingPath -ItemType File -Force | Out-Null
 
-            $result = Make-Symbolic-Link -link $existingPath -target "$STORAGE_PATH\php\8.1"
+            $result = New-SymbolicLink -link $existingPath -target "$STORAGE_PATH\php\8.1"
             $result.code | Should -Be -1
             $result.message | Should -Be "Link '$existingPath' is not a symbolic link!"
             $result.color | Should -Be 'DarkYellow'
@@ -284,8 +284,8 @@ Describe "Make-Symbolic-Link" {
             $targetPath = "$testDir\php\8.1"
 
             try {
-                Mock Is-Admin { return $true }
-                Mock Make-Directory { return 0 }
+                Mock Test-Admin { return $true }
+                Mock New-Directory { return 0 }
                 Mock Get-Item { return @{ Attributes = 'ReparsePoint' } }
 
                 New-Item -ItemType Directory -Path $testDir -Force | Out-Null
@@ -294,7 +294,7 @@ Describe "Make-Symbolic-Link" {
                 # # Create a directory at the link path to simulate an existing item
                 New-Item -ItemType Directory -Path $linkPath -Force | Out-Null
 
-                $result = Make-Symbolic-Link -link $linkPath -target $targetPath
+                $result = New-SymbolicLink -link $linkPath -target $targetPath
 
                 $result.code | Should -Be 0
                 $result.message | Should -Match "Created symbolic link"
@@ -307,18 +307,18 @@ Describe "Make-Symbolic-Link" {
         }
 
         It "Handles exceptions gracefully" {
-            Mock Is-Directory-Exists { throw 'Simulated exception' }
-            $result = Make-Symbolic-Link -link "$TEST_DRIVE\link" -target "$TEST_DRIVE\target"
+            Mock Test-DirectoryExists { throw 'Simulated exception' }
+            $result = New-SymbolicLink -link "$TEST_DRIVE\link" -target "$TEST_DRIVE\target"
             $result.code | Should -Be -1
         }
 
         It "Returns -1 for empty link path" {
-            $result = Make-Symbolic-Link -link '' -target "$TEST_DRIVE\target"
+            $result = New-SymbolicLink -link '' -target "$TEST_DRIVE\target"
             $result.code | Should -Be -1
         }
 
         It "Returns -1 for empty target path" {
-            $result = Make-Symbolic-Link -link "$TEST_DRIVE\link" -target ''
+            $result = New-SymbolicLink -link "$TEST_DRIVE\link" -target ''
             $result.code | Should -Be -1
         }
     }
@@ -329,10 +329,10 @@ Describe "Make-Symbolic-Link" {
             $targetPath = "$STORAGE_PATH\php\8.1"
             $parent = Split-Path -Path $linkPath
 
-            Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
-            Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq $parent } -MockWith { return $true }
-            Mock Is-Not-Admin { return $false }
-            Mock Make-Directory -MockWith { return 0 }
+            Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
+            Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $parent } -MockWith { return $true }
+            Mock Test-NotAdmin { return $false }
+            Mock New-Directory -MockWith { return 0 }
             Mock Test-Path { return $false }
             Mock New-Item {
                 param ($ItemType, $Path, $Target)
@@ -340,23 +340,23 @@ Describe "Make-Symbolic-Link" {
                 return @{ FullName = $Path }
             }
 
-            $result = Make-Symbolic-Link -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath
             $result.code | Should -Be 0
         }
 
         It "Returns -1 when symbolic link parent directory fails to create" {
             $linkPath = "$TEST_DRIVE\test_parent\test_link"
             $targetPath = "$STORAGE_PATH\php\8.1"
-            Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq "$TEST_DRIVE\test_parent" } -MockWith { return $true }
-            Mock Is-Directory-Not-Exists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
-            Mock Make-Directory -MockWith { return -1 }
-            $result = Make-Symbolic-Link -link $linkPath -target $targetPath
+            Mock Test-DirectoryNotExists -ParameterFilter { $path -eq "$TEST_DRIVE\test_parent" } -MockWith { return $true }
+            Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
+            Mock New-Directory -MockWith { return -1 }
+            $result = New-SymbolicLink -link $linkPath -target $targetPath
             $result.code | Should -Be -1
         }
     }
 }
 
-Describe "Extract-Zip-Core Tests" {
+Describe "Expand-ZipCore Tests" {
     It "Loads System.IO.Compression.FileSystem assembly and extracts zip" {
         # Use project storage path for testing
         $STORAGE_PATH_TEMP = (Resolve-Path -Path $STORAGE_PATH).ProviderPath
@@ -376,8 +376,8 @@ Describe "Extract-Zip-Core Tests" {
             # Create extraction directory
             New-Item -ItemType Directory -Path $extractPath -Force | Out-Null
 
-            # Call Extract-Zip-Core
-            { Extract-Zip-Core -zipPath $zipPath -extractPath $extractPath } | Should -Not -Throw
+            # Call Expand-ZipCore
+            { Expand-ZipCore -zipPath $zipPath -extractPath $extractPath } | Should -Not -Throw
 
             # Verify extraction worked
             $extractedFile = "$extractPath\test.txt"
@@ -392,140 +392,57 @@ Describe "Extract-Zip-Core Tests" {
     }
 }
 
-Describe "Extract-Zip Tests" {
+Describe "Expand-Zip Tests" {
     BeforeEach {
-        Mock Extract-Zip-Core { }
+        Mock Expand-ZipCore { }
         Mock Remove-Item { }
         Mock Write-Host { }
-        Mock Log-Data { }
+        Mock Add-LogEntry { }
     }
 
     It "Should extract zip without errors" {
         # This is a basic test since we're mocking the zip extraction
-        { Extract-Zip -zipPath 'test.zip' -extractPath 'testdir' } | Should -Not -Throw
-        Should -Invoke Extract-Zip-Core -Times 1
+        { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' } | Should -Not -Throw
+        Should -Invoke Expand-ZipCore -Times 1
     }
 
     It "Should delete zip after extraction" {
-        { Extract-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $true } | Should -Not -Throw
+        { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $true } | Should -Not -Throw
         Should -Invoke Remove-Item -Times 1 -ParameterFilter { $Path -eq 'test.zip' }
     }
 
     It "Should not delete zip if deleteZipAfter is false" {
-        { Extract-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $false } | Should -Not -Throw
+        { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $false } | Should -Not -Throw
         Should -Invoke Remove-Item -Times 0
     }
 
-    It "Should call Log-Data on extraction failure" {
-        Mock Extract-Zip-Core { throw "Extraction failed" }
-        { Extract-Zip -zipPath 'bad.zip' -extractPath 'testdir' } | Should -Not -Throw
-        Should -Invoke Log-Data -Times 1
+    It "Should call Add-LogEntry on extraction failure" {
+        Mock Expand-ZipCore { throw "Extraction failed" }
+        { Expand-Zip -zipPath 'bad.zip' -extractPath 'testdir' } | Should -Not -Throw
+        Should -Invoke Add-LogEntry -Times 1
     }
 }
 
-Describe "Get-Web-Response Tests" {
-    Context "When making web requests" {
-        It "Calls Invoke-WebRequest with UseBasicParsing" {
-            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
-
-            $result = Get-Web-Response -uri 'https://example.com'
-
-            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
-                $Uri -eq 'https://example.com' -and
-                $UseBasicParsing -eq $true
-            }
-        }
-
-        It "Calls Invoke-WebRequest with OutFile parameter when provided" {
-            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
-            $outFile = "$TEST_DRIVE\output.txt"
-
-            $result = Get-Web-Response -uri 'https://example.com' -outFile $outFile
-
-            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
-                $Uri -eq 'https://example.com' -and
-                $UseBasicParsing -eq $true -and
-                $OutFile -eq $outFile
-            }
-        }
-
-        It "Returns the result from Invoke-WebRequest" {
-            $mockResponse = @{ StatusCode = 200; Content = 'test content' }
-            Mock Invoke-WebRequest { return $mockResponse }
-
-            $result = Get-Web-Response -uri 'https://example.com'
-
-            $result.StatusCode | Should -Be 200
-            $result.Content | Should -Be 'test content'
-        }
-
-        It "Does not include OutFile parameter when not provided" {
-            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
-
-            $result = Get-Web-Response -uri 'https://example.com'
-
-            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
-                $PSBoundParameters.ContainsKey('OutFile') -eq $false
-            }
-        }
+Describe "Test-YesResponse Tests" {
+    It "Should return true for 'y' and 'Y' responses" {
+        Test-YesResponse -response 'y' | Should -Be $true
+        Test-YesResponse -response 'Y' | Should -Be $true
     }
 
-    Context "Error handling" {
-        It "Throws when Invoke-WebRequest throws" {
-            Mock Invoke-WebRequest { throw 'Network error' }
-
-            { Get-Web-Response -uri 'https://example.com' } | Should -Throw
-        }
-
-        It "Handles invalid URI format" {
-            Mock Invoke-WebRequest { throw 'Invalid URI format' }
-
-            { Get-Web-Response -uri 'not-a-valid-uri' } | Should -Throw
-        }
-    }
-
-    Context "Parameter validation" {
-        It "Trims whitespace from URI" {
-            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
-
-            Get-Web-Response -uri '   https://example.com   '
-
-            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
-                $Uri -eq 'https://example.com'
-            }
-        }
-
-        It "Passes trimmed empty string to Invoke-WebRequest" {
-            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
-
-            Get-Web-Response -uri '   '
-
-            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
-                $Uri -eq ''
-            }
-        }
-    }
-
-    Context "With different URI schemes" {
-        It "Handles HTTPS URIs" {
-            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
-
-            $result = Get-Web-Response -uri 'https://example.com'
-
-            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
-                $Uri -eq 'https://example.com'
-            }
-        }
-
-        It "Handles HTTP URIs" {
-            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
-
-            $result = Get-Web-Response -uri 'http://example.com'
-
-            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
-                $Uri -eq 'http://example.com'
-            }
-        }
+    It "Should return false for other responses" {
+        Test-YesResponse -response 'n' | Should -Be $false
+        Test-YesResponse -response 'N' | Should -Be $false
     }
 }
 
+Describe "Test-NoResponse Tests" {
+    It "Should return true for 'n' and 'N' responses" {
+        Test-NoResponse -response 'n' | Should -Be $true
+        Test-NoResponse -response 'N' | Should -Be $true
+    }
+
+    It "Should return false for other responses" {
+        Test-NoResponse -response 'y' | Should -Be $false
+        Test-NoResponse -response 'Y' | Should -Be $false
+    }
+}

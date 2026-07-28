@@ -3,8 +3,8 @@ function Uninstall-PHP {
     param ($version, $skipConfirmation = $false)
 
     try {
-        $installedVersions = Get-Matching-PHP-Versions -version $version
-        $pathVersionObject = Get-UserSelected-PHP-Version -installedVersions $installedVersions
+        $installedVersions = Get-MatchingPHPVersions -version $version
+        $pathVersionObject = Get-UserSelectedPHPVersion -installedVersions $installedVersions
 
         if (-not $pathVersionObject) {
             return @{ code = -1; message = "PHP version $version was not found!"; color = 'DarkYellow' }
@@ -15,17 +15,15 @@ function Uninstall-PHP {
         }
 
         if (-not $skipConfirmation) {
-            $response = Read-Host -Prompt "`nAre you sure you want to delete PHP version '$($pathVersionObject.version)'? (y/n)"
-            $response = $response.Trim()
-            if ($response -ne 'y' -and $response -ne 'Y') {
+            $response = Read-Host-Wrapper -prompt "`nAre you sure you want to delete PHP version '$($pathVersionObject.version)'? (y/n)"
+            if (Test-NoResponse -response $response) {
                 return @{ code = -1; message = 'Uninstallation cancelled'; color = 'Gray' }
             }
 
-            $currentVersion = Get-Current-PHP-Version
-            if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $pathVersionObject) {
-                $response = Read-Host -Prompt "`nYou are trying to uninstall the currently active PHP version ($($pathVersionObject.version)). Are you sure? (y/n)"
-                $response = $response.Trim()
-                if ($response -ne 'y' -and $response -ne 'Y') {
+            $currentVersion = Get-CurrentPHPVersion
+            if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $pathVersionObject) {
+                $response = Read-Host-Wrapper -prompt "`nYou are trying to uninstall the currently active PHP version ($($pathVersionObject.version)). Are you sure? (y/n)"
+                if (Test-NoResponse -response $response) {
                     return @{ code = -1; message = 'Uninstallation cancelled'; color = 'Gray' }
                 }
             }
@@ -33,11 +31,11 @@ function Uninstall-PHP {
 
         Remove-Item -Path ($pathVersionObject.path) -Recurse -Force
 
-        $null = Refresh-Installed-PHP-Versions-Cache
+        $null = Update-InstalledPHPVersionsCache
 
         return @{ code = 0; message = "PHP version $($pathVersionObject.version) has been uninstalled successfully"; color = 'DarkGreen' }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to uninstall PHP version '$version'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to uninstall PHP version '$version'"; exception = $_ }
         return @{ code = -1; message = "Failed to uninstall PHP version '$version'"; color = 'DarkYellow' }
     }
 }

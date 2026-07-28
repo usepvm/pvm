@@ -24,6 +24,7 @@ PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that make
 - [Running Tests](#running-tests)
   - [Requirements](#requirements-1)
   - [Run the tests](#run-the-tests)
+  - [Test Scripts](#test-scripts)
 - [Contributing](#contributing)
 - [Credits](#credits)
 - [License](#license)
@@ -90,8 +91,7 @@ pvm help <command>
 # Example: pvm help setup
 
 # Displays information about the environment including PVM version, currently active PHP version, paths, and environment variables.
-pvm info
-pvm info --verbose
+pvm info [--verbose]
 
 # Display active PHP version
 pvm current
@@ -246,8 +246,13 @@ pvm ini info --search=<term>
 ### Check logs
 
 ```sh
-pvm log --pageSize=[number] --search=<term> # Default value is 5
-# Example: pvm log --pageSize=3 --search=error
+pvm log # Default value for pagination is 5
+
+pvm log --pageSize=<number>
+# Example: pvm log --pageSize=3
+
+pvm log  --search=<term>
+# Example: pvm log --search=error
 ```
 
 ### Manage PHP Configuration Profiles
@@ -281,12 +286,12 @@ pvm profile clear [--yes|-y]
 # Example: pvm profile clear -y # Skip confirmation
 
 # Export profile to a JSON file
-pvm profile export <name> [path]
+pvm profile export <name> <path>
 # Example: pvm profile export development
 # Example: pvm profile export dev ./backup.json
 
 # Import profile from a JSON file
-pvm profile import <path> [name]
+pvm profile import <path> <name>
 # Example: pvm profile import ./my-profile.json
 # Example: pvm profile import ./profile.json custom-name
 ```
@@ -414,7 +419,7 @@ Get-Module -ListAvailable Pester
 By default, pvm test auto-detects pwsh if available, falling back to powershell. Use --shell=powershell or --shell=pwsh to force a specific engine — useful for verifying PS 5.1/7 cross-version compatibility.
 
 ```sh
-pvm test [files = (files inside the tests/ directory)] [--exclude=files] [--coverage[=<number>]] [--verbosity=(None|Normal|Detailed|Diagnostic)] [--tag=<tag>] [--sort=[coverage|duration|file|-coverage|-duration|-file]] [--group=[coverage|folder]] [--shell=[powershell|pwsh]] [--pester=<version>]
+pvm test <files> [--exclude=<files>] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>] [--sort=<sort>] [--group=<group>] [--shell=<shell>] [--pester=<version>]
 
 # Examples:
 pvm test # .............................. Runs all tests with Normal (default) verbosity.
@@ -431,6 +436,42 @@ pvm test --shell=powershell # ........... Forces Windows PowerShell (powershell.
 pvm test --shell=pwsh # ................. Forces PowerShell 7+ (pwsh.exe).
 pvm test --pester=5.7.0 # ............... Forces Pester 5.7.0.
 ```
+
+### Test Scripts
+
+PVM includes predefined scripts for common test scenarios, similar to npm scripts in package.json or composer scripts in composer.json. These scripts provide shortcuts for running tests with specific configurations without typing all the options each time.
+
+```sh
+# Run a specific script
+pvm run <script-name>
+
+# Examples:
+pvm run test:quiet # ............... Runs tests with verbosity set to None
+pvm run test:cov80 # ............... Runs tests with 80% coverage target
+pvm run test:cov90 # ............... Runs tests with 90% coverage target
+pvm run test:duration # ............ Runs tests with duration descending sort
+pvm run test:verbose # ............. Runs tests with coverage and detailed output
+pvm run test:shell # ............... Runs tests with Windows PowerShell and PowerShell Core
+pvm run test:pester # .............. Runs tests with Pester 5.7.1 and 6.0.0
+pvm run test:matrix # .............. Runs tests with all supported PowerShell versions and Pester versions
+```
+
+**Available Scripts:**
+
+| Script Name | Command | Description |
+|-------------|---------|-------------|
+| `test:quiet` | `pvm test --coverage=85 --sort=coverage --group=folder --verbosity=None` | Runs tests with verbosity set to None |
+| `test:cov80` | `pvm test --coverage=80 --sort=coverage --group=folder --verbosity=None` | Runs tests with 80% coverage target |
+| `test:cov90` | `pvm test --coverage=90 --sort=coverage --group=folder --verbosity=None` | Runs tests with 90% coverage target |
+| `test:duration` | `pvm test --sort=-duration --group=folder --verbosity=None` | Runs tests with duration descending sort |
+| `test:verbose` | `pvm test --coverage=85 --sort=coverage --group=folder --verbosity=Detailed` | Runs tests with coverage and detailed output |
+| `test:shell` | `pvm test --coverage=85 --verbosity=None --sort=coverage --group=folder --shell=powershell` and `--shell=pwsh` | Runs tests with both pwsh and powershell |
+| `test:pester` | `pvm test --coverage=85 --verbosity=None --sort=coverage --group=folder --pester=5.7.1` and `--pester=6.0.0` | Runs tests with Pester 5.7 and 6.0 |
+| `test:matrix` | `pvm test --coverage=85 --verbosity=None --sort=coverage --group=folder` with all combinations of `--shell=powershell/pwsh` and `--pester=5.7.1/6.0.0` | Runs tests with all combinations of Pester and shell |
+
+**Customizing Scripts:**
+
+You can customize scripts by editing the `scripts` section in `src/helpers/config.ps1`. The scripts are defined in the `$PVMConfig.defaults.scripts` hashtable. Add or modify scripts to suit your workflow.
 
 ## Contributing
 

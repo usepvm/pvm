@@ -4,7 +4,7 @@ function Get-EnvConfig {
 
     $envFile = "$rootPath\.env"
 
-    if (Is-File-Not-Exists -path $envFile) {
+    if (Test-FileNotExists -path $envFile) {
         Copy-Item -Path "$rootPath\.env.example" -Destination $envFile
     } else {
         Write-Verbose "Using .env from: $envFile"
@@ -36,21 +36,21 @@ function Get-EnvConfig {
     return $config
 }
 
-function Set-Aliases-List {
+function Set-AliasesList {
     try {
         $jsonContent = $PVMConfig.defaults.aliases | ConvertTo-Json -Depth 10
-        Set-Content -Path $PVMConfig.paths.aliasesList -Value $jsonContent -Encoding UTF8
+        Set-Content-Wrapper -path $PVMConfig.paths.aliasesList -value $jsonContent
 
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create aliases list"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create aliases list"; exception = $_ }
         return -1
     }
 }
 
 function Get-Aliases {
     try {
-        if (Is-File-Exists -path $PVMConfig.paths.aliasesList) {
+        if (Test-FileExists -path $PVMConfig.paths.aliasesList) {
             $data = (Get-Content -Path $PVMConfig.paths.aliasesList -Raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}
@@ -59,7 +59,7 @@ function Get-Aliases {
             }
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get aliases list"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get aliases list"; exception = $_ }
     }
 
     return $PVMConfig.defaults.aliases
@@ -69,8 +69,12 @@ function Get-FlagMap {
     return $PVMConfig.defaults.flags
 }
 
+function Get-Scripts {
+    return $PVMConfig.defaults.scripts
+}
+
 function Get-Config {
-    param([string] $rootPath)
+    param ([string] $rootPath)
 
     $envConfig = Get-EnvConfig -rootPath $rootPath
 
@@ -157,7 +161,6 @@ function Get-Config {
                 'a' = 'add'; '+' = 'add'; 'rm' = 'remove'; '-' = 'remove'
                 'del' = 'delete'; 'cls' = 'clear'
                 'logs' = 'log'; 'upgrade' = 'update'
-                'run' = 'test'
                 'fix' = 'repair';
             }
             flags          = [ordered]@{
@@ -165,6 +168,36 @@ function Get-Config {
                 '-v'        = 'version'
                 '--help'    = 'help'
                 '-h'        = 'help'
+            }
+            scripts        = [ordered]@{
+                'test:quiet'        = @('test --verbosity=None --coverage=85 --sort=coverage --group=folder')
+                'test:cov80'        = @('test --verbosity=None --coverage=80 --sort=coverage --group=folder')
+                'test:cov90'        = @('test --verbosity=None --coverage=90 --sort=coverage --group=folder')
+                'test:duration'     = @('test --verbosity=None --sort=-duration --group=folder')
+                'test:verbose'      = @('test --verbosity=Detailed --coverage=85 --sort=coverage --group=folder')
+                'test:shell'        = @(
+                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --shell=powershell'
+                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --shell=pwsh'
+                )
+                'test:pester'       = @(
+                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --pester=5.7.1'
+                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --pester=6.0.0'
+                )
+                'test:matrix'       = @(
+                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --shell=powershell --pester=5.7.1'
+                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --shell=pwsh --pester=5.7.1'
+                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --shell=pwsh --pester=6.0.0'
+                )
+            }
+        }
+        test    = @{
+            verbosity = @{
+                default = 'Normal'
+                options = @('None', 'Normal', 'Detailed', 'Diagnostic')
+            }
+            coverage = @{
+                default = 75
+                enabled = $false
             }
         }
     }

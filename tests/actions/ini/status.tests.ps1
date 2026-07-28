@@ -13,7 +13,7 @@ BeforeAll {
 
     Mock Write-Host {}
 
-    function Reset-Ini-Content {
+    function Reset-IniContent {
     # Create a test php.ini file
     @"
 memory_limit = 128M
@@ -27,7 +27,7 @@ max_execution_time = 30
     }
 
     # Create initial ini content first
-    Reset-Ini-Content
+    Reset-IniContent
 
     # Mock global variables
     $PVMConfig.paths.logError = "$TEST_DRIVE\error.log"
@@ -47,11 +47,11 @@ AfterAll {
 
 Describe "Get-IniExtensionStatus" {
     BeforeEach {
-        Reset-Ini-Content
+        Reset-IniContent
     }
 
     It "Detects enabled extension" {
-        Mock Get-Matching-PHPExtensionsStatus {
+        Mock Get-MatchingPHPExtensionsStatus {
             return @(
                 @{ name = 'curl'; id='curl'; status='Enabled'; color='DarkGreen'; line=0; lineNamber=0; source='ext,ini' }
             )
@@ -60,7 +60,7 @@ Describe "Get-IniExtensionStatus" {
     }
 
     It "Detects disabled extension" {
-        Mock Get-Matching-PHPExtensionsStatus {
+        Mock Get-MatchingPHPExtensionsStatus {
             return @(
                 @{ name = 'xdebug'; id='xdebug'; status='Disabled'; color='DarkYellow'; line=0; lineNamber=0; source='ext,ini' }
             )
@@ -69,7 +69,7 @@ Describe "Get-IniExtensionStatus" {
     }
 
     It "Detects enabled zend_extension" {
-        Mock Get-Matching-PHPExtensionsStatus {
+        Mock Get-MatchingPHPExtensionsStatus {
             return @(
                 @{ name = 'opcache'; id='opcache'; status='Enabled'; color='DarkGreen'; line=0; lineNamber=0; source='ext,ini' }
             )

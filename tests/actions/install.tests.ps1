@@ -53,13 +53,13 @@ BeforeAll {
     }
 
     # Mock functions for testing
-    Mock Log-Data {
+    Mock Add-LogEntry {
         param ($logPath, $message, $data)
         Write-Host -Object "LOG: $message - $data"
         return $true
     }
 
-    Mock Get-Web-Response {
+    Mock Get-WebResponse {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
@@ -95,10 +95,10 @@ BeforeAll {
         return $script:MockUserInput
     }
 
-    Mock Is-Not-Admin { return $false }
+    Mock Test-NotAdmin { return $false }
 
     # Environment variable wrapper functions
-    Mock Get-All-EnvVars-Core {
+    Mock Get-AllEnvVarsCore {
         if ($script:MockRegistryThrowException) {
             throw $script:MockRegistryException
         }
@@ -108,7 +108,7 @@ BeforeAll {
         return $result
     }
 
-    Mock Get-EnvVar-ByName-Core {
+    Mock Get-EnvVarByNameCore {
         param ($name)
 
         if ($script:MockRegistryThrowException) {
@@ -118,7 +118,7 @@ BeforeAll {
         return $script:MockRegistry.Machine[$name]
     }
 
-    Mock Set-EnvVar-Core {
+    Mock Set-EnvVarCore {
         param ($name, $value)
 
         if ($script:MockRegistryThrowException) {
@@ -139,19 +139,73 @@ AfterAll {
 }
 
 # Test Suites
-Describe "Get-Source-Urls Tests" {
+Describe "Get-SourceUrls Tests" {
     It "Should return ordered hashtable with correct URLs" {
-        $urls = Get-Source-Urls
+        $urls = Get-SourceUrls
         $urls | Should -BeOfType [System.Collections.Specialized.OrderedDictionary]
         $urls['Archives'] | Should -Be 'https://windows.php.net/downloads/releases/archives'
         $urls['Releases'] | Should -Be 'https://windows.php.net/downloads/releases'
     }
 }
 
-Describe "Get-Latest-PHP-Version Tests" {
+Describe "Get-LatestPHPVersionFromUrl Tests" {
+    BeforeEach {
+        Reset-MockState
+    }
+
+    It "Should parse PHP versions correctly" {
+        $mockLinks = @(
+            @{ href = $null },
+            @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-8.1.1-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-debug-pack-8.3.32-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-devel-pack-8.3.32-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-test-pack-8.3.32.zip' }
+        )
+        Set-MockWebResponse -url 'https://test.com' -links $mockLinks
+
+        $result = Get-LatestPHPVersionFromUrl -url 'https://test.com'
+
+        $result.Count | Should -Be 2
+        $result[0].version | Should -Be '8.1.0'
+        $result[1].version | Should -Be '8.1.1'
+    }
+
+    It "Should handle network errors gracefully" {
+        $script:MockFileSystem.DownloadFails = $true
+
+        $result = Get-LatestPHPVersionFromUrl -url 'https://test.com'
+
+        $result | Should -Be @()
+    }
+
+    It "Should filter out debug and nts versions" {
+        $mockLinks = @(
+            @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-debug-8.1.0-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-devel-8.1.0-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-8.1.0-nts-Win32-vs16-x64.zip' }
+        )
+        Set-MockWebResponse -url 'https://test.com' -links $mockLinks
+
+        $result = Get-LatestPHPVersionFromUrl -url 'https://test.com'
+
+        $result.Length | Should -Be 2
+        $result[0].version | Should -Be '8.1.0'
+        $result[1].version | Should -Be '8.1.0'
+    }
+}
+
+Describe "Get-LatestPHPVersion Tests" {
     BeforeEach {
         Reset-MockState
         Mock Write-Host {}
+        Mock Save-CachedData { return 0 }
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
     }
 
     It "Should return the latest available version" {
@@ -159,18 +213,38 @@ Describe "Get-Latest-PHP-Version Tests" {
             @{ href = '/downloads/releases/php-8.0.10-Win32-vs16-x64.zip' },
             @{ href = '/downloads/releases/php-8.1.12-Win32-vs16-x64.zip' },
             @{ href = '/downloads/releases/php-8.2.1-Win32-vs16-x64.zip' },
-            @{ href = '/downloads/releases/php-8.1.15-nts-Win32-vs16-x64.zi' }
+            @{ href = '/downloads/releases/php-8.1.15-nts-Win32-vs16-x64.zip' }
         )
 
         Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
         Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
 
-        $result = Get-Latest-PHP-Version
+        $result = Get-LatestPHPVersion
 
         $result | Should -Not -BeNullOrEmpty
         $result.version | Should -Be '8.2.1'
         $result.arch | Should -Be 'x64'
         $result.BuildType | Should -Be 'TS'
+    }
+
+    It "Should filter by valid url" {
+        $mockLinks = @(
+            @{ href = $null },
+            @{ href = '/downloads/releases/php-8.3.32-Win32-vs16-x64.zip' },
+            @{ href = '/downloads/releases/php-debug-pack-8.3.32-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-devel-pack-8.3.32-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-test-pack-8.3.32.zip' }
+        )
+
+        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
+        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
+
+        $result = Get-LatestPHPVersion
+
+        $result | Should -Not -BeNullOrEmpty
+        $result.version | Should -Be '8.3.32'
+        $result.arch | Should -Be 'x64'
+        $result.BuildType | Should -Be 'ts'
     }
 
     It "Should filter by architecture and build type" {
@@ -184,7 +258,7 @@ Describe "Get-Latest-PHP-Version Tests" {
         Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
         Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
 
-        $result = Get-Latest-PHP-Version -arch 'x86' -buildType 'nts'
+        $result = Get-LatestPHPVersion -arch 'x86' -buildType 'nts'
 
         $result | Should -Not -BeNullOrEmpty
         $result.version | Should -Be '8.3.3'
@@ -196,15 +270,15 @@ Describe "Get-Latest-PHP-Version Tests" {
         Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links @()
         Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links @()
 
-        $result = Get-Latest-PHP-Version
+        $result = Get-LatestPHPVersion
 
         $result | Should -BeNullOrEmpty
     }
 
     It "Should handle exception gracefully" {
-        Mock Get-Source-Urls { throw 'Error' }
+        Mock Get-SourceUrls { throw 'Error' }
 
-        $result = Get-Latest-PHP-Version
+        $result = Get-LatestPHPVersion
 
         $result | Should -BeNullOrEmpty
     }
@@ -220,7 +294,7 @@ Describe "Get-Latest-PHP-Version Tests" {
             )
         }
 
-        $result = Get-Latest-PHP-Version
+        $result = Get-LatestPHPVersion
 
         $result.version | Should -Be '8.0'
         $result.arch | Should -Be 'x64'
@@ -228,7 +302,7 @@ Describe "Get-Latest-PHP-Version Tests" {
     }
 
     It "Should read from source if cache is empty" {
-        Mock Get-Data-From-Cache { return @() }
+        Mock Get-DataFromCache { return @() }
 
         $mockLinks = @(
             @{ href = '/downloads/releases/php-8.3.0-Win32-vs16-x64.zip' },
@@ -240,7 +314,7 @@ Describe "Get-Latest-PHP-Version Tests" {
         Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
         Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
 
-        $result = Get-Latest-PHP-Version
+        $result = Get-LatestPHPVersion
 
         $result | Should -Not -BeNullOrEmpty
     }
@@ -248,46 +322,55 @@ Describe "Get-Latest-PHP-Version Tests" {
     It "Should return empty array when exceptions occur" {
         Mock Get-OrUpdateCache { throw 'Test exception' }
 
-        $result = Get-Latest-PHP-Version
+        $result = Get-LatestPHPVersion
 
         $result | Should -BeNullOrEmpty
     }
 
-    It "Should return empty array when exceptions occur in Get-Web-Response" {
-        Mock Get-Web-Response { throw 'Test exception' }
+    It "Should return empty array when exceptions occur in Get-WebResponse" {
+        Mock Get-WebResponse { throw 'Test exception' }
 
-        $result = Get-Latest-PHP-Version
+        $result = Get-LatestPHPVersion
+
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Should return empty array when exceptions occur in Get-LatestPHPVersionFromUrl" {
+        Mock Get-LatestPHPVersionFromUrl { throw 'Test exception' }
+
+        $result = Get-LatestPHPVersion
 
         $result | Should -BeNullOrEmpty
     }
 }
 
-Describe "Get-PHP-Versions-From-Url Tests" {
+Describe "Get-PHPVersionsFromUrl Tests" {
     BeforeEach {
         Reset-MockState
     }
 
     It "Should parse PHP versions correctly" {
         $mockLinks = @(
+            @{ href = $null },
             @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' },
             @{ href = '/downloads/releases/php-8.1.1-Win32-vs16-x64.zip' },
-            @{ href = '/downloads/releases/php-debug-8.1.0-Win32-vs16-x64.zip' },
-            @{ href = '/downloads/releases/php-8.1.0-nts-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-debug-pack-8.3.32-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-devel-pack-8.3.32-Win32-vs16-x64.zip' }
+            @{ href = '/downloads/releases/php-test-pack-8.3.32.zip' }
         )
         Set-MockWebResponse -url 'https://test.com' -links $mockLinks
 
-        $result = Get-PHP-Versions-From-Url -url 'https://test.com' -version '8.1'
+        $result = Get-PHPVersionsFromUrl -url 'https://test.com' -version '8.1'
 
-        $result.Count | Should -Be 3
+        $result.Count | Should -Be 2
         $result[0].version | Should -Be '8.1.0'
         $result[1].version | Should -Be '8.1.1'
-        $result[2].version | Should -Be '8.1.0'
     }
 
     It "Should handle network errors gracefully" {
         $script:MockFileSystem.DownloadFails = $true
 
-        $result = Get-PHP-Versions-From-Url -url 'https://test.com' -version '8.1'
+        $result = Get-PHPVersionsFromUrl -url 'https://test.com' -version '8.1'
 
         $result | Should -Be @()
     }
@@ -301,7 +384,7 @@ Describe "Get-PHP-Versions-From-Url Tests" {
         )
         Set-MockWebResponse -url 'https://test.com' -links $mockLinks
 
-        $result = Get-PHP-Versions-From-Url -url 'https://test.com' -version '8.1'
+        $result = Get-PHPVersionsFromUrl -url 'https://test.com' -version '8.1'
 
         $result.Length | Should -Be 2
         $result[0].version | Should -Be '8.1.0'
@@ -309,7 +392,7 @@ Describe "Get-PHP-Versions-From-Url Tests" {
     }
 }
 
-Describe "Get-PHP-Versions Tests" {
+Describe "Get-PHPVersions Tests" {
     BeforeEach {
         Mock Write-Host { }
         Reset-MockState
@@ -324,7 +407,7 @@ Describe "Get-PHP-Versions Tests" {
         Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
         Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
 
-        $result = Get-PHP-Versions -version '8.1' -arch 'x64'
+        $result = Get-PHPVersions -version '8.1' -arch 'x64'
 
         $result.Count | Should -BeGreaterThan 0
     }
@@ -338,71 +421,79 @@ Describe "Get-PHP-Versions Tests" {
         Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
         Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
 
-        $result = Get-PHP-Versions -version '8.1' -buildType 'nts'
+        $result = Get-PHPVersions -version '8.1' -buildType 'nts'
 
         $result.Count | Should -BeGreaterThan 0
     }
 
     It "Should handle exception gracefully" {
-        Mock Get-Source-Urls { throw 'Error' }
+        Mock Get-SourceUrls { throw 'Error' }
 
-        $result = Get-PHP-Versions -version '8.1'
+        $result = Get-PHPVersions -version '8.1'
 
         $result | Should -BeOfType [hashtable]
         $result.Count | Should -Be 0
     }
 
     It "Should skip when fetched is empty after filtering" {
-        Mock Get-PHP-Versions-From-Url { return @(
+        Mock Get-PHPVersionsFromUrl { return @(
             @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0'; buildType = 'nts'; arch = 'x86' }
             @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0'; buildType = 'ts'; arch = 'x86' }
         ) }
 
-        $result = Get-PHP-Versions -version '8.1' -arch 'x64'
+        $result = Get-PHPVersions -version '8.1' -arch 'x64'
 
         $result.Count | Should -Be 0
     }
 }
 
-Describe "Download-PHP" {
+Describe "Get-PHP" {
     BeforeAll {
-        Mock Make-Directory { return 0 }
-        Mock Download-PHP-From-Url { return "$TEST_DRIVE\php" }
+        Mock New-Directory { return 0 }
+        Mock Get-PHPFromUrl { return "$TEST_DRIVE\php" }
+    }
+
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
     }
 
     It "Should download PHP successfully" {
-        $result = Download-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
+        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
         $result | Should -Be "$TEST_DRIVE\php"
     }
 
     It "Returns null if directory creation fails" {
-        Mock Make-Directory { return -1 }
-        $result = Download-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
+        Mock New-Directory { return -1 }
+        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
         $result | Should -BeNullOrEmpty
     }
 
     It "Handles exception gracefully" {
-        Mock Get-Source-Urls { throw 'Test exception' }
-        $result = Download-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
+        Mock Get-SourceUrls { throw 'Test exception' }
+        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
         $result | Should -BeNullOrEmpty
     }
 }
 
-Describe "Download-PHP-From-Url Tests" {
+Describe "Get-PHPFromUrl Tests" {
     BeforeEach {
         Mock Write-Host { }
         Reset-MockState
     }
 
     It "Should download file successfully" {
-        $urls = Get-Source-Urls
+        $urls = Get-SourceUrls
         $versionObject = @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
 
         # Mock the actual URL that will be called
         $expectedUrl = "$($urls['Archives'])/php-8.1.0-Win32-vs16-x64.zip"
         Set-MockWebResponse -url $expectedUrl -content 'Downloaded content'
 
-        $result = Download-PHP-From-Url -destination "$TEST_DRIVE\php" -url $expectedUrl -versionObject $versionObject
+        $result = Get-PHPFromUrl -destination "$TEST_DRIVE\php" -url $expectedUrl -versionObject $versionObject
 
         $result | Should -Be "$TEST_DRIVE\php"
         $script:MockFileSystem.Files.ContainsKey("$TEST_DRIVE\php\php-8.1.0-Win32-vs16-x64.zip") | Should -Be $true
@@ -412,13 +503,13 @@ Describe "Download-PHP-From-Url Tests" {
         $script:MockFileSystem.DownloadFails = $true
         $versionObject = @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip' }
 
-        $result = Download-PHP-From-Url -destination "$TEST_DRIVE\php" -url 'https://test.com/php.zip' -versionObject $versionObject
+        $result = Get-PHPFromUrl -destination "$TEST_DRIVE\php" -url 'https://test.com/php.zip' -versionObject $versionObject
 
         $result | Should -Be $null
     }
 }
 
-Describe "Extract-And-Configure Tests" {
+Describe "Expand-AndConfigurePHP Tests" {
     BeforeAll {
         Mock Add-Type { param ($AssemblyName) }
         Mock Copy-Item {
@@ -440,19 +531,19 @@ Describe "Extract-And-Configure Tests" {
     }
 
     It "Should extract and configure PHP" {
-        Mock Extract-Zip { }
-        { Extract-And-Configure -path "$TEST_DRIVE\php.zip" -fileNamePath "$TEST_DRIVE\php" } | Should -Not -Throw
+        Mock Expand-Zip { }
+        { Expand-AndConfigurePHP -path "$TEST_DRIVE\php.zip" -fileNamePath "$TEST_DRIVE\php" } | Should -Not -Throw
         $script:MockFileSystem.Files.ContainsKey("$TEST_DRIVE\php\php.ini") | Should -Be $true
     }
 
     It "Should handle extraction failure" {
         Mock Remove-Item { throw 'Test exception' }
 
-        { Extract-And-Configure -path "$TEST_DRIVE\php.zip" -fileNamePath "$TEST_DRIVE\php" } | Should -Not -Throw
+        { Expand-AndConfigurePHP -path "$TEST_DRIVE\php.zip" -fileNamePath "$TEST_DRIVE\php" } | Should -Not -Throw
     }
 }
 
-Describe "Configure-Opcache Tests" {
+Describe "Set-Opcache Tests" {
     BeforeAll {
         Mock Set-Content {
             param ($Path, $Value, $Encoding = $null)
@@ -479,7 +570,7 @@ Describe "Configure-Opcache Tests" {
     }
 
     It "Should enable Opcache successfully" {
-        $code = Configure-Opcache -version '8.1' -phpPath "$TEST_DRIVE\php"
+        $code = Set-Opcache -version '8.1' -phpPath "$TEST_DRIVE\php"
 
         $code | Should -Be 0
         $content = $script:MockFileSystem.Files["$TEST_DRIVE\php\php.ini"]
@@ -492,14 +583,14 @@ Describe "Configure-Opcache Tests" {
     It "Should handle missing php.ini" {
         $script:MockFileSystem.Files.Remove("$TEST_DRIVE\php\php.ini")
 
-        $code = Configure-Opcache -version '8.1' -phpPath "$TEST_DRIVE\php"
+        $code = Set-Opcache -version '8.1' -phpPath "$TEST_DRIVE\php"
         $code | Should -Be -1
     }
 
     It "Should handle exception gracefully" {
         Mock Get-Content { throw 'Error reading file' }
 
-        $code = Configure-Opcache -version '8.1' -phpPath "$TEST_DRIVE\php"
+        $code = Set-Opcache -version '8.1' -phpPath "$TEST_DRIVE\php"
         $code | Should -Be -1
     }
 }
@@ -569,6 +660,11 @@ Describe "Select-Version Tests" {
 
 Describe "Install-PHP Integration Tests" {
     BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
         Mock Write-Host { }
         Reset-MockState
         $script:MockUserInput = ''
@@ -583,9 +679,9 @@ Describe "Install-PHP Integration Tests" {
     }
 
     It "Should install PHP successfully" {
-        Mock Get-Matching-PHP-Versions { return $null }
+        Mock Get-MatchingPHPVersions { return $null }
 
-        Mock Download-PHP-From-Url { return "$TEST_DRIVE\php" }
+        Mock Get-PHPFromUrl { return "$TEST_DRIVE\php" }
 
         $result = Install-PHP -version '8.1'
 
@@ -599,8 +695,8 @@ Describe "Install-PHP Integration Tests" {
     }
 
     It "Returns -1 when user declines family version install" {
-        Mock Get-Current-PHP-Version { return @{ version = '7.4.9' } }
-        Mock Get-Matching-PHP-Versions { return @(
+        Mock Get-CurrentPHPVersion { return @{ version = '7.4.9' } }
+        Mock Get-MatchingPHPVersions { return @(
             @{ version = '7.4.9'; arch = 'x64'; buildType = 'TS'; fileName = 'php-7.4.9-Win32-vs16-x64.zip' },
             @{ version = '8.0.9'; arch = 'x64'; buildType = 'TS'; fileName = 'php-8.0.9-Win32-vs16-x64.zip' },
             @{ version = '8.1.9'; arch = 'x64'; buildType = 'TS'; fileName = 'php-8.1.9-Win32-vs16-x64.zip' },
@@ -614,9 +710,9 @@ Describe "Install-PHP Integration Tests" {
     }
 
     It "Installs PHP when user accepts family version install" {
-        Mock Get-Matching-PHP-Versions { return $null }
-        Mock Download-PHP-From-Url { return "$TEST_DRIVE\php" }
-        Mock Get-Matching-PHP-Versions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
+        Mock Get-MatchingPHPVersions { return $null }
+        Mock Get-PHPFromUrl { return "$TEST_DRIVE\php" }
+        Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
         $script:MockUserInput = 'y'
 
         $result = Install-PHP -version '8'
@@ -625,8 +721,8 @@ Describe "Install-PHP Integration Tests" {
     }
 
     It "Returns -1 when user selection is null" {
-        Mock Get-Matching-PHP-Versions { return $null }
-        Mock Download-PHP-From-Url { return "$TEST_DRIVE\php" }
+        Mock Get-MatchingPHPVersions { return $null }
+        Mock Get-PHPFromUrl { return "$TEST_DRIVE\php" }
         Mock Select-Version { return $null }
 
         $result = Install-PHP -version '8.1'
@@ -635,19 +731,32 @@ Describe "Install-PHP Integration Tests" {
     }
 
     It "Returns -1 when user selection is already installed" {
-        Mock Get-Matching-PHP-Versions { return $null }
-        Mock Download-PHP-From-Url { return "$TEST_DRIVE\php" }
+        Mock Get-MatchingPHPVersions { return $null }
+        Mock Get-PHPFromUrl { return "$TEST_DRIVE\php" }
         Mock Select-Version { return @{ version = '8.1.15'; fileName = 'php-8.1.15-Win32-vs16-x64.zip' } }
-        Mock Is-PHP-Version-Installed { return $true }
+        Mock Test-PHPVersionInstalled { return $true }
 
         $result = Install-PHP -version '8.1'
 
         $result.code | Should -Be -1
     }
 
+    It "Returns -1 when user selection cannot be installed" {
+        Mock Get-MatchingPHPVersions { return $null }
+        Mock Get-PHPFromUrl { return "$TEST_DRIVE\php" }
+        Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
+        $script:MockUserInput = 'y'
+        Mock Get-PHP { return $null }
+
+        $result = Install-PHP -version '8'
+
+        $result.code | Should -Be -1
+        $result.message | Should -Be "Failed to download PHP version 8"
+    }
+
     It "Handles exception gracefully" {
-        Mock Is-PHP-Version-Installed { return $false }
-        Mock Get-Matching-PHP-Versions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
+        Mock Test-PHPVersionInstalled { return $false }
+        Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
         Mock Read-Host { throw 'Test exception' }
 
         $result = Install-PHP -version '8.1'
@@ -690,7 +799,7 @@ Describe "Install-PHP Integration Tests" {
             }
         }
 
-        Mock Get-PHP-Versions {
+        Mock Get-PHPVersions {
             return @{
                 Releases = @{
                     filename = 'php-8.1.33-Win32-vs16-x64.zip'
@@ -721,31 +830,36 @@ Describe "Environment Variable Tests" {
     BeforeEach {
         Mock Write-Host { }
         Reset-MockState
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
     }
 
-    It "Get-All-EnvVars should handle registry errors" {
+    It "Get-AllEnvVars should handle registry errors" {
         $script:MockRegistryThrowException = $true
 
-        $result = Get-All-EnvVars
+        $result = Get-AllEnvVars
 
         $result | Should -Be $null
     }
 
-    It "Get-EnvVar-ByName should handle null/empty names" {
-        $result = Get-EnvVar-ByName -name ''
+    It "Get-EnvVarByName should handle null/empty names" {
+        $result = Get-EnvVarByName -name ''
         $result | Should -Be $null
 
-        $result = Get-EnvVar-ByName -name '   '
+        $result = Get-EnvVarByName -name '   '
         $result | Should -Be $null
 
-        $result = Get-EnvVar-ByName -name $null
+        $result = Get-EnvVarByName -name $null
         $result | Should -Be $null
     }
 
-    It "Get-EnvVar-ByName should handle registry errors" {
+    It "Get-EnvVarByName should handle registry errors" {
         $script:MockRegistryThrowException = $true
 
-        $result = Get-EnvVar-ByName -name 'TEST'
+        $result = Get-EnvVarByName -name 'TEST'
 
         $result | Should -Be $null
     }
@@ -769,10 +883,10 @@ Describe "Environment Variable Tests" {
         $result | Should -Be -1
     }
 
-    It "Get-Installed-PHP-Versions should return sorted versions" {
-        Mock Cache-Data { return 0 }
-        Mock Can-Use-Cache { return $false }
-        Mock Get-Installed-PHP-Versions-From-Disk {
+    It "Get-InstalledPHPVersions should return sorted versions" {
+        Mock Save-CachedData { return 0 }
+        Mock Test-CanUseCache { return $false }
+        Mock Get-InstalledPHPVersionsFromDisk {
             return @(
                 @{version = '8.2'; arch = 'x64'; buildType = 'nts'}
                 @{version = '8.1'; arch = 'x64'; buildType = 'nts'}
@@ -782,29 +896,31 @@ Describe "Environment Variable Tests" {
             )
         }
 
-        $result = Get-Installed-PHP-Versions
+        $result = Get-InstalledPHPVersions
 
         $result[0].version | Should -Be '5.6'
         $result[1].version | Should -Be '7.4'
     }
 
-    It "Get-Installed-PHP-Versions should handle registry errors" {
-        $script:MockRegistryThrowException = $true
+    It "Get-InstalledPHPVersions should return empty array when no directories found" {
+        $PVMConfig.paths.php = "$($PVMConfig.paths.fakeStorage)\install-drive\storage\installed-php"
+        New-Item -Path $PVMConfig.paths.php -ItemType Directory -Force
+        Remove-Item -Path "$($PVMConfig.paths.php)\*" -Recurse -Force
 
-        $result = Get-Installed-PHP-Versions
+        $result = Get-InstalledPHPVersions
 
         $result | Should -Be @()
     }
 
-    It "Get-Matching-PHP-Versions should find matching versions" {
-        Mock Get-Installed-PHP-Versions {
+    It "Get-MatchingPHPVersions should find matching versions" {
+        Mock Get-InstalledPHPVersions {
             return @(
                 @{version = '8.1.0'; arch = 'x64'; buildType = 'nts'}
                 @{version = '8.2.0'; arch = 'x64'; buildType = 'nts'}
                 @{version = '8.1.5'; arch = 'x64'; buildType = 'nts'}
             )
         }
-        $result = Get-Matching-PHP-Versions -version '8.1'
+        $result = Get-MatchingPHPVersions -version '8.1'
 
         $result | Where-Object { $_.version -eq '8.1.0' } | Should -Not -BeNullOrEmpty
         $result | Where-Object { $_.version -eq '8.1.5' } | Should -Not -BeNullOrEmpty

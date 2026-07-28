@@ -18,7 +18,7 @@ BeforeAll {
         DownloadFails = $false
     }
 
-    Mock Get-Web-Response {
+    Mock Get-WebResponse {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
@@ -46,9 +46,9 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Get-Extension-Categories-By-Page Tests" {
+Describe "Get-ExtensionCategoriesByPage Tests" {
     It "Returns extensions links by page" {
-        Mock Get-Web-Response -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Get-WebResponse -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links   = @(
@@ -60,7 +60,7 @@ Describe "Get-Extension-Categories-By-Page Tests" {
             }
         }
 
-        $result = Get-Extension-Categories-By-Page -extCategory 'Caching' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
+        $result = Get-ExtensionCategoriesByPage -extCategory 'Caching' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
 
         $result.availableExtensions.Count | Should -Be 4
         $result.availableExtensions[0].href | Should -Be '/package/APC'
@@ -71,7 +71,7 @@ Describe "Get-Extension-Categories-By-Page Tests" {
     }
 
     It "Sets hasMore to true when more pages are available" {
-        Mock Get-Web-Response -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Get-WebResponse -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links   = @(
@@ -86,16 +86,16 @@ Describe "Get-Extension-Categories-By-Page Tests" {
             }
         }
 
-        $result = Get-Extension-Categories-By-Page -extCategory 'Caching' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
+        $result = Get-ExtensionCategoriesByPage -extCategory 'Caching' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
 
         $result.hasMore | Should -Be $true
     }
 }
 
-Describe "Get-PHPExtensions-From-Source" {
+Describe "Get-PHPExtensionsFromSource" {
     BeforeAll {
-        Mock Cache-Data { return 0 }
-        Mock Get-Web-Response -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+        Mock Save-CachedData { return 0 }
+        Mock Get-WebResponse -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
                 Links   = @(
@@ -113,7 +113,7 @@ Describe "Get-PHPExtensions-From-Source" {
                 )
             }
         }
-        Mock Get-Extension-Categories-By-Page {
+        Mock Get-ExtensionCategoriesByPage {
             param ($link)
             if ($link -eq '/packages.php?catpid=1&amp;catname=Authentication') {
                 return @{
@@ -139,35 +139,44 @@ Describe "Get-PHPExtensions-From-Source" {
         }
     }
 
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
+
     It "Returns list of available extensions" {
-        $list = Get-PHPExtensions-From-Source
+        $list = Get-PHPExtensionsFromSource
         $list.Count | Should -Be 3 # include xdebug category
     }
 
     It "Handles thrown exception" {
-        Mock Get-Extension-Categories-By-Page { throw 'Network error' }
-        $list = Get-PHPExtensions-From-Source
+        Mock Get-ExtensionCategoriesByPage { throw 'Network error' }
+        $list = Get-PHPExtensionsFromSource
         $list.Count | Should -Be 0
     }
 }
 
-Describe "List-PHP-Extensions" {
+Describe "Show-PHPExtensions" {
     BeforeAll {
-        Mock Get-All-PHPExtensionsStatus {
+        Mock Save-CachedData { return 0 }
+        Mock Get-AllPHPExtensionsStatus {
             return @(
                 @{ name = 'curl'; enabled = $true; status = 'Enabled' }
                 @{ name = 'opcache'; enabled = $false; status = 'Disabled' }
             )
         }
-        Mock Get-Matching-PHPExtensionsStatus {
+        Mock Get-MatchingPHPExtensionsStatus {
             return @(
                 @{ name = 'curl'; enabled = $true; status = 'Enabled' }
                 @{ name = 'opcache'; enabled = $false; status = 'Disabled' }
             )
         }
 
-        function Get-Extension-List {
-            return @{
+        function Get-ExtensionList {
+            return [pscustomobject] @{
                 Authentication = @(
                     @{
                         outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
@@ -175,6 +184,7 @@ Describe "List-PHP-Extensions" {
                         href        = '/package/courierauth';
                         extName     = 'courierauth';
                         extCategory = 'Authentication';
+                        description = 'Courier Authentication'
                     },
                     @{
                         outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
@@ -182,6 +192,7 @@ Describe "List-PHP-Extensions" {
                         href        = '/package/krb5';
                         extName     = 'krb5';
                         extCategory = 'Authentication'
+                        description = 'Kerberos 5'
                     }
                 )
                 Caching        = @(
@@ -191,6 +202,7 @@ Describe "List-PHP-Extensions" {
                         href        = '/package/APC';
                         extName     = 'APC';
                         extCategory = 'Caching'
+                        description = 'APC'
                     }
                     @{
                         outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
@@ -198,67 +210,68 @@ Describe "List-PHP-Extensions" {
                         href        = '/package/APCu';
                         extName     = 'APCu';
                         extCategory = 'Caching'
+                        description = 'APCu'
                     }
                 )
             }
         }
-        Mock Get-Data-From-Cache { return Get-Extension-List }
-        Mock Get-PHPExtensions-From-Source -MockWith { return Get-Extension-List }
-        Mock Display-Extensions-States {}
-        Mock Display-Installed-Extensions {}
+        Mock Get-DataFromCache { return Get-ExtensionList }
+        Mock Get-PHPExtensionsFromSource -MockWith { return Get-ExtensionList }
+        Mock Show-ExtensionsStates {}
+        Mock Show-InstalledExtensions {}
     }
 
     It "Returns 0 when no extensions are installed" {
-        Mock Get-All-PHPExtensionsStatus { return @() }
+        Mock Get-AllPHPExtensionsStatus { return @() }
 
-        $code = List-PHP-Extensions -iniPath $testIniPath
+        $code = Show-PHPExtensions -iniPath $testIniPath
 
         $code | Should -Be 0
-        Should -Invoke Display-Extensions-States -Exactly 1
-        Should -Invoke Display-Installed-Extensions -Exactly 1
+        Should -Invoke Show-ExtensionsStates -Exactly 1
+        Should -Invoke Show-InstalledExtensions -Exactly 1
     }
 
     It "Displays installed extensions" {
-        $code = List-PHP-Extensions -iniPath $testIniPath
+        $code = Show-PHPExtensions -iniPath $testIniPath
         $code | Should -Be 0
-        Should -Invoke Get-All-PHPExtensionsStatus -Exactly 1
-        Should -Invoke Get-Matching-PHPExtensionsStatus -Exactly 0
-        Should -Invoke Display-Extensions-States -Exactly 1
-        Should -Invoke Display-Installed-Extensions -Exactly 1
+        Should -Invoke Get-AllPHPExtensionsStatus -Exactly 1
+        Should -Invoke Get-MatchingPHPExtensionsStatus -Exactly 0
+        Should -Invoke Show-ExtensionsStates -Exactly 1
+        Should -Invoke Show-InstalledExtensions -Exactly 1
     }
 
     It "Displays local extensions matching the filter" {
-        $code = List-PHP-Extensions -iniPath $testIniPath -term 'pc'
+        $code = Show-PHPExtensions -iniPath $testIniPath -term 'pc'
         $code | Should -Be 0
-        Should -Invoke Get-All-PHPExtensionsStatus -Exactly 1
-        Should -Invoke Get-Matching-PHPExtensionsStatus -Exactly 1
-        Should -Invoke Display-Extensions-States -Exactly 1
-        Should -Invoke Display-Installed-Extensions -Exactly 1
+        Should -Invoke Get-AllPHPExtensionsStatus -Exactly 1
+        Should -Invoke Get-MatchingPHPExtensionsStatus -Exactly 1
+        Should -Invoke Show-ExtensionsStates -Exactly 1
+        Should -Invoke Show-InstalledExtensions -Exactly 1
     }
 
     It "Returns 0 when no local extensions matchs the filter" {
-        Mock Get-Matching-PHPExtensionsStatus { return @() }
+        Mock Get-MatchingPHPExtensionsStatus { return @() }
 
-        $code = List-PHP-Extensions -iniPath $testIniPath -term 'nonexistent'
+        $code = Show-PHPExtensions -iniPath $testIniPath -term 'nonexistent'
 
         $code | Should -Be 0
-        Should -Invoke Get-Matching-PHPExtensionsStatus -Exactly 1
-        Should -Invoke Display-Extensions-States -Exactly 1
-        Should -Invoke Display-Installed-Extensions -Exactly 1
+        Should -Invoke Get-MatchingPHPExtensionsStatus -Exactly 1
+        Should -Invoke Show-ExtensionsStates -Exactly 1
+        Should -Invoke Show-InstalledExtensions -Exactly 1
     }
 
     It "Returns -1 when no extensions are found" {
         Mock Test-Path { return $false }
-        Mock Get-PHPExtensions-From-Source { return @{} }
-        $code = List-PHP-Extensions -iniPath $testIniPath -available $true
+        Mock Get-PHPExtensionsFromSource { return @{} }
+        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
         $code | Should -Be -1
-        Should -Invoke Get-PHPExtensions-From-Source -Exactly 1
-        Should -Invoke Get-Data-From-Cache -Exactly 0
+        Should -Invoke Get-PHPExtensionsFromSource -Exactly 1
+        Should -Invoke Get-DataFromCache -Exactly 0
     }
 
     It "Displays available extensions from cache" {
-        Mock Can-Use-Cache { return $true }
-        Mock Get-Data-From-Cache {
+        Mock Test-CanUseCache { return $true }
+        Mock Get-DataFromCache {
             return @{
                 GUI    = @(
                     @{href = '/package/php_xcb'; extName = 'php_xcb'; extCategory = 'GUI' }
@@ -271,42 +284,43 @@ Describe "List-PHP-Extensions" {
                 )
             }
         }
-        $code = List-PHP-Extensions -iniPath $testIniPath -available $true
+        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
         $code | Should -Be 0
-        Should -Invoke Get-Data-From-Cache -Exactly 1
-        Should -Invoke Get-PHPExtensions-From-Source -Exactly 0
+        Should -Invoke Get-DataFromCache -Exactly 1
+        Should -Invoke Get-PHPExtensionsFromSource -Exactly 0
     }
 
     It "Displays available extensions from source when cache is empty" {
-        Mock Can-Use-Cache { return $true }
-        Mock Get-Data-From-Cache { return @{} }
-        $code = List-PHP-Extensions -iniPath $testIniPath -available $true
+        Mock Test-CanUseCache { return $true }
+        Mock Get-DataFromCache { return @{} }
+        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
         $code | Should -Be 0
-        Should -Invoke Get-Data-From-Cache -Exactly 1
-        Should -Invoke Get-PHPExtensions-From-Source -Exactly 1
+        Should -Invoke Get-DataFromCache -Exactly 1
+        Should -Invoke Get-PHPExtensionsFromSource -Exactly 1
     }
 
     It "Displays available extensions matching the filter" {
-        $code = List-PHP-Extensions -iniPath $testIniPath -available $true -term 'pc'
+        $code = Show-PHPExtensions -iniPath $testIniPath -available $true -term 'pc'
         $code | Should -Be 0
     }
 
     It "Returns -1 when no available extensions matchs the filter" {
-        $code = List-PHP-Extensions -iniPath $testIniPath -available $true -term 'nonexistent'
+        $code = Show-PHPExtensions -iniPath $testIniPath -available $true -term 'nonexistent'
         $code | Should -Be -1
     }
 
     It "Handles thrown exception" {
-        Mock Can-Use-Cache { throw 'Error' }
-        $code = List-PHP-Extensions -iniPath $testIniPath -available $true
+        Mock Test-CanUseCache { throw 'Error' }
+        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
         $code | Should -Be -1
     }
 
     It "Returns -1 when available extensions count is 0" {
-        Mock Can-Use-Cache { return $false }
+        Mock Test-CanUseCache { return $false }
         Mock Get-OrUpdateCache -ParameterFilter { $cacheFileName -eq 'available_extensions' } { return @{} }
-        Mock Write-Host {}
-        $code = List-PHP-Extensions -iniPath $testIniPath -available $true
+
+        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
+
         $code | Should -Be -1
         Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq "`nNo extensions found"
@@ -314,7 +328,7 @@ Describe "List-PHP-Extensions" {
     }
 
     It "Displays available extensions with long descriptions that require wrapping" {
-        Mock Can-Use-Cache { return $false }
+        Mock Test-CanUseCache { return $false }
         Mock Get-OrUpdateCache -ParameterFilter { $cacheFileName -eq 'available_extensions' } {
             return @{
                 TestCategory = @(
@@ -327,13 +341,13 @@ Describe "List-PHP-Extensions" {
             }
         }
         # Mock $Host.UI.RawUI.WindowSize to trigger the maxDescLength < 100 condition
-        Mock Get-Console-Width { 80 }
-        $code = List-PHP-Extensions -iniPath $testIniPath -available $true
+        Mock Get-ConsoleWidth { 80 }
+        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
         $code | Should -Be 0
     }
 
     It "Displays available extensions with very long word without spaces to trigger breakPos fallback" {
-        Mock Can-Use-Cache { return $false }
+        Mock Test-CanUseCache { return $false }
         Mock Get-OrUpdateCache -ParameterFilter { $cacheFileName -eq 'available_extensions' } {
             return @{
                 TestCategory = @(
@@ -341,7 +355,7 @@ Describe "List-PHP-Extensions" {
                 )
             }
         }
-        $code = List-PHP-Extensions -iniPath $testIniPath -available $true
+        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
         $code | Should -Be 0
     }
 }

@@ -164,14 +164,14 @@ VALID=yes
     }
 }
 
-Describe "Set-Aliases-List" {
+Describe "Set-AliasesList" {
     BeforeAll {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
     }
 
     It "Creates aliases.json" {
-        $result = Set-Aliases-List
+        $result = Set-AliasesList
         $result | Should -Be 0
 
         $result = Get-Aliases
@@ -180,7 +180,7 @@ Describe "Set-Aliases-List" {
 
     It "Returns -1 when exception is thrown" {
         Mock Set-Content { throw 'Test exception' }
-        $result = Set-Aliases-List
+        $result = Set-AliasesList
         $result | Should -Be -1
     }
 }
@@ -188,7 +188,7 @@ Describe "Set-Aliases-List" {
 Describe "Get-Aliases" {
     BeforeAll {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $testContent = [ordered]@{'?'  = 'help'; 'i'  = 'install'; 'init' = 'setup'}
+        $testContent = [ordered]@{'?' = 'help'; 'i' = 'install'; 'init' = 'setup'}
         $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ALIASES_LIST_PATH
         $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
     }
@@ -208,7 +208,7 @@ Describe "Get-Aliases" {
     }
 
     It "Returns default value when exception is thrown" {
-        Mock Is-File-Exists { return $true }
+        Mock Test-FileExists { return $true }
         Mock Get-Content { throw 'Test exception' }
         $result = Get-Aliases
         $result.Count | Should -Be $DEFAULT_ALIASES.Count
@@ -219,6 +219,20 @@ Describe "Get-FlagMap" {
     It "Returns PVMConfig.defaults.flags" {
         $result = Get-FlagMap
         $result.Count | Should -Be $PVMConfig.defaults.flags.Count
+    }
+}
+
+Describe "Get-Scripts" {
+    It "Returns scripts from PVMConfig.defaults.scripts" {
+        $PVMConfig.defaults.scripts = [ordered]@{
+            'test:quiet'        = @('test --verbosity=None')
+            'test:cov'          = @('test --coverage=75')
+        }
+
+        $result = Get-Scripts
+        $result.Count | Should -Be 2
+        $result['test:quiet'] | Should -Be 'test --verbosity=None'
+        $result['test:cov'] | Should -Be 'test --coverage=75'
     }
 }
 

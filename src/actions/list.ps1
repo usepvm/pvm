@@ -1,19 +1,21 @@
 ﻿
-function Get-From-Source {
+function Get-FromSource {
     try {
-        $urls = Get-Source-Urls
-        $fetchedVersionsGrouped = @{}
-        foreach ($key in $urls.Keys) {
-            $html = Get-Web-Response -uri $urls[$key]
-            $links = $html.Links
+        $fetchedVersionsGrouped = Show-SpinnerWhileJob -scriptBlock {
+            $urls = Get-SourceUrls
+            $fetchedVersionsGrouped = @{}
+            foreach ($key in $urls.Keys) {
+                $html = Get-WebResponse -uri $urls[$key]
+                $links = $html.Links
 
-            # Filter the links to find versions that match the given version
-            $filteredLinks = @()
-            $links | ForEach-Object {
-                if ($_.href -match "php-\d+\.\d+\.\d+(?:-\d+)?-(?:nts-)?Win32.*\.zip$" -and
-                    $_.href -notmatch 'php-debug' -and
-                    $_.href -notmatch 'php-devel' # -and $_.href -notmatch "nts"
-                ) {
+                # Filter the links to find versions that match the given version
+                $filteredLinks = @()
+                $null = $links | Where-Object {
+                    if (-not $_.href) { return $false }
+                    if ($_.href -match 'php-debug') { return $false }
+                    if ($_.href -match 'php-devel') { return $false }
+                    if ($_.href -notmatch "php-\d+\.\d+\.\d+(?:-\d+)?-(?:nts-)?Win32.*\.zip$") { return $false }
+
                     $fileName = $_.href -split '/'
                     $fileName = $fileName[$fileName.Count - 1]
 
@@ -24,53 +26,45 @@ function Get-From-Source {
                         Link      = $_.href
                     }
                 }
+                # Return the filtered links (PHP version names)
+                $fetchedVersionsGrouped[$key] = $filteredLinks
             }
-            # Return the filtered links (PHP version names)
-            $fetchedVersionsGrouped[$key] = $filteredLinks
-        }
 
-        if ($fetchedVersionsGrouped.Count -eq 0 -or
-            ($fetchedVersionsGrouped['Archives'].Count -eq 0 -and $fetchedVersionsGrouped['Releases'].Count -eq 0)) {
-            Print-Error -message "`nNo PHP versions found in the source."
-            return @{}
-        }
+            return @{ pvmData = $fetchedVersionsGrouped }
+        } -rethrow $true
 
         return $fetchedVersionsGrouped
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch PHP versions from source"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch PHP versions from source"; exception = $_ }
         return @{}
     }
 }
 
-function Get-PHP-List-To-Install {
+function Get-PHPListToInstall {
     try {
         $fetchedVersionsGrouped = Get-OrUpdateCache -cacheFileName 'available_php_versions' -compute {
-            Get-From-Source
+            return [pscustomobject] (Get-FromSource)
         }
-
-        if (-not $fetchedVersionsGrouped) {
-            return @{}
-        }
-
-        $fetchedVersionsGrouped = [pscustomobject] $fetchedVersionsGrouped
 
         return $fetchedVersionsGrouped
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get fetch PHP versions"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get fetch PHP versions"; exception = $_ }
         return @{}
     }
 }
 
-function Get-Available-PHP-Versions {
+function Get-AvailablePHPVersions {
     param ($term = $null, $arch = $null, $buildType = $null)
 
     try {
-        Print-Message -message "`nLoading available PHP versions..."
+        Show-Message -message "`nLoading available PHP versions..."
 
-        $fetchedVersionsGrouped = Get-PHP-List-To-Install
+        $fetchedVersionsGrouped = Get-PHPListToInstall
 
-        if ($fetchedVersionsGrouped.Count -eq 0) {
-            Print-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
+        if (-not $fetchedVersionsGrouped -or
+            $fetchedVersionsGrouped.Count -eq 0 -or
+            ($fetchedVersionsGrouped.Archives.Count -eq 0 -and $fetchedVersionsGrouped.Releases.Count -eq 0)) {
+            Show-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
             return -1
         }
 
@@ -92,11 +86,11 @@ function Get-Available-PHP-Versions {
         }
 
         if ($fetchedVersionsGroupedPartialList.Count -eq 0) {
-            Print-Error -message "`nNo PHP versions found matching '$term'"
+            Show-Error -message "`nNo PHP versions found matching '$term'"
             return -1
         }
 
-        Print-Info -message "`nAvailable Versions"
+        Show-Info -message "`nAvailable Versions"
         Write-Gray -message '------------------'
 
         $fetchedVersionsGroupedPartialList.GetEnumerator() |
@@ -107,46 +101,46 @@ function Get-Available-PHP-Versions {
                 if ($fetchedVersionsGroupe.Length -eq 0) {
                     return
                 }
-                Print-Message -message "`n$key`n"
+                Show-Message -message "`n$key`n"
                 $maxNameLength = ($fetchedVersionsGroupe.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $fetchedVersionsGroupe | ForEach-Object {
                     $versionNumber = "$($_.Version) ".PadRight($maxNameLength, '.')
-                    Print-Message -message "  $versionNumber $($_.Arch) $($_.BuildType)"
+                    Show-Message -message "  $versionNumber $($_.Arch) $($_.BuildType)"
                 }
             }
 
         $msg = "`nThis is a partial list. For a complete list, visit:"
         $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
-        Print-Message -message $msg
+        Show-Message -message $msg
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"; exception = $_ }
         return -1
     }
 }
 
-function Display-Installed-PHP-Versions {
+function Show-InstalledPHPVersions {
     param ($term = $null, $arch = $null, $buildType = $null)
 
     try {
-        $currentVersion = Get-Current-PHP-Version
-        $installedPhp = Get-Installed-PHP-Versions -arch $arch -buildType $buildType
+        $currentVersion = Get-CurrentPHPVersion
+        $installedPhp = Get-InstalledPHPVersions -arch $arch -buildType $buildType
 
         if ($installedPhp.Count -eq 0) {
-            Print-Error -message "`nNo PHP versions found"
+            Show-Error -message "`nNo PHP versions found"
             return -1
         }
 
         if ($term) {
             $installedPhp = $installedPhp | Where-Object { $_.Version -like "$term*" }
             if ($installedPhp.Count -eq 0) {
-                Print-Error -message "`nNo PHP versions found matching '$term'"
+                Show-Error -message "`nNo PHP versions found matching '$term'"
                 return -1
             }
         }
 
-        Print-Info -message "`nInstalled Versions"
+        Show-Info -message "`nInstalled Versions"
         Write-Gray -message '------------------'
         $duplicates = @()
         $maxNameLength = ($installedPhp.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
@@ -163,27 +157,27 @@ function Display-Installed-PHP-Versions {
                 if ($_.BuildType) {
                     $metaData += $_.BuildType
                 }
-                if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $_) {
+                if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $_) {
                     $isCurrent = '(Current)'
                 }
                 $versionNumber = "$versionNumber ".PadRight($maxNameLength, '.')
-                Print-Message -message " $versionNumber $metaData $isCurrent"
+                Show-Message -message " $versionNumber $metaData $isCurrent"
             }
         }
         return 0
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display installed PHP versions"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display installed PHP versions"; exception = $_ }
         return -1
     }
 }
 
-function Get-PHP-Versions-List {
+function Get-PHPVersionsList {
     param ($available = $false, $term = $null, $arch = $null, $buildType = $null)
 
     if ($available) {
-        $result = Get-Available-PHP-Versions -term $term -arch $arch -buildType $buildType
+        $result = Get-AvailablePHPVersions -term $term -arch $arch -buildType $buildType
     } else {
-        $result = Display-Installed-PHP-Versions -term $term -arch $arch -buildType $buildType
+        $result = Show-InstalledPHPVersions -term $term -arch $arch -buildType $buildType
     }
 
     return $result

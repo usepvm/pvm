@@ -1,5 +1,5 @@
 ﻿
-function Display-Msg-By-ExitCode {
+function Show-MsgByExitCode {
     param ($result, $message = $null)
 
     try {
@@ -21,18 +21,18 @@ function Display-Msg-By-ExitCode {
             Write-Color -message "`n$($result.message)" -foreColor $result.color
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
     }
 }
 
-function Log-Data {
+function Add-LogEntry {
     param ($data)
 
     try {
         $logPath = if ($data.logPath) { $data.logPath } else { $PVMConfig.paths.logError }
-        $created = Make-Directory -path (Split-Path -Path $logPath)
+        $created = New-Directory -path (Split-Path -Path $logPath)
         if ($created -ne 0) {
-            Print-Message -message "Failed to create directory $(Split-Path -Path $logPath)"
+            Show-Message -message "Failed to create directory $(Split-Path -Path $logPath)"
             return -1
         }
         $content = "`n--------------------------"
@@ -41,7 +41,7 @@ function Log-Data {
             $content += "`nMessage: $($data.exception.Exception.Message)"
             $content += "`nPosition: $($data.exception.InvocationInfo.PositionMessage)"
         }
-        Add-Content -Path $logPath -Value $content
+        Add-Content-Wrapper -path $logPath -value $content
         return 0
     } catch {
         return -1
@@ -75,139 +75,203 @@ function Format-Seconds {
 
         return '{0:D2}:{1:D2}' -f $minutes, $seconds
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to format seconds"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to format seconds"; exception = $_ }
         return -1
     }
 }
 
-function Get-Console-Width {
+function Get-ConsoleWidth {
     return $Host.UI.RawUI.WindowSize.Width
+}
+
+function Show-SpinnerWhileJob {
+    param ($scriptBlock, $message = "Working", [switch]$noClear, $argumentList = @(), $rethrow = $false)
+
+    $spinner = @('|', '/', '-', '\')
+
+    try {
+        # Create initialization script to load all PVM functions into the job
+        $env:PVM_ROOT_FOR_JOB = $PVMRoot
+        $initScript = {
+            . "$($env:PVM_ROOT_FOR_JOB)\src\import.ps1"
+        }
+
+        # $job = Start-Job -ScriptBlock $scriptBlock -InitializationScript $initScript -ArgumentList (,$argumentList)
+        $job = Start-Job -ScriptBlock $scriptBlock -InitializationScript $initScript -ArgumentList $argumentList
+
+        $i = 0
+        while ($job.State -eq 'Running') {
+            Show-Message -message "`r$message $($spinner[$i % $spinner.Length])" -NoNewline
+            Start-Sleep -Milliseconds 100
+            $i++
+        }
+
+        # Clear the spinner line
+        if (-not $noClear) {
+            Show-Message -message "`r$(' ' * ($message.Length + 2))`r" -NoNewline
+        }
+
+        $result = Receive-Job -Job $job -Wait -AutoRemoveJob -ErrorAction Stop
+        Remove-Item Env:\PVM_ROOT_FOR_JOB -ErrorAction SilentlyContinue
+
+        return $result.pvmData
+    } catch {
+        Write-Yellow -message "`r$(' ' * ($message.Length + 2))`r" -NoNewline
+        Remove-Item Env:\PVM_ROOT_FOR_JOB -ErrorAction SilentlyContinue
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show spinner while job"; exception = $_ }
+
+        if ($rethrow) {
+            throw $_
+        }
+
+        return -1
+    }
 }
 
 function Write-Color {
     param ($message, $foreColor, [switch]$noNewLine)
 
-    Write-Host $message -ForegroundColor $foreColor -NoNewline:$noNewLine
+    if ($script:PVMSubprocessMode) {
+        $script:StructuredOutput += @{
+            message = $message
+            color = $foreColor
+            noNewLine = $noNewLine.IsPresent
+        }
+    } else {
+        Write-Host -Object $message -ForegroundColor $foreColor -NoNewline:$noNewLine
+    }
 }
 
 function Write-White {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor White -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor White -noNewLine:$noNewLine
 }
 
 function Write-DarkGreen {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor DarkGreen -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor DarkGreen -noNewLine:$noNewLine
 }
 
 function Write-DarkYellow {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor DarkYellow -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor DarkYellow -noNewLine:$noNewLine
 }
 
 function Write-Yellow {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor Yellow -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor Yellow -noNewLine:$noNewLine
 }
 
 function Write-Cyan {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor Cyan -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor Cyan -noNewLine:$noNewLine
 }
 
 function Write-Magenta {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor Magenta -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor Magenta -noNewLine:$noNewLine
 }
 
 function Write-Blue {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor Blue -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor Blue -noNewLine:$noNewLine
 }
 
 function Write-DarkGray {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor DarkGray -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor DarkGray -noNewLine:$noNewLine
 }
 
 function Write-Gray {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
-    Write-Color $message -foreColor Gray -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor Gray -noNewLine:$noNewLine
 }
 
 function Write-Default {
-    param($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine)
 
-    Print-Message $message -noNewLine:$noNewLine
+    Show-Message -message $message -noNewLine:$noNewLine
 }
 
-function Print-Success {
-    param($message, [switch]$noNewLine)
+function Show-Success {
+    param ($message, [switch]$noNewLine)
 
-    Write-DarkGreen $message -noNewLine:$noNewLine
+    Write-DarkGreen -message $message -noNewLine:$noNewLine
 }
 
-function Print-Error {
-    param($message, [switch]$noNewLine)
+function Show-Error {
+    param ($message, [switch]$noNewLine)
 
-    Write-DarkYellow $message -noNewLine:$noNewLine
+    Write-DarkYellow -message $message -noNewLine:$noNewLine
 }
 
-function Print-Warning {
-    param($message, [switch]$noNewLine)
+function Show-Warning {
+    param ($message, [switch]$noNewLine)
 
-    Write-Yellow $message -noNewLine:$noNewLine
+    Write-Yellow -message $message -noNewLine:$noNewLine
 }
 
-function Print-Info {
-    param($message, [switch]$noNewLine)
+function Show-Info {
+    param ($message, [switch]$noNewLine)
 
-    Write-Cyan $message -noNewLine:$noNewLine
+    Write-Cyan -message $message -noNewLine:$noNewLine
 }
 
-function Print-Header {
-    param($message, [switch]$noNewLine)
+function Show-Header {
+    param ($message, [switch]$noNewLine)
 
-    Write-Magenta $message -noNewLine:$noNewLine
+    Write-Magenta -message $message -noNewLine:$noNewLine
 }
 
-function Print-Section {
-    param($message, [switch]$noNewLine)
+function Show-Section {
+    param ($message, [switch]$noNewLine)
 
-    Write-Blue $message -noNewLine:$noNewLine
+    Write-Blue -message $message -noNewLine:$noNewLine
 }
 
-function Print-Debug {
-    param($message, [switch]$noNewLine)
+function Show-Debug {
+    param ($message, [switch]$noNewLine)
 
-    Write-DarkGray $message -noNewLine:$noNewLine
+    Write-DarkGray -message $message -noNewLine:$noNewLine
 }
 
-function Print-Verbose {
-    param($message, [switch]$noNewLine)
+function Show-Verbose {
+    param ($message, [switch]$noNewLine)
 
-    Write-Gray $message -noNewLine:$noNewLine
+    Write-Gray -message $message -noNewLine:$noNewLine
 }
 
-function Print-Value {
-    param($message, [switch]$noNewLine)
+function Show-Value {
+    param ($message, [switch]$noNewLine)
 
-    Write-White $message -noNewLine:$noNewLine
+    Write-White -message $message -noNewLine:$noNewLine
 }
 
-function Print-Message {
-    param($message, [switch]$noNewLine)
+function Show-Message {
+    param ($message, [switch]$noNewLine)
 
-    Write-Host $message -NoNewline:$noNewLine
+    Write-White -message $message -noNewLine:$noNewLine
+}
+
+function New-Line {
+    Show-Message -message "`n" -noNewLine
+}
+
+function New-Lines {
+    param ($count)
+
+    for ($i = 0; $i -lt $count; $i++) {
+        New-Line
+    }
 }
 
 function MakePlayer {

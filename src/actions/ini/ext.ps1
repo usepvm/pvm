@@ -1,9 +1,9 @@
-
-function Get-Extension-Categories-By-Page {
+﻿
+function Get-ExtensionCategoriesByPage {
     param ($extCategory, $link, $page = 1)
 
     $availableExtensions = @()
-    $html = Get-Web-Response -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
+    $html = Get-WebResponse -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
     $null = $html.Links | Where-Object {
         if (-not $_.href) { return $false }
@@ -14,9 +14,15 @@ function Get-Extension-Categories-By-Page {
         if ($_.href -notmatch '^/package/[A-Za-z0-9_]+$') {
             return $false
         }
+
+        $null = $_.outerHTML -match '(?s)<strong>(?<package>.*?)</strong>.*?<td[^>]*>(?<description>.*?)</td>'
+        $description = $matches['description']
+
         $extName = ($_.href -replace '/package/', '').Trim()
         $_ | Add-Member -NotePropertyName 'extName' -NotePropertyValue $extName -Force
         $_ | Add-Member -NotePropertyName 'extCategory' -NotePropertyValue $extCategory -Force
+        $_ | Add-Member -NotePropertyName 'description' -NotePropertyValue $description -Force
+
         $availableExtensions += $_
         return $true
     }
@@ -27,30 +33,39 @@ function Get-Extension-Categories-By-Page {
     }
 }
 
-function Get-PHPExtensions-From-Source {
+function Get-PHPExtensionsFromSource {
     $availableExtensions = @{}
     try {
-        $html_cat = Get-Web-Response -uri $PVMConfig.links.peclPackages
+        $html_cat = Get-WebResponse -uri $PVMConfig.links.peclPackages
         $null = $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
 
-            if ($_.href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
+            $href = $_.href
+            if ($href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
                 return $false
             }
 
-            $page = 1
             $extCategory = $matches[1] -replace '\+', ' '
-            do {
-                $hasMore = $false
-                $result = Get-Extension-Categories-By-Page -extCategory $extCategory -link $_.href -page $page
-                $availableExtensions[$extCategory] += $result.availableExtensions
-                $hasMore = $result.hasMore
-                $page++
-            } while ($hasMore)
 
-            if ($availableExtensions[$extCategory].Count -eq 0) {
-                $availableExtensions.Remove($extCategory)
-            }
+            $availableExtensions = Show-SpinnerWhileJob -argumentList @($availableExtensions, $extCategory, $href) -scriptBlock {
+                param ($availableExtensions, $extCategory, $href)
+
+                $page = 1
+                do {
+                    $hasMore = $false
+                    $result = Get-ExtensionCategoriesByPage -extCategory $extCategory -link $href -page $page
+                    $availableExtensions[$extCategory] += $result.availableExtensions
+                    $hasMore = $result.hasMore
+                    $page++
+                } while ($hasMore)
+
+                if ($availableExtensions[$extCategory].Count -eq 0) {
+                    $availableExtensions.Remove($extCategory)
+                }
+
+                return @{ pvmData = $availableExtensions }
+            } -message "- Loading category '$extCategory'..." -rethrow $true
+
             return $true
         }
         $availableExtensions['XDebug'] = @(
@@ -62,39 +77,38 @@ function Get-PHPExtensions-From-Source {
         )
         $dataToCache = [ordered] @{}
         $availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object { $dataToCache[$_.Key] = $_.Value }
-        $null = Cache-Data -cacheFileName 'available_extensions' -data $dataToCache -depth 3
 
         return $availableExtensions
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"; exception = $_ }
         return @{}
     }
 }
 
-function List-PHP-Extensions {
+function Show-PHPExtensions {
     param ($iniPath, $available = $false, $term = $null)
 
     try {
         if (-not $available) {
-            $allExtensions = Get-All-PHPExtensionsStatus -iniPath $iniPath -includeIniOnly $true
+            $allExtensions = Get-AllPHPExtensionsStatus -iniPath $iniPath -includeIniOnly $true
 
             $filtered = if ($term) {
-                Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $term -includeIniOnly $true
+                Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $term -includeIniOnly $true
             } else {
                 $allExtensions
             }
 
-            Display-Extensions-States -extensions $allExtensions
-            Display-Installed-Extensions -extensions $filtered
+            Show-ExtensionsStates -extensions $allExtensions
+            Show-InstalledExtensions -extensions $filtered
         } else {
-            Print-Message -message "`nLoading available extensions..."
+            Show-Message -message "`nLoading available extensions..."
 
             $availableExtensions = Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
-                return [pscustomobject] (Get-PHPExtensions-From-Source)
+                return [pscustomobject] (Get-PHPExtensionsFromSource)
             }
 
             if ($availableExtensions.Count -eq 0) {
-                Print-Error -message "`nNo extensions found"
+                Show-Error -message "`nNo extensions found"
                 return -1
             }
 
@@ -102,7 +116,7 @@ function List-PHP-Extensions {
             $availableExtensions.PSObject.Properties | ForEach-Object {
                 $searchResult = $_.Value
                 if ($term) {
-                    if ($_.Key -notlike "*$term*") {
+                    if ($_.Name -notlike "*$term*") {
                         # Search the list if the category doesn't match
                         $searchResult = $searchResult | Where-Object {
                             $_.extName -like "*$term*"
@@ -119,14 +133,14 @@ function List-PHP-Extensions {
                 if ($term) {
                     $msg += " matching '$term'"
                 }
-                Print-Error -message $msg
+                Show-Error -message $msg
                 return -1
             }
 
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
             $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxKeyLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3))
 
-            Print-Info -message "`nAvailable Extensions by Category:"
+            Show-Info -message "`nAvailable Extensions by Category:"
             Write-Gray -message '--------------------------------'
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
                 $key = "$($_.Key) "
@@ -134,7 +148,7 @@ function List-PHP-Extensions {
 
                 $label = "  $key"
 
-                $maxDescLength = (Get-Console-Width) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH) * 2)
+                $maxDescLength = (Get-ConsoleWidth) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH) * 2)
                 if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
                 $descLines = @()
@@ -149,14 +163,14 @@ function List-PHP-Extensions {
 
                 if ($descLines.Count -eq 0) {
                     $line = $label.PadRight($maxLineLength, '.')
-                    Print-Message -message $line
+                    Show-Message -message $line
                 } else {
                     $line = $label.PadRight($maxLineLength, '.') + " $($descLines[0])"
-                    Print-Message -message $line
+                    Show-Message -message $line
 
                     $indent = ' ' * ($maxLineLength + 1)
                     for ($i = 1; $i -lt $descLines.Count; $i++) {
-                        Print-Message -message "$indent$($descLines[$i])"
+                        Show-Message -message "$indent$($descLines[$i])"
                     }
                 }
             }
@@ -164,13 +178,13 @@ function List-PHP-Extensions {
             $msg = "`nThis is a partial list. For a complete list, visit:"
             $msg += "`nPHP Extensions : $($PVMConfig.links.peclPackages)"
             $msg += "`nXDebug : $($PVMConfig.links.xdebugHistorical)"
-            Print-Message -message $msg
+            Show-Message -message $msg
         }
 
         return 0
     } catch {
-        Print-Error -message "`nFailed to list extensions"
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"; exception = $_ }
+        Show-Error -message "`nFailed to list extensions"
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list extensions"; exception = $_ }
         return -1
     }
 }

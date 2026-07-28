@@ -14,43 +14,43 @@ AfterAll {
 
 Describe "Invoke-Setup Tests" {
     BeforeEach {
-        Mock Is-PVM-Setup { $true }
-        Mock Setup-PVM { @{ code = 0; message = 'Setup completed' } }
+        Mock Test-PVMSetup { $true }
+        Mock Initialize-PVM { @{ code = 0; message = 'Setup completed' } }
         Mock Optimize-SystemPath { 0 }
-        Mock Setup-Environment-Directories-And-Files { 0 }
-        Mock Create-Env-File { 0 }
-        Mock Pause-ForEnvEdit { }
-        Mock Display-Msg-By-ExitCode { }
+        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
+        Mock New-EnvFile { 0 }
+        Mock Wait-ForEnvEdit { }
+        Mock Show-MsgByExitCode { }
         Mock Write-Host { }
     }
 
     It "Should return 0 when PVM is already setup" {
-        Mock Is-PVM-Setup { $true }
+        Mock Test-PVMSetup { $true }
 
         $result = Invoke-Setup
         $result | Should -Be 0
 
-        Should -Invoke Is-PVM-Setup -Times 1
-        Should -Invoke Setup-PVM -Times 0
-        Should -Invoke Setup-Environment-Directories-And-Files -Times 0
-        Should -Invoke Create-Env-File -Times 0
+        Should -Invoke Test-PVMSetup -Times 1
+        Should -Invoke Initialize-PVM -Times 0
+        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 0
+        Should -Invoke New-EnvFile -Times 0
         Should -Invoke Optimize-SystemPath -Times 1
-        Should -Invoke Display-Msg-By-ExitCode -Times 1
+        Should -Invoke Show-MsgByExitCode -Times 1
     }
 
     It "Should setup PVM when not already setup" {
-        Mock Is-PVM-Setup { $false }
-        Mock Setup-PVM { @{ code = 0; message = 'Setup completed successfully' } }
+        Mock Test-PVMSetup { $false }
+        Mock Initialize-PVM { @{ code = 0; message = 'Setup completed successfully' } }
 
         $result = Invoke-Setup
         $result | Should -Be 0
 
-        Should -Invoke Is-PVM-Setup -Times 1
-        Should -Invoke Setup-PVM -Times 1
-        Should -Invoke Setup-Environment-Directories-And-Files -Times 1
-        Should -Invoke Create-Env-File -Times 1
+        Should -Invoke Test-PVMSetup -Times 1
+        Should -Invoke Initialize-PVM -Times 1
+        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
+        Should -Invoke New-EnvFile -Times 1
         Should -Invoke Optimize-SystemPath -Times 1
-        Should -Invoke Display-Msg-By-ExitCode -Times 1
+        Should -Invoke Show-MsgByExitCode -Times 1
     }
 
     It "Should display warning when system path optimization fails" {
@@ -63,70 +63,70 @@ Describe "Invoke-Setup Tests" {
     }
 
     It "Should pause for env edit after creating env file" {
-        Mock Is-PVM-Setup { $false }
-        Mock Create-Env-File { return 0 }
-        Mock Pause-ForEnvEdit { }
-        Mock Setup-PVM { @{ code = 0; message = 'Setup completed successfully' } }
+        Mock Test-PVMSetup { $false }
+        Mock New-EnvFile { return 0 }
+        Mock Wait-ForEnvEdit { }
+        Mock Initialize-PVM { @{ code = 0; message = 'Setup completed successfully' } }
 
         $result = Invoke-Setup
         $result | Should -Be 0
 
-        Should -Invoke Create-Env-File -Times 1
-        Should -Invoke Pause-ForEnvEdit -Times 1
-        Should -Invoke Setup-PVM -Times 1
+        Should -Invoke New-EnvFile -Times 1
+        Should -Invoke Wait-ForEnvEdit -Times 1
+        Should -Invoke Initialize-PVM -Times 1
     }
 }
 
 Describe "Invoke-Repair Tests" {
     BeforeAll {
-        Mock Pause-ForEnvEdit { }
+        Mock Wait-ForEnvEdit { }
     }
 
     It "Should return 0 when all actions succeed" {
-        Mock Create-Env-File { 0 }
-        Mock Setup-Environment-Directories-And-Files { 0 }
+        Mock New-EnvFile { 0 }
+        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
 
         $result = Invoke-Repair
         $result | Should -Be 0
-        Should -Invoke Setup-Environment-Directories-And-Files -Times 1
+        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
     }
 
-    It "Should return -1 when Setup-Environment-Directories-And-Files fails" {
-        Mock Setup-Environment-Directories-And-Files { -1 }
-        Mock Create-Env-File { 0 }
+    It "Should return -1 when Initialize-EnvironmentDirectoriesAndFiles fails" {
+        Mock Initialize-EnvironmentDirectoriesAndFiles { -1 }
+        Mock New-EnvFile { 0 }
 
         $result = Invoke-Repair
         $result | Should -Be -1
-        Should -Invoke Setup-Environment-Directories-And-Files -Times 1
-        Should -Invoke Create-Env-File -Times 1
+        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
+        Should -Invoke New-EnvFile -Times 1
     }
 
-    It "Should return -1 when Create-Env-File fails" {
-        Mock Setup-Environment-Directories-And-Files { 0 }
-        Mock Create-Env-File { -1 }
+    It "Should return -1 when New-EnvFile fails" {
+        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
+        Mock New-EnvFile { -1 }
 
         $result = Invoke-Repair
         $result | Should -Be -1
-        Should -Invoke Setup-Environment-Directories-And-Files -Times 1
-        Should -Invoke Create-Env-File -Times 1
+        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
+        Should -Invoke New-EnvFile -Times 1
     }
 
     It "Should pause for env edit after creating env file" {
-        Mock Setup-Environment-Directories-And-Files { 0 }
-        Mock Create-Env-File { 0 }
-        Mock Pause-ForEnvEdit { }
+        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
+        Mock New-EnvFile { 0 }
+        Mock Wait-ForEnvEdit { }
 
         $result = Invoke-Repair
         $result | Should -Be 0
-        Should -Invoke Setup-Environment-Directories-And-Files -Times 1
-        Should -Invoke Create-Env-File -Times 1
-        Should -Invoke Pause-ForEnvEdit -Times 1
+        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
+        Should -Invoke New-EnvFile -Times 1
+        Should -Invoke Wait-ForEnvEdit -Times 1
     }
 }
 
 Describe "Invoke-Current Tests" {
     It "Should display current PHP version and extensions when version is set" {
-        Mock Get-Current-PHP-Version { @{
+        Mock Get-CurrentPHPVersion { @{
                 version   = '8.2.0'
                 arch      = 'x64'
                 buildType = 'TS'
@@ -139,7 +139,7 @@ Describe "Invoke-Current Tests" {
         $result = Invoke-Current
 
         $result | Should -Be 0
-        Should -Invoke Get-Current-PHP-Version -Times 1
+        Should -Invoke Get-CurrentPHPVersion -Times 1
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*Running version: PHP 8.2.0*' }
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*xdebug v3.2.0*' -and $ForegroundColor -eq 'DarkGreen' }
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*opcache v8.2.0*' -and $ForegroundColor -eq 'DarkYellow' }
@@ -147,7 +147,7 @@ Describe "Invoke-Current Tests" {
     }
 
     It "Should display current PHP version and extensions when version is not set" {
-        Mock Get-Current-PHP-Version { @{
+        Mock Get-CurrentPHPVersion { @{
                 version   = '8.2.0'
                 arch      = 'x64'
                 buildType = 'TS'
@@ -161,7 +161,7 @@ Describe "Invoke-Current Tests" {
         $result = Invoke-Current
 
         $result | Should -Be 0
-        Should -Invoke Get-Current-PHP-Version -Times 1
+        Should -Invoke Get-CurrentPHPVersion -Times 1
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*Running version: PHP 8.2.0*' }
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*xdebug*' -and $ForegroundColor -eq 'DarkGreen' }
         Should -Invoke Write-Host -ParameterFilter { $Object -like '*opcache*' -and $ForegroundColor -eq 'DarkYellow' }
@@ -169,7 +169,7 @@ Describe "Invoke-Current Tests" {
     }
 
     It "Should return -1 when no PHP version is set" {
-        Mock Get-Current-PHP-Version { @{ version = $null; status = $null; path = $null } }
+        Mock Get-CurrentPHPVersion { @{ version = $null; status = $null; path = $null } }
 
         $result = Invoke-Current
         $result | Should -Be -1
@@ -178,7 +178,7 @@ Describe "Invoke-Current Tests" {
     }
 
     It "Should handle missing status information" {
-        Mock Get-Current-PHP-Version { @{ version = '8.2.0'; status = $null; path = 'C:\PHP\8.2.0' } }
+        Mock Get-CurrentPHPVersion { @{ version = '8.2.0'; status = $null; path = 'C:\PHP\8.2.0' } }
 
         $result = Invoke-Current
         $result | Should -Be -1
@@ -189,28 +189,28 @@ Describe "Invoke-Current Tests" {
 
 Describe "Invoke-List Tests" {
     BeforeEach {
-        Mock Get-Available-PHP-Versions { return 0 }
-        Mock Display-Installed-PHP-Versions { return 0 }
+        Mock Get-AvailablePHPVersions { return 0 }
+        Mock Show-InstalledPHPVersions { return 0 }
     }
 
-    It "Should call Get-Available-PHP-Versions when 'available' argument is provided" {
+    It "Should call Get-AvailablePHPVersions when 'available' argument is provided" {
         $arguments = @("available")
 
         $result = Invoke-List -arguments $arguments
         $result | Should -Be 0
 
-        Should -Invoke Get-Available-PHP-Versions -Times 1
-        Should -Invoke Display-Installed-PHP-Versions -Times 0
+        Should -Invoke Get-AvailablePHPVersions -Times 1
+        Should -Invoke Show-InstalledPHPVersions -Times 0
     }
 
-    It "Should call Display-Installed-PHP-Versions when no 'available' argument" {
+    It "Should call Show-InstalledPHPVersions when no 'available' argument" {
         $arguments = @()
 
         $result = Invoke-List -arguments $arguments
         $result | Should -Be 0
 
-        Should -Invoke Display-Installed-PHP-Versions -Times 1
-        Should -Invoke Get-Available-PHP-Versions -Times 0
+        Should -Invoke Show-InstalledPHPVersions -Times 1
+        Should -Invoke Get-AvailablePHPVersions -Times 0
     }
 }
 
@@ -243,8 +243,8 @@ Describe "Invoke-Install Tests" {
     It "Should install detected PHP version from the project" {
         $arguments = @('auto')
 
-        Mock Get-Matching-PHP-Versions { return @() }
-        Mock Detect-PHP-VersionFromProject { return '8.1' }
+        Mock Get-MatchingPHPVersions { return @() }
+        Mock Find-PHPVersionFromProject { return '8.1' }
         $result = Invoke-Install -arguments $arguments
         $result | Should -Be 0
 
@@ -255,7 +255,7 @@ Describe "Invoke-Install Tests" {
 
     It "Should install latest PHP version when 'latest' argument is provided" {
         $arguments = @('latest')
-        Mock Get-Latest-PHP-Version { return @{version = '8.6.0' } }
+        Mock Get-LatestPHPVersion { return @{version = '8.6.0' } }
 
         $result = Invoke-Install -arguments $arguments
         $result | Should -Be 0
@@ -267,7 +267,7 @@ Describe "Invoke-Install Tests" {
 
     It "Should return -1 when no latest PHP version was found" {
         $arguments = @('latest')
-        Mock Get-Latest-PHP-Version { return $null }
+        Mock Get-LatestPHPVersion { return $null }
 
         $result = Invoke-Install -arguments $arguments
 
@@ -276,7 +276,7 @@ Describe "Invoke-Install Tests" {
 
     It "Should return -1 when detected PHP version is already installed" {
         $arguments = @('auto')
-        Mock Auto-Select-PHP-Version { return @{ code = 0; version = '8.2' } }
+        Mock Select-PHPVersionAutomatically { return @{ code = 0; version = '8.2' } }
 
         $result = Invoke-Install -arguments $arguments
 
@@ -287,7 +287,7 @@ Describe "Invoke-Install Tests" {
 Describe "Invoke-Uninstall Tests" {
     BeforeEach {
         Mock Uninstall-PHP { @{ code = 0; message = 'Uninstalled successfully' } }
-        Mock Display-Msg-By-ExitCode { }
+        Mock Show-MsgByExitCode { }
         Mock Write-Host { }
     }
 
@@ -305,7 +305,7 @@ Describe "Invoke-Uninstall Tests" {
         Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
             $version -eq '8.2.0' -and $skipConfirmation -eq $false
         }
-        Should -Invoke Display-Msg-By-ExitCode -Exactly 1
+        Should -Invoke Show-MsgByExitCode -Exactly 1
     }
 
     It "Should pass skipConfirmation true when -y flag is provided" {
@@ -347,9 +347,9 @@ Describe "Invoke-Uninstall Tests" {
 
 Describe "Invoke-Use Tests" {
     BeforeEach {
-        Mock Auto-Select-PHP-Version { @{ code = 0; version = '8.2.0' } }
-        Mock Update-PHP-Version { @{ code = 0; message = 'Version updated' } }
-        Mock Display-Msg-By-ExitCode { }
+        Mock Select-PHPVersionAutomatically { @{ code = 0; version = '8.2.0' } }
+        Mock Update-PHPVersion { @{ code = 0; message = 'Version updated' } }
+        Mock Show-MsgByExitCode { }
         Mock Write-Host { }
     }
 
@@ -368,10 +368,10 @@ Describe "Invoke-Use Tests" {
         $result = Invoke-Use -arguments $arguments
         $result | Should -Be 0
 
-        Should -Invoke Update-PHP-Version -Times 1 -ParameterFilter {
+        Should -Invoke Update-PHPVersion -Times 1 -ParameterFilter {
             $version -eq '8.2.0'
         }
-        Should -Invoke Display-Msg-By-ExitCode -Times 1
+        Should -Invoke Show-MsgByExitCode -Times 1
     }
 
     It "Should handle 'auto' version selection successfully" {
@@ -380,20 +380,20 @@ Describe "Invoke-Use Tests" {
         $result = Invoke-Use -arguments $arguments
         $result | Should -Be 0
 
-        Should -Invoke Auto-Select-PHP-Version -Times 1
-        Should -Invoke Update-PHP-Version -Times 1 -ParameterFilter { $version -eq '8.2.0' }
+        Should -Invoke Select-PHPVersionAutomatically -Times 1
+        Should -Invoke Update-PHPVersion -Times 1 -ParameterFilter { $version -eq '8.2.0' }
     }
 
     It "Should return -1 when auto-selection fails" {
-        Mock Auto-Select-PHP-Version { @{ code = 1; message = 'Auto selection failed' } }
+        Mock Select-PHPVersionAutomatically { @{ code = 1; message = 'Auto selection failed' } }
         $arguments = @('auto')
 
         $result = Invoke-Use -arguments $arguments
         $result | Should -Be -1
 
-        Should -Invoke Auto-Select-PHP-Version -Times 1
-        Should -Invoke Display-Msg-By-ExitCode -Times 1
-        Should -Invoke Update-PHP-Version -Times 0
+        Should -Invoke Select-PHPVersionAutomatically -Times 1
+        Should -Invoke Show-MsgByExitCode -Times 1
+        Should -Invoke Update-PHPVersion -Times 0
     }
 }
 
@@ -484,11 +484,11 @@ Describe "Invoke-Log Tests" {
 
 Describe "Invoke-Version Tests" {
     It "Should show version and return 0" {
-        Mock Show-PVM-Version { }
+        Mock Show-PVMVersion { }
         $result = Invoke-Version
 
         $result | Should -Be 0
-        Should -Invoke Show-PVM-Version -Times 1
+        Should -Invoke Show-PVMVersion -Times 1
     }
 }
 
@@ -511,7 +511,7 @@ Describe "Invoke-Help Tests" {
 
 Describe "Invoke-Test Tests" {
     BeforeAll {
-        Mock Prepare-Tests { 0 }
+        Mock Initialize-Tests { 0 }
     }
 
     It "Installs Pester module when not already installed" {
@@ -536,15 +536,15 @@ Describe "Invoke-Test Tests" {
     }
 
     It "Should keep grouping disabled by default" {
-        Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+        Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
         $result = Invoke-Test -arguments @()
 
         $result.groupBy | Should -BeNullOrEmpty
     }
 
-    It "Should pass coverage grouping option to Prepare-Tests" {
-        Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+    It "Should pass coverage grouping option to Initialize-Tests" {
+        Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
         $result = Invoke-Test -arguments @('--group=coverage')
 
@@ -577,7 +577,7 @@ Describe "Invoke-Test Tests" {
             }
         )
 
-        $result = Write-Tests-Summary -testSummary $testSummary -options @{ sortBy = $null; groupBy = 'folder'; target = 75 } -maxLineLength 40
+        $result = Write-TestsSummary -testSummary $testSummary -options @{ sortBy = $null; groupBy = 'folder'; target = 75 } -maxLineLength 40
 
         $result | Should -Be 0
         Should -Invoke Write-Host -ParameterFilter { $Object -eq "`n  [core]" }
@@ -603,7 +603,7 @@ Describe "Invoke-Test Tests" {
 
     Context "Pester version parsing" {
         It "Should parse --pester argument correctly" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
 
             $result = Invoke-Test -arguments @('--pester=5.5')
 
@@ -611,7 +611,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should pass null when no --pester argument" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
 
             $result = Invoke-Test -arguments @()
 
@@ -619,29 +619,29 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should pass 'latest' when --pester=latest is specified" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
 
             $result = Invoke-Test -arguments @('--pester=latest')
 
             $result | Should -Be 'latest'
         }
 
-        It "Should pass pesterVersion to Prepare-Tests" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+        It "Should pass pesterVersion to Initialize-Tests" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
 
             $result = Invoke-Test -arguments @('--pester=5.6.0')
 
-            Should -Invoke Prepare-Tests -ParameterFilter {
+            Should -Invoke Initialize-Tests -ParameterFilter {
                 $pesterVersion -eq '5.6.0'
             } -Times 1
         }
 
         It "Should pass null pesterVersion when no --pester argument" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
 
             $result = Invoke-Test -arguments @()
 
-            Should -Invoke Prepare-Tests -ParameterFilter {
+            Should -Invoke Initialize-Tests -ParameterFilter {
                 $pesterVersion -eq $null
             } -Times 1
         }
@@ -649,7 +649,7 @@ Describe "Invoke-Test Tests" {
 
     Context "Test argument parsing" {
         It "Should filter out --pester argument from test names" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $testsNames }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $testsNames }
 
             $result = Invoke-Test -arguments @('TestFile.ps1', '--pester=5.5')
 
@@ -657,7 +657,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should parse --exclude argument correctly" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $exclude }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $exclude }
 
             $result = Invoke-Test -arguments @('--exclude=TestFile1.ps1,TestFile2.ps1')
 
@@ -665,7 +665,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should parse --sort argument correctly" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--sort=coverage')
 
@@ -673,7 +673,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should parse --group argument correctly" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--group=folder')
 
@@ -681,7 +681,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should parse --tag argument correctly" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--tag=unit')
 
@@ -689,7 +689,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should parse --coverage argument with custom target" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--coverage=85')
 
@@ -697,17 +697,17 @@ Describe "Invoke-Test Tests" {
             $result.target | Should -Be 85
         }
 
-        It "Should parse --coverage argument without target (default 75)" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+        It "Should parse --coverage argument without target (default $($PVMConfig.test.coverage.default))" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--coverage')
 
             $result.coverage | Should -Be $true
-            $result.target | Should -Be 75
+            $result.target | Should -Be $PVMConfig.test.coverage.default
         }
 
         It "Should parse --verbosity argument correctly" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $options }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--verbosity=detailed')
 
@@ -715,7 +715,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should filter out flag arguments from test names" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $testsNames }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $testsNames }
 
             $result = Invoke-Test -arguments @('TestFile.ps1', '--unknown', '-x')
 
@@ -723,7 +723,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should pass non-flag arguments as test names" {
-            Mock Prepare-Tests { param($testsNames, $options, $exclude) return $testsNames }
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $testsNames }
 
             $result = Invoke-Test -arguments @('TestFile1.ps1', 'TestFile2.ps1')
 
@@ -753,7 +753,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should accept coverage target of 0" {
-            Mock Prepare-Tests { 0 }
+            Mock Initialize-Tests { 0 }
 
             $result = Invoke-Test -arguments @('--coverage=0')
 
@@ -761,7 +761,7 @@ Describe "Invoke-Test Tests" {
         }
 
         It "Should accept coverage target of 100" {
-            Mock Prepare-Tests { 0 }
+            Mock Initialize-Tests { 0 }
 
             $result = Invoke-Test -arguments @('--coverage=100')
 
@@ -773,14 +773,14 @@ Describe "Invoke-Test Tests" {
 Describe "Invoke-Profile Tests" {
     BeforeEach {
         Mock Write-Host { }
-        Mock Save-PHP-Profile { 0 }
-        Mock Load-PHP-Profile { 0 }
-        Mock List-PHP-Profiles { 0 }
-        Mock Show-PHP-Profile { 0 }
-        Mock Delete-PHP-Profile { 0 }
-        Mock Clear-PHP-Profiles { 0 }
-        Mock Export-PHP-Profile { 0 }
-        Mock Import-PHP-Profile { 0 }
+        Mock Save-PHPProfile { 0 }
+        Mock Use-PHPProfile { 0 }
+        Mock Show-PHPProfiles { 0 }
+        Mock Show-PHPProfile { 0 }
+        Mock Remove-PHPProfile { 0 }
+        Mock Clear-PHPProfiles { 0 }
+        Mock Export-PHPProfile { 0 }
+        Mock Import-PHPProfile { 0 }
     }
 
     Context "No action provided" {
@@ -815,7 +815,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Save-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Save-PHPProfile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile' -and $description -eq $null
             }
         }
@@ -826,7 +826,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Save-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Save-PHPProfile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile' -and
                 $description -eq 'This is my description'
             }
@@ -851,7 +851,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Load-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Use-PHPProfile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
         }
@@ -862,7 +862,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Load-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Use-PHPProfile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
         }
@@ -875,7 +875,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke List-PHP-Profiles -Times 1
+            Should -Invoke Show-PHPProfiles -Times 1
         }
     }
 
@@ -897,7 +897,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Show-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Show-PHPProfile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
         }
@@ -908,7 +908,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Show-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Show-PHPProfile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
         }
@@ -932,7 +932,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Delete-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Remove-PHPProfile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
         }
@@ -943,7 +943,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Delete-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Remove-PHPProfile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile'
             }
         }
@@ -954,7 +954,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Delete-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Remove-PHPProfile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile' -and $skipConfirmation -eq $true
             }
         }
@@ -967,7 +967,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
 
             $result | Should -Be 0
-            Should -Invoke Clear-PHP-Profiles -Times 1
+            Should -Invoke Clear-PHPProfiles -Times 1
         }
 
         It "Should clear all profiles files and skip confirmation" {
@@ -976,7 +976,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
 
             $result | Should -Be 0
-            Should -Invoke Clear-PHP-Profiles -Times 1
+            Should -Invoke Clear-PHPProfiles -Times 1
         }
 
         It "Should clear all profiles files and skip confirmation using --yes" {
@@ -985,7 +985,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
 
             $result | Should -Be 0
-            Should -Invoke Clear-PHP-Profiles -Times 1
+            Should -Invoke Clear-PHPProfiles -Times 1
         }
     }
 
@@ -1007,7 +1007,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Export-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Export-PHPProfile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile' -and $exportPath -eq $null
             }
         }
@@ -1018,7 +1018,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Export-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Export-PHPProfile -Times 1 -ParameterFilter {
                 $profileName -eq 'myprofile' -and
                 $exportPath -eq 'C:\exports\profile.json'
             }
@@ -1043,7 +1043,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Import-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Import-PHPProfile -Times 1 -ParameterFilter {
                 $importPath -eq 'C:\profiles\export.json' -and $profileName -eq $null
             }
         }
@@ -1054,7 +1054,7 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Import-PHP-Profile -Times 1 -ParameterFilter {
+            Should -Invoke Import-PHPProfile -Times 1 -ParameterFilter {
                 $importPath -eq 'C:\profiles\export.json' -and
                 $profileName -eq 'myimported'
             }
@@ -1080,21 +1080,21 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Save-PHP-Profile -Times 1
+            Should -Invoke Save-PHPProfile -Times 1
         }
     }
 
     Context "Action success and failure returns" {
-        It "Should return 0 when Save-PHP-Profile succeeds" {
-            Mock Save-PHP-Profile { return 0 }
+        It "Should return 0 when Save-PHPProfile succeeds" {
+            Mock Save-PHPProfile { return 0 }
             $arguments = @('save', 'test')
 
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
         }
 
-        It "Should return -1 when Load-PHP-Profile fails" {
-            Mock Load-PHP-Profile { return -1 }
+        It "Should return -1 when Use-PHPProfile fails" {
+            Mock Use-PHPProfile { return -1 }
             $arguments = @('load', 'test')
 
             $result = Invoke-Profile -arguments $arguments
@@ -1102,7 +1102,7 @@ Describe "Invoke-Profile Tests" {
         }
 
         It "Should return action result code from any profile action" {
-            Mock Delete-PHP-Profile { return 5 }
+            Mock Remove-PHPProfile { return 5 }
             $arguments = @('delete', 'test')
 
             $result = Invoke-Profile -arguments $arguments
@@ -1114,10 +1114,10 @@ Describe "Invoke-Profile Tests" {
 Describe "Invoke-Cache Tests" {
     BeforeEach {
         Mock Write-Host { }
-        Mock List-Cache-Files { 0 }
-        Mock Show-Cache-Data { 0 }
-        Mock Delete-Cache-File { 0 }
-        Mock Clear-Cache-Files { 0 }
+        Mock Show-CacheFiles { 0 }
+        Mock Show-CachedData { 0 }
+        Mock Remove-CacheFile { 0 }
+        Mock Clear-CacheFiles { 0 }
     }
 
     Context "No action provided" {
@@ -1141,7 +1141,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke List-Cache-Files -Times 1
+            Should -Invoke Show-CacheFiles -Times 1
         }
     }
 
@@ -1163,7 +1163,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Show-Cache-Data -Times 1 -ParameterFilter {
+            Should -Invoke Show-CachedData -Times 1 -ParameterFilter {
                 $cacheName -eq 'available_versions'
             }
         }
@@ -1174,7 +1174,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Show-Cache-Data -Times 1 -ParameterFilter {
+            Should -Invoke Show-CachedData -Times 1 -ParameterFilter {
                 $cacheName -eq 'available_versions'
             }
         }
@@ -1198,7 +1198,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Delete-Cache-File -Times 1 -ParameterFilter {
+            Should -Invoke Remove-CacheFile -Times 1 -ParameterFilter {
                 $cacheName -eq 'available_versions'
             }
         }
@@ -1209,7 +1209,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Delete-Cache-File -Times 1 -ParameterFilter {
+            Should -Invoke Remove-CacheFile -Times 1 -ParameterFilter {
                 $cacheName -eq 'available_versions'
             }
         }
@@ -1220,7 +1220,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke Delete-Cache-File -Times 1 -ParameterFilter {
+            Should -Invoke Remove-CacheFile -Times 1 -ParameterFilter {
                 $cacheName -eq 'available_versions' -and $skipConfirmation -eq $true
             }
         }
@@ -1233,7 +1233,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
 
             $result | Should -Be 0
-            Should -Invoke Clear-Cache-Files -Times 1
+            Should -Invoke Clear-CacheFiles -Times 1
         }
 
         It "Should clear all cache files and skip confirmation" {
@@ -1242,7 +1242,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
 
             $result | Should -Be 0
-            Should -Invoke Clear-Cache-Files -Times 1
+            Should -Invoke Clear-CacheFiles -Times 1
         }
 
         It "Should clear all cache files and skip confirmation using --yes" {
@@ -1251,7 +1251,7 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
 
             $result | Should -Be 0
-            Should -Invoke Clear-Cache-Files -Times 1
+            Should -Invoke Clear-CacheFiles -Times 1
         }
     }
 
@@ -1274,21 +1274,21 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be 0
 
-            Should -Invoke List-Cache-Files -Times 1
+            Should -Invoke Show-CacheFiles -Times 1
         }
     }
 
     Context "Action success and failure returns" {
-        It "Should return 0 when Save-PHP-Profile succeeds" {
-            Mock Save-PHP-Profile { return 0 }
+        It "Should return 0 when Save-PHPProfile succeeds" {
+            Mock Save-PHPProfile { return 0 }
             $arguments = @('save', 'test')
 
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be 0
         }
 
-        It "Should return -1 when Load-PHP-Profile fails" {
-            Mock Load-PHP-Profile { return -1 }
+        It "Should return -1 when Use-PHPProfile fails" {
+            Mock Use-PHPProfile { return -1 }
             $arguments = @('load', 'test')
 
             $result = Invoke-Profile -arguments $arguments
@@ -1296,7 +1296,7 @@ Describe "Invoke-Cache Tests" {
         }
 
         It "Should return action result code from any profile action" {
-            Mock Delete-PHP-Profile { return 5 }
+            Mock Remove-PHPProfile { return 5 }
             $arguments = @('delete', 'test')
 
             $result = Invoke-Profile -arguments $arguments
@@ -1343,13 +1343,14 @@ Describe "Invoke-Info Tests" {
             MIN_PAD_RIGHT_LENGTH = 2
             PHP_CURRENT_VERSION_PATH = 'C:\pvm'
         }
-        Mock Get-Profile-Files {
+        Mock Get-ProfileFiles {
             @('profile1.json', 'profile2.json')
         }
-        Mock Get-Cache-Files {
+        Mock Get-CacheFiles {
             @('cache1.json')
         }
-        Mock Get-Installed-PHP-Versions-From-Disk {
+        Mock Test-CanUseCache { return $false }
+        Mock Get-InstalledPHPVersionsFromDisk {
             @(
                 @{ version = '8.2' }
                 @{ version = '8.3' }
@@ -1359,7 +1360,7 @@ Describe "Invoke-Info Tests" {
 
     Context "Default output" {
         BeforeEach {
-            Mock Get-Current-PHP-Version {
+            Mock Get-CurrentPHPVersion {
                 @{
                     version   = '8.3.28'
                     arch      = 'x64'
@@ -1392,7 +1393,7 @@ Describe "Invoke-Info Tests" {
 
     Context "When no PHP version is active" {
         BeforeEach {
-            Mock Get-Current-PHP-Version { $null }
+            Mock Get-CurrentPHPVersion { $null }
         }
 
         It "Returns 0" {
@@ -1406,7 +1407,7 @@ Describe "Invoke-Info Tests" {
 
     Context "Verbose output" {
         BeforeEach {
-            Mock Get-Current-PHP-Version {
+            Mock Get-CurrentPHPVersion {
                 @{
                     version   = '8.3.28'
                     arch      = 'x64'
@@ -1431,15 +1432,41 @@ Describe "Invoke-Info Tests" {
 }
 
 Describe "Invoke-Update Tests" {
-    BeforeEach {
-        Mock Write-Host { }
+    It "Should call Update-PVM and return 0" {
         Mock Update-PVM { @{ code = 0; message = 'Updated' } }
+
+        $result = Invoke-Update -arguments @()
+
+        $result | Should -Be 0
+        Should -Invoke Update-PVM -Times 1
     }
 
-    It "Should call Update-PVM and return 0" {
-        $result = Invoke-Update -arguments @()
-        $result | Should -Be 0
+    It "Should call Update-PVM and return -1" {
+        Mock Update-PVM { @{ code = -1; message = 'Failed' } }
 
+        $result = Invoke-Update -arguments @()
+
+        $result | Should -Be -1
         Should -Invoke Update-PVM -Times 1
+    }
+}
+
+Describe "Invoke-Run Tests" {
+    It "Should call Invoke-RunScripts and return 0" {
+        Mock Invoke-RunScripts { 0 }
+
+        $result = Invoke-Run -arguments @('script.ps1')
+
+        $result | Should -Be 0
+        Should -Invoke Invoke-RunScripts -Times 1
+    }
+
+    It "Should call Invoke-RunScripts and return -1" {
+        Mock Invoke-RunScripts { -1 }
+
+        $result = Invoke-Run -arguments @('script.ps1')
+
+        $result | Should -Be -1
+        Should -Invoke Invoke-RunScripts -Times 1
     }
 }

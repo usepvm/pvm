@@ -1,41 +1,40 @@
 ﻿
-function Detect-PHP-VersionFromProject {
+function Find-PHPVersionFromProject {
     try {
         # 1. Check .php-version
-        if (Is-File-Exists -path '.php-version') {
-            $version = Get-Content -Path '.php-version' | Select-Object -First 1
-            return $version.Trim()
+        if (Test-FileExists -path '.php-version') {
+            $version = (Get-Content -Path '.php-version' | Select-Object -First 1).Trim()
+            if (Test-PHPVersionFormat -version $version) {
+                return $version
+            }
+            Show-Error -message "`nInvalid version '$version' in .php-version"
         }
 
         # 2. Check composer.json
-        if (Is-File-Exists -path 'composer.json') {
+        if (Test-FileExists -path 'composer.json') {
             try {
                 $json = Get-Content -Path 'composer.json' -Raw | ConvertFrom-Json
-                if ($json.require.php) {
-                    $constraint = $json.require.php.Trim()
-                    # Extract first PHP version number in the string (e.g. from "^8.3" or ">=8.1 <8.3")
-                    if ($constraint -match '(\d+(\.\d+(\.\d+)?)?)') {
-                        return $matches[1]
-                    }
+                if ($json.require.php -and $json.require.php.Trim() -match '(\d+(\.\d+(\.\d+)?)?)') {
+                    return $matches[1]
                 }
             } catch {
-                Print-Error -message "`nFailed to parse composer.json: $_"
+                Show-Error -message "`nFailed to parse composer.json: $_"
                 throw $_
             }
         }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to detect PHP version from project"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to detect PHP version from project"; exception = $_ }
     }
 
     return $null
 }
 
-function Update-PHP-Version {
+function Update-PHPVersion {
     param ($version)
 
     try {
-        $installedVersions = Get-Matching-PHP-Versions -version $version
-        $pathVersionObject = Get-UserSelected-PHP-Version -installedVersions $installedVersions
+        $installedVersions = Get-MatchingPHPVersions -version $version
+        $pathVersionObject = Get-UserSelectedPHPVersion -installedVersions $installedVersions
 
         if (-not $pathVersionObject) {
             return @{ code = -1; message = "PHP version $version was not found!"; color = 'DarkYellow' }
@@ -45,14 +44,14 @@ function Update-PHP-Version {
             return $pathVersionObject
         }
 
-        $currentVersion = Get-Current-PHP-Version
+        $currentVersion = Get-CurrentPHPVersion
         if ($currentVersion -and $currentVersion.version) {
-            if (Is-Two-PHP-Versions-Equal -version1 $currentVersion -version2 $pathVersionObject) {
+            if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $pathVersionObject) {
                 return @{ code = 0; message = "Already using PHP $($pathVersionObject.version)"; color = 'DarkCyan' }
             }
         }
 
-        $linkCreated = Make-Symbolic-Link -link $PVMConfig.env.PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
+        $linkCreated = New-SymbolicLink -link $PVMConfig.env.PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
         if ($linkCreated.code -ne 0) {
             return $linkCreated
         }
@@ -60,26 +59,35 @@ function Update-PHP-Version {
 
         return @{ code = 0; message = $text; color = 'DarkGreen' }
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to update PHP version to '$version'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to update PHP version to '$version'"; exception = $_ }
         return @{ code = -1; message = "No matching PHP versions found for '$version', Use 'pvm list' to see installed versions."; color = 'DarkYellow' }
     }
 }
 
-function Auto-Select-PHP-Version {
-    $version = Detect-PHP-VersionFromProject
+function Select-PHPVersionAutomatically {
+    $version = Find-PHPVersionFromProject
 
     if (-not $version) {
-        return @{ code = -1; message = 'Could not detect PHP version from .php-version or composer.json'; color = 'DarkYellow' }
+        $version = Read-Host-Wrapper -prompt "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)"
+
+        if (-not (Test-PHPVersionFormat -version $version)) {
+            return @{ code = -1; message = "Invalid version format: '$version'. Expected e.g. 8, 8.3 or 8.3.1"; color = 'DarkYellow' }
+        }
+
+        $response = Read-Host-Wrapper -prompt "`nSave as project default in .php-version? (y/n)"
+        if (Test-YesResponse -response $response) {
+            Set-Content-Wrapper -path '.php-version' -value $version
+        }
     }
 
-    Print-Message -message "`nDetected PHP version from project: $version"
+    Show-Message -message "`nUsing PHP version: $version"
 
-    $installedVersions = Get-Matching-PHP-Versions -version $version
+    $installedVersions = Get-MatchingPHPVersions -version $version
     if (-not $installedVersions) {
         $message = "PHP '$version' is not installed."
         $message += "`nRun: pvm install $version"
         return @{ code = -1; version = $version; message = $message; }
     }
 
-    return @{ code = 0; version = $version; }
+    return @{ code = 0; version = $version }
 }

@@ -4,14 +4,14 @@ function Enable-IniExtension {
 
     try {
         if ($extNames -isnot [array] -or $extNames.Count -eq 0) {
-            Print-Warning -message "`nPlease provide at least one extension name to enable"
+            Show-Warning -message "`nPlease provide at least one extension name to enable"
             return -1
         }
 
         $results = @()
         $overallCode = 0
         foreach ($extName in $extNames) {
-            $matchesListStatus = Get-Matching-PHPExtensionsStatus -iniPath $iniPath -extName $extName
+            $matchesListStatus = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $extName
 
             if ($matchesListStatus.Length -eq 0) {
                 $results += @{ name = $extName; status = 'Not found'; color = 'Gray' }
@@ -20,28 +20,28 @@ function Enable-IniExtension {
             }
 
             if ($matchesListStatus.Length -gt 1) {
-                Print-Info -message "`nMultiple extensions match '$extName':`n"
+                Show-Info -message "`nMultiple extensions match '$extName':`n"
 
                 $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0
                 $matchesListStatus | ForEach-Object {
                     $name = "$($_.name) ".PadRight($maxLineLength, '.')
-                    Print-Message -message "[$index] $name " -noNewLine
+                    Show-Message -message "[$index] $name " -noNewLine
                     Write-Color -message "$($_.status)" -foreColor $_.color
                     $index++
                 }
 
                 do {
-                    $choiceRaw = Read-Host -Prompt "`nSelect a number"
+                    $choiceRaw = Read-Host-Wrapper -prompt "`nSelect a number"
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                        Print-Warning -message 'Please enter a valid positive number.'
+                        Show-Warning -message 'Please enter a valid positive number.'
                         continue
                     }
 
                     if ($choice -lt 0 -or $choice -gt $matchesListStatus.Length - 1) {
-                        Print-Warning -message "Number must be between 0 and $($matchesListStatus.Length - 1)."
+                        Show-Warning -message "Number must be between 0 and $($matchesListStatus.Length - 1)."
                         continue
                     }
 
@@ -77,21 +77,21 @@ function Enable-IniExtension {
             }
 
             $null = Backup-IniFile -iniPath $iniPath
-            Set-Content -Path $iniPath -Value $newLines -Encoding UTF8
+            Set-Content-Wrapper -path $iniPath -value $newLines
 
             $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
         }
 
         $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        Print-Message -message "`nResults:"
+        Show-Message -message "`nResults:"
         foreach ($item in $results) {
-            Print-Message -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
+            Show-Message -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
             Write-Color -message " $($item.status)" -foreColor $item.color
         }
 
         return $overallCode
     } catch {
-        $null = Log-Data -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable extension '$($extNames -join ', ')'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable extension '$($extNames -join ', ')'"; exception = $_ }
         return -1
     }
 }

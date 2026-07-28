@@ -234,8 +234,8 @@ Describe "Save-CachedData" {
 
 Describe "Get-OrUpdateCache" {
     It "Reads from cache first" {
-        function Example { return @{} }
-        Mock Example { return @{} }
+        function Get-Example { return @{} }
+        Mock Get-Example { return @{} }
         Mock Test-CanUseCache { return $true }
         Mock Save-CachedData { return 0 }
         Mock Get-DataFromCache {
@@ -246,17 +246,17 @@ Describe "Get-OrUpdateCache" {
         }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Example
+            Get-Example
         }
 
         Should -Invoke Get-DataFromCache -Exactly 1
-        Should -Invoke Example -Exactly 0
+        Should -Invoke Get-Example -Exactly 0
         Should -Invoke Save-CachedData -Exactly 0
     }
 
     It "Runs the passed command when can't read from cache" {
-        function Example { return @{} }
-        Mock Example {
+        function Get-Example { return @{} }
+        Mock Get-Example {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
                 'Releases' = @('php-8.2.0-Win32-x64.zip')
@@ -266,16 +266,16 @@ Describe "Get-OrUpdateCache" {
         Mock Test-CanUseCache { return $false }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Example
+            Get-Example
         }
 
-        Should -Invoke Example -Exactly 1
+        Should -Invoke Get-Example -Exactly 1
         Should -Invoke Save-CachedData -Exactly 1
     }
 
     It "Checks for data type 'array' before saving to cache" {
-        function Example { return @{} }
-        Mock Example {
+        function Get-Example { return @{} }
+        Mock Get-Example {
             return @(
                 @('php-8.1.0-Win32-x64.zip')
                 @('php-8.2.0-Win32-x64.zip')
@@ -285,16 +285,16 @@ Describe "Get-OrUpdateCache" {
         Mock Test-CanUseCache { return $false }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Example
+            Get-Example
         }
 
-        Should -Invoke Example -Exactly 1
+        Should -Invoke Get-Example -Exactly 1
         Should -Invoke Save-CachedData -Exactly 1
     }
 
     It "Checks for data type 'pscustomobject' before saving to cache" {
-        function Example { return @{} }
-        Mock Example {
+        function Get-Example { return @{} }
+        Mock Get-Example {
             return [pscustomobject] @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
                 'Releases' = @('php-8.2.0-Win32-x64.zip')
@@ -304,10 +304,10 @@ Describe "Get-OrUpdateCache" {
         Mock Test-CanUseCache { return $false }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Example
+            Get-Example
         }
 
-        Should -Invoke Example -Exactly 1
+        Should -Invoke Get-Example -Exactly 1
         Should -Invoke Save-CachedData -Exactly 1
     }
 }

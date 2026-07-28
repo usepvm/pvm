@@ -47,6 +47,7 @@ function Get-LatestPHPVersionFromUrl {
 
         $allUrlVersions = @()
         $null = $links | Where-Object {
+            if (-not $_.href) { return $false }
             if ($_.href -match 'php-debug') { return $false }
             if ($_.href -match 'php-devel') { return $false }
             if ($_.href -notmatch 'php-\d+(\.\d+)*-(?:nts-)?win.*\.zip$') { return $false }
@@ -79,6 +80,7 @@ function Get-PHPVersionsFromUrl {
 
         $formattedList = @()
         $null = $links | Where-Object {
+            if (-not $_.href) { return $false }
             if ($_.href -match 'php-debug')  { return $false }
             if ($_.href -match 'php-devel')  { return $false }
             if ($_.href -notmatch "php-$version(\.\d+)*-(?:nts-)?win.*\.zip$") { return $false }

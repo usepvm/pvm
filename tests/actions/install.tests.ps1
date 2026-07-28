@@ -165,7 +165,7 @@ Describe "Get-LatestPHPVersion Tests" {
             @{ href = '/downloads/releases/php-8.0.10-Win32-vs16-x64.zip' },
             @{ href = '/downloads/releases/php-8.1.12-Win32-vs16-x64.zip' },
             @{ href = '/downloads/releases/php-8.2.1-Win32-vs16-x64.zip' },
-            @{ href = '/downloads/releases/php-8.1.15-nts-Win32-vs16-x64.zi' }
+            @{ href = '/downloads/releases/php-8.1.15-nts-Win32-vs16-x64.zip' }
         )
 
         Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
@@ -181,6 +181,7 @@ Describe "Get-LatestPHPVersion Tests" {
 
     It "Should filter by valid url" {
         $mockLinks = @(
+            @{ href = $null },
             @{ href = '/downloads/releases/php-8.3.32-Win32-vs16-x64.zip' },
             @{ href = '/downloads/releases/php-debug-pack-8.3.32-Win32-vs16-x64.zip' }
             @{ href = '/downloads/releases/php-devel-pack-8.3.32-Win32-vs16-x64.zip' }
@@ -302,6 +303,7 @@ Describe "Get-PHPVersionsFromUrl Tests" {
 
     It "Should parse PHP versions correctly" {
         $mockLinks = @(
+            @{ href = $null },
             @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' },
             @{ href = '/downloads/releases/php-8.1.1-Win32-vs16-x64.zip' },
             @{ href = '/downloads/releases/php-debug-pack-8.3.32-Win32-vs16-x64.zip' }

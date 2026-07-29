@@ -553,6 +553,7 @@ Describe "Invoke-Test Tests" {
 
     It "Should group summary entries by folder when requested" {
         Mock Write-Host { }
+        Mock Invoke-SuccessSound
 
         $testSummary = @(
             [pscustomobject]@{
@@ -580,6 +581,7 @@ Describe "Invoke-Test Tests" {
         $result = Write-TestsSummary -testSummary $testSummary -options @{ sortBy = $null; groupBy = 'folder'; target = 75 } -maxLineLength 40
 
         $result | Should -Be 0
+        Should -Invoke Invoke-SuccessSound -Times 1
         Should -Invoke Write-Host -ParameterFilter { $Object -eq "`n  [core]" }
         Should -Invoke Write-Host -ParameterFilter { $Object -eq "`n  [actions]" }
     }

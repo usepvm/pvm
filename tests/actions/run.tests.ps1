@@ -61,6 +61,7 @@ Describe 'Invoke-RunScripts' {
         Mock Show-SubProcessOutput {}
         Mock New-Lines {}
         Mock Add-LogEntry {}
+        Mock Invoke-Sound {}
     }
 
     It 'Returns -1 when scriptName is null or whitespace' {

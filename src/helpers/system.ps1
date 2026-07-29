@@ -1,4 +1,4 @@
-
+﻿
 function Test-OS64Bit {
     return [System.Environment]::Is64BitOperatingSystem
 }
@@ -219,6 +219,44 @@ function Split-ShellFromArguments {
     }
 }
 
+function Show-SpinnerWhileProcess  {
+    param ($fileName, $processArgs, $message = 'Working')
+
+    try {
+        $psi = [System.Diagnostics.ProcessStartInfo]::new()
+        $psi.FileName = $fileName
+        foreach ($a in $processArgs) { $psi.ArgumentList.Add($a) }
+        $psi.RedirectStandardOutput = $true
+        $psi.RedirectStandardError = $true
+        $psi.UseShellExecute = $false
+        $psi.CreateNoWindow = $true
+
+        $proc = [System.Diagnostics.Process]::new()
+        $proc.StartInfo = $psi
+        $null = $proc.Start()
+
+        $stdOutTask = $proc.StandardOutput.ReadToEndAsync()
+        $stdErrTask = $proc.StandardError.ReadToEndAsync()
+
+        $spinner = @('|', '/', '-', '\')
+        $i = 0
+        while (-not $proc.HasExited) {
+            Show-Message -message "`r$message $($spinner[$i % $spinner.Length])" -noNewLine
+            Start-Sleep -Milliseconds 100
+            $i++
+        }
+        Show-Message -message "`r$(' ' * ($message.Length + 2))`r" -noNewLine
+
+        $proc.WaitForExit()
+        $outputText = $stdOutTask.Result + $stdErrTask.Result
+
+        return @{ output = $outputText; code = $proc.ExitCode }
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run subprocess"; exception = $_ }
+        return @{ output = $null; code = -1 }
+    }
+}
+
 function Invoke-PVMSubprocess {
     param ($command, $arguments = @())
 
@@ -247,11 +285,5 @@ function Invoke-PVMSubprocess {
         '--pvm-subprocess'
     ) + $remainingArgs
 
-    $outputText = & $engine @processArgs | Out-String
-
-    if ($null -ne $LASTEXITCODE) {
-        return @{ output = $outputText; code = [int]$LASTEXITCODE }
-    }
-
-    return @{ output = $outputText; code = 0 }
+    return Show-SpinnerWhileProcess -fileName $engine -processArgs $processArgs
 }

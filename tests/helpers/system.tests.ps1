@@ -415,6 +415,86 @@ Describe "Split-ShellFromArguments" {
     }
 }
 
+Describe "Show-SpinnerWhileProcess" {
+    BeforeAll {
+        Mock Show-Message {}
+    }
+
+    Context "When process succeeds" {
+        It "Returns exit code 0 and captured stdout" {
+            $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hello')
+
+            $result.code | Should -Be 0
+            $result.output | Should -Match 'hello'
+        }
+    }
+
+    Context "When process exits with non-zero code" {
+        It "Returns the process exit code" {
+            $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'exit 5')
+
+            $result.code | Should -Be 5
+        }
+    }
+
+    Context "When process writes to stderr" {
+        It "Captures stderr in combined output" {
+            $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo err-message 1>&2')
+
+            $result.output | Should -Match 'err-message'
+        }
+    }
+
+    Context "When processArgs is not provided" {
+        It "Runs without arguments" {
+            $result = Show-SpinnerWhileProcess -fileName 'hostname.exe'
+
+            $result.code | Should -Be 0
+        }
+    }
+
+    Context "When displaying the spinner" {
+        It "Uses the provided message" {
+            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -message 'Custom'
+
+            Should -Invoke Show-Message -ParameterFilter { $message -match 'Custom' }
+        }
+
+        It "Defaults to 'Working' when no message is provided" {
+            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi')
+
+            Should -Invoke Show-Message -ParameterFilter { $message -match 'Working' }
+        }
+
+        It "Clears the spinner line after completion" {
+            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -message 'Clearing'
+
+            Should -Invoke Show-Message -ParameterFilter { $message -eq "`r$(' ' * ('Clearing'.Length + 2))`r" }
+        }
+    }
+
+    Context "When the process fails to start" {
+        BeforeAll {
+            Mock Add-LogEntry {}
+        }
+
+        It "Returns -1 with null output" {
+            $result = Show-SpinnerWhileProcess -fileName 'nonexistent-exe-xyz-12345.exe' -processArgs @()
+
+            $result.code | Should -Be -1
+            $result.output | Should -Be $null
+        }
+
+        It "Logs the error" {
+            Show-SpinnerWhileProcess -fileName 'nonexistent-exe-xyz-12345.exe' -processArgs @()
+
+            Should -Invoke Add-LogEntry -Times 1 -ParameterFilter {
+                $data.header -match 'Show-SpinnerWhileProcess - Failed to run subprocess'
+            }
+        }
+    }
+}
+
 Describe "Invoke-PVMSubprocess" {
     BeforeAll {
         Mock Show-Error { }
@@ -429,29 +509,24 @@ Describe "Invoke-PVMSubprocess" {
     It "Invokes pvm.ps1 with stripped shell argument and returns exit code" {
         Mock Get-Command { return @{ Name = 'pwsh.exe' } } -ParameterFilter { $Name -eq 'pwsh.exe' }
         Mock Resolve-PVMEngine { return 'pwsh.exe' }
-
-        Mock pwsh.exe {
-            $global:LASTEXITCODE = 0
-        } -Verifiable
+        Mock Show-SpinnerWhileProcess { return @{ output = ''; code = 0 } }
 
         $result = Invoke-PVMSubprocess -command 'test' -arguments @('--coverage=85', '--shell=pwsh')
 
         $result.code | Should -Be 0
-        Should -Invoke pwsh.exe -Times 1 -ParameterFilter {
-            $args -contains '-File' -and
-            $args -contains 'test' -and
-            $args -contains '--coverage=85' -and
-            $args -notcontains '--shell=pwsh'
+        Should -Invoke Show-SpinnerWhileProcess -Times 1 -ParameterFilter {
+            $fileName -eq 'pwsh.exe' -and
+            $processArgs -contains '-File' -and
+            $processArgs -contains 'test' -and
+            $processArgs -contains '--coverage=85' -and
+            $processArgs -notcontains '--shell=pwsh'
         }
     }
 
     It "Returns subprocess exit code on failure" {
         Mock Get-Command { return @{ Name = 'pwsh.exe' } } -ParameterFilter { $Name -eq 'pwsh.exe' }
         Mock Resolve-PVMEngine { return 'pwsh.exe' }
-
-        Mock pwsh.exe {
-            $global:LASTEXITCODE = 1
-        }
+        Mock Show-SpinnerWhileProcess { return @{ output = ''; code = 1 } }
 
         $result = Invoke-PVMSubprocess -command 'test' -arguments @('--pester=6.0.0')
 
@@ -464,16 +539,5 @@ Describe "Invoke-PVMSubprocess" {
         $result = Invoke-PVMSubprocess -command 'test' -arguments @('--pester=6.0.0')
 
         $result.code | Should -Be -1
-    }
-
-    It "Returns 0 when pwsh.exe is found and last exit code is null" {
-        Mock Get-Command { return @{ Name = 'pwsh.exe' } }
-        Mock pwsh.exe {
-            $global:LASTEXITCODE = $null
-        }
-
-        $result = Invoke-PVMSubprocess -command 'test' -arguments @('--pester=6.0.0')
-
-        $result.code | Should -Be 0
     }
 }

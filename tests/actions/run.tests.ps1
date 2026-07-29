@@ -174,9 +174,9 @@ Describe 'Invoke-RunScripts' {
         $scripts =@('test arg1', 'test arg2')
         Mock Get-Scripts { @{'testscript' = $scripts } }
         Mock Invoke-PVMSubprocess { throw 'Test exception' }
-        
+
         $result = Invoke-RunScripts -scriptName 'testscript'
-        
+
         $result | Should -Be -1
         Should -Invoke Write-Yellow -Times $scripts.Count -Exactly
         Should -Invoke Add-LogEntry -Times $scripts.Count -Exactly

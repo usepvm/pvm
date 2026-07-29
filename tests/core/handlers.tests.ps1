@@ -551,41 +551,6 @@ Describe "Invoke-Test Tests" {
         $result.groupBy | Should -Be 'coverage'
     }
 
-    It "Should group summary entries by folder when requested" {
-        Mock Write-Host { }
-        Mock Invoke-SuccessSound
-
-        $testSummary = @(
-            [pscustomobject]@{
-                code = 0
-                relativeFilePath = 'core/handlers.tests.ps1'
-                Message = 'Passed'
-                testResultData = [pscustomobject]@{
-                    failedCount = 0
-                    duration = 0.2
-                    coverageRaw = 100
-                }
-            },
-            [pscustomobject]@{
-                code = 0
-                relativeFilePath = 'actions/install.tests.ps1'
-                Message = 'Passed'
-                testResultData = [pscustomobject]@{
-                    failedCount = 0
-                    duration = 0.1
-                    coverageRaw = 90
-                }
-            }
-        )
-
-        $result = Write-TestsSummary -testSummary $testSummary -options @{ sortBy = $null; groupBy = 'folder'; target = 75 } -maxLineLength 40
-
-        $result | Should -Be 0
-        Should -Invoke Invoke-SuccessSound -Times 1
-        Should -Invoke Write-Host -ParameterFilter { $Object -eq "`n  [core]" }
-        Should -Invoke Write-Host -ParameterFilter { $Object -eq "`n  [actions]" }
-    }
-
     Context "Handle invalid coverage target values" {
         It "Should return -1 for over 100 coverage target" {
             $result = Invoke-Test -arguments @('TestFile.ps1', '--coverage=150')

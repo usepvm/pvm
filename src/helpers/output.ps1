@@ -274,7 +274,7 @@ function New-Lines {
     }
 }
 
-function MakePlayer {
+function New-Player {
     Add-Type -AssemblyName PresentationCore
     $MediaPlayer = New-Object System.Windows.Media.MediaPlayer
     
@@ -297,24 +297,24 @@ function Get-Sound-TotalSeconds {
     return $totalSeconds
 }
 
-function Play-Sound {
+function Invoke-Sound {
     param ($path)
- 
-    $MediaPlayer = MakePlayer
+
+    $MediaPlayer = New-Player
     $MediaPlayer.Open($path)
     $duration = Get-Sound-TotalSeconds -path $path
     $MediaPlayer.Play()
     Start-Sleep -Seconds $duration
 }
 
-function Play-Success {
-    Play-Sound "$PVMRoot\assets\sounds\success.mp3"
+function Invoke-SuccessSound {
+    Invoke-Sound -path "$($PVMConfig.paths.assets)\sounds\success.mp3"
 }
 
-function Play-Error {
-    Play-Sound "$PVMRoot\assets\sounds\error.mp3"
+function Invoke-ErrorSound {
+    Invoke-Sound -path "$($PVMConfig.paths.assets)\sounds\error.mp3"
 }
 
-function Play-Prompt {
-    Play-Sound "$PVMRoot\assets\sounds\prompt.mp3"
+function Invoke-PromptSound {
+    Invoke-Sound -path "$($PVMConfig.paths.assets)\sounds\prompt.mp3"
 }

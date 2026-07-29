@@ -97,6 +97,7 @@ function Get-Config {
         version  = '2.6' # PVM version
 
         paths    = [ordered]@{
+            assets             = "$rootPath\assets"
             storage            = $storage
             fakeStorage        = $fakeStorage
             php                = "$storage\php"

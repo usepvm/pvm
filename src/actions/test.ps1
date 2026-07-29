@@ -444,10 +444,12 @@ function Write-TestsSummary {
     Write-GroupedResults -sorted $sorted -groupExpr $groupExpr -maxLineLength $maxLineLength -target $options.target -groupBy $options.groupBy
 
     if ($totalFailedTests -gt 0) {
+        Invoke-ErrorSound
         return -1
-    } else {
-        return 0
     }
+
+    Invoke-SuccessSound
+    return 0
 }
 
 function Invoke-Tests {

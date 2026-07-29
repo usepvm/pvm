@@ -276,35 +276,39 @@ function New-Lines {
 
 function New-Player {
     Add-Type -AssemblyName PresentationCore
-    $MediaPlayer = New-Object System.Windows.Media.MediaPlayer
-    
+    $MediaPlayer = New-Object -TypeName System.Windows.Media.MediaPlayer
+
     return $MediaPlayer
 }
 
 function Get-Sound-TotalSeconds {
     param ($path)
-    
+
     $folder = Split-Path $path
     $file = Split-Path $path -Leaf
     $shell = New-Object -ComObject Shell.Application
     $shellFolder = $shell.Namespace($folder)
     $shellFile = $shellFolder.ParseName($file)
-    
+
     $duration = $shellFolder.GetDetailsOf($shellFile, 27)
     $ts = [timespan]::Parse($duration)
-    $totalSeconds = $ts.TotalSeconds
-    
+    $totalSeconds = if ($ts.TotalSeconds -gt 1) { $ts.TotalSeconds } else { 1 }
+
     return $totalSeconds
 }
 
 function Invoke-Sound {
     param ($path)
 
-    $MediaPlayer = New-Player
-    $MediaPlayer.Open($path)
-    $duration = Get-Sound-TotalSeconds -path $path
-    $MediaPlayer.Play()
-    Start-Sleep -Seconds $duration
+    try {
+        $MediaPlayer = New-Player
+        $MediaPlayer.Open($path)
+        $duration = Get-Sound-TotalSeconds -path $path
+        $MediaPlayer.Play()
+        Start-Sleep -Seconds $duration
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to play sound"; exception = $_ }
+    }
 }
 
 function Invoke-SuccessSound {

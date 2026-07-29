@@ -416,10 +416,11 @@ function Write-GroupedResults {
 }
 
 function Write-TestsSummary {
-    param ($testSummary, $options, $maxLineLength)
+    param ($testData, $options, $maxLineLength)
 
-    $totalFailedTests = $testSummary | Where-Object { $_.code -ne 0 } | ForEach-Object { $_.testResultData.failedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
-    $totalDuration = $testSummary | ForEach-Object { $_.testResultData.duration } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+    $testSummary = $testData.testSummary
+    $totalFailedTests = $testData.totalFailedTests
+    $totalDuration = $testData.totalDuration
     $totalDurationFormatted = Format-Seconds -totalSeconds $totalDuration
 
     if ($totalFailedTests -gt 0) {
@@ -442,14 +443,6 @@ function Write-TestsSummary {
     }
 
     Write-GroupedResults -sorted $sorted -groupExpr $groupExpr -maxLineLength $maxLineLength -target $options.target -groupBy $options.groupBy
-
-    if ($totalFailedTests -gt 0) {
-        Invoke-ErrorSound
-        return -1
-    }
-
-    Invoke-SuccessSound
-    return 0
 }
 
 function Invoke-Tests {
@@ -519,7 +512,21 @@ function Invoke-Tests {
             return -1
         }
 
-        return Write-TestsSummary -testSummary $testSummary -options $options -maxLineLength $maxLineLength
+        $testData = @{
+            testSummary = $testSummary
+            totalFailedTests = $testSummary | Where-Object { $_.code -ne 0 } | ForEach-Object { $_.testResultData.failedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            totalDuration = $testSummary | ForEach-Object { $_.testResultData.duration } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+        }
+
+        Write-TestsSummary -testData $testData -options $options -maxLineLength $maxLineLength
+
+        if ($totalFailedTests -gt 0) {
+            Invoke-ErrorSound
+            return -1
+        }
+
+        Invoke-SuccessSound
+        return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
         Show-Error -message "`nFailed to run tests, check log: $($PVMConfig.paths.logError)"

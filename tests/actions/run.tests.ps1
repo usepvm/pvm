@@ -142,7 +142,7 @@ Describe 'Invoke-RunScripts' {
 
     It 'Returns -1 when any subprocess command fails' {
         Mock Get-Scripts { @{'testscript' = @('test arg1', 'test arg2')} }
-        Mock Invoke-PVMSubprocess { @{ code = 1; output = '' } }
+        Mock Invoke-PVMSubprocess { @{ code = -1; output = '' } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
 
@@ -163,11 +163,23 @@ Describe 'Invoke-RunScripts' {
         Mock Invoke-PVMSubprocess {
             param ($command, $arguments)
             if ($arguments -eq 'arg1') { return @{ code = 0; output = '' } }
-            return @{ code = 1; output = '' }
+            return @{ code = -1; output = '' }
         }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
 
         $result | Should -Be -1
+    }
+
+    It "Handles exception in subprocess" {
+        $scripts =@('test arg1', 'test arg2')
+        Mock Get-Scripts { @{'testscript' = $scripts } }
+        Mock Invoke-PVMSubprocess { throw 'Test exception' }
+        
+        $result = Invoke-RunScripts -scriptName 'testscript'
+        
+        $result | Should -Be -1
+        Should -Invoke Write-Yellow -Times $scripts.Count -Exactly
+        Should -Invoke Add-LogEntry -Times $scripts.Count -Exactly
     }
 }

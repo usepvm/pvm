@@ -51,28 +51,34 @@ function Invoke-RunScripts {
         $runInSubProcess = $scriptCommands.Count -gt 1
         $results = @()
         foreach ($scriptCommand in $scriptCommands) {
-            Write-Gray -message "Command: pvm $scriptCommand"
-            $parts = $scriptCommand -split ' '
-            $command = $parts[0]
-            $scriptArgs = if ($parts.Count -gt 1) { $parts[1..($parts.Count - 1)] } else { @() }
+            try {
+                Write-Gray -message "Command: pvm $scriptCommand"
+                $parts = $scriptCommand -split ' '
+                $command = $parts[0]
+                $scriptArgs = if ($parts.Count -gt 1) { $parts[1..($parts.Count - 1)] } else { @() }
 
-            if ($command -ne 'test') {
-                Write-Yellow -message "`nInvalid command in script: '$command'`n"
+                if ($command -ne 'test') {
+                    Write-Yellow -message "`nInvalid command in script: '$command'`n"
+                    $results += -1
+                    continue
+                }
+
+                if ($runInSubProcess) {
+                    $result = Invoke-PVMSubprocess -command $command -arguments $scriptArgs
+                    $results += $result
+                } else {
+                    $actions = Get-Actions -arguments $scriptArgs
+                    $result = $($actions[$command].action.Invoke())
+                    return $result
+                }
+
+                Show-SubProcessOutput -output $result.output
+                New-Lines -count 3
+            } catch {
+                Write-Yellow -message "`nFailed to run command: pvm $scriptCommand, check logs at '$($PVMConfig.paths.logError)'`n"
+                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run script"; exception = $_ }
                 $results += -1
-                continue
             }
-
-            if ($runInSubProcess) {
-                $result = Invoke-PVMSubprocess -command $command -arguments $scriptArgs
-                $results += $result
-            } else {
-                $actions = Get-Actions -arguments $scriptArgs
-                $result = $($actions[$command].action.Invoke())
-                return $result
-            }
-
-            Show-SubProcessOutput -output $result.output
-            New-Lines -count 3
         }
 
         if ($results | Where-Object { $_ -and $_.code -ne 0 }) {

@@ -710,6 +710,16 @@ Describe "Sound Functions" {
             { Invoke-Sound -path "C:\music\song.mp3" } | Should -Not -Throw
             Should -Invoke Add-LogEntry -Times 1 -Exactly
         }
+
+        It "does not play sound in subprocess mode" {
+            Mock New-Player {}
+            $script:PVMSubprocessMode = $true
+
+            Invoke-Sound -path "C:\music\song.mp3"
+
+            Should -Invoke New-Player -Times 0
+            $script:PVMSubprocessMode = $false
+        }
     }
 
     Context "Invoke-<Type>Sound wrappers" {

@@ -301,6 +301,10 @@ function Invoke-Sound {
     param ($path)
 
     try {
+        if ($script:PVMSubprocessMode) {
+            return
+        }
+
         $MediaPlayer = New-Player
         $MediaPlayer.Open($path)
         $duration = Get-Sound-TotalSeconds -path $path

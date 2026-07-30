@@ -1,6 +1,10 @@
 ﻿
 BeforeAll {
-    Mock Write-Host {}
+    Mock Write-Color {}
+    Mock Show-Message {}
+    Mock Write-Yellow {}
+    Mock Write-Cyan {}
+    Mock Write-Gray {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\run-drive"

@@ -1,6 +1,6 @@
 ﻿
 BeforeAll {
-    Mock Write-Host {}
+    Mock Show-Error {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\update-check-drive"
@@ -152,6 +152,9 @@ Describe "Test-ShouldCheckForUpdates" {
 }
 
 Describe "Test-CheckForUpdatesQuietly" {
+    BeforeAll {
+        Mock Show-Info {}
+    }
     Context "When an update check is not due" {
         It "Returns without calling Update-PVM" {
             Mock Test-ShouldCheckForUpdates { return $false }
@@ -185,13 +188,12 @@ Describe "Test-CheckForUpdatesQuietly" {
             Mock Test-ShouldCheckForUpdates { return $true }
             Mock Update-PVM { return @{ code = 0; message = 'Update available: v2.7.0' } }
             Mock Set-LastUpdateCheckTimestamp {}
-            Mock Write-Host {}
 
             $result = Test-CheckForUpdatesQuietly
 
             $result | Should -Be 0
-            Should -Invoke Write-Host -Times 1 -ParameterFilter {
-                $Object -like "*Update available: v2.7.0*Run 'pvm update' to update.*"
+            Should -Invoke Show-Info -Times 1 -ParameterFilter {
+                $message -like "*Update available: v2.7.0*Run 'pvm update' to update.*"
             }
         }
 
@@ -199,24 +201,22 @@ Describe "Test-CheckForUpdatesQuietly" {
             Mock Test-ShouldCheckForUpdates { return $true }
             Mock Update-PVM { return @{ code = -1; message = 'Update available: v2.7.0' } }
             Mock Set-LastUpdateCheckTimestamp {}
-            Mock Write-Host {}
 
             $result = Test-CheckForUpdatesQuietly
 
             $result | Should -Be -1
-            Should -Invoke Write-Host -Times 0
+            Should -Invoke Show-Info -Times 0
         }
 
         It "Does not write to the host when no update is available" {
             Mock Test-ShouldCheckForUpdates { return $true }
             Mock Update-PVM { return @{ code = 0; message = 'PVM is already up to date' } }
             Mock Set-LastUpdateCheckTimestamp {}
-            Mock Write-Host {}
 
             $result = Test-CheckForUpdatesQuietly
 
             $result | Should -Be 0
-            Should -Invoke Write-Host -Times 0
+            Should -Invoke Show-Info -Times 0
         }
 
         It "Returns -1 and logs error when Update-PVM throws exception" {

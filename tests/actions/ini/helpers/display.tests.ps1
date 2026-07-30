@@ -1,6 +1,8 @@
 
 BeforeAll {
-    Mock Write-Host {}
+    Mock Show-Message {}
+    Mock Show-Error {}
+    Mock Write-Color {}
 }
 
 Describe "Show-ExtensionsStates" {
@@ -10,10 +12,10 @@ Describe "Show-ExtensionsStates" {
             @{ Extension = 'opcache'; Enabled = $true }
         )
         Show-ExtensionsStates -extensions $extensions
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -match 'Enabled: 2' -and
-            $Object -match 'Disabled: 0' -and
-            $Object -match 'Total: 2'
+        Should -Invoke Show-Message -Times 1 -ParameterFilter {
+            $message -match 'Enabled: 2' -and
+            $message -match 'Disabled: 0' -and
+            $message -match 'Total: 2'
         }
     }
 
@@ -22,10 +24,10 @@ Describe "Show-ExtensionsStates" {
             @{ Extension = 'xdebug'; Enabled = $false }
         )
         Show-ExtensionsStates -extensions $extensions
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -match 'Enabled: 0' -and
-            $Object -match 'Disabled: 1' -and
-            $Object -match 'Total: 1'
+        Should -Invoke Show-Message -Times 1 -ParameterFilter {
+            $message -match 'Enabled: 0' -and
+            $message -match 'Disabled: 1' -and
+            $message -match 'Total: 1'
         }
     }
 
@@ -36,10 +38,10 @@ Describe "Show-ExtensionsStates" {
             @{ Extension = 'opcache'; Enabled = $true }
         )
         Show-ExtensionsStates -extensions $extensions
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -match 'Enabled: 2' -and
-            $Object -match 'Disabled: 1' -and
-            $Object -match 'Total: 3'
+        Should -Invoke Show-Message -Times 1 -ParameterFilter {
+            $message -match 'Enabled: 2' -and
+            $message -match 'Disabled: 1' -and
+            $message -match 'Total: 3'
         }
     }
 }
@@ -48,8 +50,8 @@ Describe "Show-InstalledExtensions" {
     It "Displays message when extensions array is empty" {
         $extensions = @()
         Show-InstalledExtensions -extensions $extensions
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq '  No extensions found.'
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -eq '  No extensions found.'
         }
     }
 
@@ -59,7 +61,8 @@ Describe "Show-InstalledExtensions" {
             @{ Extension = 'opcache'; comment = 'Available (not configured)'; Enabled = $false }
         )
         Show-InstalledExtensions -extensions $extensions
-        Should -Invoke Write-Host -Times 2
+        Should -Invoke Show-Message -Times 2
+        Should -Invoke Write-Color -Times 2
     }
 }
 
@@ -70,10 +73,10 @@ Describe "Show-SettingsStates" {
             @{ Name = 'short_open_tag'; Value = 'Off'; Enabled = $true }
         )
         Show-SettingsStates -settings $settings
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -match 'Enabled: 2' -and
-            $Object -match 'Disabled: 0' -and
-            $Object -match 'Total: 2'
+        Should -Invoke Show-Message -Times 1 -ParameterFilter {
+            $message -match 'Enabled: 2' -and
+            $message -match 'Disabled: 0' -and
+            $message -match 'Total: 2'
         }
     }
 
@@ -82,10 +85,10 @@ Describe "Show-SettingsStates" {
             @{ Name = 'display_errors'; Value = 'Off'; Enabled = $false }
         )
         Show-SettingsStates -settings $settings
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -match 'Enabled: 0' -and
-            $Object -match 'Disabled: 1' -and
-            $Object -match 'Total: 1'
+        Should -Invoke Show-Message -Times 1 -ParameterFilter {
+            $message -match 'Enabled: 0' -and
+            $message -match 'Disabled: 1' -and
+            $message -match 'Total: 1'
         }
     }
 
@@ -96,10 +99,10 @@ Describe "Show-SettingsStates" {
             @{ Name = 'error_reporting'; Value = 'E_ALL'; Enabled = $true }
         )
         Show-SettingsStates -settings $settings
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -match 'Enabled: 2' -and
-            $Object -match 'Disabled: 1' -and
-            $Object -match 'Total: 3'
+        Should -Invoke Show-Message -Times 1 -ParameterFilter {
+            $message -match 'Enabled: 2' -and
+            $message -match 'Disabled: 1' -and
+            $message -match 'Total: 3'
         }
     }
 }
@@ -108,8 +111,8 @@ Describe "Show-Settings" {
     It "Displays message when settings array is empty" {
         $settings = @()
         Show-Settings -settings $settings
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq '  No settings found.'
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -eq '  No settings found.'
         }
     }
 
@@ -121,6 +124,7 @@ Describe "Show-Settings" {
             @{ Name = 'error_log'; Value = ''; comment = 'Deprecated' ; Enabled = $false }
         )
         Show-Settings -settings $settings
-        Should -Invoke Write-Host -Times 4
+        Should -Invoke Show-Message -Times 2
+        Should -Invoke Write-Color -Times 2
     }
 }

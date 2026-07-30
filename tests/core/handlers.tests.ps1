@@ -1,6 +1,11 @@
 ﻿
 BeforeAll {
-    Mock Write-Host {}
+    Mock Show-Error {}
+    Mock Show-Warning {}
+    Mock Show-Message {}
+    Mock Write-Color {}
+    Mock Show-Info {}
+
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 
@@ -21,7 +26,6 @@ Describe "Invoke-Setup Tests" {
         Mock New-EnvFile { 0 }
         Mock Wait-ForEnvEdit { }
         Mock Show-MsgByExitCode { }
-        Mock Write-Host { }
     }
 
     It "Should return 0 when PVM is already setup" {
@@ -59,7 +63,7 @@ Describe "Invoke-Setup Tests" {
         $result = Invoke-Setup
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Failed to optimize system path*' -and $ForegroundColor -eq 'DarkYellow' }
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to optimize system path*' }
     }
 
     It "Should pause for env edit after creating env file" {
@@ -140,10 +144,10 @@ Describe "Invoke-Current Tests" {
 
         $result | Should -Be 0
         Should -Invoke Get-CurrentPHPVersion -Times 1
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Running version: PHP 8.2.0*' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*xdebug v3.2.0*' -and $ForegroundColor -eq 'DarkGreen' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*opcache v8.2.0*' -and $ForegroundColor -eq 'DarkYellow' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Path: C:\PHP\8.2.0*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*Running version: PHP 8.2.0*' }
+        Should -Invoke Write-Color -ParameterFilter { $message -like '*xdebug v3.2.0*' -and $foreColor -eq 'DarkGreen' }
+        Should -Invoke Write-Color -ParameterFilter { $message -like '*opcache v8.2.0*' -and $foreColor -eq 'DarkYellow' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*Path: C:\PHP\8.2.0*' }
     }
 
     It "Should display current PHP version and extensions when version is not set" {
@@ -162,10 +166,10 @@ Describe "Invoke-Current Tests" {
 
         $result | Should -Be 0
         Should -Invoke Get-CurrentPHPVersion -Times 1
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Running version: PHP 8.2.0*' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*xdebug*' -and $ForegroundColor -eq 'DarkGreen' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*opcache*' -and $ForegroundColor -eq 'DarkYellow' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Path: C:\PHP\8.2.0*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*Running version: PHP 8.2.0*' }
+        Should -Invoke Write-Color -ParameterFilter { $message -like '*xdebug*' -and $foreColor -eq 'DarkGreen' }
+        Should -Invoke Write-Color -ParameterFilter { $message -like '*opcache*' -and $foreColor -eq 'DarkYellow' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*Path: C:\PHP\8.2.0*' }
     }
 
     It "Should return -1 when no PHP version is set" {
@@ -174,7 +178,7 @@ Describe "Invoke-Current Tests" {
         $result = Invoke-Current
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*No PHP version is currently set*' }
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*No PHP version is currently set*' }
     }
 
     It "Should handle missing status information" {
@@ -183,7 +187,7 @@ Describe "Invoke-Current Tests" {
         $result = Invoke-Current
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*No status information available*' -and $ForegroundColor -eq 'Yellow' }
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*No status information available*' }
     }
 }
 
@@ -217,7 +221,6 @@ Describe "Invoke-List Tests" {
 Describe "Invoke-Install Tests" {
     BeforeEach {
         Mock Install-PHP { 0 }
-        Mock Write-Host { }
     }
 
     It "Should return -1 when no version is provided" {
@@ -226,7 +229,7 @@ Describe "Invoke-Install Tests" {
         $result = Invoke-Install -arguments $arguments
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Please provide a PHP version to install*' }
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Please provide a PHP version to install*' }
     }
 
     It "Should install PHP with basic parameters" {
@@ -288,14 +291,13 @@ Describe "Invoke-Uninstall Tests" {
     BeforeEach {
         Mock Uninstall-PHP { @{ code = 0; message = 'Uninstalled successfully' } }
         Mock Show-MsgByExitCode { }
-        Mock Write-Host { }
     }
 
     It "Should return -1 when no version is provided" {
         $result = Invoke-Uninstall -arguments @()
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Please provide a PHP version to uninstall*' }
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Please provide a PHP version to uninstall*' }
     }
 
     It "Should uninstall PHP version without skipConfirmation by default" {
@@ -350,7 +352,6 @@ Describe "Invoke-Use Tests" {
         Mock Select-PHPVersionAutomatically { @{ code = 0; version = '8.2.0' } }
         Mock Update-PHPVersion { @{ code = 0; message = 'Version updated' } }
         Mock Show-MsgByExitCode { }
-        Mock Write-Host { }
     }
 
     It "Should return -1 when no version is provided" {
@@ -359,7 +360,7 @@ Describe "Invoke-Use Tests" {
         $result = Invoke-Use -arguments $arguments
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Please provide a PHP version to use*' }
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Please provide a PHP version to use*' }
     }
 
     It "Should use specific PHP version" {
@@ -400,7 +401,6 @@ Describe "Invoke-Use Tests" {
 Describe "Invoke-Ini Tests" {
     BeforeEach {
         Mock Invoke-IniAction { 0 }
-        Mock Write-Host { }
     }
 
     It "Should return -1 when no action is provided" {
@@ -409,7 +409,7 @@ Describe "Invoke-Ini Tests" {
         $result = Invoke-Ini -arguments $arguments
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like "*Please specify an action for 'pvm ini'*" }
+        Should -Invoke Show-Warning -ParameterFilter { $message -like "*Please specify an action for 'pvm ini'*" }
     }
 
     It "Should call Invoke-IniAction with correct parameters for single action" {
@@ -704,8 +704,8 @@ Describe "Invoke-Test Tests" {
 
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*Invalid coverage value*' -and $ForegroundColor -eq 'Yellow'
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like '*Invalid coverage value*'
             }
         }
 
@@ -714,8 +714,8 @@ Describe "Invoke-Test Tests" {
 
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*Invalid coverage value*' -and $ForegroundColor -eq 'Yellow'
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like '*Invalid coverage value*'
             }
         }
 
@@ -739,7 +739,6 @@ Describe "Invoke-Test Tests" {
 
 Describe "Invoke-Profile Tests" {
     BeforeEach {
-        Mock Write-Host { }
         Mock Save-PHPProfile { 0 }
         Mock Use-PHPProfile { 0 }
         Mock Show-PHPProfiles { 0 }
@@ -757,9 +756,8 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like "*Please specify an action for 'pvm profile'*" -and
-                $ForegroundColor -eq 'Yellow'
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like "*Please specify an action for 'pvm profile'*"
             }
         }
     }
@@ -771,8 +769,8 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*Please provide a profile name: pvm profile save*'
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like '*Please provide a profile name: pvm profile save*'
             }
         }
 
@@ -807,8 +805,8 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*Please provide a profile name: pvm profile load*'
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like '*Please provide a profile name: pvm profile load*'
             }
         }
 
@@ -853,8 +851,8 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*Please provide a profile name: pvm profile show*'
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like '*Please provide a profile name: pvm profile show*'
             }
         }
 
@@ -888,8 +886,8 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*Please provide a profile name: pvm profile delete*'
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like '*Please provide a profile name: pvm profile delete*'
             }
         }
 
@@ -963,8 +961,8 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*Please provide a profile name: pvm profile export*'
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like '*Please provide a profile name: pvm profile export*'
             }
         }
 
@@ -999,8 +997,8 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*Please provide a file path: pvm profile import*'
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like '*Please provide a file path: pvm profile import*'
             }
         }
 
@@ -1035,9 +1033,8 @@ Describe "Invoke-Profile Tests" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like "*Unknown action 'unknown'*" -and
-                $ForegroundColor -eq "DarkYellow"
+            Should -Invoke Show-Error -ParameterFilter {
+                $message -like "*Unknown action 'unknown'*"
             }
         }
 
@@ -1080,7 +1077,6 @@ Describe "Invoke-Profile Tests" {
 
 Describe "Invoke-Cache Tests" {
     BeforeEach {
-        Mock Write-Host { }
         Mock Show-CacheFiles { 0 }
         Mock Show-CachedData { 0 }
         Mock Remove-CacheFile { 0 }
@@ -1094,9 +1090,8 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like "*Please specify an action for 'pvm cache'*" -and
-                $ForegroundColor -eq 'Yellow'
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like "*Please specify an action for 'pvm cache'*"
             }
         }
     }
@@ -1119,8 +1114,8 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*Please provide a cache name: pvm cache show*'
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like '*Please provide a cache name: pvm cache show*'
             }
         }
 
@@ -1154,8 +1149,8 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*Please provide a cache name: pvm cache delete*'
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like '*Please provide a cache name: pvm cache delete*'
             }
         }
 
@@ -1229,9 +1224,8 @@ Describe "Invoke-Cache Tests" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like "*Unknown action 'unknown'*" -and
-                $ForegroundColor -eq "DarkYellow"
+            Should -Invoke Show-Error -ParameterFilter {
+                $message -like "*Unknown action 'unknown'*"
             }
         }
 
@@ -1273,17 +1267,13 @@ Describe "Invoke-Cache Tests" {
 }
 
 Describe "Invoke-Aliases Tests" {
-    BeforeEach {
-        Mock Write-Host { }
-    }
-
     It "Should return -1 when no aliases are found" {
         Mock Get-Aliases { return @{} }
 
         $result = Invoke-Aliases
 
         $result | Should -Be -1
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*No aliases found.*' -and $ForegroundColor -eq 'DarkYellow' }
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*No aliases found.*' }
     }
 
     It "Should return 0 when aliases are found" {
@@ -1292,13 +1282,12 @@ Describe "Invoke-Aliases Tests" {
         $result = Invoke-Aliases
 
         $result | Should -Be 0
-        Should -Invoke Write-Host -Times 2
+        Should -Invoke Show-Message -Times 2
     }
 }
 
 Describe "Invoke-Info Tests" {
     BeforeEach {
-        Mock Write-Host { }
         $Global:PVMRoot = 'C:\pvm'
         $PVMConfig.version = '2.6'
         $PVMConfig.paths = @{
@@ -1344,16 +1333,16 @@ Describe "Invoke-Info Tests" {
         It "Displays status section" {
             Invoke-Info -arguments @()
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*PVM status*'
+            Should -Invoke Show-Info -ParameterFilter {
+                $message -like '*PVM status*'
             }
         }
 
         It "Does not display verbose sections" {
             Invoke-Info -arguments @()
 
-            Should -Not -Invoke Write-Host -ParameterFilter {
-                $Object -like '*PVM paths*'
+            Should -Not -Invoke Show-Info -ParameterFilter {
+                $message -like '*PVM paths*'
             }
         }
     }
@@ -1387,8 +1376,8 @@ Describe "Invoke-Info Tests" {
         It "Displays environment paths section" {
             Invoke-Info -arguments @('--verbose')
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*PVM paths*'
+            Should -Invoke Show-Info -ParameterFilter {
+                $message -like '*PVM paths*'
             }
         }
 

@@ -1,6 +1,6 @@
 ﻿
 BeforeAll {
-    Mock Write-Host {}
+    Mock Show-Message {}
 
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 
@@ -261,8 +261,7 @@ Describe "Get-UserSelectedPHPVersion" {
     }
 
     It "Should return null when no version is selected" {
-        Mock Read-Host { return '' }
-        Mock Write-Host { }
+        Mock Read-Host-Wrapper { return '' }
 
         $result = Get-UserSelectedPHPVersion -installedVersions @(
             @{ version = '7.4'; Arch = 'x64'; BuildType = 'ts'}
@@ -273,8 +272,7 @@ Describe "Get-UserSelectedPHPVersion" {
     }
 
     It "Should prompt user and return selected version when multiple are provided" {
-        Mock Read-Host { return '2' }
-        Mock Write-Host { }
+        Mock Read-Host-Wrapper { return '2' }
 
         $result = Get-UserSelectedPHPVersion -installedVersions @(
             @{ version = '7.4'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\7.4'}
@@ -287,8 +285,7 @@ Describe "Get-UserSelectedPHPVersion" {
     }
 
     It "Should print current next to active php version" {
-        Mock Read-Host { return '2' }
-        Mock Write-Host { }
+        Mock Read-Host-Wrapper { return '2' }
         Mock Get-CurrentPHPVersion { return @{ version = '8.0'; arch = 'x64'; buildType = 'ts'}}
 
         $list = @(
@@ -300,7 +297,7 @@ Describe "Get-UserSelectedPHPVersion" {
 
         $maxNameLength = ($list.version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $version = '8.0 '.PadRight($maxNameLength, '.')
-        Should -Invoke Write-Host -ParameterFilter { $Object -eq " [1] $version x64 ts (Current)" }
+        Should -Invoke Show-Message -ParameterFilter { $message -eq " [1] $version x64 ts (Current)" }
     }
 }
 

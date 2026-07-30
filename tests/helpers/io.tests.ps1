@@ -1,6 +1,6 @@
 ﻿
 BeforeAll {
-    Mock Write-Host {}
+    Mock Add-LogEntry { 0 }
     # Create a mock registry to simulate environment variables
     $script:MockRegistry = @{
         Machine = @{
@@ -396,7 +396,6 @@ Describe "Expand-Zip Tests" {
     BeforeEach {
         Mock Expand-ZipCore { }
         Mock Remove-Item { }
-        Mock Write-Host { }
         Mock Add-LogEntry { }
     }
 

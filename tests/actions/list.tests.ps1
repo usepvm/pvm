@@ -11,7 +11,10 @@ BeforeAll {
     $script:PHP_WIN_ARCHIVES_URL = $PVMConfig.links.phpWinArchives
     $script:PHP_WIN_RELEASES_URL = $PVMConfig.links.phpWinReleases
 
-    Mock Write-Host { }
+    Mock Show-Message { }
+    Mock Show-Error { }
+    Mock Show-Info { }
+    Mock Write-Gray { }
 
     # Mock external functions that aren't defined in the provided code
     Mock New-Directory { return 0 }
@@ -182,7 +185,6 @@ Describe "Get-PHPListToInstall" {
 
 Describe "Get-AvailablePHPVersions" {
     BeforeEach {
-        Mock Write-Host { }
         Mock Show-SpinnerWhileJob {
             param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
             $result = & $scriptBlock @argumentList
@@ -369,11 +371,11 @@ Describe "Get-AvailablePHPVersions" {
         $code = Get-AvailablePHPVersions
 
         $code | Should -Be 0
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Available Versions*' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Archives*' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Releases*' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*8.1.0*' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*8.2.0*' }
+        Should -Invoke Show-Info -ParameterFilter { $message -like '*Available Versions*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*Archives*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*Releases*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*8.1.0*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*8.2.0*' }
     }
 
     It "Returns -1 on empty list" {
@@ -399,10 +401,6 @@ Describe "Get-AvailablePHPVersions" {
 }
 
 Describe "Show-InstalledPHPVersions" {
-    BeforeEach {
-        Mock Write-Host { }
-    }
-
     It "Should display installed versions with current version marked" {
         Mock Get-CurrentPHPVersion { return @{
             version = '8.2.0'
@@ -417,10 +415,10 @@ Describe "Show-InstalledPHPVersions" {
 
         Show-InstalledPHPVersions
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Installed Versions*' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*8.2.0*(Current)*' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*8.1.5*' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*7.4.33*' }
+        Should -Invoke Show-Info -ParameterFilter { $message -like '*Installed Versions*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*8.2.0*(Current)*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*8.1.5*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*7.4.33*' }
     }
 
     It "Display installed versions matching filter" {
@@ -439,7 +437,7 @@ Describe "Show-InstalledPHPVersions" {
 
         Show-InstalledPHPVersions
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*No PHP versions found*' }
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*No PHP versions found*' }
     }
 
     It "Should handle duplicate versions" {
@@ -457,7 +455,7 @@ Describe "Show-InstalledPHPVersions" {
         Show-InstalledPHPVersions
 
         # Should only display unique versions
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*8.2.0*' } -Exactly 1
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*8.2.0*' } -Exactly 1
     }
 
     It "Should handle no current version set" {
@@ -469,8 +467,8 @@ Describe "Show-InstalledPHPVersions" {
 
         Show-InstalledPHPVersions
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*8.2.0*' -and $Object -notlike '*(Current)*' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*8.1.5*' -and $Object -notlike '*(Current)*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*8.2.0*' -and $message -notlike '*(Current)*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*8.1.5*' -and $message -notlike '*(Current)*' }
     }
 
     It "Should handle exceptions gracefully" {

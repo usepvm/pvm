@@ -10,8 +10,7 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PHP_CURRENT_DIR -Force | Out-Null
 
-    # Mock Add-LogEntry function
-    Mock Write-Host {}
+    Mock Show-Error {}
 
     Mock Add-LogEntry {
         param ($data)

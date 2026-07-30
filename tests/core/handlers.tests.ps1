@@ -8,11 +8,17 @@ BeforeAll {
 
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\handlers-drive"
+    $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
+    $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
+    $PVMConfig.paths.storage = "$TEST_DRIVE\storage"
+    $PVMConfig.paths.data = "$TEST_DRIVE\storage\data"
 
     Import-Module PowerShellGet -ErrorAction SilentlyContinue
 }
 
 AfterAll {
+    Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
 }
@@ -1290,10 +1296,6 @@ Describe "Invoke-Info Tests" {
     BeforeEach {
         $Global:PVMRoot = 'C:\pvm'
         $PVMConfig.version = '2.6'
-        $PVMConfig.paths = @{
-            storage = 'C:\pvm\storage'
-            data    = 'C:\pvm\storage\data'
-        }
         $PVMConfig.env = @{
             CACHE_MAX_HOURS      = 168
             MIN_PAD_RIGHT_LENGTH = 2

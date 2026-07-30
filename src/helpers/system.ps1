@@ -225,7 +225,13 @@ function Show-SpinnerWhileProcess  {
     try {
         $psi = [System.Diagnostics.ProcessStartInfo]::new()
         $psi.FileName = $fileName
-        foreach ($a in $processArgs) { $psi.ArgumentList.Add($a) }
+        $psi.Arguments = ($processArgs | ForEach-Object {
+            if ($_ -match '[\s"]') {
+                '"' + ($_ -replace '"', '\"') + '"'
+            } else {
+                $_
+            }
+        }) -join ' '
         $psi.RedirectStandardOutput = $true
         $psi.RedirectStandardError = $true
         $psi.UseShellExecute = $false

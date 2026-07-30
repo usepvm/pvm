@@ -4,7 +4,7 @@ BeforeAll {
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\log-drive"
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    
+
     Mock Show-Error {}
     Mock Show-Warning {}
     Mock Show-Message {}

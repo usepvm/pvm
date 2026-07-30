@@ -9,7 +9,7 @@ BeforeAll {
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    
+
     Mock Show-Message {}
     Mock Show-Error {}
     Mock Show-Info {}

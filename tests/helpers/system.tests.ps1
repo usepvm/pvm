@@ -3,7 +3,7 @@ BeforeAll {
     Mock Show-Message {}
     Mock Show-Error {}
     Mock Show-Success {}
-    
+
     # Create a mock registry to simulate environment variables
     $script:MockRegistry = @{
         Machine = @{

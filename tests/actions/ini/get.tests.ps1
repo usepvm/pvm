@@ -10,7 +10,7 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
-    
+
     Mock Show-Warning {}
     Mock Show-Info {}
     Mock Show-Message {}

@@ -109,18 +109,23 @@ function Get-PHPVersions {
 
     try {
         $urls = Get-SourceUrls
-        $rawByKey = @{}
+        $rawByKey = Show-SpinnerWhileJob -argumentList @($urls, $version, $arch, $buildType) -scriptBlock {
+            param ($urls, $version, $arch, $buildType)
 
-        foreach ($key in $urls.Keys) {
-            $fetched = Get-PHPVersionsFromUrl -url $urls[$key] -version $version
-            if ($fetched.Count -eq 0) {
-                continue
+            $rawByKey = @{}
+            foreach ($key in $urls.Keys) {
+                $fetched = Get-PHPVersionsFromUrl -url $urls[$key] -version $version
+                if ($fetched.Count -eq 0) {
+                    continue
+                }
+                if ($null -ne $arch) { $fetched = $fetched | Where-Object { $_.arch -eq $arch } }
+                if ($null -ne $buildType) { $fetched = $fetched | Where-Object { $_.buildType -eq $buildType } }
+                if ($fetched.Count -eq 0) { continue }
+                $rawByKey[$key] = $fetched
             }
-            if ($null -ne $arch) { $fetched = $fetched | Where-Object { $_.arch -eq $arch } }
-            if ($null -ne $buildType) { $fetched = $fetched | Where-Object { $_.buildType -eq $buildType } }
-            if ($fetched.Count -eq 0) { continue }
-            $rawByKey[$key] = $fetched
-        }
+
+            return @{ pvmData = $rawByKey }
+        } -rethrow $true
 
         $fetchedVersions = [ordered]@{}
         foreach ($key in $urls.Keys) {
@@ -356,12 +361,7 @@ function Install-PHP {
         }
 
         Show-Message -message "`nLoading the matching versions..."
-        $matchingVersions = Show-SpinnerWhileJob -argumentList @($version, $arch, $buildType) -scriptBlock {
-            param ($version, $arch, $buildType)
-
-            $data = Get-PHPVersions -version $version -arch $arch -buildType $buildType
-            return @{ pvmData = $data }
-        } -rethrow $true
+        $matchingVersions = Get-PHPVersions -version $version -arch $arch -buildType $buildType
 
         if ($matchingVersions.Count -eq 0) {
             $msg = "No matching PHP versions found for '$version', Check one of the following:"

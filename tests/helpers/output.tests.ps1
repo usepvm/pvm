@@ -632,6 +632,8 @@ Describe "Write-Host helpers Tests" {
     It "Prints new lines" {
         New-Lines -count 5
 
-        Should -Invoke Write-Host -Exactly 5
+        Should -Invoke Write-Host -Exactly 1 -ParameterFilter {
+            $Object -eq ("`n" * 5) -and $NoNewline
+        }
     }
 }

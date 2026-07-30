@@ -90,7 +90,7 @@ BeforeAll {
         return $script:MockFileSystem.Files.ContainsKey($Path)
     }
 
-    Mock Read-Host {
+    Mock Read-Host-Wrapper {
         param ($Prompt)
         return $script:MockUserInput
     }
@@ -757,7 +757,7 @@ Describe "Install-PHP Integration Tests" {
     It "Handles exception gracefully" {
         Mock Test-PHPVersionInstalled { return $false }
         Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
-        Mock Read-Host { throw 'Test exception' }
+        Mock Read-Host-Wrapper { throw 'Test exception' }
 
         $result = Install-PHP -version '8.1'
 

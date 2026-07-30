@@ -145,7 +145,7 @@ extension=sqlite3
                 @{ BaseName = 'sqlite3'; Name = 'sqlite3.dll'; FullName = "$extDirectory\sqlite3.dll" }
             )
         }
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith { return '0' }
+        Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
 
         Enable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
@@ -162,7 +162,7 @@ extension=sqlite3
 "@ | Set-Content -Path $testIniPath
 
         $script:callCount = 0
-        Mock Read-Host -ParameterFilter { $Prompt -eq "`nSelect a number" } -MockWith {
+        Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
             $script:callCount++
             if ($script:callCount -eq 1) { return 'A' }
             if ($script:callCount -eq 2) { return '-1' }

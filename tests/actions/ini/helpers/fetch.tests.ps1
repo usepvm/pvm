@@ -269,7 +269,7 @@ Describe "Get-ExtensionLinksFromURL Tests" {
         }
 
         It "Prompts user to select link when multiple found and returns selected" {
-            Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+            Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
 
             $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
 
@@ -278,7 +278,7 @@ Describe "Get-ExtensionLinksFromURL Tests" {
         }
 
         It "Returns null when user skips selection" {
-            Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '' }
+            Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '' }
 
             $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
 
@@ -290,7 +290,7 @@ Describe "Get-ExtensionLinksFromURL Tests" {
 
         It "Reprompts user when typing invalid choice" {
             $script:callCount = 0
-            Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith {
+            Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith {
                 $script:callCount++
                 if ($script:callCount -eq 1) { return 'A' }
                 if ($script:callCount -eq 2) { return '-1' }
@@ -306,7 +306,7 @@ Describe "Get-ExtensionLinksFromURL Tests" {
         It "Handles defensive check when chosen item is null" {
             # Test the defensive check by having a null element in the array
             Mock Get-ExtensionMatchingCategories { return @( @{ href = '/package/memcache' }, $null, @{ href = '/package/memcached' } ) }
-            Mock Read-Host -ParameterFilter { $Prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
+            Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
 
             $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
 

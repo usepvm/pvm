@@ -9,7 +9,10 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    Mock Write-Host {}
+    Mock Show-Error {}
+    Mock Show-Message {}
+    Mock Show-Info {}
+    Mock Write-Gray {}
 
     $script:MockFileSystem = @{
         Directories   = @()
@@ -322,8 +325,8 @@ Describe "Show-PHPExtensions" {
         $code = Show-PHPExtensions -iniPath $testIniPath -available $true
 
         $code | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nNo extensions found"
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -eq "`nNo extensions found"
         }
     }
 

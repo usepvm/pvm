@@ -9,7 +9,8 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
 
-    Mock Write-Host {}
+    Mock Show-Error {}
+    Mock Show-Message {}
 
     Mock Get-MatchingPHPVersions {
         param ($version)
@@ -71,7 +72,6 @@ Describe "Find-PHPVersionFromProject" {
         Mock Test-FileExists -ParameterFilter { $path -eq '.php-version'} -MockWith { return $true }
         Mock Test-FileExists -ParameterFilter { $path -eq 'composer.json'} -MockWith { return $false }
         Mock Get-Content { return '' }
-        Mock Show-Error { }
 
         $result = Find-PHPVersionFromProject
 

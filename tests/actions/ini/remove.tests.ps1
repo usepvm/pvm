@@ -8,7 +8,12 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $extDirectory -Force | Out-Null
 
-    Mock Write-Host {}
+    Mock Show-Warning {}
+    Mock Show-Error {}
+    Mock Show-Info {}
+    Mock Show-Message {}
+    Mock Write-Color {}
+    
     Mock Add-LogEntry { return 0 }
 
     function Reset-IniContent {
@@ -158,8 +163,8 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @()
 
         $result | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nPlease provide at least one extension name to uninstall"
+        Should -Invoke Show-Warning -Times 1 -ParameterFilter {
+            $message -eq "`nPlease provide at least one extension name to uninstall"
         }
     }
 
@@ -169,8 +174,8 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
 
         $result | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -like "*Extensions directory not found*"
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -like "*Extensions directory not found*"
         }
     }
 
@@ -180,8 +185,8 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('nonexistent')
 
         $result | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -like "*nonexistent*"
+        Should -Invoke Show-Message -Times 1 -ParameterFilter {
+            $message -like "*nonexistent*"
         }
     }
 
@@ -221,8 +226,8 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
 
         $result | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -like "*Failed to remove*ext directory*"
+        Should -Invoke Write-Color -Times 1 -ParameterFilter {
+            $message -like "*Failed to remove*ext directory*"
         }
     }
 
@@ -245,8 +250,8 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
 
         $result | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -like "*Failed to remove*php.ini*"
+        Should -Invoke Write-Color -Times 1 -ParameterFilter {
+            $message -like "*Failed to remove*php.ini*"
         }
     }
 
@@ -269,8 +274,8 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
 
         $result | Should -Be 0
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq ' Uninstalled'
+        Should -Invoke Write-Color -Times 1 -ParameterFilter {
+            $message -eq ' Uninstalled'
         }
     }
 
@@ -295,8 +300,8 @@ Describe "Uninstall-Extension" {
 
         $result | Should -Be 0
         Should -Invoke Remove-ExtensionFromIniFile -Times 0
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq ' Uninstalled'
+        Should -Invoke Write-Color -Times 1 -ParameterFilter {
+            $message -eq ' Uninstalled'
         }
     }
 
@@ -392,8 +397,8 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('sql')
 
         $result | Should -Be 0
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq ' Uninstalled'
+        Should -Invoke Write-Color -Times 1 -ParameterFilter {
+            $message -eq ' Uninstalled'
         }
     }
 

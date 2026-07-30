@@ -9,7 +9,14 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    Mock Write-Host {}
+    Mock Show-Success {}
+    Mock Show-Info {}
+    Mock Show-Warning {}
+    Mock Show-Message {}
+    Mock Show-Error {}
+    Mock Show-Value {}
+    Mock Write-Color {}
+    Mock Write-Gray {}
     # Mock helper functions
     Mock Get-CurrentPHPVersion {
         return @{
@@ -200,7 +207,6 @@ Describe "Save-PHPProfile Tests" {
             }
         }
 
-        Mock Write-Host {}
         Mock Add-LogEntry { return 0 }
     }
 
@@ -311,7 +317,6 @@ Describe "Use-PHPProfile Tests" {
         Mock Set-IniSettingDirect { return 0 }
         Mock Enable-IniExtensionDirect { return 0 }
         Mock Disable-IniExtensionDirect { return 0 }
-        Mock Write-Host {}
         Mock Add-LogEntry { return 0 }
     }
 
@@ -358,20 +363,20 @@ Describe "Use-PHPProfile Tests" {
         $result = Use-PHPProfile -profileName 'testprofile'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -eq '  Settings ignored (not popular): 1'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -eq '  Settings ignored (not popular): 1'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -eq '  Settings skipped: 1'
+        Should -Invoke Show-Warning -ParameterFilter {
+            $message -eq '  Settings skipped: 1'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -eq '  Extensions ignored (not popular): 1'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -eq '  Extensions ignored (not popular): 1'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -eq '  Extensions skipped: 2'
+        Should -Invoke Show-Warning -ParameterFilter {
+            $message -eq '  Extensions skipped: 2'
         } -Exactly 1
     }
 
@@ -464,8 +469,6 @@ Describe "Show-PHPProfiles Tests" {
                 curl = @{ enabled = $true; type = 'extension' }
             }
         } | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\profile2.json"
-
-        Mock Write-Host {}
     }
 
     It "Returns -1 when profiles directory does not exist" {
@@ -479,8 +482,8 @@ Describe "Show-PHPProfiles Tests" {
         $result = Show-PHPProfiles
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -match 'profile1' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -match 'profile2' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'profile1' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'profile2' }
     }
 
     It "Should handle empty profiles directory" {
@@ -593,7 +596,6 @@ Describe "Get-PopularPHPExtensions Tests" {
 
 Describe "Show-PHPProfile Tests" {
     BeforeEach {
-        Mock Write-Host {}
         Mock Add-LogEntry { return 0 }
 
         # Ensure profiles directory exists
@@ -604,12 +606,12 @@ Describe "Show-PHPProfile Tests" {
         $result = Show-PHPProfile -profileName 'nonexistent'
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Profile 'nonexistent' not found"
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match "Profile 'nonexistent' not found"
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Use 'pvm profile list' to see available profiles"
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match "Use 'pvm profile list' to see available profiles"
         } -Exactly 1
     }
 
@@ -620,8 +622,8 @@ Describe "Show-PHPProfile Tests" {
         $result = Show-PHPProfile -profileName 'invalid'
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Failed to show profile'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Failed to show profile'
         } -Exactly 1
 
         Should -Invoke Add-LogEntry -Exactly 1
@@ -641,20 +643,20 @@ Describe "Show-PHPProfile Tests" {
         $result = Show-PHPProfile -profileName 'emptyprofile'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Profile: emptyprofile'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Profile: emptyprofile'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Settings \(0\):'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Settings \(0\):'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Extensions \(0\):'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Extensions \(0\):'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match '\(none\)'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match '\(none\)'
         } -Exactly 2
     }
 
@@ -675,24 +677,24 @@ Describe "Show-PHPProfile Tests" {
         $result = Show-PHPProfile -profileName 'settingsonly'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Settings \(2\):'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Settings \(2\):'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Extensions \(0\):'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Extensions \(0\):'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'memory_limit'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'memory_limit'
         }
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'display_errors'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'display_errors'
         }
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match '\(none\)'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match '\(none\)'
         } -Exactly 1
     }
 
@@ -713,24 +715,24 @@ Describe "Show-PHPProfile Tests" {
         $result = Show-PHPProfile -profileName 'extensionsonly'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Settings \(0\):'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Settings \(0\):'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Extensions \(2\):'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Extensions \(2\):'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'curl'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'curl'
         }
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'opcache'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'opcache'
         }
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match '\(none\)'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match '\(none\)'
         } -Exactly 1
     }
 
@@ -754,12 +756,12 @@ Describe "Show-PHPProfile Tests" {
         $result = Show-PHPProfile -profileName 'fullprofile'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Settings \(2\):'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Settings \(2\):'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Extensions \(2\):'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Extensions \(2\):'
         } -Exactly 1
     }
 
@@ -781,13 +783,13 @@ Describe "Show-PHPProfile Tests" {
         $result | Should -Be 0
 
         # Check for enabled setting status with DarkGreen
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -eq 'Enabled' -and $ForegroundColor -eq 'DarkGreen'
+        Should -Invoke Write-Color -ParameterFilter {
+            $message -eq 'Enabled' -and $foreColor -eq 'DarkGreen'
         } -Exactly 1
 
         # Check for disabled setting status with DarkYellow
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -eq 'Disabled' -and $ForegroundColor -eq 'DarkYellow'
+        Should -Invoke Write-Color -ParameterFilter {
+            $message -eq 'Disabled' -and $foreColor -eq 'DarkYellow'
         } -Exactly 1
     }
 
@@ -809,13 +811,13 @@ Describe "Show-PHPProfile Tests" {
         $result | Should -Be 0
 
         # Check for enabled extension status with DarkGreen
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -eq 'Enabled' -and $ForegroundColor -eq 'DarkGreen'
+        Should -Invoke Write-Color -ParameterFilter {
+            $message -eq 'Enabled' -and $foreColor -eq 'DarkGreen'
         } -Exactly 1
 
         # Check for disabled extension status with DarkYellow
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -eq 'Disabled' -and $ForegroundColor -eq 'DarkYellow'
+        Should -Invoke Write-Color -ParameterFilter {
+            $message -eq 'Disabled' -and $foreColor -eq 'DarkYellow'
         } -Exactly 1
     }
 
@@ -836,12 +838,12 @@ Describe "Show-PHPProfile Tests" {
         $result = Show-PHPProfile -profileName 'extensiontypes'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'regular_ext' -and $Object -match 'extension'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'regular_ext' -and $message -match 'extension'
         }
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'zend_ext' -and $Object -match 'zend_extension'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'zend_ext' -and $message -match 'zend_extension'
         }
     }
 
@@ -860,8 +862,8 @@ Describe "Show-PHPProfile Tests" {
         $result = Show-PHPProfile -profileName 'nullsettings'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Settings \(0\):'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Settings \(0\):'
         } -Exactly 1
     }
 
@@ -880,8 +882,8 @@ Describe "Show-PHPProfile Tests" {
         $result = Show-PHPProfile -profileName 'nullextensions'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Extensions \(0\):'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Extensions \(0\):'
         } -Exactly 1
     }
 
@@ -899,24 +901,24 @@ Describe "Show-PHPProfile Tests" {
         $result = Show-PHPProfile -profileName 'completeprofile'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "`nProfile: completeprofile"
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match "`nProfile: completeprofile"
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Description: Complete profile description'
+        Should -Invoke Show-Value -ParameterFilter {
+            $message -match 'Description: Complete profile description'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Created: 01/01/2023 12:30:45'
+        Should -Invoke Show-Value -ParameterFilter {
+            $message -match 'Created: 01/01/2023 12:30:45'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'PHP Version: 8.2.0'
+        Should -Invoke Show-Value -ParameterFilter {
+            $message -match 'PHP Version: 8.2.0'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'PATH:'
+        Should -Invoke Show-Value -ParameterFilter {
+            $message -match 'PATH:'
         } -Exactly 1
     }
 
@@ -936,24 +938,24 @@ Describe "Show-PHPProfile Tests" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\sortedsettings.json"
 
         $output = @()
-        Mock Write-Host -ParameterFilter { $Object -match 'alpha|beta|zebra' } {
-            $output += $Object
+        Mock Show-Message -ParameterFilter { $message -match 'alpha|beta|zebra' } {
+            $output += $message
         }
 
         $result = Show-PHPProfile -profileName 'sortedsettings'
         $result | Should -Be 0
 
         # Verify settings are displayed (order is checked by the function using Sort-Object)
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'alpha'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'alpha'
         }
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'beta'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'beta'
         }
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'zebra'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'zebra'
         }
     }
 
@@ -976,16 +978,16 @@ Describe "Show-PHPProfile Tests" {
         $result | Should -Be 0
 
         # Verify extensions are displayed (order is checked by the function using Sort-Object)
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'alpha_ext'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'alpha_ext'
         }
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'beta_ext'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'beta_ext'
         }
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'zebra_ext'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'zebra_ext'
         }
     }
 
@@ -1006,12 +1008,12 @@ Describe "Show-PHPProfile Tests" {
         $result = Show-PHPProfile -profileName 'settingvalues'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'memory_limit' -and $Object -match '512M'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'memory_limit' -and $message -match '512M'
         }
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'max_execution_time' -and $Object -match '60'
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match 'max_execution_time' -and $message -match '60'
         }
     }
 
@@ -1042,19 +1044,18 @@ Describe "Show-PHPProfile Tests" {
         $result = Show-PHPProfile -profileName 'largeprofile'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Settings \(10\):'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Settings \(10\):'
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Extensions \(10\):'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Extensions \(10\):'
         } -Exactly 1
     }
 }
 
 Describe "Remove-PHPProfile Tests" {
     BeforeEach {
-        Mock Write-Host {}
         Mock Add-LogEntry { return 0 }
 
         # Ensure profiles directory exists
@@ -1065,8 +1066,8 @@ Describe "Remove-PHPProfile Tests" {
         $result = Remove-PHPProfile -profileName 'nonexistent'
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Profile 'nonexistent' not found"
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match "Profile 'nonexistent' not found"
         } -Exactly 1
     }
 
@@ -1090,8 +1091,8 @@ Describe "Remove-PHPProfile Tests" {
         # Verify file still exists
         Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $true
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Deletion cancelled'
+        Should -Invoke Write-Gray -ParameterFilter {
+            $message -match 'Deletion cancelled'
         } -Exactly 1
 
         Should -Invoke Read-Host-Wrapper -Exactly 1
@@ -1117,8 +1118,8 @@ Describe "Remove-PHPProfile Tests" {
         # Verify file still exists
         Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $true
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Deletion cancelled'
+        Should -Invoke Write-Gray -ParameterFilter {
+            $message -match 'Deletion cancelled'
         } -Exactly 1
     }
 
@@ -1142,8 +1143,8 @@ Describe "Remove-PHPProfile Tests" {
         # Verify file still exists
         Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $true
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Deletion cancelled'
+        Should -Invoke Write-Gray -ParameterFilter {
+            $message -match 'Deletion cancelled'
         } -Exactly 1
     }
 
@@ -1167,8 +1168,8 @@ Describe "Remove-PHPProfile Tests" {
         # Verify file is deleted
         Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $false
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Profile 'testprofile' deleted successfully"
+        Should -Invoke Show-Success -ParameterFilter {
+            $message -match "Profile 'testprofile' deleted successfully"
         } -Exactly 1
 
         Should -Invoke Read-Host-Wrapper -ParameterFilter {
@@ -1196,8 +1197,8 @@ Describe "Remove-PHPProfile Tests" {
         # Verify file is deleted
         Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $false
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Profile 'testprofile' deleted successfully"
+        Should -Invoke Show-Success -ParameterFilter {
+            $message -match "Profile 'testprofile' deleted successfully"
         } -Exactly 1
     }
 
@@ -1229,8 +1230,8 @@ Describe "Remove-PHPProfile Tests" {
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Failed to delete profile'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Failed to delete profile'
         } -Exactly 1
 
         Should -Invoke Add-LogEntry -Exactly 1
@@ -1279,8 +1280,8 @@ Describe "Remove-PHPProfile Tests" {
         # Verify file is deleted
         Test-Path "$PROFILES_PATH\test-profile_123.json" | Should -Be $false
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Profile 'test-profile_123' deleted successfully"
+        Should -Invoke Show-Success -ParameterFilter {
+            $message -match "Profile 'test-profile_123' deleted successfully"
         } -Exactly 1
     }
 
@@ -1305,8 +1306,8 @@ Describe "Remove-PHPProfile Tests" {
         # Verify file still exists
         Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $true
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Deletion cancelled'
+        Should -Invoke Write-Gray -ParameterFilter {
+            $message -match 'Deletion cancelled'
         } -Exactly 1
     }
 }
@@ -1315,7 +1316,6 @@ Describe "Clear-PHPProfiles Tests" {
     BeforeEach {
         Remove-Item -Path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
 
-        Mock Write-Host {}
         Mock Add-LogEntry { return 0 }
     }
 
@@ -1323,8 +1323,8 @@ Describe "Clear-PHPProfiles Tests" {
         $result = Clear-PHPProfiles
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'No profiles found'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'No profiles found'
         } -Exactly 1
     }
 
@@ -1340,8 +1340,8 @@ Describe "Clear-PHPProfiles Tests" {
         Test-Path "$PROFILES_PATH\example1.json" | Should -Be $true
         Test-Path "$PROFILES_PATH\example2.json" | Should -Be $true
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Deletion cancelled'
+        Should -Invoke Write-Gray -ParameterFilter {
+            $message -match 'Deletion cancelled'
         } -Exactly 1
     }
 
@@ -1389,8 +1389,8 @@ Describe "Clear-PHPProfiles Tests" {
 
         Test-Path "$PROFILES_PATH\example1.json" | Should -Be $false
         Test-Path "$PROFILES_PATH\example2.json" | Should -Be $false
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'All profiles deleted successfully'
+        Should -Invoke Show-Success -ParameterFilter {
+            $message -match 'All profiles deleted successfully'
         } -Exactly 1
     }
 
@@ -1438,8 +1438,8 @@ Describe "Clear-PHPProfiles Tests" {
         $result = Clear-PHPProfiles
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Failed to clear profiles'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Failed to clear profiles'
         } -Exactly 1
 
         Should -Invoke Add-LogEntry -Exactly 1
@@ -1451,8 +1451,8 @@ Describe "Clear-PHPProfiles Tests" {
         $result = Clear-PHPProfiles
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Failed to clear profiles'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Failed to clear profiles'
         } -Exactly 1
 
         Should -Invoke Add-LogEntry -Exactly 1
@@ -1461,7 +1461,6 @@ Describe "Clear-PHPProfiles Tests" {
 
 Describe "Export-PHPProfile Tests" {
     BeforeEach {
-        Mock Write-Host {}
         Mock Add-LogEntry { return 0 }
 
         # Ensure profiles directory exists
@@ -1480,8 +1479,8 @@ Describe "Export-PHPProfile Tests" {
         $result = Export-PHPProfile -profileName 'nonexistent'
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Profile 'nonexistent' not found"
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match "Profile 'nonexistent' not found"
         } -Exactly 1
     }
 
@@ -1510,8 +1509,8 @@ Describe "Export-PHPProfile Tests" {
         $exportedContent.name | Should -Be 'testprofile'
         $exportedContent.settings.memory_limit.value | Should -Be '256M'
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Profile 'testprofile' exported to:"
+        Should -Invoke Show-Success -ParameterFilter {
+            $message -match "Profile 'testprofile' exported to:"
         } -Exactly 1
 
         Should -Invoke Get-Location -Exactly 1
@@ -1542,8 +1541,8 @@ Describe "Export-PHPProfile Tests" {
         $exportedContent = Get-Content -Path $customExportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Profile 'testprofile' exported to:" -and $Object -match 'custom\\myprofile.json'
+        Should -Invoke Show-Success -ParameterFilter {
+            $message -match "Profile 'testprofile' exported to:" -and $message -match 'custom\\myprofile.json'
         } -Exactly 1
     }
 
@@ -1590,8 +1589,8 @@ Describe "Export-PHPProfile Tests" {
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath "$TEST_DRIVE\export.json"
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Failed to export profile'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Failed to export profile'
         } -Exactly 1
 
         Should -Invoke Add-LogEntry -Exactly 1
@@ -1615,8 +1614,8 @@ Describe "Export-PHPProfile Tests" {
         $expectedPath = "$TEST_DRIVE\export\test-profile_123.json"
         Test-Path $expectedPath | Should -Be $true
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Profile 'test-profile_123' exported to:"
+        Should -Invoke Show-Success -ParameterFilter {
+            $message -match "Profile 'test-profile_123' exported to:"
         } -Exactly 1
     }
 
@@ -1670,7 +1669,6 @@ Describe "Export-PHPProfile Tests" {
 
 Describe "Import-PHPProfile Tests" {
     BeforeEach {
-        Mock Write-Host {}
         Mock Add-LogEntry { return 0 }
         Mock New-Directory { return 0 }
 
@@ -1682,8 +1680,8 @@ Describe "Import-PHPProfile Tests" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\nonexistent.json"
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'File not found:'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'File not found:'
         } -Exactly 1
     }
 
@@ -1694,8 +1692,8 @@ Describe "Import-PHPProfile Tests" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\invalid.json"
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Invalid JSON file:'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Invalid JSON file:'
         } -Exactly 1
     }
 
@@ -1710,8 +1708,8 @@ Describe "Import-PHPProfile Tests" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\missingname.json"
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Invalid profile format' -and $Object -match 'name'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Invalid profile format' -and $message -match 'name'
         } -Exactly 1
     }
 
@@ -1725,8 +1723,8 @@ Describe "Import-PHPProfile Tests" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\missingsettings.json"
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Invalid profile format' -and $Object -match 'settings'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Invalid profile format' -and $message -match 'settings'
         } -Exactly 1
     }
 
@@ -1740,8 +1738,8 @@ Describe "Import-PHPProfile Tests" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\missingextensions.json"
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Invalid profile format' -and $Object -match 'extensions'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Invalid profile format' -and $message -match 'extensions'
         } -Exactly 1
     }
 
@@ -1770,8 +1768,8 @@ Describe "Import-PHPProfile Tests" {
         $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'originalname'
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Profile imported successfully as 'originalname'"
+        Should -Invoke Show-Success -ParameterFilter {
+            $message -match "Profile imported successfully as 'originalname'"
         } -Exactly 1
     }
 
@@ -1796,8 +1794,8 @@ Describe "Import-PHPProfile Tests" {
         $importedContent = Get-Content -Path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'customname'
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Profile imported successfully as 'customname'"
+        Should -Invoke Show-Success -ParameterFilter {
+            $message -match "Profile imported successfully as 'customname'"
         } -Exactly 1
     }
 
@@ -1860,8 +1858,8 @@ Describe "Import-PHPProfile Tests" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\testprofile.json"
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Failed to create profiles directory'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Failed to create profiles directory'
         } -Exactly 1
     }
 
@@ -1923,8 +1921,8 @@ Describe "Import-PHPProfile Tests" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\testprofile.json"
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Use 'pvm profile load testprofile' to apply it"
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match "Use 'pvm profile load testprofile' to apply it"
         } -Exactly 1
     }
 
@@ -1944,8 +1942,8 @@ Describe "Import-PHPProfile Tests" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\testprofile.json"
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Failed to import profile'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Failed to import profile'
         } -Exactly 1
 
         Should -Invoke Add-LogEntry -Exactly 1

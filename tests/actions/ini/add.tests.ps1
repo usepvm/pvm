@@ -17,7 +17,12 @@ BeforeAll {
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
 
-    Mock Write-Host {}
+    Mock Show-Warning {}
+    Mock Show-Message {}
+    Mock Show-Error {}
+    Mock Show-Success {}
+    Mock Show-Info {}
+    Mock Write-Gray {}
 
     function Reset-IniContent {
         # Create a test php.ini file
@@ -113,7 +118,6 @@ Describe "Get-XDebugFromUrl Tests" {
         }
     }
     BeforeEach {
-        Mock Write-Host { }
         Reset-MockState
     }
 
@@ -511,8 +515,8 @@ Describe "Add-MissingPHPExtensionToIni" {
         Mock Test-Path { return $true }
         $result = Add-MissingPHPExtensionToIni -iniPath $testIniPath -extFileName 'php_xdebug.dll'
         $result | Should -Be 0
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "- Extension 'php_xdebug.dll' already exists in php.ini"
+        Should -Invoke Show-Warning -Times 1 -ParameterFilter {
+            $message -eq "- Extension 'php_xdebug.dll' already exists in php.ini"
         }
     }
 
@@ -526,8 +530,8 @@ extension=php_mbstring.dll
         $result = Add-MissingPHPExtensionToIni -iniPath $testIniPath -extFileName 'php_curl.dll'
         $result | Should -Be 0
         (Get-Content -Path $testIniPath) -match 'extension=php_curl.dll' | Should -Be $true
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "- 'php_curl.dll' added successfully."
+        Should -Invoke Show-Success -Times 1 -ParameterFilter {
+            $message -eq "- 'php_curl.dll' added successfully."
         }
     }
 
@@ -572,8 +576,8 @@ extension=php_mbstring.dll
         Mock Test-Path { return $false }
         $result = Add-MissingPHPExtensionToIni -iniPath 'nonexistent.ini' -extFileName 'php_curl.dll'
         $result | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nphp.ini file not found: nonexistent.ini"
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -eq "`nphp.ini file not found: nonexistent.ini"
         }
     }
 
@@ -584,8 +588,8 @@ extension=php_mbstring.dll
         $result = Add-MissingPHPExtensionToIni -iniPath $testIniPath -extFileName 'php_curl.dll'
 
         $result | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nExtensions directory not found: $extDirectory"
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -eq "`nExtensions directory not found: $extDirectory"
         }
     }
 
@@ -597,8 +601,8 @@ extension=php_mbstring.dll
         $result = Add-MissingPHPExtensionToIni -iniPath $testIniPath -extFileName 'php_curl.dll'
 
         $result | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nExtension file not found: php_curl.dll"
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -eq "`nExtension file not found: php_curl.dll"
         }
     }
 

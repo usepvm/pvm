@@ -1,6 +1,5 @@
 ﻿
 BeforeAll {
-    Mock Write-Host {}
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     # Global test variables
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\install-drive"
@@ -53,11 +52,7 @@ BeforeAll {
     }
 
     # Mock functions for testing
-    Mock Add-LogEntry {
-        param ($logPath, $message, $data)
-        Write-Host -Object "LOG: $message - $data"
-        return $true
-    }
+    Mock Add-LogEntry { return $true }
 
     Mock Get-WebResponse {
         param ($Uri, $OutFile = $null)
@@ -131,6 +126,10 @@ BeforeAll {
             $script:MockRegistry.Machine[$name] = $value
         }
     }
+    Mock Show-Info {}
+    Mock Show-Error {}
+    Mock Show-Success {}
+    Mock Show-Message {}
 }
 
 AfterAll {
@@ -199,7 +198,6 @@ Describe "Get-LatestPHPVersionFromUrl Tests" {
 Describe "Get-LatestPHPVersion Tests" {
     BeforeEach {
         Reset-MockState
-        Mock Write-Host {}
         Mock Save-CachedData { return 0 }
         Mock Show-SpinnerWhileJob {
             param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
@@ -394,7 +392,6 @@ Describe "Get-PHPVersionsFromUrl Tests" {
 
 Describe "Get-PHPVersions Tests" {
     BeforeEach {
-        Mock Write-Host { }
         Reset-MockState
     }
 
@@ -481,7 +478,6 @@ Describe "Get-PHP" {
 
 Describe "Get-PHPFromUrl Tests" {
     BeforeEach {
-        Mock Write-Host { }
         Reset-MockState
     }
 
@@ -525,7 +521,6 @@ Describe "Expand-AndConfigurePHP Tests" {
     }
 
     BeforeEach {
-        Mock Write-Host { }
         Reset-MockState
         $script:MockFileSystem.Files["$TEST_DRIVE\php\php.ini-development"] = 'development config'
     }
@@ -559,7 +554,6 @@ Describe "Set-Opcache Tests" {
         }
     }
     BeforeEach {
-        Mock Write-Host { }
         Reset-MockState
         $script:MockFileSystem.Files["$TEST_DRIVE\php\php.ini"] = @"
 ;extension_dir = "ext"
@@ -602,7 +596,6 @@ Describe "Select-Version Tests" {
     }
 
     It "Should return single version when only one available" {
-        Mock Write-Host { }
         $versions = @{
             'Archives' = @(@{ version = '8.1.0'; fileName = 'php-8.1.0.zip' })
         }
@@ -613,7 +606,6 @@ Describe "Select-Version Tests" {
     }
 
     It "Should return null when user cancels" {
-        Mock Write-Host { }
         $versions = @{
             'Archives' = @(
                 @{ version = '8.1.0'; fileName = 'php-8.1.0.zip' },
@@ -628,7 +620,6 @@ Describe "Select-Version Tests" {
     }
 
     It "Returns null when user provides invalid input" {
-        Mock Write-Host { }
         $versions = @{
             'Archives' = @(
                 @{ version = '8.1.0'; fileName = 'php-8.1.0.zip' },
@@ -643,7 +634,6 @@ Describe "Select-Version Tests" {
     }
 
     It "Should return selected version when user provides valid input" {
-        Mock Write-Host { }
         $versions = @{
             'Archives' = @(
                 @{ version = '8.1.0'; arch = 'x64'; buildType = 'TS'; fileName = 'php-8.1.0.zip' },
@@ -665,7 +655,6 @@ Describe "Install-PHP Integration Tests" {
             $result = & $scriptBlock @argumentList
             return $result.pvmData
         }
-        Mock Write-Host { }
         Reset-MockState
         $script:MockUserInput = ''
         $script:MockFileSystem.Files["$TEST_DRIVE\pvm\pvm"] = 'PVM executable'
@@ -828,7 +817,6 @@ Describe "Install-PHP Integration Tests" {
 
 Describe "Environment Variable Tests" {
     BeforeEach {
-        Mock Write-Host { }
         Reset-MockState
         Mock Show-SpinnerWhileJob {
             param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)

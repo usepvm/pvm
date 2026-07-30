@@ -3,12 +3,18 @@ BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\fetch-drive"
-    Mock Write-Host {}
+
     $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    
+    Mock Show-Message {}
+    Mock Show-Error {}
+    Mock Show-Info {}
+    Mock Write-Gray {}
+    Mock Show-Warning {}
 }
 
 AfterAll {
@@ -283,8 +289,8 @@ Describe "Get-ExtensionLinksFromURL Tests" {
             $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
 
             $result | Should -Be $null
-            Should -Invoke Write-Host -Times 1 -ParameterFilter {
-                $Object -eq "`nInstallation cancelled"
+            Should -Invoke Write-Gray -Times 1 -ParameterFilter {
+                $message -eq "`nInstallation cancelled"
             }
         }
 
@@ -312,8 +318,8 @@ Describe "Get-ExtensionLinksFromURL Tests" {
 
             # Should return null and show error message when chosen item is null
             $result | Should -Be $null
-            Should -Invoke Write-Host -Times 1 -ParameterFilter {
-                $Object -like "*You chose the wrong index*"
+            Should -Invoke Show-Error -Times 1 -ParameterFilter {
+                $message -like "*You chose the wrong index*"
             }
         }
     }

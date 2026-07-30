@@ -1,6 +1,5 @@
 ﻿
 BeforeAll {
-    Mock Write-Host {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 

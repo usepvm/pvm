@@ -1,6 +1,9 @@
 ﻿
 BeforeAll {
-    Mock Write-Host {}
+    Mock Show-Message {}
+    Mock Show-Error {}
+    Mock Show-Success {}
+    
     # Create a mock registry to simulate environment variables
     $script:MockRegistry = @{
         Machine = @{
@@ -328,7 +331,7 @@ Describe "Invoke-PSCommand" {
             $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
             Mock Start-Process { return $mockProcess }
 
-            $result = Invoke-PSCommand -command "Write-Host -Object 'hello'"
+            $result = Invoke-PSCommand -command "Write-Output -InputObject 'hello'"
 
             Should -Invoke Start-Process -Times 1 -ParameterFilter {
                 $FilePath -eq 'powershell.exe' -and

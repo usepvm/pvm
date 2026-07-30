@@ -18,7 +18,6 @@ BeforeAll {
     }
 
     New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
-    Mock Write-Host { }
 }
 
 AfterAll {
@@ -27,6 +26,13 @@ AfterAll {
 }
 
 Describe "Uninstall-PHP" {
+    BeforeAll {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
     Context "When PHP version is found directly" {
         BeforeEach {
             Mock Get-MatchingPHPVersions -MockWith { }

@@ -7,6 +7,12 @@ BeforeAll {
     # Create test cache directory
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
+
+    Mock Show-Error {}
+    Mock Show-Info {}
+    Mock Write-Gray {}
+    Mock Show-Message {}
+    Mock Show-Success {}
 }
 
 AfterAll {
@@ -47,7 +53,6 @@ Describe "Show-CacheFiles Tests" {
         # Clean slate for each test
         Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
-        Mock Write-Host {}
         Mock Add-LogEntry { return 0 }
     }
 
@@ -57,8 +62,8 @@ Describe "Show-CacheFiles Tests" {
         $result = Show-CacheFiles
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'No cache directory found'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'No cache directory found'
         } -Exactly 1
     }
 
@@ -67,8 +72,8 @@ Describe "Show-CacheFiles Tests" {
         $result = Show-CacheFiles
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'No cache files found'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'No cache files found'
         } -Exactly 1
     }
 
@@ -79,8 +84,8 @@ Describe "Show-CacheFiles Tests" {
         $result = Show-CacheFiles
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -match 'releases' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -match 'versions' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'releases' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'versions' }
     }
 
     It "Should return 0 and display header when at least one file exists" {
@@ -89,8 +94,8 @@ Describe "Show-CacheFiles Tests" {
         $result = Show-CacheFiles
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Available Cache Files'
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match 'Available Cache Files'
         } -Exactly 1
     }
 
@@ -101,7 +106,7 @@ Describe "Show-CacheFiles Tests" {
         $result = Show-CacheFiles
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -match 'readme' } -Exactly 0
+        Should -Invoke Show-Info -ParameterFilter { $message -match 'readme' } -Exactly 0
     }
 
     It "Should return -1 and log error when Get-CacheFiles throws" {
@@ -110,8 +115,8 @@ Describe "Show-CacheFiles Tests" {
         $result = Show-CacheFiles
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Failed to list cache files'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Failed to list cache files'
         } -Exactly 1
 
         Should -Invoke Add-LogEntry -Exactly 1
@@ -122,7 +127,6 @@ Describe "Show-CachedData Tests" {
     BeforeEach {
         Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
-        Mock Write-Host {}
         Mock Add-LogEntry { return 0 }
     }
 
@@ -130,12 +134,12 @@ Describe "Show-CachedData Tests" {
         $result = Show-CachedData -cacheName 'nonexistent'
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Cache file 'nonexistent' not found"
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match "Cache file 'nonexistent' not found"
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Use 'pvm cache list' to see available cache files"
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match "Use 'pvm cache list' to see available cache files"
         } -Exactly 1
     }
 
@@ -147,8 +151,8 @@ Describe "Show-CachedData Tests" {
         $result = Show-CachedData -cacheName 'empty'
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "No data found in cache file 'empty'"
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match "No data found in cache file 'empty'"
         } -Exactly 1
     }
 
@@ -159,8 +163,8 @@ Describe "Show-CachedData Tests" {
         $result = Show-CachedData -cacheName 'emptycol'
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "No data found in cache file 'emptycol'"
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match "No data found in cache file 'emptycol'"
         } -Exactly 1
     }
 
@@ -174,8 +178,8 @@ Describe "Show-CachedData Tests" {
         $result = Show-CachedData -cacheName 'releases'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Cache Data for 'releases'"
+        Should -Invoke Show-Info -ParameterFilter {
+            $message -match "Cache Data for 'releases'"
         } -Exactly 1
     }
 
@@ -187,8 +191,8 @@ Describe "Show-CachedData Tests" {
         $result = Show-CachedData -cacheName 'info'
         $result | Should -Be 0
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match '---'
+        Should -Invoke Write-Gray -ParameterFilter {
+            $message -match '---'
         } -Exactly 1
     }
 
@@ -199,8 +203,8 @@ Describe "Show-CachedData Tests" {
         $result = Show-CachedData -cacheName 'broken'
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Failed to show cache data'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Failed to show cache data'
         } -Exactly 1
 
         Should -Invoke Add-LogEntry -Exactly 1
@@ -211,7 +215,6 @@ Describe "Remove-CacheFile Tests" {
     BeforeEach {
         Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
-        Mock Write-Host {}
         Mock Add-LogEntry { return 0 }
     }
 
@@ -219,12 +222,12 @@ Describe "Remove-CacheFile Tests" {
         $result = Remove-CacheFile -cacheName 'nonexistent'
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Cache file 'nonexistent' not found"
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match "Cache file 'nonexistent' not found"
         } -Exactly 1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Use 'pvm cache list' to see available cache files"
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -match "Use 'pvm cache list' to see available cache files"
         } -Exactly 1
     }
 
@@ -238,8 +241,8 @@ Describe "Remove-CacheFile Tests" {
 
         Test-Path "$CACHE_PATH\releases.json" | Should -Be $true
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Deletion cancelled'
+        Should -Invoke Write-Gray -ParameterFilter {
+            $message -match 'Deletion cancelled'
         } -Exactly 1
     }
 
@@ -253,8 +256,8 @@ Describe "Remove-CacheFile Tests" {
 
         Test-Path "$CACHE_PATH\releases.json" | Should -Be $true
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Deletion cancelled'
+        Should -Invoke Write-Gray -ParameterFilter {
+            $message -match 'Deletion cancelled'
         } -Exactly 1
     }
 
@@ -290,8 +293,8 @@ Describe "Remove-CacheFile Tests" {
 
         Test-Path "$CACHE_PATH\releases.json" | Should -Be $false
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Cache file 'releases' deleted successfully"
+        Should -Invoke Show-Success -ParameterFilter {
+            $message -match "Cache file 'releases' deleted successfully"
         } -Exactly 1
     }
 
@@ -339,8 +342,8 @@ Describe "Remove-CacheFile Tests" {
         $result = Remove-CacheFile -cacheName 'releases'
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Failed to delete cache file'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Failed to delete cache file'
         } -Exactly 1
 
         Should -Invoke Add-LogEntry -Exactly 1
@@ -356,8 +359,8 @@ Describe "Remove-CacheFile Tests" {
 
         Test-Path "$CACHE_PATH\php-releases_8x.json" | Should -Be $false
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match "Cache file 'php-releases_8x' deleted successfully"
+        Should -Invoke Show-Success -ParameterFilter {
+            $message -match "Cache file 'php-releases_8x' deleted successfully"
         } -Exactly 1
     }
 }
@@ -366,7 +369,6 @@ Describe "Clear-CacheFiles Tests" {
     BeforeEach {
         Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
-        Mock Write-Host {}
         Mock Add-LogEntry { return 0 }
     }
 
@@ -374,8 +376,8 @@ Describe "Clear-CacheFiles Tests" {
         $result = Clear-CacheFiles
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'No cache files found'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'No cache files found'
         } -Exactly 1
     }
 
@@ -391,8 +393,8 @@ Describe "Clear-CacheFiles Tests" {
         Test-Path "$CACHE_PATH\releases.json" | Should -Be $true
         Test-Path "$CACHE_PATH\versions.json" | Should -Be $true
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Deletion cancelled'
+        Should -Invoke Write-Gray -ParameterFilter {
+            $message -match 'Deletion cancelled'
         } -Exactly 1
     }
 
@@ -443,8 +445,8 @@ Describe "Clear-CacheFiles Tests" {
         Test-Path "$CACHE_PATH\versions.json"  | Should -Be $false
         Test-Path "$CACHE_PATH\metadata.json"  | Should -Be $false
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'All cache files deleted successfully'
+        Should -Invoke Show-Success -ParameterFilter {
+            $message -match 'All cache files deleted successfully'
         } -Exactly 1
     }
 
@@ -505,8 +507,8 @@ Describe "Clear-CacheFiles Tests" {
         $result = Clear-CacheFiles
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Failed to clear cache files'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Failed to clear cache files'
         } -Exactly 1
 
         Should -Invoke Add-LogEntry -Exactly 1
@@ -518,8 +520,8 @@ Describe "Clear-CacheFiles Tests" {
         $result = Clear-CacheFiles
         $result | Should -Be -1
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Failed to clear cache files'
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Failed to clear cache files'
         } -Exactly 1
 
         Should -Invoke Add-LogEntry -Exactly 1

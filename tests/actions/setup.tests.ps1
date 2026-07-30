@@ -1,6 +1,9 @@
 ﻿
 BeforeAll {
-    Mock Write-Host {}
+    Mock Show-Message {}
+    Mock Show-Success {}
+    Mock Show-Error {}
+    Mock Show-Info {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\setup-drive"
@@ -16,7 +19,6 @@ AfterAll {
 
 Describe "Initialize-PVM" {
     BeforeAll {
-        Mock Write-Host {}
         # Mock global variables that the function depends on
         $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'C:\php\8.2'
         $script:PVMRoot = "$TEST_DRIVE\PVM"
@@ -291,8 +293,8 @@ Describe "New-EnvFile" {
 
         $result | Should -Be -1
         Should -Invoke Copy-Item -Times 0
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -like '*Failed to find .env.example file.*'
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -like '*Failed to find .env.example file.*'
         }
     }
 
@@ -316,8 +318,8 @@ Describe "New-EnvFile" {
 
         $result | Should -Be 0
         Should -Invoke Copy-Item -Times 1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -like '*Created .env file.*'
+        Should -Invoke Show-Success -Times 1 -ParameterFilter {
+            $message -like '*Created .env file.*'
         }
     }
 
@@ -331,8 +333,8 @@ Describe "New-EnvFile" {
         $result | Should -Be 0
         Should -Invoke Read-Host-Wrapper -Times 0
         Should -Invoke Copy-Item -Times 1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -like '*Created .env file.*'
+        Should -Invoke Show-Success -Times 1 -ParameterFilter {
+            $message -like '*Created .env file.*'
         }
     }
 
@@ -358,8 +360,8 @@ Describe "Wait-ForEnvEdit" {
         Wait-ForEnvEdit
 
         Should -Invoke Read-Host-Wrapper -Times 1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -like "*Edit $PVMRoot\.env now if you want custom settings*"
+        Should -Invoke Show-Info -Times 1 -ParameterFilter {
+            $message -like "*Edit $PVMRoot\.env now if you want custom settings*"
         }
     }
 }

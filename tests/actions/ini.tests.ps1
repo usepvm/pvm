@@ -14,7 +14,11 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
 
-    Mock Write-Host {}
+    Mock Show-Error {}
+    Mock Show-Warning {}
+    Mock Show-Message {}
+    Mock Show-Info {}
+    Mock Write-Color {}
 
     function Reset-IniContent {
         # Create a test php.ini file

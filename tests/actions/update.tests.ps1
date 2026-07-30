@@ -1,6 +1,7 @@
 
 BeforeAll {
-    Mock Write-Host {}
+    Mock Show-Info {}
+    Mock Show-Warning {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $PVMConfig.version = 'v1.0.0'

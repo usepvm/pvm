@@ -1,6 +1,8 @@
 ﻿
 BeforeAll {
-    Mock Write-Host {}
+    Mock Show-Message {}
+    Mock Show-Error {}
+    Mock Write-Color {}
 }
 
 Describe "Get-Actions Tests" {
@@ -199,7 +201,6 @@ Describe "Integration Tests" {
             Mock Get-CurrentPHPVersion { @{ version = '8.2.0'; status = @{ 'xdebug' = $true }; path = 'C:\PHP\8.2.0' } }
             Mock Install-PHP { 0 }
             Mock Update-PHPVersion { @{ code = 0; message = 'Version updated' } }
-            Mock Write-Host { }
         }
 
         It "Should handle complete workflow: setup -> install -> use -> current" {
@@ -235,13 +236,12 @@ Describe "Integration Tests" {
             Mock Initialize-PVM { @{ code = 1; message = 'Setup failed' } }
             Mock Optimize-SystemPath { -1 }
             Mock Show-MsgByExitCode { }
-            Mock Write-Host { }
 
             $result = Invoke-Setup
             $result | Should -Be 0
 
             Should -Invoke Initialize-PVM -Times 1
-            Should -Invoke Write-Host -ParameterFilter { $Object -like '*Failed to optimize system path*' }
+            Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to optimize system path*' }
             Should -Invoke Show-MsgByExitCode -Times 1
         }
     }

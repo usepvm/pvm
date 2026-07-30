@@ -7,7 +7,8 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    Mock Write-Host {}
+    Mock Show-Error {}
+    Mock Show-Success {}
 
     function Reset-IniContent {
     # Create a test php.ini file

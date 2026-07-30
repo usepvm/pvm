@@ -1,6 +1,5 @@
 ﻿
 BeforeAll {
-    Mock Write-Host {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\output-drive"
@@ -15,9 +14,11 @@ AfterAll {
 }
 
 Describe "Show-MsgByExitCode" {
+    BeforeAll {
+        Mock Write-Color {}
+    }
     Context "When displaying messages" {
         It "Displays message without error" {
-            Mock Write-Host {}
             $testResult = @{
                 message = 'Test message'
                 color = 'Gray'
@@ -26,7 +27,6 @@ Describe "Show-MsgByExitCode" {
         }
 
         It "Displays custom message if provided" {
-            Mock Write-Host {}
             $testResult = @{
                 message = 'Original message'
             }
@@ -35,7 +35,6 @@ Describe "Show-MsgByExitCode" {
         }
 
         It "Displays list of messages if provided" {
-            Mock Write-Host { }
             $testResults = @{
                 code = 0
                 messages = @(
@@ -48,7 +47,7 @@ Describe "Show-MsgByExitCode" {
         }
 
         It "Handles exceptions gracefully" {
-            Mock Write-Host { throw 'Simulated Write-Host failure' }
+            Mock Write-Color { throw 'Simulated Write-Host failure' }
             $testResult = @{
                 message = 'Test message'
                 color = 'Gray'
@@ -59,6 +58,9 @@ Describe "Show-MsgByExitCode" {
 }
 
 Describe "Add-LogEntry" {
+    BeforeAll {
+        Mock Show-Message {}
+    }
     Context "When logging data" {
         It "Logs data successfully" {
             $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = "$TEST_DRIVE\logs\test.log"
@@ -208,6 +210,8 @@ Describe "Get-ConsoleWidth" {
 
 Describe "Show-SpinnerWhileJob" {
     BeforeAll {
+        Mock Show-Message {}
+        Mock Write-Yellow {}
         $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
         $script:keepRunning = $true
         Mock Start-Job {
@@ -256,8 +260,8 @@ Describe "Show-SpinnerWhileJob" {
             $scriptBlock = { return @{ result = 'success' } }
             $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Custom Message"
 
-            # Verify Write-Host was called (spinner and clear)
-            Should -Invoke Write-Host -Times 2
+            # Verify Show-Message was called (spinner and clear)
+            Should -Invoke Show-Message -Times 2
         }
 
         It "Passes argument list to job" {
@@ -284,7 +288,7 @@ Describe "Show-SpinnerWhileJob" {
 
             # Verify that the clear line (spaces) is not called when noClear is set
             # The clear happens at line 114 in the source
-            Should -Invoke Write-Host -Times 1
+            Should -Invoke Show-Message -Times 1
         }
 
         It "Clears spinner line by default" {
@@ -298,7 +302,7 @@ Describe "Show-SpinnerWhileJob" {
             $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Processing"
 
             # Should be called twice: once for spinner, once for clear
-            Should -Invoke Write-Host -Times 2
+            Should -Invoke Show-Message -Times 2
         }
 
         It "Returns -1 when job fails and rethrow is false" {
@@ -435,205 +439,246 @@ Describe "Show-SpinnerWhileJob" {
 }
 
 Describe "Write-Host helpers Tests" {
-    It "Prints message with specified color" {
-        Write-Color -message 'Test message' -foreColor 'Red'
+    Context "Write-Color Tests" {
+        It "Prints message with specified color" {
+            Mock Write-Host {}
+            $script:PVMSubprocessMode = $false
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'Red'
-        } -Exactly 1
-    }
+            Write-Color -message 'Test message' -foreColor 'Red'
 
-    It "Stores structured output when subprocess mode is enabled" {
-        $script:StructuredOutput = @()
-        $script:PVMSubprocessMode = $true
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -match 'Test message' -and $ForegroundColor -eq 'Red'
+            } -Exactly 1
+        }
 
-        Write-Color -message 'Test message' -foreColor 'Red'
+        It "Stores structured output when subprocess mode is enabled" {
+            Mock Write-Host {}
+            $script:StructuredOutput = @()
+            $script:PVMSubprocessMode = $true
 
-        $script:StructuredOutput.Count | Should -Be 1
-        $script:PVMSubprocessMode = $false
-    }
+            Write-Color -message 'Test message' -foreColor 'Red'
 
-    It "Prints success message" {
-        Show-Success -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGreen'
+            Should -Invoke Write-Host -Exactly 0
+            $script:StructuredOutput.Count | Should -Be 1
+            $script:PVMSubprocessMode = $false
         }
     }
 
-    It "Prints error message" {
-        Show-Error -message 'Test message'
+    Context "Write-Color wrappers Tests" {
+        BeforeEach {
+            Mock Write-Color {}
+        }
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkYellow'
+        It "Prints white message" {
+            Write-White -message 'Test message'
+
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'White'
+            }
+        }
+
+        It "Prints dark green message" {
+            Write-DarkGreen -message 'Test message'
+
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'DarkGreen'
+            }
+        }
+
+        It "Prints dark green message" {
+            Write-DarkGreen -message 'Test message'
+
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'DarkGreen'
+            }
+        }
+
+        It "Prints dark yellow message" {
+            Write-DarkYellow -message 'Test message'
+
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'DarkYellow'
+            }
+        }
+
+        It "Prints yellow message" {
+            Write-Yellow -message 'Test message'
+
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'Yellow'
+            }
+        }
+
+        It "Prints cyan message" {
+            Write-Cyan -message 'Test message'
+
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'Cyan'
+            }
+        }
+
+        It "Prints magenta message" {
+            Write-Magenta -message 'Test message'
+
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'Magenta'
+            }
+        }
+
+        It "Prints blue message" {
+            Write-Blue -message 'Test message'
+
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'Blue'
+            }
+        }
+
+        It "Prints dark gray message" {
+            Write-DarkGray -message 'Test message'
+
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'DarkGray'
+            }
+        }
+
+        It "Prints gray message" {
+            Write-Gray -message 'Test message'
+
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'Gray'
+            }
+        }
+
+        It "Prints default message" {
+            Write-Default -message 'Test message'
+
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'White'
+            }
         }
     }
 
-    It "Prints warning message" {
-        Show-Warning -message 'Test message'
+    Context "Show-* Tests" {
+        It "Prints success message" {
+            Mock Write-DarkGreen {}
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'Yellow'
+            Show-Success -message 'Test message'
+
+            Should -Invoke Write-DarkGreen -ParameterFilter {
+                $message -match 'Test message'
+            }
+        }
+
+        It "Prints error message" {
+            Mock Write-DarkYellow {}
+
+            Show-Error -message 'Test message'
+
+            Should -Invoke Write-DarkYellow -ParameterFilter {
+                $message -match 'Test message'
+            }
+        }
+
+        It "Prints warning message" {
+            Mock Write-Yellow {}
+
+            Show-Warning -message 'Test message'
+
+            Should -Invoke Write-Yellow -ParameterFilter {
+                $message -match 'Test message'
+            }
+        }
+
+        It "Prints info message" {
+            Mock Write-Cyan {}
+
+            Show-Info -message 'Test message'
+
+            Should -Invoke Write-Cyan -ParameterFilter {
+                $message -match 'Test message'
+            }
+        }
+
+        It "Prints header message" {
+            Mock Write-Magenta {}
+
+            Show-Header -message 'Test message'
+
+            Should -Invoke Write-Magenta -ParameterFilter {
+                $message -match 'Test message'
+            }
+        }
+
+        It "Prints section message" {
+            Mock Write-Blue {}
+
+            Show-Section -message 'Test message'
+
+            Should -Invoke Write-Blue -ParameterFilter {
+                $message -match 'Test message'
+            }
+        }
+
+        It "Prints debug message" {
+            Mock Write-DarkGray {}
+
+            Show-Debug -message 'Test message'
+
+            Should -Invoke Write-DarkGray -ParameterFilter {
+                $message -match 'Test message'
+            }
+        }
+
+        It "Prints verbose message" {
+            Mock Write-Gray {}
+
+            Show-Verbose -message 'Test message'
+
+            Should -Invoke Write-Gray -ParameterFilter {
+                $message -match 'Test message'
+            }
+        }
+
+        It "Prints value message" {
+            Mock Write-White {}
+
+            Show-Value -message 'Test message'
+
+            Should -Invoke Write-White -ParameterFilter {
+                $message -match 'Test message'
+            }
+        }
+
+        It "Prints host message" {
+            Mock Write-White {}
+
+            Show-Message -message 'Test message'
+
+            Should -Invoke Write-White -ParameterFilter {
+                $message -match 'Test message'
+            }
         }
     }
 
-    It "Prints info message" {
-        Show-Info -message 'Test message'
+    Context "New-Line* Test" {
+        It "Prints new line" {
+            Mock Show-Message {}
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'Cyan'
+            New-Line
+
+            Should -Invoke Show-Message -ParameterFilter {
+                $message -eq "`n" -and $noNewline
+            }
         }
-    }
 
-    It "Prints header message" {
-        Show-Header -message 'Test message'
+        It "Prints new lines" {
+            Mock Show-Message {}
 
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'Magenta'
-        }
-    }
+            New-Lines -count 5
 
-    It "Prints section message" {
-        Show-Section -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'Blue'
-        }
-    }
-
-    It "Prints debug message" {
-        Show-Debug -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGray'
-        }
-    }
-
-    It "Prints verbose message" {
-        Show-Verbose -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'Gray'
-        }
-    }
-
-    It "Prints value message" {
-        Show-Value -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'White'
-        }
-    }
-
-    It "Prints host message" {
-        Show-Message -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'White'
-        }
-    }
-
-    It "Prints white message" {
-        Write-White -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'White'
-        }
-    }
-
-    It "Prints dark green message" {
-        Write-DarkGreen -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGreen'
-        }
-    }
-
-    It "Prints dark green message" {
-        Write-DarkGreen -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGreen'
-        }
-    }
-
-    It "Prints dark yellow message" {
-        Write-DarkYellow -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkYellow'
-        }
-    }
-
-    It "Prints yellow message" {
-        Write-Yellow -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'Yellow'
-        }
-    }
-
-    It "Prints cyan message" {
-        Write-Cyan -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'Cyan'
-        }
-    }
-
-    It "Prints magenta message" {
-        Write-Magenta -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'Magenta'
-        }
-    }
-
-    It "Prints blue message" {
-        Write-Blue -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'Blue'
-        }
-    }
-
-    It "Prints dark gray message" {
-        Write-DarkGray -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'DarkGray'
-        }
-    }
-
-    It "Prints gray message" {
-        Write-Gray -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'Gray'
-        }
-    }
-
-    It "Prints default message" {
-        Write-Default -message 'Test message'
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -match 'Test message' -and $ForegroundColor -eq 'White'
-        }
-    }
-
-    It "Prints new line" {
-        New-Line
-
-        Should -Invoke Write-Host -ParameterFilter {
-            $Object -eq "`n" -and $NoNewline
-        }
-    }
-
-    It "Prints new lines" {
-        New-Lines -count 5
-
-        Should -Invoke Write-Host -Exactly 1 -ParameterFilter {
-            $Object -eq ("`n" * 5) -and $NoNewline
+            Should -Invoke Show-Message -Exactly 1 -ParameterFilter {
+                $message -eq ("`n" * 5) -and $noNewline
+            }
         }
     }
 }

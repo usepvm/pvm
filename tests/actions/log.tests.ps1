@@ -4,6 +4,14 @@ BeforeAll {
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\log-drive"
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+
+    Mock Show-Error {}
+    Mock Show-Warning {}
+    Mock Show-Message {}
+    Mock Show-Value {}
+    Mock Show-Debug {}
+    Mock Show-Info {}
+    Mock Show-Header {}
 }
 
 AfterAll {
@@ -96,7 +104,6 @@ Describe "Show-Log" {
         $script:DEFAULT_LOG_PAGE_SIZE = $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE = 3
         $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
         New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
-        Mock Write-Host {}
 
         @'
 --------------------------
@@ -119,8 +126,8 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
         $result = Show-Log -pageSize 'abc'
 
         $result | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nInvalid page size: abc"
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -eq "`nInvalid page size: abc"
         }
     }
 
@@ -128,8 +135,8 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
         $result = Show-Log -pageSize 0
 
         $result | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nPage size must be a positive integer."
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -eq "`nPage size must be a positive integer."
         }
     }
 
@@ -137,8 +144,8 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
         $result = Show-Log -pageSize -5
 
         $result | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nPage size must be a positive integer."
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -eq "`nPage size must be a positive integer."
         }
     }
 
@@ -213,8 +220,8 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
         $result = Show-Log -pageSize 1
 
         $result | Should -Be -1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nLog file not found: $LOG_ERROR_PATH"
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -eq "`nLog file not found: $LOG_ERROR_PATH"
         }
     }
 

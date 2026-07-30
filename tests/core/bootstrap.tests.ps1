@@ -7,6 +7,9 @@ BeforeAll {
     $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+
+    Mock Show-Message {}
+    Mock Show-Error {}
 }
 
 AfterAll {
@@ -17,7 +20,6 @@ AfterAll {
 Describe "Show-Usage Tests" {
     BeforeEach {
         Mock Get-CurrentPHPVersion { @{ version = '8.2.0' } }
-        Mock Write-Host { }
 
         # Mock the Get-Actions function to return a predictable set
         Mock Get-Actions {
@@ -38,20 +40,20 @@ Describe "Show-Usage Tests" {
         $PVMConfig.version = '2.0'
         Show-Usage -arguments @()
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Running version : 2.0*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*Running version : 2.0*' }
     }
 
     It "Should display usage header" {
         Show-Usage -arguments @()
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*Usage:*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*Usage:*' }
     }
 
     It "Should display all available commands with descriptions" {
         Show-Usage -arguments @()
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*pvm setup*Setup the environment*' }
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*pvm current*Display active version*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*pvm setup*Setup the environment*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*pvm current*Display active version*' }
     }
 
     It "Uses fallback maxDescLength when window is small" {
@@ -66,12 +68,10 @@ Describe "Show-Usage Tests" {
         Show-Usage -arguments @()
 
         Should -Invoke Get-ConsoleWidth -Times 1
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*pvm testcmd*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*pvm testcmd*' }
     }
 
     It "Breaks mid-word when no space within maxDescLength" {
-        Mock Write-Host {}
-
         $noSpace = ('A' * 150) + ' rest of description'
         Mock Get-Actions {
             [ordered]@{
@@ -81,12 +81,10 @@ Describe "Show-Usage Tests" {
 
         Show-Usage -arguments @()
 
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*pvm nospace*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*pvm nospace*' }
     }
 
     It "Writes additional description lines when wrapping occurs" {
-        Mock Write-Host {}
-
         # Create description with spaces to force multiple wrapped lines
         $spaced = (1..10 | ForEach-Object { ('word' + $_) }) -join ' '
         Mock Get-Actions {
@@ -98,21 +96,20 @@ Describe "Show-Usage Tests" {
         Show-Usage -arguments @()
 
         # Ensure additional lines were written (calls beyond the initial line)
-        Should -Invoke Write-Host -ParameterFilter { $Object -like '*multiline*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*multiline*' }
     }
 }
 
 Describe "Show-PVMVersion Function Tests" {
     BeforeEach {
-        Mock Write-Host { }
         $PVMConfig.version = '1.2.3'
     }
 
     It "Should display version with proper formatting" {
         Show-PVMVersion
 
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nPVM version 1.2.3"
+        Should -Invoke Show-Message -Times 1 -ParameterFilter {
+            $message -eq "`nPVM version 1.2.3"
         }
     }
 
@@ -123,8 +120,8 @@ Describe "Show-PVMVersion Function Tests" {
             $PVMConfig.version = $version
             Show-PVMVersion
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -eq "`nPVM version $version"
+            Should -Invoke Show-Message -ParameterFilter {
+                $message -eq "`nPVM version $version"
             }
         }
     }
@@ -133,8 +130,8 @@ Describe "Show-PVMVersion Function Tests" {
         $PVMConfig.version = '1.0.0-RC1+build.123'
         Show-PVMVersion
 
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -eq "`nPVM version 1.0.0-RC1+build.123"
+        Should -Invoke Show-Message -Times 1 -ParameterFilter {
+            $message -eq "`nPVM version 1.0.0-RC1+build.123"
         }
     }
 }
@@ -206,7 +203,6 @@ Describe "Get-ClosestCommandSuggestion tests" {
 
 Describe "Start-PVM Function Tests" {
     BeforeEach {
-        Mock Write-Host { }
         Mock Show-Usage { }
         Mock Show-PVMVersion { }
         Mock Resolve-FlagCommand { return $null }
@@ -293,8 +289,8 @@ Describe "Start-PVM Function Tests" {
             Should -Invoke Show-Usage -Times 1
             Should -Invoke Get-Actions -Times 1
             Should -Invoke Resolve-Alias -Times 1
-            Should -Invoke Write-Host -Times 1 -ParameterFilter {
-                $Object -eq "`n'invalid-command' is not a valid command."
+            Should -Invoke Show-Error -Times 1 -ParameterFilter {
+                $message -eq "`n'invalid-command' is not a valid command."
             }
         }
 
@@ -309,8 +305,8 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'cach' -arguments @()
 
             $result | Should -Be 0
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -eq "`n'cach' is not a valid command. Did you mean 'cache'?"
+            Should -Invoke Show-Error -ParameterFilter {
+                $message -eq "`n'cach' is not a valid command. Did you mean 'cache'?"
             }
         }
 
@@ -325,8 +321,8 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'ali' -arguments @()
 
             $result | Should -Be 0
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -eq "`n'ali' is not a valid command. Did you mean 'aliases'?"
+            Should -Invoke Show-Error -ParameterFilter {
+                $message -eq "`n'ali' is not a valid command. Did you mean 'aliases'?"
             }
         }
 
@@ -342,8 +338,8 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'invalid-command' -arguments @()
 
             $result | Should -Be 0
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -eq "`n'invalid-command' is not a valid command."
+            Should -Invoke Show-Error -ParameterFilter {
+                $message -eq "`n'invalid-command' is not a valid command."
             }
         }
 
@@ -392,8 +388,8 @@ Describe "Start-PVM Function Tests" {
 
             $result | Should -Be -1
             Should -Invoke Test-PVMSetup -Times 1
-            Should -Invoke Write-Host -Times 1 -ParameterFilter {
-                $Object -eq "`nPVM is not setup. Please run 'pvm setup' first."
+            Should -Invoke Show-Message -Times 1 -ParameterFilter {
+                $message -eq "`nPVM is not setup. Please run 'pvm setup' first."
             }
         }
 
@@ -404,8 +400,8 @@ Describe "Start-PVM Function Tests" {
 
             $result | Should -Be 0
             Should -Invoke Test-PVMSetup -Times 1
-            Should -Invoke Write-Host -Times 0 -ParameterFilter {
-                $Object -like '*PVM is not setup*'
+            Should -Invoke Show-Message -Times 0 -ParameterFilter {
+                $message -like '*PVM is not setup*'
             }
         }
 
@@ -423,8 +419,8 @@ Describe "Start-PVM Function Tests" {
                 $result = Start-PVM -command $op -arguments @()
 
                 $result | Should -Be -1
-                Should -Invoke Write-Host -ParameterFilter {
-                    $Object -eq "`nPVM is not setup. Please run 'pvm setup' first."
+                Should -Invoke Show-Message -ParameterFilter {
+                    $message -eq "`nPVM is not setup. Please run 'pvm setup' first."
                 }
             }
         }
@@ -500,9 +496,8 @@ Describe "Start-PVM Function Tests" {
 
             $result | Should -Be -1
             Should -Invoke Add-LogEntry -Times 1
-            Should -Invoke Write-Host -Times 1 -ParameterFilter {
-                $Object -eq "`nCommand canceled or failed to elevate privileges." -and
-                $ForegroundColor -eq 'DarkYellow'
+            Should -Invoke Show-Error -Times 1 -ParameterFilter {
+                $message -eq "`nCommand canceled or failed to elevate privileges."
             }
         }
 
@@ -597,9 +592,7 @@ Describe "Start-PVM Function Tests" {
 
             $result | Should -Be -1
             Should -Invoke Add-LogEntry -Times 1
-            Should -Invoke Write-Host -Times 1 -ParameterFilter {
-                $ForegroundColor -eq 'DarkYellow'
-            }
+            Should -Invoke Show-Error -Times 1
         }
     }
 
@@ -768,9 +761,7 @@ Describe "Start-PVM Function Tests" {
             Should -Invoke Resolve-Alias -Times 1
             Should -Invoke Test-PVMSetup -Times 1
             Should -Invoke Add-LogEntry -Times 1
-            Should -Invoke Write-Host -Times 1 -ParameterFilter {
-                $ForegroundColor -eq 'DarkYellow'
-            }
+            Should -Invoke Show-Error -Times 1
         }
     }
 }

@@ -1,6 +1,9 @@
 ﻿
 BeforeAll {
-    Mock Write-Host {}
+    Mock Show-Message {}
+    Mock Show-Success {}
+    Mock Show-Error {}
+    Mock Show-Info {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\setup-drive"
@@ -16,7 +19,6 @@ AfterAll {
 
 Describe "Initialize-PVM" {
     BeforeAll {
-        Mock Write-Host {}
         # Mock global variables that the function depends on
         $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'C:\php\8.2'
         $script:PVMRoot = "$TEST_DRIVE\PVM"
@@ -291,15 +293,15 @@ Describe "New-EnvFile" {
 
         $result | Should -Be -1
         Should -Invoke Copy-Item -Times 0
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -like '*Failed to find .env.example file.*'
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -like '*Failed to find .env.example file.*'
         }
     }
 
     It "Returns 0 when the user does not want to overwrite the .env file" {
         Mock Test-FileNotExists { return $false }
         New-Item -ItemType File -Path "$PVMRoot\.env" -Force | Out-Null
-        Mock Read-Host { return 'n' }
+        Mock Read-Host-Wrapper { return 'n' }
 
         $result = New-EnvFile
 
@@ -310,56 +312,56 @@ Describe "New-EnvFile" {
     It "Returns 0 when the user wants to overwrite the .env file" {
         Mock Test-FileNotExists { return $false }
         New-Item -ItemType File -Path "$PVMRoot\.env" -Force | Out-Null
-        Mock Read-Host { return 'y' }
+        Mock Read-Host-Wrapper { return 'y' }
 
         $result = New-EnvFile
 
         $result | Should -Be 0
         Should -Invoke Copy-Item -Times 1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -like '*Created .env file.*'
+        Should -Invoke Show-Success -Times 1 -ParameterFilter {
+            $message -like '*Created .env file.*'
         }
     }
 
     It "Returns 0 when the .env is created" {
         Mock Test-FileNotExists -ParameterFilter { $path -eq "$PVMRoot\.env.example"} { return $false }
         Mock Test-FileExists -ParameterFilter { $path -eq "$PVMRoot\.env"} { return $false }
-        Mock Read-Host { }
+        Mock Read-Host-Wrapper { }
 
         $result = New-EnvFile
 
         $result | Should -Be 0
-        Should -Invoke Read-Host -Times 0
+        Should -Invoke Read-Host-Wrapper -Times 0
         Should -Invoke Copy-Item -Times 1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -like '*Created .env file.*'
+        Should -Invoke Show-Success -Times 1 -ParameterFilter {
+            $message -like '*Created .env file.*'
         }
     }
 
     It "Returns -1 when the .env is not created" {
         Mock Test-FileNotExists -ParameterFilter { $path -eq "$PVMRoot\.env.example"} { return $false }
         Mock Test-FileExists -ParameterFilter { $path -eq "$PVMRoot\.env"} { return $false }
-        Mock Read-Host { }
+        Mock Read-Host-Wrapper { }
         Mock Copy-Item { throw 'Access denied' }
 
         $result = New-EnvFile
 
         $result | Should -Be -1
-        Should -Invoke Read-Host -Times 0
+        Should -Invoke Read-Host-Wrapper -Times 0
         Should -Invoke Copy-Item -Times 1
     }
 }
 
 Describe "Wait-ForEnvEdit" {
     It "Should prompt the user to edit the .env file" {
-        Mock Read-Host { return '' }
+        Mock Read-Host-Wrapper { return '' }
         Mock Get-Config { return @{} }
 
         Wait-ForEnvEdit
 
-        Should -Invoke Read-Host -Times 1
-        Should -Invoke Write-Host -Times 1 -ParameterFilter {
-            $Object -like "*Edit $PVMRoot\.env now if you want custom settings*"
+        Should -Invoke Read-Host-Wrapper -Times 1
+        Should -Invoke Show-Info -Times 1 -ParameterFilter {
+            $message -like "*Edit $PVMRoot\.env now if you want custom settings*"
         }
     }
 }

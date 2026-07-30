@@ -11,7 +11,10 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
 
-    Mock Write-Host {}
+    Mock Show-Warning {}
+    Mock Write-Color {}
+    Mock Show-Error {}
+    Mock Show-Message {}
 
     function Reset-IniContent {
     # Create a test php.ini file
@@ -78,7 +81,7 @@ Describe "Get-IniExtensionStatus" {
     }
 
     It "Returns -1 for non-existent extension" {
-        Mock Read-Host { return 'n' }
+        Mock Read-Host-Wrapper { return 'n' }
         Get-IniExtensionStatus -iniPath $testIniPath -extNames @('nonexistent_ext') | Should -Be -1
     }
 

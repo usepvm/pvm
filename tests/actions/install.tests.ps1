@@ -392,6 +392,11 @@ Describe "Get-PHPVersionsFromUrl Tests" {
 
 Describe "Get-PHPVersions Tests" {
     BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
         Reset-MockState
     }
 

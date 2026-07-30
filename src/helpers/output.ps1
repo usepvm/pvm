@@ -263,13 +263,11 @@ function Show-Message {
 }
 
 function New-Line {
-    Show-Message -message "`n" -noNewLine
+    New-Lines -count 1
 }
 
 function New-Lines {
-    param ($count)
+    param ($count = 1)
 
-    for ($i = 0; $i -lt $count; $i++) {
-        New-Line
-    }
+    Show-Message -message ("`n" * $count) -noNewLine
 }

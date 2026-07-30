@@ -520,7 +520,7 @@ function Invoke-Tests {
 
         Write-TestsSummary -testData $testData -options $options -maxLineLength $maxLineLength
 
-        if ($totalFailedTests -gt 0) {
+        if ($testData.totalFailedTests -gt 0) {
             return -1
         }
 

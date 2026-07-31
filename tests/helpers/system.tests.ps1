@@ -432,29 +432,24 @@ Describe "Invoke-PVMSubprocess" {
     It "Invokes pvm.ps1 with stripped shell argument and returns exit code" {
         Mock Get-Command { return @{ Name = 'pwsh.exe' } } -ParameterFilter { $Name -eq 'pwsh.exe' }
         Mock Resolve-PVMEngine { return 'pwsh.exe' }
-
-        Mock pwsh.exe {
-            $global:LASTEXITCODE = 0
-        } -Verifiable
+        Mock Show-SpinnerWhileProcess { return @{ output = ''; code = 0 } }
 
         $result = Invoke-PVMSubprocess -command 'test' -arguments @('--coverage=85', '--shell=pwsh')
 
         $result.code | Should -Be 0
-        Should -Invoke pwsh.exe -Times 1 -ParameterFilter {
-            $args -contains '-File' -and
-            $args -contains 'test' -and
-            $args -contains '--coverage=85' -and
-            $args -notcontains '--shell=pwsh'
+        Should -Invoke Show-SpinnerWhileProcess -Times 1 -ParameterFilter {
+            $fileName -eq 'pwsh.exe' -and
+            $processArgs -contains '-File' -and
+            $processArgs -contains 'test' -and
+            $processArgs -contains '--coverage=85' -and
+            $processArgs -notcontains '--shell=pwsh'
         }
     }
 
     It "Returns subprocess exit code on failure" {
         Mock Get-Command { return @{ Name = 'pwsh.exe' } } -ParameterFilter { $Name -eq 'pwsh.exe' }
         Mock Resolve-PVMEngine { return 'pwsh.exe' }
-
-        Mock pwsh.exe {
-            $global:LASTEXITCODE = 1
-        }
+        Mock Show-SpinnerWhileProcess { return @{ output = ''; code = 1 } }
 
         $result = Invoke-PVMSubprocess -command 'test' -arguments @('--pester=6.0.0')
 
@@ -467,16 +462,5 @@ Describe "Invoke-PVMSubprocess" {
         $result = Invoke-PVMSubprocess -command 'test' -arguments @('--pester=6.0.0')
 
         $result.code | Should -Be -1
-    }
-
-    It "Returns 0 when pwsh.exe is found and last exit code is null" {
-        Mock Get-Command { return @{ Name = 'pwsh.exe' } }
-        Mock pwsh.exe {
-            $global:LASTEXITCODE = $null
-        }
-
-        $result = Invoke-PVMSubprocess -command 'test' -arguments @('--pester=6.0.0')
-
-        $result.code | Should -Be 0
     }
 }

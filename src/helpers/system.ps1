@@ -1,4 +1,4 @@
-
+﻿
 function Test-OS64Bit {
     return [System.Environment]::Is64BitOperatingSystem
 }
@@ -247,11 +247,5 @@ function Invoke-PVMSubprocess {
         '--pvm-subprocess'
     ) + $remainingArgs
 
-    $outputText = & $engine @processArgs | Out-String
-
-    if ($null -ne $LASTEXITCODE) {
-        return @{ output = $outputText; code = [int]$LASTEXITCODE }
-    }
-
-    return @{ output = $outputText; code = 0 }
+    return Show-SpinnerWhileProcess -fileName $engine -processArgs $processArgs
 }

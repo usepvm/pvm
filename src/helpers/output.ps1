@@ -85,7 +85,7 @@ function Get-ConsoleWidth {
 }
 
 function Show-SpinnerWhileJob {
-    param ($scriptBlock, $message = "Working", [switch]$noClear, $argumentList = @(), $rethrow = $false)
+    param ($scriptBlock, $message = @{ content = 'Please wait...'; color = 'White' }, [switch]$noClear, $argumentList = @(), $rethrow = $false)
 
     $spinner = @('|', '/', '-', '\')
 
@@ -101,14 +101,14 @@ function Show-SpinnerWhileJob {
 
         $i = 0
         while ($job.State -eq 'Running') {
-            Show-Message -message "`r$message $($spinner[$i % $spinner.Length])" -NoNewline
+            Write-Color -message "`r$($message.content) $($spinner[$i % $spinner.Length])" -foreColor $message.color -NoNewline
             Start-Sleep -Milliseconds 100
             $i++
         }
 
         # Clear the spinner line
         if (-not $noClear) {
-            Show-Message -message "`r$(' ' * ($message.Length + 2))`r" -NoNewline
+            Write-Color -message "`r$(' ' * ($message.content.Length + 2))`r" -foreColor $message.color -NoNewline
         }
 
         $result = Receive-Job -Job $job -Wait -AutoRemoveJob -ErrorAction Stop
@@ -116,7 +116,7 @@ function Show-SpinnerWhileJob {
 
         return $result.pvmData
     } catch {
-        Write-Yellow -message "`r$(' ' * ($message.Length + 2))`r" -NoNewline
+        Write-Yellow -message "`r$(' ' * ($message.content.Length + 2))`r" -NoNewline
         Remove-Item Env:\PVM_ROOT_FOR_JOB -ErrorAction SilentlyContinue
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show spinner while job"; exception = $_ }
 

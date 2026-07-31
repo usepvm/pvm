@@ -64,7 +64,7 @@ function Get-PHPExtensionsFromSource {
                 }
 
                 return @{ pvmData = $availableExtensions }
-            } -message "- Loading category '$extCategory'..." -rethrow $true
+            } -message @{ content = "- Loading category '$extCategory'..."; color = 'Cyan' } -rethrow $true
 
             return $true
         }

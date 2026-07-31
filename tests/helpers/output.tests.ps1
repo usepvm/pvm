@@ -210,7 +210,7 @@ Describe "Get-ConsoleWidth" {
 
 Describe "Show-SpinnerWhileJob" {
     BeforeAll {
-        Mock Show-Message {}
+        Mock Write-Color {}
         Mock Write-Yellow {}
         $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
         $script:keepRunning = $true
@@ -246,7 +246,7 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Processing"
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
 
             $result | Should -Not -Be -1
         }
@@ -258,10 +258,10 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Custom Message"
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Custom Message"; color = 'Cyan' }
 
             # Verify Show-Message was called (spinner and clear)
-            Should -Invoke Show-Message -Times 2
+            Should -Invoke Write-Color -Times 2
         }
 
         It "Passes argument list to job" {
@@ -284,11 +284,11 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Processing" -noClear
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' } -noClear
 
             # Verify that the clear line (spaces) is not called when noClear is set
             # The clear happens at line 114 in the source
-            Should -Invoke Show-Message -Times 1
+            Should -Invoke Write-Color -Times 1
         }
 
         It "Clears spinner line by default" {
@@ -299,10 +299,10 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Processing"
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
 
             # Should be called twice: once for spinner, once for clear
-            Should -Invoke Show-Message -Times 2
+            Should -Invoke Write-Color -Times 2
         }
 
         It "Returns -1 when job fails and rethrow is false" {
@@ -415,7 +415,7 @@ Describe "Show-SpinnerWhileJob" {
                 Start-Sleep -Milliseconds 200
                 return @{ result = 'success' }
             }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message "Processing"
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
 
             # Start-Sleep should be called during spinner loop
             Should -Invoke Start-Sleep

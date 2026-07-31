@@ -533,7 +533,7 @@ Describe "Write-Host helpers Tests" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {
             Mock Write-Host {}
-            $script:PVMSubprocessMode = $false
+            $PVMSubprocess.mode = $false
 
             Write-Color -message 'Test message' -foreColor 'Red'
 
@@ -544,14 +544,14 @@ Describe "Write-Host helpers Tests" {
 
         It "Stores structured output when subprocess mode is enabled" {
             Mock Write-Host {}
-            $script:StructuredOutput = @()
-            $script:PVMSubprocessMode = $true
+            $PVMSubprocess.structuredOutput = @()
+            $PVMSubprocess.mode = $true
 
             Write-Color -message 'Test message' -foreColor 'Red'
 
             Should -Invoke Write-Host -Exactly 0
-            $script:StructuredOutput.Count | Should -Be 1
-            $script:PVMSubprocessMode = $false
+            $PVMSubprocess.structuredOutput.Count | Should -Be 1
+            $PVMSubprocess.mode = $false
         }
     }
 

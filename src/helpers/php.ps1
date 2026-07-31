@@ -115,7 +115,7 @@ function Get-InstalledPHPVersionsFromDisk {
         $installedVersions = ($installedVersions | Sort-Object { [version]$_.Version })
 
         return @{ pvmData = $installedVersions }
-    }
+    } -rethrow $true
 }
 
 function Get-InstalledPHPVersions {

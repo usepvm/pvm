@@ -356,6 +356,10 @@ pvm aliases
 | del    | delete    |
 | cls    | clear     |
 
+**Customizing Aliases:**
+
+You can customize aliases by editing the `storage/data/templates/aliases.json` file.
+
 ### Build Types
 
 | Option | Meaning         |
@@ -471,7 +475,7 @@ pvm run test:matrix # .............. Runs tests with all supported PowerShell ve
 
 **Customizing Scripts:**
 
-You can customize scripts by editing the `scripts` section in `src/helpers/config.ps1`. The scripts are defined in the `$PVMConfig.defaults.scripts` hashtable. Add or modify scripts to suit your workflow.
+You can customize scripts by editing the `storage/data/templates/scripts.json` file, Add or modify scripts to suit your workflow.
 
 ## Contributing
 

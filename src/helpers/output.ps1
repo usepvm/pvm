@@ -129,7 +129,7 @@ function Show-SpinnerWhileJob {
 }
 
 function Show-SpinnerWhileProcess  {
-    param ($fileName, $processArgs, $message = 'Working')
+    param ($fileName, $processArgs, $message = @{ content = 'Please wait...'; color = 'White' }, [switch]$noClear)
 
     try {
         $psi = [System.Diagnostics.ProcessStartInfo]::new()
@@ -156,11 +156,15 @@ function Show-SpinnerWhileProcess  {
         $spinner = @('|', '/', '-', '\')
         $i = 0
         while (-not $proc.HasExited) {
-            Show-Message -message "`r$message $($spinner[$i % $spinner.Length])" -noNewLine
+            Write-Color -message "`r$($message.content) $($spinner[$i % $spinner.Length])" -foreColor $message.color -noNewLine
             Start-Sleep -Milliseconds 100
             $i++
         }
-        Show-Message -message "`r$(' ' * ($message.Length + 2))`r" -noNewLine
+
+        # Clear the spinner line
+        if (-not $noClear) {
+            Write-Color -message "`r$(' ' * ($message.content.Length + 2))`r" -foreColor $message.color -NoNewline
+        }
 
         $proc.WaitForExit()
         $outputText = $stdOutTask.Result + $stdErrTask.Result

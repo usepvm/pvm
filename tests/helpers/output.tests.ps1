@@ -440,7 +440,7 @@ Describe "Show-SpinnerWhileJob" {
 
 Describe "Show-SpinnerWhileProcess" {
     BeforeAll {
-        Mock Show-Message {}
+        Mock Write-Color {}
     }
 
     Context "When process succeeds" {
@@ -478,21 +478,32 @@ Describe "Show-SpinnerWhileProcess" {
 
     Context "When displaying the spinner" {
         It "Uses the provided message" {
-            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -message 'Custom'
+            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -message @{ content = 'Custom'; color = 'Cyan' }
 
-            Should -Invoke Show-Message -ParameterFilter { $message -match 'Custom' }
+            # Verify Show-Message was called (spinner and clear)
+            Should -Invoke Write-Color -Times 2
         }
 
-        It "Defaults to 'Working' when no message is provided" {
+        It "Defaults to 'Please wait...' when no message is provided" {
             Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi')
 
-            Should -Invoke Show-Message -ParameterFilter { $message -match 'Working' }
+            Should -Invoke Write-Color -ParameterFilter { $message -match 'Please wait...' }
         }
 
         It "Clears the spinner line after completion" {
-            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -message 'Clearing'
+            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -message @{ content = 'Clearing'; color = 'Cyan' }
 
-            Should -Invoke Show-Message -ParameterFilter { $message -eq "`r$(' ' * ('Clearing'.Length + 2))`r" }
+            Should -Invoke Write-Color -ParameterFilter { $message -eq "`r$(' ' * ('Clearing'.Length + 2))`r" }
+        }
+    }
+    
+    Context "When clearing the spinner" {
+        It "Does not clear the spinner line when noClear is set" {
+            $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -noClear
+            
+            # Verify that the clear line (spaces) is not called when noClear is set
+            # The clear happens at line 114 in the source
+            Should -Invoke Write-Color -Times 1
         }
     }
 

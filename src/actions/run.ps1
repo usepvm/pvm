@@ -64,6 +64,13 @@ function Invoke-RunScripts {
                 }
 
                 if ($runInSubProcess) {
+                    $verbosityArg = $scriptArgs | Where-Object { $_ -match '^--verbosity=' }
+                    if ($verbosityArg -and $verbosityArg -ne '--verbosity=None') {
+                        Write-Yellow -message "`nInvalid verbosity in multi-command script '$scriptName': '$scriptCommand' (only --verbosity=None is allowed when a script has more than one command)`n"
+                        $results += -1
+                        continue
+                    }
+
                     $result = Invoke-PVMSubprocess -command $command -arguments $scriptArgs
                     $results += $result
                 } else {

@@ -227,30 +227,42 @@ Describe "Initialize-PVMFiles" {
         Mock New-ProfileTemplate { return 0 }
         Mock Set-ZendExtensionsList { return 0 }
         Mock Set-AliasesList { return 0 }
+        Mock Set-ScriptsList { return 0 }
+    }
+
+    It "Returns 0 when all files are created" {
+        $result = Initialize-PVMFiles
+        $result | Should -Be @(0, 0, 0, 0, 0)
     }
 
     It "Returns -1 when the example profile creation fails" {
         Mock New-ExamplePHPProfile { return -1 }
-        $result = Initialize-EnvironmentDirectoriesAndFiles
-        $result | Should -Be -1
+        $result = Initialize-PVMFiles
+        $result | Should -Be @(-1, 0, 0, 0, 0)
     }
 
     It "Returns -1 when the profile template file creation fails" {
         Mock New-ProfileTemplate { return -1 }
-        $result = Initialize-EnvironmentDirectoriesAndFiles
-        $result | Should -Be -1
+        $result = Initialize-PVMFiles
+        $result | Should -Be @(0, -1, 0, 0, 0)
     }
 
     It "Returns -1 when the zend extensions file creation fails" {
         Mock Set-ZendExtensionsList { return -1 }
-        $result = Initialize-EnvironmentDirectoriesAndFiles
-        $result | Should -Be -1
+        $result = Initialize-PVMFiles
+        $result | Should -Be @(0, 0, -1, 0, 0)
     }
 
     It "Returns -1 when the aliases file creation fails" {
         Mock Set-AliasesList { return -1 }
-        $result = Initialize-EnvironmentDirectoriesAndFiles
-        $result | Should -Be -1
+        $result = Initialize-PVMFiles
+        $result | Should -Be @(0, 0, 0, -1, 0)
+    }
+
+    It "Returns -1 when the scripts file creation fails" {
+        Mock Set-ScriptsList { return -1 }
+        $result = Initialize-PVMFiles
+        $result | Should -Be @(0, 0, 0, 0, -1)
     }
 }
 

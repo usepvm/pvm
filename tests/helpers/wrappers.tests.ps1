@@ -1,10 +1,8 @@
 ﻿
 
 BeforeAll {
-    # Setup test environment
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\wrappers-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 

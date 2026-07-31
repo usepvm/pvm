@@ -1,6 +1,5 @@
 ﻿
 BeforeAll {
-    # Create a test directory for PHP installations
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\uninstall-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)

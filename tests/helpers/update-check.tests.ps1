@@ -1,12 +1,12 @@
 ﻿
 BeforeAll {
-    Mock Show-Error {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\update-check-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    Mock Show-Error {}
 }
 
 AfterAll {

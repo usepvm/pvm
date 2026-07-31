@@ -1,9 +1,9 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\ext-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\ext-drive"
     $script:testIniPath = "$TEST_DRIVE\php.ini"
     $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
 

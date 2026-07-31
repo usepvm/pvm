@@ -1,15 +1,15 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\info-drive"
     $script:testIniPath = "$TEST_DRIVE\php.ini"
     $script:extDirectory = "$TEST_DRIVE\ext"
     $script:testBackupPath = "$testIniPath.bak"
-    $script:CACHE_PATH = $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
+    New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
 
     Mock Show-Error {}
     Mock Show-Message {}
@@ -32,10 +32,6 @@ max_execution_time = 30
 
     # Create initial ini content first
     Reset-IniContent
-
-    # Mock global variables
-    $PVMConfig.paths.logError = "$TEST_DRIVE\error.log"
-    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$TEST_DRIVE\php"
 
     # Create directory and symlink for current PHP version
     $phpVersionPath = "$TEST_DRIVE\php-8.2"

@@ -1,20 +1,17 @@
 ﻿
 BeforeAll {
+    $script:PVMRootBackup = $PVMRoot
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\handlers-drive"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
+    Import-Module PowerShellGet -ErrorAction SilentlyContinue
+
     Mock Show-Error {}
     Mock Show-Warning {}
     Mock Show-Message {}
     Mock Write-Color {}
     Mock Show-Info {}
-
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\handlers-drive"
-    $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
-    $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
-    $PVMConfig.paths.storage = "$TEST_DRIVE\storage"
-    $PVMConfig.paths.data = "$TEST_DRIVE\storage\data"
-
-    Import-Module PowerShellGet -ErrorAction SilentlyContinue
 }
 
 AfterAll {

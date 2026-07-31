@@ -3,12 +3,10 @@ BeforeAll {
     # Create a test directory for PHP installations
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\uninstall-drive"
-    $script:CACHE_PATH = $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
-    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$TEST_DRIVE\php\current"
-    $PVMConfig.paths.logError = "$TEST_DRIVE\Logs\error.log"
-    $script:testPhpPath = "$TEST_DRIVE\PHP"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    $script:testPhpPath = "$TEST_DRIVE\PHP"
     New-Item -Path "$testPhpPath\7.4" -ItemType Directory -Force
     New-Item -Path "$testPhpPath\8.0" -ItemType Directory -Force
 
@@ -46,6 +44,8 @@ Describe "Uninstall-PHP" {
             Mock Get-UserSelectedPHPVersion -MockWith {
                 return @{ code = 0; version = '7.4'; arch = 'x86'; buildType = 'nts'; path = "$testPhpPath\7.4" }
             }
+            Mock Update-InstalledPHPVersionsCache { 0}
+
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $true
 
             $result.code | Should -Be 0
@@ -178,6 +178,8 @@ Describe "Uninstall-PHP" {
         }
 
         It "Should successfully uninstall after user selection (skipConfirmation)" {
+            Mock Update-InstalledPHPVersionsCache { 0}
+
             $result = Uninstall-PHP -version '8.*' -skipConfirmation $true
 
             $result.code | Should -Be 0

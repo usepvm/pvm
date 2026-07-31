@@ -3,8 +3,9 @@ BeforeAll {
     # Mock global variables that would be loaded from config
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\bootstrap-drive"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
     $PVMConfig.version = '1.0.0'
-    $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 

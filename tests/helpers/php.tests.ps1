@@ -5,12 +5,13 @@ BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\php-drive"
-    $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
     $script:testPhpPath = "$TEST_DRIVE\PHP"
     $script:testExtPath = "$testPhpPath\ext"
     $script:testIniPath = "$testPhpPath\php.ini"
-    $script:TEMPLATES_PATH = $PVMConfig.paths.templates = "$TEST_DRIVE\storage\data\templates"
-    $script:ZEND_EXTENSIONS_LIST_PATH = $PVMConfig.paths.zendExtensionsList = "$TEMPLATES_PATH\zend_extensions.json"
+    $script:TEMPLATES_PATH = $PVMConfig.paths.templates
+    $script:ZEND_EXTENSIONS_LIST_PATH = $PVMConfig.paths.zendExtensionsList
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $testPhpPath -Force | Out-Null

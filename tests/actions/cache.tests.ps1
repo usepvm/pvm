@@ -2,11 +2,12 @@
 BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\cache-drive"
-    $script:CACHE_PATH = $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
+    $script:CACHE_PATH = $PVMConfig.paths.cache
     # Create test cache directory
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
+    New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
 
     Mock Show-Error {}
     Mock Show-Info {}

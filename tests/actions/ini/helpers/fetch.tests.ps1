@@ -3,6 +3,7 @@ BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\fetch-drive"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot

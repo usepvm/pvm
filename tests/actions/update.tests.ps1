@@ -1,10 +1,13 @@
-
+﻿
 BeforeAll {
-    Mock Show-Info {}
-    Mock Show-Warning {}
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
     $PVMConfig.version = 'v1.0.0'
+
+    Mock Show-Info {}
+    Mock Show-Warning {}
 }
 
 AfterAll {

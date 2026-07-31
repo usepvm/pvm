@@ -3,8 +3,9 @@ BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     # Global test variables
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\install-drive"
-    $PVMConfig.paths.logError = "$TEST_DRIVE\error.log"
-    $PVMConfig.paths.storage = "$TEST_DRIVE\storage"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
+    $script:PHP_DIR = $PVMConfig.paths.php
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
@@ -896,9 +897,8 @@ Describe "Environment Variable Tests" {
     }
 
     It "Get-InstalledPHPVersions should return empty array when no directories found" {
-        $PVMConfig.paths.php = "$($PVMConfig.paths.fakeStorage)\install-drive\storage\installed-php"
-        New-Item -Path $PVMConfig.paths.php -ItemType Directory -Force
-        Remove-Item -Path "$($PVMConfig.paths.php)\*" -Recurse -Force
+        New-Item -Path $PHP_DIR -ItemType Directory -Force
+        Remove-Item -Path "$PHP_DIR\*" -Recurse -Force
 
         $result = Get-InstalledPHPVersions
 

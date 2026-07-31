@@ -3,11 +3,15 @@ BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     # Mock global variables
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\profile-drive"
-    $script:PROFILES_PATH = $PVMConfig.paths.profiles = "$TEST_DRIVE\profiles"
-    $script:TEMPLATES_PATH = $PVMConfig.paths.templates = "$PROFILES_PATH\templates"
-    $script:PROFILE_TEMPLATE_PATH = $PVMConfig.paths.profileTemplate = "$TEMPLATES_PATH\profile-template.json"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
+    $script:PROFILES_PATH = $PVMConfig.paths.profiles
+    $script:TEMPLATES_PATH = $PVMConfig.paths.templates
+    $script:PROFILE_TEMPLATE_PATH = $PVMConfig.paths.profileTemplate
+    $script:EXAMPLE_PROFILE_PATH = $PVMConfig.paths.exampleProfile
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    New-Item -ItemType Directory -Path $PROFILES_PATH -Force | Out-Null
 
     Mock Show-Success {}
     Mock Show-Info {}
@@ -44,9 +48,6 @@ BeforeAll {
     Mock New-Directory { param ($path) return 0 }
 
     Mock Add-LogEntry { param ($data) return $true }
-
-    # Create test profile directory
-    New-Item -ItemType Directory -Path $PROFILES_PATH -Force | Out-Null
 }
 
 AfterAll {
@@ -1998,7 +1999,7 @@ Describe "New-ExamplePHPProfile Tests" {
         $result = New-ExamplePHPProfile
         $result | Should -Be 0
 
-        Test-Path $PVMConfig.paths.exampleProfile | Should -Be $true
+        Test-Path $EXAMPLE_PROFILE_PATH | Should -Be $true
     }
 
     It "Returns -1 when exception is thrown" {

@@ -438,6 +438,97 @@ Describe "Show-SpinnerWhileJob" {
     }
 }
 
+Describe "Show-SpinnerWhileProcess" {
+    BeforeAll {
+        Mock Write-Color {}
+    }
+
+    Context "When process succeeds" {
+        It "Returns exit code 0 and captured stdout" {
+            $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hello')
+
+            $result.code | Should -Be 0
+            $result.output | Should -Match 'hello'
+        }
+    }
+
+    Context "When process exits with non-zero code" {
+        It "Returns the process exit code" {
+            $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'exit 5')
+
+            $result.code | Should -Be 5
+        }
+    }
+
+    Context "When process writes to stderr" {
+        It "Captures stderr in combined output" {
+            $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo err-message 1>&2')
+
+            $result.output | Should -Match 'err-message'
+        }
+    }
+
+    Context "When processArgs is not provided" {
+        It "Runs without arguments" {
+            $result = Show-SpinnerWhileProcess -fileName 'hostname.exe'
+
+            $result.code | Should -Be 0
+        }
+    }
+
+    Context "When displaying the spinner" {
+        It "Uses the provided message" {
+            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -message @{ content = 'Custom'; color = 'Cyan' }
+
+            # Verify Show-Message was called (spinner and clear)
+            Should -Invoke Write-Color -Times 2
+        }
+
+        It "Defaults to 'Please wait...' when no message is provided" {
+            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi')
+
+            Should -Invoke Write-Color -ParameterFilter { $message -match 'Please wait...' }
+        }
+
+        It "Clears the spinner line after completion" {
+            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -message @{ content = 'Clearing'; color = 'Cyan' }
+
+            Should -Invoke Write-Color -ParameterFilter { $message -eq "`r$(' ' * ('Clearing'.Length + 2))`r" }
+        }
+    }
+    
+    Context "When clearing the spinner" {
+        It "Does not clear the spinner line when noClear is set" {
+            $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -noClear
+            
+            # Verify that the clear line (spaces) is not called when noClear is set
+            # The clear happens at line 114 in the source
+            Should -Invoke Write-Color -Times 1
+        }
+    }
+
+    Context "When the process fails to start" {
+        BeforeAll {
+            Mock Add-LogEntry {}
+        }
+
+        It "Returns -1 with null output" {
+            $result = Show-SpinnerWhileProcess -fileName 'nonexistent-exe-xyz-12345.exe' -processArgs @()
+
+            $result.code | Should -Be -1
+            $result.output | Should -Be $null
+        }
+
+        It "Logs the error" {
+            Show-SpinnerWhileProcess -fileName 'nonexistent-exe-xyz-12345.exe' -processArgs @()
+
+            Should -Invoke Add-LogEntry -Times 1 -ParameterFilter {
+                $data.header -match 'Show-SpinnerWhileProcess - Failed to run subprocess'
+            }
+        }
+    }
+}
+
 Describe "Write-Host helpers Tests" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {

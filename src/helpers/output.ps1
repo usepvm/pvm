@@ -128,6 +128,54 @@ function Show-SpinnerWhileJob {
     }
 }
 
+function Show-SpinnerWhileProcess  {
+    param ($fileName, $processArgs, $message = @{ content = 'Please wait...'; color = 'White' }, [switch]$noClear)
+
+    try {
+        $psi = [System.Diagnostics.ProcessStartInfo]::new()
+        $psi.FileName = $fileName
+        $psi.Arguments = ($processArgs | ForEach-Object {
+            if ($_ -match '[\s"]') {
+                '"' + ($_ -replace '"', '\"') + '"'
+            } else {
+                $_
+            }
+        }) -join ' '
+        $psi.RedirectStandardOutput = $true
+        $psi.RedirectStandardError = $true
+        $psi.UseShellExecute = $false
+        $psi.CreateNoWindow = $true
+
+        $proc = [System.Diagnostics.Process]::new()
+        $proc.StartInfo = $psi
+        $null = $proc.Start()
+
+        $stdOutTask = $proc.StandardOutput.ReadToEndAsync()
+        $stdErrTask = $proc.StandardError.ReadToEndAsync()
+
+        $spinner = @('|', '/', '-', '\')
+        $i = 0
+        while (-not $proc.HasExited) {
+            Write-Color -message "`r$($message.content) $($spinner[$i % $spinner.Length])" -foreColor $message.color -noNewLine
+            Start-Sleep -Milliseconds 100
+            $i++
+        }
+
+        # Clear the spinner line
+        if (-not $noClear) {
+            Write-Color -message "`r$(' ' * ($message.content.Length + 2))`r" -foreColor $message.color -NoNewline
+        }
+
+        $proc.WaitForExit()
+        $outputText = $stdOutTask.Result + $stdErrTask.Result
+
+        return @{ output = $outputText; code = $proc.ExitCode }
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run subprocess"; exception = $_ }
+        return @{ output = $null; code = -1 }
+    }
+}
+
 function Write-Color {
     param ($message, $foreColor, [switch]$noNewLine)
 

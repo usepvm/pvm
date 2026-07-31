@@ -219,50 +219,6 @@ function Split-ShellFromArguments {
     }
 }
 
-function Show-SpinnerWhileProcess  {
-    param ($fileName, $processArgs, $message = 'Working')
-
-    try {
-        $psi = [System.Diagnostics.ProcessStartInfo]::new()
-        $psi.FileName = $fileName
-        $psi.Arguments = ($processArgs | ForEach-Object {
-            if ($_ -match '[\s"]') {
-                '"' + ($_ -replace '"', '\"') + '"'
-            } else {
-                $_
-            }
-        }) -join ' '
-        $psi.RedirectStandardOutput = $true
-        $psi.RedirectStandardError = $true
-        $psi.UseShellExecute = $false
-        $psi.CreateNoWindow = $true
-
-        $proc = [System.Diagnostics.Process]::new()
-        $proc.StartInfo = $psi
-        $null = $proc.Start()
-
-        $stdOutTask = $proc.StandardOutput.ReadToEndAsync()
-        $stdErrTask = $proc.StandardError.ReadToEndAsync()
-
-        $spinner = @('|', '/', '-', '\')
-        $i = 0
-        while (-not $proc.HasExited) {
-            Show-Message -message "`r$message $($spinner[$i % $spinner.Length])" -noNewLine
-            Start-Sleep -Milliseconds 100
-            $i++
-        }
-        Show-Message -message "`r$(' ' * ($message.Length + 2))`r" -noNewLine
-
-        $proc.WaitForExit()
-        $outputText = $stdOutTask.Result + $stdErrTask.Result
-
-        return @{ output = $outputText; code = $proc.ExitCode }
-    } catch {
-        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run subprocess"; exception = $_ }
-        return @{ output = $null; code = -1 }
-    }
-}
-
 function Invoke-PVMSubprocess {
     param ($command, $arguments = @())
 

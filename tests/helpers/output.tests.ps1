@@ -438,6 +438,86 @@ Describe "Show-SpinnerWhileJob" {
     }
 }
 
+Describe "Show-SpinnerWhileProcess" {
+    BeforeAll {
+        Mock Show-Message {}
+    }
+
+    Context "When process succeeds" {
+        It "Returns exit code 0 and captured stdout" {
+            $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hello')
+
+            $result.code | Should -Be 0
+            $result.output | Should -Match 'hello'
+        }
+    }
+
+    Context "When process exits with non-zero code" {
+        It "Returns the process exit code" {
+            $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'exit 5')
+
+            $result.code | Should -Be 5
+        }
+    }
+
+    Context "When process writes to stderr" {
+        It "Captures stderr in combined output" {
+            $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo err-message 1>&2')
+
+            $result.output | Should -Match 'err-message'
+        }
+    }
+
+    Context "When processArgs is not provided" {
+        It "Runs without arguments" {
+            $result = Show-SpinnerWhileProcess -fileName 'hostname.exe'
+
+            $result.code | Should -Be 0
+        }
+    }
+
+    Context "When displaying the spinner" {
+        It "Uses the provided message" {
+            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -message 'Custom'
+
+            Should -Invoke Show-Message -ParameterFilter { $message -match 'Custom' }
+        }
+
+        It "Defaults to 'Working' when no message is provided" {
+            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi')
+
+            Should -Invoke Show-Message -ParameterFilter { $message -match 'Working' }
+        }
+
+        It "Clears the spinner line after completion" {
+            Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -message 'Clearing'
+
+            Should -Invoke Show-Message -ParameterFilter { $message -eq "`r$(' ' * ('Clearing'.Length + 2))`r" }
+        }
+    }
+
+    Context "When the process fails to start" {
+        BeforeAll {
+            Mock Add-LogEntry {}
+        }
+
+        It "Returns -1 with null output" {
+            $result = Show-SpinnerWhileProcess -fileName 'nonexistent-exe-xyz-12345.exe' -processArgs @()
+
+            $result.code | Should -Be -1
+            $result.output | Should -Be $null
+        }
+
+        It "Logs the error" {
+            Show-SpinnerWhileProcess -fileName 'nonexistent-exe-xyz-12345.exe' -processArgs @()
+
+            Should -Invoke Add-LogEntry -Times 1 -ParameterFilter {
+                $data.header -match 'Show-SpinnerWhileProcess - Failed to run subprocess'
+            }
+        }
+    }
+}
+
 Describe "Write-Host helpers Tests" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {

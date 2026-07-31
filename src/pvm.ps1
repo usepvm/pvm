@@ -3,22 +3,22 @@
 
 param ($command)
 
-# Check if running in subprocess mode
-$params = $args
-$script:PVMSubprocessMode = $params -contains '--pvm-subprocess'
-if ($script:PVMSubprocessMode) {
-    $params = $params | Where-Object { $_ -ne '--pvm-subprocess' }
-    $script:StructuredOutput = @()
-}
-
 # Load functions scripts
 . "$PSScriptRoot\import.ps1"
+
+# Check if running in subprocess mode
+$params = $args
+$PVMSubprocess.mode = $params -contains '--pvm-subprocess'
+if ($PVMSubprocess.mode) {
+    $params = $params | Where-Object { $_ -ne '--pvm-subprocess' }
+    $PVMSubprocess.structuredOutput = @()
+}
 
 $exitCode = Start-PVM -command $command -arguments $params
 
 # If in subprocess mode, output structured data
-if ($script:PVMSubprocessMode) {
-    $script:StructuredOutput | ConvertTo-Json -Depth 10
+if ($PVMSubprocess.mode) {
+    $PVMSubprocess.structuredOutput | ConvertTo-Json -Depth 10
 }
 
 exit $exitCode

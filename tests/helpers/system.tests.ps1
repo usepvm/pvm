@@ -22,9 +22,10 @@ BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\system-drive"
-    $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
-    $script:STORAGE_PATH = $PVMConfig.paths.storage = "$TEST_DRIVE\storage"
-    $script:PATH_VAR_BACKUP_PATH = $PVMConfig.paths.pathVarBackup = "$TEST_DRIVE\logs\path_backup.log"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:LOG_ERROR_PATH = $PVMConfig.paths.logError
+    $script:STORAGE_PATH = $PVMConfig.paths.storage
+    $script:PATH_VAR_BACKUP_PATH = $PVMConfig.paths.pathVarBackup
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null

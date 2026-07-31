@@ -1,14 +1,21 @@
 ﻿
 BeforeAll {
+    $script:PVMRootBackup = $PVMRoot
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\setup-drive"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+
+    # Mock global variables that the function depends on
+    $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
+    $script:PVMRoot = "$TEST_DRIVE\PVM"
+    $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME
+
     Mock Show-Message {}
     Mock Show-Success {}
     Mock Show-Error {}
     Mock Show-Info {}
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\setup-drive"
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
 
 AfterAll {
@@ -19,12 +26,6 @@ AfterAll {
 
 Describe "Initialize-PVM" {
     BeforeAll {
-        # Mock global variables that the function depends on
-        $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = 'C:\php\8.2'
-        $script:PVMRoot = "$TEST_DRIVE\PVM"
-        $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME = 'PVM'
-        $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
-
         # Initialize mock registry
         $script:MockRegistry = @{
             Machine = @{

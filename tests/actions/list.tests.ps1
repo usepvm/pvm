@@ -3,8 +3,7 @@ BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     # Mock global variables that would be defined in the main script
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\list-drive"
-    $PVMConfig.paths.data = "$TEST_DRIVE\storage\data"
-    $PVMConfig.paths.logError = "$TEST_DRIVE\storage\logs\error.log"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
@@ -109,10 +108,6 @@ Describe "Get-FromSource" {
 }
 
 Describe "Get-PHPListToInstall" {
-    BeforeEach {
-        $PVMConfig.paths.cache = "$TEST_DRIVE\storage\cache"
-    }
-
     It "Returns empty object when cache and/or source not working" {
         Mock Get-OrUpdateCache { return $null }
 

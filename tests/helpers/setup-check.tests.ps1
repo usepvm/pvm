@@ -4,6 +4,7 @@ BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\setup-check-drive"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
@@ -17,7 +18,7 @@ AfterAll {
 Describe "Test-PVMSetup" {
     BeforeAll {
         $global:PVMRoot = "$TEST_DRIVE\pvm"
-        $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$TEST_DRIVE\pvm\php"
+        $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
         $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME
         New-Item -ItemType Directory -Path $global:PVMRoot -Force | Out-Null
     }

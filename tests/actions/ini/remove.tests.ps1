@@ -1,6 +1,9 @@
 ﻿
 BeforeAll {
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\remove-drive"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
     $script:testIniPath = "$TEST_DRIVE\php.ini"
     $script:extDirectory = "$TEST_DRIVE\ext"
     $script:testBackupPath = "$testIniPath.bak"
@@ -33,6 +36,7 @@ display_errors = On
 
 AfterAll {
     Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Remove-ExtensionFromIniFile" {

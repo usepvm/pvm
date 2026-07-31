@@ -3,6 +3,7 @@ BeforeAll {
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\output-drive"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
@@ -63,7 +64,7 @@ Describe "Add-LogEntry" {
     }
     Context "When logging data" {
         It "Logs data successfully" {
-            $script:LOG_ERROR_PATH = $PVMConfig.paths.logError = "$TEST_DRIVE\logs\test.log"
+            $script:LOG_ERROR_PATH = $PVMConfig.paths.logError
             $result = Add-LogEntry -data @{
                 header = 'Test message'
                 exception = @{
@@ -496,11 +497,11 @@ Describe "Show-SpinnerWhileProcess" {
             Should -Invoke Write-Color -ParameterFilter { $message -eq "`r$(' ' * ('Clearing'.Length + 2))`r" }
         }
     }
-    
+
     Context "When clearing the spinner" {
         It "Does not clear the spinner line when noClear is set" {
             $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -noClear
-            
+
             # Verify that the clear line (spaces) is not called when noClear is set
             # The clear happens at line 114 in the source
             Should -Invoke Write-Color -Times 1
@@ -533,7 +534,7 @@ Describe "Write-Host helpers Tests" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {
             Mock Write-Host {}
-            $script:PVMSubprocessMode = $false
+            $PVMSubprocess.mode = $false
 
             Write-Color -message 'Test message' -foreColor 'Red'
 
@@ -544,14 +545,14 @@ Describe "Write-Host helpers Tests" {
 
         It "Stores structured output when subprocess mode is enabled" {
             Mock Write-Host {}
-            $script:StructuredOutput = @()
-            $script:PVMSubprocessMode = $true
+            $PVMSubprocess.structuredOutput = @()
+            $PVMSubprocess.mode = $true
 
             Write-Color -message 'Test message' -foreColor 'Red'
 
             Should -Invoke Write-Host -Exactly 0
-            $script:StructuredOutput.Count | Should -Be 1
-            $script:PVMSubprocessMode = $false
+            $PVMSubprocess.structuredOutput.Count | Should -Be 1
+            $PVMSubprocess.mode = $false
         }
     }
 

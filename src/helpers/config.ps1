@@ -217,6 +217,7 @@ function Get-Config {
                 )
             }
         }
+
         test    = @{
             verbosity = @{
                 default = 'Normal'
@@ -225,6 +226,33 @@ function Get-Config {
             coverage = @{
                 default = 75
                 enabled = $false
+            }
+            setFakePaths = {
+                param ($root)
+
+                $fakeStorage = "$root\storage"
+                $fakeData = "$fakeStorage\data"
+                $fakeProfiles = "$fakeData\profiles"
+                $fakeTemplates = "$fakeData\templates"
+                $fakeLogs = "$fakeStorage\logs"
+
+                $PVMConfig.paths.storage = $fakeStorage
+                $PVMConfig.paths.fakeStorage = $fakeStorage
+                $PVMConfig.paths.php = "$fakeStorage\php"
+                $PVMConfig.paths.data = $fakeData
+                $PVMConfig.paths.templates = $fakeTemplates
+                $PVMConfig.paths.cache = "$fakeData\cache"
+                $PVMConfig.paths.profiles = $fakeProfiles
+                $PVMConfig.paths.exampleProfile = "$fakeProfiles\example-profile.json"
+                $PVMConfig.paths.profileTemplate = "$fakeTemplates\profile-template.json"
+                $PVMConfig.paths.zendExtensionsList = "$fakeTemplates\zend_extensions.json"
+                $PVMConfig.paths.aliasesList = "$fakeTemplates\aliases.json"
+                $PVMConfig.paths.scriptsList = "$fakeTemplates\scripts.json"
+                $PVMConfig.paths.log = $fakeLogs
+                $PVMConfig.paths.logError = "$fakeLogs\error.log"
+                $PVMConfig.paths.pathVarBackup = "$fakeLogs\path.bak.log"
+
+                $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$root\pvm\php"
             }
         }
     }

@@ -3,9 +3,10 @@ BeforeAll {
     # Mock dependencies
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\current-drive"
-    $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
-    $script:PHP_DIR = "$TEST_DRIVE\php"
-    $script:PHP_CURRENT_DIR = $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$PHP_DIR\current"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
+    $script:PHP_CURRENT_DIR = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
+    $script:PHP_DIR = $PVMConfig.paths.php
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PHP_CURRENT_DIR -Force | Out-Null
@@ -427,7 +428,7 @@ Describe "Integration Tests" {
             }}
             # Arrange
             $testPhpPath = "$PHP_DIR\8.2.0"
-            $testCurrentPath = "$PHP_DIR\current"
+            $testCurrentPath = $PHP_CURRENT_DIR
 
             New-Item -Path $testPhpPath -ItemType Directory -Force
 

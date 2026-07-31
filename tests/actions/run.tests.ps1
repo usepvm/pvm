@@ -1,15 +1,17 @@
 ﻿
 BeforeAll {
+    $script:PVMRootBackup = $PVMRoot
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\run-drive"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+
     Mock Write-Color {}
     Mock Show-Message {}
     Mock Write-Yellow {}
     Mock Write-Cyan {}
     Mock Write-Gray {}
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\run-drive"
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
 
 AfterAll {

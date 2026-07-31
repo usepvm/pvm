@@ -3,8 +3,7 @@ BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     # Mock data and helper functions for testing
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\use-drive"
-    $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$TEST_DRIVE\pvm\php"
-    $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null

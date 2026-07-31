@@ -1,6 +1,9 @@
 ﻿
 BeforeAll {
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\restore-drive"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
     $script:testIniPath = "$TEST_DRIVE\php.ini"
     $script:extDirectory = "$TEST_DRIVE\ext"
     $script:testBackupPath = "$testIniPath.bak"
@@ -29,6 +32,7 @@ max_execution_time = 30
 
 AfterAll {
     Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Restore-IniBackup" {

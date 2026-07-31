@@ -4,9 +4,11 @@ BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\config-drive"
-    $script:TEMPLATES_PATH = $PVMConfig.paths.templates = "$TEST_DRIVE\templates"
-    $script:ALIASES_LIST_PATH = $PVMConfig.paths.aliasesList = "$TEMPLATES_PATH\aliases.json"
-    $script:SCRIPTS_LIST_PATH = $PVMConfig.paths.scriptsList = "$TEMPLATES_PATH\scripts.json"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
+    $script:TEMPLATES_PATH = $PVMConfig.paths.templates
+    $script:ALIASES_LIST_PATH = $PVMConfig.paths.aliasesList
+    $script:SCRIPTS_LIST_PATH = $PVMConfig.paths.scriptsList
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }

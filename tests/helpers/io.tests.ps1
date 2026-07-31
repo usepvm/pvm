@@ -19,9 +19,9 @@ BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
 
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\io-drive"
-    $script:STORAGE_PATH = $PVMConfig.paths.storage = "$TEST_DRIVE\storage"
-    $PVMConfig.paths.logError = "$TEST_DRIVE\logs\error.log"
-    $PVMConfig.paths.pathVarBackup = "$TEST_DRIVE\logs\path_backup.log"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
+    $script:STORAGE_PATH = $PVMConfig.paths.storage
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null

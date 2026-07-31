@@ -3,6 +3,9 @@
 
 param ($command)
 
+# Load functions scripts
+. "$PSScriptRoot\import.ps1"
+
 # Check if running in subprocess mode
 $params = $args
 $script:PVMSubprocessMode = $params -contains '--pvm-subprocess'
@@ -10,9 +13,6 @@ if ($script:PVMSubprocessMode) {
     $params = $params | Where-Object { $_ -ne '--pvm-subprocess' }
     $script:StructuredOutput = @()
 }
-
-# Load functions scripts
-. "$PSScriptRoot\import.ps1"
 
 $exitCode = Start-PVM -command $command -arguments $params
 

@@ -185,4 +185,16 @@ Describe 'Invoke-RunScripts' {
         Should -Invoke Write-Yellow -Times $scripts.Count -Exactly
         Should -Invoke Add-LogEntry -Times $scripts.Count -Exactly
     }
+
+    It "Returns -1 when multi-command script has invalid verbosity" {
+        Mock Get-Scripts { @{'testscript' = @('test arg1 --verbosity=None', 'test arg2 --verbosity=Normal')} }
+        Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
+
+        $result = Invoke-RunScripts -scriptName 'testscript'
+
+        $result | Should -Be -1
+        Should -Invoke Write-Yellow -ParameterFilter {
+            $message -like "*Invalid verbosity in multi-command script 'testscript': 'test arg2 --verbosity=Normal' (only --verbosity=None is allowed when a script has more than one command)*"
+        } -Exactly 1
+    }
 }

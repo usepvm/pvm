@@ -1,5 +1,18 @@
 ﻿
 BeforeAll {
+    $script:PVMRootBackup = $PVMRoot
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\system-drive"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
+    $script:LOG_ERROR_PATH = $PVMConfig.paths.logError
+    $script:STORAGE_PATH = $PVMConfig.paths.storage
+    $script:PATH_VAR_BACKUP_PATH = $PVMConfig.paths.pathVarBackup
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
+    New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
+
     Mock Show-Message {}
     Mock Show-Error {}
     Mock Show-Success {}
@@ -16,20 +29,6 @@ BeforeAll {
             'REGULAR_VAR' = 'SomeValue'
         }
     }
-
-    # Setup test environment
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\system-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
-    $script:LOG_ERROR_PATH = $PVMConfig.paths.logError
-    $script:STORAGE_PATH = $PVMConfig.paths.storage
-    $script:PATH_VAR_BACKUP_PATH = $PVMConfig.paths.pathVarBackup
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
 
     # Mock file system for logging tests
     $script:MockFileSystem = @{

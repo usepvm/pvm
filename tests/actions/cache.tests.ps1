@@ -5,7 +5,6 @@ BeforeAll {
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     $script:CACHE_PATH = $PVMConfig.paths.cache
-    # Create test cache directory
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
 

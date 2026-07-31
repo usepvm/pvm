@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-    # Mock global variables
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\profile-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 

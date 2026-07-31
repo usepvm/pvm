@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\add-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 

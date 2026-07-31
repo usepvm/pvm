@@ -1,5 +1,16 @@
 ﻿
 BeforeAll {
+    $script:PVMRootBackup = $PVMRoot
+    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\io-drive"
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
+    $script:STORAGE_PATH = $PVMConfig.paths.storage
+
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
+    New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
+
     Mock Add-LogEntry { 0 }
     # Create a mock registry to simulate environment variables
     $script:MockRegistry = @{
@@ -13,19 +24,6 @@ BeforeAll {
             'REGULAR_VAR' = 'SomeValue'
         }
     }
-
-    # Setup test environment
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
-
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\io-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
-
-    $script:STORAGE_PATH = $PVMConfig.paths.storage
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
 }
 
 AfterAll {

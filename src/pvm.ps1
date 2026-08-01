@@ -4,7 +4,7 @@
 param ($command)
 
 # Load functions scripts
-. "$PSScriptRoot\import.ps1"
+. "$PSScriptRoot\imports.ps1"
 
 # Check if running in subprocess mode
 $params = $args

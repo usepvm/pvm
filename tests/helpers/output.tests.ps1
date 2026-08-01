@@ -785,7 +785,7 @@ Describe "Write-Host helpers Tests" {
 
 Describe "Sound Functions" {
     BeforeAll {
-        $Global:PVMConfig = @{ paths = @{ assets = "C:\pvm\assets" } }
+        $Global:PVMConfig.paths.assets = "C:\pvm\assets"
     }
 
     BeforeEach {

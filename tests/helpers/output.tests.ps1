@@ -792,6 +792,14 @@ Describe "Sound Functions" {
         $Global:PVMConfig = @{ paths = @{ assets = "C:\pvm\assets" } }
     }
 
+    BeforeEach {
+        $script:currentPVMSubprocess = @{ mode = $Global:PVMSubprocess.mode; structuredOutput = $Global:PVMSubprocess.structuredOutput }
+    }
+
+    AfterEach {
+        $Global:PVMSubprocess = $script:currentPVMSubprocess
+    }
+
     Context "New-Player" {
         It "loads PresentationCore and returns a MediaPlayer instance" {
             Mock Add-Type {}
@@ -848,6 +856,7 @@ Describe "Sound Functions" {
         }
 
         It "opens the file, plays it, and sleeps for its duration" {
+            $Global:PVMSubprocess.mode = $false
             Invoke-Sound -path "C:\music\song.mp3"
 
             $script:playerCalls.Open | Should -Be "C:\music\song.mp3"
@@ -856,6 +865,7 @@ Describe "Sound Functions" {
         }
 
         It "logs and does not throw when playback fails" {
+            $Global:PVMSubprocess.mode = $false
             Mock New-Player { throw "boom" }
 
             { Invoke-Sound -path "C:\music\song.mp3" } | Should -Not -Throw
@@ -864,14 +874,11 @@ Describe "Sound Functions" {
 
         It "does not play sound in subprocess mode" {
             Mock New-Player {}
-            $currentPVMSubprocess = @{ mode = $Global:PVMSubprocess.mode; structuredOutput = $Global:PVMSubprocess.structuredOutput }
             $Global:PVMSubprocess.mode = $true
 
             Invoke-Sound -path "C:\music\song.mp3"
 
             Should -Invoke New-Player -Times 0
-            $Global:PVMSubprocess.mode = $currentPVMSubprocess.mode
-            $Global:PVMSubprocess.structuredOutput = $currentPVMSubprocess.structuredOutput
         }
     }
 

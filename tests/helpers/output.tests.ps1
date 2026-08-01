@@ -853,6 +853,8 @@ Describe "Sound Functions" {
 
         It "opens the file, plays it, and sleeps for its duration" {
             $Global:PVMSubprocess.mode = $false
+            $PVMConfig.env.SOUNDS_DISABLED = $false
+
             Invoke-Sound -path "C:\music\song.mp3"
 
             $script:playerCalls.Open | Should -Be "C:\music\song.mp3"
@@ -862,6 +864,8 @@ Describe "Sound Functions" {
 
         It "logs and does not throw when playback fails" {
             $Global:PVMSubprocess.mode = $false
+            $PVMConfig.env.SOUNDS_DISABLED = $false
+
             Mock New-Player { throw "boom" }
 
             { Invoke-Sound -path "C:\music\song.mp3" } | Should -Not -Throw
@@ -871,6 +875,16 @@ Describe "Sound Functions" {
         It "does not play sound in subprocess mode" {
             Mock New-Player {}
             $Global:PVMSubprocess.mode = $true
+
+            Invoke-Sound -path "C:\music\song.mp3"
+
+            Should -Invoke New-Player -Times 0
+        }
+
+        It "does not play sound when sounds are disabled" {
+            Mock New-Player {}
+            $Global:PVMSubprocess.mode = $false
+            $PVMConfig.env.SOUNDS_DISABLED = $true
 
             Invoke-Sound -path "C:\music\song.mp3"
 

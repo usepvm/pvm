@@ -345,6 +345,10 @@ function Invoke-Sound {
             return
         }
 
+        if ($PVMConfig.env.SOUNDS_DISABLED) {
+            return
+        }
+
         $MediaPlayer = New-Player
         $MediaPlayer.Open($path)
         $duration = Get-Sound-TotalSeconds -path $path

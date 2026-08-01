@@ -190,6 +190,7 @@ function Get-Config {
             MIN_LINE_LENGTH             = Get-EnvInt -value $envConfig['MIN_LINE_LENGTH'] -default 40
             ENABLE_UPDATE_CHECK         = Get-EnvBool -value $envConfig['ENABLE_UPDATE_CHECK'] -default $true
             UPDATE_CHECK_INTERVAL_HOURS = Get-EnvInt -value $envConfig['UPDATE_CHECK_INTERVAL_HOURS'] -default 24
+            SOUNDS_DISABLED             = Get-EnvBool -value $envConfig['SOUNDS_DISABLED'] -default $false
         }
 
         defaults = @{

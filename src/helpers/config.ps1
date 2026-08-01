@@ -1,41 +1,4 @@
 ﻿
-function Get-EnvConfig {
-    param ($rootPath)
-
-    $envFile = "$rootPath\.env"
-
-    if (Test-FileNotExists -path $envFile) {
-        Copy-Item -Path "$rootPath\.env.example" -Destination $envFile
-    } else {
-        Write-Verbose "Using .env from: $envFile"
-    }
-
-    $config = @{}
-
-    # Read the file and parse key=value pairs
-    Get-Content -Path $envFile | ForEach-Object {
-        # Skip empty lines and comments
-        if ($_ -match '^\s*$' -or $_ -match '^\s*#') {
-            return
-        }
-
-        # Parse key=value format
-        if ($_ -match '^([^=]+)=(.*)$') {
-            $key = $matches[1].Trim()
-            $value = $matches[2].Trim()
-
-            # Remove quotes if present (ensures matching quote types)
-            if ($value -match "^([""'])(.*)\1$") {
-                $value = $matches[2]
-            }
-
-            $config[$key] = $value
-        }
-    }
-
-    return $config
-}
-
 function Set-AliasesList {
     try {
         $jsonContent = $PVMConfig.defaults.aliases | ConvertTo-Json -Depth 10
@@ -98,6 +61,69 @@ function Get-Scripts {
     return $PVMConfig.defaults.scripts
 }
 
+function Get-EnvBool {
+    param ($value, $default = $false)
+
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        return $default
+    }
+
+    $parsed = $false
+    if ([bool]::TryParse($value, [ref]$parsed)) {
+        return $parsed
+    }
+
+    return $default
+}
+
+function Get-EnvInt {
+    param ($value, $default = 0)
+
+    $parsed = 0
+    if ([int]::TryParse($value, [ref]$parsed)) {
+        return $parsed
+    }
+
+    return $default
+}
+
+function Get-EnvConfig {
+    param ($rootPath)
+
+    $envFile = "$rootPath\.env"
+
+    if (Test-FileNotExists -path $envFile) {
+        Copy-Item -Path "$rootPath\.env.example" -Destination $envFile
+    } else {
+        Write-Verbose "Using .env from: $envFile"
+    }
+
+    $config = @{}
+
+    # Read the file and parse key=value pairs
+    Get-Content -Path $envFile | ForEach-Object {
+        # Skip empty lines and comments
+        if ($_ -match '^\s*$' -or $_ -match '^\s*#') {
+            return
+        }
+
+        # Parse key=value format
+        if ($_ -match '^([^=]+)=(.*)$') {
+            $key = $matches[1].Trim()
+            $value = $matches[2].Trim()
+
+            # Remove quotes if present (ensures matching quote types)
+            if ($value -match "^([""'])(.*)\1$") {
+                $value = $matches[2]
+            }
+
+            $config[$key] = $value
+        }
+    }
+
+    return $config
+}
+
 function Get-Config {
     param ($rootPath)
 
@@ -156,13 +182,13 @@ function Get-Config {
         env      = [ordered]@{
             PHP_CURRENT_VERSION_PATH    = $envConfig['PHP_CURRENT_VERSION_PATH']
             PVM_ENV_VAR_NAME            = $envConfig['PVM_ENV_VAR_NAME']
-            CACHE_MAX_HOURS             = [int] $envConfig['CACHE_MAX_HOURS']
-            DEFAULT_LOG_PAGE_SIZE       = [int] $envConfig['DEFAULT_LOG_PAGE_SIZE']
-            DEFAULT_PARTIAL_LIST_SIZE   = [int] $envConfig['DEFAULT_PARTIAL_LIST_SIZE']
-            MIN_PAD_RIGHT_LENGTH        = [int] $envConfig['MIN_PAD_RIGHT_LENGTH']
-            MIN_LINE_LENGTH             = [int] $envConfig['MIN_LINE_LENGTH']
-            ENABLE_UPDATE_CHECK         = [bool] $envConfig['ENABLE_UPDATE_CHECK']
-            UPDATE_CHECK_INTERVAL_HOURS = [int] $envConfig['UPDATE_CHECK_INTERVAL_HOURS']
+            CACHE_MAX_HOURS             = Get-EnvInt -value $envConfig['CACHE_MAX_HOURS'] -default 24
+            DEFAULT_LOG_PAGE_SIZE       = Get-EnvInt -value $envConfig['DEFAULT_LOG_PAGE_SIZE'] -default 20
+            DEFAULT_PARTIAL_LIST_SIZE   = Get-EnvInt -value $envConfig['DEFAULT_PARTIAL_LIST_SIZE'] -default 5
+            MIN_PAD_RIGHT_LENGTH        = Get-EnvInt -value $envConfig['MIN_PAD_RIGHT_LENGTH'] -default 2
+            MIN_LINE_LENGTH             = Get-EnvInt -value $envConfig['MIN_LINE_LENGTH'] -default 40
+            ENABLE_UPDATE_CHECK         = Get-EnvBool -value $envConfig['ENABLE_UPDATE_CHECK'] -default $true
+            UPDATE_CHECK_INTERVAL_HOURS = Get-EnvInt -value $envConfig['UPDATE_CHECK_INTERVAL_HOURS'] -default 24
         }
 
         defaults = @{

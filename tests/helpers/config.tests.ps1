@@ -18,6 +18,213 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
+Describe "Set-AliasesList" {
+    BeforeAll {
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
+    }
+
+    It "Creates aliases.json" {
+        $result = Set-AliasesList
+        $result | Should -Be 0
+
+        $result = Get-Aliases
+        $result.Count | Should -Be $DEFAULT_ALIASES.Count
+    }
+
+    It "Returns -1 when exception is thrown" {
+        Mock Set-Content { throw 'Test exception' }
+        $result = Set-AliasesList
+        $result | Should -Be -1
+    }
+}
+
+Describe "Get-Aliases" {
+    BeforeAll {
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        $testContent = [ordered]@{'?' = 'help'; 'i' = 'install'; 'init' = 'setup'}
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ALIASES_LIST_PATH
+        $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
+    }
+
+    It "Returns aliases from aliases.json or PVMConfig.defaults.aliases" {
+        $result = Get-Aliases
+        $result.Count | Should -Be 3
+        $result['?'] | Should -Be 'help'
+        $result['i'] | Should -Be 'install'
+        $result['init'] | Should -Be 'setup'
+    }
+
+    It "Falls back to DEFAULT_ALIASES value" {
+        Remove-Item -Path "$TEMPLATES_PATH\aliases.json"
+        $result = Get-Aliases
+        $result.Count | Should -Be $DEFAULT_ALIASES.Count
+    }
+
+    It "Returns default value when exception is thrown" {
+        Mock Test-FileExists { return $true }
+        Mock Get-Content { throw 'Test exception' }
+        $result = Get-Aliases
+        $result.Count | Should -Be $DEFAULT_ALIASES.Count
+    }
+}
+
+Describe "Get-FlagMap" {
+    It "Returns PVMConfig.defaults.flags" {
+        $result = Get-FlagMap
+        $result.Count | Should -Be $PVMConfig.defaults.flags.Count
+    }
+}
+
+Describe "Set-Scripts-List" {
+    BeforeAll {
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        $script:DEFAULT_SCRIPTS = $PVMConfig.defaults.scripts
+    }
+
+    It "Creates scripts.json" {
+        $result = Set-ScriptsList
+        $result | Should -Be 0
+
+        $result = Get-Scripts
+        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
+    }
+
+    It "Returns -1 when exception is thrown" {
+        Mock Set-Content { throw 'Test exception' }
+        $result = Set-ScriptsList
+        $result | Should -Be -1
+    }
+}
+
+Describe "Get-Scripts" {
+    BeforeAll {
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        $testContent = [ordered]@{'test:quiet' = 'test --verbosity=None'; 'test:cov' = 'test --coverage=75'}
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $SCRIPTS_LIST_PATH
+        $script:DEFAULT_SCRIPTS = $PVMConfig.defaults.scripts
+    }
+
+    It "Returns scripts from scripts.json or PVMConfig.defaults.scripts" {
+        $result = Get-Scripts
+        $result.Count | Should -Be 2
+        $result['test:quiet'] | Should -Be 'test --verbosity=None'
+        $result['test:cov'] | Should -Be 'test --coverage=75'
+    }
+
+    It "Falls back to DEFAULT_SCRIPTS value" {
+        Remove-Item -Path "$script:TEMPLATES_PATH\scripts.json"
+        $result = Get-Scripts
+        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
+    }
+
+    It "Returns default value when exception is thrown" {
+        Mock Test-FileExists { return $true }
+        Mock Get-Content { throw 'Test exception' }
+        $result = Get-Scripts
+        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
+    }
+}
+
+Describe "Get-EnvBool" {
+    It 'returns $true for "true" (any case)' {
+        Get-EnvBool 'true' | Should -BeTrue
+        Get-EnvBool 'True' | Should -BeTrue
+        Get-EnvBool 'TRUE' | Should -BeTrue
+    }
+
+    It 'returns $false for "false" (any case)' {
+        Get-EnvBool 'false' | Should -BeFalse
+        Get-EnvBool 'False' | Should -BeFalse
+        Get-EnvBool 'FALSE' | Should -BeFalse
+    }
+
+    It 'returns the default when value is $null' {
+        Get-EnvBool $null $true | Should -BeTrue
+        Get-EnvBool $null $false | Should -BeFalse
+    }
+
+    It 'returns the default when value is empty string' {
+        Get-EnvBool '' $true | Should -BeTrue
+    }
+
+    It 'returns the default when value is whitespace only' {
+        Get-EnvBool '   ' $true | Should -BeTrue
+    }
+
+    It 'returns the default when value is unparsable garbage' {
+        Get-EnvBool 'yes' $true | Should -BeTrue
+        Get-EnvBool '1' $false | Should -BeFalse
+        Get-EnvBool 'not-a-bool' $true | Should -BeTrue
+    }
+
+    It 'defaults to $false when no default is supplied and value is invalid' {
+        Get-EnvBool 'garbage' | Should -BeFalse
+    }
+
+    It 'trims surrounding whitespace around a valid value' {
+        Get-EnvBool '  true  ' | Should -BeTrue
+    }
+
+    It 'does not throw on any input' {
+        { Get-EnvBool $null } | Should -Not -Throw
+        { Get-EnvBool '' } | Should -Not -Throw
+        { Get-EnvBool 'nonsense' } | Should -Not -Throw
+    }
+}
+
+Describe "Get-EnvInt" {
+    It 'parses a valid positive integer' {
+        Get-EnvInt '42' | Should -Be 42
+    }
+
+    It 'parses a valid negative integer' {
+        Get-EnvInt '-5' | Should -Be -5
+    }
+
+    It 'parses zero' {
+        Get-EnvInt '0' | Should -Be 0
+    }
+
+    It 'returns the default when value is $null' {
+        Get-EnvInt $null 24 | Should -Be 24
+    }
+
+    It 'returns the default when value is empty string' {
+        Get-EnvInt '' 24 | Should -Be 24
+    }
+
+    It 'returns the default when value is whitespace only' {
+        Get-EnvInt '   ' 10 | Should -Be 10
+    }
+
+    It 'returns the default when value is non-numeric' {
+        Get-EnvInt 'abc' 10 | Should -Be 10
+    }
+
+    It 'returns the default when value is a decimal (not a valid int)' {
+        Get-EnvInt '3.14' 10 | Should -Be 10
+    }
+
+    It 'defaults to 0 when no default is supplied and value is invalid' {
+        Get-EnvInt 'garbage' | Should -Be 0
+    }
+
+    It 'trims surrounding whitespace around a valid value' {
+        Get-EnvInt '  42  ' | Should -Be 42
+    }
+
+    It 'does not throw on any input' {
+        { Get-EnvInt $null } | Should -Not -Throw
+        { Get-EnvInt '' } | Should -Not -Throw
+        { Get-EnvInt 'nonsense' } | Should -Not -Throw
+    }
+
+    It 'handles values exceeding Int32 range by falling back to default' {
+        Get-EnvInt '99999999999999999999' 5 | Should -Be 5
+    }
+}
+
 Describe "Get-EnvConfig" {
     BeforeEach {
         $script:envRoot = "$TEST_DRIVE\envconfig"
@@ -162,114 +369,6 @@ VALID=yes
             $result | Should -BeOfType [hashtable]
             $result.Count | Should -Be 0
         }
-    }
-}
-
-Describe "Set-AliasesList" {
-    BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
-    }
-
-    It "Creates aliases.json" {
-        $result = Set-AliasesList
-        $result | Should -Be 0
-
-        $result = Get-Aliases
-        $result.Count | Should -Be $DEFAULT_ALIASES.Count
-    }
-
-    It "Returns -1 when exception is thrown" {
-        Mock Set-Content { throw 'Test exception' }
-        $result = Set-AliasesList
-        $result | Should -Be -1
-    }
-}
-
-Describe "Get-Aliases" {
-    BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $testContent = [ordered]@{'?' = 'help'; 'i' = 'install'; 'init' = 'setup'}
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ALIASES_LIST_PATH
-        $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
-    }
-
-    It "Returns aliases from aliases.json or PVMConfig.defaults.aliases" {
-        $result = Get-Aliases
-        $result.Count | Should -Be 3
-        $result['?'] | Should -Be 'help'
-        $result['i'] | Should -Be 'install'
-        $result['init'] | Should -Be 'setup'
-    }
-
-    It "Falls back to DEFAULT_ALIASES value" {
-        Remove-Item -Path "$TEMPLATES_PATH\aliases.json"
-        $result = Get-Aliases
-        $result.Count | Should -Be $DEFAULT_ALIASES.Count
-    }
-
-    It "Returns default value when exception is thrown" {
-        Mock Test-FileExists { return $true }
-        Mock Get-Content { throw 'Test exception' }
-        $result = Get-Aliases
-        $result.Count | Should -Be $DEFAULT_ALIASES.Count
-    }
-}
-
-Describe "Get-FlagMap" {
-    It "Returns PVMConfig.defaults.flags" {
-        $result = Get-FlagMap
-        $result.Count | Should -Be $PVMConfig.defaults.flags.Count
-    }
-}
-
-Describe "Set-Scripts-List" {
-    BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $script:DEFAULT_SCRIPTS = $PVMConfig.defaults.scripts
-    }
-
-    It "Creates scripts.json" {
-        $result = Set-ScriptsList
-        $result | Should -Be 0
-
-        $result = Get-Scripts
-        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
-    }
-
-    It "Returns -1 when exception is thrown" {
-        Mock Set-Content { throw 'Test exception' }
-        $result = Set-ScriptsList
-        $result | Should -Be -1
-    }
-}
-
-Describe "Get-Scripts" {
-    BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $testContent = [ordered]@{'test:quiet' = 'test --verbosity=None'; 'test:cov' = 'test --coverage=75'}
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $SCRIPTS_LIST_PATH
-        $script:DEFAULT_SCRIPTS = $PVMConfig.defaults.scripts
-    }
-
-    It "Returns scripts from scripts.json or PVMConfig.defaults.scripts" {
-        $result = Get-Scripts
-        $result.Count | Should -Be 2
-        $result['test:quiet'] | Should -Be 'test --verbosity=None'
-        $result['test:cov'] | Should -Be 'test --coverage=75'
-    }
-
-    It "Falls back to DEFAULT_SCRIPTS value" {
-        Remove-Item -Path "$script:TEMPLATES_PATH\scripts.json"
-        $result = Get-Scripts
-        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
-    }
-
-    It "Returns default value when exception is thrown" {
-        Mock Test-FileExists { return $true }
-        Mock Get-Content { throw 'Test exception' }
-        $result = Get-Scripts
-        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
     }
 }
 

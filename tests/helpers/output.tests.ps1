@@ -552,7 +552,9 @@ Describe "Write-Host helpers Tests" {
             Write-Color -message 'Test message' -foreColor 'Red'
 
             Should -Invoke Write-Host -ParameterFilter {
-                $Object -match 'Test message' -and $ForegroundColor -eq 'Red'
+                $Object -match 'Test message' -and
+                $ForegroundColor -eq 'Red' -and
+                $NoNewline -eq $false
             } -Exactly 1
         }
 
@@ -565,6 +567,9 @@ Describe "Write-Host helpers Tests" {
 
             Should -Invoke Write-Host -Exactly 0
             $Global:PVMSubprocess.structuredOutput.Count | Should -Be 1
+            $Global:PVMSubprocess.structuredOutput[0].message | Should -Be 'Test message'
+            $Global:PVMSubprocess.structuredOutput[0].color | Should -Be 'Red'
+            $Global:PVMSubprocess.structuredOutput[0].noNewLine | Should -Be $false
         }
     }
 

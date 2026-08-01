@@ -15,6 +15,24 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
+Describe "Write-Host-Wrapper" {
+    It "Calls Write-Host with the correct parameters" -tag i {
+        Mock Write-Host { }
+
+        $object = "Test message"
+        $foregroundColor = "Green"
+        $noNewLine = $false
+
+        Write-Host-Wrapper -object $object -foregroundColor $foregroundColor -noNewLine:$noNewLine
+
+        Should -Invoke Write-Host -Times 1 -ParameterFilter {
+            $Object -eq $object -and
+            $ForegroundColor -eq $foregroundColor -and
+            $NoNewline -eq $noNewLine
+        }
+    }
+}
+
 Describe "Read-Host-Wrapper" {
     It "Calls Read-Host with no parameters" {
         Mock Read-Host { }

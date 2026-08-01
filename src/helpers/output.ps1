@@ -186,7 +186,7 @@ function Write-Color {
             noNewLine = $noNewLine.IsPresent
         }
     } else {
-        Write-Host -Object $message -ForegroundColor $foreColor -NoNewline:$noNewLine
+        Write-Host-Wrapper -object $message -foregroundColor $foreColor -noNewLine:$noNewLine
     }
 }
 
@@ -242,12 +242,6 @@ function Write-Gray {
     param ($message, [switch]$noNewLine)
 
     Write-Color -message $message -foreColor Gray -noNewLine:$noNewLine
-}
-
-function Write-Default {
-    param ($message, [switch]$noNewLine)
-
-    Show-Message -message $message -noNewLine:$noNewLine
 }
 
 function Show-Success {
@@ -310,14 +304,14 @@ function Show-Message {
     Write-White -message $message -noNewLine:$noNewLine
 }
 
-function New-Line {
-    New-Lines -count 1
-}
-
 function New-Lines {
     param ($count = 1)
 
-    Show-Message -message ("`n" * $count) -noNewLine
+    Write-Host-Wrapper -object ("`n" * $count) -noNewLine
+}
+
+function New-Line {
+    New-Lines -count 1
 }
 
 function New-Player {

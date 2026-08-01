@@ -488,7 +488,7 @@ Describe "Show-PHPProfiles Tests" {
 
     It "Should handle empty profiles directory" {
         # Remove all profiles
-        Remove-Item -Path "$PROFILES_PATH\*" -Force
+        Remove-Item -Path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
 
         $result = Show-PHPProfiles
         $result | Should -Be -1

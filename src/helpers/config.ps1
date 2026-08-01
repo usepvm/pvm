@@ -99,7 +99,7 @@ function Get-Scripts {
 }
 
 function Get-Config {
-    param ([string] $rootPath)
+    param ($rootPath)
 
     $envConfig = Get-EnvConfig -rootPath $rootPath
 

@@ -228,7 +228,10 @@ function Save-PHPProfile {
 
         # Extract only popular extensions
         foreach ($ext in $phpIniData.extensions) {
-            $extName = $ext.Extension -replace '^php_', '' -replace '\.dll$', ''
+            $extName = $ext.Extension.Trim("'`"") `
+                        -replace '^php_', '' `
+                        -replace '-[\d.]+.*$', '' `
+                        -replace '\.dll$', ''
             if ($popularExtensions -contains $extName) {
                 $userProfile.extensions[$extName] = @{
                     enabled = $ext.Enabled

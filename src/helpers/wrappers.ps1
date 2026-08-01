@@ -1,4 +1,19 @@
 ﻿
+function Write-Host-Wrapper {
+    param ($object, $foregroundColor = $null, [switch]$noNewLine)
+
+    $params = @{
+        Object    = $object
+        NoNewline = $noNewLine
+    }
+
+    if ($null -ne $foregroundColor) {
+        $params['ForegroundColor'] = $foregroundColor
+    }
+
+    Write-Host @params
+}
+
 function Read-Host-Wrapper {
     param ($prompt = $null)
 

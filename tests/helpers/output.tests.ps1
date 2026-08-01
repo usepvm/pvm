@@ -536,9 +536,17 @@ Describe "Show-SpinnerWhileProcess" {
 }
 
 Describe "Write-Host helpers Tests" {
+    BeforeEach {
+        $script:currentPVMSubprocess = @{ mode = $Global:PVMSubprocess.mode; structuredOutput = $Global:PVMSubprocess.structuredOutput }
+    }
+
+    AfterEach {
+        $Global:PVMSubprocess.mode = $script:currentPVMSubprocess.mode
+        $Global:PVMSubprocess.structuredOutput = $script:currentPVMSubprocess.structuredOutput
+    }
+
     Context "Write-Color Tests" {
         It "Prints message with specified color" {
-            $currentPVMSubprocess = @{ mode = $Global:PVMSubprocess.mode; structuredOutput = $Global:PVMSubprocess.structuredOutput }
             $Global:PVMSubprocess.mode = $false
             Mock Write-Host {}
 
@@ -547,12 +555,9 @@ Describe "Write-Host helpers Tests" {
             Should -Invoke Write-Host -ParameterFilter {
                 $Object -match 'Test message' -and $ForegroundColor -eq 'Red'
             } -Exactly 1
-            $Global:PVMSubprocess.mode = $currentPVMSubprocess.mode
-            $Global:PVMSubprocess.structuredOutput = $currentPVMSubprocess.structuredOutput
         }
 
         It "Stores structured output when subprocess mode is enabled" {
-            $currentPVMSubprocess = @{ mode = $Global:PVMSubprocess.mode; structuredOutput = $Global:PVMSubprocess.structuredOutput }
             $Global:PVMSubprocess.structuredOutput = @()
             $Global:PVMSubprocess.mode = $true
             Mock Write-Host {}
@@ -561,8 +566,6 @@ Describe "Write-Host helpers Tests" {
 
             Should -Invoke Write-Host -Exactly 0
             $Global:PVMSubprocess.structuredOutput.Count | Should -Be 1
-            $Global:PVMSubprocess.mode = $currentPVMSubprocess.mode
-            $Global:PVMSubprocess.structuredOutput = $currentPVMSubprocess.structuredOutput
         }
     }
 

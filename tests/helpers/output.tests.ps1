@@ -789,7 +789,7 @@ Describe "Sound Functions" {
     }
 
     BeforeEach {
-        $script:currentPVMSubprocess = @{ mode = $Global:PVMSubprocess.mode; structuredOutput = $Global:PVMSubprocess.structuredOutput }
+        $script:currentPVMSubprocess = @{ mode = $Global:PVMSubprocess.enabled; structuredOutput = $Global:PVMSubprocess.structuredOutput }
     }
 
     AfterEach {
@@ -852,7 +852,7 @@ Describe "Sound Functions" {
         }
 
         It "opens the file, plays it, and sleeps for its duration" {
-            $Global:PVMSubprocess.mode = $false
+            $Global:PVMSubprocess.enabled = $false
             $PVMConfig.env.SOUNDS_DISABLED = $false
 
             Invoke-Sound -path "C:\music\song.mp3"
@@ -863,7 +863,7 @@ Describe "Sound Functions" {
         }
 
         It "logs and does not throw when playback fails" {
-            $Global:PVMSubprocess.mode = $false
+            $Global:PVMSubprocess.enabled = $false
             $PVMConfig.env.SOUNDS_DISABLED = $false
 
             Mock New-Player { throw "boom" }
@@ -874,7 +874,7 @@ Describe "Sound Functions" {
 
         It "does not play sound in subprocess mode" {
             Mock New-Player {}
-            $Global:PVMSubprocess.mode = $true
+            $Global:PVMSubprocess.enabled = $true
 
             Invoke-Sound -path "C:\music\song.mp3"
 
@@ -883,7 +883,7 @@ Describe "Sound Functions" {
 
         It "does not play sound when sounds are disabled" {
             Mock New-Player {}
-            $Global:PVMSubprocess.mode = $false
+            $Global:PVMSubprocess.enabled = $false
             $PVMConfig.env.SOUNDS_DISABLED = $true
 
             Invoke-Sound -path "C:\music\song.mp3"

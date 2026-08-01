@@ -179,8 +179,8 @@ function Show-SpinnerWhileProcess  {
 function Write-Color {
     param ($message, $foreColor, [switch]$noNewLine)
 
-    if ($PVMSubprocess.mode) {
-        $PVMSubprocess.structuredOutput += @{
+    if ($Global:PVMSubprocess.mode) {
+        $Global:PVMSubprocess.structuredOutput += @{
             message = $message
             color = $foreColor
             noNewLine = $noNewLine.IsPresent
@@ -347,7 +347,7 @@ function Invoke-Sound {
     param ($path)
 
     try {
-        if ($script:PVMSubprocessMode) {
+        if ($Global:PVMSubprocess.mode) {
             return
         }
 

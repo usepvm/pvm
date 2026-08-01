@@ -122,7 +122,7 @@ function Get-Config {
         version  = '2.6' # PVM version
 
         paths    = [ordered]@{
-            assets             = "$rootPath\assets"
+            pvmRoot            = $rootPath
             storage            = $storage
             fakeStorage        = $fakeStorage
             php                = "$storage\php"
@@ -138,6 +138,7 @@ function Get-Config {
             log                = $logs
             logError           = "$logs\error.log"
             pathVarBackup      = "$logs\path.bak.log"
+            assets             = "$rootPath\assets"
         }
 
         links    = [ordered]@{
@@ -236,6 +237,7 @@ function Get-Config {
                 $fakeTemplates = "$fakeData\templates"
                 $fakeLogs = "$fakeStorage\logs"
 
+                $PVMConfig.paths.pvmRoot = $root
                 $PVMConfig.paths.storage = $fakeStorage
                 $PVMConfig.paths.fakeStorage = $fakeStorage
                 $PVMConfig.paths.php = "$fakeStorage\php"
@@ -251,6 +253,7 @@ function Get-Config {
                 $PVMConfig.paths.log = $fakeLogs
                 $PVMConfig.paths.logError = "$fakeLogs\error.log"
                 $PVMConfig.paths.pathVarBackup = "$fakeLogs\path.bak.log"
+                $PVMConfig.paths.assets = "$root\assets"
 
                 $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$root\pvm\php"
             }

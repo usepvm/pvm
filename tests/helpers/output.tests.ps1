@@ -213,6 +213,11 @@ Describe "Show-SpinnerWhileJob" {
     BeforeAll {
         Mock Write-Color {}
         Mock Write-Yellow {}
+
+        $PVMRoot = $PVMConfig.paths.pvmRoot
+        New-Item -Path "$PVMRoot\src" -ItemType Directory -Force | Out-Null
+        Set-Content -Path "$PVMRoot\src\import.ps1" -Value '# no-op for tests'
+
         $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
         $script:keepRunning = $true
         Mock Start-Job {
@@ -533,26 +538,31 @@ Describe "Show-SpinnerWhileProcess" {
 Describe "Write-Host helpers Tests" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {
+            $currentPVMSubprocess = @{ mode = $Global:PVMSubprocess.mode; structuredOutput = $Global:PVMSubprocess.structuredOutput }
+            $Global:PVMSubprocess.mode = $false
             Mock Write-Host {}
-            $PVMSubprocess.mode = $false
 
             Write-Color -message 'Test message' -foreColor 'Red'
 
             Should -Invoke Write-Host -ParameterFilter {
                 $Object -match 'Test message' -and $ForegroundColor -eq 'Red'
             } -Exactly 1
+            $Global:PVMSubprocess.mode = $currentPVMSubprocess.mode
+            $Global:PVMSubprocess.structuredOutput = $currentPVMSubprocess.structuredOutput
         }
 
         It "Stores structured output when subprocess mode is enabled" {
+            $currentPVMSubprocess = @{ mode = $Global:PVMSubprocess.mode; structuredOutput = $Global:PVMSubprocess.structuredOutput }
+            $Global:PVMSubprocess.structuredOutput = @()
+            $Global:PVMSubprocess.mode = $true
             Mock Write-Host {}
-            $PVMSubprocess.structuredOutput = @()
-            $PVMSubprocess.mode = $true
 
             Write-Color -message 'Test message' -foreColor 'Red'
 
             Should -Invoke Write-Host -Exactly 0
-            $PVMSubprocess.structuredOutput.Count | Should -Be 1
-            $PVMSubprocess.mode = $false
+            $Global:PVMSubprocess.structuredOutput.Count | Should -Be 1
+            $Global:PVMSubprocess.mode = $currentPVMSubprocess.mode
+            $Global:PVMSubprocess.structuredOutput = $currentPVMSubprocess.structuredOutput
         }
     }
 
@@ -852,12 +862,14 @@ Describe "Sound Functions" {
 
         It "does not play sound in subprocess mode" {
             Mock New-Player {}
-            $script:PVMSubprocessMode = $true
+            $currentPVMSubprocess = @{ mode = $Global:PVMSubprocess.mode; structuredOutput = $Global:PVMSubprocess.structuredOutput }
+            $Global:PVMSubprocess.mode = $true
 
             Invoke-Sound -path "C:\music\song.mp3"
 
             Should -Invoke New-Player -Times 0
-            $script:PVMSubprocessMode = $false
+            $Global:PVMSubprocess.mode = $currentPVMSubprocess.mode
+            $Global:PVMSubprocess.structuredOutput = $currentPVMSubprocess.structuredOutput
         }
     }
 

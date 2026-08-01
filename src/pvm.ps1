@@ -8,17 +8,17 @@ param ($command)
 
 # Check if running in subprocess mode
 $params = $args
-$PVMSubprocess.mode = $params -contains '--pvm-subprocess'
-if ($PVMSubprocess.mode) {
+$Global:PVMSubprocess.mode = $params -contains '--pvm-subprocess'
+if ($Global:PVMSubprocess.mode) {
     $params = $params | Where-Object { $_ -ne '--pvm-subprocess' }
-    $PVMSubprocess.structuredOutput = @()
+    $Global:PVMSubprocess.structuredOutput = @()
 }
 
 $exitCode = Start-PVM -command $command -arguments $params
 
 # If in subprocess mode, output structured data
-if ($PVMSubprocess.mode) {
-    $PVMSubprocess.structuredOutput | ConvertTo-Json -Depth 10
+if ($Global:PVMSubprocess.mode) {
+    $Global:PVMSubprocess.structuredOutput | ConvertTo-Json -Depth 10
 }
 
 exit $exitCode

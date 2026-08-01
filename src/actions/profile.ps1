@@ -228,7 +228,10 @@ function Save-PHPProfile {
 
         # Extract only popular extensions
         foreach ($ext in $phpIniData.extensions) {
-            $extName = $ext.Extension -replace '^php_', '' -replace '\.dll$', ''
+            $extName = $ext.Extension.Trim("'`"") `
+                        -replace '^php_', '' `
+                        -replace '-[\d.]+.*$', '' `
+                        -replace '\.dll$', ''
             if ($popularExtensions -contains $extName) {
                 $userProfile.extensions[$extName] = @{
                     enabled = $ext.Enabled
@@ -253,7 +256,7 @@ function Save-PHPProfile {
         Show-Message -message "  Extensions: $($userProfile.extensions.Count) (popular/common only)"
         Show-Message -message "  Location: $profilePath"
         Show-Info -message "`nNote: Only popular/common settings and extensions are saved."
-        Show-Info -message "      You can manually add other settings/extensions using 'pvm ini' commands."
+        Show-Info -message "      You can manually edit settings/extensions at '$($PVMConfig.paths.profileTemplate)'."
 
         return 0
     } catch {

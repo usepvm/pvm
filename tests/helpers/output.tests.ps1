@@ -541,8 +541,7 @@ Describe "Write-Host helpers Tests" {
     }
 
     AfterEach {
-        $Global:PVMSubprocess.mode = $script:currentPVMSubprocess.mode
-        $Global:PVMSubprocess.structuredOutput = $script:currentPVMSubprocess.structuredOutput
+        $Global:PVMSubprocess = $script:currentPVMSubprocess
     }
 
     Context "Write-Color Tests" {

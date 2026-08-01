@@ -122,6 +122,7 @@ function Get-Config {
         version  = '2.6' # PVM version
 
         paths    = [ordered]@{
+            pvmRoot            = $rootPath
             storage            = $storage
             fakeStorage        = $fakeStorage
             php                = "$storage\php"
@@ -235,6 +236,7 @@ function Get-Config {
                 $fakeTemplates = "$fakeData\templates"
                 $fakeLogs = "$fakeStorage\logs"
 
+                $PVMConfig.paths.pvmRoot = $root
                 $PVMConfig.paths.storage = $fakeStorage
                 $PVMConfig.paths.fakeStorage = $fakeStorage
                 $PVMConfig.paths.php = "$fakeStorage\php"

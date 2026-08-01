@@ -179,7 +179,7 @@ function Show-SpinnerWhileProcess  {
 function Write-Color {
     param ($message, $foreColor, [switch]$noNewLine)
 
-    if ($Global:PVMSubprocess.mode) {
+    if ($Global:PVMSubprocess.enabled) {
         $Global:PVMSubprocess.structuredOutput += @{
             message = $message
             color = $foreColor

@@ -547,25 +547,25 @@ Describe "Write-Host helpers Tests" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {
             $Global:PVMSubprocess.mode = $false
-            Mock Write-Host {}
+            Mock Write-Host-Wrapper {}
 
             Write-Color -message 'Test message' -foreColor 'Red'
 
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -match 'Test message' -and
-                $ForegroundColor -eq 'Red' -and
-                $NoNewline -eq $false
+            Should -Invoke Write-Host-Wrapper -ParameterFilter {
+                $object -match 'Test message' -and
+                $foregroundColor -eq 'Red' -and
+                $noNewLine -eq $false
             } -Exactly 1
         }
 
         It "Stores structured output when subprocess mode is enabled" {
             $Global:PVMSubprocess.structuredOutput = @()
             $Global:PVMSubprocess.mode = $true
-            Mock Write-Host {}
+            Mock Write-Host-Wrapper {}
 
             Write-Color -message 'Test message' -foreColor 'Red'
 
-            Should -Invoke Write-Host -Exactly 0
+            Should -Invoke Write-Host-Wrapper -Exactly 0
             $Global:PVMSubprocess.structuredOutput.Count | Should -Be 1
             $Global:PVMSubprocess.structuredOutput[0].message | Should -Be 'Test message'
             $Global:PVMSubprocess.structuredOutput[0].color | Should -Be 'Red'
@@ -770,23 +770,22 @@ Describe "Write-Host helpers Tests" {
     }
 
     Context "New-Line* Test" {
-        It "Prints new line" {
-            Mock Show-Message {}
-
-            New-Line
-
-            Should -Invoke Show-Message -ParameterFilter {
-                $message -eq "`n" -and $noNewline
-            }
-        }
-
         It "Prints new lines" {
-            Mock Show-Message {}
+            Mock Write-Host-Wrapper {}
 
             New-Lines -count 5
 
-            Should -Invoke Show-Message -Exactly 1 -ParameterFilter {
-                $message -eq ("`n" * 5) -and $noNewline
+            Should -Invoke Write-Host-Wrapper -Exactly 1 -ParameterFilter {
+                $object -eq ("`n" * 5) -and $noNewLine
+            }
+        }
+        It "Prints new line" {
+            Mock New-Lines {}
+
+            New-Line
+
+            Should -Invoke New-Lines -ParameterFilter {
+                $count -eq 1
             }
         }
     }

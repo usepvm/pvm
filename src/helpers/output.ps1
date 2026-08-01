@@ -186,7 +186,7 @@ function Write-Color {
             noNewLine = $noNewLine.IsPresent
         }
     } else {
-        Write-Host -Object $message -ForegroundColor $foreColor -NoNewline:$noNewLine
+        Write-Host-Wrapper -object $message -foregroundColor $foreColor -noNewLine:$noNewLine
     }
 }
 
@@ -310,12 +310,12 @@ function Show-Message {
     Write-White -message $message -noNewLine:$noNewLine
 }
 
-function New-Line {
-    New-Lines -count 1
-}
-
 function New-Lines {
     param ($count = 1)
 
-    Show-Message -message ("`n" * $count) -noNewLine
+    Write-Host-Wrapper -object ("`n" * $count) -noNewLine
+}
+
+function New-Line {
+    New-Lines -count 1
 }

@@ -244,12 +244,6 @@ function Write-Gray {
     Write-Color -message $message -foreColor Gray -noNewLine:$noNewLine
 }
 
-function Write-Default {
-    param ($message, [switch]$noNewLine)
-
-    Show-Message -message $message -noNewLine:$noNewLine
-}
-
 function Show-Success {
     param ($message, [switch]$noNewLine)
 

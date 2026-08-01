@@ -657,14 +657,6 @@ Describe "Write-Host helpers Tests" {
                 $message -match 'Test message' -and $foreColor -eq 'Gray'
             }
         }
-
-        It "Prints default message" {
-            Write-Default -message 'Test message'
-
-            Should -Invoke Write-Color -ParameterFilter {
-                $message -match 'Test message' -and $foreColor -eq 'White'
-            }
-        }
     }
 
     Context "Show-* Tests" {

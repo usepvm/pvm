@@ -93,7 +93,7 @@ function Show-SpinnerWhileJob {
         # Create initialization script to load all PVM functions into the job
         $env:PVM_ROOT_FOR_JOB = $PVMRoot
         $initScript = {
-            . "$($env:PVM_ROOT_FOR_JOB)\src\import.ps1"
+            . "$($env:PVM_ROOT_FOR_JOB)\src\imports.ps1"
         }
 
         # $job = Start-Job -ScriptBlock $scriptBlock -InitializationScript $initScript -ArgumentList (,$argumentList)

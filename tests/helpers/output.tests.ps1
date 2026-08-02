@@ -912,6 +912,13 @@ Describe "Sound Functions" {
             }
         }
 
+        It "Invoke-NotifySound plays notify.mp3 from assets path" {
+            Invoke-NotifySound
+            Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
+                $filename -eq "notify.mp3"
+            }
+        }
+
         It "Invoke-PromptSound plays prompt.mp3 from assets path" {
             Invoke-PromptSound
             Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {

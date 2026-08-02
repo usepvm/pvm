@@ -365,6 +365,10 @@ function Invoke-ErrorSound {
     Invoke-Sound -filename "error.mp3"
 }
 
+function Invoke-NotifySound {
+    Invoke-Sound -filename "notify.mp3"
+}
+
 function Invoke-PromptSound {
     Invoke-Sound -filename "prompt.mp3"
 }

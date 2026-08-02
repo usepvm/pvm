@@ -59,7 +59,7 @@ function Invoke-RunScripts {
 
                 if ($command -ne 'test') {
                     Write-Yellow -message "`nInvalid command in script: '$command'`n"
-                    $results += -1
+                    $results += @{ code = -1; output = $null }
                     continue
                 }
 
@@ -67,7 +67,7 @@ function Invoke-RunScripts {
                     $verbosityArg = $scriptArgs | Where-Object { $_ -match '^--verbosity=' }
                     if ($verbosityArg -and $verbosityArg -ne '--verbosity=None') {
                         Write-Yellow -message "`nInvalid verbosity in multi-command script '$scriptName': '$scriptCommand' (only --verbosity=None is allowed when a script has more than one command)`n"
-                        $results += -1
+                        $results += @{ code = -2; output = $null }
                         continue
                     }
 
@@ -84,15 +84,20 @@ function Invoke-RunScripts {
             } catch {
                 Write-Yellow -message "`nFailed to run command: pvm $scriptCommand, check logs at '$($PVMConfig.paths.logError)'`n"
                 $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run script"; exception = $_ }
-                $results += -1
+                $results += @{ code = -1; output = $null }
             }
         }
 
-        if ($results | Where-Object { $_ -and $_.code -ne 0 }) {
+        if ($results | Where-Object { $_ -and $_.code -eq -1 }) {
             Invoke-ErrorSound
             return -1
         }
-        
+
+        if ($results | Where-Object { $_ -and $_.code -eq -2 }) {
+            Invoke-NotifySound
+            return -1
+        }
+
         Invoke-SuccessSound
         return 0
     } catch {

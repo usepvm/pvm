@@ -341,11 +341,7 @@ function Invoke-Sound {
     param ($path)
 
     try {
-        if ($Global:PVMSubprocess.enabled) {
-            return
-        }
-
-        if ($PVMConfig.env.SOUNDS_DISABLED) {
+        if ($Global:PVMSubprocess.enabled -or $PVMConfig.env.SOUNDS_DISABLED) {
             return
         }
 

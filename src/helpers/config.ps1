@@ -156,7 +156,7 @@ function Get-Config {
             templates          = $templates
             cache              = "$data\cache"
             profiles           = $profiles
-            exampleProfile     = "$profiles\example-profile.json"
+            exampleProfile     = "$profiles\profile-example.json"
             profileTemplate    = "$templates\profile-template.json"
             zendExtensionsList = "$templates\zend_extensions.json"
             aliasesList        = "$templates\aliases.json"
@@ -272,7 +272,7 @@ function Get-Config {
                 $PVMConfig.paths.templates = $fakeTemplates
                 $PVMConfig.paths.cache = "$fakeData\cache"
                 $PVMConfig.paths.profiles = $fakeProfiles
-                $PVMConfig.paths.exampleProfile = "$fakeProfiles\example-profile.json"
+                $PVMConfig.paths.exampleProfile = "$fakeProfiles\profile-example.json"
                 $PVMConfig.paths.profileTemplate = "$fakeTemplates\profile-template.json"
                 $PVMConfig.paths.zendExtensionsList = "$fakeTemplates\zend_extensions.json"
                 $PVMConfig.paths.aliasesList = "$fakeTemplates\aliases.json"

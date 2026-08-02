@@ -652,7 +652,7 @@ function Import-PHPProfile {
 function New-ExamplePHPProfile {
     try {
         $exampleProfile = [ordered]@{
-            name        = "example-profile"
+            name        = "profile-example"
             description = "Dev"
             created     = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
             phpVersion  = "8.2.30"

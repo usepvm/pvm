@@ -164,6 +164,7 @@ function Get-Config {
             log                = $logs
             logError           = "$logs\error.log"
             pathVarBackup      = "$logs\path.bak.log"
+            assets             = "$rootPath\assets"
         }
 
         links    = [ordered]@{
@@ -189,6 +190,7 @@ function Get-Config {
             MIN_LINE_LENGTH             = Get-EnvInt -value $envConfig['MIN_LINE_LENGTH'] -default 40
             ENABLE_UPDATE_CHECK         = Get-EnvBool -value $envConfig['ENABLE_UPDATE_CHECK'] -default $true
             UPDATE_CHECK_INTERVAL_HOURS = Get-EnvInt -value $envConfig['UPDATE_CHECK_INTERVAL_HOURS'] -default 24
+            SOUNDS_DISABLED             = Get-EnvBool -value $envConfig['SOUNDS_DISABLED'] -default $false
         }
 
         defaults = @{
@@ -278,6 +280,7 @@ function Get-Config {
                 $PVMConfig.paths.log = $fakeLogs
                 $PVMConfig.paths.logError = "$fakeLogs\error.log"
                 $PVMConfig.paths.pathVarBackup = "$fakeLogs\path.bak.log"
+                $PVMConfig.paths.assets = "$root\assets"
 
                 $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$root\pvm\php"
             }

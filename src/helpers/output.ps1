@@ -313,3 +313,58 @@ function New-Lines {
 function New-Line {
     New-Lines -count 1
 }
+
+function New-Player {
+    Add-Type -AssemblyName PresentationCore
+    $MediaPlayer = New-Object -TypeName System.Windows.Media.MediaPlayer
+
+    return $MediaPlayer
+}
+
+function Get-Sound-TotalSeconds {
+    param ($path)
+
+    $folder = Split-Path $path
+    $file = Split-Path $path -Leaf
+    $shell = New-Object -ComObject Shell.Application
+    $shellFolder = $shell.Namespace($folder)
+    $shellFile = $shellFolder.ParseName($file)
+
+    $duration = $shellFolder.GetDetailsOf($shellFile, 27)
+    $ts = [timespan]::Parse($duration)
+    $totalSeconds = if ($ts.TotalSeconds -gt 1) { $ts.TotalSeconds } else { 1 }
+
+    return $totalSeconds
+}
+
+function Invoke-Sound {
+    param ($filename)
+
+    try {
+        if ($Global:PVMSubprocess.enabled -or $PVMConfig.env.SOUNDS_DISABLED) {
+            return
+        }
+
+        $MediaPlayer = New-Player
+        $path = "$($PVMConfig.paths.assets)\sounds\$filename"
+        $MediaPlayer.Open($path)
+        $duration = Get-Sound-TotalSeconds -path $path
+        $MediaPlayer.Play()
+        Start-Sleep -Seconds $duration
+        $MediaPlayer.Close()
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to play sound"; exception = $_ }
+    }
+}
+
+function Invoke-SuccessSound {
+    Invoke-Sound -filename "success.mp3"
+}
+
+function Invoke-ErrorSound {
+    Invoke-Sound -filename "error.mp3"
+}
+
+function Invoke-PromptSound {
+    Invoke-Sound -filename "prompt.mp3"
+}

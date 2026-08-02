@@ -521,9 +521,11 @@ function Invoke-Tests {
         Write-TestsSummary -testData $testData -options $options -maxLineLength $maxLineLength
 
         if ($testData.totalFailedTests -gt 0) {
+            Invoke-ErrorSound
             return -1
         }
 
+        Invoke-SuccessSound
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }

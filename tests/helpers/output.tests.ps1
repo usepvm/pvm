@@ -782,3 +782,141 @@ Describe "Write-Host helpers Tests" {
         }
     }
 }
+
+Describe "Sound Functions" {
+    BeforeAll {
+        $Global:PVMConfig.paths.assets = "C:\pvm\assets"
+    }
+
+    BeforeEach {
+        $script:currentPVMSubprocess = @{ enabled = $Global:PVMSubprocess.enabled; structuredOutput = $Global:PVMSubprocess.structuredOutput }
+    }
+
+    AfterEach {
+        $Global:PVMSubprocess = $script:currentPVMSubprocess
+    }
+
+    Context "New-Player" {
+        It "loads PresentationCore and returns a MediaPlayer instance" {
+            Mock Add-Type {}
+            Mock New-Object { @{ PSTypeName = 'FakeMediaPlayer' } }
+
+            $result = New-Player
+
+            Should -Invoke Add-Type -Times 1 -Exactly
+            Should -Invoke New-Object -Times 1 -Exactly
+            $result.PSTypeName | Should -Be 'FakeMediaPlayer'
+        }
+    }
+
+    Context "Get-Sound-TotalSeconds" {
+        BeforeEach {
+            $script:fakeShellFile = [PSCustomObject]@{}
+            $script:fakeShellFolder = [PSCustomObject]@{}
+            $script:fakeShell = [PSCustomObject]@{}
+
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name ParseName -Value { param($f) $script:fakeShellFile }
+            $script:fakeShell | Add-Member -MemberType ScriptMethod -Name Namespace -Value { param($f) $script:fakeShellFolder }
+
+            Mock New-Object { $script:fakeShell } -ParameterFilter { $ComObject -eq 'Shell.Application' }
+        }
+
+        It "returns TotalSeconds when duration is greater than 1 second" {
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) "0:00:05" } -Force
+
+            $result = Get-Sound-TotalSeconds -path "C:\music\song.mp3"
+
+            $result | Should -Be 5
+        }
+
+        It "returns 1 when duration is 1 second or less" {
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) "0:00:00" } -Force
+
+            $result = Get-Sound-TotalSeconds -path "C:\music\song.mp3"
+
+            $result | Should -Be 1
+        }
+    }
+
+    Context "Invoke-Sound" {
+        BeforeEach {
+            $script:playerCalls = @{ Open = $null; Play = $false }
+            $script:fakePlayer = [PSCustomObject]@{}
+            $script:fakePlayer | Add-Member -MemberType ScriptMethod -Name Open -Value { param($p) $script:playerCalls.Open = $p }
+            $script:fakePlayer | Add-Member -MemberType ScriptMethod -Name Play -Value { $script:playerCalls.Play = $true }
+            $script:fakePlayer | Add-Member -MemberType ScriptMethod -Name Close -Value { }
+
+            Mock New-Player { $script:fakePlayer }
+            Mock Get-Sound-TotalSeconds { 3 }
+            Mock Start-Sleep {}
+            Mock Add-LogEntry {}
+        }
+
+        It "opens the file, plays it, and sleeps for its duration" {
+            $Global:PVMSubprocess.enabled = $false
+            $PVMConfig.env.SOUNDS_DISABLED = $false
+
+            Invoke-Sound -filename "song.mp3"
+
+            $script:playerCalls.Open | Should -Be "$($PVMConfig.paths.assets)\sounds\song.mp3"
+            $script:playerCalls.Play | Should -BeTrue
+            Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 3 }
+        }
+
+        It "logs and does not throw when playback fails" {
+            $Global:PVMSubprocess.enabled = $false
+            $PVMConfig.env.SOUNDS_DISABLED = $false
+
+            Mock New-Player { throw "boom" }
+
+            { Invoke-Sound -filename "song.mp3" } | Should -Not -Throw
+            Should -Invoke Add-LogEntry -Times 1 -Exactly
+        }
+
+        It "does not play sound in subprocess mode" {
+            Mock New-Player {}
+            $Global:PVMSubprocess.enabled = $true
+
+            Invoke-Sound -filename "song.mp3"
+
+            Should -Invoke New-Player -Times 0
+        }
+
+        It "does not play sound when sounds are disabled" {
+            Mock New-Player {}
+            $Global:PVMSubprocess.enabled = $false
+            $PVMConfig.env.SOUNDS_DISABLED = $true
+
+            Invoke-Sound -filename "song.mp3"
+
+            Should -Invoke New-Player -Times 0
+        }
+    }
+
+    Context "Invoke-<Type>Sound wrappers" {
+        BeforeEach {
+            Mock Invoke-Sound {}
+        }
+
+        It "Invoke-SuccessSound plays success.mp3 from assets path" {
+            Invoke-SuccessSound
+            Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
+                $filename -eq "success.mp3"
+            }
+        }
+
+        It "Invoke-ErrorSound plays error.mp3 from assets path" {
+            Invoke-ErrorSound
+            Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
+                $filename -eq "error.mp3"
+            }
+        }
+
+        It "Invoke-PromptSound plays prompt.mp3 from assets path" {
+            Invoke-PromptSound
+            Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
+                $filename -eq "prompt.mp3"
+            }
+        }
+    }
+}

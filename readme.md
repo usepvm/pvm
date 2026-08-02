@@ -17,6 +17,8 @@ PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that make
   - [Managing php.ini](#manage-phpini-settings-and-extensions)
   - [Profiles](#manage-php-configuration-profiles)
   - [Cache](#managing-cache)
+  - [Performance & User Experience](#performance--user-experience)
+  - [Sound Notifications](#sound-notifications)
   - [Aliases](#command-aliases)
   - [Build Types](#build-types)
   - [Namespaced Commands](#namespaced-commands)
@@ -32,13 +34,16 @@ PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that make
 ## Features
 
 - Install and manage multiple PHP versions
-- Switch PHP versions instantly
-- Auto-detect PHP version from project files
-- Manage php.ini settings
-- Enable, disable, install, and remove extensions
-- Save and load reusable PHP configuration profiles
+- Automatic PHP version detection
+- Manage php.ini settings and extensions
+- Create, save, and reuse PHP configuration profiles
 - Built-in cache management
-- Built-in test runner with coverage reporting
+- Intelligent command suggestions
+- Automatic update checking and self-update support
+- Built-in test runner with coverage support
+- Reusable project scripts similar to npm or Composer scripts
+- Responsive long-running operations with progress indicators
+- Optional sound notifications for test results
 
 ## Requirements
 
@@ -58,9 +63,21 @@ cp .env.example .env # edit .env to set your config values before running setup
 # Run this command to setup pvm
 pvm setup
 
-# Ensure PVM directories and default files exist
+# Recreate missing directories, templates and configuration files & Fix the .env file
 pvm repair
 ```
+
+**Environment Configuration:**
+
+The `.env` file lets you customize how PVM behaves. Key configuration options include:
+
+- `SOUNDS_DISABLED` - Disable sound notifications (default: false)
+- `CACHE_MAX_HOURS` - Cached available versions expiration in hours (default: 168)
+- `ENABLE_UPDATE_CHECK` - Enable automatic update checks (default: true)
+- `UPDATE_CHECK_INTERVAL_HOURS` - Update check interval in hours (default: 24)
+- `DEFAULT_LOG_PAGE_SIZE` - Default page size for log display (default: 5)
+
+See `.env.example` for the complete list of configuration options.
 
 ## Quick Start
 
@@ -90,8 +107,14 @@ pvm help
 pvm help <command>
 # Example: pvm help setup
 
+# PVM suggests the closest matching command if you mistype one
+# Example: pvm intsall 8.4 → did you mean: install?
+
 # Displays information about the environment including PVM version, currently active PHP version, paths, and environment variables.
 pvm info [--verbose]
+
+# Display the current PVM version
+pvm version
 
 # Display active PHP version
 pvm current
@@ -319,12 +342,37 @@ pvm cache show <name>
 # Remove a specific cache file
 pvm cache delete <name> [--yes|-y]
 # Example: pvm cache delete example-cache
-# Example: pvm cache delete example-cache --y # Skip confirmation
+# Example: pvm cache delete example-cache -y # Skip confirmation
 
 # Remove all cache files
 pvm cache clear [--yes|-y]
-# Example: pvm cache clear --y # Skip confirmation
+# Example: pvm cache clear -y # Skip confirmation
 ```
+
+### Performance & User Experience
+
+Long-running operations — listing available PHP versions, fetching extensions, running multi-config test scripts — execute as background jobs with a spinner shown in the terminal, so the CLI stays responsive.
+
+### Sound Notifications
+
+PVM can play optional notification sounds when long-running commands complete or fail.
+
+Configure the feature in `.env`:
+
+```env
+# Enable sound notifications (default)
+SOUNDS_DISABLED=false
+
+# Disable sound notifications
+SOUNDS_DISABLED=true
+```
+
+**Sound Feedback Features:**
+
+- Success sounds play after successful command completion
+- Error sounds play when commands fail
+- Test completion sounds play after running tests
+- Sounds are automatically disabled in subprocess mode
 
 ### Command Aliases
 
@@ -340,6 +388,7 @@ pvm aliases
 | ------ | --------- |
 | ?      | help      |
 | h      | help      |
+| ver    | version   |
 | init   | setup     |
 | cur    | current   |
 | active | current   |
@@ -355,6 +404,9 @@ pvm aliases
 | -      | remove    |
 | del    | delete    |
 | cls    | clear     |
+| logs   | log       |
+| upgrade| update    |
+| fix    | repair    |
 
 **Customizing Aliases:**
 
@@ -389,12 +441,16 @@ pvm cache:<subcommand>
 
 ## Data Storage
 
-| Item         | Location               |
-| ------------ | ---------------------- |
-| PHP Versions | storage/php/           |
-| Profiles     | storage/data/profiles/ |
-| Cache        | storage/data/cache/    |
-| Logs         | storage/logs/          |
+| Item         | Location                             |
+| ------------ | ------------------------------------ |
+| PHP Versions | storage/php/                         |
+| Templates    | storage/data/templates               |
+| Profiles     | storage/data/profiles/               |
+| Cache        | storage/data/cache/                  |
+| Logs         | storage/logs/                        |
+| Assets       | storage/assets/                      |
+
+**Note:** The `storage/data/templates/` directory contains `aliases.json` and `scripts.json` for customizing command aliases and test scripts.
 
 ## Running Tests
 
@@ -402,7 +458,7 @@ Run tests against the PowerShell scripts in the repo — especially useful for c
 
 ### Requirements
 
-To run tests with, you need to have the Pester testing framework installed. Pester is a testing framework for PowerShell.
+To run the test suite, install the Pester testing framework.
 
 Open PowerShell as Administrator and run:
 
@@ -434,8 +490,10 @@ pvm test --coverage # ................... Runs all tests and generates coverage 
 pvm test --coverage=80.5 # .............. Runs all tests and generates coverage report (target: 80.5%)
 pvm test --sort=duration # .............. Runs all tests and sorts results by duration (ascending)
 pvm test --sort=-duration # ............. Runs all tests and sorts results by duration (descending)
+pvm test --sort=file # .................. Runs all tests and sorts results by file name.
 pvm test --tag=myTag #................... Runs only runs tests with tag "myTag".
-pvm test --group=folder # ............... Runs all tests and groups results by folder
+pvm test --group=folder # ............... Runs all tests and groups results by folder.
+pvm test --group=coverage # ............. Runs all tests and groups results by coverage band.
 pvm test --shell=powershell # ........... Forces Windows PowerShell (powershell.exe) instead of auto-detected pwsh.
 pvm test --shell=pwsh # ................. Forces PowerShell 7+ (pwsh.exe).
 pvm test --pester=5.7.0 # ............... Forces Pester 5.7.0.
@@ -443,11 +501,16 @@ pvm test --pester=5.7.0 # ............... Forces Pester 5.7.0.
 
 ### Test Scripts
 
-PVM includes predefined scripts for common test scenarios, similar to npm scripts in package.json or composer scripts in composer.json. These scripts provide shortcuts for running tests with specific configurations without typing all the options each time.
+PVM includes reusable scripts, similar to Composer or npm scripts, allowing frequently used test commands to be executed with a short alias.
+
+The test runner provides visual feedback with spinner animations during execution and sound notifications upon completion (see [Sound Notifications](#sound-notifications) for configuration).
 
 ```sh
 # Run a specific script
 pvm run <script-name>
+
+# List all available predefined scripts
+pvm run list
 
 # Examples:
 pvm run test:quiet # ............... Runs tests with verbosity set to None
@@ -471,7 +534,7 @@ pvm run test:matrix # .............. Runs tests with all supported PowerShell ve
 | `test:verbose` | `pvm test --coverage=85 --sort=coverage --group=folder --verbosity=Detailed` | Runs tests with coverage and detailed output |
 | `test:shell` | `pvm test --coverage=85 --verbosity=None --sort=coverage --group=folder --shell=powershell` and `--shell=pwsh` | Runs tests with both pwsh and powershell |
 | `test:pester` | `pvm test --coverage=85 --verbosity=None --sort=coverage --group=folder --pester=5.7.1` and `--pester=6.0.0` | Runs tests with Pester 5.7 and 6.0 |
-| `test:matrix` | `pvm test --coverage=85 --verbosity=None --sort=coverage --group=folder` with all combinations of `--shell=powershell/pwsh` and `--pester=5.7.1/6.0.0` | Runs tests with all combinations of Pester and shell |
+| `test:matrix` | `pvm test --coverage=85 --verbosity=None --sort=coverage --group=folder --shell=powershell --pester=5.7.1`, `pvm test --coverage=85 --verbosity=None --sort=coverage --group=folder --shell=pwsh --pester=5.7.1`, and `pvm test --coverage=85 --verbosity=None --sort=coverage --group=folder --shell=pwsh --pester=6.0.0` | Runs the predefined shell/Pester matrix combinations |
 
 **Customizing Scripts:**
 

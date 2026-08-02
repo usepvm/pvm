@@ -537,7 +537,7 @@ Describe "Show-SpinnerWhileProcess" {
 
 Describe "Write-Host helpers Tests" {
     BeforeEach {
-        $script:currentPVMSubprocess = @{ mode = $Global:PVMSubprocess.enabled; structuredOutput = $Global:PVMSubprocess.structuredOutput }
+        $script:currentPVMSubprocess = @{ enabled = $Global:PVMSubprocess.enabled; structuredOutput = $Global:PVMSubprocess.structuredOutput }
     }
 
     AfterEach {

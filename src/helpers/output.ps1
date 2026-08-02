@@ -338,7 +338,7 @@ function Get-Sound-TotalSeconds {
 }
 
 function Invoke-Sound {
-    param ($path)
+    param ($filename)
 
     try {
         if ($Global:PVMSubprocess.enabled -or $PVMConfig.env.SOUNDS_DISABLED) {
@@ -346,6 +346,7 @@ function Invoke-Sound {
         }
 
         $MediaPlayer = New-Player
+        $path = "$($PVMConfig.paths.assets)\sounds\$filename"
         $MediaPlayer.Open($path)
         $duration = Get-Sound-TotalSeconds -path $path
         $MediaPlayer.Play()
@@ -357,13 +358,13 @@ function Invoke-Sound {
 }
 
 function Invoke-SuccessSound {
-    Invoke-Sound -path "$($PVMConfig.paths.assets)\sounds\success.mp3"
+    Invoke-Sound -filename "success.mp3"
 }
 
 function Invoke-ErrorSound {
-    Invoke-Sound -path "$($PVMConfig.paths.assets)\sounds\error.mp3"
+    Invoke-Sound -filename "error.mp3"
 }
 
 function Invoke-PromptSound {
-    Invoke-Sound -path "$($PVMConfig.paths.assets)\sounds\prompt.mp3"
+    Invoke-Sound -filename "prompt.mp3"
 }

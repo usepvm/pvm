@@ -856,9 +856,9 @@ Describe "Sound Functions" {
             $Global:PVMSubprocess.enabled = $false
             $PVMConfig.env.SOUNDS_DISABLED = $false
 
-            Invoke-Sound -path "C:\music\song.mp3"
+            Invoke-Sound -filename "song.mp3"
 
-            $script:playerCalls.Open | Should -Be "C:\music\song.mp3"
+            $script:playerCalls.Open | Should -Be "$($PVMConfig.paths.assets)\sounds\song.mp3"
             $script:playerCalls.Play | Should -BeTrue
             Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 3 }
         }
@@ -869,7 +869,7 @@ Describe "Sound Functions" {
 
             Mock New-Player { throw "boom" }
 
-            { Invoke-Sound -path "C:\music\song.mp3" } | Should -Not -Throw
+            { Invoke-Sound -filename "song.mp3" } | Should -Not -Throw
             Should -Invoke Add-LogEntry -Times 1 -Exactly
         }
 
@@ -877,7 +877,7 @@ Describe "Sound Functions" {
             Mock New-Player {}
             $Global:PVMSubprocess.enabled = $true
 
-            Invoke-Sound -path "C:\music\song.mp3"
+            Invoke-Sound -filename "song.mp3"
 
             Should -Invoke New-Player -Times 0
         }
@@ -887,7 +887,7 @@ Describe "Sound Functions" {
             $Global:PVMSubprocess.enabled = $false
             $PVMConfig.env.SOUNDS_DISABLED = $true
 
-            Invoke-Sound -path "C:\music\song.mp3"
+            Invoke-Sound -filename "song.mp3"
 
             Should -Invoke New-Player -Times 0
         }
@@ -901,21 +901,21 @@ Describe "Sound Functions" {
         It "Invoke-SuccessSound plays success.mp3 from assets path" {
             Invoke-SuccessSound
             Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
-                $path -eq "$($PVMConfig.paths.assets)\sounds\success.mp3"
+                $filename -eq "success.mp3"
             }
         }
 
         It "Invoke-ErrorSound plays error.mp3 from assets path" {
             Invoke-ErrorSound
             Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
-                $path -eq "$($PVMConfig.paths.assets)\sounds\error.mp3"
+                $filename -eq "error.mp3"
             }
         }
 
         It "Invoke-PromptSound plays prompt.mp3 from assets path" {
             Invoke-PromptSound
             Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
-                $path -eq "$($PVMConfig.paths.assets)\sounds\prompt.mp3"
+                $filename -eq "prompt.mp3"
             }
         }
     }

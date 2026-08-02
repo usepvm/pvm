@@ -789,7 +789,7 @@ Describe "Sound Functions" {
     }
 
     BeforeEach {
-        $script:currentPVMSubprocess = @{ mode = $Global:PVMSubprocess.enabled; structuredOutput = $Global:PVMSubprocess.structuredOutput }
+        $script:currentPVMSubprocess = @{ enabled = $Global:PVMSubprocess.enabled; structuredOutput = $Global:PVMSubprocess.structuredOutput }
     }
 
     AfterEach {

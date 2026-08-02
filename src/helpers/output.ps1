@@ -350,6 +350,7 @@ function Invoke-Sound {
         $duration = Get-Sound-TotalSeconds -path $path
         $MediaPlayer.Play()
         Start-Sleep -Seconds $duration
+        $MediaPlayer.Close()
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to play sound"; exception = $_ }
     }

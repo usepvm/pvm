@@ -844,6 +844,7 @@ Describe "Sound Functions" {
             $script:fakePlayer = [PSCustomObject]@{}
             $script:fakePlayer | Add-Member -MemberType ScriptMethod -Name Open -Value { param($p) $script:playerCalls.Open = $p }
             $script:fakePlayer | Add-Member -MemberType ScriptMethod -Name Play -Value { $script:playerCalls.Play = $true }
+            $script:fakePlayer | Add-Member -MemberType ScriptMethod -Name Close -Value { }
 
             Mock New-Player { $script:fakePlayer }
             Mock Get-Sound-TotalSeconds { 3 }

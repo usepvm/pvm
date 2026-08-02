@@ -183,11 +183,11 @@ function Get-Config {
         env      = [ordered]@{
             PHP_CURRENT_VERSION_PATH    = $envConfig['PHP_CURRENT_VERSION_PATH']
             PVM_ENV_VAR_NAME            = $envConfig['PVM_ENV_VAR_NAME']
-            CACHE_MAX_HOURS             = Get-EnvInt -value $envConfig['CACHE_MAX_HOURS'] -default 24
-            DEFAULT_LOG_PAGE_SIZE       = Get-EnvInt -value $envConfig['DEFAULT_LOG_PAGE_SIZE'] -default 20
-            DEFAULT_PARTIAL_LIST_SIZE   = Get-EnvInt -value $envConfig['DEFAULT_PARTIAL_LIST_SIZE'] -default 5
-            MIN_PAD_RIGHT_LENGTH        = Get-EnvInt -value $envConfig['MIN_PAD_RIGHT_LENGTH'] -default 2
-            MIN_LINE_LENGTH             = Get-EnvInt -value $envConfig['MIN_LINE_LENGTH'] -default 40
+            CACHE_MAX_HOURS             = Get-EnvInt -value $envConfig['CACHE_MAX_HOURS'] -default 168
+            DEFAULT_LOG_PAGE_SIZE       = Get-EnvInt -value $envConfig['DEFAULT_LOG_PAGE_SIZE'] -default 5
+            DEFAULT_PARTIAL_LIST_SIZE   = Get-EnvInt -value $envConfig['DEFAULT_PARTIAL_LIST_SIZE'] -default 10
+            MIN_PAD_RIGHT_LENGTH        = Get-EnvInt -value $envConfig['MIN_PAD_RIGHT_LENGTH'] -default 10
+            MIN_LINE_LENGTH             = Get-EnvInt -value $envConfig['MIN_LINE_LENGTH'] -default 50
             ENABLE_UPDATE_CHECK         = Get-EnvBool -value $envConfig['ENABLE_UPDATE_CHECK'] -default $true
             UPDATE_CHECK_INTERVAL_HOURS = Get-EnvInt -value $envConfig['UPDATE_CHECK_INTERVAL_HOURS'] -default 24
             SOUNDS_DISABLED             = Get-EnvBool -value $envConfig['SOUNDS_DISABLED'] -default $false

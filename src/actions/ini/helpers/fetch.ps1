@@ -73,7 +73,7 @@ function Get-ExtensionLinksFromURL {
     param ($extName, $version)
 
     try {
-        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
+        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_pecl" -compute {
             return Select-ExtensionLinksFromURL -extName $extName
         }
     } catch {
@@ -129,7 +129,7 @@ function Get-ExtensionLinksFromURL {
 
         $extName = $chosenItem.extName
         Show-Message -message "`nLoading links for '$extName'..."
-        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$version`_pecl" -compute {
+        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_pecl" -compute {
             return Select-ExtensionLinksFromURL -extName $extName
         }
     }

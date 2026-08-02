@@ -119,7 +119,7 @@ function Show-PHPExtensions {
                     if ($_.Name -notlike "*$term*") {
                         # Search the list if the category doesn't match
                         $searchResult = $searchResult | Where-Object {
-                            $_.extName -like "*$term*"
+                            $_.extName -like "*$term*" -or $_.description -like "*$term*"
                         }
                     }
                 }

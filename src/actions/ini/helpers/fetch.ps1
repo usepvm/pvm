@@ -198,7 +198,7 @@ function Get-ExtensionLinksFromURL {
         } else {
             Show-Info -message "`nMatching '$extName' extension:"
             $index = 0
-            $linksMatchingExtName | ForEach-Object {
+            $linksMatchingExtName | Sort-Object extName | ForEach-Object {
                 $extItem = $_.extName
                 Show-Message -message "[$index] $extItem"
                 $index++

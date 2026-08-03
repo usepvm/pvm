@@ -1,4 +1,90 @@
 ﻿
+function Get-ExtensionCategoriesByPage {
+    param ($extCategory, $link, $page = 1)
+
+    $availableExtensions = @()
+    $html = Get-WebResponse -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
+    $hasMore = $false
+    $null = $html.Links | Where-Object {
+        if (-not $_.href) { return $false }
+        if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+&pageID=(\d+)$') {
+            $hasMore = ($page -eq ($matches[1] - 1))
+            return $false
+        }
+        if ($_.href -notmatch '^/package/[A-Za-z0-9_]+$') {
+            return $false
+        }
+
+        $null = $_.outerHTML -match '(?s)<strong>(?<package>.*?)</strong>.*?<td[^>]*>(?<description>.*?)</td>'
+        $description = $matches['description']
+
+        $extName = ($_.href -replace '/package/', '').Trim()
+        $_ | Add-Member -NotePropertyName 'extName' -NotePropertyValue $extName -Force
+        $_ | Add-Member -NotePropertyName 'extCategory' -NotePropertyValue $extCategory -Force
+        $_ | Add-Member -NotePropertyName 'description' -NotePropertyValue $description -Force
+
+        $availableExtensions += $_
+        return $true
+    }
+
+    return @{
+        hasMore             = $hasMore
+        availableExtensions = $availableExtensions
+    }
+}
+
+function Get-PHPExtensionsFromSource {
+    $availableExtensions = @{}
+    try {
+        $html_cat = Get-WebResponse -uri $PVMConfig.links.peclPackages
+        $null = $html_cat.Links | Where-Object {
+            if (-not $_.href) { return $false }
+
+            $href = $_.href
+            if ($href -notmatch '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
+                return $false
+            }
+
+            $extCategory = $matches[1] -replace '\+', ' '
+
+            $availableExtensions = Show-SpinnerWhileJob -argumentList @($availableExtensions, $extCategory, $href) -scriptBlock {
+                param ($availableExtensions, $extCategory, $href)
+
+                $page = 1
+                do {
+                    $hasMore = $false
+                    $result = Get-ExtensionCategoriesByPage -extCategory $extCategory -link $href -page $page
+                    $availableExtensions[$extCategory] += $result.availableExtensions
+                    $hasMore = $result.hasMore
+                    $page++
+                } while ($hasMore)
+
+                if ($availableExtensions[$extCategory].Count -eq 0) {
+                    $availableExtensions.Remove($extCategory)
+                }
+
+                return @{ pvmData = $availableExtensions }
+            } -message @{ content = "- Loading category '$extCategory'..."; color = 'Cyan' } -rethrow $true
+
+            return $true
+        }
+        $availableExtensions['XDebug'] = @(
+            @{
+                href        = $PVMConfig.links.xdebugHistorical
+                extName     = 'xdebug'
+                extCategory = 'XDebug'
+            }
+        )
+        $availableExtensionsOrdered = [ordered] @{}
+        $availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object { $availableExtensionsOrdered[$_.Key] = $_.Value }
+
+        return $availableExtensionsOrdered
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get PHP extensions from source"; exception = $_ }
+        return @{}
+    }
+}
+
 function Get-AvailablePHPExtensions {
     return Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
         return [pscustomobject] (Get-PHPExtensionsFromSource)

@@ -15,11 +15,153 @@ BeforeAll {
     Mock Show-Info {}
     Mock Write-Gray {}
     Mock Show-Warning {}
+    
+    $script:MockFileSystem = @{
+        Directories   = @()
+        Files         = @{}
+        WebResponses  = @{}
+        DownloadFails = $false
+    }
+
+    Mock Get-WebResponse {
+        param ($Uri, $OutFile = $null)
+
+        if ($script:MockFileSystem.DownloadFails) {
+            throw 'Network error'
+        }
+
+        if ($script:MockFileSystem.WebResponses.ContainsKey($Uri)) {
+            $response = $script:MockFileSystem.WebResponses[$Uri]
+            if ($OutFile) {
+                $script:MockFileSystem.Files[$OutFile] = 'Downloaded content'
+                return
+            }
+            return @{
+                Content = $response.Content
+                Links   = $response.Links
+            }
+        }
+
+        throw "URL not mocked: $Uri"
+    }
 }
 
 AfterAll {
     Remove-Item -Path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
+}
+
+Describe "Get-ExtensionCategoriesByPage Tests" {
+    It "Returns extensions links by page" {
+        Mock Get-WebResponse -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+            return @{
+                Content = 'Mocked PHP extension Caching content'
+                Links   = @(
+                    @{ href = '/package/APC' }
+                    @{ href = '/package/APCu' }
+                    @{ href = '/package/memcache' }
+                    @{ href = '/package/memcached' }
+                )
+            }
+        }
+
+        $result = Get-ExtensionCategoriesByPage -extCategory 'Caching' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
+
+        $result.availableExtensions.Count | Should -Be 4
+        $result.availableExtensions[0].href | Should -Be '/package/APC'
+        $result.availableExtensions[1].href | Should -Be '/package/APCu'
+        $result.availableExtensions[2].href | Should -Be '/package/memcache'
+        $result.availableExtensions[3].href | Should -Be '/package/memcached'
+        $result.hasMore | Should -Be $false
+    }
+
+    It "Sets hasMore to true when more pages are available" {
+        Mock Get-WebResponse -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+            return @{
+                Content = 'Mocked PHP extension Caching content'
+                Links   = @(
+                    @{ href = $null }
+                    @{ href = 'random_link.php' }
+                    @{ href = '/packages.php?catpid=3&amp;catname=Caching&pageID=2' }
+                    @{ href = '/package/APC' }
+                    @{ href = '/package/APCu' }
+                    @{ href = '/package/memcache' }
+                    @{ href = '/package/memcached' }
+                )
+            }
+        }
+
+        $result = Get-ExtensionCategoriesByPage -extCategory 'Caching' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
+
+        $result.hasMore | Should -Be $true
+    }
+}
+
+Describe "Get-PHPExtensionsFromSource" {
+    BeforeAll {
+        Mock Save-CachedData { return 0 }
+        Mock Get-WebResponse -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+            return @{
+                Content = 'Mocked PHP extensions content'
+                Links   = @(
+                    @{ href = $null }
+                    @{ href = 'random_link' }
+                    @{ href       = '/packages.php?catpid=1&amp;catname=Authentication';
+                        outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>'
+                    }
+                    @{ href       = '/packages.php?catpid=3&amp;catname=Caching';
+                        outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>'
+                    }
+                    @{ href       = '/packages.php?catpid=7&amp;catname=EmptyCat';
+                        outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>'
+                    }
+                )
+            }
+        }
+        Mock Get-ExtensionCategoriesByPage {
+            param ($link)
+            if ($link -eq '/packages.php?catpid=1&amp;catname=Authentication') {
+                return @{
+                    hasMore             = $false
+                    availableExtensions = @(
+                        @{ href = '/package/courierauth' }
+                        @{ href = '/package/krb5' }
+                    )
+                }
+            }
+            if ($link -eq '/packages.php?catpid=3&amp;catname=Caching') {
+                return @{
+                    hasMore             = $false
+                    availableExtensions = @(
+                        @{ href = '/package/memcache' }
+                        @{ href = '/package/memcached' }
+                    )
+                }
+            }
+            if ($link -eq '/packages.php?catpid=7&amp;catname=EmptyCat') {
+                return @{ hasMore = $false; availableExtensions = @() }
+            }
+        }
+    }
+
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
+
+    It "Returns list of available extensions" {
+        $list = Get-PHPExtensionsFromSource
+        $list.Count | Should -Be 3 # include xdebug category
+    }
+
+    It "Handles thrown exception" {
+        Mock Get-ExtensionCategoriesByPage { throw 'Network error' }
+        $list = Get-PHPExtensionsFromSource
+        $list.Count | Should -Be 0
+    }
 }
 
 Describe "Select-ExtensionLinksFromURL" {

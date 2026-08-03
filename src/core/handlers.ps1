@@ -477,19 +477,23 @@ function Invoke-Info {
     $maxNameLength = ($allKeys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
 
     Show-Info -message "`n`nPVM status:`n"
-    foreach ($var in $config.GetEnumerator()) {
-        $key = "$($var.Key) ".PadRight($maxNameLength, '.')
-        $rel = $var.Value
-        Show-Message -message "- $key $rel"
+    foreach ($entry in $config.GetEnumerator()) {
+        $key = "$($entry.Key) ".PadRight($maxNameLength, '.')
+        Show-Message -message "- $key $($entry.Value)"
     }
 
     if ($arguments -contains '--verbose') {
-        $PVM_PATHS = $PVMConfig.paths
+        $PVM_PATHS = [ordered]@{}
+        foreach ($entry in $PVMConfig.paths.GetEnumerator()) {
+            $PVM_PATHS[$entry.Key] = $entry.Value
+        }
         $PVM_PATHS["Current PHP Path"] = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
 
         Show-Info -message "`n`nPVM paths:`n"
         foreach ($entry in $PVM_PATHS.GetEnumerator()) {
             $key = "$($entry.Key) ".PadRight($maxNameLength, '.')
+            $value = if ($entry.Value -eq $PVMRoot) { $PVMRoot } else { $entry.Value.Replace("$PVMRoot\", '') }
+            Show-Message -message "- $key $value"
         }
 
         Show-Info -message "`n`nPVM environment variables:`n"

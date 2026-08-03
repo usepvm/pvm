@@ -93,6 +93,20 @@ function Get-CacheFilePath {
     return "$($PVMConfig.paths.cache)\$filename"
 }
 
+function Test-HasData {
+    param($data)
+
+    if ($null -eq $data) {
+        return $false
+    }
+
+    if ($data -is [hashtable] -or $data -is [array]) {
+        return $data.Count -gt 0
+    }
+
+    return @($data.PSObject.Properties).Count -gt 0
+}
+
 function Get-OrUpdateCache {
     param ($cacheFileName, $compute, $depth = 3)
 
@@ -100,31 +114,16 @@ function Get-OrUpdateCache {
 
     if ($useCache) {
         $data = Get-DataFromCache -cacheFileName $cacheFileName
-        $hasCachedData = if ($null -eq $data) {
-            $false
-        } elseif ($data -is [hashtable] -or $data -is [array]) {
-            $data.Count -gt 0
-        } else {
-            $data.PSObject.Properties.Count -gt 0
-        }
 
-        if ($hasCachedData) {
+        if (Test-HasData -data $data) {
             return $data
         }
     }
 
     $data = & $compute
 
-    if ($null -ne $data) {
-        $hasData = if ($data -is [hashtable] -or $data -is [array]) {
-            $data.Count -gt 0
-        } else {
-            $data.PSObject.Properties.Count -gt 0
-        }
-
-        if ($hasData) {
-            $null = Save-CachedData -cacheFileName $cacheFileName -data $data -depth $depth
-        }
+    if (Test-HasData -data $data) {
+        $null = Save-CachedData -cacheFileName $cacheFileName -data $data -depth $depth
     }
 
     return $data

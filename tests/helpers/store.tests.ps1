@@ -233,6 +233,43 @@ Describe "Save-CachedData" {
     }
 }
 
+Describe "Test-HasData" {
+    It "Returns false for null data" {
+        $result = Test-HasData -data $null
+        $result | Should -Be $false
+    }
+
+    It "Returns true for non-empty hashtable" {
+        $result = Test-HasData -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+        $result | Should -Be $true
+    }
+
+    It "Returns false for empty hashtable" {
+        $result = Test-HasData -data @{}
+        $result | Should -Be $false
+    }
+
+    It "Returns true for non-empty array" {
+        $result = Test-HasData -data @('php-8.4.12.zip', 'php-5.5.0.zip')
+        $result | Should -Be $true
+    }
+
+    It "Returns false for empty array" {
+        $result = Test-HasData -data @()
+        $result | Should -Be $false
+    }
+
+    It "Returns true for non-empty pscustomobject" {
+        $result = Test-HasData -data ([pscustomobject] @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')})
+        $result | Should -Be $true
+    }
+
+    It "Returns false for empty pscustomobject" {
+        $result = Test-HasData -data ([pscustomobject] @{})
+        $result | Should -Be $false
+    }
+}
+
 Describe "Get-OrUpdateCache" {
     BeforeAll {
         function Get-Example { return @{} }
@@ -275,20 +312,20 @@ Describe "Get-OrUpdateCache" {
         Should -Invoke Get-Example -Exactly 1
         Should -Invoke Save-CachedData -Exactly 1
     }
-    
+
     It "Runs the passed command when cache is empty" {
         Mock Test-CanUseCache { return $true }
         Mock Get-DataFromCache { return $null }
         Mock Get-Example { return $null }
-        
+
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
             Get-Example
         }
-        
+
         Should -Invoke Get-DataFromCache -Exactly 1
         Should -Invoke Get-Example -Exactly 1
     }
-    
+
     It "Does not run the passed command when cache has pscustomobject data" {
         Mock Test-CanUseCache { return $true }
         Mock Get-Example { return $null }
@@ -298,11 +335,11 @@ Describe "Get-OrUpdateCache" {
                 'Releases' = @('php-8.2.0-Win32-x64.zip')
             }
         }
-        
+
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
             Get-Example
         }
-        
+
         Should -Invoke Get-DataFromCache -Exactly 1
         Should -Invoke Get-Example -Exactly 0
     }

@@ -306,12 +306,17 @@ Describe "Get-AvailablePHPExtensions Tests" {
             }
         }
     }
+
     It "Returns cached extensions when available" {
         Mock Test-CanUseCache { return $true }
         Mock Get-DataFromCache { return Get-ExtensionList }
+        Mock Get-PHPExtensionsFromSource { return Get-ExtensionList }
 
         $result = Get-AvailablePHPExtensions
 
+        Should -Invoke Test-CanUseCache -Exactly 1
+        Should -Invoke Get-DataFromCache -Exactly 1
+        Should -Invoke Get-PHPExtensionsFromSource -Exactly 0
         $result.PSObject.Properties.Name.Count | Should -Be 2
         $result.Authentication.Count | Should -Be 2
         $result.Authentication[0].extName | Should -Be 'courierauth'
@@ -321,10 +326,14 @@ Describe "Get-AvailablePHPExtensions Tests" {
 
     It "Fetches extensions from source when cache is not available" {
         Mock Test-CanUseCache { return $false }
+        Mock Get-DataFromCache { return Get-ExtensionList }
         Mock Get-PHPExtensionsFromSource { return Get-ExtensionList }
 
         $result = Get-AvailablePHPExtensions
 
+        Should -Invoke Test-CanUseCache -Exactly 1
+        Should -Invoke Get-DataFromCache -Exactly 0
+        Should -Invoke Get-PHPExtensionsFromSource -Exactly 1
         $result.PSObject.Properties.Name.Count | Should -Be 2
         $result.Authentication.Count | Should -Be 2
         $result.Authentication[0].extName | Should -Be 'courierauth'

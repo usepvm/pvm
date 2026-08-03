@@ -490,8 +490,12 @@ function Invoke-Info {
         Show-Info -message "`n`nPVM paths:`n"
         foreach ($entry in $PVM_PATHS.GetEnumerator()) {
             $key = "$($entry.Key) ".PadRight($maxNameLength, '.')
-            $rel = $entry.Value.Replace("$PVMRoot\", '')
-            Show-Message -message "- $key $rel"
+        }
+
+        Show-Info -message "`n`nPVM environment variables:`n"
+        foreach ($entry in $PVMConfig.env.GetEnumerator()) {
+            $key = "$($entry.Key) ".PadRight($maxNameLength, '.')
+            Show-Message -message "- $key $($entry.Value)"
         }
     }
 

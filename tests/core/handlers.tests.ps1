@@ -1380,6 +1380,14 @@ Describe "Invoke-Info Tests" {
             }
         }
 
+        It "Displays environment paths section" {
+            Invoke-Info -arguments @('--verbose')
+
+            Should -Invoke Show-Info -ParameterFilter {
+                $message -like '*PVM environment variables*'
+            }
+        }
+
         It "Returns 0" {
             Invoke-Info -arguments @('--verbose') | Should -Be 0
         }

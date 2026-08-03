@@ -944,6 +944,7 @@ Describe "Set-ZendExtensionsList" {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions
     }
+
     It "Creates zend_extensions.json" {
         $result = Set-ZendExtensionsList
         $result | Should -Be 0

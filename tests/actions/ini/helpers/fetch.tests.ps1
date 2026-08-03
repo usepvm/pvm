@@ -15,7 +15,7 @@ BeforeAll {
     Mock Show-Info {}
     Mock Write-Gray {}
     Mock Show-Warning {}
-    
+
     $script:MockFileSystem = @{
         Directories   = @()
         Files         = @{}

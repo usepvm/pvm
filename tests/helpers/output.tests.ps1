@@ -771,6 +771,7 @@ Describe "Write-Host helpers Tests" {
                 $object -eq ("`n" * 5) -and $noNewLine
             }
         }
+
         It "Prints new line" {
             Mock New-Lines {}
 

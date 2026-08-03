@@ -100,7 +100,15 @@ function Get-OrUpdateCache {
 
     if ($useCache) {
         $data = Get-DataFromCache -cacheFileName $cacheFileName
-        if ($null -ne $data -and $data.Count -gt 0) {
+        $hasCachedData = if ($null -eq $data) {
+            $false
+        } elseif ($data -is [hashtable] -or $data -is [array]) {
+            $data.Count -gt 0
+        } else {
+            $data.PSObject.Properties.Count -gt 0
+        }
+
+        if ($hasCachedData) {
             return $data
         }
     }

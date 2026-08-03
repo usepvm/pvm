@@ -103,30 +103,14 @@ function Show-PHPExtensions {
         } else {
             Show-Message -message "`nLoading available extensions..."
 
-            $availableExtensions = Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
-                return [pscustomobject] (Get-PHPExtensionsFromSource)
-            }
+            $availableExtensions = Get-AvailablePHPExtensions
 
             if ($availableExtensions.Count -eq 0) {
                 Show-Error -message "`nNo extensions found"
                 return -1
             }
 
-            $availableExtensionsPartialList = @{}
-            $availableExtensions.PSObject.Properties | ForEach-Object {
-                $searchResult = $_.Value
-                if ($term) {
-                    if ($_.Name -notlike "*$term*") {
-                        # Search the list if the category doesn't match
-                        $searchResult = $searchResult | Where-Object {
-                            $_.extName -like "*$term*" -or $_.description -like "*$term*"
-                        }
-                    }
-                }
-                if ($searchResult.Count -gt 0) {
-                    $availableExtensionsPartialList[$_.Name] = $searchResult
-                }
-            }
+            $availableExtensionsPartialList = Get-FilteredPHPExtensionsByCategory -availableExtensions $availableExtensions -term $term
 
             if ($availableExtensionsPartialList.Count -eq 0) {
                 $msg = "`nNo extensions found"

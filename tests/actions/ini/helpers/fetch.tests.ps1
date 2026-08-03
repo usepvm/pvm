@@ -104,25 +104,8 @@ Describe "Get-PackagesFromSourceLinks Tests" {
     }
 }
 
-Describe "Get-ExtensionMatchingCategories Tests" {
+Describe "Get-AvailablePHPExtensions Tests" {
     BeforeAll {
-        Mock Save-CachedData { return 0 }
-        Mock Get-WebResponse -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
-            return @{
-                Content = 'Mocked PHP extensions content'
-                Links = @(
-                    @{ href = $null }
-                    @{ href = 'random_link' }
-                    @{ href = '/packages.php?catpid=1&amp;catname=Authentication';
-                        outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>' }
-                    @{ href = '/packages.php?catpid=3&amp;catname=Caching';
-                        outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>' }
-                    @{ href = '/packages.php?catpid=7&amp;catname=EmptyCat';
-                        outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>' }
-                )
-            }
-        }
-
         function Get-ExtensionList {
             return [pscustomobject] @{
                 Authentication = @(
@@ -180,8 +163,215 @@ Describe "Get-ExtensionMatchingCategories Tests" {
                 )
             }
         }
+    }
+    It "Returns cached extensions when available" {
+        Mock Test-CanUseCache { return $true }
         Mock Get-DataFromCache { return Get-ExtensionList }
-        Mock Get-PHPExtensionsFromSource -MockWith { return Get-ExtensionList }
+
+        $result = Get-AvailablePHPExtensions
+
+        $result.PSObject.Properties.Name.Count | Should -Be 2
+        $result.Authentication.Count | Should -Be 2
+        $result.Authentication[0].extName | Should -Be 'courierauth'
+        $result.Caching.Count | Should -Be 4
+        $result.Caching[0].extName | Should -Be 'APC'
+    }
+
+    It "Fetches extensions from source when cache is not available" {
+        Mock Test-CanUseCache { return $false }
+        Mock Get-PHPExtensionsFromSource { return Get-ExtensionList }
+
+        $result = Get-AvailablePHPExtensions
+
+        $result.PSObject.Properties.Name.Count | Should -Be 2
+        $result.Authentication.Count | Should -Be 2
+        $result.Authentication[0].extName | Should -Be 'courierauth'
+        $result.Caching.Count | Should -Be 4
+        $result.Caching[0].extName | Should -Be 'APC'
+    }
+}
+
+Describe "Get-FilteredPHPExtensionsByCategory Tests" {
+    BeforeAll {
+        function Get-ExtensionList {
+            return [pscustomobject] @{
+                Authentication = @(
+                    @{
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/courierauth';
+                        extName     = 'courierauth';
+                        extCategory = 'Authentication';
+                        description = 'Courier Authentication'
+                    },
+                    @{
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/krb5';
+                        extName     = 'krb5';
+                        extCategory = 'Authentication'
+                        description = 'Kerberos 5'
+                    }
+                )
+                Caching        = @(
+                    @{
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/APC';
+                        extName     = 'APC';
+                        extCategory = 'Caching'
+                        description = 'APC'
+                    }
+                    @{
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/APCu';
+                        extName     = 'APCu';
+                        extCategory = 'Caching'
+                        description = 'APCu'
+                    }
+                    @{
+                        outerHTML   = '<a href="/package/memcache"><strong>memcache</strong></a>';
+                        tagName     = 'A';
+                        href = '/package/memcache'
+                        extName     = 'memcache';
+                        extCategory = 'Caching'
+                        description = 'memcache'
+                    }
+                    @{
+                        outerHTML   = '<a href="/package/memcached"><strong>memcached</strong></a>';
+                        tagName     = 'A';
+                        href = '/package/memcached'
+                        extName     = 'memcached';
+                        extCategory = 'Caching'
+                        description = 'memcached'
+                    }
+
+                )
+            }
+        }
+    }
+
+    It "Returns all extensions when no search term provided" {
+        $testExtensions = Get-ExtensionList
+        $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions
+
+        $result.Count | Should -Be 2
+        $result.Authentication.Length | Should -Be 2
+        $result.Caching.Length | Should -Be 4
+    }
+
+    It "Filters by category name when term matches category" {
+        $testExtensions = Get-ExtensionList
+        $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'Cach'
+
+        $result.Count | Should -Be 1
+        $result.Caching.Length | Should -Be 4
+        $result.Caching[0].extName | Should -Be 'APC'
+    }
+
+    It "Filters by extension name when term matches extName" {
+        $testExtensions = Get-ExtensionList
+        $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'mem'
+
+        $result.Count | Should -Be 1
+        $result.Caching.Length | Should -Be 2
+        $result.Caching[0].extName | Should -Be 'memcache'
+        $result.Caching[1].extName | Should -Be 'memcached'
+    }
+
+    It "Filters by description when term matches description" {
+        $testExtensions = Get-ExtensionList
+        $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'Kerberos'
+
+        $result.Count | Should -Be 1
+        $result.Authentication.Length | Should -Be 1
+        $result.Authentication[0].extName | Should -Be 'krb5'
+    }
+
+    It "Returns empty result when no matches found" {
+        $testExtensions = Get-ExtensionList
+        $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'nonexistent'
+
+        $result.Count | Should -Be 0
+    }
+
+    It "Returns empty hashtable when availableExtensions is empty" {
+        $emptyExtensions = [pscustomobject]@{}
+        $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $emptyExtensions
+
+        $result.Count | Should -Be 0
+    }
+
+    It "Case insensitive search works" {
+        $testExtensions = Get-ExtensionList
+        $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'CACH'
+
+        $result.Count | Should -Be 1
+        $result.Caching.Count | Should -Be 4
+    }
+}
+
+Describe "Get-ExtensionMatchingCategories Tests" {
+    BeforeAll {
+        function Get-ExtensionList {
+            return [pscustomobject] @{
+                Authentication = @(
+                    @{
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/courierauth';
+                        extName     = 'courierauth';
+                        extCategory = 'Authentication';
+                        description = 'Courier Authentication'
+                    },
+                    @{
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/krb5';
+                        extName     = 'krb5';
+                        extCategory = 'Authentication'
+                        description = 'Kerberos 5'
+                    }
+                )
+                Caching        = @(
+                    @{
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/APC';
+                        extName     = 'APC';
+                        extCategory = 'Caching'
+                        description = 'APC'
+                    }
+                    @{
+                        outerHTML   = '<a href="/package/APC"><strong>APC</strong></a>';
+                        tagName     = 'A';
+                        href        = '/package/APCu';
+                        extName     = 'APCu';
+                        extCategory = 'Caching'
+                        description = 'APCu'
+                    }
+                    @{
+                        outerHTML   = '<a href="/package/memcache"><strong>memcache</strong></a>';
+                        tagName     = 'A';
+                        href = '/package/memcache'
+                        extName     = 'memcache';
+                        extCategory = 'Caching'
+                        description = 'memcache'
+                    }
+                    @{
+                        outerHTML   = '<a href="/package/memcached"><strong>memcached</strong></a>';
+                        tagName     = 'A';
+                        href = '/package/memcached'
+                        extName     = 'memcached';
+                        extCategory = 'Caching'
+                        description = 'memcached'
+                    }
+
+                )
+            }
+        }
+        Mock Get-AvailablePHPExtensions -MockWith { return Get-ExtensionList }
     }
 
     BeforeEach {
@@ -201,14 +391,21 @@ Describe "Get-ExtensionMatchingCategories Tests" {
     }
 
     It "Displays matching extensions from source when cache is empty" {
-        Mock Test-CanUseCache { return $true }
-        Mock Get-DataFromCache { return @{} }
-
         $result = Get-ExtensionMatchingCategories -extName 'mem'
 
         $result.Count | Should -Be 2
-        Should -Invoke Get-DataFromCache -Exactly 1
-        Should -Invoke Get-PHPExtensionsFromSource -Exactly 1
+        Should -Invoke Get-AvailablePHPExtensions -Exactly 1
+    }
+
+    It "Returns empty when no matching extensions found" {
+        Mock Get-AvailablePHPExtensions { return @{} }
+
+        $result = Get-ExtensionMatchingCategories -extName 'mem'
+
+        $result.Count | Should -Be 0
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter {
+            $message -like "*No extensions found*"
+        }
     }
 }
 

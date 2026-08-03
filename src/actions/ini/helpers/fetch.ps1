@@ -1,3 +1,29 @@
+﻿
+function Get-AvailablePHPExtensions {
+    return Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
+        return [pscustomobject] (Get-PHPExtensionsFromSource)
+    }
+}
+
+function Get-FilteredPHPExtensionsByCategory {
+    param ($availableExtensions, $term = $null)
+
+    $result = @{}
+    $availableExtensions.PSObject.Properties | ForEach-Object {
+        $categoryMatches = $_.Name -like "*$term*"
+        $searchResult = if ($term -and -not $categoryMatches) {
+            $_.Value | Where-Object {
+                ($_.extName -like "*$term*" -or $_.description -like "*$term*")
+            }
+        } else {
+            $_.Value
+        }
+        if ($searchResult.Length -gt 0) {
+            $result[$_.Name] = @($searchResult)
+        }
+    }
+    return $result
+}
 
 function Select-ExtensionLinksFromURL {
     param ($extName)
@@ -49,22 +75,15 @@ function Get-PackagesFromSourceLinks {
 function Get-ExtensionMatchingCategories {
     param ($extName)
 
-    $availableExtensions = Get-OrUpdateCache -cacheFileName 'available_extensions' -compute {
-        return [pscustomobject] (Get-PHPExtensionsFromSource)
-    }
-    $linksMatchingExtName = @()
-    $availableExtensions.PSObject.Properties | ForEach-Object {
-        $extensionsList = $_.Value
-        if ($extensionsList.Count -eq 0) {
-            return
-        }
+    $availableExtensions = Get-AvailablePHPExtensions
 
-        return $extensionsList | Where-Object {
-            if ($_.extName -like "*$extName*" -or $_.description -like "*$extName*") {
-                $linksMatchingExtName += $_
-            }
-        }
+    if ($availableExtensions.Count -eq 0) {
+        Show-Error -message "`nNo extensions found"
+        return @()
     }
+
+    $grouped = Get-FilteredPHPExtensionsByCategory -availableExtensions $availableExtensions -term $extName
+    $linksMatchingExtName = $grouped.Values | ForEach-Object { $_ }
 
     return $linksMatchingExtName
 }

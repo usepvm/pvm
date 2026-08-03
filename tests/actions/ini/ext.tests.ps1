@@ -164,7 +164,6 @@ Describe "Get-PHPExtensionsFromSource" {
 
 Describe "Show-PHPExtensions" {
     BeforeAll {
-        Mock Save-CachedData { return 0 }
         Mock Get-AllPHPExtensionsStatus {
             return @(
                 @{ name = 'curl'; enabled = $true; status = 'Enabled' }
@@ -218,8 +217,7 @@ Describe "Show-PHPExtensions" {
                 )
             }
         }
-        Mock Get-DataFromCache { return Get-ExtensionList }
-        Mock Get-PHPExtensionsFromSource -MockWith { return Get-ExtensionList }
+        Mock Get-AvailablePHPExtensions -MockWith { return Get-ExtensionList }
         Mock Show-ExtensionsStates {}
         Mock Show-InstalledExtensions {}
     }
@@ -264,47 +262,18 @@ Describe "Show-PHPExtensions" {
     }
 
     It "Returns -1 when no extensions are found" {
-        Mock Test-Path { return $false }
-        Mock Get-PHPExtensionsFromSource { return @{} }
+        Mock Get-AvailablePHPExtensions { return @{} }
         $code = Show-PHPExtensions -iniPath $testIniPath -available $true
         $code | Should -Be -1
-        Should -Invoke Get-PHPExtensionsFromSource -Exactly 1
-        Should -Invoke Get-DataFromCache -Exactly 0
-    }
-
-    It "Displays available extensions from cache" {
-        Mock Test-CanUseCache { return $true }
-        Mock Get-DataFromCache {
-            return @{
-                GUI    = @(
-                    @{href = '/package/php_xcb'; extName = 'php_xcb'; extCategory = 'GUI' }
-                    @{href = '/package/tk'; extName = 'tk'; extCategory = 'GUI' }
-                    @{href = '/package/php_xcb'; extName = 'php_xcb'; extCategory = 'GUI' }
-                );
-                Images = @(
-                    @{href = '/package/cairo'; extName = 'cairo'; extCategory = 'Images' }
-                    @{href = '/package/cairo_wrapper'; extName = 'cairo_wrapper'; extCategory = 'Images' }
-                )
-            }
-        }
-        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
-        $code | Should -Be 0
-        Should -Invoke Get-DataFromCache -Exactly 1
-        Should -Invoke Get-PHPExtensionsFromSource -Exactly 0
-    }
-
-    It "Displays available extensions from source when cache is empty" {
-        Mock Test-CanUseCache { return $true }
-        Mock Get-DataFromCache { return @{} }
-        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
-        $code | Should -Be 0
-        Should -Invoke Get-DataFromCache -Exactly 1
-        Should -Invoke Get-PHPExtensionsFromSource -Exactly 1
+        Should -Invoke Get-AvailablePHPExtensions -Exactly 1
     }
 
     It "Displays available extensions matching the filter" {
+        Mock Get-AvailablePHPExtensions { return Get-ExtensionList }
         $code = Show-PHPExtensions -iniPath $testIniPath -available $true -term 'pc'
         $code | Should -Be 0
+        Should -Invoke Show-Info -Exactly 1
+        Should -Invoke Write-Gray -Exactly 1
     }
 
     It "Returns -1 when no available extensions matchs the filter" {
@@ -313,14 +282,13 @@ Describe "Show-PHPExtensions" {
     }
 
     It "Handles thrown exception" {
-        Mock Test-CanUseCache { throw 'Error' }
+        Mock Get-AvailablePHPExtensions { throw 'Error' }
         $code = Show-PHPExtensions -iniPath $testIniPath -available $true
         $code | Should -Be -1
     }
 
     It "Returns -1 when available extensions count is 0" {
-        Mock Test-CanUseCache { return $false }
-        Mock Get-OrUpdateCache -ParameterFilter { $cacheFileName -eq 'available_extensions' } { return @{} }
+        Mock Get-AvailablePHPExtensions { return @{} }
 
         $code = Show-PHPExtensions -iniPath $testIniPath -available $true
 
@@ -331,8 +299,7 @@ Describe "Show-PHPExtensions" {
     }
 
     It "Displays available extensions with long descriptions that require wrapping" {
-        Mock Test-CanUseCache { return $false }
-        Mock Get-OrUpdateCache -ParameterFilter { $cacheFileName -eq 'available_extensions' } {
+        Mock Get-AvailablePHPExtensions {
             return @{
                 TestCategory = @(
                     @{ extName = 'verylongextensionnameone'; extCategory = 'TestCategory' },
@@ -350,8 +317,7 @@ Describe "Show-PHPExtensions" {
     }
 
     It "Displays available extensions with very long word without spaces to trigger breakPos fallback" {
-        Mock Test-CanUseCache { return $false }
-        Mock Get-OrUpdateCache -ParameterFilter { $cacheFileName -eq 'available_extensions' } {
+        Mock Get-AvailablePHPExtensions {
             return @{
                 TestCategory = @(
                     @{ extName = 'a' * 150; extCategory = 'TestCategory' }

@@ -234,8 +234,11 @@ Describe "Save-CachedData" {
 }
 
 Describe "Get-OrUpdateCache" {
-    It "Reads from cache first" {
+    BeforeAll {
         function Get-Example { return @{} }
+    }
+
+    It "Reads from cache first" {
         Mock Get-Example { return @{} }
         Mock Test-CanUseCache { return $true }
         Mock Save-CachedData { return 0 }
@@ -256,7 +259,6 @@ Describe "Get-OrUpdateCache" {
     }
 
     It "Runs the passed command when can't read from cache" {
-        function Get-Example { return @{} }
         Mock Get-Example {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
@@ -273,9 +275,39 @@ Describe "Get-OrUpdateCache" {
         Should -Invoke Get-Example -Exactly 1
         Should -Invoke Save-CachedData -Exactly 1
     }
+    
+    It "Runs the passed command when cache is empty" {
+        Mock Test-CanUseCache { return $true }
+        Mock Get-DataFromCache { return $null }
+        Mock Get-Example { return $null }
+        
+        $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
+            Get-Example
+        }
+        
+        Should -Invoke Get-DataFromCache -Exactly 1
+        Should -Invoke Get-Example -Exactly 1
+    }
+    
+    It "Does not run the passed command when cache has pscustomobject data" {
+        Mock Test-CanUseCache { return $true }
+        Mock Get-Example { return $null }
+        Mock Get-DataFromCache {
+            return [pscustomobject] @{
+                'Archives' = @('php-8.1.0-Win32-x64.zip')
+                'Releases' = @('php-8.2.0-Win32-x64.zip')
+            }
+        }
+        
+        $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
+            Get-Example
+        }
+        
+        Should -Invoke Get-DataFromCache -Exactly 1
+        Should -Invoke Get-Example -Exactly 0
+    }
 
     It "Checks for data type 'array' before saving to cache" {
-        function Get-Example { return @{} }
         Mock Get-Example {
             return @(
                 @('php-8.1.0-Win32-x64.zip')
@@ -294,7 +326,6 @@ Describe "Get-OrUpdateCache" {
     }
 
     It "Checks for data type 'pscustomobject' before saving to cache" {
-        function Get-Example { return @{} }
         Mock Get-Example {
             return [pscustomobject] @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')

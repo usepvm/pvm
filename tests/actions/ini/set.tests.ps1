@@ -16,6 +16,7 @@ BeforeAll {
     Mock Show-Error {}
     Mock Show-Info {}
     Mock Write-Color {}
+    Mock New-Line {}
 
     function Reset-IniContent {
     # Create a test php.ini file

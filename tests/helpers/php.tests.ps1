@@ -846,16 +846,14 @@ Describe "Get-BinaryArchitectureFromDLL" {
 
             # PE offset is at 0x3C (60 decimal)
             $peOffset = 0x80
-            [BitConverter]::GetBytes($peOffset) | `
-                ForEach-Object -Begin { $i = 0 } -Process { $bytes[0x3C + $i] = $_; $i++ }
+            [BitConverter]::GetBytes($peOffset).CopyTo($bytes, 0x3C)
 
             # At PE offset, write "PE\0\0"
             $bytes[$peOffset] = 0x50      # 'P'
             $bytes[$peOffset + 1] = 0x45  # 'E'
 
             # Machine type at PE offset + 4 (0x8664 for x64)
-            [BitConverter]::GetBytes([uint16]0x8664) | `
-                ForEach-Object -Begin { $i = 0 } -Process { $bytes[$peOffset + 4 + $i] = $_; $i++ }
+            [BitConverter]::GetBytes([uint16]0x8664).CopyTo($bytes, $peOffset + 4)
 
             [System.IO.File]::WriteAllBytes($actualPath, $bytes)
 
@@ -879,16 +877,14 @@ Describe "Get-BinaryArchitectureFromDLL" {
 
             # PE offset is at 0x3C (60 decimal)
             $peOffset = 0x80
-            [BitConverter]::GetBytes($peOffset) | `
-                ForEach-Object -Begin { $i = 0 } -Process { $bytes[0x3C + $i] = $_; $i++ }
+            [BitConverter]::GetBytes($peOffset).CopyTo($bytes, 0x3C)
 
             # At PE offset, write "PE\0\0"
             $bytes[$peOffset] = 0x50      # 'P'
             $bytes[$peOffset + 1] = 0x45  # 'E'
 
             # Machine type at PE offset + 4 (0x014c for x86)
-            [BitConverter]::GetBytes([uint16]0x014c) | `
-                ForEach-Object -Begin { $i = 0 } -Process { $bytes[$peOffset + 4 + $i] = $_; $i++ }
+            [BitConverter]::GetBytes([uint16]0x014c).CopyTo($bytes, $peOffset + 4)
 
             [System.IO.File]::WriteAllBytes($actualPath, $bytes)
 
@@ -912,16 +908,14 @@ Describe "Get-BinaryArchitectureFromDLL" {
 
             # PE offset is at 0x3C (60 decimal)
             $peOffset = 0x80
-            [BitConverter]::GetBytes($peOffset) | `
-                ForEach-Object -Begin { $i = 0 } -Process { $bytes[0x3C + $i] = $_; $i++ }
+            [BitConverter]::GetBytes($peOffset).CopyTo($bytes, 0x3C)
 
             # At PE offset, write "PE\0\0"
             $bytes[$peOffset] = 0x50      # 'P'
             $bytes[$peOffset + 1] = 0x45  # 'E'
 
             # Machine type at PE offset + 4 (0x0000 for unknown)
-            [BitConverter]::GetBytes([uint16]0x0000) | `
-                ForEach-Object -Begin { $i = 0 } -Process { $bytes[$peOffset + 4 + $i] = $_; $i++ }
+            [BitConverter]::GetBytes([uint16]0x0000).CopyTo($bytes, $peOffset + 4)
 
             [System.IO.File]::WriteAllBytes($actualPath, $bytes)
 

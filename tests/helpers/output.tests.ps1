@@ -264,7 +264,7 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Custom Message"; color = 'Cyan' }
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Custom Message"; color = 'Cyan' }
 
             # Verify Show-Message was called (spinner and clear)
             Should -Invoke Write-Color -Times 2
@@ -277,7 +277,7 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { param ($a, $b) return @{ result = "$a$b" } }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -argumentList @('arg1', 'arg2')
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -argumentList @('arg1', 'arg2')
 
             Should -Invoke Start-Job
         }
@@ -290,7 +290,7 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' } -noClear
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' } -noClear
 
             # Verify that the clear line (spaces) is not called when noClear is set
             # The clear happens at line 114 in the source
@@ -305,7 +305,7 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
 
             # Should be called twice: once for spinner, once for clear
             Should -Invoke Write-Color -Times 2
@@ -347,7 +347,7 @@ Describe "Show-SpinnerWhileJob" {
             Mock Add-LogEntry {}
 
             $scriptBlock = { throw "Job failed" }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
 
             Should -Invoke Add-LogEntry -Exactly 1
         }
@@ -361,7 +361,7 @@ Describe "Show-SpinnerWhileJob" {
             Mock Remove-Item {}
 
             $scriptBlock = { return @{ result = 'success' } }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock
 
             Should -Invoke Remove-Item -ParameterFilter {
                 $Path -eq 'Env:\PVM_ROOT_FOR_JOB'
@@ -378,7 +378,7 @@ Describe "Show-SpinnerWhileJob" {
             Mock Remove-Item {}
 
             $scriptBlock = { throw "Job failed" }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
 
             Should -Invoke Remove-Item -ParameterFilter {
                 $Path -eq 'Env:\PVM_ROOT_FOR_JOB'
@@ -421,7 +421,7 @@ Describe "Show-SpinnerWhileJob" {
                 Start-Sleep -Milliseconds 200
                 return @{ result = 'success' }
             }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
 
             # Start-Sleep should be called during spinner loop
             Should -Invoke Start-Sleep
@@ -434,7 +434,7 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock
 
             # Verify Start-Job was called with initializationScript parameter
             Should -Invoke Start-Job -ParameterFilter {
@@ -505,7 +505,7 @@ Describe "Show-SpinnerWhileProcess" {
 
     Context "When clearing the spinner" {
         It "Does not clear the spinner line when noClear is set" {
-            $result = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -noClear
+            $null = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -noClear
 
             # Verify that the clear line (spaces) is not called when noClear is set
             # The clear happens at line 114 in the source

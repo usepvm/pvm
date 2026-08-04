@@ -81,8 +81,8 @@ function Get-PHPVersionsFromUrl {
         $formattedList = @()
         $null = $links | Where-Object {
             if (-not $_.href) { return $false }
-            if ($_.href -match 'php-debug')  { return $false }
-            if ($_.href -match 'php-devel')  { return $false }
+            if ($_.href -match 'php-debug') { return $false }
+            if ($_.href -match 'php-devel') { return $false }
             if ($_.href -notmatch "php-$version(\.\d+)*-(?:nts-)?win.*\.zip$") { return $false }
 
             $fileVersion = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''

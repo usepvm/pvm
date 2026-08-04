@@ -128,7 +128,7 @@ function Show-SpinnerWhileJob {
     }
 }
 
-function Show-SpinnerWhileProcess  {
+function Show-SpinnerWhileProcess {
     param ($fileName, $processArgs, $message = @{ content = 'Please wait...'; color = 'White' }, [switch]$noClear)
 
     try {

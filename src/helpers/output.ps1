@@ -163,7 +163,7 @@ function Show-SpinnerWhileProcess  {
 
         # Clear the spinner line
         if (-not $noClear) {
-            Write-Color -message "`r$(' ' * ($message.content.Length + 2))`r" -foreColor $message.color -NoNewline
+            Write-Color -message "`r$(' ' * ($message.content.Length + 2))`r" -foreColor $message.color -noNewLine
         }
 
         $proc.WaitForExit()

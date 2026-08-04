@@ -131,6 +131,7 @@ function Show-SpinnerWhileJob {
 function Show-SpinnerWhileProcess {
     param ($fileName, $processArgs, $message = @{ content = 'Please wait...'; color = 'White' }, [switch]$noClear)
 
+    $proc = $null
     try {
         $psi = [System.Diagnostics.ProcessStartInfo]::new()
         $psi.FileName = $fileName
@@ -173,6 +174,13 @@ function Show-SpinnerWhileProcess {
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run subprocess"; exception = $_ }
         return @{ output = $null; code = -1 }
+    } finally {
+        if ($proc) {
+            if (-not $proc.HasExited) {
+                $proc.Kill()
+            }
+            $proc.Dispose()
+        }
     }
 }
 

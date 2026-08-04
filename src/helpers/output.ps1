@@ -128,6 +128,10 @@ function Show-SpinnerWhileJob {
     }
 }
 
+function New-Process {
+    return [System.Diagnostics.Process]::new()
+}
+
 function Show-SpinnerWhileProcess {
     param ($fileName, $processArgs, $message = @{ content = 'Please wait...'; color = 'White' }, [switch]$noClear)
 
@@ -147,7 +151,7 @@ function Show-SpinnerWhileProcess {
         $psi.UseShellExecute = $false
         $psi.CreateNoWindow = $true
 
-        $proc = [System.Diagnostics.Process]::new()
+        $proc = New-Process
         $proc.StartInfo = $psi
         $null = $proc.Start()
 
@@ -176,8 +180,12 @@ function Show-SpinnerWhileProcess {
         return @{ output = $null; code = -1 }
     } finally {
         if ($proc) {
-            if (-not $proc.HasExited) {
-                $proc.Kill()
+            try {
+                if ($proc.Responding -and (-not $proc.HasExited)) {
+                    $proc.Kill()
+                }
+            } catch {
+                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to kill subprocess"; exception = $_ }
             }
             $proc.Dispose()
         }

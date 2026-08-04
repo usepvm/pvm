@@ -447,6 +447,7 @@ Describe "Show-SpinnerWhileJob" {
 Describe "Show-SpinnerWhileProcess" {
     BeforeAll {
         Mock Write-Color {}
+        Mock Add-LogEntry {}
     }
 
     Context "When process succeeds" {
@@ -514,10 +515,6 @@ Describe "Show-SpinnerWhileProcess" {
     }
 
     Context "When the process fails to start" {
-        BeforeAll {
-            Mock Add-LogEntry {}
-        }
-
         It "Returns -1 with null output" {
             $result = Show-SpinnerWhileProcess -fileName 'nonexistent-exe-xyz-12345.exe' -processArgs @()
 
@@ -531,6 +528,91 @@ Describe "Show-SpinnerWhileProcess" {
             Should -Invoke Add-LogEntry -Times 1 -ParameterFilter {
                 $data.header -match 'Show-SpinnerWhileProcess - Failed to run subprocess'
             }
+        }
+    }
+    
+    Context "Finally block" {
+        BeforeEach {
+            Mock Write-Color {}
+
+            $script:killed = $false
+            $script:disposed = $false
+
+            $stdout = [pscustomobject]@{}
+            $stdout | Add-Member ScriptMethod ReadToEndAsync {
+                [pscustomobject]@{ Result = '' }
+            }
+
+            $stderr = [pscustomobject]@{}
+            $stderr | Add-Member ScriptMethod ReadToEndAsync {
+                [pscustomobject]@{ Result = '' }
+            }
+
+            $script:fakeProc = [pscustomobject]@{
+                StartInfo      = $null
+                StandardOutput = $stdout
+                StandardError  = $stderr
+                ExitCode       = 0
+                Responding     = $false
+                HasExited      = $true
+            }
+
+            $script:fakeProc | Add-Member ScriptMethod Start { $true }
+            $script:fakeProc | Add-Member ScriptMethod WaitForExit {}
+            $script:fakeProc | Add-Member ScriptMethod Kill {
+                $script:killed = $true
+            }
+            $script:fakeProc | Add-Member ScriptMethod Dispose {
+                $script:disposed = $true
+            }
+
+            Mock New-Process { $script:fakeProc }
+        }
+
+        It "Disposes the process" {
+            Show-SpinnerWhileProcess -fileName 'anything.exe'
+
+            $script:disposed | Should -BeTrue
+        }
+
+        It "Kills a running process during cleanup" {
+            $script:fakeProc.Responding = $true
+            $script:fakeProc.HasExited = $false
+            Mock Start-Sleep { throw 'boom' }
+
+            Show-SpinnerWhileProcess -fileName 'anything.exe'
+
+            $script:killed | Should -BeTrue
+            $script:disposed | Should -BeTrue
+        }
+
+        It "Does not kill an exited process" {
+            $script:fakeProc.Responding = $true
+            $script:fakeProc.HasExited = $true
+
+            Show-SpinnerWhileProcess -fileName 'anything.exe'
+
+            $script:killed | Should -BeFalse
+            $script:disposed | Should -BeTrue
+        }
+
+        It "Logs when Kill throws" {
+            $script:fakeProc.Responding = $true
+            $script:fakeProc.HasExited = $false
+            Mock Start-Sleep { throw 'boom' }
+
+            $script:fakeProc | Add-Member ScriptMethod Kill {
+                throw "boom"
+            } -Force
+
+            Show-SpinnerWhileProcess -fileName 'anything.exe'
+
+            Should -Invoke Add-LogEntry -ParameterFilter {
+                $data.header -match 'Failed to kill subprocess'
+            } -Exactly 1
+
+            $script:killed | Should -BeFalse
+            $script:disposed | Should -BeTrue
         }
     }
 }

@@ -213,6 +213,7 @@ Describe "Show-SpinnerWhileJob" {
     BeforeAll {
         Mock Write-Color {}
         Mock Write-Yellow {}
+        Mock Add-LogEntry {}
 
         $PVMRoot = $PVMConfig.paths.pvmRoot
         New-Item -Path "$PVMRoot\src" -ItemType Directory -Force | Out-Null
@@ -317,8 +318,6 @@ Describe "Show-SpinnerWhileJob" {
                 throw "Job failed"
             }
 
-            Mock Add-LogEntry {}
-
             $scriptBlock = { throw "Job failed" }
             $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
 
@@ -331,8 +330,6 @@ Describe "Show-SpinnerWhileJob" {
                 throw "Job failed"
             }
 
-            Mock Add-LogEntry {}
-
             $scriptBlock = { throw "Job failed" }
 
             { Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$true } | Should -Throw
@@ -343,8 +340,6 @@ Describe "Show-SpinnerWhileJob" {
             Mock Receive-Job {
                 throw "Job failed"
             }
-
-            Mock Add-LogEntry {}
 
             $scriptBlock = { throw "Job failed" }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
@@ -374,7 +369,6 @@ Describe "Show-SpinnerWhileJob" {
                 throw "Job failed"
             }
 
-            Mock Add-LogEntry {}
             Mock Remove-Item {}
 
             $scriptBlock = { throw "Job failed" }
@@ -530,7 +524,7 @@ Describe "Show-SpinnerWhileProcess" {
             }
         }
     }
-    
+
     Context "Finally block" {
         BeforeEach {
             Mock Write-Color {}

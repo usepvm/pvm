@@ -7,7 +7,7 @@ BeforeAll {
     $script:PROFILES_PATH = $PVMConfig.paths.profiles
     $script:TEMPLATES_PATH = $PVMConfig.paths.templates
     $script:PROFILE_TEMPLATE_PATH = $PVMConfig.paths.profileTemplate
-    $script:EXAMPLE_PROFILE_PATH = $PVMConfig.paths.exampleProfile
+    $script:EXAMPLE_PROFILE_PATH = $PVMConfig.paths.profileExample
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PROFILES_PATH -Force | Out-Null

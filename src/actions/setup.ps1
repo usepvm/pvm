@@ -71,7 +71,7 @@ function Initialize-PVMFiles {
 
     $codes += $code = New-ExamplePHPProfile
     if ($code -eq 0) {
-        Show-Success -message "`nExample profile created successfully at '$($PVMConfig.paths.exampleProfile)'."
+        Show-Success -message "`nExample profile created successfully at '$($PVMConfig.paths.profileExample)'."
         Show-Message -message "- Use 'pvm help profile' to learn more."
     } else {
         Show-Error -message "`nFailed to create example profile."

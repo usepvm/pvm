@@ -651,7 +651,7 @@ function Import-PHPProfile {
 
 function New-ExamplePHPProfile {
     try {
-        $exampleProfile = [ordered]@{
+        $profileExample = [ordered]@{
             name        = "profile-example"
             description = "Dev"
             created     = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
@@ -693,8 +693,8 @@ function New-ExamplePHPProfile {
             }
         }
 
-        $jsonContent = $exampleProfile | ConvertTo-Json -Depth 10
-        Set-Content-Wrapper -path $PVMConfig.paths.exampleProfile -value $jsonContent
+        $jsonContent = $profileExample | ConvertTo-Json -Depth 10
+        Set-Content-Wrapper -path $PVMConfig.paths.profileExample -value $jsonContent
 
         return 0
     } catch {

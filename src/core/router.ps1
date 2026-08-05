@@ -351,15 +351,16 @@ function Get-Actions {
             action      = { return Invoke-Update -arguments $script:arguments }
         }
         'run'       = @{
-            command     = 'pvm run <script-name>';
+            command     = 'pvm run <script-name>|[list]';
             description = 'Run a predefined script from the scripts configuration.';
             usage       = [ordered]@{
-                USAGE       = 'pvm run <script-name>'
+                USAGE       = 'pvm run <script-name>|[list]'
                 DESCRIPTION = @(
                     'Runs a predefined script from the scripts configuration.',
                     'Scripts are shortcuts for common commands with predefined options.'
                 )
                 EXAMPLES    = @(
+                    'pvm run list ............................... Lists all available scripts'
                     'pvm run test:quiet ......................... Runs tests with verbosity set to None'
                     'pvm run test:cov80 ......................... Runs tests with 80% coverage target'
                     'pvm run test:cov90 ......................... Runs tests with 90% coverage target'

@@ -287,3 +287,38 @@ function Get-Config {
         }
     }
 }
+
+function Copy-ObjectDeep {
+    param($object)
+
+    if ($null -eq $object) {
+        return $null
+    }
+
+    if ($object -is [System.Collections.Specialized.OrderedDictionary]) {
+        $copy = [ordered]@{}
+        foreach ($key in $object.Keys) {
+            $copy[$key] = Copy-ObjectDeep -object $object[$key]
+        }
+        return $copy
+    }
+
+    if ($object -is [hashtable]) {
+        $copy = @{}
+        foreach ($key in $object.Keys) {
+            $copy[$key] = Copy-ObjectDeep -object $object[$key]
+        }
+        return $copy
+    }
+
+    if ($object -is [array]) {
+        return @($object | ForEach-Object { Copy-ObjectDeep -object $_ })
+    }
+
+    if ($object -is [scriptblock]) {
+        # Recreate a new scriptblock
+        return [scriptblock]::Create($object.ToString())
+    }
+
+    return $object
+}

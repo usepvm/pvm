@@ -500,3 +500,199 @@ TEST_DRIVE=bad<path
         }
     }
 }
+
+Describe "Copy-ObjectDeep" {
+    It "Returns null when input is null" {
+        $result = Copy-ObjectDeep -object $null
+        $result | Should -Be $null
+    }
+
+    It "Returns primitive value as-is" {
+        $result = Copy-ObjectDeep -object 42
+        $result | Should -Be 42
+
+        $result = Copy-ObjectDeep -object "test string"
+        $result | Should -Be "test string"
+
+        $result = Copy-ObjectDeep -object $true
+        $result | Should -Be $true
+    }
+
+    It "Deep copies ordered dictionary" {
+        $original = [ordered]@{
+            key1 = "value1"
+            key2 = 42
+            key3 = $false
+        }
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.GetType().Name | Should -Be "OrderedDictionary"
+        $copy.key1 | Should -Be "value1"
+        $copy.key2 | Should -Be 42
+        $copy.key3 | Should -Be $false
+
+        # Verify it's a deep copy, not a reference
+        $copy.key1 = "modified"
+        $original.key1 | Should -Be "value1"
+    }
+
+    It "Deep copies hashtable" {
+        $original = @{
+            name = "test"
+            count = 10
+            active = $true
+        }
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.GetType().Name | Should -Be "Hashtable"
+        $copy.name | Should -Be "test"
+        $copy.count | Should -Be 10
+        $copy.active | Should -Be $true
+
+        # Verify it's a deep copy, not a reference
+        $copy.name = "modified"
+        $original.name | Should -Be "test"
+    }
+
+    It "Deep copies array" {
+        $original = @(1, 2, 3, "four", $false)
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.Count | Should -Be 5
+        $copy[0] | Should -Be 1
+        $copy[1] | Should -Be 2
+        $copy[2] | Should -Be 3
+        $copy[3] | Should -Be "four"
+        $copy[4] | Should -Be $false
+
+        # Verify it's a deep copy, not a reference
+        $copy[0] = 99
+        $original[0] | Should -Be 1
+    }
+
+    It "Deep copies nested ordered dictionary" {
+        $original = [ordered]@{
+            level1 = [ordered]@{
+                level2 = [ordered]@{
+                    value = "deep"
+                }
+            }
+        }
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.level1.level2.value | Should -Be "deep"
+
+        # Verify it's a deep copy
+        $copy.level1.level2.value = "modified"
+        $original.level1.level2.value | Should -Be "deep"
+    }
+
+    It "Deep copies nested hashtable" {
+        $original = @{
+            outer = @{
+                inner = @{
+                    data = "nested"
+                }
+            }
+        }
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.outer.inner.data | Should -Be "nested"
+
+        # Verify it's a deep copy
+        $copy.outer.inner.data = "modified"
+        $original.outer.inner.data | Should -Be "nested"
+    }
+
+    It "Deep copies array of hashtables" {
+        $original = @(
+            @{ name = "first"; value = 1 },
+            @{ name = "second"; value = 2 }
+        )
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.Count | Should -Be 2
+        $copy[0].name | Should -Be "first"
+        $copy[1].value | Should -Be 2
+
+        # Verify it's a deep copy
+        $copy[0].name = "modified"
+        $original[0].name | Should -Be "first"
+    }
+
+    It "Deep copies ordered dictionary containing arrays" {
+        $original = [ordered]@{
+            items = @(1, 2, 3)
+            names = @("alice", "bob")
+        }
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.items.Count | Should -Be 3
+        $copy.names.Count | Should -Be 2
+
+        # Verify it's a deep copy
+        $copy.items[0] = 99
+        $original.items[0] | Should -Be 1
+    }
+
+    It "Recreates scriptblock as new instance" {
+        $original = { Write-Host "test" }
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.GetType().Name | Should -Be "ScriptBlock"
+        $copy.ToString() | Should -Be $original.ToString()
+
+        # Verify it's a new instance
+        $copy = { Write-Host "modified" }
+        $original.ToString() | Should -Not -Be "modified"
+    }
+
+    It "Handles complex nested structure" {
+        $original = [ordered]@{
+            data = @{
+                items = @(
+                    [ordered]@{ name = "item1"; values = @(1, 2, 3) },
+                    [ordered]@{ name = "item2"; values = @(4, 5, 6) }
+                )
+                config = [ordered]@{
+                    enabled = $true
+                    options = @("opt1", "opt2")
+                }
+            }
+        }
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.data.items.Count | Should -Be 2
+        $copy.data.items[0].name | Should -Be "item1"
+        $copy.data.items[0].values[1] | Should -Be 2
+        $copy.data.config.enabled | Should -Be $true
+        $copy.data.config.options[0] | Should -Be "opt1"
+
+        # Verify deep copy
+        $copy.data.items[0].values[0] = 999
+        $original.data.items[0].values[0] | Should -Be 1
+    }
+
+    It "Handles empty collections" {
+        $emptyOrdered = [ordered]@{}
+        $emptyHashtable = @{}
+        $emptyArray = @()
+
+        $copyOrdered = Copy-ObjectDeep -object $emptyOrdered
+        $copyHashtable = Copy-ObjectDeep -object $emptyHashtable
+        $copyArray = Copy-ObjectDeep -object $emptyArray
+
+        $copyOrdered.Count | Should -Be 0
+        $copyHashtable.Count | Should -Be 0
+        $copyArray.Count | Should -Be 0
+    }
+}

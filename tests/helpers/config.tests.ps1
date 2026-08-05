@@ -499,6 +499,97 @@ TEST_DRIVE=bad<path
             $result.defaults.aliases['ls'] | Should -Be 'list'
         }
     }
+
+    Context "Get-Config -> test.setFakePaths" {
+        BeforeAll {
+            $script:testRoot = "$TEST_DRIVE\pvm"
+            New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
+            @'
+PHP_CURRENT_VERSION_PATH=C:\pvm\php
+PVM_ENV_VAR_NAME=PVM
+CACHE_MAX_HOURS=168
+DEFAULT_LOG_PAGE_SIZE=5
+DEFAULT_PARTIAL_LIST_SIZE=10
+MIN_PAD_RIGHT_LENGTH=20
+MIN_LINE_LENGTH=50
+'@ | Set-Content -Path "$testRoot\.env"
+        }
+
+        BeforeEach {
+            $PVMConfig = Get-Config -rootPath $testRoot
+        }
+
+        AfterEach {
+            Remove-Variable -Name PVMConfig -Scope Global -ErrorAction SilentlyContinue
+        }
+
+        It "Is a scriptblock" {
+            $PVMConfig.test.setFakePaths | Should -BeOfType [scriptblock]
+        }
+
+        It "Rewrites PVMConfig.paths. under the given root" {
+            $fakeRoot = "$TEST_DRIVE\fake-root"
+            $PVMConfig.test.setFakePaths.Invoke($fakeRoot)
+
+            $PVMConfig.paths.pvmRoot | Should -Be $fakeRoot
+            $PVMConfig.paths.storage | Should -Be "$fakeRoot\storage"
+
+            $PVMConfig.paths.fakeStorage | Should -Be "$fakeRoot\storage"
+
+            $PVMConfig.paths.php | Should -Be "$fakeRoot\storage\php"
+            $PVMConfig.paths.data | Should -Be "$fakeRoot\storage\data"
+            $PVMConfig.paths.cache | Should -Be "$fakeRoot\storage\data\cache"
+            $PVMConfig.paths.templates | Should -Be "$fakeRoot\storage\data\templates"
+            $PVMConfig.paths.profiles | Should -Be "$fakeRoot\storage\data\profiles"
+
+            $PVMConfig.paths.profileExample | Should -Be "$fakeRoot\storage\data\profiles\profile-example.json"
+            $PVMConfig.paths.profileTemplate | Should -Be "$fakeRoot\storage\data\templates\profile-template.json"
+            $PVMConfig.paths.zendExtensionsList | Should -Be "$fakeRoot\storage\data\templates\zend_extensions.json"
+            $PVMConfig.paths.aliasesList | Should -Be "$fakeRoot\storage\data\templates\aliases.json"
+            $PVMConfig.paths.scriptsList | Should -Be "$fakeRoot\storage\data\templates\scripts.json"
+
+            $PVMConfig.paths.log | Should -Be "$fakeRoot\storage\logs"
+            $PVMConfig.paths.logError | Should -Be "$fakeRoot\storage\logs\error.log"
+            $PVMConfig.paths.pathVarBackup | Should -Be "$fakeRoot\storage\logs\path.bak.log"
+
+            $PVMConfig.paths.assets | Should -Be "$fakeRoot\assets"
+        }
+
+        It "Rewrites env.PHP_CURRENT_VERSION_PATH under the given root" {
+            $fakeRoot = "$TEST_DRIVE\fake-root"
+            $PVMConfig.test.setFakePaths.Invoke($fakeRoot)
+
+            $PVMConfig.env.PHP_CURRENT_VERSION_PATH | Should -Be "$fakeRoot\pvm\php"
+        }
+
+        It "Does not touch unrelated config sections" {
+            $fakeRoot = "$TEST_DRIVE\fake-root"
+            $originalVersion = $PVMConfig.version
+            $originalLinks = [ordered]@{}
+            $PVMConfig.links.GetEnumerator() | ForEach-Object {
+                $originalLinks[$_.Key] = $_.Value  
+            }
+
+            $PVMConfig.test.setFakePaths.Invoke($fakeRoot)
+
+            $PVMConfig.version | Should -Be $originalVersion
+            $PVMConfig.links.GetEnumerator() | ForEach-Object {
+                $PVMConfig.links[$_.Key] | Should -Be $originalLinks[$_.Key]
+            }
+        }
+
+        It "Overwrites previously-set fake paths when called again with a new root" {
+            $firstRoot = "$TEST_DRIVE\fake-root-1"
+            $secondRoot = "$TEST_DRIVE\fake-root-2"
+
+            $PVMConfig.test.setFakePaths.Invoke($firstRoot)
+            $PVMConfig.test.setFakePaths.Invoke($secondRoot)
+
+            $PVMConfig.paths.pvmRoot | Should -Be $secondRoot
+            $PVMConfig.paths.storage | Should -Be "$secondRoot\storage"
+            $PVMConfig.env.PHP_CURRENT_VERSION_PATH | Should -Be "$secondRoot\pvm\php"
+        }
+    }
 }
 
 Describe "Copy-ObjectDeep" {

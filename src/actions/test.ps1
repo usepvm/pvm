@@ -252,6 +252,7 @@ function Invoke-TestFile {
     $sortedName = if ($options -and $options.groupBy -and $options.groupBy -eq 'folder') { $file.Name } else { $relativeFilePath }
 
     if (Test-FileNotExists -path $file.FullName) {
+        $testResultData.failedCount = 1
         return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = 'File not found!'; testResultData = $testResultData }
     }
 

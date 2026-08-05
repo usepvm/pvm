@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
     $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Get-Config -rootPath $PVMRoot
+    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     $PVMConfig.version = 'v1.0.0'

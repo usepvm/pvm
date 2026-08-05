@@ -293,7 +293,7 @@ function Get-Actions {
             command     = 'pvm test <options>';
             description = 'Run the PVM test suite.';
             usage       = [ordered]@{
-                USAGE       = 'pvm test <files> [--exclude=<files>] [--coverage[=<number>]] [--verbosity=<verbosity] [--tag=<tag>] [--sort=<sort>] [--group=<group>] [--shell=<shell>] [--pester=<version>]'
+                USAGE       = 'pvm test <files> [--exclude=<files>] [--coverage[=<number>]] [--verbosity=<verbosity] [--tag=<tag>] [--sort=<sort>] [--group=<group>] [--shell=<shell>] [--pester=<version>] [--mute]'
                 DESCRIPTION = @(
                     'Runs the PVM test suite to verify that the installation and configuration'
                     'are working correctly. This includes testing PHP version switching,'
@@ -313,6 +313,7 @@ function Get-Actions {
                     'pvm test --group=folder .......... Runs all tests and group results by folder'
                     'pvm test --shell=powershell ...... Runs all tests with Windows PowerShell (powershell.exe)'
                     'pvm test --pester=5.7.0 .......... Runs all tests with Pester 5.7.0'
+                    'pvm test --mute .................. Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
                 )
                 ARGUMENTS   = @(
                     'files ............................ Run only specific test files (e.g. use, install)'
@@ -326,6 +327,7 @@ function Get-Actions {
                     '--exclude=[files] ................ Run all tests except selected files'
                     '--shell=<shell> .................. Run tests with a specific shell (powershell, pwsh)'
                     '--pester=<version> ............... Run tests with a specific Pester version'
+                    '--mute ........................... Force mute mode (SOUNDS_DISABLED = false)'
                 )
             }
             action      = { return Invoke-Test -arguments $script:arguments }
@@ -351,10 +353,10 @@ function Get-Actions {
             action      = { return Invoke-Update -arguments $script:arguments }
         }
         'run'       = @{
-            command     = 'pvm run <script-name>|[list]';
+            command     = 'pvm run <script-name>|[list] [--mute]';
             description = 'Run a predefined script from the scripts configuration.';
             usage       = [ordered]@{
-                USAGE       = 'pvm run <script-name>|[list]'
+                USAGE       = 'pvm run <script-name>|[list] [--mute]'
                 DESCRIPTION = @(
                     'Runs a predefined script from the scripts configuration.',
                     'Scripts are shortcuts for common commands with predefined options.'
@@ -369,6 +371,7 @@ function Get-Actions {
                     'pvm run test:shell ......................... Runs tests with Windows PowerShell and PowerShell Core'
                     'pvm run test:pester ........................ Runs tests with Pester 5.7.1 and 6.0.0'
                     'pvm run test:matrix ........................ Runs tests with all supported PowerShell versions and Pester versions'
+                    'pvm run test:matrix --mute ................. Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
                 )
             }
             action      = { return Invoke-Run -arguments $script:arguments }

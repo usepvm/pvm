@@ -738,6 +738,26 @@ Describe "Invoke-Test Tests" {
             $result | Should -Be 0
         }
     }
+
+    Context "Muted validation" {
+        It "Should set SOUNDS_DISABLED to true when --mute is specified" {
+            Mock Initialize-Tests { 0 }
+            $PVMConfig.env.SOUNDS_DISABLED = $false
+
+            $null = Invoke-Test -arguments @('--mute')
+
+            $PVMConfig.env.SOUNDS_DISABLED | Should -Be $true
+        }
+
+        It "Should not set SOUNDS_DISABLED when --mute is not specified" {
+            Mock Initialize-Tests { 0 }
+            $PVMConfig.env.SOUNDS_DISABLED = $false
+
+            $null = Invoke-Test -arguments @()
+
+            $PVMConfig.env.SOUNDS_DISABLED | Should -Be $false
+        }
+    }
 }
 
 Describe "Invoke-Profile Tests" {
@@ -1431,5 +1451,23 @@ Describe "Invoke-Run Tests" {
 
         $result | Should -Be -1
         Should -Invoke Invoke-RunScripts -Times 1
+    }
+
+    It "Should set SOUNDS_DISABLED when --mute is specified" {
+        Mock Invoke-RunScripts { 0 }
+        $PVMConfig.env.SOUNDS_DISABLED = $false
+
+        $null = Invoke-Run -arguments @('script.ps1', '--mute')
+
+        $PVMConfig.env.SOUNDS_DISABLED | Should -Be $true
+    }
+
+    It "Should not set SOUNDS_DISABLED when --mute is not specified" {
+        Mock Invoke-RunScripts { 0 }
+        $PVMConfig.env.SOUNDS_DISABLED = $false
+
+        $null = Invoke-Run -arguments @('script.ps1')
+
+        $PVMConfig.env.SOUNDS_DISABLED | Should -Be $false
     }
 }

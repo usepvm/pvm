@@ -479,7 +479,7 @@ Get-Module -ListAvailable Pester
 By default, pvm test auto-detects pwsh if available, falling back to powershell. Use --shell=powershell or --shell=pwsh to force a specific engine — useful for verifying PS 5.1/7 cross-version compatibility.
 
 ```sh
-pvm test <files> [--exclude=<files>] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>] [--sort=<sort>] [--group=<group>] [--shell=<shell>] [--pester=<version>]
+pvm test <files> [--exclude=<files>] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>] [--sort=<sort>] [--group=<group>] [--shell=<shell>] [--pester=<version>] [--mute]
 
 # Examples:
 pvm test # .............................. Runs all tests with Normal (default) verbosity.
@@ -497,6 +497,7 @@ pvm test --group=coverage # ............. Runs all tests and groups results by c
 pvm test --shell=powershell # ........... Forces Windows PowerShell (powershell.exe) instead of auto-detected pwsh.
 pvm test --shell=pwsh # ................. Forces PowerShell 7+ (pwsh.exe).
 pvm test --pester=5.7.0 # ............... Forces Pester 5.7.0.
+pvm test --mute #........................ Runs tests and forces mute mode (SOUNDS_DISABLED = false)
 ```
 
 ### Test Scripts
@@ -507,7 +508,7 @@ The test runner provides visual feedback with spinner animations during executio
 
 ```sh
 # Run a specific script
-pvm run <script-name>
+pvm run <script-name> [--mute]
 
 # List all available predefined scripts
 pvm run list
@@ -521,6 +522,7 @@ pvm run test:verbose # ............. Runs tests with coverage and detailed outpu
 pvm run test:shell # ............... Runs tests with Windows PowerShell and PowerShell Core
 pvm run test:pester # .............. Runs tests with Pester 5.7.1 and 6.0.0
 pvm run test:matrix # .............. Runs tests with all supported PowerShell versions and Pester versions
+pvm run test:matrix --mute # ....... Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
 ```
 
 **Available Scripts:**

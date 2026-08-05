@@ -227,6 +227,10 @@ function Invoke-Test {
             $pesterVersion = $Matches[1]
             return $false
         }
+        if ($_ -match '^--mute') {
+            $PVMConfig.env.SOUNDS_DISABLED = $true
+            return $false
+        }
         if ($_ -match '^-{1,2}') {
             return $false
         }
@@ -520,6 +524,7 @@ function Invoke-Run {
     param ($arguments)
 
     $scriptName = $arguments[0]
+    $PVMConfig.env.SOUNDS_DISABLED = [bool]($arguments | Where-Object { $_ -match '^--mute' } | Select-Object -First 1)
 
     $code = Invoke-RunScripts -scriptName $scriptName
 

@@ -567,7 +567,7 @@ MIN_LINE_LENGTH=50
             $originalVersion = $PVMConfig.version
             $originalLinks = [ordered]@{}
             $PVMConfig.links.GetEnumerator() | ForEach-Object {
-                $originalLinks[$_.Key] = $_.Value  
+                $originalLinks[$_.Key] = $_.Value
             }
 
             $PVMConfig.test.setFakePaths.Invoke($fakeRoot)

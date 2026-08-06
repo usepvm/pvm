@@ -8,6 +8,7 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
+    Mock Show-Info {}
     Mock Show-Message {}
     Mock Show-Error {}
 }
@@ -25,10 +26,14 @@ Describe "Show-Usage Tests" {
         Mock Get-Actions {
             [ordered]@{
                 'setup' = @{
+                    order = 0
+                    group = 'Getting Started'
                     command = 'pvm setup'
                     description = 'Setup the environment variables and paths for PHP.'
                 }
                 'current' = @{
+                    order = 1
+                    group = 'PHP Version Management'
                     command = 'pvm current'
                     description = 'Display active version.'
                 }
@@ -61,7 +66,7 @@ Describe "Show-Usage Tests" {
 
         Mock Get-Actions {
             [ordered]@{
-                'testcmd' = @{ command = 'pvm testcmd'; description = ('X' * 200) }
+                'testcmd' = @{ order = 0; group = 'Getting Started'; command = 'pvm testcmd'; description = ('X' * 200) }
             }
         }
 
@@ -75,7 +80,7 @@ Describe "Show-Usage Tests" {
         $noSpace = ('A' * 150) + ' rest of description'
         Mock Get-Actions {
             [ordered]@{
-                'nospace' = @{ command = 'pvm nospace'; description = $noSpace }
+                'nospace' = @{ order = 0; group = 'Getting Started'; command = 'pvm nospace'; description = $noSpace }
             }
         }
 
@@ -89,7 +94,7 @@ Describe "Show-Usage Tests" {
         $spaced = (1..10 | ForEach-Object { ('word' + $_) }) -join ' '
         Mock Get-Actions {
             [ordered]@{
-                'multiline' = @{ command = 'pvm multiline'; description = $spaced }
+                'multiline' = @{ order = 0; group = 'Getting Started'; command = 'pvm multiline'; description = $spaced }
             }
         }
 

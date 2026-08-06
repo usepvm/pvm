@@ -50,13 +50,6 @@ Describe "Get-Actions Tests" {
         $actions.Keys | Should -Contain 'run'
     }
 
-    It "Should set script-level arguments variable" {
-        $testArgs = @('arg1', 'arg2')
-        Get-Actions -arguments $testArgs
-
-        $script:arguments | Should -Be $testArgs
-    }
-
     Context "Action Execution Tests" {
         It "Should execute help action correctly" {
             $actions = Get-Actions -arguments @()

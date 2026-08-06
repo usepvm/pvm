@@ -10,9 +10,18 @@ function Show-Usage {
     $maxDescLength = (Get-ConsoleWidth) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2))
     if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
-    $actions.GetEnumerator() | ForEach-Object {
+    $currentGroup = $null
+
+    $actions.GetEnumerator() | Sort-Object { $_.Value.order } | ForEach-Object {
         $command = $_.Value.command
         $description = $_.Value.description
+        $group = $_.Value.group
+
+        # Print a section header whenever the group changes
+        if ($group -and $group -ne $currentGroup) {
+            Show-Info -message "`n$group`:"
+            $currentGroup = $group
+        }
 
         # Wrap description by spaces without breaking words
         $descLines = @()

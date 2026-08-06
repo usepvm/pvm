@@ -28,14 +28,18 @@ Describe "Show-Usage Tests" {
                 'setup' = @{
                     order = 0
                     group = 'Getting Started'
-                    command = 'pvm setup'
-                    description = 'Setup the environment variables and paths for PHP.'
+                    data = @{
+                        command = 'pvm setup'
+                        description = 'Setup the environment variables and paths for PHP.'
+                    }
                 }
                 'current' = @{
                     order = 1
                     group = 'PHP Version Management'
-                    command = 'pvm current'
-                    description = 'Display active version.'
+                    data  = @{
+                        command = 'pvm current'
+                        description = 'Display active version.'
+                    }
                 }
             }
         }
@@ -66,7 +70,10 @@ Describe "Show-Usage Tests" {
 
         Mock Get-Actions {
             [ordered]@{
-                'testcmd' = @{ order = 0; group = 'Getting Started'; command = 'pvm testcmd'; description = ('X' * 200) }
+                'testcmd' = @{
+                    order = 0; group = 'Getting Started';
+                    data = @{ command = 'pvm testcmd'; description = ('X' * 200) }
+                }
             }
         }
 
@@ -80,7 +87,10 @@ Describe "Show-Usage Tests" {
         $noSpace = ('A' * 150) + ' rest of description'
         Mock Get-Actions {
             [ordered]@{
-                'nospace' = @{ order = 0; group = 'Getting Started'; command = 'pvm nospace'; description = $noSpace }
+                'nospace' = @{
+                    order = 0; group = 'Getting Started';
+                    data = @{ command = 'pvm nospace'; description = $noSpace }
+                }
             }
         }
 
@@ -94,7 +104,10 @@ Describe "Show-Usage Tests" {
         $spaced = (1..10 | ForEach-Object { ('word' + $_) }) -join ' '
         Mock Get-Actions {
             [ordered]@{
-                'multiline' = @{ order = 0; group = 'Getting Started'; command = 'pvm multiline'; description = $spaced }
+                'multiline' = @{
+                    order = 0; group = 'Getting Started';
+                    data = @{ command = 'pvm multiline'; description = $spaced }
+                }
             }
         }
 
@@ -214,11 +227,11 @@ Describe "Start-PVM Function Tests" {
         Mock Test-CheckForUpdatesQuietly {}
         Mock Get-Actions {
             [ordered]@{
-                'version' = @{ action = { return 0 } }
-                'setup' = @{ action = { return 0 } }
-                'install' = @{ action = { return 0 } }
-                'use' = @{ action = { return 0 } }
-                'list' = @{ action = { return 0 } }
+                'version' = @{ data = @{ action = { return 0 } } }
+                'setup' = @{ data = @{ action = { return 0 } } }
+                'install' = @{ data = @{ action = { return 0 } } }
+                'use' = @{ data = @{ action = { return 0 } } }
+                'list' = @{ data = @{ action = { return 0 } } }
             }
         }
         Mock Test-PVMSetup { $true }
@@ -435,7 +448,7 @@ Describe "Start-PVM Function Tests" {
         It "Should execute action and return 0" {
             Mock Get-Actions {
                 [ordered]@{
-                    'install' = @{ action = { return 0 } }
+                    'install' = @{ data = @{ action = { return 0 } } }
                 }
             }
 
@@ -447,7 +460,7 @@ Describe "Start-PVM Function Tests" {
         It "Should execute action and return non-zero exit code" {
             Mock Get-Actions {
                 [ordered]@{
-                    'install' = @{ action = { return -1 } }
+                    'install' = @{ data = @{ action = { return -1 } } }
                 }
             }
 
@@ -459,7 +472,7 @@ Describe "Start-PVM Function Tests" {
         It "Should execute action and return custom exit code" {
             Mock Get-Actions {
                 [ordered]@{
-                    'use' = @{ action = { return 42 } }
+                    'use' = @{ data = @{ action = { return 42 } } }
                 }
             }
 
@@ -473,8 +486,8 @@ Describe "Start-PVM Function Tests" {
             Mock Get-Actions {
                 [ordered]@{
                     'test' = @{
-                        action = {
-                            if (Test-Path 'C:\Test') { return 0 } else { return -1 }
+                        data = @{
+                            action = { if (Test-Path 'C:\Test') { return 0 } else { return -1 } }
                         }
                     }
                 }
@@ -492,7 +505,9 @@ Describe "Start-PVM Function Tests" {
             Mock Get-Actions {
                 [ordered]@{
                     'install' = @{
-                        action = { throw 'Test exception' }
+                        data = @{
+                            action = { throw 'Test exception' }
+                        }
                     }
                 }
             }
@@ -510,7 +525,9 @@ Describe "Start-PVM Function Tests" {
             Mock Get-Actions {
                 [ordered]@{
                     'install' = @{
-                        action = { throw 'Detailed test exception' }
+                        data = @{
+                            action = { throw 'Detailed test exception' }
+                        }
                     }
                 }
             }
@@ -536,7 +553,9 @@ Describe "Start-PVM Function Tests" {
                 Mock Get-Actions {
                     [ordered]@{
                         'test' = @{
-                            action = { throw $exception }
+                            data = @{
+                                action = { throw $exception }
+                            }
                         }
                     }
                 }
@@ -588,7 +607,9 @@ Describe "Start-PVM Function Tests" {
             Mock Get-Actions {
                 [ordered]@{
                     'install' = @{
-                        action = { throw 'Test exception' }
+                        data = @{
+                            action = { throw 'Test exception' }
+                        }
                     }
                 }
             }
@@ -645,9 +666,9 @@ Describe "Start-PVM Function Tests" {
             foreach ($case in $testCases) {
                 Mock Get-Actions {
                     [ordered]@{
-                        'install' = @{ action = { return 10 } }
-                        'use' = @{ action = { return 20 } }
-                        'list' = @{ action = { return 30 } }
+                        'install' = @{ data = @{ action = { return 10 } } }
+                        'use' = @{ data = @{ action = { return 20 } } }
+                        'list' = @{ data = @{ action = { return 30 } } }
                     }
                 }
 
@@ -684,10 +705,10 @@ Describe "Start-PVM Function Tests" {
         BeforeEach {
             Mock Get-Actions {
                 [ordered]@{
-                    'install' = @{ action = { return Invoke-Install -arguments @() } }
-                    'list' = @{ action = { return Invoke-List -arguments @() } }
-                    'ini' = @{ action = { return Invoke-Ini -arguments @() } }
-                    'cache' = @{ action = { return Invoke-Cache -arguments @() } }
+                    'install' = @{ data = @{ action = { return Invoke-Install -arguments @() } } }
+                    'list' = @{ data = @{ action = { return Invoke-List -arguments @() } } }
+                    'ini' = @{ data = @{ action = { return Invoke-Ini -arguments @() } } }
+                    'cache' = @{ data = @{ action = { return Invoke-Cache -arguments @() } } }
                 }
             }
         }
@@ -713,7 +734,7 @@ Describe "Start-PVM Function Tests" {
         It "Should execute complete happy path" {
             Mock Get-Actions {
                 [ordered]@{
-                    'install' = @{ action = { return 0 } }
+                    'install' = @{ data = @{ action = { return 0 } } }
                 }
             }
             Mock Test-PVMSetup { $true }
@@ -732,7 +753,7 @@ Describe "Start-PVM Function Tests" {
         It "Should handle complete setup workflow" {
             Mock Get-Actions {
                 [ordered]@{
-                    'setup' = @{ action = { return 0 } }
+                    'setup' = @{ data = @{ action = { return 0 } } }
                 }
             }
             Mock Resolve-Alias { param ($alias) return $alias }

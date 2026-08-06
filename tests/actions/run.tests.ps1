@@ -115,7 +115,7 @@ Describe 'Invoke-RunScripts' {
 
     It "Runs single command in subprocess and returns result with no arguments" {
         Mock Get-Scripts { @{'testscript' = @('test')} }
-        Mock Get-Actions { @{ 'test' = @{ action = { return 0 } } } }
+        Mock Get-Actions { @{ 'test' = @{ data = @{ action = { return 0 } } } } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
 
@@ -126,7 +126,7 @@ Describe 'Invoke-RunScripts' {
 
     It 'Runs single command directly and returns result' {
         Mock Get-Scripts { @{'testscript' = @('test arg1')} }
-        Mock Get-Actions { @{ 'test' = @{ action = { return 0 } } } }
+        Mock Get-Actions { @{ 'test' = @{ data = @{ action = { return 0 } } } } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
 

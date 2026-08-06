@@ -53,35 +53,35 @@ Describe "Get-Actions Tests" {
     Context "Action Execution Tests" {
         It "Should execute help action correctly" {
             $actions = Get-Actions -arguments @()
-            $actions['help'].action.Invoke()
+            $actions['help'].data.action.Invoke()
 
             Should -Invoke Invoke-Help -Times 1
         }
 
         It "Should execute version action correctly" {
             $actions = Get-Actions -arguments @()
-            $actions['version'].action.Invoke()
+            $actions['version'].data.action.Invoke()
 
             Should -Invoke Invoke-Version -Times 1
         }
 
         It "Should execute setup action correctly" {
             $actions = Get-Actions -arguments @()
-            $actions['setup'].action.Invoke()
+            $actions['setup'].data.action.Invoke()
 
             Should -Invoke Invoke-Setup -Times 1
         }
 
         It "Should execute repair action correctly" {
             $actions = Get-Actions -arguments @()
-            $actions['repair'].action.Invoke()
+            $actions['repair'].data.action.Invoke()
 
             Should -Invoke Invoke-Repair -Times 1
         }
 
         It "Should execute current action correctly" {
             $actions = Get-Actions -arguments @()
-            $actions['current'].action.Invoke()
+            $actions['current'].data.action.Invoke()
 
             Should -Invoke Invoke-Current -Times 1
         }
@@ -89,49 +89,49 @@ Describe "Get-Actions Tests" {
         It "Should execute list action with arguments" {
             $testArgs = @('available')
             $actions = Get-Actions -arguments $testArgs
-            $actions['list'].action.Invoke()
+            $actions['list'].data.action.Invoke()
 
             Should -Invoke Invoke-List -Times 1
         }
 
         It "Should execute install action correctly" {
             $actions = Get-Actions -arguments @('8.2.0')
-            $actions['install'].action.Invoke()
+            $actions['install'].data.action.Invoke()
 
             Should -Invoke Invoke-Install -Times 1
         }
 
         It "Should execute uninstall action correctly" {
             $actions = Get-Actions -arguments @('8.2.0')
-            $actions['uninstall'].action.Invoke()
+            $actions['uninstall'].data.action.Invoke()
 
             Should -Invoke Invoke-Uninstall -Times 1
         }
 
         It "Should execute use action correctly" {
             $actions = Get-Actions -arguments @('8.2.0')
-            $actions['use'].action.Invoke()
+            $actions['use'].data.action.Invoke()
 
             Should -Invoke Invoke-Use -Times 1
         }
 
         It "Should execute ini action correctly" {
             $actions = Get-Actions -arguments @('set', 'memory_limit=256M')
-            $actions['ini'].action.Invoke()
+            $actions['ini'].data.action.Invoke()
 
             Should -Invoke Invoke-Ini -Times 1
         }
 
         It "Should execute info action" {
             $actions = Get-Actions -arguments @()
-            $actions['info'].action.Invoke()
+            $actions['info'].data.action.Invoke()
 
             Should -Invoke Invoke-Info -Times 1
         }
 
         It "Should execute log action" {
             $actions = Get-Actions -arguments @("--pageSize=10")
-            $actions['log'].action.Invoke()
+            $actions['log'].data.action.Invoke()
 
             Should -Invoke Invoke-Log -Times 1
         }
@@ -139,42 +139,42 @@ Describe "Get-Actions Tests" {
         It "Should execute test action with verbosity" {
             $testArgs = @('TestFile.ps1', 'Detailed', "--tag=unit")
             $actions = Get-Actions -arguments $testArgs
-            $actions['test'].action.Invoke()
+            $actions['test'].data.action.Invoke()
 
             Should -Invoke Invoke-Test -Times 1
         }
 
         It "Should execute profile action" {
             $actions = Get-Actions -arguments @('save')
-            $actions['profile'].action.Invoke()
+            $actions['profile'].data.action.Invoke()
 
             Should -Invoke Invoke-Profile -Times 1
         }
 
         It "Should execute cache action" {
             $actions = Get-Actions -arguments @('list')
-            $actions['cache'].action.Invoke()
+            $actions['cache'].data.action.Invoke()
 
             Should -Invoke Invoke-Cache -Times 1
         }
 
         It "Should execute aliases action" {
             $actions = Get-Actions -arguments @()
-            $actions['aliases'].action.Invoke()
+            $actions['aliases'].data.action.Invoke()
 
             Should -Invoke Invoke-Aliases -Times 1
         }
 
         It "Should execute update action" {
             $actions = Get-Actions -arguments @()
-            $actions['update'].action.Invoke()
+            $actions['update'].data.action.Invoke()
 
             Should -Invoke Invoke-Update -Times 1
         }
 
         It "Should execute run action" {
             $actions = Get-Actions -arguments @()
-            $actions['run'].action.Invoke()
+            $actions['run'].data.action.Invoke()
 
             Should -Invoke Invoke-Run -Times 1
         }

@@ -75,7 +75,7 @@ function Invoke-RunScripts {
                     $results += $result
                 } else {
                     $actions = Get-Actions -arguments $scriptArgs
-                    $result = $($actions[$command].action.Invoke())
+                    $result = $($actions[$command].data.action.Invoke())
                     return $result
                 }
 

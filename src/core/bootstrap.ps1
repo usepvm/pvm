@@ -6,15 +6,15 @@ function Show-Usage {
     Show-Message -message "`nUsage:`n"
 
     $actions = Get-Actions -arguments $arguments
-    $maxLineLength = ($actions.GetEnumerator() | ForEach-Object { $_.Value.command.Length } | Measure-Object -Maximum).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
+    $maxLineLength = ($actions.GetEnumerator() | ForEach-Object { $_.Value.data.command.Length } | Measure-Object -Maximum).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
     $maxDescLength = (Get-ConsoleWidth) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2))
     if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
     $currentGroup = $null
 
     $actions.GetEnumerator() | Sort-Object { $_.Value.order } | ForEach-Object {
-        $command = $_.Value.command
-        $description = $_.Value.description
+        $command = $_.Value.data.command
+        $description = $_.Value.data.description
         $group = $_.Value.group
 
         # Print a section header whenever the group changes
@@ -246,7 +246,7 @@ function Start-PVM {
             return -1
         }
 
-        $result = $($actions[$command].action.Invoke())
+        $result = $($actions[$command].data.action.Invoke())
 
         # Check for updates after successful command execution (skip for update command itself)
         if ($result -eq 0 -and $command -ne 'update') {

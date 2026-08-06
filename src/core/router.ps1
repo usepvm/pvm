@@ -3,8 +3,6 @@ function Get-HelpAction {
     param ($arguments)
 
     return @{
-        order       = 0;
-        group       = 'Getting Started';
         command     = 'pvm help <command>';
         description = 'Display help for a command.';
         usage       = [ordered]@{
@@ -20,8 +18,6 @@ function Get-HelpAction {
 
 function Get-VersionAction {
     return @{
-        order       = 0;
-        group       = 'Getting Started';
         command     = 'pvm version';
         description = 'Display the current PVM version.';
         usage       = [ordered]@{
@@ -34,8 +30,6 @@ function Get-VersionAction {
 
 function Get-SetupAction {
     return @{
-        order       = 0;
-        group       = 'Getting Started';
         command     = 'pvm setup';
         description = 'Configure PHP environment variables, paths, directories, and files.';
         usage       = [ordered]@{
@@ -51,8 +45,6 @@ function Get-SetupAction {
 
 function Get-CurrentAction {
     return @{
-        order       = 1;
-        group       = 'PHP Version Management';
         command     = 'pvm current';
         description = 'Display the active PHP version.';
         usage       = [ordered]@{
@@ -70,8 +62,6 @@ function Get-ListAction {
     param ($arguments)
 
     return @{
-        order       = 1;
-        group       = 'PHP Version Management';
         command     = 'pvm list [available] [x86|x64] [ts|nts]';
         description = "List installed PHP versions, or use 'available' to show versions that can be installed.";
         usage       = [ordered]@{
@@ -97,8 +87,6 @@ function Get-InstallAction {
     param ($arguments)
 
     return @{
-        order       = 1;
-        group       = 'PHP Version Management';
         command     = 'pvm install <version>|[auto]|[latest] [x86|x64] [ts|nts]';
         description = "Install a specific PHP version, 'latest', or use 'auto' to install the version from composer.json or .php-version.";
         usage       = [ordered]@{
@@ -127,8 +115,6 @@ function Get-UninstallAction {
     param ($arguments)
 
     return @{
-        order       = 1;
-        group       = 'PHP Version Management';
         command     = 'pvm uninstall <version>';
         description = 'Remove an installed PHP version.';
         usage       = [ordered]@{
@@ -149,8 +135,6 @@ function Get-UseAction {
     param ($arguments)
 
     return @{
-        order       = 1;
-        group       = 'PHP Version Management';
         command     = 'pvm use <version>|[auto]';
         description = "Switch to a specific PHP version, or use 'auto' to select the version from composer.json or .php-version.";
         usage       = [ordered]@{
@@ -176,8 +160,6 @@ function Get-InfoAction {
     param ($arguments)
 
     return @{
-        order       = 3;
-        group       = 'Info & Diagnostics';
         command     = 'pvm info [--verbose]';
         description = 'Show PVM status and environment information.';
         usage       = [ordered]@{
@@ -195,8 +177,6 @@ function Get-IniAction {
     param ($arguments)
 
     return @{
-        order       = 2;
-        group       = 'PHP Configuration';
         command     = 'pvm ini <action> <args>';
         description = "Manage php.ini settings and extensions for the active PHP version.";
         usage       = [ordered]@{
@@ -251,8 +231,6 @@ function Get-ProfileAction {
     param ($arguments)
 
     return @{
-        order       = 2;
-        group       = 'PHP Configuration';
         command     = 'pvm profile <action> <args>';
         description = 'Save, load, inspect, import, and export PHP configuration profiles.';
         usage       = [ordered]@{
@@ -294,8 +272,6 @@ function Get-CacheAction {
     param ($arguments)
 
     return @{
-        order       = 3;
-        group       = 'Info & Diagnostics';
         command     = 'pvm cache <action> <args>';
         description = 'List, inspect, delete, or clear PVM cache files.';
         usage       = [ordered]@{
@@ -322,8 +298,6 @@ function Get-CacheAction {
 
 function Get-AliasesAction {
     return @{
-        order       = 3;
-        group       = 'Info & Diagnostics';
         command     = 'pvm aliases';
         description = 'List all command aliases.';
         usage       = [ordered]@{
@@ -338,8 +312,6 @@ function Get-AliasesAction {
 
 function Get-RepairAction {
     return @{
-        order       = 3;
-        group       = 'Info & Diagnostics';
         command     = 'pvm repair';
         description = 'Ensure PVM directories and default files exist & Fix the .env file.';
         usage       = [ordered]@{
@@ -359,8 +331,6 @@ function Get-LogAction {
     param ($arguments)
 
     return @{
-        order       = 3;
-        group       = 'Info & Diagnostics';
         command     = 'pvm log <options>';
         description = 'Display recent PVM log entries.';
         usage       = [ordered]@{
@@ -383,8 +353,6 @@ function Get-TestAction {
     param ($arguments)
 
     return @{
-        order       = 4;
-        group       = 'Maintenance & Dev';
         command     = 'pvm test <options>';
         description = 'Run the PVM test suite.';
         usage       = [ordered]@{
@@ -433,8 +401,6 @@ function Get-UpdateAction {
     param ($arguments)
 
     return @{
-        order       = 4;
-        group       = 'Maintenance & Dev';
         command     = 'pvm update [--check]';
         description = 'Update PVM to the latest version from git repository.';
         usage       = [ordered]@{
@@ -460,8 +426,6 @@ function Get-RunAction {
     param ($arguments)
 
     return @{
-        order       = 4;
-        group       = 'Maintenance & Dev';
         command     = 'pvm run <script-name>|[list] [--mute]';
         description = 'Run a predefined script from the scripts configuration.';
         usage       = [ordered]@{
@@ -491,23 +455,77 @@ function Get-Actions {
     param ($arguments)
 
     return [ordered]@{
-        'help' = (Get-HelpAction -arguments $arguments)
-        'version' = (Get-VersionAction)
-        'setup' = (Get-SetupAction)
-        'current' = (Get-CurrentAction)
-        'list' = (Get-ListAction -arguments $arguments)
-        'install' = (Get-InstallAction -arguments $arguments)
-        'uninstall' = (Get-UninstallAction -arguments $arguments)
-        'use' = (Get-UseAction -arguments $arguments)
-        'info' = (Get-InfoAction -arguments $arguments)
-        'ini' = (Get-IniAction -arguments $arguments)
-        'profile' = (Get-ProfileAction -arguments $arguments)
-        'cache' = (Get-CacheAction -arguments $arguments)
-        'aliases' = (Get-AliasesAction)
-        'repair' = (Get-RepairAction)
-        'log' = (Get-LogAction -arguments $arguments)
-        'test' = (Get-TestAction -arguments $arguments)
-        'update' = (Get-UpdateAction -arguments $arguments)
-        'run' = (Get-RunAction -arguments $arguments)
+        'help' = @{
+            order = 0; group = 'Getting Started';
+            data = (Get-HelpAction -arguments $arguments)
+        }
+        'version' = @{
+            order = 0; group = 'Getting Started';
+            data = (Get-VersionAction)
+        }
+        'setup' = @{
+            order = 0; group = 'Getting Started';
+            data = (Get-SetupAction)
+        }
+        'current' = @{
+            order = 1; group = 'PHP Version Management';
+            data = (Get-CurrentAction)
+        }
+        'list' = @{
+            order = 1; group = 'PHP Version Management';
+            data = (Get-ListAction -arguments $arguments)
+        }
+        'install' = @{
+            order = 1; group = 'PHP Version Management';
+            data = (Get-InstallAction -arguments $arguments)
+        }
+        'uninstall' = @{
+            order = 1; group = 'PHP Version Management';
+            data = (Get-UninstallAction -arguments $arguments)
+        }
+        'use' = @{
+            order = 1; group = 'PHP Version Management';
+            data = (Get-UseAction -arguments $arguments)
+        }
+        'info' = @{
+            order = 3; group = 'Info & Diagnostics';
+            data = (Get-InfoAction -arguments $arguments)
+        }
+        'ini' = @{
+            order = 2; group = 'PHP Configuration';
+            data = (Get-IniAction -arguments $arguments)
+        }
+        'profile' = @{
+            order = 2; group = 'PHP Configuration';
+            data = (Get-ProfileAction -arguments $arguments)
+        }
+        'cache' = @{
+            order = 3; group = 'Info & Diagnostics';
+            data = (Get-CacheAction -arguments $arguments)
+        }
+        'aliases' = @{
+            order = 3; group = 'Info & Diagnostics';
+            data = (Get-AliasesAction)
+        }
+        'repair' = @{
+            order = 3; group = 'Info & Diagnostics';
+            data = (Get-RepairAction)
+        }
+        'log' = @{
+            order = 3; group = 'Info & Diagnostics';
+            data = (Get-LogAction -arguments $arguments)
+        }
+        'test' = @{
+            order = 4; group = 'Maintenance & Dev';
+            data = (Get-TestAction -arguments $arguments)
+        }
+        'update' = @{
+            order = 4; group = 'Maintenance & Dev';
+            data = (Get-UpdateAction -arguments $arguments)
+        }
+        'run' = @{
+            order = 4; group = 'Maintenance & Dev';
+            data = (Get-RunAction -arguments $arguments)
+        }
     }
 }

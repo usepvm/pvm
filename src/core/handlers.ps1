@@ -270,7 +270,8 @@ function Invoke-Help {
 
     $command = $arguments[0]
     if ($command) {
-        $usage = $actions[$command].usage
+        $actions = Get-Actions -arguments $arguments
+        $usage = $actions[$command].data.usage
         if ($null -eq $usage) {
             Show-Warning -message "`nNo usage information available for the '$command' command."
             return -1

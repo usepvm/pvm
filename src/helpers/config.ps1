@@ -320,5 +320,13 @@ function Copy-ObjectDeep {
         return [scriptblock]::Create($object.ToString())
     }
 
+    if ($object -is [System.Management.Automation.PSCustomObject]) {
+        $copy = [PSCustomObject]@{}
+        foreach ($prop in $object.PSObject.Properties) {
+            $copy | Add-Member -MemberType NoteProperty -Name $prop.Name -Value (Copy-ObjectDeep -object $prop.Value)
+        }
+        return $copy
+    }
+
     return $object
 }

@@ -786,4 +786,101 @@ Describe "Copy-ObjectDeep" {
         $copyHashtable.Count | Should -Be 0
         $copyArray.Count | Should -Be 0
     }
+
+    It "Deep copies PSCustomObject" {
+        $original = [PSCustomObject]@{
+            name  = "test"
+            count = 10
+            active = $true
+        }
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.GetType().Name | Should -Be "PSCustomObject"
+        $copy.name | Should -Be "test"
+        $copy.count | Should -Be 10
+        $copy.active | Should -Be $true
+
+        # Verify it's a deep copy, not a reference
+        $copy.name = "modified"
+        $original.name | Should -Be "test"
+    }
+
+    It "Deep copies nested PSCustomObject" {
+        $original = [PSCustomObject]@{
+            level1 = [PSCustomObject]@{
+                level2 = [PSCustomObject]@{
+                    value = "deep"
+                }
+            }
+        }
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.level1.level2.value | Should -Be "deep"
+
+        # Verify it's a deep copy
+        $copy.level1.level2.value = "modified"
+        $original.level1.level2.value | Should -Be "deep"
+    }
+
+    It "Deep copies PSCustomObject containing arrays" {
+        $original = [PSCustomObject]@{
+            items = @(1, 2, 3)
+            names = @("alice", "bob")
+        }
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.items.Count | Should -Be 3
+        $copy.names.Count | Should -Be 2
+
+        # Verify it's a deep copy
+        $copy.items[0] = 99
+        $original.items[0] | Should -Be 1
+    }
+
+    It "Deep copies array of PSCustomObjects" {
+        $original = @(
+            [PSCustomObject]@{ name = "first"; value = 1 },
+            [PSCustomObject]@{ name = "second"; value = 2 }
+        )
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.Count | Should -Be 2
+        $copy[0].name | Should -Be "first"
+        $copy[1].value | Should -Be 2
+
+        # Verify it's a deep copy
+        $copy[0].name = "modified"
+        $original[0].name | Should -Be "first"
+    }
+
+    It "Deep copies PSCustomObject containing hashtable" {
+        $original = [PSCustomObject]@{
+            config = @{
+                enabled = $true
+                nested  = @{ value = "inner" }
+            }
+        }
+
+        $copy = Copy-ObjectDeep -object $original
+
+        $copy.config.enabled | Should -Be $true
+        $copy.config.nested.value | Should -Be "inner"
+
+        # Verify it's a deep copy
+        $copy.config.nested.value = "modified"
+        $original.config.nested.value | Should -Be "inner"
+    }
+
+    It "Handles empty PSCustomObject" {
+        $emptyObject = [PSCustomObject]@{}
+
+        $copyObject = Copy-ObjectDeep -object $emptyObject
+
+        $copyObject.GetType().Name | Should -Be "PSCustomObject"
+        @($copyObject.PSObject.Properties).Count | Should -Be 0
+    }
 }

@@ -253,7 +253,7 @@ function Invoke-TestFile {
 
     if (Test-FileNotExists -path $file.FullName) {
         $testResultData.failedCount = 1
-        return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = 'File not found!'; testResultData = $testResultData }
+        return @{ code = -1; name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; message = @{ content = 'File not found!'; color = 'DarkYellow' }; testResultData = $testResultData }
     }
 
     if (-not $options) {
@@ -283,7 +283,6 @@ function Invoke-TestFile {
         } else {
             $coverageRaw = $null
         }
-        $message = Format-TestResultMessage -testResult $testResult -rawDuration $rawDuration -coverageRaw $coverageRaw
 
         $testResultData.passedCount = $testResult.PassedCount
         $testResultData.failedCount = $testResult.FailedCount
@@ -292,10 +291,21 @@ function Invoke-TestFile {
 
         $code = if ($testResult.FailedCount -gt 0) { -1 } else { 0 }
 
-        return @{ code = $code; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = $message; testResultData = $testResultData }
+        if ($testResult.FailedCount -gt 0) {
+            $color = 'DarkYellow'
+        } elseif ($null -ne $coverageRaw -and $coverageRaw -lt $options.target) {
+            $color = 'DarkGray'
+        } else { $color = 'DarkGreen' }
+
+        $message = @{
+            content = Format-TestResultMessage -testResult $testResult -rawDuration $rawDuration -coverageRaw $coverageRaw
+            color = $color
+        }
+
+        return @{ code = $code; name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; message = $message; testResultData = $testResultData }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"; exception = $_ }
-        return @{ code = -1; Name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; Message = 'Failed to run test, check log.'; testResultData = $testResultData }
+        return @{ code = -1; name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; message = @{ content = 'Failed to run test, check log.'; color = 'DarkYellow' }; testResultData = $testResultData }
     }
 }
 
@@ -357,16 +367,6 @@ function Get-FolderGroupName {
     return ($parent -replace '\\', '/')
 }
 
-function Get-ResultColor {
-    param ($item, $target)
-
-    if ($item.code -ne 0) { return 'DarkYellow' }
-
-    if ($null -ne $item.testResultData.coverageRaw -and $item.testResultData.coverageRaw -lt $target) { return 'DarkGray' }
-
-    return 'DarkGreen'
-}
-
 function Get-CoverageGroupRank {
     param ($groupName)
 
@@ -410,8 +410,8 @@ function Write-GroupedResults {
 
         $group.Group | ForEach-Object {
             $label = "    - $($_.sortedName) "
-            $line = $label.PadRight($maxLineLength, '.') + " $($_.Message)"
-            Write-Color -message $line -foreColor (Get-ResultColor -item $_ -target $target)
+            $line = $label.PadRight($maxLineLength, '.') + " $($_.message.content)"
+            Write-Color -message $line -foreColor $_.message.color
         }
     }
 }

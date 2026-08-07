@@ -286,8 +286,10 @@ function Invoke-TestFile {
 
         $testResultData.passedCount = $testResult.PassedCount
         $testResultData.failedCount = $testResult.FailedCount
+        $testResultData.totalCount = $testResult.TotalCount
         $testResultData.duration = $rawDuration
         $testResultData.coverageRaw = $coverageRaw
+        $testResultData.CodeCoverage = $testResult.CodeCoverage
 
         $code = if ($testResult.FailedCount -gt 0) { -1 } else { 0 }
 
@@ -394,14 +396,22 @@ function Get-FolderGroupName {
     return ($parent -replace '\\', '/')
 }
 
-function Write-GroupedResults {
-    param ($sorted, $groupExpr, $maxLineLength, $target, $groupBy = $null)
+function Write-TestsSummary {
+    param ($testData, $options, $maxLineLength)
+
+    $sorted = Get-SortedTests -data $testData.testSummary -by $options.sortBy
+
+    $groupExpr = switch ($options.groupBy) {
+        'coverage' { { Get-CoverageGroupName -coverageRaw $_.testResultData.coverageRaw } }
+        'folder'   { { Get-FolderGroupName -item $_ } }
+        default    { $null }
+    }
 
     $grouped = if ($groupExpr) { $sorted | Group-Object -Property $groupExpr } else { @(@{ Name = $null; Group = $sorted }) }
 
-    if ($groupBy -eq 'coverage') {
+    if ($options.groupBy -eq 'coverage') {
         $grouped = $grouped | Sort-Object { Get-CoverageGroupRank -groupName $_.Name }
-    } elseif ($groupBy -eq 'folder') {
+    } elseif ($options.groupBy -eq 'folder') {
         $grouped = $grouped | Sort-Object { $_.Name }
     }
 
@@ -414,36 +424,6 @@ function Write-GroupedResults {
             Write-Color -message $line -foreColor $_.message.color
         }
     }
-}
-
-function Write-TestsSummary {
-    param ($testData, $options, $maxLineLength)
-
-    $testSummary = $testData.testSummary
-    $totalFailedTests = $testData.totalFailedTests
-    $totalDuration = $testData.totalDuration
-    $totalDurationFormatted = Format-Seconds -totalSeconds $totalDuration
-
-    if ($totalFailedTests -gt 0) {
-        $color = 'DarkYellow'
-    } else {
-        $color = 'DarkGreen'
-    }
-    $content = " Files tested : $($testSummary.Length) | Total failed tests: $totalFailedTests"
-    if ($totalDurationFormatted -ne -1) {
-        $content += " | Total duration: $totalDurationFormatted"
-    }
-    Write-Color -message "$content`n" -foreColor $color
-
-    $sorted = Get-SortedTests -data $testSummary -by $options.sortBy
-
-    $groupExpr = switch ($options.groupBy) {
-        'coverage' { { Get-CoverageGroupName -coverageRaw $_.testResultData.coverageRaw } }
-        'folder'   { { Get-FolderGroupName -item $_ } }
-        default    { $null }
-    }
-
-    Write-GroupedResults -sorted $sorted -groupExpr $groupExpr -maxLineLength $maxLineLength -target $options.target -groupBy $options.groupBy
 }
 
 function Invoke-Tests {
@@ -504,7 +484,6 @@ function Invoke-Tests {
         Show-Message -message " PowerShell Engine ..... $($psInfo.Name)"
         Show-Message -message " PowerShell ............ $($psInfo.Version)"
         Show-Message -message " Pester ................ $($pesterInfo.Version)"
-        Show-Message -message "`nTest Results Summary:"
         Show-Message -message " Coverage .............. $($options.target)%"
         Show-Message -message " Verbosity ............. $($options.verbosity)`n"
 
@@ -513,10 +492,33 @@ function Invoke-Tests {
             return -1
         }
 
+        $totalAnalyzed = 0
+        $totalExecuted = 0
+        $testSummary | ForEach-Object {
+            $totalAnalyzed += [double]$_.testResultData.CodeCoverage.CommandsAnalyzedCount
+            $totalExecuted += [double]$_.testResultData.CodeCoverage.CommandsExecutedCount
+        }
+        $totalCoverage = if ($totalAnalyzed -gt 0) { [math]::Round(($totalExecuted / $totalAnalyzed) * 100, 2) } else { 0 }
+
         $testData = @{
             testSummary = $testSummary
-            totalFailedTests = $testSummary | Where-Object { $_.code -ne 0 } | ForEach-Object { $_.testResultData.failedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            totalFailedTests = $testSummary | ForEach-Object { $_.testResultData.failedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            totalPassedTests = $testSummary | ForEach-Object { $_.testResultData.passedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            totalTests = $testSummary | ForEach-Object { $_.testResultData.totalCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
             totalDuration = $testSummary | ForEach-Object { $_.testResultData.duration } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            totalCoverage = $totalCoverage
+        }
+
+        $totalDurationFormatted = Format-Seconds -totalSeconds $testData.totalDuration
+
+        Show-Message -message "Test Results Summary:"
+        Show-Message -message " Files tested ........... $($testData.testSummary.Length)"
+        Show-Message -message " Total tests ............ $($testData.totalTests)"
+        Show-Message -message " Total passed ........... $($testData.totalPassedTests)"
+        Show-Message -message " Total failed ........... $($testData.totalFailedTests)"
+        Show-Message -message " Total coverage ......... $($testData.totalCoverage)%"
+        if ($totalDurationFormatted -ne -1) {
+            Show-Message -message " Total duration ......... $totalDurationFormatted"
         }
 
         Write-TestsSummary -testData $testData -options $options -maxLineLength $maxLineLength

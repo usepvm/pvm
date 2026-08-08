@@ -208,13 +208,13 @@ Describe 'Invoke-RunScripts' {
         $result = Invoke-RunScripts -scriptName 'testscript' -files @('file1.ps1', 'file2.ps1')
 
         $result | Should -Be 0
-        Should -Invoke Invoke-PVMSubprocess -ParameterFilter {
+        Should -Invoke Invoke-PVMSubprocess -Times 1 -ParameterFilter {
             $command -eq 'test' -and
             $arguments -join ' | ' -eq 'arg1 | --verbosity=None | file1.ps1 | file2.ps1'
-        } -Times 1
-        Should -Invoke Invoke-PVMSubprocess -ParameterFilter {
+        }
+        Should -Invoke Invoke-PVMSubprocess -Times 1 -ParameterFilter {
             $command -eq 'test' -and
             $arguments -join ' | ' -eq 'arg2 | --pester=5.7 | --verbosity=None | file1.ps1 | file2.ps1'
-        } -Times 1
+        }
     }
 }

@@ -525,9 +525,20 @@ function Invoke-Run {
     param ($arguments)
 
     $scriptName = $arguments[0]
-    $PVMConfig.env.SOUNDS_DISABLED = [bool]($arguments | Where-Object { $_ -match '^--mute' } | Select-Object -First 1)
 
-    $files = $arguments | Where-Object { $_ -ne $scriptName }
+    $files = $arguments | Where-Object {
+        if ($_ -eq $scriptName) {
+            return $false
+        }
+        if ($_ -match '^--mute') {
+            $PVMConfig.env.SOUNDS_DISABLED = $true
+            return $false
+        }
+        if ($_ -match '^-{1,2}') {
+            return $false
+        }
+        return $true
+    }
 
     $code = Invoke-RunScripts -scriptName $scriptName -files $files
 

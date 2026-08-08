@@ -1482,4 +1482,15 @@ Describe "Invoke-Run Tests" {
 
         $PVMConfig.env.SOUNDS_DISABLED | Should -Be $false
     }
+
+    It "Filters out script name and unknown arguments from the list of files" {
+        Mock Invoke-RunScripts { 0 }
+
+        $null = Invoke-Run -arguments @('script', '--unknown', 'file.ps1', 'file2.ps1')
+
+        Should -Invoke Invoke-RunScripts -Times 1 -ParameterFilter {
+            $scriptName -eq 'script' -and
+            $files -join ' | ' -eq 'file.ps1 | file2.ps1'
+        }
+    }
 }

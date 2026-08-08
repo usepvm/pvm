@@ -200,4 +200,21 @@ Describe 'Invoke-RunScripts' {
             $message -like "*Invalid verbosity in multi-command script 'testscript': 'test arg2 --verbosity=Normal' (only --verbosity=None is allowed when a script has more than one command)*"
         } -Exactly 1
     }
+
+    It "Runs scripts with custom files" {
+        Mock Get-Scripts { @{'testscript' = @('test arg1 --verbosity=None', 'test arg2 --pester=5.7 --verbosity=None')} }
+        Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
+
+        $result = Invoke-RunScripts -scriptName 'testscript' -files @('file1.ps1', 'file2.ps1')
+
+        $result | Should -Be 0
+        Should -Invoke Invoke-PVMSubprocess -ParameterFilter {
+            $command -eq 'test' -and
+            $arguments -join ' | ' -eq 'arg1 | --verbosity=None | file1.ps1 | file2.ps1'
+        } -Times 1
+        Should -Invoke Invoke-PVMSubprocess -ParameterFilter {
+            $command -eq 'test' -and
+            $arguments -join ' | ' -eq 'arg2 | --pester=5.7 | --verbosity=None | file1.ps1 | file2.ps1'
+        } -Times 1
+    }
 }

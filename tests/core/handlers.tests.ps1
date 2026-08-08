@@ -1453,6 +1453,18 @@ Describe "Invoke-Run Tests" {
         Should -Invoke Invoke-RunScripts -Times 1
     }
 
+    It "Should call Invoke-RunScripts with custom files" {
+        Mock Invoke-RunScripts { 0 }
+
+        $result = Invoke-Run -arguments @('script.ps1', 'file2.ps1')
+
+        $result | Should -Be 0
+        Should -Invoke Invoke-RunScripts -Times 1 -ParameterFilter {
+            $scriptName -eq 'script.ps1' -and
+            $files -eq @('file2.ps1')
+        }
+    }
+
     It "Should set SOUNDS_DISABLED when --mute is specified" {
         Mock Invoke-RunScripts { 0 }
         $PVMConfig.env.SOUNDS_DISABLED = $false

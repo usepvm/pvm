@@ -2,7 +2,7 @@
 function Show-Usage {
     param ($arguments)
 
-    Show-Message -message "`nRunning version : $($PVMConfig.version)"
+    Show-PVMVersion
     Show-Message -message "`nUsage:`n"
 
     $actions = Get-Actions -arguments $arguments
@@ -12,38 +12,40 @@ function Show-Usage {
 
     $currentGroup = $null
 
-    $actions.GetEnumerator() | Sort-Object { $_.Value.order } | ForEach-Object {
-        $command = $_.Value.data.command
-        $description = $_.Value.data.description
-        $group = $_.Value.group
+    $actions.GetEnumerator() |
+        Sort-Object { $_.Value.order }, { $_.Value.itemOrder } |
+        ForEach-Object {
+            $command = $_.Value.data.command
+            $description = $_.Value.data.description
+            $group = $_.Value.group
 
-        # Print a section header whenever the group changes
-        if ($group -and $group -ne $currentGroup) {
-            Show-Info -message "`n$group`:"
-            $currentGroup = $group
-        }
+            # Print a section header whenever the group changes
+            if ($group -and $group -ne $currentGroup) {
+                Show-Info -message "`n$group`:"
+                $currentGroup = $group
+            }
 
-        # Wrap description by spaces without breaking words
-        $descLines = @()
-        $remaining = $description
-        while ($remaining.Length -gt $maxDescLength) {
-            $breakPos = $remaining.LastIndexOf(' ', $maxDescLength)
-            if ($breakPos -lt 0) { $breakPos = $maxDescLength } # fallback: break mid-word
-            $descLines += $remaining.Substring(0, $breakPos)
-            $remaining = $remaining.Substring($breakPos).Trim()
-        }
-        if ($remaining) { $descLines += $remaining }
+            # Wrap description by spaces without breaking words
+            $descLines = @()
+            $remaining = $description
+            while ($remaining.Length -gt $maxDescLength) {
+                $breakPos = $remaining.LastIndexOf(' ', $maxDescLength)
+                if ($breakPos -lt 0) { $breakPos = $maxDescLength } # fallback: break mid-word
+                $descLines += $remaining.Substring(0, $breakPos)
+                $remaining = $remaining.Substring($breakPos).Trim()
+            }
+            if ($remaining) { $descLines += $remaining }
 
-        # First line (command + dots + description)
-        $label = "  $command "
-        $line = $label.PadRight($maxLineLength, '.') + " $($descLines[0])"
-        Show-Message -message $line
+            # First line (command + dots + description)
+            $label = "  $command "
+            $line = $label.PadRight($maxLineLength, '.') + " $($descLines[0])"
+            Show-Message -message $line
 
-        # Remaining description lines aligned under description column
-        $indent = ' ' * ($maxLineLength + 1)
-        for ($i = 1; $i -lt $descLines.Count; $i++) {
-            Show-Message -message "$indent$($descLines[$i])"
-        }
+            # Remaining description lines aligned under description column
+            $indent = ' ' * ($maxLineLength + 1)
+            for ($i = 1; $i -lt $descLines.Count; $i++) {
+                Show-Message -message "$indent$($descLines[$i])"
+            }
     }
 }
 

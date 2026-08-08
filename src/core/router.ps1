@@ -31,7 +31,7 @@ function Get-VersionAction {
 function Get-SetupAction {
     return @{
         command     = 'pvm setup';
-        description = 'Configure PHP environment variables, paths, directories, and files.';
+        description = 'Set up the PVM environment and PHP paths.';
         usage       = [ordered]@{
             USAGE       = 'pvm setup';
             DESCRIPTION = @(
@@ -313,7 +313,7 @@ function Get-AliasesAction {
 function Get-RepairAction {
     return @{
         command     = 'pvm repair';
-        description = 'Ensure PVM directories and default files exist & Fix the .env file.';
+        description = 'Repair the PVM environment and fix the .env file.';
         usage       = [ordered]@{
             USAGE       = 'pvm repair'
             DESCRIPTION = @(
@@ -456,76 +456,76 @@ function Get-Actions {
 
     return [ordered]@{
         'help' = @{
-            order = 0; group = 'Getting Started';
+            order = 0; itemOrder = 0; group = 'Getting Started';
             data = (Get-HelpAction -arguments $arguments)
         }
         'version' = @{
-            order = 0; group = 'Getting Started';
+            order = 0; itemOrder = 1; group = 'Getting Started';
             data = (Get-VersionAction)
         }
         'setup' = @{
-            order = 0; group = 'Getting Started';
+            order = 0; itemOrder = 2; group = 'Getting Started';
             data = (Get-SetupAction)
         }
         'current' = @{
-            order = 1; group = 'PHP Version Management';
+            order = 1; itemOrder = 0; group = 'PHP Version Management';
             data = (Get-CurrentAction)
         }
         'list' = @{
-            order = 1; group = 'PHP Version Management';
+            order = 1; itemOrder = 1; group = 'PHP Version Management';
             data = (Get-ListAction -arguments $arguments)
         }
         'install' = @{
-            order = 1; group = 'PHP Version Management';
+            order = 1; itemOrder = 2; group = 'PHP Version Management';
             data = (Get-InstallAction -arguments $arguments)
         }
-        'uninstall' = @{
-            order = 1; group = 'PHP Version Management';
-            data = (Get-UninstallAction -arguments $arguments)
-        }
         'use' = @{
-            order = 1; group = 'PHP Version Management';
+            order = 1; itemOrder = 3; group = 'PHP Version Management';
             data = (Get-UseAction -arguments $arguments)
         }
+        'uninstall' = @{
+            order = 1; itemOrder = 4; group = 'PHP Version Management';
+            data = (Get-UninstallAction -arguments $arguments)
+        }
         'info' = @{
-            order = 3; group = 'Info & Diagnostics';
+            order = 3; itemOrder = 0; group = 'Info and Diagnostics';
             data = (Get-InfoAction -arguments $arguments)
         }
         'ini' = @{
-            order = 2; group = 'PHP Configuration';
+            order = 2; itemOrder = 0; group = 'PHP Configuration';
             data = (Get-IniAction -arguments $arguments)
         }
         'profile' = @{
-            order = 2; group = 'PHP Configuration';
+            order = 2; itemOrder = 1; group = 'PHP Configuration';
             data = (Get-ProfileAction -arguments $arguments)
         }
         'cache' = @{
-            order = 3; group = 'Info & Diagnostics';
+            order = 4; itemOrder = 1; group = 'Maintenance';
             data = (Get-CacheAction -arguments $arguments)
         }
         'aliases' = @{
-            order = 3; group = 'Info & Diagnostics';
+            order = 3; itemOrder = 1; group = 'Info and Diagnostics';
             data = (Get-AliasesAction)
         }
         'repair' = @{
-            order = 3; group = 'Info & Diagnostics';
+            order = 4; itemOrder = 0; group = 'Maintenance';
             data = (Get-RepairAction)
         }
-        'log' = @{
-            order = 3; group = 'Info & Diagnostics';
-            data = (Get-LogAction -arguments $arguments)
-        }
         'test' = @{
-            order = 4; group = 'Maintenance & Dev';
+            order = 5; itemOrder = 0; group = 'Development';
             data = (Get-TestAction -arguments $arguments)
         }
         'update' = @{
-            order = 4; group = 'Maintenance & Dev';
+            order = 4; itemOrder = 2; group = 'Maintenance';
             data = (Get-UpdateAction -arguments $arguments)
         }
         'run' = @{
-            order = 4; group = 'Maintenance & Dev';
+            order = 5; itemOrder = 1; group = 'Development';
             data = (Get-RunAction -arguments $arguments)
+        }
+        'log' = @{
+            order = 3; itemOrder = 2; group = 'Info and Diagnostics';
+            data = (Get-LogAction -arguments $arguments)
         }
     }
 }

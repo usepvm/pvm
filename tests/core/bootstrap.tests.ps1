@@ -49,7 +49,7 @@ Describe "Show-Usage Tests" {
         $PVMConfig.version = '2.0'
         Show-Usage -arguments @()
 
-        Should -Invoke Show-Message -ParameterFilter { $message -like '*Running version : 2.0*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*PVM version 2.0*' }
     }
 
     It "Should display usage header" {

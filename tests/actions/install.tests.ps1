@@ -54,7 +54,7 @@ BeforeAll {
     # Mock functions for testing
     Mock Add-LogEntry { return $true }
 
-    Mock Invoke-WebRequest-Wrapper {
+    Mock Invoke-WebRequestWrapper {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
@@ -325,8 +325,8 @@ Describe "Get-LatestPHPVersion Tests" {
         $result | Should -BeNullOrEmpty
     }
 
-    It "Should return empty array when exceptions occur in Invoke-WebRequest-Wrapper" {
-        Mock Invoke-WebRequest-Wrapper { throw 'Test exception' }
+    It "Should return empty array when exceptions occur in Invoke-WebRequestWrapper" {
+        Mock Invoke-WebRequestWrapper { throw 'Test exception' }
 
         $result = Get-LatestPHPVersion
 

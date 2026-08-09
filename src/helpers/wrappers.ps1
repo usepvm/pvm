@@ -38,7 +38,7 @@ function Set-ContentWrapper {
     Set-Content -Path $path -Value $value -Encoding UTF8
 }
 
-function Invoke-WebRequest-Wrapper {
+function Invoke-WebRequestWrapper {
     param ($uri, $outFile = $null, $useBasicParsing = $true)
 
     $uri = $uri.Trim()

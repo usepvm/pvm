@@ -42,7 +42,7 @@ function Get-LatestPHPVersionFromUrl {
     param ($url)
 
     try {
-        $html = Invoke-WebRequest-Wrapper -uri $url
+        $html = Invoke-WebRequestWrapper -uri $url
         $links = $html.Links
 
         $allUrlVersions = @()
@@ -75,7 +75,7 @@ function Get-PHPVersionsFromUrl {
     param ($url, $version)
 
     try {
-        $html = Invoke-WebRequest-Wrapper -uri $url
+        $html = Invoke-WebRequestWrapper -uri $url
         $links = $html.Links
 
         $formattedList = @()
@@ -164,7 +164,7 @@ function Get-PHPFromUrl {
     try {
         # Download the selected PHP version
         $fileName = $versionObject.fileName
-        $null = Invoke-WebRequest-Wrapper -uri $url -outFile "$destination\$fileName"
+        $null = Invoke-WebRequestWrapper -uri $url -outFile "$destination\$fileName"
         return $destination
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP from $url"; exception = $_ }

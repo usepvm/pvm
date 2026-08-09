@@ -149,12 +149,12 @@ Describe "Set-ContentWrapper Tests" {
     }
 }
 
-Describe "Invoke-WebRequest-Wrapper Tests" {
+Describe "Invoke-WebRequestWrapper Tests" {
     Context "When making web requests" {
         It "Calls Invoke-WebRequest with UseBasicParsing" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            $null = Invoke-WebRequest-Wrapper -uri 'https://example.com'
+            $null = Invoke-WebRequestWrapper -uri 'https://example.com'
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq 'https://example.com' -and
@@ -166,7 +166,7 @@ Describe "Invoke-WebRequest-Wrapper Tests" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
             $outFile = "$TEST_DRIVE\output.txt"
 
-            $null = Invoke-WebRequest-Wrapper -uri 'https://example.com' -outFile $outFile
+            $null = Invoke-WebRequestWrapper -uri 'https://example.com' -outFile $outFile
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq 'https://example.com' -and
@@ -178,7 +178,7 @@ Describe "Invoke-WebRequest-Wrapper Tests" {
         It "Returns the result from Invoke-WebRequest" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200; Content = 'test content' } }
 
-            $result = Invoke-WebRequest-Wrapper -uri 'https://example.com'
+            $result = Invoke-WebRequestWrapper -uri 'https://example.com'
 
             $result.StatusCode | Should -Be 200
             $result.Content | Should -Be 'test content'
@@ -187,7 +187,7 @@ Describe "Invoke-WebRequest-Wrapper Tests" {
         It "Does not include OutFile parameter when not provided" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            $null = Invoke-WebRequest-Wrapper -uri 'https://example.com'
+            $null = Invoke-WebRequestWrapper -uri 'https://example.com'
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $PSBoundParameters.ContainsKey('OutFile') -eq $false
@@ -199,13 +199,13 @@ Describe "Invoke-WebRequest-Wrapper Tests" {
         It "Throws when Invoke-WebRequest throws" {
             Mock Invoke-WebRequest { throw 'Network error' }
 
-            { Invoke-WebRequest-Wrapper -uri 'https://example.com' } | Should -Throw
+            { Invoke-WebRequestWrapper -uri 'https://example.com' } | Should -Throw
         }
 
         It "Handles invalid URI format" {
             Mock Invoke-WebRequest { throw 'Invalid URI format' }
 
-            { Invoke-WebRequest-Wrapper -uri 'not-a-valid-uri' } | Should -Throw
+            { Invoke-WebRequestWrapper -uri 'not-a-valid-uri' } | Should -Throw
         }
     }
 
@@ -213,7 +213,7 @@ Describe "Invoke-WebRequest-Wrapper Tests" {
         It "Trims whitespace from URI" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            Invoke-WebRequest-Wrapper -uri '   https://example.com   '
+            Invoke-WebRequestWrapper -uri '   https://example.com   '
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq 'https://example.com'
@@ -223,7 +223,7 @@ Describe "Invoke-WebRequest-Wrapper Tests" {
         It "Passes trimmed empty string to Invoke-WebRequest" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            Invoke-WebRequest-Wrapper -uri '   '
+            Invoke-WebRequestWrapper -uri '   '
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq ''
@@ -235,7 +235,7 @@ Describe "Invoke-WebRequest-Wrapper Tests" {
         It "Handles HTTPS URIs" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            $null = Invoke-WebRequest-Wrapper -uri 'https://example.com'
+            $null = Invoke-WebRequestWrapper -uri 'https://example.com'
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq 'https://example.com'
@@ -245,7 +245,7 @@ Describe "Invoke-WebRequest-Wrapper Tests" {
         It "Handles HTTP URIs" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            $null = Invoke-WebRequest-Wrapper -uri 'http://example.com'
+            $null = Invoke-WebRequestWrapper -uri 'http://example.com'
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq 'http://example.com'

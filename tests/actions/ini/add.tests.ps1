@@ -67,7 +67,7 @@ max_execution_time = 30
         DownloadFails = $false
     }
 
-    Mock Invoke-WebRequest-Wrapper {
+    Mock Invoke-WebRequestWrapper {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
@@ -279,7 +279,7 @@ opcache.enable = 1
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest-Wrapper { }
+        Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
         Mock Get-Content { return "zend_extension=opcache" }
         Mock Set-Content { }
@@ -298,7 +298,7 @@ opcache.enable = 1
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest-Wrapper { }
+        Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
         Mock Get-Content { return "zend_extension=opcache" }
         Mock Set-Content { }
@@ -319,7 +319,7 @@ opcache.enable = 1
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest-Wrapper { }
+        Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
         Mock Get-Content { return "zend_extension=opcache" }
         Mock Set-Content { }
@@ -337,7 +337,7 @@ opcache.enable = 1
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest-Wrapper { }
+        Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
         Mock Remove-Item { }
 
@@ -365,7 +365,7 @@ opcache.enable = 1
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest-Wrapper { }
+        Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
         Mock Remove-Item { }
         Mock Get-Content { return "zend_extension=opcache`nopache.enable = 1" }
@@ -386,7 +386,7 @@ opcache.enable = 1
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest-Wrapper { }
+        Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
         Mock Remove-Item { }
         Mock Get-Content { return "zend_extension=opcache`nopache.enable = 1" }
@@ -410,7 +410,7 @@ opcache.enable = 1
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
-        Mock Invoke-WebRequest-Wrapper { }
+        Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
         Mock Remove-Item { }
         Mock Get-Content { return "zend_extension=opcache" }
@@ -429,7 +429,7 @@ opcache.enable = 1
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
-        Mock Invoke-WebRequest-Wrapper { }
+        Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
         Mock Remove-Item { }
         Mock Get-Content { return "zend_extension=opcache" }
@@ -802,10 +802,10 @@ Describe "Install-Extension" {
 
     Context "When extension has no direct link" {
         BeforeEach {
-            Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/nonexistent_ext" } -MockWith {
+            Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/nonexistent_ext" } -MockWith {
                 throw 'Network error'
             }
-            Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+            Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
                 return @{
                     Content = 'Mocked PHP extensions content'
                     Links   = @(
@@ -823,7 +823,7 @@ Describe "Install-Extension" {
                     )
                 }
             }
-            Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=1&amp;catname=Authentication" } -MockWith {
+            Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=1&amp;catname=Authentication" } -MockWith {
                 return @{
                     Content = 'Mocked PHP extension Auth content'
                     Links   = @(
@@ -833,7 +833,7 @@ Describe "Install-Extension" {
                     )
                 }
             }
-            Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching" } -MockWith {
+            Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching" } -MockWith {
                 return @{
                     Content = 'Mocked PHP extension Caching content'
                     Links   = @(
@@ -844,13 +844,13 @@ Describe "Install-Extension" {
                     )
                 }
             }
-            Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=7&amp;catname=EmptyCat" } -MockWith {
+            Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=7&amp;catname=EmptyCat" } -MockWith {
                 return @{
                     Content = 'Mocked PHP extension EmptyCat content'
                     Links   = @()
                 }
             }
-            Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/courierauth" } -MockWith {
+            Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/courierauth" } -MockWith {
                 return @{
                     Content = 'Mocked courierauth content'
                     Links   = @(
@@ -859,7 +859,7 @@ Describe "Install-Extension" {
                     )
                 }
             }
-            Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/courierauth/1.4.0/windows" } -MockWith {
+            Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/courierauth/1.4.0/windows" } -MockWith {
                 return @{
                     Content = 'Mocked PHP courierauth 1.4.0 content'
                     Links   = @(
@@ -869,7 +869,7 @@ Describe "Install-Extension" {
                     )
                 }
             }
-            Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" } -MockWith {
+            Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" } -MockWith {
                 $script:MockFileSystem.Files[$OutFile] = 'Downloaded content'
                 return
             }

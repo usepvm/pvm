@@ -64,7 +64,7 @@ max_execution_time = 30
         DownloadFails = $false
     }
 
-    Mock Invoke-WebRequest-Wrapper {
+    Mock Invoke-WebRequestWrapper {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {

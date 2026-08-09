@@ -23,7 +23,7 @@ BeforeAll {
         DownloadFails = $false
     }
 
-    Mock Invoke-WebRequest-Wrapper {
+    Mock Invoke-WebRequestWrapper {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
@@ -53,7 +53,7 @@ AfterAll {
 
 Describe "Get-ExtensionCategoriesByPage Tests" {
     It "Returns extensions links by page" {
-        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links   = @(
@@ -76,7 +76,7 @@ Describe "Get-ExtensionCategoriesByPage Tests" {
     }
 
     It "Sets hasMore to true when more pages are available" {
-        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links   = @(
@@ -100,7 +100,7 @@ Describe "Get-ExtensionCategoriesByPage Tests" {
 Describe "Get-PHPExtensionsFromSource" {
     BeforeAll {
         Mock Save-CachedData { return 0 }
-        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
                 Links   = @(
@@ -166,7 +166,7 @@ Describe "Get-PHPExtensionsFromSource" {
 
 Describe "Select-ExtensionLinksFromURL" {
     It "Returns filtered links for given extension" {
-        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
             return @{
                 Content = 'Mocked memcache content'
                 Links = @(
@@ -191,7 +191,7 @@ Describe "Select-ExtensionLinksFromURL" {
 Describe "Get-PackagesFromSourceLinks Tests" {
     It "Returns formatted list for matching packages" {
         Mock Add-LogEntry { return 0 }
-        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" } -MockWith {
             return @{
                 Content = 'Mocked PHP memcache 3.4.0 content'
                 Links = @(
@@ -201,7 +201,7 @@ Describe "Get-PackagesFromSourceLinks Tests" {
                 )
             }
         }
-        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.3.0/windows" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.3.0/windows" } -MockWith {
             return @{
                 Content = 'Mocked PHP memcache 3.4.0 content'
                 Links = @(
@@ -211,7 +211,7 @@ Describe "Get-PackagesFromSourceLinks Tests" {
                 )
             }
         }
-        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.2.0/windows" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.2.0/windows" } -MockWith {
             return @{
                 Content = 'Mocked PHP memcache 3.4.0 content'
                 Links = @(
@@ -238,7 +238,7 @@ Describe "Get-PackagesFromSourceLinks Tests" {
     }
 
     It "Handles exception gracefully" {
-        Mock Invoke-WebRequest-Wrapper { throw 'Network error' }
+        Mock Invoke-WebRequestWrapper { throw 'Network error' }
 
         $result = Get-PackagesFromSourceLinks -extName 'memcache' -version '8.2' -links @( @{ href = '/package/memcache/3.4.0/windows' } )
 

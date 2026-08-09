@@ -3,7 +3,7 @@ function Get-ExtensionCategoriesByPage {
     param ($extCategory, $link, $page = 1)
 
     $availableExtensions = @()
-    $html = Invoke-WebRequest-Wrapper -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
+    $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
     $null = $html.Links | Where-Object {
         if (-not $_.href) { return $false }
@@ -36,7 +36,7 @@ function Get-ExtensionCategoriesByPage {
 function Get-PHPExtensionsFromSource {
     $availableExtensions = @{}
     try {
-        $html_cat = Invoke-WebRequest-Wrapper -uri $PVMConfig.links.peclPackages
+        $html_cat = Invoke-WebRequestWrapper -uri $PVMConfig.links.peclPackages
         $null = $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
 
@@ -114,7 +114,7 @@ function Get-FilteredPHPExtensionsByCategory {
 function Select-ExtensionLinksFromURL {
     param ($extName)
 
-    $html = Invoke-WebRequest-Wrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName"
+    $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName"
     $links = $html.Links | Where-Object {
         $_.href -match "/package/$extName/([^/]+)/windows$"
     }
@@ -129,7 +129,7 @@ function Get-PackagesFromSourceLinks {
     $links | ForEach-Object {
         try {
             $extVersion = $_.href -replace "/package/$extName/", '' -replace '/windows', ''
-            $html = Invoke-WebRequest-Wrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName/$extVersion/windows"
+            $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName/$extVersion/windows"
             $html.Links | ForEach-Object {
                 if (-not $_.href) { return }
 

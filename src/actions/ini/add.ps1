@@ -178,14 +178,14 @@ function Install-XDebugExtension {
             if (Test-FileExists -path "$phpPath\ext\$($chosenItem.fileName)") {
                 $response = Read-HostWrapper -prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
                 if (Test-NoResponse -response $response) {
-                    Remove-ItemWrapper -path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)"
+                    Remove-ItemWrapper -path "$($PVMConfig.paths.php)\$($chosenItem.fileName)"
                     Write-Gray -message "`nInstallation cancelled"
                     return -1
                 }
             }
         }
 
-        Move-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)" -Destination "$phpPath\ext"
+        Move-Item -Path "$($PVMConfig.paths.php)\$($chosenItem.fileName)" -Destination "$phpPath\ext"
         $xDebugConfig = Get-XdebugConfigV2 -XDebugPath $($chosenItem.fileName)
         if ($chosenItem.xDebugVersion -like '3.*') {
             $xDebugConfig = Get-XdebugConfigV3 -XDebugPath $($chosenItem.fileName)
@@ -350,7 +350,7 @@ function Install-Extension {
 
         $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.php
         $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip", '').Trim()
-        $extractPath = "$($PVMConfig.paths.storage)\php\$fileNamePath"
+        $extractPath = "$($PVMConfig.paths.php)\$fileNamePath"
         Expand-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
         $files = Get-ChildItem -Path $extractPath
         $extFile = $files | Where-Object {
@@ -367,7 +367,7 @@ function Install-Extension {
             if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
                 $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
                 if (Test-NoResponse -response $response) {
-                    Remove-ItemWrapper -path "$($PVMConfig.paths.storage)\php\$fileNamePath"
+                    Remove-ItemWrapper -path "$($PVMConfig.paths.php)\$fileNamePath"
                     Write-Gray -message "`nInstallation cancelled"
                     return -1
                 }

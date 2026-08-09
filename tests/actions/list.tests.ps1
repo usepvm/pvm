@@ -28,7 +28,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -41,7 +41,7 @@ Describe "Get-FromSource" {
         }
         # Clean test directory
         if (Test-Path "$TEST_DRIVE\data") {
-            Remove-Item -Path "$TEST_DRIVE\data" -Recurse -Force
+            Remove-ItemWrapper -path "$TEST_DRIVE\data" -Recurse -Force
         }
 
         Mock Test-OS64Bit { return $true }

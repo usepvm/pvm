@@ -13,7 +13,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
 }
@@ -56,7 +56,7 @@ Describe "Get-Aliases" {
     }
 
     It "Falls back to DEFAULT_ALIASES value" {
-        Remove-Item -Path "$TEMPLATES_PATH\aliases.json"
+        Remove-ItemWrapper -path "$TEMPLATES_PATH\aliases.json"
         $result = Get-Aliases
         $result.Count | Should -Be $DEFAULT_ALIASES.Count
     }
@@ -113,7 +113,7 @@ Describe "Get-Scripts" {
     }
 
     It "Falls back to DEFAULT_SCRIPTS value" {
-        Remove-Item -Path "$script:TEMPLATES_PATH\scripts.json"
+        Remove-ItemWrapper -path "$script:TEMPLATES_PATH\scripts.json"
         $result = Get-Scripts
         $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
     }

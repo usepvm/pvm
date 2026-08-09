@@ -112,12 +112,12 @@ function Show-SpinnerWhileJob {
         }
 
         $result = Receive-Job -Job $job -Wait -AutoRemoveJob -ErrorAction Stop
-        Remove-Item Env:\PVM_ROOT_FOR_JOB -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path Env:\PVM_ROOT_FOR_JOB
 
         return $result.pvmData
     } catch {
         Write-Yellow -message "`r$(' ' * ($message.content.Length + 2))`r" -NoNewline
-        Remove-Item Env:\PVM_ROOT_FOR_JOB -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path Env:\PVM_ROOT_FOR_JOB
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show spinner while job"; exception = $_ }
 
         if ($rethrow) {

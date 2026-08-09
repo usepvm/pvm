@@ -40,7 +40,7 @@ function Remove-ExtensionFromExtDirectory {
             return -1
         }
 
-        Remove-Item -Path $extensionFullPath -Force -ErrorAction Stop
+        Remove-ItemWrapper -path $extensionFullPath
 
         return 0
     } catch {

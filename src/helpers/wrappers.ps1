@@ -60,3 +60,9 @@ function Copy-ItemWrapper {
 
     Copy-Item -Path $path -Destination $destination -Force
 }
+
+function Remove-ItemWrapper {
+    param ($path)
+
+    Remove-Item -Path $path -Force -Recurse -ErrorAction SilentlyContinue
+}

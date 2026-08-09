@@ -28,13 +28,13 @@ max_execution_time = 30
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Backup-IniFile" {
     It "Creates a backup when none exists" {
-        Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
         $result = Backup-IniFile -iniPath $testIniPath
         $result | Should -Be 0
         Test-Path $testBackupPath | Should -Be $true

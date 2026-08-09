@@ -93,7 +93,7 @@ function Remove-CacheFile {
             }
         }
 
-        Remove-Item -Path $cachePath -Force
+        Remove-ItemWrapper -path $cachePath
         Show-Success -message "`nCache file '$cacheName' deleted successfully."
 
         return 0
@@ -124,7 +124,7 @@ function Clear-CacheFiles {
         }
 
         foreach ($cacheFile in $cacheFiles) {
-            Remove-Item -Path $cacheFile.FullName -Force
+            Remove-ItemWrapper -path $cacheFile.FullName
         }
 
         Show-Success -message "`nAll cache files deleted successfully."

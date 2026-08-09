@@ -178,7 +178,7 @@ function Install-XDebugExtension {
             if (Test-FileExists -path "$phpPath\ext\$($chosenItem.fileName)") {
                 $response = Read-HostWrapper -prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
                 if (Test-NoResponse -response $response) {
-                    Remove-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)"
+                    Remove-ItemWrapper -path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)"
                     Write-Gray -message "`nInstallation cancelled"
                     return -1
                 }
@@ -367,7 +367,7 @@ function Install-Extension {
             if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
                 $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
                 if (Test-NoResponse -response $response) {
-                    Remove-Item -Path "$($PVMConfig.paths.storage)\php\$fileNamePath" -Force -Recurse
+                    Remove-ItemWrapper -path "$($PVMConfig.paths.storage)\php\$fileNamePath"
                     Write-Gray -message "`nInstallation cancelled"
                     return -1
                 }
@@ -375,7 +375,7 @@ function Install-Extension {
         }
 
         Move-Item -Path $extFile.FullName -Destination "$phpPath\ext"
-        Remove-Item -Path $extractPath -Force -Recurse
+        Remove-ItemWrapper -path $extractPath
         $code = Add-MissingPHPExtensionToIni -iniPath $iniPath -extFileName $extFile.Name -enable $false
         if ($code -ne 0) {
             Show-Error -Message "`nFailed to add $extName"

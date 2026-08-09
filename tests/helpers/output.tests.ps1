@@ -9,7 +9,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
 }
@@ -353,13 +353,13 @@ Describe "Show-SpinnerWhileJob" {
                 return @{ pvmData = @{ result = 'success' } }
             }
 
-            Mock Remove-Item {}
+            Mock Remove-ItemWrapper {}
 
             $scriptBlock = { return @{ result = 'success' } }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock
 
-            Should -Invoke Remove-Item -ParameterFilter {
-                $Path -eq 'Env:\PVM_ROOT_FOR_JOB'
+            Should -Invoke Remove-ItemWrapper -ParameterFilter {
+                $path -eq 'Env:\PVM_ROOT_FOR_JOB'
             }
         }
 
@@ -369,13 +369,13 @@ Describe "Show-SpinnerWhileJob" {
                 throw "Job failed"
             }
 
-            Mock Remove-Item {}
+            Mock Remove-ItemWrapper {}
 
             $scriptBlock = { throw "Job failed" }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
 
-            Should -Invoke Remove-Item -ParameterFilter {
-                $Path -eq 'Env:\PVM_ROOT_FOR_JOB'
+            Should -Invoke Remove-ItemWrapper -ParameterFilter {
+                $path -eq 'Env:\PVM_ROOT_FOR_JOB'
             }
         }
 

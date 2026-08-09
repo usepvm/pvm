@@ -42,14 +42,14 @@ max_execution_time = 30
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
 Describe "Set-IniSetting" {
     BeforeEach {
         Reset-IniContent
-        Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
     }
 
     It "Accepts key parameter without value" {

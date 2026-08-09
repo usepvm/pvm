@@ -10,7 +10,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
 }
@@ -268,13 +268,35 @@ Describe "Copy-ItemWrapper Tests" {
             $Destination -eq $destination
         }
     }
-    
+
     It "Throws when Copy-Item throws" {
         Mock Copy-Item { throw 'Test error' }
 
         $source = "$TEST_DRIVE\source"
         $destination = "$TEST_DRIVE\destination"
-        
+
         { Copy-ItemWrapper -path $source -destination $destination } | Should -Throw
+    }
+}
+
+Describe "Remove-ItemWrapper Tests" {
+    It "Calls Remove-Item with the correct parameters" {
+        Mock Remove-Item { }
+
+        $path = "$TEST_DRIVE\path"
+
+        $null = Remove-ItemWrapper -path $path
+
+        Should -Invoke Remove-Item -Times 1 -ParameterFilter {
+            $Path -eq $path
+        }
+    }
+
+    It "Throws when Remove-Item throws" {
+        Mock Remove-Item { throw 'Test error' }
+
+        $path = "$TEST_DRIVE\path"
+
+        { Remove-ItemWrapper -path $path } | Should -Throw
     }
 }

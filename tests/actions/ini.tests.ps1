@@ -88,7 +88,7 @@ max_execution_time = 30
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -96,7 +96,7 @@ Describe "Invoke-IniAction" {
     BeforeEach {
         Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
         Reset-IniContent
-        Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
     }
 
     Context "info action" {
@@ -302,7 +302,7 @@ extension=php_curl.dll
                 return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\php_curl-1.4.0-7.4-ts-vc15-x86\php_curl.dll" } )
             }
             Mock Expand-Zip { }
-            Mock Remove-Item { }
+            Mock Remove-ItemWrapper { }
             Mock Move-Item { }
             Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
                 return 'y'
@@ -426,7 +426,7 @@ extension=php_curl.dll
         }
 
         It "Handles missing php.ini file" {
-            Remove-Item -Path "$phpVersionPath\php.ini" -Force
+            Remove-ItemWrapper -path "$phpVersionPath\php.ini" -Force
             $result = Invoke-IniAction -action 'info' -params @()
             $result | Should -Be -1
         }

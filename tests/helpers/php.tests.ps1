@@ -33,7 +33,7 @@ max_execution_time = 30
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -971,7 +971,7 @@ Describe "Get-ZendExtensionsList" {
     }
 
     It "Falls back to DEFAULT_ZEND_EXTENSIONS value" {
-        Remove-Item -Path "$TEMPLATES_PATH\zend_extensions.json"
+        Remove-ItemWrapper -path "$TEMPLATES_PATH\zend_extensions.json"
         $result = Get-ZendExtensionsList
         $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
     }

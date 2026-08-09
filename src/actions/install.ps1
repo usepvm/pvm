@@ -214,7 +214,7 @@ function Expand-AndConfigurePHP {
     param ($path, $fileNamePath)
 
     try {
-        Remove-Item -Path $fileNamePath -Recurse -Force
+        Remove-ItemWrapper -path $fileNamePath
         Expand-Zip -zipPath $path -extractPath $fileNamePath -deleteZipAfter $true
         $iniCandidates = @(
             'php.ini-development',

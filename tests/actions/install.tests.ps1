@@ -133,7 +133,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -517,7 +517,7 @@ Describe "Expand-AndConfigurePHP Tests" {
             param ($path, $destination)
             $script:MockFileSystem.Files[$Destination] = 'Copied content'
         }
-        Mock Remove-Item {
+        Mock Remove-ItemWrapper {
             param ($Path)
             if ($script:MockFileSystem.Files.ContainsKey($Path)) {
                 $script:MockFileSystem.Files.Remove($Path)
@@ -537,7 +537,7 @@ Describe "Expand-AndConfigurePHP Tests" {
     }
 
     It "Should handle extraction failure" {
-        Mock Remove-Item { throw 'Test exception' }
+        Mock Remove-ItemWrapper { throw 'Test exception' }
 
         { Expand-AndConfigurePHP -path "$TEST_DRIVE\php.zip" -fileNamePath "$TEST_DRIVE\php" } | Should -Not -Throw
     }
@@ -897,7 +897,7 @@ Describe "Environment Variable Tests" {
 
     It "Get-InstalledPHPVersions should return empty array when no directories found" {
         New-Item -Path $PHP_DIR -ItemType Directory -Force
-        Remove-Item -Path "$PHP_DIR\*" -Recurse -Force
+        Remove-ItemWrapper -path "$PHP_DIR\*" -Recurse -Force
 
         $result = Get-InstalledPHPVersions
 

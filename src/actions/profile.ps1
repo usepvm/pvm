@@ -527,7 +527,7 @@ function Remove-PHPProfile {
             }
         }
 
-        Remove-Item -Path $profilePath -Force
+        Remove-ItemWrapper -path $profilePath
         Show-Success -message "`nProfile '$profileName' deleted successfully."
 
         return 0
@@ -558,7 +558,7 @@ function Clear-PHPProfiles {
         }
 
         foreach ($profileFile in $profileFiles) {
-            Remove-Item -Path $profileFile.FullName -Force
+            Remove-ItemWrapper -path $profileFile.FullName
         }
 
         Show-Success -message "`nAll profiles deleted successfully."

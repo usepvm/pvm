@@ -40,7 +40,7 @@ max_execution_time = 30
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -48,7 +48,7 @@ Describe "Disable-IniExtension" {
     BeforeEach {
         Mock Test-DirectoryExists -ParameterFilter { $path -eq $extDirectory } -MockWith { return $true }
         Reset-IniContent
-        Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
     }
 
     It "Disables enabled extension" {

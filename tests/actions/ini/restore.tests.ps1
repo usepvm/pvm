@@ -31,7 +31,7 @@ max_execution_time = 30
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -48,7 +48,7 @@ Describe "Restore-IniBackup" {
     }
 
     It "Fails when backup doesn't exist" {
-        Remove-Item -Path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
         Restore-IniBackup -iniPath $testIniPath | Should -Be -1
     }
 

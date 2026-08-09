@@ -137,7 +137,7 @@ function Expand-Zip {
         Expand-ZipCore -zipPath $zipPath -extractPath $extractPath
 
         if ($deleteZipAfter) {
-            Remove-Item -Path $zipPath -Force
+            Remove-ItemWrapper -path $zipPath
         }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to expand zip file from $zipPath"; exception = $_ }

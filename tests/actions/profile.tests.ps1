@@ -50,7 +50,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -488,7 +488,7 @@ Describe "Show-PHPProfiles Tests" {
 
     It "Should handle empty profiles directory" {
         # Remove all profiles
-        Remove-Item -Path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
 
         $result = Show-PHPProfiles
         $result | Should -Be -1
@@ -550,7 +550,7 @@ Describe "Get-PopularPHPSettings Tests" {
     }
 
     It "Should fallback to default popular PHP settings" {
-        Remove-Item -Path $PROFILE_TEMPLATE_PATH
+        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
         $settings = Get-PopularPHPSettings
         $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
     }
@@ -581,7 +581,7 @@ Describe "Get-PopularPHPExtensions Tests" {
     }
 
     It "Should fallback to default popular PHP extensions" {
-        Remove-Item -Path $PROFILE_TEMPLATE_PATH
+        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
         $extensions = Get-PopularPHPExtensions
         $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
     }
@@ -1212,7 +1212,7 @@ Describe "Remove-PHPProfile Tests" {
         Test-Path "$PROFILES_PATH\example.json" | Should -Be $false
     }
 
-    It "Should return -1 and log error when Remove-Item fails" {
+    It "Should return -1 and log error when Remove-ItemWrapper fails" {
         # Create test profile
         $testProfile = @{
             name = 'testprofile'
@@ -1225,7 +1225,7 @@ Describe "Remove-PHPProfile Tests" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\testprofile.json"
 
         Mock Read-HostWrapper { return 'y' }
-        Mock Remove-Item { throw 'Access denied' }
+        Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
@@ -1314,7 +1314,7 @@ Describe "Remove-PHPProfile Tests" {
 
 Describe "Clear-PHPProfiles Tests" {
     BeforeEach {
-        Remove-Item -Path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
 
         Mock Add-LogEntry { return 0 }
     }
@@ -1433,7 +1433,7 @@ Describe "Clear-PHPProfiles Tests" {
         '{}' | Set-Content -Path "$PROFILES_PATH\example.json"
 
         Mock Read-HostWrapper { return 'y' }
-        Mock Remove-Item { throw 'Access denied' }
+        Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be -1

@@ -18,7 +18,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -34,7 +34,7 @@ Describe "Uninstall-PHP" {
         BeforeEach {
             Mock Get-MatchingPHPVersions -MockWith { }
             Mock Get-UserSelectedPHPVersion -MockWith { }
-            Mock Remove-Item -MockWith { }
+            Mock Remove-ItemWrapper -MockWith { }
             Mock Add-LogEntry -MockWith { 0 }
             Mock Get-CurrentPHPVersion { @{ version = $null } }
         }
@@ -51,8 +51,8 @@ Describe "Uninstall-PHP" {
             $result.message | Should -BeLike '*PHP version 7.4 has been uninstalled successfully*'
             $result.color | Should -Be 'DarkGreen'
 
-            Should -Invoke Remove-Item -Exactly 1 -ParameterFilter {
-                $Path -eq "$testPhpPath\7.4" -and $Recurse -eq $true -and $Force -eq $true
+            Should -Invoke Remove-ItemWrapper -Exactly 1 -ParameterFilter {
+                $path -eq "$testPhpPath\7.4"
             }
         }
 
@@ -70,7 +70,7 @@ Describe "Uninstall-PHP" {
             Should -Invoke Read-HostWrapper -Exactly 1 -ParameterFilter {
                 $Prompt -like "*Are you sure you want to delete PHP version*"
             }
-            Should -Invoke Remove-Item -Exactly 0
+            Should -Invoke Remove-ItemWrapper -Exactly 0
         }
 
         It "Should proceed after general confirmation 'y' when not current version" {
@@ -86,7 +86,7 @@ Describe "Uninstall-PHP" {
             $result.message | Should -BeLike '*PHP version 7.4 has been uninstalled successfully*'
 
             Should -Invoke Read-HostWrapper -Exactly 1
-            Should -Invoke Remove-Item -Exactly 1
+            Should -Invoke Remove-ItemWrapper -Exactly 1
         }
 
         It "Should prompt current-version warning after general confirm when uninstalling active version" {
@@ -107,7 +107,7 @@ Describe "Uninstall-PHP" {
 
             $result.code | Should -Be -1
             Should -Invoke Read-HostWrapper -Exactly 2
-            Should -Invoke Remove-Item -Exactly 0
+            Should -Invoke Remove-ItemWrapper -Exactly 0
         }
 
         It "Should prompt current-version warning and cancel on 'n'" {
@@ -128,7 +128,7 @@ Describe "Uninstall-PHP" {
             $result.code | Should -Be -1
             $result.message | Should -Be 'Uninstallation cancelled'
             Should -Invoke Read-HostWrapper -Exactly 2
-            Should -Invoke Remove-Item -Exactly 0
+            Should -Invoke Remove-ItemWrapper -Exactly 0
         }
 
         It "Should uninstall current version after both confirmations answered 'y'" {
@@ -144,7 +144,7 @@ Describe "Uninstall-PHP" {
 
             $result.code | Should -Be 0
             Should -Invoke Read-HostWrapper -Exactly 2
-            Should -Invoke Remove-Item -Exactly 1
+            Should -Invoke Remove-ItemWrapper -Exactly 1
         }
 
         It "Should skip all prompts and uninstall current version when skipConfirmation is true" {
@@ -159,7 +159,7 @@ Describe "Uninstall-PHP" {
 
             $result.code | Should -Be 0
             Should -Invoke Read-HostWrapper -Exactly 0
-            Should -Invoke Remove-Item -Exactly 1
+            Should -Invoke Remove-ItemWrapper -Exactly 1
         }
     }
 
@@ -171,7 +171,7 @@ Describe "Uninstall-PHP" {
             Mock Get-UserSelectedPHPVersion -MockWith {
                 @{ code = 0; version = '8.0'; path = "$testPhpPath\8.0" }
             }
-            Mock Remove-Item -MockWith { }
+            Mock Remove-ItemWrapper -MockWith { }
             Mock Add-LogEntry -MockWith { 0 }
             Mock Get-CurrentPHPVersion { @{ version = $null } }
         }
@@ -187,8 +187,8 @@ Describe "Uninstall-PHP" {
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
             Should -Invoke Get-UserSelectedPHPVersion -Exactly 1
-            Should -Invoke Remove-Item -Exactly 1 -ParameterFilter {
-                $Path -eq "$testPhpPath\8.0"
+            Should -Invoke Remove-ItemWrapper -Exactly 1 -ParameterFilter {
+                $path -eq "$testPhpPath\8.0"
             }
         }
     }
@@ -199,7 +199,7 @@ Describe "Uninstall-PHP" {
                 @()
             }
             Mock Get-UserSelectedPHPVersion -MockWith { }
-            Mock Remove-Item -MockWith { }
+            Mock Remove-ItemWrapper -MockWith { }
             Mock Add-LogEntry -MockWith { 0 }
         }
 
@@ -211,7 +211,7 @@ Describe "Uninstall-PHP" {
             $result.color | Should -Be 'DarkYellow'
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
-            Should -Invoke Remove-Item -Exactly 0
+            Should -Invoke Remove-ItemWrapper -Exactly 0
         }
     }
 
@@ -223,7 +223,7 @@ Describe "Uninstall-PHP" {
             Mock Get-UserSelectedPHPVersion -MockWith {
                 @{ code = -1; message = 'User cancelled the selection'; color = 'DarkYellow' }
             }
-            Mock Remove-Item -MockWith { }
+            Mock Remove-ItemWrapper -MockWith { }
             Mock Add-LogEntry -MockWith { 0 }
         }
 
@@ -236,7 +236,7 @@ Describe "Uninstall-PHP" {
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
             Should -Invoke Get-UserSelectedPHPVersion -Exactly 1
-            Should -Invoke Remove-Item -Exactly 0
+            Should -Invoke Remove-ItemWrapper -Exactly 0
         }
     }
 
@@ -244,7 +244,7 @@ Describe "Uninstall-PHP" {
         BeforeEach {
             Mock Get-MatchingPHPVersions -MockWith { return $null }
             Mock Get-UserSelectedPHPVersion -MockWith { return $null }
-            Mock Remove-Item -MockWith { }
+            Mock Remove-ItemWrapper -MockWith { }
             Mock Add-LogEntry -MockWith { 0 }
         }
 
@@ -257,7 +257,7 @@ Describe "Uninstall-PHP" {
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
             Should -Invoke Get-UserSelectedPHPVersion -Exactly 1
-            Should -Invoke Remove-Item -Exactly 0
+            Should -Invoke Remove-ItemWrapper -Exactly 0
         }
     }
 
@@ -266,7 +266,7 @@ Describe "Uninstall-PHP" {
             Mock Get-CurrentPHPVersion { @{ version = $null } }
             Mock Get-MatchingPHPVersions -MockWith { }
             Mock Get-UserSelectedPHPVersion -MockWith { }
-            Mock Remove-Item -MockWith { throw 'Access denied' }
+            Mock Remove-ItemWrapper -MockWith { throw 'Access denied' }
         }
 
         It "Should catch the exception and return error message" {
@@ -281,12 +281,12 @@ Describe "Uninstall-PHP" {
             $result.message | Should -Be "Failed to uninstall PHP version '7.4'"
             $result.color | Should -Be 'DarkYellow'
 
-            Should -Invoke Remove-Item -Exactly 1
+            Should -Invoke Remove-ItemWrapper -Exactly 1
             Should -Invoke Add-LogEntry -Exactly 1
         }
     }
 
     AfterAll {
-        Remove-Item -Path $testPhpPath -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testPhpPath -Recurse -Force -ErrorAction SilentlyContinue
     }
 }

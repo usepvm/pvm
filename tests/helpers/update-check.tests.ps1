@@ -10,7 +10,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
 }
@@ -24,7 +24,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
 
     AfterEach {
         if (Test-Path $TIMESTAMP_FILE) {
-            Remove-Item -Path $TIMESTAMP_FILE -Force
+            Remove-ItemWrapper -path $TIMESTAMP_FILE -Force
         }
     }
 

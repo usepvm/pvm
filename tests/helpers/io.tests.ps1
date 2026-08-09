@@ -27,7 +27,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
 }
@@ -122,7 +122,7 @@ Describe "Test-FileExists" {
             $result = Test-FileExists -path $filePath
             $result | Should -Be $true
 
-            Remove-Item -Path $filePath -Force
+            Remove-ItemWrapper -path $filePath -Force
         }
 
         It "Returns false for non-existent file" {
@@ -271,7 +271,7 @@ Describe "New-SymbolicLink" {
             $result.color | Should -Be 'DarkYellow'
 
             # Cleanup
-            Remove-Item -Path $existingPath -Force
+            Remove-ItemWrapper -path $existingPath -Force
         }
 
         It "Deletes existing symbolic link and creates new one" {
@@ -299,7 +299,7 @@ Describe "New-SymbolicLink" {
             } finally {
                 # Cleanup
                 if (Test-Path $testDir) {
-                    Remove-Item -Path $testDir -Recurse -Force
+                    Remove-ItemWrapper -path $testDir -Recurse -Force
                 }
             }
         }
@@ -384,7 +384,7 @@ Describe "Expand-ZipCore Tests" {
         } finally {
             # Cleanup
             if (Test-Path $testDir) {
-                Remove-Item -Path $testDir -Recurse -Force
+                Remove-ItemWrapper -path $testDir -Recurse -Force
             }
         }
     }
@@ -393,7 +393,7 @@ Describe "Expand-ZipCore Tests" {
 Describe "Expand-Zip Tests" {
     BeforeEach {
         Mock Expand-ZipCore { }
-        Mock Remove-Item { }
+        Mock Remove-ItemWrapper { }
         Mock Add-LogEntry { }
     }
 
@@ -405,12 +405,12 @@ Describe "Expand-Zip Tests" {
 
     It "Should delete zip after extraction" {
         { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $true } | Should -Not -Throw
-        Should -Invoke Remove-Item -Times 1 -ParameterFilter { $Path -eq 'test.zip' }
+        Should -Invoke Remove-ItemWrapper -Times 1 -ParameterFilter { $path -eq 'test.zip' }
     }
 
     It "Should not delete zip if deleteZipAfter is false" {
         { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $false } | Should -Not -Throw
-        Should -Invoke Remove-Item -Times 0
+        Should -Invoke Remove-ItemWrapper -Times 0
     }
 
     It "Should call Add-LogEntry on extraction failure" {

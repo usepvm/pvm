@@ -35,7 +35,7 @@ display_errors = On
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -88,7 +88,7 @@ Describe "Remove-ExtensionFromIniFile" {
 Describe "Remove-ExtensionFromExtDirectory" {
     It "Removes the file and returns 0 when file exists and paths match" {
         Mock Test-FileNotExists { return $false }
-        Mock Remove-Item { }
+        Mock Remove-ItemWrapper { }
         $extensionObject = @{
             fileName = 'php_curl.dll'
             fullPath = "$extDirectory\php_curl.dll"
@@ -129,9 +129,9 @@ Describe "Remove-ExtensionFromExtDirectory" {
         $result | Should -Be -1
     }
 
-    It "Returns -1 and logs when Remove-Item throws" {
+    It "Returns -1 and logs when Remove-ItemWrapper throws" {
         Mock Test-FileNotExists { return $false }
-        Mock Remove-Item { throw 'Access denied' }
+        Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $extensionObject = @{
             fileName = 'php_curl.dll'
@@ -142,7 +142,7 @@ Describe "Remove-ExtensionFromExtDirectory" {
         $result = Remove-ExtensionFromExtDirectory -extensionDirectory $extDirectory -extensionObject $extensionObject
 
         $result | Should -Be -1
-        Should -Invoke Remove-Item -Times 1
+        Should -Invoke Remove-ItemWrapper -Times 1
         Should -Invoke Add-LogEntry -Times 1
     }
 }
@@ -160,7 +160,7 @@ Describe "Uninstall-Extension" {
     }
 
     AfterEach {
-        Remove-Item -Path "$extDirectory\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$extDirectory\*" -Force -ErrorAction SilentlyContinue
     }
 
     It "Returns -1 immediately when extNames is empty" {

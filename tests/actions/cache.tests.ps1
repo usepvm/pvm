@@ -16,7 +16,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-Item -Path $TEST_DRIVE -Recurse -Force
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
     $Global:PVMConfig = $PVMConfigBackup
 }
 
@@ -51,7 +51,7 @@ Describe "Get-CacheFiles Tests" {
 Describe "Show-CacheFiles Tests" {
     BeforeEach {
         # Clean slate for each test
-        Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
         Mock Add-LogEntry { return 0 }
     }
@@ -125,7 +125,7 @@ Describe "Show-CacheFiles Tests" {
 
 Describe "Show-CachedData Tests" {
     BeforeEach {
-        Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
         Mock Add-LogEntry { return 0 }
     }
@@ -213,7 +213,7 @@ Describe "Show-CachedData Tests" {
 
 Describe "Remove-CacheFile Tests" {
     BeforeEach {
-        Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
         Mock Add-LogEntry { return 0 }
     }
@@ -333,11 +333,11 @@ Describe "Remove-CacheFile Tests" {
         Test-Path "$CACHE_PATH\mydata.json" | Should -Be $false
     }
 
-    It "Should return -1 and log error when Remove-Item throws" {
+    It "Should return -1 and log error when Remove-ItemWrapper throws" {
         '{}' | Set-Content -Path "$CACHE_PATH\releases.json"
 
         Mock Read-HostWrapper { return 'y' }
-        Mock Remove-Item { throw 'Access denied' }
+        Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $result = Remove-CacheFile -cacheName 'releases'
         $result | Should -Be -1
@@ -367,7 +367,7 @@ Describe "Remove-CacheFile Tests" {
 
 Describe "Clear-CacheFiles Tests" {
     BeforeEach {
-        Remove-Item -Path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
         Mock Add-LogEntry { return 0 }
     }
@@ -502,7 +502,7 @@ Describe "Clear-CacheFiles Tests" {
         '{}' | Set-Content -Path "$CACHE_PATH\releases.json"
 
         Mock Read-HostWrapper { return 'y' }
-        Mock Remove-Item { throw 'Access denied' }
+        Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $result = Clear-CacheFiles
         $result | Should -Be -1

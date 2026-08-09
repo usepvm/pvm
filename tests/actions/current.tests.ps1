@@ -273,12 +273,12 @@ Describe "Get-PHPStatus Function Tests" {
 Describe "Get-CurrentPHPVersion Function Tests" {
     Context "When PHP current version symlink exists and is valid" {
         BeforeEach {
-            # Mock Get-Item to return a symlink object
-            Mock Get-Item {
+            # Mock Get-ItemWrapper to return a symlink object
+            Mock Get-ItemWrapper {
                 return @{
                     Target = 'C:\php\8.2.0'
                 }
-            } -ParameterFilter { $Path -eq $PHP_CURRENT_DIR }
+            } -ParameterFilter { $path -eq $PHP_CURRENT_DIR }
 
             # Mock Get-PHPStatus
             Mock Get-PHPStatus {
@@ -323,7 +323,7 @@ Describe "Get-CurrentPHPVersion Function Tests" {
     Context "When PHP current version path does not exist" {
         It "returns empty result when path does not exist" {
             # Arrange
-            Mock Get-Item { return @{ Target = 'C:\php\8.2.0' } }
+            Mock Get-ItemWrapper { return @{ Target = 'C:\php\8.2.0' } }
             Mock Test-DirectoryExists { return $false }
 
             # Act
@@ -338,7 +338,7 @@ Describe "Get-CurrentPHPVersion Function Tests" {
 
         It "Should return null values when path does not exist" {
             # Arrange
-            Mock Get-Item { throw 'Path does not exist' }
+            Mock Get-ItemWrapper { throw 'Path does not exist' }
 
             # Act
             $result = Get-CurrentPHPVersion
@@ -352,7 +352,7 @@ Describe "Get-CurrentPHPVersion Function Tests" {
 
         It "Should call Add-LogEntry when exception occurs" {
             # Arrange
-            Mock Get-Item { throw 'Path does not exist' }
+            Mock Get-ItemWrapper { throw 'Path does not exist' }
             Mock Add-LogEntry { return 0 }
 
             # Act
@@ -363,14 +363,14 @@ Describe "Get-CurrentPHPVersion Function Tests" {
         }
     }
 
-    Context "When Get-Item returns null" {
+    Context "When Get-ItemWrapper returns null" {
         BeforeEach {
-            Mock Get-Item {
+            Mock Get-ItemWrapper {
                 return $null
-            } -ParameterFilter { $Path -eq $PHP_CURRENT_DIR }
+            } -ParameterFilter { $path -eq $PHP_CURRENT_DIR }
         }
 
-        It "Should handle null Get-Item result" {
+        It "Should handle null Get-ItemWrapper result" {
             # Act
             $result = Get-CurrentPHPVersion
 
@@ -384,11 +384,11 @@ Describe "Get-CurrentPHPVersion Function Tests" {
 
     Context "When Get-PHPStatus fails" {
         BeforeEach {
-            Mock Get-Item {
+            Mock Get-ItemWrapper {
                 return @{
                     Target = 'C:\php\8.1.0'
                 }
-            } -ParameterFilter { $Path -eq $PHP_CURRENT_DIR }
+            } -ParameterFilter { $path -eq $PHP_CURRENT_DIR }
 
             # Mock Get-PHPStatus to return -1 (error case)
             Mock Get-PHPStatus {
@@ -438,7 +438,7 @@ Describe "Integration Tests" {
             )
             $phpIniContent | Out-File -FilePath "$testPhpPath\php.ini"
 
-            Mock Get-Item {
+            Mock Get-ItemWrapper {
                 return @{
                     Target = $testPhpPath
                 }

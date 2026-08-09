@@ -98,7 +98,7 @@ function New-SymbolicLink {
         }
         # Remove old link if it exists
         if (Test-Path $link) {
-            $item = Get-Item -LiteralPath $link -Force
+            $item = Get-ItemWrapper -path $link
             if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
                 [System.IO.Directory]::Delete($link)
             } else {

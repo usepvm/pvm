@@ -284,7 +284,7 @@ Describe "New-SymbolicLink" {
             try {
                 Mock Test-Admin { return $true }
                 Mock New-Directory { return 0 }
-                Mock Get-Item { return @{ Attributes = 'ReparsePoint' } }
+                Mock Get-ItemWrapper { return @{ Attributes = 'ReparsePoint' } }
 
                 New-Item -ItemType Directory -Path $testDir -Force | Out-Null
                 New-Item -ItemType Directory -Path $targetPath -Force | Out-Null

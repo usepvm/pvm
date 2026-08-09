@@ -37,7 +37,7 @@ function Test-CanUseCache {
         $useCache = $false
 
         if (Test-FileExists -path $path) {
-            $cacheFile = Get-Item -Path $path -ErrorAction SilentlyContinue
+            $cacheFile = Get-ItemWrapper -path $path
             if ($null -eq $cacheFile) {
                 return $false
             }

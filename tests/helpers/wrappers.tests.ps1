@@ -300,3 +300,25 @@ Describe "Remove-ItemWrapper Tests" {
         { Remove-ItemWrapper -path $path } | Should -Throw
     }
 }
+
+Describe "Get-ItemWrapper Tests" {
+    It "Calls Get-Item with the correct parameters" {
+        Mock Get-Item { }
+
+        $path = "$TEST_DRIVE\path"
+
+        $null = Get-ItemWrapper -path $path
+
+        Should -Invoke Get-Item -Times 1 -ParameterFilter {
+            $Path -eq $path
+        }
+    }
+
+    It "Throws when Get-Item throws" {
+        Mock Get-Item { throw 'Test error' }
+
+        $path = "$TEST_DRIVE\path"
+
+        { Get-ItemWrapper -path $path } | Should -Throw
+    }
+}

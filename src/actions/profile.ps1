@@ -557,9 +557,7 @@ function Clear-PHPProfiles {
             }
         }
 
-        foreach ($profileFile in $profileFiles) {
-            Remove-ItemWrapper -path $profileFile.FullName
-        }
+        Remove-ItemWrapper -path "$($PVMConfig.paths.profiles)\*"
 
         Show-Success -message "`nAll profiles deleted successfully."
 

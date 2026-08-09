@@ -123,9 +123,7 @@ function Clear-CacheFiles {
             }
         }
 
-        foreach ($cacheFile in $cacheFiles) {
-            Remove-ItemWrapper -path $cacheFile.FullName
-        }
+        Remove-ItemWrapper -path "$($PVMConfig.paths.cache)\*"
 
         Show-Success -message "`nAll cache files deleted successfully."
 

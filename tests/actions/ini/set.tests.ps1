@@ -38,7 +38,7 @@ max_execution_time = 30
     $phpVersionPath = "$TEST_DRIVE\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
     New-Item -ItemType SymbolicLink -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
-    Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
+    Copy-ItemWrapper -path $testIniPath -destination "$phpVersionPath\php.ini"
 }
 
 AfterAll {

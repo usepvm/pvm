@@ -513,8 +513,8 @@ Describe "Get-PHPFromUrl Tests" {
 Describe "Expand-AndConfigurePHP Tests" {
     BeforeAll {
         Mock Add-Type { param ($AssemblyName) }
-        Mock Copy-Item {
-            param ($Path, $Destination)
+        Mock Copy-ItemWrapper {
+            param ($path, $destination)
             $script:MockFileSystem.Files[$Destination] = 'Copied content'
         }
         Mock Remove-Item {

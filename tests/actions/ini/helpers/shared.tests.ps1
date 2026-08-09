@@ -53,7 +53,7 @@ Describe "Backup-IniFile" {
     }
 
     It "Returns -1 on error" {
-        Mock Copy-Item { throw 'Access denied' }
+        Mock Copy-ItemWrapper { throw 'Access denied' }
         $result = Backup-IniFile -iniPath 'invalidpath'
         $result | Should -Be -1
     }

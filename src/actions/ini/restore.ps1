@@ -10,7 +10,7 @@ function Restore-IniBackup {
             return -1
         }
 
-        Copy-Item -Path $backupPath -Destination $iniPath -Force
+        Copy-ItemWrapper -path $backupPath -destination $iniPath
         Show-Success -message "`nRestored php.ini from backup: $backupPath"
         return 0
     } catch {

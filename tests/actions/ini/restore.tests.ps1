@@ -54,7 +54,7 @@ Describe "Restore-IniBackup" {
 
     It "Returns -1 on error" {
         Mock Test-Path { return $true }
-        Mock Copy-Item { throw 'Access denied' }
+        Mock Copy-ItemWrapper { throw 'Access denied' }
         $null = Backup-IniFile -iniPath $testIniPath
         Restore-IniBackup -iniPath $testIniPath | Should -Be -1
     }

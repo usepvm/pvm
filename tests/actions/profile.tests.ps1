@@ -1572,7 +1572,7 @@ Describe "Export-PHPProfile Tests" {
         $exportedContent.settings.memory_limit.value | Should -Be '256M'
     }
 
-    It "Should return -1 and log error when Copy-Item fails" {
+    It "Should return -1 and log error when Copy-ItemWrapper fails" {
         # Create test profile
         $testProfile = @{
             name = 'testprofile'
@@ -1584,7 +1584,7 @@ Describe "Export-PHPProfile Tests" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\testprofile.json"
 
-        Mock Copy-Item { throw 'Access denied' }
+        Mock Copy-ItemWrapper { throw 'Access denied' }
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath "$TEST_DRIVE\export.json"
         $result | Should -Be -1
@@ -1937,7 +1937,7 @@ Describe "Import-PHPProfile Tests" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$TEST_DRIVE\testprofile.json"
 
-        Mock Copy-Item { throw 'Disk full' }
+        Mock Copy-ItemWrapper { throw 'Disk full' }
 
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\testprofile.json"
         $result | Should -Be -1

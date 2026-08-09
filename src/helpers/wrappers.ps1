@@ -54,3 +54,9 @@ function Invoke-WebRequestWrapper {
 
     return Invoke-WebRequest @params
 }
+
+function Copy-ItemWrapper {
+    param ($path, $destination)
+
+    Copy-Item -Path $path -Destination $destination -Force
+}

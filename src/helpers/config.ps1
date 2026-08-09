@@ -93,7 +93,7 @@ function Get-EnvConfig {
     $envFile = "$rootPath\.env"
 
     if (Test-FileNotExists -path $envFile) {
-        Copy-Item -Path "$rootPath\.env.example" -Destination $envFile
+        Copy-ItemWrapper -path "$rootPath\.env.example" -destination $envFile
     } else {
         Write-Verbose "Using .env from: $envFile"
     }

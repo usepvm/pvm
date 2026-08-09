@@ -296,7 +296,7 @@ Describe "Initialize-EnvironmentDirectoriesAndFiles" {
 Describe "New-EnvFile" {
     BeforeAll {
         $script:PVMRoot = "$TEST_DRIVE\PVM"
-        Mock Copy-Item { }
+        Mock Copy-ItemWrapper { }
     }
 
     It "Returns -1 when the .env.example file is not found" {
@@ -305,7 +305,7 @@ Describe "New-EnvFile" {
         $result = New-EnvFile
 
         $result | Should -Be -1
-        Should -Invoke Copy-Item -Times 0
+        Should -Invoke Copy-ItemWrapper -Times 0
         Should -Invoke Show-Error -Times 1 -ParameterFilter {
             $message -like '*Failed to find .env.example file.*'
         }
@@ -319,7 +319,7 @@ Describe "New-EnvFile" {
         $result = New-EnvFile
 
         $result | Should -Be -1
-        Should -Invoke Copy-Item -Times 0
+        Should -Invoke Copy-ItemWrapper -Times 0
     }
 
     It "Returns 0 when the user wants to overwrite the .env file" {
@@ -330,7 +330,7 @@ Describe "New-EnvFile" {
         $result = New-EnvFile
 
         $result | Should -Be 0
-        Should -Invoke Copy-Item -Times 1
+        Should -Invoke Copy-ItemWrapper -Times 1
         Should -Invoke Show-Success -Times 1 -ParameterFilter {
             $message -like '*Created .env file.*'
         }
@@ -345,7 +345,7 @@ Describe "New-EnvFile" {
 
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Times 0
-        Should -Invoke Copy-Item -Times 1
+        Should -Invoke Copy-ItemWrapper -Times 1
         Should -Invoke Show-Success -Times 1 -ParameterFilter {
             $message -like '*Created .env file.*'
         }
@@ -355,13 +355,13 @@ Describe "New-EnvFile" {
         Mock Test-FileNotExists -ParameterFilter { $path -eq "$PVMRoot\.env.example"} { return $false }
         Mock Test-FileExists -ParameterFilter { $path -eq "$PVMRoot\.env"} { return $false }
         Mock Read-HostWrapper { }
-        Mock Copy-Item { throw 'Access denied' }
+        Mock Copy-ItemWrapper { throw 'Access denied' }
 
         $result = New-EnvFile
 
         $result | Should -Be -1
         Should -Invoke Read-HostWrapper -Times 0
-        Should -Invoke Copy-Item -Times 1
+        Should -Invoke Copy-ItemWrapper -Times 1
     }
 }
 

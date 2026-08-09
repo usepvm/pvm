@@ -586,7 +586,7 @@ function Export-PHPProfile {
             $exportPath = "$(Get-Location)\$profileName.json"
         }
 
-        Copy-Item -Path $profilePath -Destination $exportPath -Force
+        Copy-ItemWrapper -path $profilePath -destination $exportPath
         Show-Success -message "`nProfile '$profileName' exported to: $exportPath"
 
         return 0
@@ -635,7 +635,7 @@ function Import-PHPProfile {
             $jsonContent = $userProfile | ConvertTo-Json -Depth 10
             Set-ContentWrapper -path $targetPath -value $jsonContent
         } else {
-            Copy-Item -Path $importPath -Destination $targetPath -Force
+            Copy-ItemWrapper -path $importPath -destination $targetPath
         }
 
         Show-Success -message "`nProfile imported successfully as '$finalName'."

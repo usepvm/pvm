@@ -253,3 +253,28 @@ Describe "Invoke-WebRequestWrapper Tests" {
         }
     }
 }
+
+Describe "Copy-ItemWrapper Tests" {
+    It "Calls Copy-Item with the correct parameters" {
+        Mock Copy-Item { }
+
+        $source = "$TEST_DRIVE\source"
+        $destination = "$TEST_DRIVE\destination"
+
+        $null = Copy-ItemWrapper -path $source -destination $destination
+
+        Should -Invoke Copy-Item -Times 1 -ParameterFilter {
+            $Path -eq $source -and
+            $Destination -eq $destination
+        }
+    }
+    
+    It "Throws when Copy-Item throws" {
+        Mock Copy-Item { throw 'Test error' }
+
+        $source = "$TEST_DRIVE\source"
+        $destination = "$TEST_DRIVE\destination"
+        
+        { Copy-ItemWrapper -path $source -destination $destination } | Should -Throw
+    }
+}

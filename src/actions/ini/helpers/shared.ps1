@@ -5,7 +5,7 @@ function Backup-IniFile {
     try {
         $backup = "$iniPath.bak"
         if (Test-FileNotExists -path $backup) {
-            Copy-Item -Path $iniPath $backup
+            Copy-ItemWrapper -path $iniPath -destination $backup
         }
         return 0
     } catch {

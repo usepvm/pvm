@@ -224,7 +224,7 @@ function Expand-AndConfigurePHP {
         )
         foreach ($candidate in $iniCandidates) {
             if (Test-FileExists -path "$fileNamePath\$candidate") {
-                Copy-Item -Path "$fileNamePath\$candidate" -Destination "$fileNamePath\php.ini"
+                Copy-ItemWrapper -path "$fileNamePath\$candidate" -destination "$fileNamePath\php.ini"
                 break
             }
         }

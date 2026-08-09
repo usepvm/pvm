@@ -41,7 +41,7 @@ max_execution_time = 30
     # Create initial ini content first
     Reset-IniContent
 
-    Copy-Item -Path $testIniPath "$phpVersionPath\php.ini" -Force
+    Copy-ItemWrapper -path $testIniPath -destination "$phpVersionPath\php.ini"
 
     # Mock Add-LogEntry function
     Mock Add-LogEntry {

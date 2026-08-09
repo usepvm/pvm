@@ -138,7 +138,7 @@ function New-EnvFile {
                 return -1
             }
         }
-        Copy-Item -Path "$PVMRoot\.env.example" -Destination "$PVMRoot\.env"
+        Copy-ItemWrapper -path "$PVMRoot\.env.example" -destination "$PVMRoot\.env"
         Show-Success -message "`nCreated .env file."
 
         return 0

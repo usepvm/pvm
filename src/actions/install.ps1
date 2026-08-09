@@ -42,7 +42,7 @@ function Get-LatestPHPVersionFromUrl {
     param ($url)
 
     try {
-        $html = Get-WebResponse -uri $url
+        $html = Invoke-WebRequest-Wrapper -uri $url
         $links = $html.Links
 
         $allUrlVersions = @()
@@ -75,7 +75,7 @@ function Get-PHPVersionsFromUrl {
     param ($url, $version)
 
     try {
-        $html = Get-WebResponse -uri $url
+        $html = Invoke-WebRequest-Wrapper -uri $url
         $links = $html.Links
 
         $formattedList = @()
@@ -164,7 +164,7 @@ function Get-PHPFromUrl {
     try {
         # Download the selected PHP version
         $fileName = $versionObject.fileName
-        $null = Get-WebResponse -uri $url -outFile "$destination\$fileName"
+        $null = Invoke-WebRequest-Wrapper -uri $url -outFile "$destination\$fileName"
         return $destination
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP from $url"; exception = $_ }
@@ -251,7 +251,7 @@ function Set-Opcache {
                 -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `
                 -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
         }
-        Set-Content-Wrapper -path $phpIniPath -value $phpIniContent
+        Set-ContentWrapper -path $phpIniPath -value $phpIniContent
         Show-Success -message "`nOpcache configured successfully for PHP version $version"
 
         return 0
@@ -302,7 +302,7 @@ function Select-Version {
         $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
         Show-Message -message $msg
-        $selectedVersionInput = Read-Host-Wrapper -prompt "`nInsert the [number] matching the version to install (or press Enter to cancel)"
+        $selectedVersionInput = Read-HostWrapper -prompt "`nInsert the [number] matching the version to install (or press Enter to cancel)"
 
         if (-not $selectedVersionInput) {
             return $null
@@ -352,7 +352,7 @@ function Install-PHP {
                     $versionNumber = "$versionNumber ".PadRight($maxNameLength, '.')
                     Show-Message -message " $versionNumber $metaData $isCurrent"
                 }
-                $response = Read-Host-Wrapper -prompt "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
+                $response = Read-HostWrapper -prompt "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 if (Test-NoResponse -response $response) {
                     return @{ code = -1; message = 'Installation cancelled'; color = 'Gray' }
                 }

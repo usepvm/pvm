@@ -1,5 +1,5 @@
 ﻿
-function Write-Host-Wrapper {
+function Write-HostWrapper {
     param ($object, $foregroundColor = $null, [switch]$noNewLine)
 
     $params = @{
@@ -14,7 +14,7 @@ function Write-Host-Wrapper {
     Write-Host @params
 }
 
-function Read-Host-Wrapper {
+function Read-HostWrapper {
     param ($prompt = $null)
 
     $response = Read-Host -Prompt $prompt
@@ -26,19 +26,19 @@ function Read-Host-Wrapper {
     return $response.Trim()
 }
 
-function Add-Content-Wrapper {
+function Add-ContentWrapper {
     param ($path, $value)
 
     Add-Content -Path $path -Value $value -Encoding UTF8
 }
 
-function Set-Content-Wrapper {
+function Set-ContentWrapper {
     param ($path, $value)
 
     Set-Content -Path $path -Value $value -Encoding UTF8
 }
 
-function Get-WebResponse {
+function Invoke-WebRequest-Wrapper {
     param ($uri, $outFile = $null, $useBasicParsing = $true)
 
     $uri = $uri.Trim()

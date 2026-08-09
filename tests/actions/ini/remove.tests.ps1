@@ -156,7 +156,7 @@ Describe "Uninstall-Extension" {
 
         Mock Test-DirectoryNotExists { return $false }
         Mock Test-FileNotExists { return $false }
-        Mock Read-Host-Wrapper { return 'n' }
+        Mock Read-HostWrapper { return 'n' }
     }
 
     AfterEach {
@@ -223,7 +223,7 @@ Describe "Uninstall-Extension" {
                     lineNumber = 2
                 })
         }
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
         Mock Test-FileNotExists { return $false }
         Mock Remove-ExtensionFromExtDirectory { return -1 }
 
@@ -246,7 +246,7 @@ Describe "Uninstall-Extension" {
                     lineNumber = 2
                 })
         }
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
         Mock Test-FileNotExists { return $false }
         Mock Remove-ExtensionFromExtDirectory { return 0 }
         Mock Remove-ExtensionFromIniFile { return -1 }
@@ -270,7 +270,7 @@ Describe "Uninstall-Extension" {
                     lineNumber = 2
                 })
         }
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
         Mock Test-FileNotExists { return $false }
         Mock Remove-ExtensionFromExtDirectory { return 0 }
         Mock Remove-ExtensionFromIniFile { return 0 }
@@ -296,7 +296,7 @@ Describe "Uninstall-Extension" {
                     lineNumber = 2
                 })
         }
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
         Mock Remove-ExtensionFromExtDirectory { return 0 }
         Mock Remove-ExtensionFromIniFile { return 0 }
 
@@ -351,7 +351,7 @@ Describe "Uninstall-Extension" {
                     color      = 'DarkGreen'
                 })
         }
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
         Mock Test-FileNotExists { return $true }
 
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('sql')
@@ -385,14 +385,14 @@ Describe "Uninstall-Extension" {
                 })
         }
         $script:callCount = 0
-        Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
             $script:callCount++
             if ($script:callCount -eq 1) { return 'A' }
             if ($script:callCount -eq 2) { return '-1' }
             else { return '1' }
         }
 
-        Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nAre you sure you want to uninstall 'pdo_mysql'? (y/n)" } -MockWith {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nAre you sure you want to uninstall 'pdo_mysql'? (y/n)" } -MockWith {
             return 'y'
         }
         Mock Remove-ExtensionFromExtDirectory { return 0 }
@@ -424,7 +424,7 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl') -skipConfirmation $true
 
         $result | Should -Be 0
-        Should -Invoke Read-Host-Wrapper -Exactly 0 -ParameterFilter {
+        Should -Invoke Read-HostWrapper -Exactly 0 -ParameterFilter {
             $Prompt -like "*Are you sure*"
         }
     }
@@ -441,13 +441,13 @@ Describe "Uninstall-Extension" {
                 })
         }
         Mock Test-FileNotExists { return $false }
-        Mock Read-Host-Wrapper -ParameterFilter { $prompt -like "*Are you sure*" } -MockWith { return 'n' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -like "*Are you sure*" } -MockWith { return 'n' }
         Mock Remove-ExtensionFromExtDirectory { return 0 }
 
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl') -skipConfirmation $false
 
         $result | Should -Be -1
-        Should -Invoke Read-Host-Wrapper -Exactly 1 -ParameterFilter {
+        Should -Invoke Read-HostWrapper -Exactly 1 -ParameterFilter {
             $Prompt -like "*Are you sure*"
         }
         Should -Invoke Remove-ExtensionFromExtDirectory -Exactly 0
@@ -465,14 +465,14 @@ Describe "Uninstall-Extension" {
                 })
         }
         Mock Test-FileNotExists { return $false }
-        Mock Read-Host-Wrapper -ParameterFilter { $prompt -like "*Are you sure*" } -MockWith { return 'y' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -like "*Are you sure*" } -MockWith { return 'y' }
         Mock Remove-ExtensionFromExtDirectory { return 0 }
         Mock Remove-ExtensionFromIniFile { return 0 }
 
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl') -skipConfirmation $false
 
         $result | Should -Be 0
-        Should -Invoke Read-Host-Wrapper -Exactly 1 -ParameterFilter {
+        Should -Invoke Read-HostWrapper -Exactly 1 -ParameterFilter {
             $Prompt -like "*Are you sure*"
         }
     }
@@ -505,7 +505,7 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl', 'xdebug') -skipConfirmation $true
 
         $result | Should -Be 0
-        Should -Invoke Read-Host-Wrapper -Exactly 0 -ParameterFilter {
+        Should -Invoke Read-HostWrapper -Exactly 0 -ParameterFilter {
             $Prompt -like "*Are you sure*"
         }
     }

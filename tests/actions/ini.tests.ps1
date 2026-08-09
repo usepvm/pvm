@@ -64,7 +64,7 @@ max_execution_time = 30
         DownloadFails = $false
     }
 
-    Mock Get-WebResponse {
+    Mock Invoke-WebRequest-Wrapper {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
@@ -131,15 +131,15 @@ Describe "Invoke-IniAction" {
     Context "set action" {
         It "Sets single setting" {
             Mock Test-FileNotExists { return $false }
-            Mock Read-Host-Wrapper { return '256M' }
+            Mock Read-HostWrapper { return '256M' }
             $result = Invoke-IniAction -action 'set' -params @('memory_limit')
             $result | Should -Be 0
         }
 
         It "Sets multiple settings" {
             Mock Test-FileNotExists { return $false }
-            Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { '512M' }
-            Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "Enter new value for 'max_execution_time'" } -MockWith { '60' }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { '512M' }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'max_execution_time'" } -MockWith { '60' }
 
             $result = Invoke-IniAction -action 'set' -params @('memory_limit', 'max_execution_time')
             $result | Should -Be 0
@@ -287,7 +287,7 @@ extension=php_curl.dll
                 DownloadFails = $false
             }
 
-            Mock Read-Host-Wrapper {
+            Mock Read-HostWrapper {
                 param ($Prompt)
                 if ($Prompt -eq "`nInsert the [number] you want to install") {
                     return '0'
@@ -304,7 +304,7 @@ extension=php_curl.dll
             Mock Expand-Zip { }
             Mock Remove-Item { }
             Mock Move-Item { }
-            Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
                 return 'y'
             }
             Mock Install-Extension { return 0 }

@@ -23,7 +23,7 @@ BeforeAll {
         DownloadFails = $false
     }
 
-    Mock Get-WebResponse {
+    Mock Invoke-WebRequest-Wrapper {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
@@ -53,7 +53,7 @@ AfterAll {
 
 Describe "Get-ExtensionCategoriesByPage Tests" {
     It "Returns extensions links by page" {
-        Mock Get-WebResponse -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links   = @(
@@ -76,7 +76,7 @@ Describe "Get-ExtensionCategoriesByPage Tests" {
     }
 
     It "Sets hasMore to true when more pages are available" {
-        Mock Get-WebResponse -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links   = @(
@@ -100,7 +100,7 @@ Describe "Get-ExtensionCategoriesByPage Tests" {
 Describe "Get-PHPExtensionsFromSource" {
     BeforeAll {
         Mock Save-CachedData { return 0 }
-        Mock Get-WebResponse -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
                 Links   = @(
@@ -166,7 +166,7 @@ Describe "Get-PHPExtensionsFromSource" {
 
 Describe "Select-ExtensionLinksFromURL" {
     It "Returns filtered links for given extension" {
-        Mock Get-WebResponse -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
+        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
             return @{
                 Content = 'Mocked memcache content'
                 Links = @(
@@ -191,7 +191,7 @@ Describe "Select-ExtensionLinksFromURL" {
 Describe "Get-PackagesFromSourceLinks Tests" {
     It "Returns formatted list for matching packages" {
         Mock Add-LogEntry { return 0 }
-        Mock Get-WebResponse -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" } -MockWith {
+        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" } -MockWith {
             return @{
                 Content = 'Mocked PHP memcache 3.4.0 content'
                 Links = @(
@@ -201,7 +201,7 @@ Describe "Get-PackagesFromSourceLinks Tests" {
                 )
             }
         }
-        Mock Get-WebResponse -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.3.0/windows" } -MockWith {
+        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.3.0/windows" } -MockWith {
             return @{
                 Content = 'Mocked PHP memcache 3.4.0 content'
                 Links = @(
@@ -211,7 +211,7 @@ Describe "Get-PackagesFromSourceLinks Tests" {
                 )
             }
         }
-        Mock Get-WebResponse -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.2.0/windows" } -MockWith {
+        Mock Invoke-WebRequest-Wrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.2.0/windows" } -MockWith {
             return @{
                 Content = 'Mocked PHP memcache 3.4.0 content'
                 Links = @(
@@ -238,7 +238,7 @@ Describe "Get-PackagesFromSourceLinks Tests" {
     }
 
     It "Handles exception gracefully" {
-        Mock Get-WebResponse { throw 'Network error' }
+        Mock Invoke-WebRequest-Wrapper { throw 'Network error' }
 
         $result = Get-PackagesFromSourceLinks -extName 'memcache' -version '8.2' -links @( @{ href = '/package/memcache/3.4.0/windows' } )
 
@@ -623,7 +623,7 @@ Describe "Get-ExtensionLinksFromURL Tests" {
         }
 
         It "Prompts user to select link when multiple found and returns selected" {
-            Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
 
             $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
 
@@ -632,7 +632,7 @@ Describe "Get-ExtensionLinksFromURL Tests" {
         }
 
         It "Returns null when user skips selection" {
-            Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '' }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '' }
 
             $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
 
@@ -644,7 +644,7 @@ Describe "Get-ExtensionLinksFromURL Tests" {
 
         It "Reprompts user when typing invalid choice" {
             $script:callCount = 0
-            Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith {
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith {
                 $script:callCount++
                 if ($script:callCount -eq 1) { return 'A' }
                 if ($script:callCount -eq 2) { return '-1' }
@@ -660,7 +660,7 @@ Describe "Get-ExtensionLinksFromURL Tests" {
         It "Handles defensive check when chosen item is null" {
             # Test the defensive check by having a null element in the array
             Mock Get-ExtensionMatchingCategories { return @( @{ href = '/package/memcache' }, $null, @{ href = '/package/memcached' } ) }
-            Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
 
             $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
 

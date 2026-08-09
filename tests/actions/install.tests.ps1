@@ -54,7 +54,7 @@ BeforeAll {
     # Mock functions for testing
     Mock Add-LogEntry { return $true }
 
-    Mock Get-WebResponse {
+    Mock Invoke-WebRequest-Wrapper {
         param ($Uri, $OutFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
@@ -85,7 +85,7 @@ BeforeAll {
         return $script:MockFileSystem.Files.ContainsKey($Path)
     }
 
-    Mock Read-Host-Wrapper {
+    Mock Read-HostWrapper {
         param ($Prompt)
         return $script:MockUserInput
     }
@@ -325,8 +325,8 @@ Describe "Get-LatestPHPVersion Tests" {
         $result | Should -BeNullOrEmpty
     }
 
-    It "Should return empty array when exceptions occur in Get-WebResponse" {
-        Mock Get-WebResponse { throw 'Test exception' }
+    It "Should return empty array when exceptions occur in Invoke-WebRequest-Wrapper" {
+        Mock Invoke-WebRequest-Wrapper { throw 'Test exception' }
 
         $result = Get-LatestPHPVersion
 
@@ -751,7 +751,7 @@ Describe "Install-PHP Integration Tests" {
     It "Handles exception gracefully" {
         Mock Test-PHPVersionInstalled { return $false }
         Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
-        Mock Read-Host-Wrapper { throw 'Test exception' }
+        Mock Read-HostWrapper { throw 'Test exception' }
 
         $result = Install-PHP -version '8.1'
 

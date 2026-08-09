@@ -23,7 +23,7 @@ function Set-IniSettingDirect {
             $lines += $newLine
         }
 
-        Set-Content-Wrapper -path $iniPath -value $lines
+        Set-ContentWrapper -path $iniPath -value $lines
         return 0
     } catch {
         return -1
@@ -85,7 +85,7 @@ function Enable-IniExtensionDirect {
             $lines += $newLine
         }
 
-        Set-Content-Wrapper -path $iniPath -value $lines
+        Set-ContentWrapper -path $iniPath -value $lines
         return 0
     } catch {
         return -1
@@ -143,7 +143,7 @@ function Disable-IniExtensionDirect {
             }
         }
 
-        Set-Content-Wrapper -path $iniPath -value $lines
+        Set-ContentWrapper -path $iniPath -value $lines
         return 0
     } catch {
         return -1
@@ -249,7 +249,7 @@ function Save-PHPProfile {
 
         $profilePath = "$($PVMConfig.paths.profiles)\$profileName.json"
         $jsonContent = $userProfile | ConvertTo-Json -Depth 10
-        Set-Content-Wrapper -path $profilePath -value $jsonContent
+        Set-ContentWrapper -path $profilePath -value $jsonContent
 
         Show-Success -message "`nProfile '$profileName' saved successfully."
         Show-Message -message "  Settings: $($userProfile.settings.Count) (popular/common only)"
@@ -520,7 +520,7 @@ function Remove-PHPProfile {
         }
 
         if (-not $skipConfirmation) {
-            $response = Read-Host-Wrapper -prompt "`nAre you sure you want to delete profile '$profileName'? (y/n)"
+            $response = Read-HostWrapper -prompt "`nAre you sure you want to delete profile '$profileName'? (y/n)"
             if (Test-NoResponse -response $response) {
                 Write-Gray -message "`nDeletion cancelled."
                 return -1
@@ -550,7 +550,7 @@ function Clear-PHPProfiles {
         }
 
         if (-not $skipConfirmation) {
-            $response = Read-Host-Wrapper -prompt "`nAre you sure you want to delete all profiles? (y/n)"
+            $response = Read-HostWrapper -prompt "`nAre you sure you want to delete all profiles? (y/n)"
             if (Test-NoResponse -response $response) {
                 Write-Gray -message "`nDeletion cancelled."
                 return -1
@@ -633,7 +633,7 @@ function Import-PHPProfile {
         if ($finalName -ne $userProfile.name) {
             $userProfile.name = $finalName
             $jsonContent = $userProfile | ConvertTo-Json -Depth 10
-            Set-Content-Wrapper -path $targetPath -value $jsonContent
+            Set-ContentWrapper -path $targetPath -value $jsonContent
         } else {
             Copy-Item -Path $importPath -Destination $targetPath -Force
         }
@@ -694,7 +694,7 @@ function New-ExamplePHPProfile {
         }
 
         $jsonContent = $profileExample | ConvertTo-Json -Depth 10
-        Set-Content-Wrapper -path $PVMConfig.paths.profileExample -value $jsonContent
+        Set-ContentWrapper -path $PVMConfig.paths.profileExample -value $jsonContent
 
         return 0
     } catch {
@@ -711,7 +711,7 @@ function New-ProfileTemplate {
         }
 
         $jsonContent = $profileTemplate | ConvertTo-Json -Depth 10
-        Set-Content-Wrapper -path $PVMConfig.paths.profileTemplate -value $jsonContent
+        Set-ContentWrapper -path $PVMConfig.paths.profileTemplate -value $jsonContent
 
         return 0
     } catch {

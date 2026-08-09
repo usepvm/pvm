@@ -17,7 +17,7 @@ function Remove-ExtensionFromIniFile {
             return -1
         }
 
-        Set-Content-Wrapper -path $iniPath -value $newLines
+        Set-ContentWrapper -path $iniPath -value $newLines
 
         return 0
     } catch {
@@ -89,7 +89,7 @@ function Uninstall-Extension {
                 }
 
                 do {
-                    $choiceRaw = Read-Host-Wrapper -prompt "`nSelect a number"
+                    $choiceRaw = Read-HostWrapper -prompt "`nSelect a number"
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
@@ -111,7 +111,7 @@ function Uninstall-Extension {
             }
 
             if (-not $skipConfirmation) {
-                $response = Read-Host-Wrapper -prompt "`nAre you sure you want to uninstall '$($selected.name)'? (y/n)"
+                $response = Read-HostWrapper -prompt "`nAre you sure you want to uninstall '$($selected.name)'? (y/n)"
                 if (Test-NoResponse -response $response) {
                     $results += @{ name = $selected.name; status = 'Uninstallation cancelled'; color = 'Gray' }
                     $overallCode = -1

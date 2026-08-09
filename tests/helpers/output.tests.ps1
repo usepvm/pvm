@@ -623,11 +623,11 @@ Describe "Write-Host helpers Tests" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {
             $Global:PVMSubprocess.enabled = $false
-            Mock Write-Host-Wrapper {}
+            Mock Write-HostWrapper {}
 
             Write-Color -message 'Test message' -foreColor 'Red'
 
-            Should -Invoke Write-Host-Wrapper -ParameterFilter {
+            Should -Invoke Write-HostWrapper -ParameterFilter {
                 $object -match 'Test message' -and
                 $foregroundColor -eq 'Red' -and
                 $noNewLine -eq $false
@@ -637,11 +637,11 @@ Describe "Write-Host helpers Tests" {
         It "Stores structured output when subprocess mode is enabled" {
             $Global:PVMSubprocess.structuredOutput = @()
             $Global:PVMSubprocess.enabled = $true
-            Mock Write-Host-Wrapper {}
+            Mock Write-HostWrapper {}
 
             Write-Color -message 'Test message' -foreColor 'Red'
 
-            Should -Invoke Write-Host-Wrapper -Exactly 0
+            Should -Invoke Write-HostWrapper -Exactly 0
             $Global:PVMSubprocess.structuredOutput.Count | Should -Be 1
             $Global:PVMSubprocess.structuredOutput[0].message | Should -Be 'Test message'
             $Global:PVMSubprocess.structuredOutput[0].color | Should -Be 'Red'
@@ -839,11 +839,11 @@ Describe "Write-Host helpers Tests" {
 
     Context "New-Line* Test" {
         It "Prints new lines" {
-            Mock Write-Host-Wrapper {}
+            Mock Write-HostWrapper {}
 
             New-Lines -count 5
 
-            Should -Invoke Write-Host-Wrapper -Exactly 1 -ParameterFilter {
+            Should -Invoke Write-HostWrapper -Exactly 1 -ParameterFilter {
                 $object -eq ("`n" * 5) -and $noNewLine
             }
         }

@@ -3,7 +3,7 @@ function Get-ExtensionCategoriesByPage {
     param ($extCategory, $link, $page = 1)
 
     $availableExtensions = @()
-    $html = Get-WebResponse -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
+    $html = Invoke-WebRequest-Wrapper -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
     $null = $html.Links | Where-Object {
         if (-not $_.href) { return $false }
@@ -36,7 +36,7 @@ function Get-ExtensionCategoriesByPage {
 function Get-PHPExtensionsFromSource {
     $availableExtensions = @{}
     try {
-        $html_cat = Get-WebResponse -uri $PVMConfig.links.peclPackages
+        $html_cat = Invoke-WebRequest-Wrapper -uri $PVMConfig.links.peclPackages
         $null = $html_cat.Links | Where-Object {
             if (-not $_.href) { return $false }
 
@@ -64,7 +64,7 @@ function Get-PHPExtensionsFromSource {
                 }
 
                 return @{ pvmData = $availableExtensions }
-            } -message @{ content = "- Loading category '$extCategory'..."; color = 'Cyan' } -rethrow $true
+            } -message @{ content = "  Loading category '$extCategory'..."; color = 'Cyan' } -rethrow $true
 
             return $true
         }
@@ -114,7 +114,7 @@ function Get-FilteredPHPExtensionsByCategory {
 function Select-ExtensionLinksFromURL {
     param ($extName)
 
-    $html = Get-WebResponse -uri "$($PVMConfig.links.peclPackageRoot)/$extName"
+    $html = Invoke-WebRequest-Wrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName"
     $links = $html.Links | Where-Object {
         $_.href -match "/package/$extName/([^/]+)/windows$"
     }
@@ -129,7 +129,7 @@ function Get-PackagesFromSourceLinks {
     $links | ForEach-Object {
         try {
             $extVersion = $_.href -replace "/package/$extName/", '' -replace '/windows', ''
-            $html = Get-WebResponse -uri "$($PVMConfig.links.peclPackageRoot)/$extName/$extVersion/windows"
+            $html = Invoke-WebRequest-Wrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName/$extVersion/windows"
             $html.Links | ForEach-Object {
                 if (-not $_.href) { return }
 
@@ -205,7 +205,7 @@ function Get-ExtensionLinksFromURL {
             }
 
             do {
-                $choiceRaw = Read-Host-Wrapper -prompt "`nInsert the [number] you want to install"
+                $choiceRaw = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
                 if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
                     Write-Gray -message "`nInstallation cancelled"
                     return $null

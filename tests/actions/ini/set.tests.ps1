@@ -53,7 +53,7 @@ Describe "Set-IniSetting" {
     }
 
     It "Accepts key parameter without value" {
-        Mock Read-Host-Wrapper { return '256M' }
+        Mock Read-HostWrapper { return '256M' }
         $result = Set-IniSetting -iniPath $testIniPath -keys @('memory_limit')
         $result | Should -Be 0
     }
@@ -69,19 +69,19 @@ Describe "Set-IniSetting" {
     }
 
     It "Updates existing setting" {
-        Mock Read-Host-Wrapper { return '256M' }
+        Mock Read-HostWrapper { return '256M' }
         Set-IniSetting -iniPath $testIniPath -keys @('memory_limit') | Should -Be 0
         (Get-Content -Path $testIniPath) -match '^memory_limit\s*=\s*256M' | Should -Be $true
     }
 
     It "Updates setting with spaces" {
-        Mock Read-Host-Wrapper { return 'Off' }
+        Mock Read-HostWrapper { return 'Off' }
         Set-IniSetting -iniPath $testIniPath -keys @('display_errors') | Should -Be 0
         (Get-Content -Path $testIniPath) -match '^display_errors\s*=\s*Off' | Should -Be $true
     }
 
     It "Updates setting and disables" {
-        Mock Read-Host-Wrapper { return '60' }
+        Mock Read-HostWrapper { return '60' }
         Set-IniSetting -iniPath $testIniPath -keys @('max_execution_time') -enable $false | Should -Be 0
         (Get-Content -Path $testIniPath) -match '^;max_execution_time\s*=\s*60' | Should -Be $true
     }
@@ -92,8 +92,8 @@ Describe "Set-IniSetting" {
 opcache.protect_memory=1
 "@ | Set-Content -Path $testIniPath
 
-        Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
-        Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '4G' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '4G' }
 
         Set-IniSetting -iniPath $testIniPath -keys @('memory') | Should -Be 0
         (Get-Content -Path $testIniPath) -match '^memory_limit\s*=\s*4G' | Should -Be $true
@@ -105,14 +105,14 @@ opcache.protect_memory=1
 opcache.protect_memory=1
 "@ | Set-Content -Path $testIniPath
 
-        Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
 
         Set-IniSetting -iniPath $testIniPath -keys @('memory=2G') | Should -Be 0
         (Get-Content -Path $testIniPath) -match '^memory_limit\s*=\s*2G' | Should -Be $true
     }
 
     It "Creates backup before modifying" {
-        Mock Read-Host-Wrapper { return '256M' }
+        Mock Read-HostWrapper { return '256M' }
         Set-IniSetting -iniPath $testIniPath -keys @('memory_limit')
         Test-Path $testBackupPath | Should -Be $true
     }
@@ -128,7 +128,7 @@ opcache.protect_memory=1
 "@ | Set-Content -Path $testIniPath
 
         $script:callCount = 0
-        Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
             $script:callCount++
             if ($script:callCount -eq 1) { return 'A' }
             if ($script:callCount -eq 2) { return '-1' }
@@ -144,8 +144,8 @@ memory_limit=
 memory_limit=2G
 "@ | Set-Content -Path $testIniPath -Encoding UTF8
 
-        Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
-        Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '3G' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '3G' }
 
         Set-IniSetting -iniPath $testIniPath -keys @('memory') | Should -Be 0
         (Get-Content -Path $testIniPath) -match '^memory_limit\s*=\s*3G' | Should -Be $true
@@ -158,7 +158,7 @@ memory_limit=2G
     }
 
     It "Handles values with special characters" {
-        Mock Read-Host-Wrapper { return '10M' }
+        Mock Read-HostWrapper { return '10M' }
         Set-IniSetting -iniPath $testIniPath -keys @('upload_max_filesize') | Should -Be 0
         (Get-Content -Path $testIniPath) -match '^upload_max_filesize\s*=\s*10M' | Should -Be $true
     }

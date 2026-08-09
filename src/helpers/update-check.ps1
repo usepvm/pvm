@@ -14,7 +14,7 @@ function Set-LastUpdateCheckTimestamp {
     try {
         $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
         $null = New-Directory -path $PVMConfig.paths.cache
-        Set-Content-Wrapper -path $timestampFile -value (Get-Date)
+        Set-ContentWrapper -path $timestampFile -value (Get-Date)
         return 0
     } catch {
         return -1

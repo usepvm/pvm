@@ -1083,7 +1083,7 @@ Describe "Remove-PHPProfile Tests" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\testprofile.json"
 
-        Mock Read-Host-Wrapper { return 'n' }
+        Mock Read-HostWrapper { return 'n' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
@@ -1095,7 +1095,7 @@ Describe "Remove-PHPProfile Tests" {
             $message -match 'Deletion cancelled'
         } -Exactly 1
 
-        Should -Invoke Read-Host-Wrapper -Exactly 1
+        Should -Invoke Read-HostWrapper -Exactly 1
     }
 
     It "Should return -1 when user cancels deletion with empty response" {
@@ -1110,7 +1110,7 @@ Describe "Remove-PHPProfile Tests" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\testprofile.json"
 
-        Mock Read-Host-Wrapper { return '' }
+        Mock Read-HostWrapper { return '' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
@@ -1135,7 +1135,7 @@ Describe "Remove-PHPProfile Tests" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\testprofile.json"
 
-        Mock Read-Host-Wrapper { return 'no' }
+        Mock Read-HostWrapper { return 'no' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
@@ -1160,7 +1160,7 @@ Describe "Remove-PHPProfile Tests" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\testprofile.json"
 
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be 0
@@ -1172,7 +1172,7 @@ Describe "Remove-PHPProfile Tests" {
             $message -match "Profile 'testprofile' deleted successfully"
         } -Exactly 1
 
-        Should -Invoke Read-Host-Wrapper -ParameterFilter {
+        Should -Invoke Read-HostWrapper -ParameterFilter {
             $prompt -match "Are you sure you want to delete profile 'testprofile'"
         } -Exactly 1
     }
@@ -1189,7 +1189,7 @@ Describe "Remove-PHPProfile Tests" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\testprofile.json"
 
-        Mock Read-Host-Wrapper { return 'Y' }
+        Mock Read-HostWrapper { return 'Y' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be 0
@@ -1204,11 +1204,11 @@ Describe "Remove-PHPProfile Tests" {
 
     It "Should not display the confirmation prompt when skipConfirmation is true" {
         '{}' | Set-Content -Path "$PROFILES_PATH\example.json"
-        Mock Read-Host-Wrapper { }
+        Mock Read-HostWrapper { }
 
         $result = Remove-PHPProfile -profileName 'example' -skipConfirmation $true
         $result | Should -Be 0
-        Should -Invoke Read-Host-Wrapper -Exactly 0
+        Should -Invoke Read-HostWrapper -Exactly 0
         Test-Path "$PROFILES_PATH\example.json" | Should -Be $false
     }
 
@@ -1224,7 +1224,7 @@ Describe "Remove-PHPProfile Tests" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\testprofile.json"
 
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
         Mock Remove-Item { throw 'Access denied' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
@@ -1249,12 +1249,12 @@ Describe "Remove-PHPProfile Tests" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\myprofile.json"
 
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
 
         $result = Remove-PHPProfile -profileName 'myprofile'
         $result | Should -Be 0
 
-        Should -Invoke Read-Host-Wrapper -ParameterFilter {
+        Should -Invoke Read-HostWrapper -ParameterFilter {
             $prompt -match "Are you sure you want to delete profile 'myprofile'" -and
             $prompt -match '\(y/n\)'
         } -Exactly 1
@@ -1272,7 +1272,7 @@ Describe "Remove-PHPProfile Tests" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\test-profile_123.json"
 
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
 
         $result = Remove-PHPProfile -profileName 'test-profile_123'
         $result | Should -Be 0
@@ -1298,7 +1298,7 @@ Describe "Remove-PHPProfile Tests" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$PROFILES_PATH\testprofile.json"
 
         # Test that 'yes' (not just 'y') is rejected
-        Mock Read-Host-Wrapper { return 'yes' }
+        Mock Read-HostWrapper { return 'yes' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
@@ -1332,7 +1332,7 @@ Describe "Clear-PHPProfiles Tests" {
         '{}' | Set-Content -Path "$PROFILES_PATH\example1.json"
         '{}' | Set-Content -Path "$PROFILES_PATH\example2.json"
 
-        Mock Read-Host-Wrapper { return 'n' }
+        Mock Read-HostWrapper { return 'n' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be -1
@@ -1348,7 +1348,7 @@ Describe "Clear-PHPProfiles Tests" {
     It "Should return -1 when user cancels with empty response" {
         '{}' | Set-Content -Path "$PROFILES_PATH\example.json"
 
-        Mock Read-Host-Wrapper { return '' }
+        Mock Read-HostWrapper { return '' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be -1
@@ -1359,7 +1359,7 @@ Describe "Clear-PHPProfiles Tests" {
     It "Should return -1 when user cancels with 'no'" {
         '{}' | Set-Content -Path "$PROFILES_PATH\example.json"
 
-        Mock Read-Host-Wrapper { return 'no' }
+        Mock Read-HostWrapper { return 'no' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be -1
@@ -1370,7 +1370,7 @@ Describe "Clear-PHPProfiles Tests" {
     It "Should return -1 when user cancels with 'yes' (not just 'y')" {
         '{}' | Set-Content -Path "$PROFILES_PATH\example.json"
 
-        Mock Read-Host-Wrapper { return 'yes' }
+        Mock Read-HostWrapper { return 'yes' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be -1
@@ -1382,7 +1382,7 @@ Describe "Clear-PHPProfiles Tests" {
         '{}' | Set-Content -Path "$PROFILES_PATH\example1.json"
         '{}' | Set-Content -Path "$PROFILES_PATH\example2.json"
 
-        Mock Read-Host-Wrapper { return 'Y' }
+        Mock Read-HostWrapper { return 'Y' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be 0
@@ -1396,23 +1396,23 @@ Describe "Clear-PHPProfiles Tests" {
 
     It "Should not display the confirmation prompt when skipConfirmation is true" {
         '{}' | Set-Content -Path "$PROFILES_PATH\example.json"
-        Mock Read-Host-Wrapper { }
+        Mock Read-HostWrapper { }
 
         $result = Clear-PHPProfiles -skipConfirmation $true
         $result | Should -Be 0
-        Should -Invoke Read-Host-Wrapper -Exactly 0
+        Should -Invoke Read-HostWrapper -Exactly 0
         Test-Path "$PROFILES_PATH\example.json" | Should -Be $false
     }
 
     It "Should display correct confirmation prompt" {
         '{}' | Set-Content -Path "$PROFILES_PATH\example.json"
 
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be 0
 
-        Should -Invoke Read-Host-Wrapper -ParameterFilter {
+        Should -Invoke Read-HostWrapper -ParameterFilter {
             $prompt -match 'Are you sure you want to delete all profiles' -and
             $prompt -match '\(y/n\)'
         } -Exactly 1
@@ -1421,7 +1421,7 @@ Describe "Clear-PHPProfiles Tests" {
     It "Should work correctly with a single profile" {
         '{}' | Set-Content -Path "$PROFILES_PATH\single.json"
 
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be 0
@@ -1432,7 +1432,7 @@ Describe "Clear-PHPProfiles Tests" {
     It "Should return -1 and log error when an exception occurs during deletion" {
         '{}' | Set-Content -Path "$PROFILES_PATH\example.json"
 
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
         Mock Remove-Item { throw 'Access denied' }
 
         $result = Clear-PHPProfiles

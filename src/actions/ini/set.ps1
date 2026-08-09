@@ -47,7 +47,7 @@ function Set-IniSetting {
                 }
 
                 do {
-                    $choiceRaw = Read-Host-Wrapper -prompt "`nSelect a number"
+                    $choiceRaw = Read-HostWrapper -prompt "`nSelect a number"
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
@@ -69,7 +69,7 @@ function Set-IniSetting {
             }
 
             if (-not $inputValue) {
-                $inputValue = Read-Host-Wrapper -prompt "Enter new value for '$($selected.name)'"
+                $inputValue = Read-HostWrapper -prompt "Enter new value for '$($selected.name)'"
             }
 
             $newLine = if ($enable) { "$($selected.name) = $inputValue" } else { ";$($selected.name) = $inputValue" }
@@ -78,7 +78,7 @@ function Set-IniSetting {
 
             $lines = Get-Content -Path $iniPath
             $lines[$selected.lineNo] = $newLine
-            Set-Content-Wrapper -path $iniPath -value $lines
+            Set-ContentWrapper -path $iniPath -value $lines
 
             $status = if ($enable) { 'Enabled' } else { 'Disabled' }
             $color = if ($enable) { 'DarkGreen' } else { 'DarkYellow' }

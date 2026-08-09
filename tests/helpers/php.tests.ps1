@@ -261,7 +261,7 @@ Describe "Get-UserSelectedPHPVersion" {
     }
 
     It "Should return null when no version is selected" {
-        Mock Read-Host-Wrapper { return '' }
+        Mock Read-HostWrapper { return '' }
 
         $result = Get-UserSelectedPHPVersion -installedVersions @(
             @{ version = '7.4'; Arch = 'x64'; BuildType = 'ts'}
@@ -272,7 +272,7 @@ Describe "Get-UserSelectedPHPVersion" {
     }
 
     It "Should prompt user and return selected version when multiple are provided" {
-        Mock Read-Host-Wrapper { return '2' }
+        Mock Read-HostWrapper { return '2' }
 
         $result = Get-UserSelectedPHPVersion -installedVersions @(
             @{ version = '7.4'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\7.4'}
@@ -285,7 +285,7 @@ Describe "Get-UserSelectedPHPVersion" {
     }
 
     It "Should print current next to active php version" {
-        Mock Read-Host-Wrapper { return '2' }
+        Mock Read-HostWrapper { return '2' }
         Mock Get-CurrentPHPVersion { return @{ version = '8.0'; arch = 'x64'; buildType = 'ts'}}
 
         $list = @(

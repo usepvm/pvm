@@ -133,7 +133,7 @@ function New-EnvFile {
         }
 
         if ((Test-FileExists -path "$PVMRoot\.env") -and ($overwrite -eq $false)) {
-            $response = Read-Host-Wrapper -prompt "`n.env file already exists. Overwrite? (y/n)"
+            $response = Read-HostWrapper -prompt "`n.env file already exists. Overwrite? (y/n)"
             if (Test-NoResponse -response $response) {
                 return -1
             }
@@ -150,6 +150,6 @@ function New-EnvFile {
 
 function Wait-ForEnvEdit {
     Show-Info -message "`nEdit $PVMRoot\.env now if you want custom settings, then press Enter to continue..."
-    Read-Host-Wrapper | Out-Null
+    Read-HostWrapper | Out-Null
     $Global:PVMConfig = Get-Config -rootPath $PVMRoot
 }

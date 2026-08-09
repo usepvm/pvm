@@ -32,7 +32,7 @@ function Enable-IniExtension {
                 }
 
                 do {
-                    $choiceRaw = Read-Host-Wrapper -prompt "`nSelect a number"
+                    $choiceRaw = Read-HostWrapper -prompt "`nSelect a number"
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
@@ -77,7 +77,7 @@ function Enable-IniExtension {
             }
 
             $null = Backup-IniFile -iniPath $iniPath
-            Set-Content-Wrapper -path $iniPath -value $newLines
+            Set-ContentWrapper -path $iniPath -value $newLines
 
             $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
         }

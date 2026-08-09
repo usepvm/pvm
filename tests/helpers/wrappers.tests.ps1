@@ -15,7 +15,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Write-Host-Wrapper" {
+Describe "Write-HostWrapper" {
     It "Calls Write-Host with the correct parameters" -tag i {
         Mock Write-Host { }
 
@@ -23,7 +23,7 @@ Describe "Write-Host-Wrapper" {
         $foregroundColor = "Green"
         $noNewLine = $false
 
-        Write-Host-Wrapper -object $object -foregroundColor $foregroundColor -noNewLine:$noNewLine
+        Write-HostWrapper -object $object -foregroundColor $foregroundColor -noNewLine:$noNewLine
 
         Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq $object -and
@@ -33,11 +33,11 @@ Describe "Write-Host-Wrapper" {
     }
 }
 
-Describe "Read-Host-Wrapper" {
+Describe "Read-HostWrapper" {
     It "Calls Read-Host with no parameters" {
         Mock Read-Host { }
 
-        $result = Read-Host-Wrapper
+        $result = Read-HostWrapper
 
         $result | Should -BeNullOrEmpty
         Should -Invoke Read-Host -Times 1 -ParameterFilter {
@@ -50,7 +50,7 @@ Describe "Read-Host-Wrapper" {
 
         $prompt = "Test prompt"
 
-        $result = Read-Host-Wrapper -prompt $prompt
+        $result = Read-HostWrapper -prompt $prompt
 
         $result | Should -Be 'Test response'
         Should -Invoke Read-Host -Times 1 -ParameterFilter {
@@ -61,7 +61,7 @@ Describe "Read-Host-Wrapper" {
     It "Returns null when Read-Host returns empty string" {
         Mock Read-Host { return '' }
 
-        $result = Read-Host-Wrapper -prompt "Test prompt"
+        $result = Read-HostWrapper -prompt "Test prompt"
 
         $result | Should -BeNullOrEmpty
     }
@@ -69,7 +69,7 @@ Describe "Read-Host-Wrapper" {
     It "Returns null when Read-Host returns null" {
         Mock Read-Host { return $null }
 
-        $result = Read-Host-Wrapper -prompt "Test prompt"
+        $result = Read-HostWrapper -prompt "Test prompt"
 
         $result | Should -BeNullOrEmpty
     }
@@ -77,7 +77,7 @@ Describe "Read-Host-Wrapper" {
     It "Returns null when Read-Host returns whitespace only" {
         Mock Read-Host { return '   ' }
 
-        $result = Read-Host-Wrapper -prompt "Test prompt"
+        $result = Read-HostWrapper -prompt "Test prompt"
 
         $result | Should -BeNullOrEmpty
     }
@@ -85,7 +85,7 @@ Describe "Read-Host-Wrapper" {
     It "Returns trimmed value when Read-Host returns whitespace" {
         Mock Read-Host { return ' Test response  ' }
 
-        $result = Read-Host-Wrapper -prompt "Test prompt"
+        $result = Read-HostWrapper -prompt "Test prompt"
 
         $result | Should -Be 'Test response'
     }
@@ -93,18 +93,18 @@ Describe "Read-Host-Wrapper" {
     It "Throws when Read-Host throws" {
         Mock Read-Host { throw 'Test error' }
 
-        { Read-Host-Wrapper -prompt "Test prompt" } | Should -Throw 'Test error'
+        { Read-HostWrapper -prompt "Test prompt" } | Should -Throw 'Test error'
     }
 }
 
-Describe "Add-Content-Wrapper" {
+Describe "Add-ContentWrapper" {
     It "Calls Add-Content with the correct parameters and UTF8 encoding" {
         Mock Add-Content {}
 
         $path = "$TEST_DRIVE\test.txt"
         $content = "Test content"
 
-        Add-Content-Wrapper -path $path -value $content
+        Add-ContentWrapper -path $path -value $content
 
         Should -Invoke Add-Content -Times 1 -ParameterFilter {
             $Path -eq $path -and
@@ -119,18 +119,18 @@ Describe "Add-Content-Wrapper" {
         $path = "$TEST_DRIVE\test.txt"
         $content = "Test content"
 
-        { Add-Content-Wrapper -path $path -value $content } | Should -Throw 'Test error'
+        { Add-ContentWrapper -path $path -value $content } | Should -Throw 'Test error'
     }
 }
 
-Describe "Set-Content-Wrapper Tests" {
+Describe "Set-ContentWrapper Tests" {
     It "Calls Set-Content with the correct parameters and UTF8 encoding" {
         Mock Set-Content {}
 
         $path = "$TEST_DRIVE\test.txt"
         $content = "Test content"
 
-        Set-Content-Wrapper -path $path -value $content
+        Set-ContentWrapper -path $path -value $content
 
         Should -Invoke Set-Content -Times 1 -ParameterFilter {
             $Path -eq $path -and
@@ -145,16 +145,16 @@ Describe "Set-Content-Wrapper Tests" {
         $path = "$TEST_DRIVE\test.txt"
         $content = "Test content"
 
-        { Set-Content-Wrapper -path $path -value $content } | Should -Throw 'Test error'
+        { Set-ContentWrapper -path $path -value $content } | Should -Throw 'Test error'
     }
 }
 
-Describe "Get-WebResponse Tests" {
+Describe "Invoke-WebRequest-Wrapper Tests" {
     Context "When making web requests" {
         It "Calls Invoke-WebRequest with UseBasicParsing" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            $null = Get-WebResponse -uri 'https://example.com'
+            $null = Invoke-WebRequest-Wrapper -uri 'https://example.com'
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq 'https://example.com' -and
@@ -166,7 +166,7 @@ Describe "Get-WebResponse Tests" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
             $outFile = "$TEST_DRIVE\output.txt"
 
-            $null = Get-WebResponse -uri 'https://example.com' -outFile $outFile
+            $null = Invoke-WebRequest-Wrapper -uri 'https://example.com' -outFile $outFile
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq 'https://example.com' -and
@@ -178,7 +178,7 @@ Describe "Get-WebResponse Tests" {
         It "Returns the result from Invoke-WebRequest" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200; Content = 'test content' } }
 
-            $result = Get-WebResponse -uri 'https://example.com'
+            $result = Invoke-WebRequest-Wrapper -uri 'https://example.com'
 
             $result.StatusCode | Should -Be 200
             $result.Content | Should -Be 'test content'
@@ -187,7 +187,7 @@ Describe "Get-WebResponse Tests" {
         It "Does not include OutFile parameter when not provided" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            $null = Get-WebResponse -uri 'https://example.com'
+            $null = Invoke-WebRequest-Wrapper -uri 'https://example.com'
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $PSBoundParameters.ContainsKey('OutFile') -eq $false
@@ -199,13 +199,13 @@ Describe "Get-WebResponse Tests" {
         It "Throws when Invoke-WebRequest throws" {
             Mock Invoke-WebRequest { throw 'Network error' }
 
-            { Get-WebResponse -uri 'https://example.com' } | Should -Throw
+            { Invoke-WebRequest-Wrapper -uri 'https://example.com' } | Should -Throw
         }
 
         It "Handles invalid URI format" {
             Mock Invoke-WebRequest { throw 'Invalid URI format' }
 
-            { Get-WebResponse -uri 'not-a-valid-uri' } | Should -Throw
+            { Invoke-WebRequest-Wrapper -uri 'not-a-valid-uri' } | Should -Throw
         }
     }
 
@@ -213,7 +213,7 @@ Describe "Get-WebResponse Tests" {
         It "Trims whitespace from URI" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            Get-WebResponse -uri '   https://example.com   '
+            Invoke-WebRequest-Wrapper -uri '   https://example.com   '
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq 'https://example.com'
@@ -223,7 +223,7 @@ Describe "Get-WebResponse Tests" {
         It "Passes trimmed empty string to Invoke-WebRequest" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            Get-WebResponse -uri '   '
+            Invoke-WebRequest-Wrapper -uri '   '
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq ''
@@ -235,7 +235,7 @@ Describe "Get-WebResponse Tests" {
         It "Handles HTTPS URIs" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            $null = Get-WebResponse -uri 'https://example.com'
+            $null = Invoke-WebRequest-Wrapper -uri 'https://example.com'
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq 'https://example.com'
@@ -245,7 +245,7 @@ Describe "Get-WebResponse Tests" {
         It "Handles HTTP URIs" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            $null = Get-WebResponse -uri 'http://example.com'
+            $null = Invoke-WebRequest-Wrapper -uri 'http://example.com'
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq 'http://example.com'

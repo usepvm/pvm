@@ -64,7 +64,7 @@ function Test-TwoPHPVersionsEqual {
 function Set-ZendExtensionsList {
     try {
         $jsonContent = $PVMConfig.defaults.zendExtensions | ConvertTo-Json -Depth 10
-        Set-Content-Wrapper -path $PVMConfig.paths.zendExtensionsList -value $jsonContent
+        Set-ContentWrapper -path $PVMConfig.paths.zendExtensionsList -value $jsonContent
 
         return 0
     } catch {
@@ -177,7 +177,7 @@ function Get-UserSelectedPHPVersion {
             Show-Message -message " [$index] $versionNumber $metaData $isCurrent"
             $index++
         }
-        $response = Read-Host-Wrapper -prompt "`nInsert the [number] of the version you want to use (or press Enter to cancel)"
+        $response = Read-HostWrapper -prompt "`nInsert the [number] of the version you want to use (or press Enter to cancel)"
         if (-not $response) {
             return @{ code = -1; message = 'Operation cancelled.'; color = 'Gray' }
         }

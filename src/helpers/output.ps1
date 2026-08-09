@@ -41,7 +41,7 @@ function Add-LogEntry {
             $content += "`nMessage: $($data.exception.Exception.Message)"
             $content += "`nPosition: $($data.exception.InvocationInfo.PositionMessage)"
         }
-        Add-Content-Wrapper -path $logPath -value $content
+        Add-ContentWrapper -path $logPath -value $content
         return 0
     } catch {
         return -1
@@ -202,7 +202,7 @@ function Write-Color {
             noNewLine = $noNewLine.IsPresent
         }
     } else {
-        Write-Host-Wrapper -object $message -foregroundColor $foreColor -noNewLine:$noNewLine
+        Write-HostWrapper -object $message -foregroundColor $foreColor -noNewLine:$noNewLine
     }
 }
 
@@ -323,7 +323,7 @@ function Show-Message {
 function New-Lines {
     param ($count = 1)
 
-    Write-Host-Wrapper -object ("`n" * $count) -noNewLine
+    Write-HostWrapper -object ("`n" * $count) -noNewLine
 }
 
 function New-Line {

@@ -77,7 +77,7 @@ Describe "Get-IniExtensionStatus" {
     }
 
     It "Returns -1 for non-existent extension" {
-        Mock Read-Host-Wrapper { return 'n' }
+        Mock Read-HostWrapper { return 'n' }
         Get-IniExtensionStatus -iniPath $testIniPath -extNames @('nonexistent_ext') | Should -Be -1
     }
 

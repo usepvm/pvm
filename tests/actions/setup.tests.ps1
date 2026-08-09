@@ -314,7 +314,7 @@ Describe "New-EnvFile" {
     It "Returns 0 when the user does not want to overwrite the .env file" {
         Mock Test-FileNotExists { return $false }
         New-Item -ItemType File -Path "$PVMRoot\.env" -Force | Out-Null
-        Mock Read-Host-Wrapper { return 'n' }
+        Mock Read-HostWrapper { return 'n' }
 
         $result = New-EnvFile
 
@@ -325,7 +325,7 @@ Describe "New-EnvFile" {
     It "Returns 0 when the user wants to overwrite the .env file" {
         Mock Test-FileNotExists { return $false }
         New-Item -ItemType File -Path "$PVMRoot\.env" -Force | Out-Null
-        Mock Read-Host-Wrapper { return 'y' }
+        Mock Read-HostWrapper { return 'y' }
 
         $result = New-EnvFile
 
@@ -339,12 +339,12 @@ Describe "New-EnvFile" {
     It "Returns 0 when the .env is created" {
         Mock Test-FileNotExists -ParameterFilter { $path -eq "$PVMRoot\.env.example"} { return $false }
         Mock Test-FileExists -ParameterFilter { $path -eq "$PVMRoot\.env"} { return $false }
-        Mock Read-Host-Wrapper { }
+        Mock Read-HostWrapper { }
 
         $result = New-EnvFile
 
         $result | Should -Be 0
-        Should -Invoke Read-Host-Wrapper -Times 0
+        Should -Invoke Read-HostWrapper -Times 0
         Should -Invoke Copy-Item -Times 1
         Should -Invoke Show-Success -Times 1 -ParameterFilter {
             $message -like '*Created .env file.*'
@@ -354,25 +354,25 @@ Describe "New-EnvFile" {
     It "Returns -1 when the .env is not created" {
         Mock Test-FileNotExists -ParameterFilter { $path -eq "$PVMRoot\.env.example"} { return $false }
         Mock Test-FileExists -ParameterFilter { $path -eq "$PVMRoot\.env"} { return $false }
-        Mock Read-Host-Wrapper { }
+        Mock Read-HostWrapper { }
         Mock Copy-Item { throw 'Access denied' }
 
         $result = New-EnvFile
 
         $result | Should -Be -1
-        Should -Invoke Read-Host-Wrapper -Times 0
+        Should -Invoke Read-HostWrapper -Times 0
         Should -Invoke Copy-Item -Times 1
     }
 }
 
 Describe "Wait-ForEnvEdit" {
     It "Should prompt the user to edit the .env file" {
-        Mock Read-Host-Wrapper { return '' }
+        Mock Read-HostWrapper { return '' }
         Mock Get-Config { return @{} }
 
         Wait-ForEnvEdit
 
-        Should -Invoke Read-Host-Wrapper -Times 1
+        Should -Invoke Read-HostWrapper -Times 1
         Should -Invoke Show-Info -Times 1 -ParameterFilter {
             $message -like "*Edit $PVMRoot\.env now if you want custom settings*"
         }

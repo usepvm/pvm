@@ -32,7 +32,7 @@ function Disable-IniExtension {
                 }
 
                 do {
-                    $choiceRaw = Read-Host-Wrapper -prompt "`nSelect a number"
+                    $choiceRaw = Read-HostWrapper -prompt "`nSelect a number"
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
@@ -77,7 +77,7 @@ function Disable-IniExtension {
             }
 
             $null = Backup-IniFile -iniPath $iniPath
-            Set-Content-Wrapper -path $iniPath -value $updatedLines
+            Set-ContentWrapper -path $iniPath -value $updatedLines
             $results += @{ name = $selected.name; status = 'Disabled'; color = 'DarkYellow' }
         }
 

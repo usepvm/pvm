@@ -2,7 +2,7 @@
 function Set-AliasesList {
     try {
         $jsonContent = $PVMConfig.defaults.aliases | ConvertTo-Json -Depth 10
-        Set-Content-Wrapper -path $PVMConfig.paths.aliasesList -value $jsonContent
+        Set-ContentWrapper -path $PVMConfig.paths.aliasesList -value $jsonContent
 
         return 0
     } catch {
@@ -35,7 +35,7 @@ function Get-FlagMap {
 function Set-ScriptsList {
     try {
         $jsonContent = $PVMConfig.defaults.scripts | ConvertTo-Json -Depth 10
-        Set-Content-Wrapper -path $PVMConfig.paths.scriptsList -value $jsonContent
+        Set-ContentWrapper -path $PVMConfig.paths.scriptsList -value $jsonContent
 
         return 0
     } catch {

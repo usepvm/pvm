@@ -125,7 +125,7 @@ extension=pgsql
                 @{ BaseName = 'sqlite3'; Name = 'sqlite3.dll'; FullName = "$extDirectory\sqlite3.dll" }
             )
         }
-        Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
 
         Disable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
@@ -142,7 +142,7 @@ extension=pgsql
 "@ | Set-Content -Path $testIniPath
 
         $script:callCount = 0
-        Mock Read-Host-Wrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
             $script:callCount++
             if ($script:callCount -eq 1) { return 'A' }
             if ($script:callCount -eq 2) { return '-1' }

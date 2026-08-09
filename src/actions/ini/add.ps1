@@ -29,7 +29,7 @@ function Get-XDebugFromUrl {
     param ($url, $version)
 
     try {
-        $html = Get-WebResponse -uri $url
+        $html = Invoke-WebRequest-Wrapper -uri $url
         $links = $html.Links
 
         # Return the filtered links (PHP version names)
@@ -155,7 +155,7 @@ function Install-XDebugExtension {
         }
         Show-Message -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.xdebugHistorical)"
 
-        $packageIndex = Read-Host-Wrapper -prompt "`nInsert the [number] you want to install"
+        $packageIndex = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
         if ([string]::IsNullOrWhiteSpace($packageIndex)) {
             Write-Gray -message "`nInstallation cancelled"
             return -1
@@ -171,12 +171,12 @@ function Install-XDebugExtension {
             return -1
         }
 
-        $null = Get-WebResponse -uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -outFile $PVMConfig.paths.php
+        $null = Invoke-WebRequest-Wrapper -uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -outFile $PVMConfig.paths.php
         $phpPath = ($iniPath | Split-Path -Parent)
 
         if (-not $skipConfirmation) {
             if (Test-FileExists -path "$phpPath\ext\$($chosenItem.fileName)") {
-                $response = Read-Host-Wrapper -prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
+                $response = Read-HostWrapper -prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
                 if (Test-NoResponse -response $response) {
                     Remove-Item -Path "$($PVMConfig.paths.storage)\php\$($chosenItem.fileName)"
                     Write-Gray -message "`nInstallation cancelled"
@@ -200,10 +200,10 @@ function Install-XDebugExtension {
             }
         }
         if ($dllXDebugExists) {
-            Set-Content-Wrapper -path $iniPath -value $iniContent
+            Set-ContentWrapper -path $iniPath -value $iniContent
         } else {
             $xDebugConfig = $xDebugConfig -replace '\ +'
-            Add-Content-Wrapper -path $iniPath -value $xDebugConfig
+            Add-ContentWrapper -path $iniPath -value $xDebugConfig
         }
 
         Show-Success -message "`nXDebug installed successfully"
@@ -254,7 +254,7 @@ function Add-MissingPHPExtensionToIni {
         } else {
             $lines += "`n$commented" + "extension=$extFileName"
         }
-        Set-Content-Wrapper -path $iniPath -value $lines
+        Set-ContentWrapper -path $iniPath -value $lines
         Show-Success -message "- '$extFileName' added successfully."
 
         return 0
@@ -334,7 +334,7 @@ function Install-Extension {
             }
             Show-Info -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.peclPackageRoot)/$extName"
 
-            $packageIndex = Read-Host-Wrapper -prompt "`nInsert the [number] you want to install"
+            $packageIndex = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
             if ([string]::IsNullOrWhiteSpace($packageIndex)) {
                 Write-Gray -message "`nInstallation cancelled"
                 return -1
@@ -348,7 +348,7 @@ function Install-Extension {
             return -1
         }
 
-        $null = Get-WebResponse -uri $chosenItem.href -outFile $PVMConfig.paths.php
+        $null = Invoke-WebRequest-Wrapper -uri $chosenItem.href -outFile $PVMConfig.paths.php
         $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip", '').Trim()
         $extractPath = "$($PVMConfig.paths.storage)\php\$fileNamePath"
         Expand-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
@@ -365,7 +365,7 @@ function Install-Extension {
 
         if (-not $skipConfirmation) {
             if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
-                $response = Read-Host-Wrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
+                $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
                 if (Test-NoResponse -response $response) {
                     Remove-Item -Path "$($PVMConfig.paths.storage)\php\$fileNamePath" -Force -Recurse
                     Write-Gray -message "`nInstallation cancelled"

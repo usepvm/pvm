@@ -508,21 +508,22 @@ The test runner provides visual feedback with spinner animations during executio
 
 ```sh
 # Run a specific script
-pvm run <script-name> [--mute]
+pvm run <script-name> [--mute] <files>
 
 # List all available predefined scripts
 pvm run list
 
 # Examples:
-pvm run test:quiet # ............... Runs tests with verbosity set to None
-pvm run test:cov80 # ............... Runs tests with 80% coverage target
-pvm run test:cov90 # ............... Runs tests with 90% coverage target
-pvm run test:duration # ............ Runs tests with duration descending sort
-pvm run test:verbose # ............. Runs tests with coverage and detailed output
-pvm run test:shell # ............... Runs tests with Windows PowerShell and PowerShell Core
-pvm run test:pester # .............. Runs tests with Pester 5.7.1 and 6.0.0
-pvm run test:matrix # .............. Runs tests with all supported PowerShell versions and Pester versions
-pvm run test:matrix --mute # ....... Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
+pvm run test:quiet # ................ Runs tests with verbosity set to None
+pvm run test:cov80 # ................ Runs tests with 80% coverage target
+pvm run test:cov90 # ................ Runs tests with 90% coverage target
+pvm run test:duration # ............. Runs tests with duration descending sort
+pvm run test:verbose # .............. Runs tests with coverage and detailed output
+pvm run test:shell # ................ Runs tests with Windows PowerShell and PowerShell Core
+pvm run test:pester # ............... Runs tests with Pester 5.7.1 and 6.0.0
+pvm run test:matrix # ............... Runs tests with all supported PowerShell versions and Pester versions
+pvm run test:matrix --mute # ........ Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
+pvm run test:matrix use install # ... Runs only 'use.tests.ps1' and 'install.tests.ps1' with all supported PowerShell versions and Pester versions
 ```
 
 **Available Scripts:**

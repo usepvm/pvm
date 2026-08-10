@@ -54,6 +54,12 @@ function Test-FileNotExists {
     return -not (Test-FileExists -path $path)
 }
 
+function Test-PathExists {
+    param ($path)
+
+    return (Test-DirectoryExists $path) -or (Test-FileExists $path)
+}
+
 function New-Directory {
     param ($path)
 

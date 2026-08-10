@@ -193,6 +193,32 @@ Describe "New-Directory" {
     }
 }
 
+Describe "Test-PathExists" {
+    It "Returns false for non-existent path" {
+        Mock Test-DirectoryExists { return $false }
+        Mock Test-FileExists { return $false }
+        
+        $result = Test-PathExists -path "$TEST_DRIVE\Nonexistent\Path"
+        $result | Should -Be $false
+    }
+    
+    It "Returns true for existing directory" {
+        Mock Test-DirectoryExists { return $true }
+        Mock Test-FileExists { return $false }
+        
+        $result = Test-PathExists -path 'C:\Directory\Exists'
+        $result | Should -Be $true
+    }
+    
+    It "Returns true for existing file" {
+        Mock Test-DirectoryExists { return $false }
+        Mock Test-FileExists { return $true }
+        
+        $result = Test-PathExists -path 'C:\File\Exists.txt'
+        $result | Should -Be $true
+    }
+}
+
 Describe "New-SymbolicLink" {
     Context "When creating symbolic links" {
         It "Creates a symbolic link successfully when running as admin" {

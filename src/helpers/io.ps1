@@ -127,13 +127,10 @@ function New-SymbolicLink {
             }
         }
         # Remove old link if it exists
-        if (Test-Path $link) {
-            $item = Get-ItemWrapper -path $link
-            if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
-                [System.IO.Directory]::Delete($link)
-            } else {
-                return @{ code = -1; message = "Link '$link' is not a symbolic link!"; color = 'DarkYellow' }
-            }
+        if (Test-SymlinkExists -path $link) {
+            [System.IO.Directory]::Delete($link)
+        } elseif (Test-PathExists -path $link) {
+            return @{ code = -1; message = "Link '$link' is not a symbolic link!"; color = 'DarkYellow' }
         }
 
         if (Test-NotAdmin) {

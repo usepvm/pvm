@@ -197,24 +197,77 @@ Describe "Test-PathExists" {
     It "Returns false for non-existent path" {
         Mock Test-DirectoryExists { return $false }
         Mock Test-FileExists { return $false }
-        
+
         $result = Test-PathExists -path "$TEST_DRIVE\Nonexistent\Path"
         $result | Should -Be $false
     }
-    
+
     It "Returns true for existing directory" {
         Mock Test-DirectoryExists { return $true }
         Mock Test-FileExists { return $false }
-        
+
         $result = Test-PathExists -path 'C:\Directory\Exists'
         $result | Should -Be $true
     }
-    
+
     It "Returns true for existing file" {
         Mock Test-DirectoryExists { return $false }
         Mock Test-FileExists { return $true }
-        
+
         $result = Test-PathExists -path 'C:\File\Exists.txt'
+        $result | Should -Be $true
+    }
+}
+
+Describe "Test-SymlinkExists" {
+    It "Returns false for null path" {
+        $result = Test-SymlinkExists -path $null
+
+        $result | Should -Be $false
+    }
+
+    It "Returns false for empty path" {
+        $result = Test-SymlinkExists -path ''
+
+        $result | Should -Be $false
+    }
+
+    It "Returns false for whitespace path" {
+        $result = Test-SymlinkExists -path '   '
+
+        $result | Should -Be $false
+    }
+
+    It "Handles exceptions gracefully" {
+        Mock Get-ItemWrapper { throw 'Error' }
+
+        $result = Test-SymlinkExists -path "$TEST_DRIVE\Nonexistent\Path"
+        $result | Should -Be $false
+    }
+
+    It "Returns true for existing symlink" {
+        Mock Get-ItemWrapper { return @{ Attributes = 'ReparsePoint' } }
+
+        $result = Test-SymlinkExists -path "$TEST_DRIVE\pvm\php"
+
+        $result | Should -Be $true
+    }
+}
+
+Describe "Test-SymlinkNotExists" {
+    It "Returns false for existing symlink" {
+        Mock Test-SymlinkExists { return $true }
+
+        $result = Test-SymlinkNotExists -path "$TEST_DRIVE\pvm\php"
+
+        $result | Should -Be $false
+    }
+
+    It "Returns true for non-existent symlink" {
+        Mock Test-SymlinkExists { return $false }
+
+        $result = Test-SymlinkNotExists -path "$TEST_DRIVE\Nonexistent\Path"
+
         $result | Should -Be $true
     }
 }

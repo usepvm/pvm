@@ -60,6 +60,30 @@ function Test-PathExists {
     return (Test-DirectoryExists $path) -or (Test-FileExists $path)
 }
 
+function Test-SymlinkExists {
+    param ($path)
+
+    try {
+        if ([string]::IsNullOrWhiteSpace($path)) {
+            return $false
+        }
+
+        $path = $path.Trim()
+
+        $item = Get-ItemWrapper -path $path
+
+        return [bool]($item.Attributes -band [IO.FileAttributes]::ReparsePoint)
+    } catch {
+        return $false
+    }
+}
+
+function Test-SymlinkNotExists {
+    param ($path)
+
+    return -not (Test-SymlinkExists -path $path)
+}
+
 function New-Directory {
     param ($path)
 

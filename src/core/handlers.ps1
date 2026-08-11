@@ -45,19 +45,20 @@ function Invoke-Current {
     }
     Show-Message -message $text
 
-    if (-not $result.status) {
+    $status = Get-PHPStatus -phpPath $result.path
+
+    if (-not $status) {
         Show-Warning -message 'No status information available for the current PHP version.'
         return -1
     }
 
     # Display zend extensions
-    $hasVersionInfo = $result.status | Where-Object { $_.Version }
-    foreach ($ext in $result.status) {
-        $statusText = if ($ext.Enabled) { 'Enabled' } else { 'Disabled' }
+    foreach ($ext in $status) {
+        $statusText = if ($ext.Version) { if ($ext.Enabled) { 'Enabled' } else { 'Disabled' } } else { 'Not Found' }
         $color = if ($ext.Enabled) { 'DarkGreen' } else { 'DarkYellow' }
         $extName = if ($ext.Name -eq 'opcache') { 'Zend OPcache' } else { (Get-Culture).TextInfo.ToTitleCase($ext.Name) }
 
-        if ($hasVersionInfo) {
+        if ($ext.Version) {
             $textInfo = "  $extName v$($ext.Version) ".PadRight(($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 4), '.')
         } else {
             $textInfo = "  $extName ".PadRight(($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 4), '.')
@@ -66,7 +67,10 @@ function Invoke-Current {
         Write-Color -message "$textInfo $statusText" -foreColor $color
     }
 
-    Show-Message -message "`nPath: $($result.path)"
+    New-Line
+    Show-Message -message "Link: $($result.link)"
+    Show-Message -message "Path: $($result.path)"
+
     return 0
 }
 

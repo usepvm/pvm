@@ -276,14 +276,10 @@ Describe "Get-CurrentPHPVersion Function Tests" {
             # Mock Get-ItemWrapper to return a symlink object
             Mock Get-ItemWrapper {
                 return @{
+                    FullName = 'C:\php\current'
                     Target = 'C:\php\8.2.0'
                 }
             } -ParameterFilter { $path -eq $PHP_CURRENT_DIR }
-
-            # Mock Get-PHPStatus
-            Mock Get-PHPStatus {
-                return @{ opcache = $true; xdebug = $false }
-            }
         }
 
         It "Should return correct version information when symlink is valid" {
@@ -300,23 +296,7 @@ Describe "Get-CurrentPHPVersion Function Tests" {
             # Assert
             $result.version | Should -Be '8.2.0'
             $result.path | Should -Be 'C:\php\8.2.0'
-            $result.status.opcache | Should -Be $true
-            $result.status.xdebug | Should -Be $false
-        }
-
-        It "Should call Get-PHPStatus with correct path" {
-            # Act
-            Mock Get-PHPInstallInfo {@{
-                Version = '8.2.0'
-                Arch = 'x64'
-                BuildType = 'ts'
-                InstallPath = 'C:\php\8.2.0'
-            }}
-            Mock Test-DirectoryExists { return $true }
-            $null = Get-CurrentPHPVersion
-
-            # Assert
-            Should -Invoke Get-PHPStatus -Times 1 -ParameterFilter { $phpPath -eq 'C:\php\8.2.0' }
+            $result.link | Should -Be 'C:\php\current'
         }
     }
 
@@ -378,79 +358,6 @@ Describe "Get-CurrentPHPVersion Function Tests" {
             $result.version | Should -Be $null
             $result.path | Should -Be $null
             ($result.status | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
-            ($result.status | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
-        }
-    }
-
-    Context "When Get-PHPStatus fails" {
-        BeforeEach {
-            Mock Get-ItemWrapper {
-                return @{
-                    Target = 'C:\php\8.1.0'
-                }
-            } -ParameterFilter { $path -eq $PHP_CURRENT_DIR }
-
-            # Mock Get-PHPStatus to return -1 (error case)
-            Mock Get-PHPStatus {
-                return @{ opcache = $false; xdebug = $false }
-            }
-        }
-
-        It "Should handle Get-PHPStatus error gracefully" {
-            Mock Get-PHPInstallInfo {@{
-                Version = '8.1.0'
-                Arch = 'x64'
-                BuildType = 'ts'
-                InstallPath = 'C:\php\8.1.0'
-            }}
-            Mock Test-DirectoryExists { return $true }
-            # Act
-            $result = Get-CurrentPHPVersion
-
-            # Assert
-            $result.version | Should -Be '8.1.0'
-            $result.path | Should -Be 'C:\php\8.1.0'
-            $result.status.opcache | Should -Be $false
-            $result.status.xdebug | Should -Be $false
-        }
-    }
-}
-
-Describe "Integration Tests" {
-    Context "Real-world scenarios" {
-        It "Should work end-to-end with actual file system" {
-            Mock Get-PHPInstallInfo {@{
-                Version = '8.2.0'
-                Arch = 'x64'
-                BuildType = 'ts'
-                InstallPath = "$PHP_DIR\8.2.0"
-            }}
-            # Arrange
-            $testPhpPath = "$PHP_DIR\8.2.0"
-            $testCurrentPath = $PHP_CURRENT_DIR
-
-            New-Item -Path $testPhpPath -ItemType Directory -Force
-
-            $phpIniContent = @(
-                'zend_extension=opcache.dll',
-                ';zend_extension=xdebug.dll',
-                'memory_limit=256M'
-            )
-            $phpIniContent | Out-File -FilePath "$testPhpPath\php.ini"
-
-            Mock Get-ItemWrapper {
-                return @{
-                    Target = $testPhpPath
-                }
-            } -ParameterFilter { $Path -eq $testCurrentPath }
-
-            # Act
-            $result = Get-CurrentPHPVersion
-
-            # Assert
-            $result.version | Should -Be '8.2.0'
-            $result.path | Should -Be $testPhpPath
-            ($result.status | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
             ($result.status | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
     }

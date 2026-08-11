@@ -133,15 +133,17 @@ Describe "Invoke-Repair Tests" {
 
 Describe "Invoke-Current Tests" {
     It "Should display current PHP version and extensions when version is set" {
+        Mock Get-PHPStatus {
+            return @(
+                @{ Name = 'xdebug'; Version = '3.2.0'; Copyright = 'Zend'; Enabled = $true }
+                @{ Name = 'opcache'; Version = '8.2.0'; Copyright = 'Zend'; Enabled = $false }
+            )
+        }
         Mock Get-CurrentPHPVersion { @{
                 version   = '8.2.0'
                 arch      = 'x64'
                 buildType = 'TS'
                 path      = 'C:\PHP\8.2.0'
-                status    = @(
-                    @{ Name = 'xdebug'; Version = '3.2.0'; Copyright = 'Zend'; Enabled = $true }
-                    @{ Name = 'opcache'; Version = '8.2.0'; Copyright = 'Zend'; Enabled = $false }
-                )
             } }
         $result = Invoke-Current
 
@@ -154,15 +156,17 @@ Describe "Invoke-Current Tests" {
     }
 
     It "Should display current PHP version and extensions when version is not set" {
+        Mock Get-PHPStatus {
+            return @(
+                @{ Name = 'xdebug'; Version = $null; Enabled = $true }
+                @{ Name = 'opcache'; Version = $null; Enabled = $false }
+            )
+        }
         Mock Get-CurrentPHPVersion { @{
                 version   = '8.2.0'
                 arch      = 'x64'
                 buildType = 'TS'
                 path      = 'C:\PHP\8.2.0'
-                status    = @(
-                    @{ Name = 'xdebug'; Version = $null; Enabled = $true }
-                    @{ Name = 'opcache'; Version = $null; Enabled = $false }
-                )
             } }
 
         $result = Invoke-Current
@@ -185,6 +189,7 @@ Describe "Invoke-Current Tests" {
     }
 
     It "Should handle missing status information" {
+        Mock Get-PHPStatus { return $null }
         Mock Get-CurrentPHPVersion { @{ version = '8.2.0'; status = $null; path = 'C:\PHP\8.2.0' } }
 
         $result = Invoke-Current

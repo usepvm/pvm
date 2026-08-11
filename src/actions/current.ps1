@@ -57,12 +57,12 @@ function Get-CurrentPHPVersion {
                 @{ Name = 'xdebug'; Version = $null; Copyright = $null; Enabled = $false }
             )
         }
-        $currentPhpVersionPath = Get-ItemWrapper -path $PVMConfig.env.PHP_CURRENT_VERSION_PATH
-        if (-not $currentPhpVersionPath) {
+        $currentPhpVersionLink = Get-ItemWrapper -path $PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        if (-not $currentPhpVersionLink) {
             return $emptyResult
         }
 
-        $currentPhpVersionPath = $currentPhpVersionPath.Target
+        $currentPhpVersionPath = $currentPhpVersionLink.Target
         if (Test-DirectoryNotExists -path $currentPhpVersionPath) {
             return $emptyResult
         }
@@ -73,7 +73,7 @@ function Get-CurrentPHPVersion {
             arch      = $phpInfo.Arch
             buildType = $phpInfo.BuildType
             path      = $phpInfo.InstallPath
-            status    = Get-PHPStatus -phpPath $currentPhpVersionPath
+            link      = $currentPhpVersionLink.FullName
         }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve current PHP version"; exception = $_ }

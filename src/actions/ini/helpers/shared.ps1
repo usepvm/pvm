@@ -1,4 +1,4 @@
-
+﻿
 function Backup-IniFile {
     param ($iniPath)
 
@@ -20,9 +20,7 @@ function Get-AllPHPExtensionsStatus {
     $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*)\2\s*(;.*)?$"
     $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*)\2\s*(;.*)?$"
     $null = Backup-IniFile -iniPath $iniPath
-    $lines = Get-Content -Path $iniPath
 
-    $matchesList = @()
     $matchesInExt = @()
 
     # helper to normalize extension identifiers for comparison
@@ -50,6 +48,8 @@ function Get-AllPHPExtensionsStatus {
                 id       = $fileId
                 fullPath = $file.FullName
                 fileName = $file.Name
+                version  = $file.VersionInfo.ProductVersion
+                copyRight = $file.VersionInfo.LegalCopyright
             }
         }
     }
@@ -58,6 +58,7 @@ function Get-AllPHPExtensionsStatus {
     $lineNumber = 1
     $iniMatches = @{}
 
+    $lines = Get-Content -Path $iniPath
     foreach ($line in $lines) {
         if ($line -match $enabledPattern) {
             $displayName = $matches['ext'].Trim('"', "'")
@@ -90,7 +91,7 @@ function Get-AllPHPExtensionsStatus {
 
     # Step 3: Merge ext+ini
     $coveredIds = @{}
-
+    $matchesList = @()
     foreach ($extMatch in $matchesInExt) {
         $id = $extMatch.id
         $coveredIds[$id] = $true
@@ -107,6 +108,8 @@ function Get-AllPHPExtensionsStatus {
                 source     = 'ext,ini'
                 fullPath   = $extMatch.fullPath
                 fileName   = $extMatch.fileName
+                version    = $extMatch.version
+                copyRight  = $extMatch.copyRight
             }
         } else {
             $isZendExtension = Get-ZendExtensionsList | Where-Object { $extMatch.name -like "*$_*" }
@@ -126,6 +129,8 @@ function Get-AllPHPExtensionsStatus {
                     source     = 'ext,ini'
                     fullPath   = $extMatch.fullPath
                     fileName   = $extMatch.fileName
+                    version    = $extMatch.version
+                    copyRight  = $extMatch.copyRight
                 }
             } catch {
                 $matchesList += @{
@@ -140,6 +145,8 @@ function Get-AllPHPExtensionsStatus {
                     source     = 'ext'
                     fullPath   = $extMatch.fullPath
                     fileName   = $extMatch.fileName
+                    version    = $extMatch.version
+                    copyRight  = $extMatch.copyRight
                 }
             }
         }

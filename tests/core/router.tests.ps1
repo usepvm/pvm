@@ -191,7 +191,13 @@ Describe "Integration Tests" {
             Mock Initialize-PVM { @{ code = 0; message = 'Setup completed' } }
             Mock Optimize-SystemPath { 0 }
             Mock Show-MsgByExitCode { }
-            Mock Get-CurrentPHPVersion { @{ version = '8.2.0'; status = @{ 'xdebug' = $true }; path = 'C:\PHP\8.2.0' } }
+            Mock Get-CurrentPHPVersion { @{ version = '8.2.0'; path = 'C:\PHP\8.2.0' } }
+            Mock Get-PHPStatus {
+                return @(
+                    @{ name = 'Xdebug'; version = '3.2.0'; copyright = 'Xdebug'; color = 'DarkGreen'; status = 'Enabled' },
+                    @{ name = 'Zend Opcache'; version = '8.2.0'; copyright = 'Zend'; color = 'DarkYellow'; status = 'Disabled' }
+                )
+            }
             Mock Install-PHP { 0 }
             Mock Update-PHPVersion { @{ code = 0; message = 'Version updated' } }
         }

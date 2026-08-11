@@ -135,8 +135,8 @@ Describe "Invoke-Current Tests" {
     It "Should display current PHP version and extensions when version is set" {
         Mock Get-PHPStatus {
             return @(
-                @{ Name = 'xdebug'; Version = '3.2.0'; Copyright = 'Zend'; Enabled = $true }
-                @{ Name = 'opcache'; Version = '8.2.0'; Copyright = 'Zend'; Enabled = $false }
+                @{ name = 'Xdebug'; version = '3.2.0'; copyright = 'Xdebug'; color = 'DarkGreen'; status = 'Enabled' },
+                @{ name = 'Zend Opcache'; version = '8.2.0'; copyright = 'Zend'; color = 'DarkYellow'; status = 'Disabled' }
             )
         }
         Mock Get-CurrentPHPVersion { @{
@@ -158,8 +158,8 @@ Describe "Invoke-Current Tests" {
     It "Should display current PHP version and extensions when version is not set" {
         Mock Get-PHPStatus {
             return @(
-                @{ Name = 'xdebug'; Version = $null; Enabled = $true }
-                @{ Name = 'opcache'; Version = $null; Enabled = $false }
+                @{ name = 'Xdebug'; text = 'Not Found'; color = 'DarkGray' },
+                @{ name = 'Zend Opcache'; text = 'Not Found'; color = 'DarkGray' }
             )
         }
         Mock Get-CurrentPHPVersion { @{
@@ -174,8 +174,8 @@ Describe "Invoke-Current Tests" {
         $result | Should -Be 0
         Should -Invoke Get-CurrentPHPVersion -Times 1
         Should -Invoke Show-Message -ParameterFilter { $message -like '*Running version: PHP 8.2.0*' }
-        Should -Invoke Write-Color -ParameterFilter { $message -like '*xdebug*' -and $foreColor -eq 'DarkGreen' }
-        Should -Invoke Write-Color -ParameterFilter { $message -like '*opcache*' -and $foreColor -eq 'DarkYellow' }
+        Should -Invoke Write-Color -ParameterFilter { $message -like '*xdebug*' -and $foreColor -eq 'DarkGray' }
+        Should -Invoke Write-Color -ParameterFilter { $message -like '*opcache*' -and $foreColor -eq 'DarkGray' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*Path: C:\PHP\8.2.0*' }
     }
 

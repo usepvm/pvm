@@ -2,50 +2,25 @@
 function Get-PHPStatus {
     param ($phpPath)
 
-    # Build zendExtensions list from ini status
-    $status = @(
-        @{ Name = 'opcache'; Version = $null; Copyright = $null; Enabled = $false }
-        @{ Name = 'xdebug'; Version = $null; Copyright = $null; Enabled = $false }
-    )
-
     try {
+        $status = @()
         $phpIniPath = "$phpPath\php.ini"
         if (Test-FileNotExists -path $phpIniPath) {
             return $status
         }
 
-        $iniContent = Get-Content -Path $phpIniPath
+        $opcacheData = Get-MatchingPHPExtensionsStatus -iniPath $phpIniPath -extName 'opcache'
+        $status += if ($opcacheData) { $opcacheData.name = 'Zend OPcache'; $opcacheData } else { @{ name = 'Zend OPcache'; color = 'DarkGray'; text = 'Not Found' } }
 
-        foreach ($line in $iniContent) {
-            $trimmed = $line.Trim()
-            if ($trimmed -match '^(;)?\s*zend_extension\s*=.*opcache.*$') {
-                $opcacheStatus = $status | Where-Object { $_.Name -eq 'opcache' }
-                $opcacheStatus.Enabled = -not $trimmed.StartsWith(';')
-            }
+        $xdebugData = Get-MatchingPHPExtensionsStatus -iniPath $phpIniPath -extName 'xdebug'
+        $status += if ($xdebugData) { $xdebugData.name = 'Xdebug'; $xdebugData } else { @{ name = 'Xdebug'; color = 'DarkGray'; text = 'Not Found' } }
 
-            if ($trimmed -match '^(;)?\s*zend_extension\s*=.*xdebug.*$') {
-                $xdebugStatus = $status | Where-Object { $_.Name -eq 'xdebug' }
-                $xdebugStatus.Enabled = -not $trimmed.StartsWith(';')
-            }
-        }
-
-        # Get zend extension info from DLL files (adds version info)
-        $dllExtensions = Get-ZendExtensionsInfo -phpPath $phpPath
-
-        # Update with DLL version info if available
-        foreach ($dllExt in $dllExtensions) {
-            $extToUpdate = $status | Where-Object { $_.Name -eq $dllExt.Name }
-            if ($extToUpdate) {
-                $extToUpdate.Version = $dllExt.Version
-                $extToUpdate.Copyright = $dllExt.Copyright
-            }
-        }
+        return $status
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve PHP status"; exception = $_ }
         Show-Error -message "An error occurred while checking PHP status: $_"
+        return @()
     }
-
-    return $status
 }
 
 function Get-CurrentPHPVersion {

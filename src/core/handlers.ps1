@@ -47,24 +47,23 @@ function Invoke-Current {
 
     $status = Get-PHPStatus -phpPath $result.path
 
-    if (-not $status) {
+    if (-not $status -or $status.Length -eq 0) {
         Show-Warning -message 'No status information available for the current PHP version.'
         return -1
     }
 
     # Display zend extensions
+    $maxNameLength = ($status.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     foreach ($ext in $status) {
-        $statusText = if ($ext.Version) { if ($ext.Enabled) { 'Enabled' } else { 'Disabled' } } else { 'Not Found' }
-        $color = if ($ext.Enabled) { 'DarkGreen' } else { 'DarkYellow' }
-        $extName = if ($ext.Name -eq 'opcache') { 'Zend OPcache' } else { (Get-Culture).TextInfo.ToTitleCase($ext.Name) }
+        $statusText = if ($ext.text) { $ext.text } else { $ext.status }
 
-        if ($ext.Version) {
-            $textInfo = "  $extName v$($ext.Version) ".PadRight(($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 4), '.')
+        if ($ext.version) {
+            $textInfo = "  $($ext.name) v$($ext.version) ".PadRight($maxNameLength, '.')
         } else {
-            $textInfo = "  $extName ".PadRight(($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 4), '.')
+            $textInfo = "  $($ext.name) ".PadRight($maxNameLength, '.')
         }
 
-        Write-Color -message "$textInfo $statusText" -foreColor $color
+        Write-Color -message "$textInfo $statusText" -foreColor $ext.color
     }
 
     New-Line

@@ -185,9 +185,12 @@ function Get-MatchingPHPExtensionsStatus {
 
     $searchId = $extName.Trim('"', "'").ToLower() -replace '^php_', '' -replace '\.dll$', ''
 
-    return Get-AllPHPExtensionsStatus -iniPath $iniPath -includeIniOnly $includeIniOnly | Where-Object {
+    $allExtensions = @(Get-AllPHPExtensionsStatus -iniPath $iniPath -includeIniOnly $includeIniOnly)
+    $extensionsMatches = $allExtensions | Where-Object {
         $_.name -like "*$extName*" -or $_.id -like "*$searchId*"
     }
+
+    return $extensionsMatches
 }
 
 function Get-AllPHPSettings {
@@ -225,7 +228,10 @@ function Get-MatchingPHPSettings {
         return @()
     }
 
-    return @(Get-AllPHPSettings -iniPath $iniPath) | Where-Object {
+    $allSettings = @(Get-AllPHPSettings -iniPath $iniPath)
+    $settingsMatches = $allSettings | Where-Object {
         $_.name -like "*$searchKey*"
     }
+
+    return $settingsMatches
 }

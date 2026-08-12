@@ -416,7 +416,8 @@ function Write-TestsSummary {
     }
 
     foreach ($group in $grouped) {
-        if ($group.Name) { Show-Info -message "`n  [$($group.Name)]" }
+        New-Line
+        if ($group.Name) { Show-Info -message "  [$($group.Name)]" }
 
         $group.Group | ForEach-Object {
             $label = "    - $($_.sortedName) "

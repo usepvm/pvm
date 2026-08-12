@@ -298,7 +298,7 @@ extension=php_curl.dll
             }
             Mock Expand-Zip { }
             Mock Remove-ItemWrapper { }
-            Mock Move-Item { }
+            Mock Move-ItemWrapper { }
             Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
                 return 'y'
             }

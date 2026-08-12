@@ -185,7 +185,7 @@ function Install-XDebugExtension {
             }
         }
 
-        Move-Item -Path "$($PVMConfig.paths.php)\$($chosenItem.fileName)" -Destination "$phpPath\ext"
+        Move-ItemWrapper -path "$($PVMConfig.paths.php)\$($chosenItem.fileName)" -destination "$phpPath\ext"
         $xDebugConfig = Get-XdebugConfigV2 -XDebugPath $($chosenItem.fileName)
         if ($chosenItem.xDebugVersion -like '3.*') {
             $xDebugConfig = Get-XdebugConfigV3 -XDebugPath $($chosenItem.fileName)
@@ -374,7 +374,7 @@ function Install-Extension {
             }
         }
 
-        Move-Item -Path $extFile.FullName -Destination "$phpPath\ext"
+        Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
         Remove-ItemWrapper -path $extractPath
         $code = Add-MissingPHPExtensionToIni -iniPath $iniPath -extFileName $extFile.Name -enable $false
         if ($code -ne 0) {

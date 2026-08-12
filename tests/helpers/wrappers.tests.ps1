@@ -277,6 +277,31 @@ Describe "Invoke-WebRequestWrapper Tests" {
     }
 }
 
+Describe "Move-ItemWrapper Tests" {
+    It "Calls Move-Item with the correct parameters" {
+        Mock Move-Item { }
+
+        $source = "$TEST_DRIVE\source"
+        $destination = "$TEST_DRIVE\destination"
+
+        $null = Move-ItemWrapper -path $source -destination $destination
+
+        Should -Invoke Move-Item -Times 1 -ParameterFilter {
+            $Path -eq $source -and
+            $Destination -eq $destination
+        }
+    }
+
+    It "Throws when Move-Item throws" {
+        Mock Move-Item { throw 'Test error' }
+
+        $source = "$TEST_DRIVE\source"
+        $destination = "$TEST_DRIVE\destination"
+
+        { Move-ItemWrapper -path $source -destination $destination } | Should -Throw
+    }
+}
+
 Describe "Copy-ItemWrapper Tests" {
     It "Calls Copy-Item with the correct parameters" {
         Mock Copy-Item { }

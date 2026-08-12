@@ -1,24 +1,26 @@
 ﻿
 function Write-HostWrapper {
-    param ($object, $foregroundColor = $null, [switch]$noNewLine)
+    param ([Parameter(ValueFromPipeline)]$object, $foregroundColor = $null, [switch]$noNewLine)
 
-    if ($Global:PVMSubprocess.enabled) {
-        $Global:PVMSubprocess.structuredOutput += @{
-            message = $object
-            color = $foregroundColor
-            noNewLine = $noNewLine.IsPresent
-        }
-    } else {
-        $params = @{
-            Object    = $object
-            NoNewline = $noNewLine
-        }
+    process {
+        if ($Global:PVMSubprocess.enabled) {
+            $Global:PVMSubprocess.structuredOutput += @{
+                message = $object
+                color = $foregroundColor
+                noNewLine = $noNewLine.IsPresent
+            }
+        } else {
+            $params = @{
+                Object    = $object
+                NoNewline = $noNewLine
+            }
 
-        if ($null -ne $foregroundColor) {
-            $params['ForegroundColor'] = $foregroundColor
-        }
+            if ($null -ne $foregroundColor) {
+                $params['ForegroundColor'] = $foregroundColor
+            }
 
-        Write-Host @params
+            Write-Host @params
+        }
     }
 }
 

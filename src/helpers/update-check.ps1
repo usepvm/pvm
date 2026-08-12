@@ -3,7 +3,7 @@ function Get-LastUpdateCheckTimestamp {
     try {
         $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
         if (Test-FileExists -path $timestampFile) {
-            return [DateTime](Get-Content -Path $timestampFile)
+            return [DateTime](Get-ContentWrapper -path $timestampFile)
         }
     } catch {
         return $null

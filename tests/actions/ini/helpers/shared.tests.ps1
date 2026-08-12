@@ -38,18 +38,18 @@ Describe "Backup-IniFile" {
         $result = Backup-IniFile -iniPath $testIniPath
         $result | Should -Be 0
         Test-Path $testBackupPath | Should -Be $true
-        (Get-Content -Path $testBackupPath) | Should -Be (Get-Content -Path $testIniPath)
+        (Get-ContentWrapper -path $testBackupPath) | Should -Be (Get-ContentWrapper -path $testIniPath)
     }
 
     It "Does not overwrite existing backup" {
-        $originalContent = Get-Content -Path $testIniPath
+        $originalContent = Get-ContentWrapper -path $testIniPath
         $result = Backup-IniFile -iniPath $testIniPath
         $result | Should -Be 0
         $newContent = 'modified content'
         $newContent | Set-Content -Path $testIniPath
         $result = Backup-IniFile -iniPath $testIniPath
         $result | Should -Be 0
-        (Get-Content -Path $testBackupPath) | Should -Be $originalContent
+        (Get-ContentWrapper -path $testBackupPath) | Should -Be $originalContent
     }
 
     It "Returns -1 on error" {
@@ -90,7 +90,7 @@ Describe "Get-AllPHPExtensionsStatus" {
         $res[0]['name']    | Should -Be 'pdo_mysql'
         $res[0]['status']  | Should -Be 'Disabled'
         $res[0]['source']  | Should -Be 'ext,ini'
-        (Get-Content -Path $testIniPath) | Should -Contain ';extension=pdo_mysql.dll'
+        (Get-ContentWrapper -path $testIniPath) | Should -Contain ';extension=pdo_mysql.dll'
     }
 
     It "Writes zend_extension prefix for known zend extensions" {
@@ -113,7 +113,7 @@ Describe "Get-AllPHPExtensionsStatus" {
         $res.Length        | Should -Be 1
         $res[0]['line']    | Should -Be ';zend_extension=php_xdebug.dll'
         $res[0]['enabled'] | Should -Be $false
-        (Get-Content -Path $testIniPath) | Should -Contain ';zend_extension=php_xdebug.dll'
+        (Get-ContentWrapper -path $testIniPath) | Should -Contain ';zend_extension=php_xdebug.dll'
     }
 
     It "Returns Available when ini write fails for ext-only extension" {

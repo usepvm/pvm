@@ -91,7 +91,7 @@ function Show-Log {
         }
 
         # Read the entire log file
-        $logContent = Get-Content -Path $PVMConfig.paths.logError -Raw
+        $logContent = Get-ContentWrapper -path $PVMConfig.paths.logError -raw
 
         # Split by the separator and filter out empty entries
         $logEntries = $logContent -split '-{26}' | Where-Object -FilterScript { $_.Trim() -ne '' }

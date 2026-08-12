@@ -420,3 +420,26 @@ Describe "Get-ChildItemWrapper Tests" {
         { Get-ChildItemWrapper -path $path } | Should -Throw
     }
 }
+
+Describe "Get-ContentWrapper Tests" {
+    It "Calls Get-Content with the correct parameters" {
+        Mock Get-Content { }
+
+        $path = "$TEST_DRIVE\path"
+
+        $null = Get-ContentWrapper -path $path -raw
+        
+        Should -Invoke Get-Content -Times 1 -ParameterFilter {
+            $Path -eq $path -and
+            $Raw
+        }
+    }
+
+    It "Throws when Get-Content throws" {
+        Mock Get-Content { throw 'Test error' }
+
+        $path = "$TEST_DRIVE\path"
+
+        { Get-ContentWrapper -path $path } | Should -Throw
+    }
+}

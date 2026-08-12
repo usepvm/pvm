@@ -459,7 +459,7 @@ Describe "Expand-ZipCore Tests" {
             # Verify extraction worked
             $extractedFile = "$extractPath\test.txt"
             Test-Path $extractedFile | Should -Be $true
-            Get-Content $extractedFile | Should -Be 'test content'
+            Get-ContentWrapper -path $extractedFile | Should -Be 'test content'
         } finally {
             # Cleanup
             if (Test-Path $testDir) {

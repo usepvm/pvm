@@ -14,7 +14,7 @@ function Set-AliasesList {
 function Get-Aliases {
     try {
         if (Test-FileExists -path $PVMConfig.paths.aliasesList) {
-            $data = (Get-Content -Path $PVMConfig.paths.aliasesList -Raw | ConvertFrom-Json)
+            $data = (Get-ContentWrapper -path $PVMConfig.paths.aliasesList -raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}
                 $data.PSObject.Properties | ForEach-Object -Process { $ordered[$_.Name] = $_.Value }
@@ -47,7 +47,7 @@ function Set-ScriptsList {
 function Get-Scripts {
     try {
         if (Test-FileExists -path $PVMConfig.paths.scriptsList) {
-            $data = (Get-Content -Path $PVMConfig.paths.scriptsList -Raw | ConvertFrom-Json)
+            $data = (Get-ContentWrapper -path $PVMConfig.paths.scriptsList -raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}
                 $data.PSObject.Properties | ForEach-Object -Process { $ordered[$_.Name] = $_.Value }
@@ -101,7 +101,7 @@ function Get-EnvConfig {
     $config = @{}
 
     # Read the file and parse key=value pairs
-    Get-Content -Path $envFile | ForEach-Object -Process {
+    Get-ContentWrapper -path $envFile | ForEach-Object -Process {
         # Skip empty lines and comments
         if ($_ -match '^\s*$' -or $_ -match '^\s*#') {
             return

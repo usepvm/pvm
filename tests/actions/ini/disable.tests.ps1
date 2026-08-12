@@ -57,7 +57,7 @@ Describe "Disable-IniExtension" {
             return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
         }
         Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
-        (Get-Content -Path $testIniPath) -match '^;extension=php_curl.dll' | Should -Be $true
+        (Get-ContentWrapper -path $testIniPath) -match '^;extension=php_curl.dll' | Should -Be $true
     }
 
     It "Returns -1 for already disabled extension" {
@@ -91,7 +91,7 @@ Describe "Disable-IniExtension" {
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
         }
         Disable-IniExtension -iniPath $testIniPath -extNames @('opcache') | Should -Be 0
-        (Get-Content -Path $testIniPath) -match '^;zend_extension=php_opcache.dll' | Should -Be $true
+        (Get-ContentWrapper -path $testIniPath) -match '^;zend_extension=php_opcache.dll' | Should -Be $true
     }
 
     It "Returns 0 when no line modification occurs while disabling extension" {
@@ -100,7 +100,7 @@ Describe "Disable-IniExtension" {
                 @{ name = 'php_curl'; status = 'Enabled'; color = 'DarkGreen'; line = 'extension=php_curl.dll'; lineNumber = 10 }
             )
         }
-        Mock Get-Content { return @('extension=php_curl.dll') }
+        Mock Get-ContentWrapper { return @('extension=php_curl.dll') }
         Mock Set-Content { }
 
         Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
@@ -129,7 +129,7 @@ extension=pgsql
 
         Disable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
-        (Get-Content -Path $testIniPath) -match '^;extension\s*=\s*pdo_mysql' | Should -Be $true
+        (Get-ContentWrapper -path $testIniPath) -match '^;extension\s*=\s*pdo_mysql' | Should -Be $true
     }
 
     It "Prints error message for non-valid number" {
@@ -161,7 +161,7 @@ extension=pgsql
         }
         Disable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
-        (Get-Content -Path $testIniPath) -match '^;extension\s*=\s*pgsql' | Should -Be $true
+        (Get-ContentWrapper -path $testIniPath) -match '^;extension\s*=\s*pgsql' | Should -Be $true
     }
 
     It "Creates backup before modifying" {
@@ -170,7 +170,7 @@ extension=pgsql
     }
 
     It "Returns -1 on error" {
-        Mock Get-Content { throw 'Access denied' }
+        Mock Get-ContentWrapper { throw 'Access denied' }
         Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be -1
     }
 }

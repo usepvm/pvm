@@ -18,7 +18,7 @@ AfterAll {
 Describe "Get-DataFromCache" {
     It "Returns data from cache file" {
         Mock Test-FileNotExists { return $false }
-        Mock Get-Content { return @'
+        Mock Get-ContentWrapper { return @'
             {
                 'Releases': [
                     '/downloads/releases/php-7.4.33-Win32-vc15-x64.zip',
@@ -55,21 +55,21 @@ Describe "Get-DataFromCache" {
 
     It "Returns empty list when cache file content returns null" {
         Mock Test-FileNotExists { return $false }
-        Mock Get-Content { return $null }
+        Mock Get-ContentWrapper { return $null }
         $list = Get-DataFromCache -cacheFileName 'test.json'
         $list.Count | Should -Be 0
     }
 
     It "Returns empty list when cache file is empty" {
         Mock Test-FileNotExists { return $false }
-        Mock Get-Content { return '' }
+        Mock Get-ContentWrapper { return '' }
         $list = Get-DataFromCache -cacheFileName 'test.json'
         $list.Count | Should -Be 0
     }
 
     It "Handles exceptions gracefully" {
         Mock Test-FileNotExists { return $false }
-        Mock Get-Content { throw 'Simulated exception' }
+        Mock Get-ContentWrapper { throw 'Simulated exception' }
         $list = Get-DataFromCache -cacheFileName 'test.json'
         $list.Count | Should -Be 0
     }

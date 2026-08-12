@@ -58,7 +58,7 @@ function Enable-IniExtension {
                 continue
             }
 
-            $lines = Get-Content -Path $iniPath
+            $lines = Get-ContentWrapper -path $iniPath
 
             $modified = $false
             $lineNumber = 0

@@ -3,7 +3,7 @@ function Set-IniSettingDirect {
     param ($iniPath, $settingName, $value, $enabled = $true)
 
     try {
-        $lines = [string[]](Get-Content -Path $iniPath)
+        $lines = [string[]](Get-ContentWrapper -path $iniPath)
         $modified = $false
         $escapedName = [regex]::Escape($settingName)
         $exactPattern = "^[#;]?\s*$escapedName\s*=\s*(.*)$"
@@ -38,7 +38,7 @@ function Enable-IniExtensionDirect {
         $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
         $extFileName = "php_$extName.dll"
 
-        $lines = [string[]](Get-Content -Path $iniPath)
+        $lines = [string[]](Get-ContentWrapper -path $iniPath)
         $modified = $false
 
         # Check for extension in multiple formats:
@@ -99,7 +99,7 @@ function Disable-IniExtensionDirect {
         # Normalize extension name - remove php_ prefix and .dll suffix if present
         $extName = $extName -replace '^php_', '' -replace '\.dll$', ''
 
-        $lines = [string[]](Get-Content -Path $iniPath)
+        $lines = [string[]](Get-ContentWrapper -path $iniPath)
 
         # Check for extension in multiple formats (only enabled/not commented lines):
         # 1. extension=php_openssl.dll (full filename, may have path)
@@ -154,7 +154,7 @@ function Get-PopularPHPSettings {
     try {
         # Return list of popular/common PHP settings that should be included in profiles
         if (Test-FileExists -path $PVMConfig.paths.profileTemplate) {
-            $data = (Get-Content -Path $PVMConfig.paths.profileTemplate -Raw | ConvertFrom-Json)
+            $data = (Get-ContentWrapper -path $PVMConfig.paths.profileTemplate -raw | ConvertFrom-Json)
             if ($null -ne $data.settings -and $data.settings.Count -gt 0) {
                 return $data.settings
             }
@@ -170,7 +170,7 @@ function Get-PopularPHPExtensions {
     try {
         # Return list of popular/common PHP extensions that should be included in profiles
         if (Test-FileExists -path $PVMConfig.paths.profileTemplate) {
-            $data = (Get-Content -Path $PVMConfig.paths.profileTemplate -Raw | ConvertFrom-Json)
+            $data = (Get-ContentWrapper -path $PVMConfig.paths.profileTemplate -raw | ConvertFrom-Json)
             if ($null -ne $data.extensions -and $data.extensions.Count -gt 0) {
                 return $data.extensions
             }
@@ -291,7 +291,7 @@ function Use-PHPProfile {
             return -1
         }
 
-        $jsonContent = Get-Content -Path $profilePath -Raw | ConvertFrom-Json
+        $jsonContent = Get-ContentWrapper -path $profilePath -raw | ConvertFrom-Json
 
         Show-Info -message "`nLoading profile '$($jsonContent.name)'..."
         if ($jsonContent.description) {
@@ -403,7 +403,7 @@ function Show-PHPProfiles {
         $profiles = @()
         foreach ($file in $profileFiles) {
             try {
-                $userProfile = Get-Content -Path $file.FullName -Raw | ConvertFrom-Json
+                $userProfile = Get-ContentWrapper -path $file.FullName -raw | ConvertFrom-Json
                 $settingsCount = if ($userProfile.settings) { ($userProfile.settings.PSObject.Properties | Measure-Object).Count } else { 0 }
                 $extensionsCount = if ($userProfile.extensions) { ($userProfile.extensions.PSObject.Properties | Measure-Object).Count } else { 0 }
                 $profiles += @{
@@ -451,7 +451,7 @@ function Show-PHPProfile {
             return -1
         }
 
-        $userProfile = Get-Content -Path $profilePath -Raw | ConvertFrom-Json
+        $userProfile = Get-ContentWrapper -path $profilePath -raw | ConvertFrom-Json
 
         $dt = [datetime]$userProfile.Created
         $utc = $dt.ToUniversalTime()
@@ -606,7 +606,7 @@ function Import-PHPProfile {
 
         # Validate JSON structure
         try {
-            $userProfile = Get-Content -Path $importPath -Raw | ConvertFrom-Json
+            $userProfile = Get-ContentWrapper -path $importPath -raw | ConvertFrom-Json
             if (-not $userProfile.name -or -not $userProfile.settings -or -not $userProfile.extensions) {
                 Show-Error -message "`nInvalid profile format. Profile must contain 'name', 'settings', and 'extensions'."
                 return -1

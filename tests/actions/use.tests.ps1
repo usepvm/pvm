@@ -61,7 +61,7 @@ AfterAll {
 Describe "Find-PHPVersionFromProject" {
     It "Should detect PHP version from .php-version" {
         Mock Test-Path { return $true }
-        Mock Get-Content { return '7.4' }
+        Mock Get-ContentWrapper { return '7.4' }
         $result = Find-PHPVersionFromProject
         $result | Should -Be '7.4'
     }
@@ -69,7 +69,7 @@ Describe "Find-PHPVersionFromProject" {
     It "Should not detect PHP version if does not exist in .php-version" {
         Mock Test-FileExists -ParameterFilter { $path -eq '.php-version'} -MockWith { return $true }
         Mock Test-FileExists -ParameterFilter { $path -eq 'composer.json'} -MockWith { return $false }
-        Mock Get-Content { return '' }
+        Mock Get-ContentWrapper { return '' }
 
         $result = Find-PHPVersionFromProject
 
@@ -82,7 +82,7 @@ Describe "Find-PHPVersionFromProject" {
             if ($path -eq 'composer.json') { return $true }
             return $false
         }
-        Mock Get-Content { return '{"require": {"php": "^8.4"}}' }
+        Mock Get-ContentWrapper { return '{"require": {"php": "^8.4"}}' }
         $result = Find-PHPVersionFromProject
         $result | Should -Be '8.4'
     }
@@ -93,7 +93,7 @@ Describe "Find-PHPVersionFromProject" {
             if ($path -eq 'composer.json') { return $true }
             return $false
         }
-        Mock Get-Content { throw 'Simulated parse error' }
+        Mock Get-ContentWrapper { throw 'Simulated parse error' }
         { Find-PHPVersionFromProject } | Should -Not -Throw
     }
 }

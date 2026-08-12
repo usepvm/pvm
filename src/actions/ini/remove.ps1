@@ -3,7 +3,7 @@ function Remove-ExtensionFromIniFile {
     param ($iniPath, $extensionObject)
 
     try {
-        $lines = Get-Content -Path $iniPath
+        $lines = Get-ContentWrapper -path $iniPath
         $newLines = @()
         $lineNumber = 1
         foreach ($line in $lines) {

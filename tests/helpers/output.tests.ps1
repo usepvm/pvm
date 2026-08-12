@@ -79,7 +79,7 @@ Describe "Add-LogEntry" {
             $result | Should -Be 0
             Test-Path $LOG_ERROR_PATH | Should -Be $true
             # Get the actual content
-            $content = Get-Content -Path $LOG_ERROR_PATH -Raw
+            $content = Get-ContentWrapper -path $LOG_ERROR_PATH -Raw
 
             # Verify the complete log format
             $content | Should -Match '\[.*\] Test message(.|\s)*Message: Test data'

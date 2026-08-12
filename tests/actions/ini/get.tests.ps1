@@ -78,7 +78,7 @@ memory_limit =
     }
 
     It "Returns -1 on error" {
-        Mock Get-Content { throw 'Access denied' }
+        Mock Get-ContentWrapper { throw 'Access denied' }
         Get-IniSetting -iniPath $testIniPath -keys @('memory_limit') | Should -Be -1
     }
 }

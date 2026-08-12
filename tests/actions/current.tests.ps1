@@ -125,7 +125,7 @@ Describe "Get-PHPStatus Function Tests" {
     }
 
     Context "When exceptions occur" {
-        It "Should handle Get-Content exceptions gracefully" {
+        It "Should handle Get-MatchingPHPExtensionsStatus exceptions gracefully" {
             # Arrange
             Mock Get-MatchingPHPExtensionsStatus { throw 'Access Denied' }
 

@@ -245,7 +245,7 @@ function Set-Opcache {
             return -1
         }
 
-        $phpIniContent = Get-Content -Path $phpIniPath
+        $phpIniContent = Get-ContentWrapper -path $phpIniPath
         $phpIniContent = $phpIniContent | ForEach-Object -Process {
             $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1' `
                 -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `

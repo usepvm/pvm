@@ -191,7 +191,7 @@ function Install-XDebugExtension {
             $xDebugConfig = Get-XdebugConfigV3 -XDebugPath $($chosenItem.fileName)
         }
         # check existence of previous xdebug
-        $iniContent = Get-Content -Path $iniPath
+        $iniContent = Get-ContentWrapper -path $iniPath
         $dllXDebugExists = $false
         for ($i = 0; $i -lt $iniContent.Count; $i++) {
             if ($iniContent[$i] -match '^(?<comment>;)?\s*zend_extension\s*=.*xdebug.*$') {
@@ -239,7 +239,7 @@ function Add-MissingPHPExtensionToIni {
             return -1
         }
 
-        $lines = Get-Content -Path $iniPath
+        $lines = Get-ContentWrapper -path $iniPath
         foreach ($line in $lines) {
             if ($line -match "^(;)?\s*(zend_)?extension\s*=\s*$extFileName\s*") {
                 Show-Warning -message "- Extension '$extFileName' already exists in php.ini"

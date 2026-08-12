@@ -281,7 +281,7 @@ opcache.enable = 1
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
-        Mock Get-Content { return "zend_extension=opcache" }
+        Mock Get-ContentWrapper { return "zend_extension=opcache" }
         Mock Set-Content { }
         Mock Remove-ItemWrapper { }
 
@@ -300,7 +300,7 @@ opcache.enable = 1
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
-        Mock Get-Content { return "zend_extension=opcache" }
+        Mock Get-ContentWrapper { return "zend_extension=opcache" }
         Mock Set-Content { }
         Mock Remove-ItemWrapper { }
 
@@ -321,7 +321,7 @@ opcache.enable = 1
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
-        Mock Get-Content { return "zend_extension=opcache" }
+        Mock Get-ContentWrapper { return "zend_extension=opcache" }
         Mock Set-Content { }
         Mock Remove-ItemWrapper { }
 
@@ -347,7 +347,7 @@ opcache.enable = 1
             ";zend_extension=php_xdebug-2.9.0-8.1-vs16-x64.dll",
             "opcache.enable = 1"
         )
-        Mock Get-Content { return $existingIniContent }
+        Mock Get-ContentWrapper { return $existingIniContent }
         Mock Set-Content { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
@@ -368,7 +368,7 @@ opcache.enable = 1
         Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
         Mock Remove-ItemWrapper { }
-        Mock Get-Content { return "zend_extension=opcache`nopache.enable = 1" }
+        Mock Get-ContentWrapper { return "zend_extension=opcache`nopache.enable = 1" }
         Mock Add-Content { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
@@ -389,7 +389,7 @@ opcache.enable = 1
         Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
         Mock Remove-ItemWrapper { }
-        Mock Get-Content { return "zend_extension=opcache`nopache.enable = 1" }
+        Mock Get-ContentWrapper { return "zend_extension=opcache`nopache.enable = 1" }
         Mock Add-Content { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
@@ -413,7 +413,7 @@ opcache.enable = 1
         Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
         Mock Remove-ItemWrapper { }
-        Mock Get-Content { return "zend_extension=opcache" }
+        Mock Get-ContentWrapper { return "zend_extension=opcache" }
         Mock Add-Content { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
@@ -432,7 +432,7 @@ opcache.enable = 1
         Mock Invoke-WebRequestWrapper { }
         Mock Move-Item { }
         Mock Remove-ItemWrapper { }
-        Mock Get-Content { return "zend_extension=opcache" }
+        Mock Get-ContentWrapper { return "zend_extension=opcache" }
         Mock Add-Content { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
@@ -447,7 +447,7 @@ opcache.enable = 1
         Mock Test-FileExists { return $true }
         Mock Remove-ItemWrapper { }
         Mock Move-Item { }
-        Mock Get-Content { return "zend_extension=opcache" }
+        Mock Get-ContentWrapper { return "zend_extension=opcache" }
         Mock Add-Content { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath -skipConfirmation $true
@@ -482,7 +482,7 @@ opcache.enable = 1
         Mock Read-HostWrapper -ParameterFilter { $prompt -like '*already exists*' } -MockWith { return 'y' }
         Mock Remove-ItemWrapper { }
         Mock Move-Item { }
-        Mock Get-Content { return "zend_extension=opcache" }
+        Mock Get-ContentWrapper { return "zend_extension=opcache" }
         Mock Add-Content { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath -skipConfirmation $false
@@ -525,7 +525,7 @@ extension=php_mbstring.dll
         Mock Test-Path { return $true }
         $result = Add-MissingPHPExtensionToIni -iniPath $testIniPath -extFileName 'php_curl.dll'
         $result | Should -Be 0
-        (Get-Content -Path $testIniPath) -match 'extension=php_curl.dll' | Should -Be $true
+        (Get-ContentWrapper -path $testIniPath) -match 'extension=php_curl.dll' | Should -Be $true
         Should -Invoke Show-Success -Times 1 -ParameterFilter {
             $message -eq "- 'php_curl.dll' added successfully."
         }
@@ -540,7 +540,7 @@ zend_extension=php_opcache.dll
         Mock Test-Path { return $true }
         $result = Add-MissingPHPExtensionToIni -iniPath $testIniPath -extFileName 'php_curl.dll' -enable $false
         $result | Should -Be 0
-        (Get-Content -Path $testIniPath) -match ';extension=php_curl.dll' | Should -Be $true
+        (Get-ContentWrapper -path $testIniPath) -match ';extension=php_curl.dll' | Should -Be $true
     }
 
     It "Adds extensions correctly for older PHP versions" {
@@ -553,7 +553,7 @@ extension=php_mbstring.dll
         Mock Get-CurrentPHPVersion { return @{ version = '7.1.0'; path = "$TEST_DRIVE\php\7.1.0" } }
         $result = Add-MissingPHPExtensionToIni -iniPath $testIniPath -extFileName 'php_curl.dll'
         $result | Should -Be 0
-        (Get-Content -Path $testIniPath) -match 'extension=php_curl.dll' | Should -Be $true
+        (Get-ContentWrapper -path $testIniPath) -match 'extension=php_curl.dll' | Should -Be $true
     }
 
     It "Adds zend_extensions correctly" {
@@ -565,7 +565,7 @@ extension=php_mbstring.dll
         Mock Get-CurrentPHPVersion { return @{ version = '7.1.0'; path = "$TEST_DRIVE\php\7.1.0" } }
         $result = Add-MissingPHPExtensionToIni -iniPath $testIniPath -extFileName 'php_opcache.dll'
         $result | Should -Be 0
-        (Get-Content -Path $testIniPath) -match 'zend_extension=php_opcache.dll' | Should -Be $true
+        (Get-ContentWrapper -path $testIniPath) -match 'zend_extension=php_opcache.dll' | Should -Be $true
     }
 
     It "Returns -1 for non-existent ini file" {

@@ -76,7 +76,7 @@ function Set-ZendExtensionsList {
 function Get-ZendExtensionsList {
     try {
         if (Test-FileExists -path $PVMConfig.paths.zendExtensionsList) {
-            $data = (Get-Content -Path $PVMConfig.paths.zendExtensionsList -Raw | ConvertFrom-Json)
+            $data = (Get-ContentWrapper -path $PVMConfig.paths.zendExtensionsList -raw | ConvertFrom-Json)
             if ($null -ne $data -and $data.Count -gt 0) {
                 return $data
             }
@@ -239,7 +239,7 @@ function Get-ZendExtensionsInfo {
     $enabledStatus = @{}
     $zendExtensionsList = Get-ZendExtensionsList
     if (Test-FileExists -path $phpIniPath) {
-        $iniContent = Get-Content -Path $phpIniPath
+        $iniContent = Get-ContentWrapper -path $phpIniPath
         foreach ($line in $iniContent) {
             $trimmed = $line.Trim()
             foreach ($zendExtensionItem in $zendExtensionsList) {
@@ -270,7 +270,7 @@ function Get-ZendExtensionsInfo {
 function Get-PHPData {
     param ($PhpIniPath)
 
-    $iniContent = Get-Content -Path $PhpIniPath
+    $iniContent = Get-ContentWrapper -path $PhpIniPath
 
     $phpIniData = @{
         extensions = @()

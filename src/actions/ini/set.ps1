@@ -76,7 +76,7 @@ function Set-IniSetting {
 
             $null = Backup-IniFile -iniPath $iniPath
 
-            $lines = Get-Content -Path $iniPath
+            $lines = Get-ContentWrapper -path $iniPath
             $lines[$selected.lineNo] = $newLine
             Set-ContentWrapper -path $iniPath -value $lines
 

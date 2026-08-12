@@ -12,7 +12,7 @@ function Get-DataFromCache {
             return @{}
         }
 
-        $jsonString = Get-Content -Path $path -Raw -ErrorAction SilentlyContinue
+        $jsonString = Get-ContentWrapper -path $path -raw
         if ([string]::IsNullOrWhiteSpace($jsonString)) {
             return @{}
         }

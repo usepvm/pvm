@@ -58,7 +58,7 @@ function Get-AllPHPExtensionsStatus {
     $lineNumber = 1
     $iniMatches = @{}
 
-    $lines = Get-Content -Path $iniPath
+    $lines = Get-ContentWrapper -path $iniPath
     foreach ($line in $lines) {
         if ($line -match $enabledPattern) {
             $displayName = $matches['ext'].Trim('"', "'")
@@ -198,7 +198,7 @@ function Get-AllPHPSettings {
 
     $pattern = '^(?<comment>[#;])?\s*(?<key>[^=\s]+)\s*=\s*(?<value>.*)$'
 
-    $lines = Get-Content -Path $iniPath
+    $lines = Get-ContentWrapper -path $iniPath
     $results = @()
     $lineNo = 0
 

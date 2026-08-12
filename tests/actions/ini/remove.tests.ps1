@@ -48,7 +48,7 @@ Describe "Remove-ExtensionFromIniFile" {
         $result = Remove-ExtensionFromIniFile -iniPath $testIniPath -extensionObject $extension
 
         $result            | Should -Be 0
-        $content = Get-Content -Path $testIniPath
+        $content = Get-ContentWrapper -path $testIniPath
         $content           | Should -Not -Contain 'extension=php_curl.dll'
         $content.Count     | Should -Be 4
     }
@@ -59,7 +59,7 @@ Describe "Remove-ExtensionFromIniFile" {
         $result = Remove-ExtensionFromIniFile -iniPath $testIniPath -extensionObject $extension
 
         $result        | Should -Be -1
-        $content = Get-Content -Path $testIniPath
+        $content = Get-ContentWrapper -path $testIniPath
         $content.Count | Should -Be 5
     }
 
@@ -69,14 +69,14 @@ Describe "Remove-ExtensionFromIniFile" {
         $result = Remove-ExtensionFromIniFile -iniPath $testIniPath -extensionObject $extension
 
         $result        | Should -Be -1
-        $content = Get-Content -Path $testIniPath
+        $content = Get-ContentWrapper -path $testIniPath
         $content.Count | Should -Be 5
     }
 
-    It "Returns -1 when Get-Content throws" {
+    It "Returns -1 when Get-ContentWrapper throws" {
         $extension = @{ line = 'extension=php_curl.dll'; lineNumber = 2 }
 
-        Mock Get-Content { throw 'Read error' }
+        Mock Get-ContentWrapper { throw 'Read error' }
 
         $result = Remove-ExtensionFromIniFile -iniPath $testIniPath -extensionObject $extension
 

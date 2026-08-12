@@ -549,8 +549,8 @@ Describe "Set-Opcache Tests" {
             param ($Path, $Value, $Encoding = $null)
             $script:MockFileSystem.Files[$Path] = $Value -join "`n"
         }
-        Mock Get-Content {
-            param ([string]$Path)
+        Mock Get-ContentWrapper {
+            param ($path)
             if ($script:MockFileSystem.Files.ContainsKey($Path)) {
                 $content = $script:MockFileSystem.Files[$Path]
                 return $content -split "`n"
@@ -587,7 +587,7 @@ Describe "Set-Opcache Tests" {
     }
 
     It "Should handle exception gracefully" {
-        Mock Get-Content { throw 'Error reading file' }
+        Mock Get-ContentWrapper { throw 'Error reading file' }
 
         $code = Set-Opcache -version '8.1' -phpPath "$TEST_DRIVE\php"
         $code | Should -Be -1

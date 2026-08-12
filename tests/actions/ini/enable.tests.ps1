@@ -57,7 +57,7 @@ Describe "Enable-IniExtension" {
             return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" } )
         }
         Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
-        (Get-Content -Path $testIniPath) -match '^extension=php_xdebug.dll' | Should -Be $true
+        (Get-ContentWrapper -path $testIniPath) -match '^extension=php_xdebug.dll' | Should -Be $true
     }
 
     It "Returns 0 for already enabled extension" {
@@ -100,7 +100,7 @@ extension=php_curl.dll
 
         Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
         # File should remain unchanged since line didn't match
-        (Get-Content -Path $testIniPath) | Should -Contain 'extension=php_xdebug.dll'
+        (Get-ContentWrapper -path $testIniPath) | Should -Contain 'extension=php_xdebug.dll'
     }
 
     It "Returns -1 for non-existent extension" {
@@ -123,7 +123,7 @@ extension=php_curl.dll
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
         }
         Enable-IniExtension -iniPath $testIniPath -extNames @('opcache') | Should -Be 0
-        (Get-Content -Path $testIniPath) -match '^zend_extension=php_opcache.dll' | Should -Be $true
+        (Get-ContentWrapper -path $testIniPath) -match '^zend_extension=php_opcache.dll' | Should -Be $true
     }
 
     It "Prompts user to select extension if multiple matches found" {
@@ -148,7 +148,7 @@ extension=sqlite3
 
         Enable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
-        (Get-Content -Path $testIniPath) -match '^extension\s*=\s*pdo_mysql' | Should -Be $true
+        (Get-ContentWrapper -path $testIniPath) -match '^extension\s*=\s*pdo_mysql' | Should -Be $true
     }
 
     It "Prints error message for non-valid number" {
@@ -181,7 +181,7 @@ extension=sqlite3
 
         Enable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
-        (Get-Content -Path $testIniPath) -match '^extension\s*=\s*pgsql' | Should -Be $true
+        (Get-ContentWrapper -path $testIniPath) -match '^extension\s*=\s*pgsql' | Should -Be $true
     }
 
     It "Creates backup before modifying" {
@@ -190,7 +190,7 @@ extension=sqlite3
     }
 
     It "Returns -1 on error" {
-        Mock Get-Content { throw 'Access denied' }
+        Mock Get-ContentWrapper { throw 'Access denied' }
         Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be -1
     }
 }

@@ -3,7 +3,7 @@ function Find-PHPVersionFromProject {
     try {
         # 1. Check .php-version
         if (Test-FileExists -path '.php-version') {
-            $version = (Get-Content -Path '.php-version' | Select-Object -First 1).Trim()
+            $version = (Get-ContentWrapper -path '.php-version' | Select-Object -First 1).Trim()
             if (Test-PHPVersionFormat -version $version) {
                 return $version
             }
@@ -13,7 +13,7 @@ function Find-PHPVersionFromProject {
         # 2. Check composer.json
         if (Test-FileExists -path 'composer.json') {
             try {
-                $json = Get-Content -Path 'composer.json' -Raw | ConvertFrom-Json
+                $json = Get-ContentWrapper -path 'composer.json' -raw | ConvertFrom-Json
                 if ($json.require.php -and $json.require.php.Trim() -match '(\d+(\.\d+(\.\d+)?)?)') {
                     return $matches[1]
                 }

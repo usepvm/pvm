@@ -63,7 +63,7 @@ Describe "Get-Aliases" {
 
     It "Returns default value when exception is thrown" {
         Mock Test-FileExists { return $true }
-        Mock Get-Content { throw 'Test exception' }
+        Mock Get-ContentWrapper { throw 'Test exception' }
         $result = Get-Aliases
         $result.Count | Should -Be $DEFAULT_ALIASES.Count
     }
@@ -120,7 +120,7 @@ Describe "Get-Scripts" {
 
     It "Returns default value when exception is thrown" {
         Mock Test-FileExists { return $true }
-        Mock Get-Content { throw 'Test exception' }
+        Mock Get-ContentWrapper { throw 'Test exception' }
         $result = Get-Scripts
         $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
     }
@@ -236,7 +236,7 @@ Describe "Get-EnvConfig" {
             Set-Content -Path "$envRoot\.env.example" -Value 'KEY=value'
             Get-EnvConfig -rootPath $envRoot
 
-            $result = Get-Content -Path "$envRoot\.env"
+            $result = Get-ContentWrapper -path "$envRoot\.env"
             $result | Should -Be 'KEY=value'
         }
     }

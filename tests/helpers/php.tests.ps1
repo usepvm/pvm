@@ -978,7 +978,7 @@ Describe "Get-ZendExtensionsList" {
 
     It "Returns default value when exception is thrown" {
         Mock Test-FileExists { return $true }
-        Mock Get-Content { throw 'Test exception' }
+        Mock Get-ContentWrapper { throw 'Test exception' }
         $result = Get-ZendExtensionsList
         $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
     }

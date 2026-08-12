@@ -87,7 +87,7 @@ Describe "Get-IniExtensionStatus" {
     }
 
     It "Returns -1 on error" {
-        Mock Get-Content { throw 'Access denied' }
+        Mock Get-ContentWrapper { throw 'Access denied' }
         Get-IniExtensionStatus -iniPath $testIniPath -extNames @('curl') | Should -Be -1
     }
 }

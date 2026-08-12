@@ -44,7 +44,7 @@ Describe "Restore-IniBackup" {
         # Modify original
         'modified content' | Set-Content -Path $testIniPath
         Restore-IniBackup -iniPath $testIniPath | Should -Be 0
-        (Get-Content -Path $testIniPath) | Should -Not -Be 'modified content'
+        (Get-ContentWrapper -path $testIniPath) | Should -Not -Be 'modified content'
     }
 
     It "Fails when backup doesn't exist" {

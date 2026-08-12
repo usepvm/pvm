@@ -16,7 +16,7 @@ AfterAll {
 }
 
 Describe "Write-HostWrapper" {
-    It "Calls Write-Host with the correct parameters" -tag i {
+    It "Calls Write-Host with the correct parameters" {
         Mock Write-Host { }
 
         $object = "Test message"

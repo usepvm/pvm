@@ -190,7 +190,7 @@ Describe "Install-XDebugExtension" {
             $script:MockFileSystem.Directories = @()
         }
 
-        function Add-Content {
+        function Add-ContentWrapper {
             param ($Path, $Value)
             if ($script:MockFileSystem.Files.ContainsKey($Path)) {
                 $script:MockFileSystem.Files[$Path] += "`n$Value"
@@ -369,13 +369,13 @@ opcache.enable = 1
         Mock Move-ItemWrapper { }
         Mock Remove-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache`nopache.enable = 1" }
-        Mock Add-Content { }
+        Mock Add-ContentWrapper { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
         $code | Should -Be 0
 
-        # Verify Add-Content was called for xdebug config
-        Should -Invoke Add-Content -Times 1 -ParameterFilter { $Path -eq $testIniPath }
+        # Verify Add-ContentWrapper was called for xdebug config
+        Should -Invoke Add-ContentWrapper -Times 1 -ParameterFilter { $Path -eq $testIniPath }
     }
 
     It "Adds xdebug v2 config when version 2.x is selected" {
@@ -390,13 +390,13 @@ opcache.enable = 1
         Mock Move-ItemWrapper { }
         Mock Remove-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache`nopache.enable = 1" }
-        Mock Add-Content { }
+        Mock Add-ContentWrapper { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
         $code | Should -Be 0
 
-        # Verify Add-Content was called with v2 config
-        Should -Invoke Add-Content -Times 1 -ParameterFilter {
+        # Verify Add-ContentWrapper was called with v2 config
+        Should -Invoke Add-ContentWrapper -Times 1 -ParameterFilter {
             $Path -eq $testIniPath -and $Value -match 'xdebug.remote_enable'
         }
     }
@@ -414,7 +414,7 @@ opcache.enable = 1
         Mock Move-ItemWrapper { }
         Mock Remove-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache" }
-        Mock Add-Content { }
+        Mock Add-ContentWrapper { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
         $code | Should -Be 0
@@ -433,7 +433,7 @@ opcache.enable = 1
         Mock Move-ItemWrapper { }
         Mock Remove-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache" }
-        Mock Add-Content { }
+        Mock Add-ContentWrapper { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
         $code | Should -Be 0
@@ -448,7 +448,7 @@ opcache.enable = 1
         Mock Remove-ItemWrapper { }
         Mock Move-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache" }
-        Mock Add-Content { }
+        Mock Add-ContentWrapper { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath -skipConfirmation $true
 
@@ -483,7 +483,7 @@ opcache.enable = 1
         Mock Remove-ItemWrapper { }
         Mock Move-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache" }
-        Mock Add-Content { }
+        Mock Add-ContentWrapper { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath -skipConfirmation $false
 

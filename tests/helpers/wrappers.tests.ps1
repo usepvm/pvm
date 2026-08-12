@@ -147,7 +147,7 @@ Describe "Add-ContentWrapper" {
 }
 
 Describe "Set-ContentWrapper Tests" {
-    It "Calls Set-ContentWrapper with the correct parameters and UTF8 encoding" {
+    It "Calls Set-Content with the correct parameters and UTF8 encoding" {
         Mock Set-Content {}
 
         $path = "$TEST_DRIVE\test.txt"
@@ -453,7 +453,7 @@ Describe "Get-ContentWrapper Tests" {
         $path = "$TEST_DRIVE\path"
 
         $null = Get-ContentWrapper -path $path -raw
-        
+
         Should -Invoke Get-Content -Times 1 -ParameterFilter {
             $Path -eq $path -and
             $Raw

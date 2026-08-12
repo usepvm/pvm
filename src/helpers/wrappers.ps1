@@ -71,7 +71,7 @@ function Invoke-WebRequestWrapper {
 
 function Move-ItemWrapper {
     param ($path, $destination)
-    
+
     Move-Item -Path $path -Destination $destination -Force
 }
 
@@ -101,6 +101,6 @@ function Get-ChildItemWrapper {
 
 function Get-ContentWrapper {
     param ($path, [switch]$raw)
-    
+
     return Get-Content -path $path -Raw:$raw -ErrorAction SilentlyContinue
 }

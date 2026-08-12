@@ -20,7 +20,7 @@ zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
+"@ | Set-ContentWrapper -path $testIniPath
     }
 
     # Create initial ini content first
@@ -46,7 +46,7 @@ Describe "Backup-IniFile" {
         $result = Backup-IniFile -iniPath $testIniPath
         $result | Should -Be 0
         $newContent = 'modified content'
-        $newContent | Set-Content -Path $testIniPath
+        $newContent | Set-ContentWrapper -path $testIniPath
         $result = Backup-IniFile -iniPath $testIniPath
         $result | Should -Be 0
         (Get-ContentWrapper -path $testBackupPath) | Should -Be $originalContent
@@ -94,7 +94,7 @@ Describe "Get-AllPHPExtensionsStatus" {
     }
 
     It "Writes zend_extension prefix for known zend extensions" {
-        '' | Set-Content -Path $testIniPath  # override whatever Reset-IniContent wrote
+        '' | Set-ContentWrapper -path $testIniPath  # override whatever Reset-IniContent wrote
         Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{
@@ -122,7 +122,7 @@ Describe "Get-AllPHPExtensionsStatus" {
                 [PSCustomObject]@{ BaseName = 'php_testext'; Name = 'php_testext.dll'; FullName = "$extDirectory\php_testext.dll" }
             )
         }
-        Mock Set-Content { throw 'Disk full' }
+        Mock Set-ContentWrapper { throw 'Disk full' }
         $res = @(Get-AllPHPExtensionsStatus -iniPath $testIniPath)
         $res[0]['status'] | Should -Be 'Disabled'
         $res[0]['comment'] | Should -Be 'Available (not configured)'
@@ -130,7 +130,7 @@ Describe "Get-AllPHPExtensionsStatus" {
     }
 
     It "Returns Enabled for extension configured as enabled in ini" {
-        'extension=pdo_mysql' | Set-Content -Path $testIniPath
+        'extension=pdo_mysql' | Set-ContentWrapper -path $testIniPath
         Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
@@ -144,7 +144,7 @@ Describe "Get-AllPHPExtensionsStatus" {
     }
 
     It "Returns Disabled for extension configured as disabled in ini" {
-        ';extension=pdo_mysql' | Set-Content -Path $testIniPath
+        ';extension=pdo_mysql' | Set-ContentWrapper -path $testIniPath
         Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
@@ -156,7 +156,7 @@ Describe "Get-AllPHPExtensionsStatus" {
     }
 
     It "Includes ini-only entry when no matching dll exists" {
-        ';extension=oci8_12c  ; Use with Oracle Database 12c Instant Client' | Set-Content -Path $testIniPath
+        ';extension=oci8_12c  ; Use with Oracle Database 12c Instant Client' | Set-ContentWrapper -path $testIniPath
         Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } { return @() }
         $res = @(Get-AllPHPExtensionsStatus -iniPath $testIniPath -includeIniOnly $true)
         $res.Length          | Should -Be 1
@@ -170,7 +170,7 @@ Describe "Get-AllPHPExtensionsStatus" {
         @'
 extension=pdo_mysql
 ;extension=oci8_12c
-'@ | Set-Content -Path $testIniPath
+'@ | Set-ContentWrapper -path $testIniPath
         Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
@@ -199,7 +199,7 @@ extension=pdo_mysql
         @'
 extension=php_
 extension=pdo_mysql
-'@ | Set-Content -Path $testIniPath
+'@ | Set-ContentWrapper -path $testIniPath
         Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
@@ -214,7 +214,7 @@ extension=pdo_mysql
         @'
 ;extension=php_
 ;extension=pdo_mysql
-'@ | Set-Content -Path $testIniPath
+'@ | Set-ContentWrapper -path $testIniPath
         Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
@@ -233,7 +233,7 @@ extension=pdo_mysql
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
             )
         }
-        '' | Set-Content -Path $testIniPath
+        '' | Set-ContentWrapper -path $testIniPath
         $res = @(Get-AllPHPExtensionsStatus -iniPath $testIniPath)
         $res.Length     | Should -Be 1
         $res[0]['name'] | Should -Be 'pdo_mysql'
@@ -316,19 +316,19 @@ Describe "Get-AllPHPSettings" {
     }
 
     It "Returns empty when ini has no key=value lines" {
-        "; this is a comment`n[PHP]" | Set-Content -Path $testIniPath
+        "; this is a comment`n[PHP]" | Set-ContentWrapper -path $testIniPath
         $res = Get-AllPHPSettings -iniPath $testIniPath
         $res | Should -Be @()
     }
 
     It "Returns all settings" {
-        "memory_limit = 128M`nupload_max_filesize = 64M`n;max_execution_time = 30" | Set-Content -Path $testIniPath
+        "memory_limit = 128M`nupload_max_filesize = 64M`n;max_execution_time = 30" | Set-ContentWrapper -path $testIniPath
         $res = @(Get-AllPHPSettings -iniPath $testIniPath)
         $res.Length | Should -Be 3
     }
 
     It "Sets enabled=true and status=Enabled for uncommented setting" {
-        'memory_limit = 256M' | Set-Content -Path $testIniPath
+        'memory_limit = 256M' | Set-ContentWrapper -path $testIniPath
         $res = @(Get-AllPHPSettings -iniPath $testIniPath)
         $res[0]['enabled'] | Should -Be $true
         $res[0]['status']  | Should -Be 'Enabled'
@@ -336,7 +336,7 @@ Describe "Get-AllPHPSettings" {
     }
 
     It "Sets enabled=false and status=Disabled for commented setting" {
-        ';memory_limit = 256M' | Set-Content -Path $testIniPath
+        ';memory_limit = 256M' | Set-ContentWrapper -path $testIniPath
         $res = @(Get-AllPHPSettings -iniPath $testIniPath)
         $res[0]['enabled'] | Should -Be $false
         $res[0]['status']  | Should -Be 'Disabled'
@@ -344,25 +344,25 @@ Describe "Get-AllPHPSettings" {
     }
 
     It "Captures name correctly" {
-        'memory_limit = 512M' | Set-Content -Path $testIniPath
+        'memory_limit = 512M' | Set-ContentWrapper -path $testIniPath
         $res = @(Get-AllPHPSettings -iniPath $testIniPath)
         $res[0]['name'] | Should -Be 'memory_limit'
     }
 
     It "Captures value correctly" {
-        'memory_limit = 512M' | Set-Content -Path $testIniPath
+        'memory_limit = 512M' | Set-ContentWrapper -path $testIniPath
         $res = @(Get-AllPHPSettings -iniPath $testIniPath)
         $res[0]['value'] | Should -Be '512M'
     }
 
     It "Captures empty value correctly" {
-        'session.save_path =' | Set-Content -Path $testIniPath
+        'session.save_path =' | Set-ContentWrapper -path $testIniPath
         $res = @(Get-AllPHPSettings -iniPath $testIniPath)
         $res[0]['value'] | Should -Be ''
     }
 
     It "Returns correct lineNo for each entry" {
-        "memory_limit = 128M`nupload_max_filesize = 64M`nmax_execution_time = 30" | Set-Content -Path $testIniPath
+        "memory_limit = 128M`nupload_max_filesize = 64M`nmax_execution_time = 30" | Set-ContentWrapper -path $testIniPath
         $res = @(Get-AllPHPSettings -iniPath $testIniPath)
         $res[0]['lineNo'] | Should -Be 0
         $res[1]['lineNo'] | Should -Be 1
@@ -370,14 +370,14 @@ Describe "Get-AllPHPSettings" {
     }
 
     It "Ignores section headers and comments" {
-        "[PHP]`n; a comment`nmemory_limit = 128M" | Set-Content -Path $testIniPath
+        "[PHP]`n; a comment`nmemory_limit = 128M" | Set-ContentWrapper -path $testIniPath
         $res = @(Get-AllPHPSettings -iniPath $testIniPath)
         $res.Length     | Should -Be 1
         $res[0]['name'] | Should -Be 'memory_limit'
     }
 
     It "Returns both enabled and disabled entries" {
-        "memory_limit = 128M`n;memory_limit = 256M" | Set-Content -Path $testIniPath
+        "memory_limit = 128M`n;memory_limit = 256M" | Set-ContentWrapper -path $testIniPath
         $res = @(Get-AllPHPSettings -iniPath $testIniPath)
         $res.Length | Should -Be 2
         ($res | Where-Object -FilterScript { $_['enabled'] })['value']      | Should -Be '128M'

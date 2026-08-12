@@ -26,7 +26,7 @@ zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
+"@ | Set-ContentWrapper -path $testIniPath
     }
 
     # Create initial ini content first

@@ -23,7 +23,7 @@ zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
+"@ | Set-ContentWrapper -path $testIniPath
     }
 
     # Create initial ini content first
@@ -42,7 +42,7 @@ Describe "Restore-IniBackup" {
         $null = Backup-IniFile -iniPath $testIniPath
 
         # Modify original
-        'modified content' | Set-Content -Path $testIniPath
+        'modified content' | Set-ContentWrapper -path $testIniPath
         Restore-IniBackup -iniPath $testIniPath | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) | Should -Not -Be 'modified content'
     }

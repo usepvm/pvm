@@ -545,7 +545,7 @@ Describe "Expand-AndConfigurePHP Tests" {
 
 Describe "Set-Opcache Tests" {
     BeforeAll {
-        Mock Set-Content {
+        Mock Set-ContentWrapper {
             param ($Path, $Value, $Encoding = $null)
             $script:MockFileSystem.Files[$Path] = $Value -join "`n"
         }

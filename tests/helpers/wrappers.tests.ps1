@@ -147,7 +147,7 @@ Describe "Add-ContentWrapper" {
 }
 
 Describe "Set-ContentWrapper Tests" {
-    It "Calls Set-Content with the correct parameters and UTF8 encoding" {
+    It "Calls Set-ContentWrapper with the correct parameters and UTF8 encoding" {
         Mock Set-Content {}
 
         $path = "$TEST_DRIVE\test.txt"

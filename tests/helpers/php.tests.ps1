@@ -25,7 +25,7 @@ zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
+"@ | Set-ContentWrapper -path $testIniPath
     }
 
     # Create initial ini content first
@@ -948,7 +948,7 @@ Describe "Set-ZendExtensionsList" {
     }
 
     It "Returns -1 when exception is thrown" {
-        Mock Set-Content { throw 'Test exception' }
+        Mock Set-ContentWrapper { throw 'Test exception' }
         $result = Set-ZendExtensionsList
         $result | Should -Be -1
     }
@@ -958,7 +958,7 @@ Describe "Get-ZendExtensionsList" {
     BeforeAll {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $testContent = @('opcache', 'xdebug', 'swoole')
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ZEND_EXTENSIONS_LIST_PATH
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $ZEND_EXTENSIONS_LIST_PATH
         $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions
     }
 
@@ -997,7 +997,7 @@ Describe "Get-ZendExtensionsInfo" {
 extension=php_curl.dll
 zend_extension=php_opcache.dll
 ;upload_max_filesize = 2M
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
+"@ | Set-ContentWrapper -path $testIniPath
         New-Item -ItemType Directory -Force -Path $testExtPath | Out-Null
         New-Item -Path "$testExtPath\opcache.dll" -ItemType File -Force | Out-Null
         New-Item -Path "$testExtPath\php_xdebug.dll" -ItemType File -Force | Out-Null
@@ -1063,7 +1063,7 @@ Describe "Get-PHPData" {
     }
 
     It "Handles empty ini file" {
-        '' | Set-Content -Path $testIniPath
+        '' | Set-ContentWrapper -path $testIniPath
         $extensions = (Get-PHPData -PhpIniPath $testIniPath).extensions
         $extensions.Count | Should -Be 0
     }

@@ -38,7 +38,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
     Context "When the timestamp file exists" {
         It "Returns a DateTime parsed from the file content" {
             $date = Get-Date '2026-01-01 10:00:00'
-            $date | Set-Content -Path $TIMESTAMP_FILE
+            $date | Set-ContentWrapper -path $TIMESTAMP_FILE
 
             $result = Get-LastUpdateCheckTimestamp
 
@@ -47,7 +47,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
         }
 
         It "Returns null when the file content cannot be parsed as a DateTime" {
-            'not-a-date' | Set-Content -Path $TIMESTAMP_FILE
+            'not-a-date' | Set-ContentWrapper -path $TIMESTAMP_FILE
 
             $result = Get-LastUpdateCheckTimestamp
 
@@ -88,9 +88,9 @@ Describe "Set-LastUpdateCheckTimestamp" {
     }
 
     Context "When writing fails" {
-        It "Returns -1 when Set-Content throws" {
+        It "Returns -1 when Set-ContentWrapper throws" {
             New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
-            Mock Set-Content { throw 'Test exception' }
+            Mock Set-ContentWrapper { throw 'Test exception' }
 
             $result = Set-LastUpdateCheckTimestamp
 

@@ -26,7 +26,7 @@ zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
+"@ | Set-ContentWrapper -path $testIniPath
     }
 
     # Create initial ini content first
@@ -75,10 +75,10 @@ Describe "Enable-IniExtension" {
                 @{ name = 'php_curl'; status = 'Enabled'; color = 'DarkGreen'; line = 'extension=php_curl.dll'; lineNumber = 1 }
             )
         }
-        Mock Set-Content { }
+        Mock Set-ContentWrapper { }
 
         Enable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
-        Should -Invoke Set-Content -Times 0
+        Should -Invoke Set-ContentWrapper -Times 0
     }
 
     It "Returns 0 when line does not match for modification (file already has correct state)" {
@@ -86,7 +86,7 @@ Describe "Enable-IniExtension" {
         @"
 extension=php_xdebug.dll
 extension=php_curl.dll
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
 
         Mock Get-ChildItemWrapper {
             param ($path)
@@ -117,7 +117,7 @@ extension=php_curl.dll
         @"
 ;zend_extension=php_opcache.dll
 extension=php_curl.dll
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
         Mock Get-ChildItemWrapper {
             param ($path)
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
@@ -133,7 +133,7 @@ extension=pdo_pgsql
 ;extension=pdo_sqlite
 ;extension=pgsql
 extension=sqlite3
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
         Mock Get-ChildItemWrapper {
             param ($path)
             return @(
@@ -158,7 +158,7 @@ extension=pdo_pgsql
 ;extension=pdo_sqlite
 ;extension=pgsql
 extension=sqlite3
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
 
         $script:callCount = 0
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {

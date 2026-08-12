@@ -41,9 +41,15 @@ function Add-ContentWrapper {
 }
 
 function Set-ContentWrapper {
-    param ($path, $value)
+    param ($path, [Parameter(ValueFromPipeline)]$value)
 
-    Set-Content -Path $path -Value $value -Encoding UTF8
+    begin {
+        $values = @()
+    } process {
+        $values += $Value
+    } end {
+        Set-Content -Path $Path -Value $values -Encoding UTF8
+    }
 }
 
 function Invoke-WebRequestWrapper {

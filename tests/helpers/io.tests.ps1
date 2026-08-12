@@ -445,7 +445,7 @@ Describe "Expand-ZipCore Tests" {
         try {
             # Create source directory and file
             New-Item -ItemType Directory -Path (Split-Path $testFile) -Force | Out-Null
-            'test content' | Set-Content -Path $testFile
+            'test content' | Set-ContentWrapper -path $testFile
 
             # Create zip file using PowerShell's Compress-Archive
             Compress-Archive -Path $testFile -DestinationPath $zipPath -Force

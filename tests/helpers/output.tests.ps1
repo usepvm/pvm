@@ -217,7 +217,7 @@ Describe "Show-SpinnerWhileJob" {
 
         $PVMRoot = $PVMConfig.paths.pvmRoot
         New-Item -Path "$PVMRoot\src" -ItemType Directory -Force | Out-Null
-        Set-Content -Path "$PVMRoot\src\imports.ps1" -Value '# no-op for tests'
+        Set-ContentWrapper -path "$PVMRoot\src\imports.ps1" -value '# no-op for tests'
 
         $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
         $script:keepRunning = $true

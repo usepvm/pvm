@@ -33,7 +33,7 @@ Describe "Set-AliasesList" {
     }
 
     It "Returns -1 when exception is thrown" {
-        Mock Set-Content { throw 'Test exception' }
+        Mock Set-ContentWrapper { throw 'Test exception' }
         $result = Set-AliasesList
         $result | Should -Be -1
     }
@@ -43,7 +43,7 @@ Describe "Get-Aliases" {
     BeforeAll {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $testContent = [ordered]@{'?' = 'help'; 'i' = 'install'; 'init' = 'setup'}
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $ALIASES_LIST_PATH
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $ALIASES_LIST_PATH
         $script:DEFAULT_ALIASES = $PVMConfig.defaults.aliases
     }
 
@@ -91,7 +91,7 @@ Describe "Set-Scripts-List" {
     }
 
     It "Returns -1 when exception is thrown" {
-        Mock Set-Content { throw 'Test exception' }
+        Mock Set-ContentWrapper { throw 'Test exception' }
         $result = Set-ScriptsList
         $result | Should -Be -1
     }
@@ -101,7 +101,7 @@ Describe "Get-Scripts" {
     BeforeAll {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $testContent = [ordered]@{'test:quiet' = 'test --verbosity=None'; 'test:cov' = 'test --coverage=75'}
-        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $SCRIPTS_LIST_PATH
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $SCRIPTS_LIST_PATH
         $script:DEFAULT_SCRIPTS = $PVMConfig.defaults.scripts
     }
 
@@ -233,7 +233,7 @@ Describe "Get-EnvConfig" {
 
     Context "When .env file is missing" {
         It "Copies .env.example to .env" {
-            Set-Content -Path "$envRoot\.env.example" -Value 'KEY=value'
+            Set-ContentWrapper -path "$envRoot\.env.example" -value 'KEY=value'
             Get-EnvConfig -rootPath $envRoot
 
             $result = Get-ContentWrapper -path "$envRoot\.env"
@@ -243,7 +243,7 @@ Describe "Get-EnvConfig" {
 
     Context "When .env file exists" {
         It "Writes a verbose message with the env file path" {
-            Set-Content -Path "$envRoot\.env" -Value 'KEY=value'
+            Set-ContentWrapper -path "$envRoot\.env" -value 'KEY=value'
             Mock Write-Verbose {}
 
             Get-EnvConfig -rootPath $envRoot -Verbose
@@ -258,7 +258,7 @@ Describe "Get-EnvConfig" {
 PHP_CURRENT_VERSION_PATH=C:\pvm\php
 CACHE_MAX_HOURS=168
 DEFAULT_LOG_PAGE_SIZE=5
-'@ | Set-Content -Path "$envRoot\.env"
+'@ | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -277,7 +277,7 @@ DEFAULT_LOG_PAGE_SIZE=5
 
 KEY=value
 
-'@ | Set-Content -Path "$envRoot\.env"
+'@ | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -286,7 +286,7 @@ KEY=value
         }
 
         It "Trims whitespace around keys and values" {
-            '  KEY  =  value  ' | Set-Content -Path "$envRoot\.env"
+            '  KEY  =  value  ' | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -294,7 +294,7 @@ KEY=value
         }
 
         It "Removes matching double quotes from values" {
-            'QUOTED="hello world"' | Set-Content -Path "$envRoot\.env"
+            'QUOTED="hello world"' | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -302,7 +302,7 @@ KEY=value
         }
 
         It "Removes matching single quotes from values" {
-            "QUOTED='hello world'" | Set-Content -Path "$envRoot\.env"
+            "QUOTED='hello world'" | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -310,7 +310,7 @@ KEY=value
         }
 
         It "Keeps unquoted values unchanged" {
-            'PLAIN=hello world' | Set-Content -Path "$envRoot\.env"
+            'PLAIN=hello world' | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -321,7 +321,7 @@ KEY=value
             @'
 MISMATCHED="value'
 UNCLOSED="value
-'@ | Set-Content -Path "$envRoot\.env"
+'@ | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -334,7 +334,7 @@ UNCLOSED="value
 NOT_A_PAIR
 ALSO NOT VALID
 VALID=yes
-'@ | Set-Content -Path "$envRoot\.env"
+'@ | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -343,7 +343,7 @@ VALID=yes
         }
 
         It "Parses empty values" {
-            'EMPTY=' | Set-Content -Path "$envRoot\.env"
+            'EMPTY=' | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -351,7 +351,7 @@ VALID=yes
         }
 
         It "Preserves inline comments as part of the value" {
-            'CACHE_MAX_HOURS=168 # Cached available versions expiration in hours' | Set-Content -Path "$envRoot\.env"
+            'CACHE_MAX_HOURS=168 # Cached available versions expiration in hours' | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -362,7 +362,7 @@ VALID=yes
             @'
 # comment only
 
-'@ | Set-Content -Path "$envRoot\.env"
+'@ | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -385,7 +385,7 @@ DEFAULT_LOG_PAGE_SIZE=5
 DEFAULT_PARTIAL_LIST_SIZE=10
 MIN_PAD_RIGHT_LENGTH=20
 MIN_LINE_LENGTH=50
-'@ | Set-Content -Path "$testRoot\.env"
+'@ | Set-ContentWrapper -path "$testRoot\.env"
         }
 
         It "Returns a hashtable with all expected sections" {
@@ -428,7 +428,7 @@ DEFAULT_PARTIAL_LIST_SIZE=10
 MIN_PAD_RIGHT_LENGTH=20
 MIN_LINE_LENGTH=50
 TEST_DRIVE=C:\fake-storage
-'@ | Set-Content -Path "$customRoot\.env"
+'@ | Set-ContentWrapper -path "$customRoot\.env"
 
             $result = Get-Config -rootPath $customRoot
 
@@ -446,7 +446,7 @@ DEFAULT_LOG_PAGE_SIZE=5
 DEFAULT_PARTIAL_LIST_SIZE=10
 MIN_PAD_RIGHT_LENGTH=20
 MIN_LINE_LENGTH=50
-'@ | Set-Content -Path "$fallbackRoot\.env"
+'@ | Set-ContentWrapper -path "$fallbackRoot\.env"
 
             $result = Get-Config -rootPath $fallbackRoot
 
@@ -465,7 +465,7 @@ DEFAULT_PARTIAL_LIST_SIZE=10
 MIN_PAD_RIGHT_LENGTH=20
 MIN_LINE_LENGTH=50
 TEST_DRIVE=bad<path
-'@ | Set-Content -Path "$invalidRoot\.env"
+'@ | Set-ContentWrapper -path "$invalidRoot\.env"
 
             $result = Get-Config -rootPath $invalidRoot
 
@@ -512,7 +512,7 @@ DEFAULT_LOG_PAGE_SIZE=5
 DEFAULT_PARTIAL_LIST_SIZE=10
 MIN_PAD_RIGHT_LENGTH=20
 MIN_LINE_LENGTH=50
-'@ | Set-Content -Path "$testRoot\.env"
+'@ | Set-ContentWrapper -path "$testRoot\.env"
         }
 
         BeforeEach {

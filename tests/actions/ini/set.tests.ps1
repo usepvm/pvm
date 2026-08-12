@@ -28,7 +28,7 @@ zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
+"@ | Set-ContentWrapper -path $testIniPath
     }
 
     # Create initial ini content first
@@ -90,7 +90,7 @@ Describe "Set-IniSetting" {
         @"
 ;memory_limit=2G
 opcache.protect_memory=1
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '4G' }
@@ -103,7 +103,7 @@ opcache.protect_memory=1
         @"
 ;memory_limit=2G
 opcache.protect_memory=1
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
 
@@ -125,7 +125,7 @@ opcache.protect_memory=1
         @"
 ;memory_limit=2G
 opcache.protect_memory=1
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
 
         $script:callCount = 0
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
@@ -142,7 +142,7 @@ opcache.protect_memory=1
         @"
 memory_limit=
 memory_limit=2G
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
+"@ | Set-ContentWrapper -path $testIniPath
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '3G' }

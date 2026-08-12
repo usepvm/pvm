@@ -26,7 +26,7 @@ zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
+"@ | Set-ContentWrapper -path $testIniPath
     }
 
     # Create initial ini content first
@@ -70,10 +70,10 @@ Describe "Disable-IniExtension" {
                 @{ name = 'php_xdebug'; status = 'Disabled'; color = 'DarkYellow'; line = ';extension=php_xdebug.dll'; lineNumber = 1 }
             )
         }
-        Mock Set-Content { }
+        Mock Set-ContentWrapper { }
 
         Disable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
-        Should -Invoke Set-Content -Times 0
+        Should -Invoke Set-ContentWrapper -Times 0
     }
 
     It "Returns -1 for non-existent extension" {
@@ -101,10 +101,10 @@ Describe "Disable-IniExtension" {
             )
         }
         Mock Get-ContentWrapper { return @('extension=php_curl.dll') }
-        Mock Set-Content { }
+        Mock Set-ContentWrapper { }
 
         Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
-        Should -Invoke Set-Content -Times 0
+        Should -Invoke Set-ContentWrapper -Times 0
     }
 
     It "Prompts user to select extension if multiple matches found" {
@@ -114,7 +114,7 @@ extension=pdo_mysql
 extension=pdo_sqlite
 extension=pgsql
 ;extension=sqlite3
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
         Mock Get-ChildItemWrapper {
             param ($path)
             return @(
@@ -139,7 +139,7 @@ extension=pdo_mysql
 extension=pdo_sqlite
 extension=pgsql
 ;extension=sqlite3
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
 
         $script:callCount = 0
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {

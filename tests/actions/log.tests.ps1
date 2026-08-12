@@ -119,7 +119,7 @@ Message: Issue 0
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 +         throw "Issue $limit"
 +         ~~~~~~~~~~~~~~~~~~~~
-'@ | Set-Content -Path $LOG_ERROR_PATH
+'@ | Set-ContentWrapper -path $LOG_ERROR_PATH
     }
 
     It "returns -1 for invalid page size (non-numeric)" {
@@ -207,7 +207,7 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
     }
 
     It "returns -1 if no entries found" {
-        '' | Set-Content -Path $LOG_ERROR_PATH
+        '' | Set-ContentWrapper -path $LOG_ERROR_PATH
 
         $result = Show-Log -pageSize 1
 
@@ -249,7 +249,7 @@ Message: Issue 0
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 +         throw "Issue $limit"
 +         ~~~~~~~~~~~~~~~~~~~~
-'@ | Set-Content -Path $LOG_ERROR_PATH
+'@ | Set-ContentWrapper -path $LOG_ERROR_PATH
 
         Mock Clear-Host {}
         Mock Get-ConsoleKey { @{ Key = 'Q' } }

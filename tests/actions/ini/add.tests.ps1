@@ -34,7 +34,7 @@ zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
+"@ | Set-ContentWrapper -path $testIniPath
     }
 
     # Create initial ini content first
@@ -282,7 +282,7 @@ opcache.enable = 1
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache" }
-        Mock Set-Content { }
+        Mock Set-ContentWrapper { }
         Mock Remove-ItemWrapper { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
@@ -301,7 +301,7 @@ opcache.enable = 1
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache" }
-        Mock Set-Content { }
+        Mock Set-ContentWrapper { }
         Mock Remove-ItemWrapper { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
@@ -322,7 +322,7 @@ opcache.enable = 1
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache" }
-        Mock Set-Content { }
+        Mock Set-ContentWrapper { }
         Mock Remove-ItemWrapper { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
@@ -348,13 +348,13 @@ opcache.enable = 1
             "opcache.enable = 1"
         )
         Mock Get-ContentWrapper { return $existingIniContent }
-        Mock Set-Content { }
+        Mock Set-ContentWrapper { }
 
         $code = Install-XDebugExtension -iniPath $testIniPath
         $code | Should -Be 0
 
-        # Verify Set-Content was called to update the ini
-        Should -Invoke Set-Content -Times 1 -ParameterFilter { $Path -eq $testIniPath }
+        # Verify Set-ContentWrapper was called to update the ini
+        Should -Invoke Set-ContentWrapper -Times 1 -ParameterFilter { $Path -eq $testIniPath }
     }
 
     It "Adds xdebug v3 config when no existing xdebug found" {
@@ -520,7 +520,7 @@ Describe "Add-MissingPHPExtensionToIni" {
         @"
 zend_extension=php_opcache.dll
 extension=php_mbstring.dll
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
 
         Mock Test-Path { return $true }
         $result = Add-MissingPHPExtensionToIni -iniPath $testIniPath -extFileName 'php_curl.dll'
@@ -535,7 +535,7 @@ extension=php_mbstring.dll
         @"
 zend_extension=php_opcache.dll
 ;extension=php_mbstring.dll
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
 
         Mock Test-Path { return $true }
         $result = Add-MissingPHPExtensionToIni -iniPath $testIniPath -extFileName 'php_curl.dll' -enable $false
@@ -547,7 +547,7 @@ zend_extension=php_opcache.dll
         @"
 zend_extension=php_opcache.dll
 extension=php_mbstring.dll
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
 
         Mock Test-Path { return $true }
         Mock Get-CurrentPHPVersion { return @{ version = '7.1.0'; path = "$TEST_DRIVE\php\7.1.0" } }
@@ -559,7 +559,7 @@ extension=php_mbstring.dll
     It "Adds zend_extensions correctly" {
         @"
 extension=php_mbstring.dll
-"@ | Set-Content -Path $testIniPath
+"@ | Set-ContentWrapper -path $testIniPath
 
         Mock Test-Path { return $true }
         Mock Get-CurrentPHPVersion { return @{ version = '7.1.0'; path = "$TEST_DRIVE\php\7.1.0" } }

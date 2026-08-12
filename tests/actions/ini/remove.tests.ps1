@@ -27,7 +27,7 @@ extension=php_curl.dll
 extension=php_xdebug.dll
 zend_extension=php_opcache.dll
 display_errors = On
-"@ | Set-Content -Path $testIniPath -Encoding UTF8
+"@ | Set-ContentWrapper -path $testIniPath
     }
 
     # Create initial ini content first

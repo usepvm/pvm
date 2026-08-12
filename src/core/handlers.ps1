@@ -495,7 +495,7 @@ function Invoke-Info {
         foreach ($entry in $PVMConfig.paths.GetEnumerator()) {
             $PVM_PATHS[$entry.Key] = $entry.Value
         }
-        $PVM_PATHS["Current PHP Path"] = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        $PVM_PATHS['Current PHP Path'] = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
 
         Show-Info -message "`n`nPVM paths:`n"
         foreach ($entry in $PVM_PATHS.GetEnumerator()) {

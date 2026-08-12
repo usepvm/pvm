@@ -178,7 +178,7 @@ function Get-IniAction {
 
     return @{
         command     = 'pvm ini <action> <args>';
-        description = "Manage php.ini settings and extensions for the active PHP version.";
+        description = 'Manage php.ini settings and extensions for the active PHP version.';
         usage       = [ordered]@{
             USAGE       = 'pvm ini <action> <args>'
             DESCRIPTION = @(

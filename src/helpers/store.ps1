@@ -59,12 +59,12 @@ function Save-CachedData {
 
     try {
         if ([string]::IsNullOrWhiteSpace($cacheFileName)) {
-            Show-Error -Message "Cache file name cannot be empty."
+            Show-Error -Message 'Cache file name cannot be empty.'
             return -1
         }
 
         if ($null -eq $data) {
-            Show-Error -Message "Data cannot be null."
+            Show-Error -Message 'Data cannot be null.'
             return -1
         }
 

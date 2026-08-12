@@ -366,17 +366,17 @@ function Invoke-Sound {
 }
 
 function Invoke-SuccessSound {
-    Invoke-Sound -filename "success.mp3"
+    Invoke-Sound -filename 'success.mp3'
 }
 
 function Invoke-ErrorSound {
-    Invoke-Sound -filename "error.mp3"
+    Invoke-Sound -filename 'error.mp3'
 }
 
 function Invoke-NotifySound {
-    Invoke-Sound -filename "notify.mp3"
+    Invoke-Sound -filename 'notify.mp3'
 }
 
 function Invoke-PromptSound {
-    Invoke-Sound -filename "prompt.mp3"
+    Invoke-Sound -filename 'prompt.mp3'
 }

@@ -87,11 +87,7 @@ function Get-PowerShellInfo {
         Path = $PSHome
     }
 
-    if ($PSVersionTable.PSVersion.Major -ge 6) {
-        $psInfo.Name = 'PowerShell Core (pwsh)'
-    } else {
-        $psInfo.Name = 'Windows PowerShell (powershell)'
-    }
+    $psInfo.Name = if ($PSVersionTable.PSVersion.Major -ge 6) { 'PowerShell Core (pwsh)' } else { 'Windows PowerShell (powershell)' }
 
     return $psInfo
 }
@@ -278,11 +274,7 @@ function Invoke-TestFile {
 
         $rawDuration = $testResult.Duration.TotalSeconds
 
-        if ($options.coverage) {
-            $coverageRaw = [double]$testResult.CodeCoverage.CoveragePercent
-        } else {
-            $coverageRaw = $null
-        }
+        $coverageRaw = if ($options.coverage) { [double]$testResult.CodeCoverage.CoveragePercent } else { $null }
 
         $testResultData.passedCount = $testResult.PassedCount
         $testResultData.failedCount = $testResult.FailedCount
@@ -431,11 +423,7 @@ function Invoke-Tests {
     param ($tests = $null, $options = $null, $pesterVersion = $null)
 
     try {
-        if ($pesterVersion) {
-            $pesterInfo = Use-PesterVersion -version $pesterVersion
-        } else {
-            $pesterInfo = Use-LatestPesterVersion
-        }
+        $pesterInfo = if ($pesterVersion) { Use-PesterVersion -version $pesterVersion } else { Use-LatestPesterVersion }
 
         if (-not $pesterInfo) {
             Show-Error -message "`nNo Pester module found. Please install Pester first."

@@ -39,18 +39,10 @@ function Format-NiceTimestamp {
             $relativeTime = "$($timeSpan.Days) days ago"
         } elseif ($timeSpan.Days -lt 30) {
             $weeks = [Math]::Floor($timeSpan.Days / 7)
-            if ($weeks -eq 1) {
-                $relativeTime = '1 week ago'
-            } else {
-                $relativeTime = "$weeks weeks ago"
-            }
+            $relativeTime = if ($weeks -eq 1) { '1 week ago' } else { "$weeks weeks ago" }
         } else {
             $months = [Math]::Floor($timeSpan.Days / 30)
-            if ($months -eq 1) {
-                $relativeTime = '1 month ago'
-            } else {
-                $relativeTime = "$months months ago"
-            }
+            $relativeTime = if ($months -eq 1) { '1 month ago' } else { "$months months ago" }
         }
 
         return @{

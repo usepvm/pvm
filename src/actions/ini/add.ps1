@@ -352,7 +352,7 @@ function Install-Extension {
         $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip", '').Trim()
         $extractPath = "$($PVMConfig.paths.php)\$fileNamePath"
         Expand-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
-        $files = Get-ChildItem -Path $extractPath
+        $files = Get-ChildItemWrapper -path $extractPath
         $extFile = $files | Where-Object -FilterScript {
             ($_.Name -match "^php_$extName.*\.dll$")
         }

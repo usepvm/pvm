@@ -22,7 +22,7 @@ AfterAll {
 
 Describe "Get-CacheFiles Tests" {
     It "Should return a list of cache files" {
-        Mock Get-ChildItem {
+        Mock Get-ChildItemWrapper {
             return @(
                 @{ Name = 'cache1.json'; FullName = "$CACHE_PATH\cache1.json" }
                 @{ Name = 'cache2.json'; FullName = "$CACHE_PATH\cache2.json" }
@@ -41,7 +41,7 @@ Describe "Get-CacheFiles Tests" {
     }
 
     It "Should handle exceptions gracefully when cache cannot be listed" {
-        Mock Get-ChildItem { throw 'Error' }
+        Mock Get-ChildItemWrapper { throw 'Error' }
 
         $result = Get-CacheFiles
         $result | Should -Be $null

@@ -52,8 +52,8 @@ Describe "Enable-IniExtension" {
     }
 
     It "Enables commented extension" {
-        Mock Get-ChildItem {
-            param ($Path)
+        Mock Get-ChildItemWrapper {
+            param ($path)
             return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" } )
         }
         Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
@@ -61,8 +61,8 @@ Describe "Enable-IniExtension" {
     }
 
     It "Returns 0 for already enabled extension" {
-        Mock Get-ChildItem {
-            param ($Path)
+        Mock Get-ChildItemWrapper {
+            param ($path)
             return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
         }
 
@@ -88,8 +88,8 @@ extension=php_xdebug.dll
 extension=php_curl.dll
 "@ | Set-Content -Path $testIniPath
 
-        Mock Get-ChildItem {
-            param ($Path)
+        Mock Get-ChildItemWrapper {
+            param ($path)
             return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" } )
         }
         Mock Get-MatchingPHPExtensionsStatus {
@@ -104,7 +104,7 @@ extension=php_curl.dll
     }
 
     It "Returns -1 for non-existent extension" {
-        Mock Get-ChildItem { return @() }
+        Mock Get-ChildItemWrapper { return @() }
         Enable-IniExtension -iniPath $testIniPath -extNames @('nonexistent_ext') | Should -Be -1
     }
 
@@ -118,8 +118,8 @@ extension=php_curl.dll
 ;zend_extension=php_opcache.dll
 extension=php_curl.dll
 "@ | Set-Content -Path $testIniPath
-        Mock Get-ChildItem {
-            param ($Path)
+        Mock Get-ChildItemWrapper {
+            param ($path)
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
         }
         Enable-IniExtension -iniPath $testIniPath -extNames @('opcache') | Should -Be 0
@@ -134,8 +134,8 @@ extension=pdo_pgsql
 ;extension=pgsql
 extension=sqlite3
 "@ | Set-Content -Path $testIniPath
-        Mock Get-ChildItem {
-            param ($Path)
+        Mock Get-ChildItemWrapper {
+            param ($path)
             return @(
                 @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
                 @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$extDirectory\pdo_pgsql.dll" }
@@ -168,8 +168,8 @@ extension=sqlite3
             else { return '3' }
         }
 
-        Mock Get-ChildItem {
-            param ($Path)
+        Mock Get-ChildItemWrapper {
+            param ($path)
             return @(
                 @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
                 @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$extDirectory\pdo_pgsql.dll" }

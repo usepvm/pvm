@@ -39,7 +39,7 @@ function Get-AllPHPExtensionsStatus {
     $extDirectory = "$phpDirectory\ext"
 
     if (Test-DirectoryExists -path $extDirectory) {
-        $dllFiles = Get-ChildItem -Path $extDirectory -Filter '*.dll' -File -ErrorAction SilentlyContinue
+        $dllFiles = Get-ChildItemWrapper -path $extDirectory -filter '*.dll' -file
         foreach ($file in $dllFiles) {
             $fileId = & $normalizeId $file.BaseName
             if (-not $fileId) { continue }

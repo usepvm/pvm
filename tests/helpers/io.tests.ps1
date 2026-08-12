@@ -59,7 +59,7 @@ Describe "Get-AllSubdirectories" {
 
         It "Returns null when an exception occurs" {
             # Simulate an exception by passing a path that causes an error
-            Mock Get-ChildItem { throw 'Simulated exception' }
+            Mock Get-ChildItemWrapper { throw 'Simulated exception' }
             $result = Get-AllSubdirectories -path $STORAGE_PATH
             $result | Should -Be $null
         }

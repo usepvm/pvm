@@ -121,7 +121,7 @@ function Get-TestsFiles {
     param ($testsNames = $null)
 
     $root = Get-PVMRootDirectory
-    $allTests = Get-ChildItem -Path "$root\tests\*.tests.ps1" -Recurse -File
+    $allTests = Get-ChildItemWrapper -path "$root\tests\*.tests.ps1" -recurse -file
 
     if (-not $testsNames) {
         return $allTests
@@ -151,7 +151,7 @@ function Get-AllTestNames {
 
     $root = Get-PVMRootDirectory
 
-    return Get-ChildItem -Path "$root\tests" -Recurse -File -Filter '*.tests.ps1' | ForEach-Object -Process {
+    return Get-ChildItemWrapper -path "$root\tests" -recurse -file -filter '*.tests.ps1' | ForEach-Object -Process {
         $name = $_.BaseName -replace '\.tests$'
         if ($name -notin $exclude) {
             return $name
@@ -169,7 +169,7 @@ function Get-TestsMap {
     param ($root)
 
     $testsMap = @{}
-    Get-ChildItem -Path "$root\src" -Recurse -Filter '*.ps1' | ForEach-Object -Process {
+    Get-ChildItemWrapper -path "$root\src" -recurse -filter '*.ps1' | ForEach-Object -Process {
         $testFile = $_.FullName -replace [regex]::Escape("$root\src"), "$root\tests"
         $testFile = $testFile -replace '.ps1', '.tests.ps1'
         $testsMap[$testFile] = $_

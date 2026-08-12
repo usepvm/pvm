@@ -46,7 +46,7 @@ Describe "Get-PHPInstallInfo" {
             # Create a mock NTS DLL file
             New-Item -Path "$testPath\php8nts.dll" -ItemType File -Force | Out-Null
 
-            Mock Get-ChildItem {
+            Mock Get-ChildItemWrapper {
                 return @{
                     VersionInfo = @{ ProductVersion = '8.3.0' }
                     Name = 'php8nts.dll'
@@ -70,7 +70,7 @@ Describe "Get-PHPInstallInfo" {
             $testPath = "$TEST_DRIVE\php\8.2"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
 
-            Mock Get-ChildItem {
+            Mock Get-ChildItemWrapper {
                 return @{
                     VersionInfo = @{ ProductVersion = '8.2.5' }
                     Name = 'php8ts.dll'
@@ -90,7 +90,7 @@ Describe "Get-PHPInstallInfo" {
         It "Returns first DLL when multiple match" {
             $testPath = "$TEST_DRIVE\php\8.1"
 
-            Mock Get-ChildItem {
+            Mock Get-ChildItemWrapper {
                 return @(
                     @{
                         VersionInfo = @{ ProductVersion = '8.1.0' }
@@ -117,7 +117,7 @@ Describe "Get-PHPInstallInfo" {
             $testPath = "$TEST_DRIVE\php\empty"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
 
-            Mock Get-ChildItem { return $null }
+            Mock Get-ChildItemWrapper { return $null }
 
             $result = Get-PHPInstallInfo -path $testPath
             $result | Should -BeNullOrEmpty
@@ -1012,7 +1012,7 @@ zend_extension=php_opcache.dll
     It "Returns Copyright from DLL VersionInfo" {
         New-Item -ItemType Directory -Force -Path $testExtPath | Out-Null
         New-Item -Path "$testExtPath\opcache.dll" -ItemType File -Force | Out-Null
-        Mock Get-ChildItem {
+        Mock Get-ChildItemWrapper {
             return @{
                 VersionInfo = @{
                     ProductVersion = '8.3.0'
@@ -1030,7 +1030,7 @@ zend_extension=php_opcache.dll
         New-Item -ItemType Directory -Force -Path $testExtPath | Out-Null
         New-Item -Path "$testExtPath\opcache.dll" -ItemType File -Force | Out-Null
 
-        Mock Get-ChildItem {
+        Mock Get-ChildItemWrapper {
             return @{
                 VersionInfo = @{
                     ProductVersion = '8.3.0'

@@ -74,13 +74,13 @@ Describe "Get-AllPHPExtensionsStatus" {
     }
 
     It "Returns empty when ext directory has no dlls and ini has no extensions" {
-        Mock Get-ChildItem -ParameterFilter { $Path -like '*ext*' } { return @() }
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } { return @() }
         $res = Get-AllPHPExtensionsStatus -iniPath $testIniPath
         $res | Should -Be @()
     }
 
     It "Returns Disabled for dll in ext not configured in ini" {
-        Mock Get-ChildItem -ParameterFilter { $Path -like '*ext*' } {
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
             )
@@ -95,7 +95,7 @@ Describe "Get-AllPHPExtensionsStatus" {
 
     It "Writes zend_extension prefix for known zend extensions" {
         '' | Set-Content -Path $testIniPath  # override whatever Reset-IniContent wrote
-        Mock Get-ChildItem -ParameterFilter { $Path -like '*ext*' } {
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{
                     BaseName = 'php_xdebug'
@@ -117,7 +117,7 @@ Describe "Get-AllPHPExtensionsStatus" {
     }
 
     It "Returns Available when ini write fails for ext-only extension" {
-        Mock Get-ChildItem -ParameterFilter { $Path -like '*ext*' } {
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'php_testext'; Name = 'php_testext.dll'; FullName = "$extDirectory\php_testext.dll" }
             )
@@ -131,7 +131,7 @@ Describe "Get-AllPHPExtensionsStatus" {
 
     It "Returns Enabled for extension configured as enabled in ini" {
         'extension=pdo_mysql' | Set-Content -Path $testIniPath
-        Mock Get-ChildItem -ParameterFilter { $Path -like '*ext*' } {
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
             )
@@ -145,7 +145,7 @@ Describe "Get-AllPHPExtensionsStatus" {
 
     It "Returns Disabled for extension configured as disabled in ini" {
         ';extension=pdo_mysql' | Set-Content -Path $testIniPath
-        Mock Get-ChildItem -ParameterFilter { $Path -like '*ext*' } {
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
             )
@@ -157,7 +157,7 @@ Describe "Get-AllPHPExtensionsStatus" {
 
     It "Includes ini-only entry when no matching dll exists" {
         ';extension=oci8_12c  ; Use with Oracle Database 12c Instant Client' | Set-Content -Path $testIniPath
-        Mock Get-ChildItem -ParameterFilter { $Path -like '*ext*' } { return @() }
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } { return @() }
         $res = @(Get-AllPHPExtensionsStatus -iniPath $testIniPath -includeIniOnly $true)
         $res.Length          | Should -Be 1
         $res[0]['name']      | Should -Be 'oci8_12c'
@@ -171,7 +171,7 @@ Describe "Get-AllPHPExtensionsStatus" {
 extension=pdo_mysql
 ;extension=oci8_12c
 '@ | Set-Content -Path $testIniPath
-        Mock Get-ChildItem -ParameterFilter { $Path -like '*ext*' } {
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
             )
@@ -183,7 +183,7 @@ extension=pdo_mysql
     }
 
     It "Skips dll with empty basename after normalization" {
-        Mock Get-ChildItem -ParameterFilter { $Path -like '*ext*' } {
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'php_'; Name = 'php_.dll'; FullName = "$extDirectory\php_.dll" }
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
@@ -200,7 +200,7 @@ extension=pdo_mysql
 extension=php_
 extension=pdo_mysql
 '@ | Set-Content -Path $testIniPath
-        Mock Get-ChildItem -ParameterFilter { $Path -like '*ext*' } {
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
             )
@@ -215,7 +215,7 @@ extension=pdo_mysql
 ;extension=php_
 ;extension=pdo_mysql
 '@ | Set-Content -Path $testIniPath
-        Mock Get-ChildItem -ParameterFilter { $Path -like '*ext*' } {
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
             )
@@ -226,7 +226,7 @@ extension=pdo_mysql
     }
 
     It "Skips dll with null or empty BaseName" {
-        Mock Get-ChildItem -ParameterFilter { $Path -like '*ext*' } {
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = ''; Name = '.dll'; FullName = "$extDirectory\.dll" }
                 [PSCustomObject]@{ BaseName = $null; Name = '.dll'; FullName = "$extDirectory\.dll" }

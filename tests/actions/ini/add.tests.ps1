@@ -626,8 +626,7 @@ Describe "Install-Extension" {
             }
         }
 
-        Mock Get-ChildItem {
-            param ($Path)
+        Mock Get-ChildItemWrapper {
             if ($script:getRandomFile) {
                 return @( @{ Name = 'random_file' } )
             }
@@ -873,8 +872,7 @@ Describe "Install-Extension" {
                 $script:MockFileSystem.Files[$OutFile] = 'Downloaded content'
                 return
             }
-            Mock Get-ChildItem {
-                param ($Path)
+            Mock Get-ChildItemWrapper {
                 return @( @{ Name = 'php_courierauth.dll'; FullName = "$TEST_DRIVE\php_courierauth-1.4.0-7.4-ts-vc15-x86\php_courierauth.dll" } )
             }
         }
@@ -990,7 +988,7 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Get-ChildItem {
+        Mock Get-ChildItemWrapper {
             # Return a file that doesn't match the expected pattern
             return @( @{ Name = 'random_file.dll'; FullName = "$TEST_DRIVE\extracted\random_file.dll" } )
         }
@@ -1010,7 +1008,7 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Get-ChildItem {
+        Mock Get-ChildItemWrapper {
             return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\extracted\php_curl.dll" } )
         }
         Mock Test-Path -ParameterFilter { $Path -match '\.dll$' } { return $true }
@@ -1031,7 +1029,7 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Get-ChildItem {
+        Mock Get-ChildItemWrapper {
             return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\extracted\php_curl.dll" } )
         }
         Mock Test-Path -ParameterFilter { $Path -match '\.dll$' } { return $true }
@@ -1054,7 +1052,7 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Get-ChildItem {
+        Mock Get-ChildItemWrapper {
             return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\extracted\php_curl.dll" } )
         }
         Mock Test-Path { return $false }
@@ -1076,7 +1074,7 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Get-ChildItem {
+        Mock Get-ChildItemWrapper {
             return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\extracted\php_curl.dll" } )
         }
         Mock Test-FileExists { return $true }
@@ -1102,7 +1100,7 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Get-ChildItem {
+        Mock Get-ChildItemWrapper {
             return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\extracted\php_curl.dll" } )
         }
         Mock Test-FileExists { return $true }
@@ -1127,7 +1125,7 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Get-ChildItem {
+        Mock Get-ChildItemWrapper {
             return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\extracted\php_curl.dll" } )
         }
         Mock Test-FileExists { return $true }

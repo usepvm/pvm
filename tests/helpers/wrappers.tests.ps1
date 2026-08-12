@@ -345,3 +345,78 @@ Describe "Get-ItemWrapper Tests" {
         { Get-ItemWrapper -path $path } | Should -Throw
     }
 }
+
+Describe "Get-ChildItemWrapper Tests" {
+    It "Calls Get-ChildItem with the correct parameters" {
+        Mock Get-ChildItem { }
+
+        $path = "$TEST_DRIVE\path"
+
+        $null = Get-ChildItemWrapper -path $path
+
+        Should -Invoke Get-ChildItem -Times 1 -ParameterFilter {
+            $Path -eq $path
+        }
+    }
+
+    It "Calls Get-ChildItem with the correct parameters with recurse" {
+        Mock Get-ChildItem { }
+
+        $path = "$TEST_DRIVE\path"
+
+        $null = Get-ChildItemWrapper -path $path -recurse -force
+
+        Should -Invoke Get-ChildItem -Times 1 -ParameterFilter {
+            $Path -eq $path -and
+            $Recurse -and
+            $Force
+        }
+    }
+
+    It "Calls Get-ChildItem with the correct parameters with filter" {
+        Mock Get-ChildItem { }
+
+        $path = "$TEST_DRIVE\path"
+
+        $null = Get-ChildItemWrapper -path $path -filter '*.txt'
+
+        Should -Invoke Get-ChildItem -Times 1 -ParameterFilter {
+            $Path -eq $path -and
+            $Filter -eq '*.txt'
+        }
+    }
+
+    It "Calls Get-ChildItem with the correct parameters with file" {
+        Mock Get-ChildItem { }
+
+        $path = "$TEST_DRIVE\path"
+
+        $null = Get-ChildItemWrapper -path $path -file
+
+        Should -Invoke Get-ChildItem -Times 1 -ParameterFilter {
+            $Path -eq $path -and
+            $File
+        }
+    }
+
+    It "Calls Get-ChildItem with the correct parameters with directory" {
+        Mock Get-ChildItem { }
+
+        $path = "$TEST_DRIVE\path"
+
+        $null = Get-ChildItemWrapper -path $path -directory
+
+        Should -Invoke Get-ChildItem -Times 1 -ParameterFilter {
+            $Path -eq $path -and
+            $Directory
+        }
+    }
+
+    It "Throws when Get-ChildItem throws" {
+        Mock Get-ChildItem { throw 'Test error' }
+
+        $path = "$TEST_DRIVE\path"
+
+        { Get-ChildItemWrapper -path $path } | Should -Throw
+    }
+}

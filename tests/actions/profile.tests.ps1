@@ -419,7 +419,7 @@ Describe "Use-PHPProfile Tests" {
 
 Describe "Get-ProfileFiles Tests" {
     It "Should return a list of profile files" {
-        Mock Get-ChildItem {
+        Mock Get-ChildItemWrapper {
             return @(
                 @{ Name = 'profile1.json'; FullName = "$PROFILES_PATH\profile1.json" }
                 @{ Name = 'profile2.json'; FullName = "$PROFILES_PATH\profile2.json" }
@@ -438,7 +438,7 @@ Describe "Get-ProfileFiles Tests" {
     }
 
     It "Should handle exceptions gracefully when profiles cannot be listed" {
-        Mock Get-ChildItem { throw 'Error' }
+        Mock Get-ChildItemWrapper { throw 'Error' }
 
         $result = Get-ProfileFiles
         $result | Should -Be $null

@@ -5,7 +5,7 @@ function Get-CacheFiles {
             return $null
         }
 
-        $files = Get-ChildItem -Path $PVMConfig.paths.cache -Filter '*.json' -ErrorAction SilentlyContinue
+        $files = Get-ChildItemWrapper -path $PVMConfig.paths.cache -filter '*.json'
 
         return $files
     } catch {

@@ -374,7 +374,7 @@ function Get-ProfileFiles {
             return $null
         }
 
-        $files = Get-ChildItem -Path $PVMConfig.paths.profiles -Filter '*.json' -ErrorAction SilentlyContinue
+        $files = Get-ChildItemWrapper -path $PVMConfig.paths.profiles -filter '*.json'
 
         return $files
     } catch {

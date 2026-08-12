@@ -7,7 +7,7 @@ function Get-AllSubdirectories {
             return $null
         }
         $path = $path.Trim()
-        return Get-ChildItem -Path $path -Directory
+        return Get-ChildItemWrapper -path $path -directory
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get all subdirectories of '$path'"; exception = $_ }
         return $null

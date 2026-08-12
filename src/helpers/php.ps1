@@ -2,7 +2,7 @@
 function Get-PHPInstallInfo {
     param ($path)
 
-    $tsDll = Get-ChildItem -Path "$path\php*ts.dll" -ErrorAction SilentlyContinue |
+    $tsDll = Get-ChildItemWrapper -path "$path\php*ts.dll" |
     Where-Object -FilterScript { $_.Name -notmatch 'nts\.dll$' } |
     Select-Object -First 1
 
@@ -10,7 +10,7 @@ function Get-PHPInstallInfo {
         $buildType = 'TS'
         $dll = $tsDll
     } else {
-        $dll = Get-ChildItem -Path "$path\php*.dll" |
+        $dll = Get-ChildItemWrapper -path "$path\php*.dll" |
         Where-Object -FilterScript { $_.Name -notmatch 'phpdbg' } |
         Select-Object -First 1
         $buildType = 'NTS'
@@ -253,7 +253,7 @@ function Get-ZendExtensionsInfo {
     $zendExtensions = @()
 
     foreach ($name in $zendExtensionsList) {
-        $dll = Get-ChildItem -Path "$extPath\*$name*.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+        $dll = Get-ChildItemWrapper -path "$extPath\*$name*.dll" | Select-Object -First 1
         if ($dll) {
             $zendExtensions += @{
                 Name      = $name

@@ -80,3 +80,9 @@ function Get-ItemWrapper {
 
     return Get-Item -Path $path -Force -ErrorAction SilentlyContinue
 }
+
+function Get-ChildItemWrapper {
+    param ($path, [switch]$recurse, [switch]$force, $filter = $null, [switch]$file, [switch]$directory)
+
+    return Get-ChildItem -Path $path -Recurse:$recurse -Force:$force -Filter $filter -File:$file -Directory:$directory -ErrorAction SilentlyContinue
+}

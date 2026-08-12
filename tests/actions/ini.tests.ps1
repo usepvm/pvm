@@ -155,8 +155,7 @@ Describe "Invoke-IniAction" {
     Context "enable action" {
         It "Enables single extension" {
             Mock Test-FileNotExists { return $false }
-            Mock Get-ChildItem {
-                param ($Path)
+            Mock Get-ChildItemWrapper {
                 return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" } )
             }
             $result = Invoke-IniAction -action 'enable' -params @('xdebug')
@@ -172,8 +171,7 @@ extension=php_curl.dll
 "@ | Set-Content -Path "$phpVersionPath\php.ini"
 
             $script:callCount = 0
-            Mock Get-ChildItem {
-                param ($Path)
+            Mock Get-ChildItemWrapper {
                 $script:callCount++
                 if ($script:callCount -eq 1) { return @(@{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" }) }
                 if ($script:callCount -eq 2) { return @(@{ BaseName = 'php_gd'; Name = 'php_gd.dll'; FullName = "$extDirectory\php_gd.dll" }) }
@@ -193,8 +191,7 @@ extension=php_curl.dll
     Context "disable action" {
         It "Disables single extension" {
             Mock Test-FileNotExists { return $false }
-            Mock Get-ChildItem {
-                param ($Path)
+            Mock Get-ChildItemWrapper {
                 return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
             }
             $result = Invoke-IniAction -action 'disable' -params @('curl')
@@ -211,8 +208,7 @@ extension=php_curl.dll
     Context "status action" {
         It "Checks single extension status" {
             Mock Test-FileNotExists { return $false }
-            Mock Get-ChildItem {
-                param ($Path)
+            Mock Get-ChildItemWrapper {
                 return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
             }
             $result = Invoke-IniAction -action 'status' -params @('curl')
@@ -294,8 +290,7 @@ extension=php_curl.dll
                 }
             }
 
-            Mock Get-ChildItem {
-                param ($Path)
+            Mock Get-ChildItemWrapper {
                 if ($script:getRandomFile) {
                     return @( @{ Name = 'random_file' } )
                 }

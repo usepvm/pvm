@@ -35,9 +35,11 @@ function Read-HostWrapper {
 }
 
 function Add-ContentWrapper {
-    param ($path, $value)
+    param ($path, [Parameter(ValueFromPipeline)]$value)
 
-    Add-Content -Path $path -Value $value -Encoding UTF8
+    process {
+        Add-Content -Path $path -Value $value -Encoding UTF8
+    }
 }
 
 function Set-ContentWrapper {

@@ -612,17 +612,8 @@ Describe "Show-SpinnerWhileProcess" {
 }
 
 Describe "Write-Host helpers Tests" {
-    BeforeEach {
-        $script:currentPVMSubprocess = @{ enabled = $Global:PVMSubprocess.enabled; structuredOutput = $Global:PVMSubprocess.structuredOutput }
-    }
-
-    AfterEach {
-        $Global:PVMSubprocess = $script:currentPVMSubprocess
-    }
-
     Context "Write-Color Tests" {
         It "Prints message with specified color" {
-            $Global:PVMSubprocess.enabled = $false
             Mock Write-HostWrapper {}
 
             Write-Color -message 'Test message' -foreColor 'Red'
@@ -632,20 +623,6 @@ Describe "Write-Host helpers Tests" {
                 $foregroundColor -eq 'Red' -and
                 $noNewLine -eq $false
             } -Exactly 1
-        }
-
-        It "Stores structured output when subprocess mode is enabled" {
-            $Global:PVMSubprocess.structuredOutput = @()
-            $Global:PVMSubprocess.enabled = $true
-            Mock Write-HostWrapper {}
-
-            Write-Color -message 'Test message' -foreColor 'Red'
-
-            Should -Invoke Write-HostWrapper -Exactly 0
-            $Global:PVMSubprocess.structuredOutput.Count | Should -Be 1
-            $Global:PVMSubprocess.structuredOutput[0].message | Should -Be 'Test message'
-            $Global:PVMSubprocess.structuredOutput[0].color | Should -Be 'Red'
-            $Global:PVMSubprocess.structuredOutput[0].noNewLine | Should -Be $false
         }
     }
 

@@ -40,16 +40,16 @@ function Find-PesterVersion {
 
     switch -Regex ($version) {
         '^\d+\.\d+\.\d+$' {
-            return $availableVersions | Where-Object { $_.Version -eq $version } | Select-Object -First 1
+            return $availableVersions | Where-Object -FilterScript { $_.Version -eq $version } | Select-Object -First 1
         }
         '^\d+\.\d+$' {
-            return $availableVersions | Where-Object { $_.Version -like "$version.*" } | Sort-Object Version -Descending | Select-Object -First 1
+            return $availableVersions | Where-Object -FilterScript { $_.Version -like "$version.*" } | Sort-Object Version -Descending | Select-Object -First 1
         }
         '^\d+$' {
-            return $availableVersions | Where-Object { $_.Version.Major -eq [int]$version } | Sort-Object Version -Descending | Select-Object -First 1
+            return $availableVersions | Where-Object -FilterScript { $_.Version.Major -eq [int]$version } | Sort-Object Version -Descending | Select-Object -First 1
         }
         default {
-            return $availableVersions | Where-Object { $_.Version -le $version } | Sort-Object Version -Descending | Select-Object -First 1
+            return $availableVersions | Where-Object -FilterScript { $_.Version -le $version } | Sort-Object Version -Descending | Select-Object -First 1
         }
     }
 }
@@ -129,14 +129,14 @@ function Get-TestsFiles {
 
     $testsNames = @($testsNames | Select-Object -Unique)
 
-    $matchedTests = $allTests | Where-Object {
+    $matchedTests = $allTests | Where-Object -FilterScript {
         $testsNames -contains ($_.Name -replace '\.tests\.ps1$', '')
     }
 
     $foundNames = $matchedTests.Name -replace '\.tests\.ps1$', ''
-    $missingNames = $testsNames | Where-Object { $foundNames -notcontains $_ }
+    $missingNames = $testsNames | Where-Object -FilterScript { $foundNames -notcontains $_ }
 
-    $missingFiles = $missingNames | ForEach-Object {
+    $missingFiles = $missingNames | ForEach-Object -Process {
         [PSCustomObject]@{
             Name     = "$_.tests.ps1"
             FullName = "$root\tests\$_.tests.ps1"
@@ -151,7 +151,7 @@ function Get-AllTestNames {
 
     $root = Get-PVMRootDirectory
 
-    return Get-ChildItem -Path "$root\tests" -Recurse -File -Filter '*.tests.ps1' | ForEach-Object {
+    return Get-ChildItem -Path "$root\tests" -Recurse -File -Filter '*.tests.ps1' | ForEach-Object -Process {
         $name = $_.BaseName -replace '\.tests$'
         if ($name -notin $exclude) {
             return $name
@@ -169,7 +169,7 @@ function Get-TestsMap {
     param ($root)
 
     $testsMap = @{}
-    Get-ChildItem -Path "$root\src" -Recurse -Filter '*.ps1' | ForEach-Object {
+    Get-ChildItem -Path "$root\src" -Recurse -Filter '*.ps1' | ForEach-Object -Process {
         $testFile = $_.FullName -replace [regex]::Escape("$root\src"), "$root\tests"
         $testFile = $testFile -replace '.ps1', '.tests.ps1'
         $testsMap[$testFile] = $_
@@ -210,7 +210,7 @@ function Set-CoverageConfig {
 function Get-SeparatorWidth {
     param ($tests, $root)
 
-    $maxLen = ($tests | ForEach-Object { ("$($_.Name) | $($_.FullName)").Length } | Measure-Object -Maximum).Maximum
+    $maxLen = ($tests | ForEach-Object -Process { ("$($_.Name) | $($_.FullName)").Length } | Measure-Object -Maximum).Maximum
 
     return $maxLen + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 5 / 2)
 }
@@ -419,7 +419,7 @@ function Write-TestsSummary {
         New-Line
         if ($group.Name) { Show-Info -message "  [$($group.Name)]" }
 
-        $group.Group | ForEach-Object {
+        $group.Group | ForEach-Object -Process {
             $label = "    - $($_.sortedName) "
             $line = $label.PadRight($maxLineLength, '.') + " $($_.message.content)"
             Write-Color -message $line -foreColor $_.message.color
@@ -474,7 +474,7 @@ function Invoke-Tests {
 
         Show-Info -message "`nRunning tests with verbosity: $($options.verbosity)"
 
-        $testSummary = $tests | ForEach-Object {
+        $testSummary = $tests | ForEach-Object -Process {
             Invoke-TestFile -config $config -file $_ -options $options -separatorWidth $separatorWidth -testsMap $testsMap
         }
 
@@ -495,7 +495,7 @@ function Invoke-Tests {
 
         $totalAnalyzed = 0
         $totalExecuted = 0
-        $testSummary | ForEach-Object {
+        $testSummary | ForEach-Object -Process {
             $totalAnalyzed += [double]$_.testResultData.CodeCoverage.CommandsAnalyzedCount
             $totalExecuted += [double]$_.testResultData.CodeCoverage.CommandsExecutedCount
         }
@@ -503,10 +503,10 @@ function Invoke-Tests {
 
         $testData = @{
             testSummary = $testSummary
-            totalFailedTests = $testSummary | ForEach-Object { $_.testResultData.failedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
-            totalPassedTests = $testSummary | ForEach-Object { $_.testResultData.passedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
-            totalTests = $testSummary | ForEach-Object { $_.testResultData.totalCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
-            totalDuration = $testSummary | ForEach-Object { $_.testResultData.duration } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            totalFailedTests = $testSummary | ForEach-Object -Process { $_.testResultData.failedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            totalPassedTests = $testSummary | ForEach-Object -Process { $_.testResultData.passedCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            totalTests = $testSummary | ForEach-Object -Process { $_.testResultData.totalCount } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+            totalDuration = $testSummary | ForEach-Object -Process { $_.testResultData.duration } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
             totalCoverage = $totalCoverage
         }
 

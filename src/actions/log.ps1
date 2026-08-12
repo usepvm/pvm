@@ -94,7 +94,7 @@ function Show-Log {
         $logContent = Get-Content -Path $PVMConfig.paths.logError -Raw
 
         # Split by the separator and filter out empty entries
-        $logEntries = $logContent -split '-{26}' | Where-Object { $_.Trim() -ne '' }
+        $logEntries = $logContent -split '-{26}' | Where-Object -FilterScript { $_.Trim() -ne '' }
 
         # Parse each entry into objects
         $parsedEntries = @()
@@ -114,11 +114,11 @@ function Show-Log {
                     # Get remaining content
                     $remainingContent = @()
                     if ($lines.Count -gt 1) {
-                        $remainingContent = $lines[1..($lines.Count - 1)] | Where-Object { $_.Trim() -ne '' }
+                        $remainingContent = $lines[1..($lines.Count - 1)] | Where-Object -FilterScript { $_.Trim() -ne '' }
                     }
 
                     # Combine first message with remaining content
-                    $fullMessage = @($firstMessage) + $remainingContent | Where-Object { $_.Trim() -ne '' }
+                    $fullMessage = @($firstMessage) + $remainingContent | Where-Object -FilterScript { $_.Trim() -ne '' }
                     $fullMessageText = ($fullMessage -join "`n").Trim()
 
                     # Parse structured error information if present

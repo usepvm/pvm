@@ -112,7 +112,7 @@ function Get-AllPHPExtensionsStatus {
                 copyRight  = $extMatch.copyRight
             }
         } else {
-            $isZendExtension = Get-ZendExtensionsList | Where-Object { $extMatch.name -like "*$_*" }
+            $isZendExtension = Get-ZendExtensionsList | Where-Object -FilterScript { $extMatch.name -like "*$_*" }
             $extensionLine = if ($isZendExtension) { ";zend_extension=$($extMatch.name).dll" } else { ";extension=$($extMatch.name).dll" }
 
             try {
@@ -186,7 +186,7 @@ function Get-MatchingPHPExtensionsStatus {
     $searchId = $extName.Trim('"', "'").ToLower() -replace '^php_', '' -replace '\.dll$', ''
 
     $allExtensions = @(Get-AllPHPExtensionsStatus -iniPath $iniPath -includeIniOnly $includeIniOnly)
-    $extensionsMatches = $allExtensions | Where-Object {
+    $extensionsMatches = $allExtensions | Where-Object -FilterScript {
         $_.name -like "*$extName*" -or $_.id -like "*$searchId*"
     }
 
@@ -229,7 +229,7 @@ function Get-MatchingPHPSettings {
     }
 
     $allSettings = @(Get-AllPHPSettings -iniPath $iniPath)
-    $settingsMatches = $allSettings | Where-Object {
+    $settingsMatches = $allSettings | Where-Object -FilterScript {
         $_.name -like "*$searchKey*"
     }
 

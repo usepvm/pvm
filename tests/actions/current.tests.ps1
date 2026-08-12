@@ -39,8 +39,8 @@ Describe "Get-PHPStatus Function Tests" {
             $result = Get-PHPStatus -phpPath $PHP_DIR
 
             # Assert
-            ($result | Where-Object { $_.Name -like '*opcache*' }).Enabled | Should -Be $true
-            ($result | Where-Object { $_.Name -like '*xdebug*' }).Enabled | Should -Be $false
+            ($result | Where-Object -FilterScript { $_.Name -like '*opcache*' }).Enabled | Should -Be $true
+            ($result | Where-Object -FilterScript { $_.Name -like '*xdebug*' }).Enabled | Should -Be $false
         }
 
         It "Should detect enabled xdebug extension" {
@@ -57,8 +57,8 @@ Describe "Get-PHPStatus Function Tests" {
             $result = Get-PHPStatus -phpPath $PHP_DIR
 
             # Assert
-            ($result | Where-Object { $_.Name -like '*opcache*' }).Enabled | Should -Be $false
-            ($result | Where-Object { $_.Name -like '*xdebug*' }).Enabled | Should -Be $true
+            ($result | Where-Object -FilterScript { $_.Name -like '*opcache*' }).Enabled | Should -Be $false
+            ($result | Where-Object -FilterScript { $_.Name -like '*xdebug*' }).Enabled | Should -Be $true
         }
 
         It "Should detect both opcache and xdebug when enabled" {
@@ -75,8 +75,8 @@ Describe "Get-PHPStatus Function Tests" {
             $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
-            ($result | Where-Object { $_.Name -like '*opcache*' }).Enabled | Should -Be $true
-            ($result | Where-Object { $_.Name -like '*xdebug*' }).Enabled | Should -Be $true
+            ($result | Where-Object -FilterScript { $_.Name -like '*opcache*' }).Enabled | Should -Be $true
+            ($result | Where-Object -FilterScript { $_.Name -like '*xdebug*' }).Enabled | Should -Be $true
         }
 
         It "Should detect both opcache and xdebug when disabled" {
@@ -93,8 +93,8 @@ Describe "Get-PHPStatus Function Tests" {
             $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
-            ($result | Where-Object { $_.Name -like '*opcache*' }).Enabled | Should -Be $false
-            ($result | Where-Object { $_.Name -like '*xdebug*' }).Enabled | Should -Be $false
+            ($result | Where-Object -FilterScript { $_.Name -like '*opcache*' }).Enabled | Should -Be $false
+            ($result | Where-Object -FilterScript { $_.Name -like '*xdebug*' }).Enabled | Should -Be $false
         }
 
         It "Should return false for both when no zend_extensions found" {
@@ -106,8 +106,8 @@ Describe "Get-PHPStatus Function Tests" {
             $result = Get-PHPStatus -phpPath $testPath
 
             # Assert
-            ($result | Where-Object { $_.Name -like '*opcache*' }).text | Should -Be 'Not Found'
-            ($result | Where-Object { $_.Name -like '*xdebug*' }).text | Should -Be 'Not Found'
+            ($result | Where-Object -FilterScript { $_.Name -like '*opcache*' }).text | Should -Be 'Not Found'
+            ($result | Where-Object -FilterScript { $_.Name -like '*xdebug*' }).text | Should -Be 'Not Found'
         }
     }
 
@@ -193,8 +193,8 @@ Describe "Get-CurrentPHPVersion Function Tests" {
             # Assert
             $result.version | Should -Be $null
             $result.path | Should -Be $null
-            ($result.status | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
-            ($result.status | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
+            ($result.status | Where-Object -FilterScript { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result.status | Where-Object -FilterScript { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
 
         It "Should return null values when path does not exist" {
@@ -207,8 +207,8 @@ Describe "Get-CurrentPHPVersion Function Tests" {
             # Assert
             $result.version | Should -Be $null
             $result.path | Should -Be $null
-            ($result.status | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
-            ($result.status | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
+            ($result.status | Where-Object -FilterScript { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result.status | Where-Object -FilterScript { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
 
         It "Should call Add-LogEntry when exception occurs" {
@@ -238,8 +238,8 @@ Describe "Get-CurrentPHPVersion Function Tests" {
             # Assert
             $result.version | Should -Be $null
             $result.path | Should -Be $null
-            ($result.status | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
-            ($result.status | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
+            ($result.status | Where-Object -FilterScript { $_.Name -eq 'opcache' }).Enabled | Should -Be $false
+            ($result.status | Where-Object -FilterScript { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
         }
     }
 }

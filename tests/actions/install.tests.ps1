@@ -99,7 +99,7 @@ BeforeAll {
         }
 
         $result = @{}
-        $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
+        $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object -Process { $result[$_.Key] = $_.Value }
         return $result
     }
 
@@ -914,8 +914,8 @@ Describe "Environment Variable Tests" {
         }
         $result = Get-MatchingPHPVersions -version '8.1'
 
-        $result | Where-Object { $_.version -eq '8.1.0' } | Should -Not -BeNullOrEmpty
-        $result | Where-Object { $_.version -eq '8.1.5' } | Should -Not -BeNullOrEmpty
-        $result | Where-Object { $_.link -eq '8.2.0' } | Should -BeNullOrEmpty
+        $result | Where-Object -FilterScript { $_.version -eq '8.1.0' } | Should -Not -BeNullOrEmpty
+        $result | Where-Object -FilterScript { $_.version -eq '8.1.5' } | Should -Not -BeNullOrEmpty
+        $result | Where-Object -FilterScript { $_.link -eq '8.2.0' } | Should -BeNullOrEmpty
     }
 }

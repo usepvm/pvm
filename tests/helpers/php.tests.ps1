@@ -315,9 +315,9 @@ Describe "Get-MatchingPHPVersions" {
             $expected = @('8.0', '8.1', '8.2')
 
             $result.Count | Should -Be $expected.Count
-            $result | Where-Object { $_.version -eq '8.2' } | Should -Not -BeNullOrEmpty
-            $result | Where-Object { $_.version -eq '8.1' } | Should -Not -BeNullOrEmpty
-            $result | Where-Object { $_.version -eq '8.0' } | Should -Not -BeNullOrEmpty
+            $result | Where-Object -FilterScript { $_.version -eq '8.2' } | Should -Not -BeNullOrEmpty
+            $result | Where-Object -FilterScript { $_.version -eq '8.1' } | Should -Not -BeNullOrEmpty
+            $result | Where-Object -FilterScript { $_.version -eq '8.0' } | Should -Not -BeNullOrEmpty
         }
 
         It "Should return exact match for pattern version number" {
@@ -1005,8 +1005,8 @@ zend_extension=php_opcache.dll
         $result = Get-ZendExtensionsInfo -phpPath $testPhpPath
         $result.Count | Should -Be 2
 
-        ($result | Where-Object { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
-        ($result | Where-Object { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
+        ($result | Where-Object -FilterScript { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
+        ($result | Where-Object -FilterScript { $_.Name -eq 'xdebug' }).Enabled | Should -Be $false
     }
 
     It "Returns Copyright from DLL VersionInfo" {
@@ -1055,10 +1055,10 @@ Describe "Get-PHPData" {
         $extensions | Should -Not -Be $null
         $extensions.Count | Should -BeGreaterThan 0
 
-        $curlExt = $extensions | Where-Object { $_.Extension -like '*curl*' }
+        $curlExt = $extensions | Where-Object -FilterScript { $_.Extension -like '*curl*' }
         $curlExt.Enabled | Should -Be $true
 
-        $xdebugExt = $extensions | Where-Object { $_.Extension -like '*xdebug*' }
+        $xdebugExt = $extensions | Where-Object -FilterScript { $_.Extension -like '*xdebug*' }
         $xdebugExt.Enabled | Should -Be $false
     }
 

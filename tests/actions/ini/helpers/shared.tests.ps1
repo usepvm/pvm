@@ -178,8 +178,8 @@ extension=pdo_mysql
         }
         $res = @(Get-AllPHPExtensionsStatus -iniPath $testIniPath -includeIniOnly $true)
         $res.Length | Should -Be 2
-        ($res | Where-Object { $_['name'] -eq 'pdo_mysql' })['source'] | Should -Be 'ext,ini'
-        ($res | Where-Object { $_['name'] -eq 'oci8_12c' })['source']  | Should -Be 'ini'
+        ($res | Where-Object -FilterScript { $_['name'] -eq 'pdo_mysql' })['source'] | Should -Be 'ext,ini'
+        ($res | Where-Object -FilterScript { $_['name'] -eq 'oci8_12c' })['source']  | Should -Be 'ini'
     }
 
     It "Skips dll with empty basename after normalization" {
@@ -380,8 +380,8 @@ Describe "Get-AllPHPSettings" {
         "memory_limit = 128M`n;memory_limit = 256M" | Set-Content -Path $testIniPath
         $res = @(Get-AllPHPSettings -iniPath $testIniPath)
         $res.Length | Should -Be 2
-        ($res | Where-Object { $_['enabled'] })['value']      | Should -Be '128M'
-        ($res | Where-Object { -not $_['enabled'] })['value'] | Should -Be '256M'
+        ($res | Where-Object -FilterScript { $_['enabled'] })['value']      | Should -Be '128M'
+        ($res | Where-Object -FilterScript { -not $_['enabled'] })['value'] | Should -Be '256M'
     }
 }
 
@@ -447,7 +447,7 @@ Describe "Get-MatchingPHPSettings" {
         }
         $res = @(Get-MatchingPHPSettings -iniPath $testIniPath -searchKey 'memory_limit')
         $res.Length | Should -Be 2
-        ($res | Where-Object { $_['enabled'] })['value']      | Should -Be '128M'
-        ($res | Where-Object { -not $_['enabled'] })['value'] | Should -Be '256M'
+        ($res | Where-Object -FilterScript { $_['enabled'] })['value']      | Should -Be '128M'
+        ($res | Where-Object -FilterScript { -not $_['enabled'] })['value'] | Should -Be '256M'
     }
 }

@@ -6,7 +6,7 @@ function Show-Usage {
     Show-Message -message "`nUsage:`n"
 
     $actions = Get-Actions -arguments $arguments
-    $maxLineLength = ($actions.GetEnumerator() | ForEach-Object { $_.Value.data.command.Length } | Measure-Object -Maximum).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
+    $maxLineLength = ($actions.GetEnumerator() | ForEach-Object -Process { $_.Value.data.command.Length } | Measure-Object -Maximum).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
     $maxDescLength = (Get-ConsoleWidth) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2))
     if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
@@ -14,7 +14,7 @@ function Show-Usage {
 
     $actions.GetEnumerator() |
         Sort-Object { $_.Value.order }, { $_.Value.itemOrder } |
-        ForEach-Object {
+        ForEach-Object -Process {
             $command = $_.Value.data.command
             $description = $_.Value.data.description
             $group = $_.Value.group
@@ -128,15 +128,15 @@ function Get-ClosestCommandSuggestion {
     $command = $command.Trim().ToLower()
     $actionCandidates = @()
     if ($null -ne $actions) {
-        $actionCandidates = $actions.Keys | ForEach-Object { $_.ToLower() } | Select-Object -Unique
+        $actionCandidates = $actions.Keys | ForEach-Object -Process { $_.ToLower() } | Select-Object -Unique
     }
 
     $aliases = Get-Aliases
     $aliasCandidates = @()
     $aliasTargets = @()
     if ($null -ne $aliases) {
-        $aliasCandidates = $aliases.Keys | ForEach-Object { $_.ToLower() } | Select-Object -Unique
-        $aliasTargets = $aliases.Values | ForEach-Object { $_.ToLower() } | Select-Object -Unique
+        $aliasCandidates = $aliases.Keys | ForEach-Object -Process { $_.ToLower() } | Select-Object -Unique
+        $aliasTargets = $aliases.Values | ForEach-Object -Process { $_.ToLower() } | Select-Object -Unique
     }
 
     $bestDistance = [int]::MaxValue
@@ -201,7 +201,7 @@ function Start-PVM {
     param ($command, $arguments)
 
     try {
-        $arguments = @($arguments | Where-Object { $_ -ne $null })
+        $arguments = @($arguments | Where-Object -FilterScript { $_ -ne $null })
 
         if ([string]::IsNullOrWhiteSpace($command) -and $arguments.Count -eq 0) {
             Show-Usage -arguments $arguments
@@ -212,7 +212,7 @@ function Start-PVM {
             $flagCommand = Resolve-FlagCommand -arguments $arguments
             if ($flagCommand) {
                 $command   = $flagCommand
-                $arguments = @($arguments | Where-Object { -not (Get-FlagMap).Contains($_) })
+                $arguments = @($arguments | Where-Object -FilterScript { -not (Get-FlagMap).Contains($_) })
             }
         } else {
             $command = $command.Trim().ToLower()

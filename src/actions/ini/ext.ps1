@@ -40,9 +40,9 @@ function Show-PHPExtensions {
 
             Show-Info -message "`nAvailable Extensions by Category:"
             Write-Gray -message '--------------------------------'
-            $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object {
+            $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object -Process {
                 $key = "$($_.Key) "
-                $vals = ($_.Value | ForEach-Object { $_.extName }) -join ', '
+                $vals = ($_.Value | ForEach-Object -Process { $_.extName }) -join ', '
 
                 $label = "  $key"
 

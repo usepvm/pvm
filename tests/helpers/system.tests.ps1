@@ -97,7 +97,7 @@ Describe "Get-AllEnvVars" {
             }
 
             $result = @{}
-            $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
+            $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object -Process { $result[$_.Key] = $_.Value }
             return $result
         }
     }
@@ -128,7 +128,7 @@ Describe "Get-EnvVarByName" {
             }
 
             $result = @{}
-            $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
+            $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object -Process { $result[$_.Key] = $_.Value }
             return $result
         }
         Mock Get-EnvVarByNameCore {
@@ -245,7 +245,7 @@ Describe "Optimize-SystemPath" {
             }
 
             $result = @{}
-            $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object { $result[$_.Key] = $_.Value }
+            $script:MockRegistry.Machine.GetEnumerator() | ForEach-Object -Process { $result[$_.Key] = $_.Value }
             return $result
         }
         Mock Get-EnvVarByNameCore {

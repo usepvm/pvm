@@ -1022,12 +1022,12 @@ Describe "Show-PHPProfile Tests" {
         $extensions = @{}
 
         # Add 10 settings
-        1..10 | ForEach-Object {
+        1..10 | ForEach-Object -Process {
             $settings["setting$_"] = @{ value = 'value$_'; enabled = ($_ % 2 -eq 0) }
         }
 
         # Add 10 extensions
-        1..10 | ForEach-Object {
+        1..10 | ForEach-Object -Process {
             $extensions["ext$_"] = @{ enabled = ($_ % 2 -eq 0); type = if ($_ % 3 -eq 0) { 'zend_extension' } else { 'extension' } }
         }
 

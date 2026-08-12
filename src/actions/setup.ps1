@@ -4,7 +4,7 @@ function Initialize-PVM {
         $path = Get-EnvVarByName -name 'Path' -optimized $true
         if ($null -eq $path) { $path = '' }
         $newPath = $path
-        $pathEntries = $path -split ';' | Where-Object { $_ -ne '' }
+        $pathEntries = $path -split ';' | Where-Object -FilterScript { $_ -ne '' }
 
         $parent = Split-Path -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH
         $created = New-Directory -path $parent
@@ -51,7 +51,7 @@ function Initialize-PVMDirectories {
 
     Show-Message -message "`nPVM environment directories:"
     $codes = @()
-    $maxNameLength = ($dirs | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+    $maxNameLength = ($dirs | ForEach-Object -Process { $_.Length } | Measure-Object -Maximum).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     foreach ($dir in $dirs) {
         $codes += $code = New-Directory -path $dir
 
@@ -119,7 +119,7 @@ function Initialize-EnvironmentDirectoriesAndFiles {
     $codes += Initialize-PVMDirectories
     $codes += Initialize-PVMFiles
 
-    if ($codes | Where-Object { $_ -ne 0 }) { return -1 }
+    if ($codes | Where-Object -FilterScript { $_ -ne 0 }) { return -1 }
     return 0
 }
 

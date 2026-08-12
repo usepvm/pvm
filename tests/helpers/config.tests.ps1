@@ -566,14 +566,14 @@ MIN_LINE_LENGTH=50
             $fakeRoot = "$TEST_DRIVE\fake-root"
             $originalVersion = $PVMConfig.version
             $originalLinks = [ordered]@{}
-            $PVMConfig.links.GetEnumerator() | ForEach-Object {
+            $PVMConfig.links.GetEnumerator() | ForEach-Object -Process {
                 $originalLinks[$_.Key] = $_.Value
             }
 
             $PVMConfig.test.setFakePaths.Invoke($fakeRoot)
 
             $PVMConfig.version | Should -Be $originalVersion
-            $PVMConfig.links.GetEnumerator() | ForEach-Object {
+            $PVMConfig.links.GetEnumerator() | ForEach-Object -Process {
                 $PVMConfig.links[$_.Key] | Should -Be $originalLinks[$_.Key]
             }
         }

@@ -10,7 +10,7 @@ function Get-FromSource {
 
                 # Filter the links to find versions that match the given version
                 $filteredLinks = @()
-                $null = $links | Where-Object {
+                $null = $links | Where-Object -FilterScript {
                     if (-not $_.href) { return $false }
                     if ($_.href -match 'php-debug') { return $false }
                     if ($_.href -match 'php-devel') { return $false }
@@ -69,16 +69,16 @@ function Get-AvailablePHPVersions {
         }
 
         $fetchedVersionsGroupedPartialList = @{}
-        $fetchedVersionsGrouped.PSObject.Properties | ForEach-Object {
+        $fetchedVersionsGrouped.PSObject.Properties | ForEach-Object -Process {
             $searchResult = $_.Value
             if ($null -ne $arch) {
-                $searchResult = $searchResult | Where-Object { $_.Arch -eq $arch }
+                $searchResult = $searchResult | Where-Object -FilterScript { $_.Arch -eq $arch }
             }
             if ($null -ne $buildType) {
-                $searchResult = $searchResult | Where-Object { $_.BuildType -eq $buildType }
+                $searchResult = $searchResult | Where-Object -FilterScript { $_.BuildType -eq $buildType }
             }
             if ($term) {
-                $searchResult = $searchResult | Where-Object { $_.Version -like "$term*" }
+                $searchResult = $searchResult | Where-Object -FilterScript { $_.Version -like "$term*" }
             }
             if ($searchResult.Count -ne 0) {
                 $fetchedVersionsGroupedPartialList[$_.Name] = $searchResult | Select-Object -Last $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE
@@ -95,7 +95,7 @@ function Get-AvailablePHPVersions {
 
         $fetchedVersionsGroupedPartialList.GetEnumerator() |
             Sort-Object Key |
-            ForEach-Object {
+            ForEach-Object -Process {
                 $key = $_.Key
                 $fetchedVersionsGroupe = $_.Value
                 if ($fetchedVersionsGroupe.Length -eq 0) {
@@ -103,7 +103,7 @@ function Get-AvailablePHPVersions {
                 }
                 Show-Message -message "`n$key`n"
                 $maxNameLength = ($fetchedVersionsGroupe.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-                $fetchedVersionsGroupe | ForEach-Object {
+                $fetchedVersionsGroupe | ForEach-Object -Process {
                     $versionNumber = "$($_.Version) ".PadRight($maxNameLength, '.')
                     Show-Message -message "  $versionNumber $($_.Arch) $($_.BuildType)"
                 }
@@ -133,7 +133,7 @@ function Show-InstalledPHPVersions {
         }
 
         if ($term) {
-            $installedPhp = $installedPhp | Where-Object { $_.Version -like "$term*" }
+            $installedPhp = $installedPhp | Where-Object -FilterScript { $_.Version -like "$term*" }
             if ($installedPhp.Count -eq 0) {
                 Show-Error -message "`nNo PHP versions found matching '$term'"
                 return -1
@@ -144,7 +144,7 @@ function Show-InstalledPHPVersions {
         Write-Gray -message '------------------'
         $duplicates = @()
         $maxNameLength = ($installedPhp.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        $installedPhp | ForEach-Object {
+        $installedPhp | ForEach-Object -Process {
             $versionNumber = $_.Version
             $versionID = "$($_.Version)_$($_.buildType)_$($_.Arch)"
             if ($duplicates -notcontains $versionID) {

@@ -22,10 +22,10 @@ function Get-LatestPHPVersion {
         }
 
         if ($arch) {
-            $versionsList = $versionsList | Where-Object { $_.arch -eq $arch }
+            $versionsList = $versionsList | Where-Object -FilterScript { $_.arch -eq $arch }
         }
         if ($buildType) {
-            $versionsList = $versionsList | Where-Object { $_.BuildType -eq $buildType }
+            $versionsList = $versionsList | Where-Object -FilterScript { $_.BuildType -eq $buildType }
         }
 
         # Sort by version number (descending) and return the first one
@@ -46,7 +46,7 @@ function Get-LatestPHPVersionFromUrl {
         $links = $html.Links
 
         $allUrlVersions = @()
-        $null = $links | Where-Object {
+        $null = $links | Where-Object -FilterScript {
             if (-not $_.href) { return $false }
             if ($_.href -match 'php-debug') { return $false }
             if ($_.href -match 'php-devel') { return $false }
@@ -79,7 +79,7 @@ function Get-PHPVersionsFromUrl {
         $links = $html.Links
 
         $formattedList = @()
-        $null = $links | Where-Object {
+        $null = $links | Where-Object -FilterScript {
             if (-not $_.href) { return $false }
             if ($_.href -match 'php-debug') { return $false }
             if ($_.href -match 'php-devel') { return $false }
@@ -118,8 +118,8 @@ function Get-PHPVersions {
                 if ($fetched.Count -eq 0) {
                     continue
                 }
-                if ($null -ne $arch) { $fetched = $fetched | Where-Object { $_.arch -eq $arch } }
-                if ($null -ne $buildType) { $fetched = $fetched | Where-Object { $_.buildType -eq $buildType } }
+                if ($null -ne $arch) { $fetched = $fetched | Where-Object -FilterScript { $_.arch -eq $arch } }
+                if ($null -ne $buildType) { $fetched = $fetched | Where-Object -FilterScript { $_.buildType -eq $buildType } }
                 if ($fetched.Count -eq 0) { continue }
                 $rawByKey[$key] = $fetched
             }
@@ -137,7 +137,7 @@ function Get-PHPVersions {
             if (-not $rawByKey.ContainsKey($key)) {
                 continue
             }
-            $rawByKey[$key] | ForEach-Object {
+            $rawByKey[$key] | ForEach-Object -Process {
                 if ($found -notcontains $_.fileName) {
                     $fetchedVersions[$key] += $_
                     $found += $_.fileName
@@ -246,7 +246,7 @@ function Set-Opcache {
         }
 
         $phpIniContent = Get-Content -Path $phpIniPath
-        $phpIniContent = $phpIniContent | ForEach-Object {
+        $phpIniContent = $phpIniContent | ForEach-Object -Process {
             $_ -replace '^\s*;\s*(extension_dir\s*=.*"ext")', '$1' `
                 -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `
                 -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
@@ -266,10 +266,10 @@ function Select-Version {
     param ($matchingVersions, $version, $arch = $null, $buildType = $null)
 
     $matchingVersionsPartialList = [ordered]@{}
-    $matchingVersions.GetEnumerator() | ForEach-Object {
+    $matchingVersions.GetEnumerator() | ForEach-Object -Process {
         $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE
     }
-    $matchingKeys = $matchingVersions.Values | Where-Object { $_.Count -gt 0 }
+    $matchingKeys = $matchingVersions.Values | Where-Object -FilterScript { $_.Count -gt 0 }
 
     if ($matchingKeys.Length -eq 1) {
         # There is exactly one key with one item
@@ -284,14 +284,14 @@ function Select-Version {
         }
         Show-Message -message $text
         $index = 0
-        $matchingVersionsPartialList.GetEnumerator() | ForEach-Object {
+        $matchingVersionsPartialList.GetEnumerator() | ForEach-Object -Process {
             $key = $_.Key
             $versionsList = $_.Value
             if ($versionsList.Length -eq 0) {
                 return
             }
             Show-Message -message "`n$key versions:`n"
-            $versionsList | ForEach-Object {
+            $versionsList | ForEach-Object -Process {
                 $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
                 Show-Message -message " [$index] $($_.version) $($_.arch) $($_.BuildType)"
                 $index++
@@ -308,8 +308,8 @@ function Select-Version {
             return $null
         }
 
-        $selectedVersionObject = $matchingVersionsPartialList.GetEnumerator() | ForEach-Object {
-            $_.Value | Where-Object {
+        $selectedVersionObject = $matchingVersionsPartialList.GetEnumerator() | ForEach-Object -Process {
+            $_.Value | Where-Object -FilterScript {
                 $_.index -eq $selectedVersionInput
             }
         }
@@ -335,7 +335,7 @@ function Install-PHP {
                 $familyVersion = $matches[0]
                 Show-Message -message "`nOther versions from the $familyVersion.x family are available:"
                 $maxNameLength = ($foundInstalledVersions.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-                $foundInstalledVersions | ForEach-Object {
+                $foundInstalledVersions | ForEach-Object -Process {
                     $versionNumber = $_.Version
                     $isCurrent = ''
                     $metaData = ''

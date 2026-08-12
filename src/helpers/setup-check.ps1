@@ -7,7 +7,7 @@ function Test-PVMSetup {
             return $false
         }
 
-        $pvmEnvEntries = $pvmEnvVarContent -split ';' | Where-Object { $_ -ne '' }
+        $pvmEnvEntries = $pvmEnvVarContent -split ';' | Where-Object -FilterScript { $_ -ne '' }
         if ($pvmEnvEntries -notcontains $PVMRoot -or $pvmEnvEntries -notcontains $PVMConfig.env.PHP_CURRENT_VERSION_PATH) {
             return $false
         }
@@ -18,7 +18,7 @@ function Test-PVMSetup {
         }
 
         $parent = Split-Path -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH
-        $pathEntries = $path -split ';' | Where-Object { $_ -ne '' }
+        $pathEntries = $path -split ';' | Where-Object -FilterScript { $_ -ne '' }
         if (
             (
                 ($path -notlike "*$pvmEnvVarContent*") -and

@@ -101,7 +101,7 @@ Describe "Show-Usage Tests" {
 
     It "Writes additional description lines when wrapping occurs" {
         # Create description with spaces to force multiple wrapped lines
-        $spaced = (1..10 | ForEach-Object { ('word' + $_) }) -join ' '
+        $spaced = (1..10 | ForEach-Object -Process { ('word' + $_) }) -join ' '
         Mock Get-Actions {
             [ordered]@{
                 'multiline' = @{
@@ -638,7 +638,7 @@ Describe "Start-PVM Function Tests" {
         }
 
         It "Should handle large arguments array" {
-            $largeArgs = 1..100 | ForEach-Object { "arg$_" }
+            $largeArgs = 1..100 | ForEach-Object -Process { "arg$_" }
 
             $result = Start-PVM -command 'setup' -arguments $largeArgs
 

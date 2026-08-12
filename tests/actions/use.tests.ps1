@@ -27,7 +27,7 @@ BeforeAll {
         # If we're in the Auto-Select test and a specific version was detected
         if ($script:TestScenario -eq 'composer' -or $script:TestScenario -eq '.php-version' -and $installedVersions) {
             # Find the version that matches what we detected (8.2)
-            $selected = $installedVersions | Where-Object { $_.version -eq '8.2' }
+            $selected = $installedVersions | Where-Object -FilterScript { $_.version -eq '8.2' }
             if ($selected) {
                 return @{code=0; version=$selected.version; path=$selected.path}
             }

@@ -24,7 +24,7 @@ function Disable-IniExtension {
 
                 $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0
-                $matchesListStatus | ForEach-Object {
+                $matchesListStatus | ForEach-Object -Process {
                     $name = "$($_.name) ".PadRight($maxLineLength, '.')
                     Show-Message -message "[$index] $name " -noNewLine
                     Write-Color -message "$($_.status)" -foreColor $_.color
@@ -62,7 +62,7 @@ function Disable-IniExtension {
 
             $modified = $false
             $lineNumber = 0
-            $updatedLines = $lines | ForEach-Object {
+            $updatedLines = $lines | ForEach-Object -Process {
                 $lineNumber++
                 if ($_ -eq $selected.line -and $selected.lineNumber -eq $lineNumber -and -not $modified -and ($_ -notmatch '^\s*;')) {
                     $modified = $true

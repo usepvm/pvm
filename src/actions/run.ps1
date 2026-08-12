@@ -64,7 +64,7 @@ function Invoke-RunScripts {
                 }
 
                 if ($runInSubProcess) {
-                    $verbosityArg = $scriptArgs | Where-Object { $_ -match '^--verbosity=' }
+                    $verbosityArg = $scriptArgs | Where-Object -FilterScript { $_ -match '^--verbosity=' }
                     if ($verbosityArg -and $verbosityArg -ne '--verbosity=None') {
                         Write-Yellow -message "`nInvalid verbosity in multi-command script '$scriptName': '$scriptCommand' (only --verbosity=None is allowed when a script has more than one command)`n"
                         $results += @{ code = -2; output = $null }
@@ -89,12 +89,12 @@ function Invoke-RunScripts {
             }
         }
 
-        if ($results | Where-Object { $_ -and $_.code -eq -1 }) {
+        if ($results | Where-Object -FilterScript { $_ -and $_.code -eq -1 }) {
             Invoke-ErrorSound
             return -1
         }
 
-        if ($results | Where-Object { $_ -and $_.code -eq -2 }) {
+        if ($results | Where-Object -FilterScript { $_ -and $_.code -eq -2 }) {
             Invoke-NotifySound
             return -1
         }

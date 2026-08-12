@@ -27,14 +27,14 @@ function Get-IniSetting {
                 continue
             }
 
-            $results[$key] = $matchesList | ForEach-Object {
+            $results[$key] = $matchesList | ForEach-Object -Process {
                 @{ extensionName = $_.name; value = $_.value; enabled = $_.status; color = $_.color }
             }
         }
 
         $results = $notFound + $results
 
-        $maxLineLength = ($results.Values | ForEach-Object { $_ } | ForEach-Object { $_.extensionName } | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+        $maxLineLength = ($results.Values | ForEach-Object -Process { $_ } | ForEach-Object -Process { $_.extensionName } | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         foreach ($key in $results.Keys) {
             Show-Info -message "`nMatches for '$key'"
 

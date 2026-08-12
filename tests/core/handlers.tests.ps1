@@ -5,7 +5,7 @@ BeforeAll {
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\handlers-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    Import-Module PowerShellGet -ErrorAction SilentlyContinue
+    Import-Module -Name PowerShellGet -ErrorAction SilentlyContinue
 
     Mock Show-Error {}
     Mock Show-Warning {}

@@ -10,7 +10,7 @@ param ($command)
 $params = $args
 $Global:PVMSubprocess.enabled = $params -contains '--pvm-subprocess'
 if ($Global:PVMSubprocess.enabled) {
-    $params = $params | Where-Object { $_ -ne '--pvm-subprocess' }
+    $params = $params | Where-Object -FilterScript { $_ -ne '--pvm-subprocess' }
     $Global:PVMSubprocess.structuredOutput = @()
 }
 

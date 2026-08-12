@@ -77,7 +77,7 @@ function Get-OptimizedEnv {
 
     $envVars = Get-AllEnvVars
 
-    $envVars.Keys | ForEach-Object {
+    $envVars.Keys | ForEach-Object -Process {
         $envName = $_
         $envValue = $envVars[$envName]
 
@@ -100,8 +100,8 @@ function Format-EnvContent {
     param ($value)
 
     $rebuiltValue = $value -split ';' |
-    ForEach-Object { $_.Trim() } |
-    Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    ForEach-Object -Process { $_.Trim() } |
+    Where-Object -FilterScript { -not [string]::IsNullOrWhiteSpace($_) }
 
     return ($rebuiltValue -join ';')
 }
@@ -112,9 +112,9 @@ function Remove-PathDuplicates {
     $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 
     $entries = $Path -split ';' |
-    ForEach-Object { $_.Trim() } |
-    Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
-    Where-Object { $seen.Add($_) }
+    ForEach-Object -Process { $_.Trim() } |
+    Where-Object -FilterScript { -not [string]::IsNullOrWhiteSpace($_) } |
+    Where-Object -FilterScript { $seen.Add($_) }
 
     return ($entries -join ';')
 }
@@ -190,7 +190,7 @@ function Resolve-PVMEngine {
         'powershell' { return 'powershell.exe' }
         'pwsh' { return 'pwsh.exe' }
         default {
-            if (Get-Command pwsh -ErrorAction SilentlyContinue) {
+            if (Get-Command -Name pwsh -ErrorAction SilentlyContinue) {
                 return 'pwsh.exe'
             }
 
@@ -233,7 +233,7 @@ function Invoke-PVMSubprocess {
 
     $engine = Resolve-PVMEngine -shell $shell
 
-    if (-not (Get-Command $engine -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command -Name $engine -ErrorAction SilentlyContinue)) {
         Show-Error -message "`nShell '$engine' not found."
         return @{ output = $null; code = -1 }
     }

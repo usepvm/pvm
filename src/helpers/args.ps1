@@ -25,7 +25,7 @@ function Resolve-FlagCommand {
 
     $flagMap = Get-FlagMap
 
-    $flag = $arguments | Where-Object { $flagMap.Contains($_) } | Select-Object -First 1
+    $flag = $arguments | Where-Object -FilterScript { $flagMap.Contains($_) } | Select-Object -First 1
 
     if ($flag) {
         return $flagMap[$flag]
@@ -37,7 +37,7 @@ function Resolve-FlagCommand {
 function Resolve-BuildType {
     param ($arguments, $choseDefault = $false)
 
-    $buildType = $arguments | Where-Object { @('ts', 'nts') -contains $_ } | Select-Object -First 1
+    $buildType = $arguments | Where-Object -FilterScript { @('ts', 'nts') -contains $_ } | Select-Object -First 1
 
     if ($null -eq $buildType -and $choseDefault) {
         $buildType = 'ts';
@@ -53,7 +53,7 @@ function Resolve-BuildType {
 function Resolve-Arch {
     param ($arguments, $choseDefault = $false)
 
-    $arch = $arguments | Where-Object { @('x86', 'x64') -contains $_ } | Select-Object -First 1
+    $arch = $arguments | Where-Object -FilterScript { @('x86', 'x64') -contains $_ } | Select-Object -First 1
 
     if ($null -eq $arch -and $choseDefault) {
         $arch = if (Test-OS64Bit) { 'x64' } else { 'x86' }

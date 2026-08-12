@@ -139,7 +139,7 @@ function Show-SpinnerWhileProcess {
     try {
         $psi = [System.Diagnostics.ProcessStartInfo]::new()
         $psi.FileName = $fileName
-        $psi.Arguments = ($processArgs | ForEach-Object {
+        $psi.Arguments = ($processArgs | ForEach-Object -Process {
             if ($_ -match '[\s"]') {
                 '"' + ($_ -replace '"', '\"') + '"'
             } else {

@@ -34,7 +34,7 @@ function Get-XDebugFromUrl {
 
         # Return the filtered links (PHP version names)
         $formattedList = @()
-        $links | ForEach-Object {
+        $links | ForEach-Object -Process {
             if (-not $_.href) { return }
 
             $fileName = [System.IO.Path]::GetFileName($_.href)
@@ -107,7 +107,7 @@ function Install-XDebugExtension {
             return -1
         }
 
-        $xDebugList = $xDebugList | Where-Object {
+        $xDebugList = $xDebugList | Where-Object -FilterScript {
             if ($null -ne $currentVersionObj.arch) {
                 if ($_.arch -ne $currentVersionObj.arch) { return $false }
             }
@@ -125,7 +125,7 @@ function Install-XDebugExtension {
         Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
         Group-Object xDebugVersion |
         Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
-        ForEach-Object {
+        ForEach-Object -Process {
             $sortedGroup = $_.Group | Sort-Object `
             @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
             @{ Expression     = {
@@ -138,7 +138,7 @@ function Install-XDebugExtension {
                 }; Descending = $true
             }
 
-            $sortedGroup | ForEach-Object {
+            $sortedGroup | ForEach-Object -Process {
                 $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
                 $index++
             }
@@ -146,9 +146,9 @@ function Install-XDebugExtension {
             $xDebugListGrouped[$_.Name] = $sortedGroup
         }
 
-        $xDebugListGrouped.GetEnumerator() | ForEach-Object {
+        $xDebugListGrouped.GetEnumerator() | ForEach-Object -Process {
             Show-Message -message "`nXDebug $($_.Key)"
-            $_.Value | ForEach-Object {
+            $_.Value | ForEach-Object -Process {
                 $text = "PHP XDebug $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
                 Show-Message -message " [$($_.index)] $text"
             }
@@ -161,8 +161,8 @@ function Install-XDebugExtension {
             return -1
         }
 
-        $chosenItem = $xDebugListGrouped.GetEnumerator() | ForEach-Object {
-            $_.Value | Where-Object {
+        $chosenItem = $xDebugListGrouped.GetEnumerator() | ForEach-Object -Process {
+            $_.Value | Where-Object -FilterScript {
                 $_.index -eq $packageIndex
             }
         }
@@ -248,7 +248,7 @@ function Add-MissingPHPExtensionToIni {
         }
 
         $commented = if ($enable) { '' } else { ';' }
-        $isZendExtension = Get-ZendExtensionsList | Where-Object { $extFileName -like "*$_*" }
+        $isZendExtension = Get-ZendExtensionsList | Where-Object -FilterScript { $extFileName -like "*$_*" }
         if ($isZendExtension) {
             $lines += "`n$commented" + "zend_extension=$extFileName"
         } else {
@@ -278,7 +278,7 @@ function Install-Extension {
             return -1
         }
 
-        $extensionLinks = $extensionLinksObj.data | Where-Object {
+        $extensionLinks = $extensionLinksObj.data | Where-Object -FilterScript {
             if ($null -ne $currentVersionObj.arch) {
                 if ($_.arch -ne $currentVersionObj.arch) { return $false }
             }
@@ -305,7 +305,7 @@ function Install-Extension {
             Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
             Group-Object extVersion |
             Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
-            ForEach-Object {
+            ForEach-Object -Process {
                 $sortedGroup = $_.Group | Sort-Object `
                 @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
                 @{ Expression     = {
@@ -317,7 +317,7 @@ function Install-Extension {
                         }
                     }; Descending = $true
                 }
-                $sortedGroup | ForEach-Object {
+                $sortedGroup | ForEach-Object -Process {
                     $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
                     $index++
                 }
@@ -325,9 +325,9 @@ function Install-Extension {
                 $extensionLinksGrouped[$_.Name] = $sortedGroup
             }
 
-            $extensionLinksGrouped.GetEnumerator() | ForEach-Object {
+            $extensionLinksGrouped.GetEnumerator() | ForEach-Object -Process {
                 Show-Message -message "`n$extName $($_.Key)"
-                $_.Value | ForEach-Object {
+                $_.Value | ForEach-Object -Process {
                     $text = "PHP $extName $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
                     Show-Message -message " [$($_.index)] $text"
                 }
@@ -340,7 +340,7 @@ function Install-Extension {
                 return -1
             }
 
-            $chosenItem = $extensionLinks | Where-Object { $_.index -eq $packageIndex }
+            $chosenItem = $extensionLinks | Where-Object -FilterScript { $_.index -eq $packageIndex }
         }
 
         if (-not $chosenItem) {
@@ -353,7 +353,7 @@ function Install-Extension {
         $extractPath = "$($PVMConfig.paths.php)\$fileNamePath"
         Expand-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
         $files = Get-ChildItem -Path $extractPath
-        $extFile = $files | Where-Object {
+        $extFile = $files | Where-Object -FilterScript {
             ($_.Name -match "^php_$extName.*\.dll$")
         }
         if (-not $extFile) {

@@ -3,7 +3,7 @@ function Get-PHPInstallInfo {
     param ($path)
 
     $tsDll = Get-ChildItem -Path "$path\php*ts.dll" -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -notmatch 'nts\.dll$' } |
+    Where-Object -FilterScript { $_.Name -notmatch 'nts\.dll$' } |
     Select-Object -First 1
 
     if ($tsDll) {
@@ -11,7 +11,7 @@ function Get-PHPInstallInfo {
         $dll = $tsDll
     } else {
         $dll = Get-ChildItem -Path "$path\php*.dll" |
-        Where-Object { $_.Name -notmatch 'phpdbg' } |
+        Where-Object -FilterScript { $_.Name -notmatch 'phpdbg' } |
         Select-Object -First 1
         $buildType = 'NTS'
     }
@@ -103,7 +103,7 @@ function Update-InstalledPHPVersionsCache {
 function Get-InstalledPHPVersionsFromDisk {
     return Show-SpinnerWhileJob -scriptBlock {
         $directories = Get-AllSubdirectories -path $PVMConfig.paths.php
-        $installedVersions = $directories | ForEach-Object {
+        $installedVersions = $directories | ForEach-Object -Process {
             if (Test-FileExists -path "$($_.FullName)\php.exe") {
                 $phpInfo = Get-PHPInstallInfo -path $_.FullName
 
@@ -131,11 +131,11 @@ function Get-InstalledPHPVersions {
         }
 
         if ($arch) {
-            $installedVersions = $installedVersions | Where-Object { $_.Arch -eq $arch }
+            $installedVersions = $installedVersions | Where-Object -FilterScript { $_.Arch -eq $arch }
         }
 
         if ($buildType) {
-            $installedVersions = $installedVersions | Where-Object { $_.BuildType -eq $buildType }
+            $installedVersions = $installedVersions | Where-Object -FilterScript { $_.BuildType -eq $buildType }
         }
 
         $installedVersions = $installedVersions | Sort-Object { [version]$_.Version }
@@ -160,7 +160,7 @@ function Get-UserSelectedPHPVersion {
         $index = 0
         Show-Message -message "`nInstalled versions :"
         $maxNameLength = ($installedVersions.version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        $installedVersions | ForEach-Object {
+        $installedVersions | ForEach-Object -Process {
             $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
             $isCurrent = ''
             if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $_) {
@@ -181,7 +181,7 @@ function Get-UserSelectedPHPVersion {
         if (-not $response) {
             return @{ code = -1; message = 'Operation cancelled.'; color = 'Gray' }
         }
-        $versionObj = $installedVersions | Where-Object { $_.index -eq $response }
+        $versionObj = $installedVersions | Where-Object -FilterScript { $_.index -eq $response }
     }
 
     return @{ code = 0; version = $versionObj.version; arch = $versionObj.arch; buildType = $versionObj.BuildType; path = $versionObj.InstallPath }
@@ -193,7 +193,7 @@ function Get-MatchingPHPVersions {
     try {
         $installedVersions = Get-InstalledPHPVersions
 
-        $matchingVersions = $installedVersions | Where-Object { $_.Version -like "$version*" }
+        $matchingVersions = $installedVersions | Where-Object -FilterScript { $_.Version -like "$version*" }
 
         return $matchingVersions
     } catch {
@@ -207,7 +207,7 @@ function Test-PHPVersionInstalled {
 
     try {
         $installedVersions = Get-MatchingPHPVersions -version $version.version
-        return ($installedVersions | Where-Object {
+        return ($installedVersions | Where-Object -FilterScript {
                 $_.Version -eq $version.version -and
                 $_.Arch -eq $version.arch -and
                 $_.BuildType -eq $version.BuildType

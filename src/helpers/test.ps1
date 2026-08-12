@@ -9,11 +9,11 @@ function Show-Scripts {
     Write-Cyan -message "`nAvailable scripts:"
 
     $scripts = Get-Scripts
-    $scripts.Keys | ForEach-Object {
+    $scripts.Keys | ForEach-Object -Process {
         $name = $_
         $commands = $scripts[$_]
         Write-White -message "`n  $name"
-        $commands | ForEach-Object {
+        $commands | ForEach-Object -Process {
             $cmd = $_
             Write-DarkGray -message "   - $cmd"
         }

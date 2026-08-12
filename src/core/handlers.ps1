@@ -26,7 +26,7 @@ function Invoke-Repair {
     if ($envCode -eq 0) { Wait-ForEnvEdit }
     $codes += if ($envCode -eq -1) { -1 } else { 0 }
 
-    if ($codes | Where-Object { $_ -ne 0 }) { return -1 }
+    if ($codes | Where-Object -FilterScript { $_ -ne 0 }) { return -1 }
     return 0
 }
 
@@ -79,7 +79,7 @@ function Invoke-List {
     $arch = Resolve-Arch -arguments $arguments
     $buildType = Resolve-BuildType -arguments $arguments
 
-    $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
+    $term = ($arguments | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
     $result = Get-PHPVersionsList -available ($arguments -contains 'available') -term $term -arch $arch -buildType $buildType
 
     return $result
@@ -134,7 +134,7 @@ function Invoke-Uninstall {
     }
 
     $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
-    $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+    $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
 
     $result = Uninstall-PHP -version $version -skipConfirmation $skipConfirmation
 
@@ -177,7 +177,7 @@ function Invoke-Ini {
     }
 
     $remainingArgs = if ($arguments.Count -gt 1) {
-        $arguments[1..($arguments.Count - 1)] | Where-Object { $_ -ne $arch }
+        $arguments[1..($arguments.Count - 1)] | Where-Object -FilterScript { $_ -ne $arch }
     } else { @() }
 
     $exitCode = Invoke-IniAction -action $action -params $remainingArgs
@@ -198,7 +198,7 @@ function Invoke-Test {
     }
     $exclude = $null
     $pesterVersion = $null
-    $testsNames = $arguments | Where-Object {
+    $testsNames = $arguments | Where-Object -FilterScript {
         if (($_ -join (',') -match '^--exclude=(.+)$')) {
             $exclude = $Matches[1] -split ','
             return $false
@@ -251,14 +251,14 @@ function Invoke-Test {
 function Invoke-Log {
     param ($arguments)
 
-    $pageSizeArg = $arguments | Where-Object { $_ -match '^--pageSize=(.+)$' }
+    $pageSizeArg = $arguments | Where-Object -FilterScript { $_ -match '^--pageSize=(.+)$' }
     if ($pageSizeArg) {
         $pageSize = $pageSizeArg -replace '^--pageSize=', ''
     } else {
         $pageSize = $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE
     }
 
-    $term = ($arguments | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
+    $term = ($arguments | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
     $code = Show-Log -pageSize $pageSize -term $term
     return $code
 }
@@ -282,7 +282,7 @@ function Invoke-Help {
         foreach ($key in $usage.Keys) {
             Show-Info -message "`n$key`:"
             if ($usage[$key] -is [array]) {
-                $($usage.$key) | ForEach-Object { Show-Message -message "  $_" }
+                $($usage.$key) | ForEach-Object -Process { Show-Message -message "  $_" }
             } else {
                 Show-Message -message "  $($usage[$key])"
             }
@@ -345,11 +345,11 @@ function Invoke-Profile {
             }
 
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
-            $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+            $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
             return (Remove-PHPProfile -profileName $profileName -skipConfirmation $skipConfirmation)
         }
         'clear' {
-            $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+            $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
             return (Clear-PHPProfiles -skipConfirmation $skipConfirmation)
         }
         'export' {
@@ -413,11 +413,11 @@ function Invoke-Cache {
             }
 
             $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
-            $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+            $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
             return (Remove-CacheFile -cacheName $cacheName -skipConfirmation $skipConfirmation)
         }
         'clear' {
-            $skipConfirmation = [bool]($remainingArgs | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+            $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
             return (Clear-CacheFiles -skipConfirmation $skipConfirmation)
         }
         default {
@@ -437,7 +437,7 @@ function Invoke-Aliases {
 
     Show-Message -message "`n`nAvailable Aliases:`n"
     $maxAliasLength = ($aliases.Keys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-    $aliases.Keys | ForEach-Object {
+    $aliases.Keys | ForEach-Object -Process {
         $alias = "$_ ".PadRight($maxAliasLength, '.')
         $command = $aliases[$_]
 
@@ -529,7 +529,7 @@ function Invoke-Run {
 
     $scriptName = $arguments[0]
 
-    $files = $arguments | Where-Object {
+    $files = $arguments | Where-Object -FilterScript {
         if ($_ -eq $scriptName) {
             return $false
         }

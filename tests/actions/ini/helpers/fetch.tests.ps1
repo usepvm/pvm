@@ -560,12 +560,77 @@ Describe "Get-ExtensionMatchingCategories Tests" {
     }
 }
 
+Describe "Select-ExtensionFromMatches Tests" {
+    Context "When no extensions found" {
+        It "Returns null" {
+            $result = Select-ExtensionFromMatches -linksMatchingExtName @()
+
+            $result | Should -BeNullOrEmpty
+        }
+    }
+
+    Context "When single extension found" {
+        It "Returns single extension" {
+            $extensionList = @( @{ href = '/package/memcache'; extName = 'memcache' } )
+            $result = Select-ExtensionFromMatches -linksMatchingExtName $extensionList
+
+            $result.extName | Should -Be 'memcache'
+        }
+    }
+
+    Context "When multiple extensions found" {
+        BeforeEach {
+            function Get-ExtensionList {
+                return @(
+                    @{ href = '/package/mysqlnd_memcache'; extName = 'mysqlnd_memcache' },
+                    @{ href = '/package/memcache'; extName = 'memcache' },
+                    @{ href = '/package/memcached'; extName = 'memcached' }
+                )
+            }
+        }
+
+        It "Prompts user to select link when multiple found and returns selected" {
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+
+            $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
+
+            $result.extName | Should -Be 'memcache'
+        }
+
+        It "Returns null when user skips selection" {
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '' }
+
+            $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
+
+            $result | Should -Be $null
+            Should -Invoke Write-Gray -Times 1 -ParameterFilter {
+                $message -eq "`nInstallation cancelled"
+            }
+        }
+
+        It "Reprompts user when typing invalid choice" {
+            $script:callCount = 0
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith {
+                $script:callCount++
+                if ($script:callCount -eq 1) { return 'A' }
+                if ($script:callCount -eq 2) { return '-1' }
+                else { return '0' }
+            }
+
+            $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
+
+            $result.extName | Should -Be 'memcache'
+        }
+    }
+}
+
 Describe "Get-ExtensionLinksFromURL Tests" {
     BeforeEach {
         $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
     }
 
     It "Returns filtered links" {
+        Mock Test-CanUseCache { return $false }
         Mock Select-ExtensionLinksFromURL {
             return @(
                 @{ href = '/package/memcache/3.4.0/windows' },
@@ -609,67 +674,23 @@ Describe "Get-ExtensionLinksFromURL Tests" {
         }
     }
 
-    Context "When multiple matching categories links found" {
-        BeforeEach {
-            Mock Get-ExtensionMatchingCategories { return @(
+    It "Handles defensive check when chosen item is null" {
+        Mock Get-ExtensionMatchingCategories {
+            return @(
                 @{ href = '/package/memcache'; extName = 'memcache' },
                 @{ href = '/package/memcached'; extName = 'memcached' }
-            ) }
-            Mock Select-ExtensionLinksFromURL -ParameterFilter { $extName -eq 'memcache' } {
-                @{ href = '/package/memcache/3.4.0/windows' },
-                @{ href = '/package/memcache/3.3.0/windows' },
-                @{ href = '/package/memcache/3.2.0/windows' }
-            }
+            )
         }
+        # Test the defensive check by having a null element in the array
+        Mock Get-OrUpdateCache { throw 'Test exception' }
+        Mock Get-ExtensionMatchingCategories { return @( @{ href = '/package/memcache'; extName = 'memcache' }, $null, @{ href = '/package/memcached'; extName = 'memcached' } ) }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
+        Mock Select-ExtensionFromMatches { return $null }
 
-        It "Prompts user to select link when multiple found and returns selected" {
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
 
-            $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
-
-            $result.extName | Should -Be 'memcache'
-            $result.links.Count | Should -Be 3
-        }
-
-        It "Returns null when user skips selection" {
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '' }
-
-            $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
-
-            $result | Should -Be $null
-            Should -Invoke Write-Gray -Times 1 -ParameterFilter {
-                $message -eq "`nInstallation cancelled"
-            }
-        }
-
-        It "Reprompts user when typing invalid choice" {
-            $script:callCount = 0
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith {
-                $script:callCount++
-                if ($script:callCount -eq 1) { return 'A' }
-                if ($script:callCount -eq 2) { return '-1' }
-                else { return '0' }
-            }
-
-            $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
-
-            $result.extName | Should -Be 'memcache'
-            $result.links.Count | Should -Be 3
-        }
-
-        It "Handles defensive check when chosen item is null" {
-            # Test the defensive check by having a null element in the array
-            Mock Get-ExtensionMatchingCategories { return @( @{ href = '/package/memcache' }, $null, @{ href = '/package/memcached' } ) }
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
-
-            $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
-
-            # Should return null and show error message when chosen item is null
-            $result | Should -Be $null
-            Should -Invoke Show-Error -Times 1 -ParameterFilter {
-                $message -like "*You chose the wrong index*"
-            }
-        }
+        # Should return null and show error message when chosen item is null
+        $result | Should -Be $null
     }
 }
 

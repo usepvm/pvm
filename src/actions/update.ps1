@@ -95,7 +95,7 @@ function Update-PVM {
 
     $gitStatus = Get-GitStatus
     if ($gitStatus) {
-        $gitStatusText = $gitStatus | ForEach-Object {
+        $gitStatusText = $gitStatus | ForEach-Object -Process {
             $_.Trim().Replace('  ', ' ')
         }
 

@@ -2,29 +2,29 @@
 function Get-ExtensionCategoriesByPage {
     param ($extCategory, $link, $page = 1)
 
-    $availableExtensions = @()
+    $availableExtensions = [System.Collections.Generic.List[object]]::new()
     $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
-    $null = $html.Links | Where-Object {
-        if (-not $_.href) { return $false }
+    $html.Links | ForEach-Object -Process {
+        if (-not $_.href) { return }
         if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+&pageID=(\d+)$') {
             $hasMore = ($page -eq ($matches[1] - 1))
-            return $false
+            return
         }
         if ($_.href -notmatch '^/package/[A-Za-z0-9_]+$') {
-            return $false
+            return
         }
 
         $null = $_.outerHTML -match '(?s)<strong>(?<package>.*?)</strong>.*?<td[^>]*>(?<description>.*?)</td>'
         $description = $matches['description']
 
         $extName = ($_.href -replace '/package/', '').Trim()
-        $_ | Add-Member -NotePropertyName 'extName' -NotePropertyValue $extName -Force
-        $_ | Add-Member -NotePropertyName 'extCategory' -NotePropertyValue $extCategory -Force
-        $_ | Add-Member -NotePropertyName 'description' -NotePropertyValue $description -Force
+        $linkItem = $_.psobject.copy()
+        $linkItem | Add-Member -NotePropertyName 'extName' -NotePropertyValue $extName -Force
+        $linkItem | Add-Member -NotePropertyName 'extCategory' -NotePropertyValue $extCategory -Force
+        $linkItem | Add-Member -NotePropertyName 'description' -NotePropertyValue $description -Force
 
-        $availableExtensions += $_
-        return $true
+        $availableExtensions.Add($linkItem)
     }
 
     return @{
@@ -37,7 +37,7 @@ function Get-PHPExtensionsFromSource {
     $availableExtensions = @{}
     try {
         $html_cat = Invoke-WebRequestWrapper -uri $PVMConfig.links.peclPackages
-        $null = $html_cat.Links | Where-Object {
+        $null = $html_cat.Links | Where-Object -FilterScript {
             if (-not $_.href) { return $false }
 
             $href = $_.href
@@ -76,7 +76,7 @@ function Get-PHPExtensionsFromSource {
             }
         )
         $availableExtensionsOrdered = [ordered] @{}
-        $availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object { $availableExtensionsOrdered[$_.Key] = $_.Value }
+        $availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object -Process { $availableExtensionsOrdered[$_.Key] = $_.Value }
 
         return $availableExtensionsOrdered
     } catch {
@@ -95,15 +95,16 @@ function Get-FilteredPHPExtensionsByCategory {
     param ($availableExtensions, $term = $null)
 
     $result = @{}
-    $availableExtensions.PSObject.Properties | ForEach-Object {
+    $availableExtensions.PSObject.Properties | ForEach-Object -Process {
         $categoryMatches = $_.Name -like "*$term*"
-        $searchResult = if ($term -and -not $categoryMatches) {
-            $_.Value | Where-Object {
-                ($_.extName -like "*$term*" -or $_.description -like "*$term*")
+        if ($term -and -not $categoryMatches) {
+            $searchResult = $_.Value | Where-Object -FilterScript {
+                return ($_.extName -like "*$term*" -or $_.description -like "*$term*")
             }
         } else {
-            $_.Value
+            $searchResult = $_.Value
         }
+        $searchResult = @($searchResult)
         if ($searchResult.Length -gt 0) {
             $result[$_.Name] = @($searchResult)
         }
@@ -115,7 +116,7 @@ function Select-ExtensionLinksFromURL {
     param ($extName)
 
     $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName"
-    $links = $html.Links | Where-Object {
+    $links = $html.Links | Where-Object -FilterScript {
         $_.href -match "/package/$extName/([^/]+)/windows$"
     }
 
@@ -125,12 +126,12 @@ function Select-ExtensionLinksFromURL {
 function Get-PackagesFromSourceLinks {
     param ($extName, $version, $links)
 
-    $formattedList = @()
-    $links | ForEach-Object {
+    $formattedList = [System.Collections.Generic.List[object]]::new()
+    $links | ForEach-Object -Process {
         try {
             $extVersion = $_.href -replace "/package/$extName/", '' -replace '/windows', ''
             $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName/$extVersion/windows"
-            $html.Links | ForEach-Object {
+            $html.Links | ForEach-Object -Process {
                 if (-not $_.href) { return }
 
                 $fileName = [System.IO.Path]::GetFileName($_.href)
@@ -140,7 +141,7 @@ function Get-PackagesFromSourceLinks {
                 # if ($fileName -notmatch "php_$extName-$version-") { return }
                 if ($fileName -notmatch "^php_$extName-[\d\.]+(?:[a-z]+\d+)?-$version-") { return }
 
-                $formattedList += @{
+                $formattedList.Add(@{
                     href       = $_.href
                     version    = $version
                     extVersion = $extVersion
@@ -148,7 +149,7 @@ function Get-PackagesFromSourceLinks {
                     buildType  = if ($fileName -match '(?i)(?:^|-)nts(?:-|\.zip$)') { 'NTS' } else { 'TS' }
                     compiler   = if ($fileName -match '(?i)\b(vs|vc)\d+\b') { $matches[0].ToUpper() } else { 'unknown' }
                     fileName   = $fileName
-                }
+                })
             }
         } catch {
             $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to find packages for $extName v$extVersion"; exception = $_ }
@@ -169,9 +170,55 @@ function Get-ExtensionMatchingCategories {
     }
 
     $grouped = Get-FilteredPHPExtensionsByCategory -availableExtensions $availableExtensions -term $extName
-    $linksMatchingExtName = $grouped.Values | ForEach-Object { $_ }
+    $linksMatchingExtName = $grouped.Values | ForEach-Object -Process { $_ }
 
     return $linksMatchingExtName
+}
+
+function Select-ExtensionFromMatches {
+    param ($linksMatchingExtName)
+
+    if ($null -eq $linksMatchingExtName -or $linksMatchingExtName.Length -eq 0) {
+        return $null
+    }
+
+    if ($linksMatchingExtName.Length -eq 1) {
+        $chosenItem = $($linksMatchingExtName)
+        $extName = $chosenItem.extName
+        Show-Message -message "`nMatching found : '$extName'"
+        return $chosenItem
+    }
+
+    Show-Info -message "`nMatching '$extName' extension:"
+    $index = 0
+
+    $sorted = $linksMatchingExtName | Sort-Object -Property @{ Expression = { $_.extName } }
+    $sorted | ForEach-Object -Process {
+        $extItem = $_.extName
+        Show-Message -message "[$index] $extItem"
+        $index++
+    }
+
+    do {
+        $choiceRaw = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
+        if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
+            Write-Gray -message "`nInstallation cancelled"
+            return $null
+        }
+
+        $choice = $null
+        if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
+            Show-Warning -message 'Please enter a valid positive number.'
+            continue
+        }
+
+        if ($choice -lt 0 -or $choice -gt $linksMatchingExtName.Length - 1) {
+            Show-Warning -message "Number must be between 0 and $($linksMatchingExtName.Length - 1)."
+            continue
+        }
+
+        return $sorted[$choice]
+    } while ($true)
 }
 
 function Get-ExtensionLinksFromURL {
@@ -191,46 +238,9 @@ function Get-ExtensionLinksFromURL {
             return $null
         }
 
-        if ($linksMatchingExtName.Length -eq 1) {
-            $chosenItem = $($linksMatchingExtName)
-            $extName = $chosenItem.extName
-            Show-Message -message "`nMatching found : '$extName'"
-        } else {
-            Show-Info -message "`nMatching '$extName' extension:"
-            $index = 0
-            $linksMatchingExtName | Sort-Object extName | ForEach-Object {
-                $extItem = $_.extName
-                Show-Message -message "[$index] $extItem"
-                $index++
-            }
+        $chosenItem = Select-ExtensionFromMatches -linksMatchingExtName $linksMatchingExtName
 
-            do {
-                $choiceRaw = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
-                if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
-                    Write-Gray -message "`nInstallation cancelled"
-                    return $null
-                }
-
-                $choice = $null
-                if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Show-Warning -message 'Please enter a valid positive number.'
-                    continue
-                }
-
-                if ($choice -lt 0 -or $choice -gt $linksMatchingExtName.Length - 1) {
-                    Show-Warning -message "Number must be between 0 and $($linksMatchingExtName.Length - 1)."
-                    continue
-                }
-
-                break
-            } while ($true)
-
-            $chosenItem = $linksMatchingExtName[$choice]
-            if (-not $chosenItem) {
-                Show-Error -Message "`nYou chose the wrong index: $choice"
-                return $null
-            }
-        }
+        if (-not $chosenItem) { return $null }
 
         $extName = $chosenItem.extName
         Show-Message -message "`nLoading links for '$extName'..."

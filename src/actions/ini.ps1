@@ -22,7 +22,7 @@ function Invoke-IniAction {
 
         switch ($action.ToLower()) {
             'info' {
-                $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
+                $term = ($params | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
                 $exitCode = Get-PHPInfo -term $term -extensions ($params -contains 'extensions') -settings ($params -contains 'settings')
             }
             'get' {
@@ -43,7 +43,7 @@ function Invoke-IniAction {
 
                 Show-Message -message "`nSetting ini value..."
                 $enable = (-not ($params -contains '--disable'))
-                $params = $params | Where-Object { $_ -notmatch '^--disable$' }
+                $params = $params | Where-Object -FilterScript { $_ -notmatch '^--disable$' }
 
                 $exitCode = Set-IniSetting -iniPath $iniPath -key @($params) -enable $enable
             }
@@ -88,8 +88,8 @@ function Invoke-IniAction {
 
                 Show-Message -message "`nInstalling extension(s): $($params -join ', ')"
 
-                $skipConfirmation = [bool]($params | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
-                $params = $params | Where-Object { @('-y', '--yes') -notcontains $_ }
+                $skipConfirmation = [bool]($params | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+                $params = $params | Where-Object -FilterScript { @('-y', '--yes') -notcontains $_ }
 
                 $exitCode = Install-IniExtension -iniPath $iniPath -extNames @($params) -skipConfirmation $skipConfirmation
             }
@@ -101,13 +101,13 @@ function Invoke-IniAction {
 
                 Show-Message -message "`nUninstalling extension(s): $($params -join ', ')"
 
-                $skipConfirmation = [bool]($params | Where-Object { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
-                $params = $params | Where-Object { @('-y', '--yes') -notcontains $_ }
+                $skipConfirmation = [bool]($params | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+                $params = $params | Where-Object -FilterScript { @('-y', '--yes') -notcontains $_ }
 
                 $exitCode = Uninstall-Extension -iniPath $iniPath -extNames @($params) -skipConfirmation $skipConfirmation
             }
             'ext' {
-                $term = ($params | Where-Object { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
+                $term = ($params | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
                 $exitCode = Show-PHPExtensions -iniPath $iniPath -available ($params -contains 'available') -term $term
             }
             default {

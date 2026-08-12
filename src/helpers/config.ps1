@@ -17,7 +17,7 @@ function Get-Aliases {
             $data = (Get-Content -Path $PVMConfig.paths.aliasesList -Raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}
-                $data.PSObject.Properties | ForEach-Object { $ordered[$_.Name] = $_.Value }
+                $data.PSObject.Properties | ForEach-Object -Process { $ordered[$_.Name] = $_.Value }
                 if ($ordered.Count -gt 0) { return $ordered }
             }
         }
@@ -50,7 +50,7 @@ function Get-Scripts {
             $data = (Get-Content -Path $PVMConfig.paths.scriptsList -Raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}
-                $data.PSObject.Properties | ForEach-Object { $ordered[$_.Name] = $_.Value }
+                $data.PSObject.Properties | ForEach-Object -Process { $ordered[$_.Name] = $_.Value }
                 if ($ordered.Count -gt 0) { return $ordered }
             }
         }
@@ -101,7 +101,7 @@ function Get-EnvConfig {
     $config = @{}
 
     # Read the file and parse key=value pairs
-    Get-Content -Path $envFile | ForEach-Object {
+    Get-Content -Path $envFile | ForEach-Object -Process {
         # Skip empty lines and comments
         if ($_ -match '^\s*$' -or $_ -match '^\s*#') {
             return
@@ -312,7 +312,7 @@ function Copy-ObjectDeep {
     }
 
     if ($object -is [array]) {
-        return @($object | ForEach-Object { Copy-ObjectDeep -object $_ })
+        return @($object | ForEach-Object -Process { Copy-ObjectDeep -object $_ })
     }
 
     if ($object -is [scriptblock]) {

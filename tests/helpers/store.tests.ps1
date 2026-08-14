@@ -270,6 +270,63 @@ Describe "Test-HasData" {
     }
 }
 
+Describe "Test-HasNoData" {
+    It "Returns true for null data" {
+        Mock Test-HasData { return $false }
+
+        $result = Test-HasNoData -data $null
+        $result | Should -Be $true
+    }
+
+    It "Returns false for non-empty data" {
+        Mock Test-HasData { return $true }
+
+        $result = Test-HasNoData -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+        $result | Should -Be $false
+    }
+
+    It "Returns true for empty data" {
+        Mock Test-HasData { return $false }
+
+        $result = Test-HasNoData -data @{}
+        $result | Should -Be $true
+    }
+
+    It "Returns false for non-empty array" {
+        Mock Test-HasData { return $true }
+
+        $result = Test-HasNoData -data @('php-8.4.12.zip', 'php-5.5.0.zip')
+        $result | Should -Be $false
+    }
+
+    It "Returns true for empty array" {
+        Mock Test-HasData { return $false }
+
+        $result = Test-HasNoData -data @()
+        $result | Should -Be $true
+    }
+
+    It "Returns false for non-empty pscustomobject" {
+        Mock Test-HasData { return $true }
+
+        $result = Test-HasNoData -data ([pscustomobject] @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')})
+        $result | Should -Be $false
+    }
+
+    It "Returns true for empty pscustomobject" {
+        Mock Test-HasData { return $false }
+
+        $result = Test-HasNoData -data ([pscustomobject] @{})
+        $result | Should -Be $true
+    }
+
+    It "Throws when Test-HasData throws" {
+        Mock Test-HasData { throw 'Error' }
+
+        { Test-HasNoData -data @() } | Should -Throw 'Error'
+    }
+}
+
 Describe "Get-OrUpdateCache" {
     BeforeAll {
         function Get-Example { return @{} }

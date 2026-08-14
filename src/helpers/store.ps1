@@ -107,6 +107,12 @@ function Test-HasData {
     return @($data.PSObject.Properties).Count -gt 0
 }
 
+function Test-HasNoData {
+    param($data)
+
+    return -not (Test-HasData -data $data)
+}
+
 function Get-OrUpdateCache {
     param ($cacheFileName, $compute, $depth = 3)
 

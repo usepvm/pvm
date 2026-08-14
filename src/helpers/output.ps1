@@ -35,7 +35,7 @@ function Add-LogEntry {
             Show-Message -message "Failed to create directory $(Split-Path -Path $logPath)"
             return -1
         }
-        $content = "`n--------------------------"
+        $content = "`n$($PVMConfig.constants.LOG_SEPARATOR)"
         $content += "`n[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($data.header)"
         if ($data.exception) {
             $content += "`nMessage: $($data.exception.Exception.Message)"

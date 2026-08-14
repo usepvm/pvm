@@ -193,6 +193,10 @@ function Get-Config {
             SOUNDS_DISABLED             = Get-EnvBool -value $envConfig['SOUNDS_DISABLED'] -default $false
         }
 
+        constants = [ordered]@{
+            LOG_SEPARATOR = '=' * 100
+        }
+
         defaults = @{
             zendExtensions = @('opcache', 'xdebug')
             extensions     = @(

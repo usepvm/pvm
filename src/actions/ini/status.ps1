@@ -12,15 +12,9 @@ function Get-IniExtensionStatus {
         $notFound = @()
         $overallCode = 0
         foreach ($extName in $extNames) {
-            $matchesListStatus = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $extName -includeIniOnly $true
+            $matchesListStatus = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $extName
             if ($matchesListStatus.Length -eq 0) {
-                $notFound += (
-                    @{
-                        name   = $extName
-                        status = 'Not found'
-                        color  = 'Gray'
-                    }
-                )
+                $notFound += @{ name = $extName; status = 'Not found'; color = 'Gray' }
                 $overallCode = -1
                 continue
             }

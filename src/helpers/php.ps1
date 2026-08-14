@@ -126,7 +126,7 @@ function Get-InstalledPHPVersions {
             return Get-InstalledPHPVersionsFromDisk
         }
 
-        if ($null -eq $installedVersions) {
+        if (Test-HasNoData -data $installedVersions) {
             return @()
         }
 

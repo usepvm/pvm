@@ -13,6 +13,8 @@ BeforeAll {
     Mock Show-Debug {}
     Mock Show-Info {}
     Mock Show-Header {}
+    Mock Clear-Host {}
+    Mock Write-DarkGray {}
 }
 
 AfterAll {
@@ -100,162 +102,307 @@ Describe "Format-NiceTimestamp" {
     }
 }
 
-Describe "Show-Log" {
-    BeforeAll {
-        $script:LOG_ERROR_PATH = $PVMConfig.paths.logError
-        New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
-
-        @'
---------------------------
-[2025-08-23 14:38:48] Test log entry 1 :
-Message: Issue 1
-Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
-+         throw "Issue $limit"
-+         ~~~~~~~~~~~~~~~~~~~~
-
---------------------------
-[2025-08-23 14:38:48] Test log entry 0 :
-Message: Issue 0
-Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
-+         throw "Issue $limit"
-+         ~~~~~~~~~~~~~~~~~~~~
-'@ | Set-ContentWrapper -path $LOG_ERROR_PATH
-    }
-
+Describe "Test-LogPageSize" {
     It "returns -1 for invalid page size (non-numeric)" {
-        $result = Show-Log -pageSize 'abc'
+        $result = Test-LogPageSize -pageSize 'abc'
 
-        $result | Should -Be -1
+        $result | Should -Be $false
         Should -Invoke Show-Error -Times 1 -ParameterFilter {
             $message -eq "`nInvalid page size: abc"
         }
     }
 
     It "returns -1 for invalid page size (zero)" {
-        $result = Show-Log -pageSize 0
+        $result = Test-LogPageSize -pageSize 0
 
-        $result | Should -Be -1
+        $result | Should -Be $false
         Should -Invoke Show-Error -Times 1 -ParameterFilter {
             $message -eq "`nPage size must be a positive integer."
         }
     }
 
     It "returns -1 for invalid page size (negative number)" {
-        $result = Show-Log -pageSize -5
+        $result = Test-LogPageSize -pageSize -5
 
-        $result | Should -Be -1
+        $result | Should -Be $false
         Should -Invoke Show-Error -Times 1 -ParameterFilter {
             $message -eq "`nPage size must be a positive integer."
         }
     }
 
-    It "parses log file and returns 0 for valid page size" {
-        # Suppress screen clearing and key reading
-        Mock Clear-Host {}
-        Mock Get-ConsoleKey { @{ Key = 'Q' } }
+    It "returns true for valid page size" {
+        $result = Test-LogPageSize -pageSize 5
 
-        $result = Show-Log -pageSize 1
+        $result | Should -Be $true
+    }
+}
 
-        $result | Should -Be 0
+Describe "Get-LogEntries" {
+    BeforeAll {
+        $script:LOG_ERROR_PATH = $PVMConfig.paths.logError
+        New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
     }
 
-    It "pages back with LeftArrow during paging and returns 0" {
-        Mock Clear-Host {}
-
-        Set-Variable -Name logNavigationKeys -Scope Script -Value @(
-            @{ Key = 'LeftArrow' },
-            @{ Key = 'Q' }
-        )
-        Set-Variable -Name logNavigationIndex -Scope Script -Value 0
-        Mock Get-ConsoleKey { $script:logNavigationKeys[$script:logNavigationIndex++] }
-
-        $result = Show-Log -pageSize 1
-
-        $result | Should -Be 0
-    }
-
-    It "pages back with an unknown key and returns 0" {
-        Mock Clear-Host {}
-
-        Set-Variable -Name logNavigationKeys -Scope Script -Value @(
-            @{ Key = 'A' },
-            @{ Key = 'Q' }
-        )
-        Set-Variable -Name logNavigationIndex -Scope Script -Value 0
-        Mock Get-ConsoleKey { $script:logNavigationKeys[$script:logNavigationIndex++] }
-
-        $result = Show-Log -pageSize 1
-
-        $result | Should -Be 0
-    }
-
-    It "navigates back from end-of-log then exits naturally" {
-        Mock Clear-Host {}
-
-        Set-Variable -Name logNavigationKeys -Scope Script -Value @(
-            @{ Key = 'RightArrow' },
-            @{ Key = 'LeftArrow' },
-            @{ Key = 'Enter' },
-            @{ Key = 'A' }
-        )
-        Set-Variable -Name logNavigationIndex -Scope Script -Value 0
-        Mock Get-ConsoleKey { $script:logNavigationKeys[$script:logNavigationIndex++] }
-
-        $result = Show-Log -pageSize 1
-
-        $result | Should -Be 0
-    }
-
-    It "returns -1 if no entries found" {
+    It "returns empty array if no entries found" {
         '' | Set-ContentWrapper -path $LOG_ERROR_PATH
 
-        $result = Show-Log -pageSize 1
+        $result = Get-LogEntries -path $LOG_ERROR_PATH
 
-        $result | Should -Be -1
+        $result.Count | Should -Be 0
     }
 
-    It "returns -1 if log file is missing" {
-        Mock Test-Path { $false }
-
-        $result = Show-Log -pageSize 1
-
-        $result | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter {
-            $message -eq "`nLog file not found: $LOG_ERROR_PATH"
-        }
-    }
-
-    It "Handles exceptions gracefully" {
-        Mock Test-Path { return $true }
-        Mock Get-ContentWrapper { throw 'File read error' }
-
-        $result = Show-Log -pageSize 1
-
-        $result | Should -Be -1
-    }
-
-    It "filters log entries based on search term" {
-        @'
---------------------------
-[2025-08-23 14:38:48] Test log entry 1 :
+    It "returns array of log entries" {
+        @"
+$($PVMConfig.constants.LOG_SEPARATOR)
+[2025-08-20 14:38:48] Test log entry 1 :
 Message: Issue 1
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
-+         throw "Issue $limit"
++         throw "Issue limit"
 +         ~~~~~~~~~~~~~~~~~~~~
 
---------------------------
+$($PVMConfig.constants.LOG_SEPARATOR)
 [2025-08-23 14:38:48] Test log entry 0 :
 Message: Issue 0
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
-+         throw "Issue $limit"
++         throw "Issue limit"
 +         ~~~~~~~~~~~~~~~~~~~~
-'@ | Set-ContentWrapper -path $LOG_ERROR_PATH
+"@ | Set-ContentWrapper -path $LOG_ERROR_PATH
 
-        Mock Clear-Host {}
+        $result = Get-LogEntries -path $LOG_ERROR_PATH
+
+        $result.Length | Should -Be 2
+        $result[0].Timestamp | Should -Be '2025-08-23 14:38:48'
+        $result[0].Header | Should -Be 'Test log entry 0 :'
+        $result[1].Timestamp | Should -Be '2025-08-20 14:38:48'
+        $result[1].Header | Should -Be 'Test log entry 1 :'
+    }
+
+    It "filters log entries based on search term" {
+        @"
+$($PVMConfig.constants.LOG_SEPARATOR)
+[2025-08-23 14:38:48] Test log entry 1 :
+Message: Issue 1
+Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
++         throw "Issue limit"
++         ~~~~~~~~~~~~~~~~~~~~
+
+$($PVMConfig.constants.LOG_SEPARATOR)
+[2025-08-23 14:38:48] Test log entry 0 :
+Message: Issue 0
+Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
++         throw "Issue limit"
++         ~~~~~~~~~~~~~~~~~~~~
+"@ | Set-ContentWrapper -path $LOG_ERROR_PATH
+
+        $result = @(Get-LogEntries -path $LOG_ERROR_PATH -term 'entry 1')
+
+        $result.Length | Should -Be 1
+        $result[0].Timestamp | Should -Be '2025-08-23 14:38:48'
+        $result[0].Header | Should -Be 'Test log entry 1 :'
+    }
+}
+
+Describe "Write-LogEntry" {
+    It "writes 1 log entry to console" {
+        $header = 'Test log entry 1 :'
+        $errorMessage = 'Issue 1'
+        $position = 'At D:\Code\Tools\pvm\file.ps1:10 char:9'
+        $message = $header + "`nMessage : $errorMessage" + "`nPosition : $position" + '+         throw "Issue $limit"' + '+         ~~~~~~~~~~~~~~~~~~~~'
+        $entry = @{
+            NiceTime = @{ Date = '23 August'; DateTime = '8/23/2025 14:38:48'; Time = '14:38:48'; Relative = '1 day ago' }
+            Timestamp = '2025-08-23 14:38:48'
+            Header = $header
+            Message = $message
+            Position = $position
+            ErrorMessage = $errorMessage
+        }
+
+        { Write-LogEntry -entry $entry } | Should -Not -Throw
+    }
+}
+
+Describe "Write-LogPage" {
+    It "writes all log entries to console" {
+        Mock Write-LogEntry {}
+        $header1 = 'Test log entry 1 :'; $errorMessage1 = 'Issue 1'; $position1 = 'At D:\Code\Tools\pvm\file.ps1:10 char:9'
+        $message1 = $header + "`nMessage : $errorMessage" + "`nPosition : $position" + '+         throw "Issue $limit"' + '+         ~~~~~~~~~~~~~~~~~~~~'
+        $header2 = 'Test log entry 2 :'; $errorMessage2 = 'Issue 2'; $position2 = 'At D:\Code\Tools\pvm\file.ps1:12 char:5'
+        $message2 = $header + "`nMessage : $errorMessage" + "`nPosition : $position" + '+         throw "Issue $limit"' + '+         ~~~~~~~~~~~~~~~~~~~~'
+        $entries = @(
+            @{
+                NiceTime = @{ Date = '23 August'; DateTime = '8/23/2025 14:38:48'; Time = '14:38:48'; Relative = '3 days ago' }
+                Timestamp = '2025-08-23 14:38:48'
+                Header = $header1
+                Message = $message1
+                Position = $position1
+                ErrorMessage = $errorMessage1
+            };
+            @{
+                NiceTime = @{ Date = '25 August'; DateTime = '8/25/2025 11:38:48'; Time = '11:38:48'; Relative = '1 day ago' }
+                Timestamp = '2025-08-25 11:38:48'
+                Header = $header2
+                Message = $message2
+                Position = $position2
+                ErrorMessage = $errorMessage2
+            }
+        )
+
+        { Write-LogPage -entries $entries -startIndex 0 -pageSize 5 } | Should -Not -Throw
+        Should -Invoke Clear-Host -Times 1
+        Should -Invoke Show-Info -Times 1
+        Should -Invoke Show-Header -Times 1
+        Should -Invoke Write-DarkGray -Times 1
+        Should -Invoke Write-LogEntry -Times 2
+    }
+}
+
+Describe "Get-LogNavigation" {
+    It "returns null if currentIndex is out of range" {
         Mock Get-ConsoleKey { @{ Key = 'Q' } }
 
-        $result = Show-Log -pageSize 1 -term 'entry 1'
+        $result = Get-LogNavigation -currentIndex 99 -pageSize 3 -totalEntries 100
+
+        $result | Should -Be $null
+        Should -Invoke Get-ConsoleKey -Times 1
+        Should -Invoke Show-Warning -Times 1
+    }
+
+    It "go back one page from the end" {
+        Mock Get-ConsoleKey { @{ Key = 'LeftArrow' } }
+
+        $currentIndex = 99; $pageSize = 3
+        $result = Get-LogNavigation -currentIndex $currentIndex -pageSize $pageSize -totalEntries 100
+
+        $result | Should -Be ($currentIndex - $pageSize)
+        Should -Invoke Get-ConsoleKey -Times 1
+        Should -Invoke Show-Warning -Times 1
+    }
+
+    It "prevents navigation beyond the start of the log" {
+        Mock Get-ConsoleKey { @{ Key = 'LeftArrow' } }
+
+        $currentIndex = 0; $pageSize = 5
+        $result = Get-LogNavigation -currentIndex $currentIndex -pageSize $pageSize -totalEntries 100
 
         $result | Should -Be 0
+        Should -Invoke Show-Warning -Times 1
+    }
+
+    It "go forward one page" {
+        Mock Get-ConsoleKey { @{ Key = 'RightArrow' } }
+
+        $currentIndex = 0; $pageSize = 5
+        $result = Get-LogNavigation -currentIndex $currentIndex -pageSize $pageSize -totalEntries 100
+
+        $result | Should -Be ($currentIndex + $pageSize)
+        Should -Invoke Show-Warning -Times 1
+    }
+
+    It "returns null when user presses Q" {
+        Mock Get-ConsoleKey { @{ Key = 'Q' } }
+
+        $currentIndex = 0; $pageSize = 5
+        $result = Get-LogNavigation -currentIndex $currentIndex -pageSize $pageSize -totalEntries 100
+
+        $result | Should -Be $null
+        Should -Invoke Show-Warning -Times 1
+    }
+
+    It "returns currentIndex when user presses any other key" {
+        Mock Get-ConsoleKey { @{ Key = 'A' } }
+
+        $currentIndex = 0; $pageSize = 5
+        $result = Get-LogNavigation -currentIndex $currentIndex -pageSize $pageSize -totalEntries 100
+
+        $result | Should -Be $currentIndex
+        Should -Invoke Show-Warning -Times 1
+    }
+}
+
+Describe "Show-Log" {
+    BeforeAll {
+        $script:LOG_ERROR_PATH = $PVMConfig.paths.logError
+        New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
+    }
+
+    It "returns -1 for invalid page size" {
+        Mock Test-LogPageSize { return $false }
+
+        $result = Show-Log -pageSize -1
+
+        $result | Should -Be -1
+    }
+
+    It "returns -1 if log file does not exist" {
+        Mock Test-LogPageSize { return $true }
+        Mock Test-FileNotExists { return $true }
+
+        $result = Show-Log -pageSize 1
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Times 1
+    }
+
+    It "returns -1 if log file is empty" {
+        Mock Test-FileNotExists { return $false }
+        Mock Get-LogEntries { return @() }
+
+        $result = Show-Log -pageSize 5
+
+        $result | Should -Be -1
+        Should -Invoke Show-Warning -Times 1
+    }
+
+    It "displays log entries" {
+        Mock Test-FileNotExists { return $false }
+        $header1 = 'Test log entry 1 :'; $errorMessage1 = 'Issue 1'; $position1 = 'At D:\Code\Tools\pvm\file.ps1:10 char:9'
+        $message1 = $header + "`nMessage : $errorMessage" + "`nPosition : $position" + '+         throw "Issue $limit"' + '+         ~~~~~~~~~~~~~~~~~~~~'
+        $header2 = 'Test log entry 2 :'; $errorMessage2 = 'Issue 2'; $position2 = 'At D:\Code\Tools\pvm\file.ps1:12 char:5'
+        $message2 = $header + "`nMessage : $errorMessage" + "`nPosition : $position" + '+         throw "Issue $limit"' + '+         ~~~~~~~~~~~~~~~~~~~~'
+        $entries = @(
+            @{
+                NiceTime = @{ Date = '23 August'; DateTime = '8/23/2025 14:38:48'; Time = '14:38:48'; Relative = '3 days ago' }
+                Timestamp = '2025-08-23 14:38:48'
+                Header = $header1
+                Message = $message1
+                Position = $position1
+                ErrorMessage = $errorMessage1
+            };
+            @{
+                NiceTime = @{ Date = '25 August'; DateTime = '8/25/2025 11:38:48'; Time = '11:38:48'; Relative = '1 day ago' }
+                Timestamp = '2025-08-25 11:38:48'
+                Header = $header2
+                Message = $message2
+                Position = $position2
+                ErrorMessage = $errorMessage2
+            }
+        )
+        Mock Get-LogEntries { return $entries }
+        Mock Write-LogPage { }
+        $script:callCount = 0
+        Mock Get-LogNavigation {
+            $script:callCount++
+            if ($script:callCount -eq 1) { return 1 }
+            return $null
+        }
+
+        $result = Show-Log -pageSize 1
+
+        $result | Should -Be 0
+        Should -Invoke Write-LogPage -Times 2
+        Should -Invoke Get-LogNavigation -Times 2
+        Should -Invoke Clear-Host -Times 1
+    }
+
+    It "Handles unexpected error reading log file and returns -1" {
+        Mock Add-LogEntry { }
+        Mock Test-FileNotExists { return $false }
+        Mock Get-LogEntries { throw 'Error' }
+
+        $result = Show-Log -pageSize 1
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Times 1
+        Should -Invoke Add-LogEntry -Times 1
     }
 }

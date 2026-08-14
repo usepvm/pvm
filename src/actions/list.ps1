@@ -70,17 +70,13 @@ function Get-AvailablePHPVersions {
 
         $fetchedVersionsGroupedPartialList = @{}
         $fetchedVersionsGrouped.PSObject.Properties | ForEach-Object -Process {
-            $searchResult = $_.Value
-            if ($null -ne $arch) {
-                $searchResult = $searchResult | Where-Object -FilterScript { $_.Arch -eq $arch }
+            $searchResult = $_.Value | Where-Object -FilterScript {
+                (($null -eq $arch) -or ($_.Arch -eq $arch)) -and
+                (($null -eq $buildType) -or ($_.BuildType -eq $buildType)) -and
+                (($null -eq $term) -or ($_.Version -like "$term*"))
             }
-            if ($null -ne $buildType) {
-                $searchResult = $searchResult | Where-Object -FilterScript { $_.BuildType -eq $buildType }
-            }
-            if ($term) {
-                $searchResult = $searchResult | Where-Object -FilterScript { $_.Version -like "$term*" }
-            }
-            if ($searchResult.Count -ne 0) {
+
+            if ($searchResult -and $searchResult.Count -ne 0) {
                 $fetchedVersionsGroupedPartialList[$_.Name] = $searchResult | Select-Object -Last $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE
             }
         }

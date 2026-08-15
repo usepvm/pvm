@@ -200,7 +200,7 @@ function Get-LogNavigation {
     # Show navigation prompt if there are more entries
     $isLastPage = ($currentIndex + $pageSize) -ge $totalEntries
     if ($isLastPage) {
-        Show-Warning -message 'End of log reached. Press Left/Up arrow to go back or any other key to exit...'
+        Show-Warning -message "`nEnd of log reached. Press Left/Up arrow to go back or any other key to exit: " -noNewLine
 
         $key = Get-ConsoleKey
         if ($key.Key -in @('LeftArrow', 'UpArrow')) {

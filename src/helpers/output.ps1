@@ -101,14 +101,14 @@ function Show-SpinnerWhileJob {
 
         $i = 0
         while ($job.State -eq 'Running') {
-            Write-Color -message "`r$($message.content) $($spinner[$i % $spinner.Length])" -foreColor $message.color -NoNewline
+            Write-Color -message "`r$($message.content) $($spinner[$i % $spinner.Length])" -foreColor $message.color -noNewline
             Start-Sleep -Milliseconds 100
             $i++
         }
 
         # Clear the spinner line
         if (-not $noClear) {
-            Write-Color -message "`r$(' ' * ($message.content.Length + 2))`r" -foreColor $message.color -NoNewline
+            Write-HostWrapper -object "`r$(' ' * ($message.content.Length + 2))`r" -noNewline
         }
 
         $result = Receive-Job -Job $job -Wait -AutoRemoveJob -ErrorAction Stop
@@ -116,7 +116,7 @@ function Show-SpinnerWhileJob {
 
         return $result.pvmData
     } catch {
-        Write-Yellow -message "`r$(' ' * ($message.content.Length + 2))`r" -NoNewline
+        Write-HostWrapper -object "`r$(' ' * ($message.content.Length + 2))`r" -noNewline
         Remove-ItemWrapper -path Env:\PVM_ROOT_FOR_JOB
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show spinner while job"; exception = $_ }
 

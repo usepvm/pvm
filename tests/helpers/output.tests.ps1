@@ -211,6 +211,7 @@ Describe "Get-ConsoleWidth" {
 
 Describe "Show-SpinnerWhileJob" {
     BeforeAll {
+        Mock Write-HostWrapper {}
         Mock Write-Color {}
         Mock Write-Yellow {}
         Mock Add-LogEntry {}
@@ -267,8 +268,8 @@ Describe "Show-SpinnerWhileJob" {
             $scriptBlock = { return @{ result = 'success' } }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Custom Message"; color = 'Cyan' }
 
-            # Verify Show-Message was called (spinner and clear)
-            Should -Invoke Write-Color -Times 2
+            Should -Invoke Write-Color -Times 1
+            Should -Invoke Write-HostWrapper -Times 1
         }
 
         It "Passes argument list to job" {
@@ -308,8 +309,8 @@ Describe "Show-SpinnerWhileJob" {
             $scriptBlock = { return @{ result = 'success' } }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
 
-            # Should be called twice: once for spinner, once for clear
-            Should -Invoke Write-Color -Times 2
+            Should -Invoke Write-Color -Times 1
+            Should -Invoke Write-HostWrapper -Times 1
         }
 
         It "Returns -1 when job fails and rethrow is false" {

@@ -9,7 +9,7 @@ function Get-FromSource {
                 $links = $html.Links
 
                 # Filter the links to find versions that match the given version
-                $filteredLinks = @()
+                $filteredLinks = [System.Collections.Generic.List[object]]::new()
                 $null = $links | Where-Object -FilterScript {
                     if (-not $_.href) { return $false }
                     if ($_.href -match 'php-debug') { return $false }
@@ -19,15 +19,17 @@ function Get-FromSource {
                     $fileName = $_.href -split '/'
                     $fileName = $fileName[$fileName.Count - 1]
 
-                    $filteredLinks += @{
+                    $filteredLinks.Add(@{
                         Version   = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
                         Arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
                         BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
                         Link      = $_.href
-                    }
+                    })
                 }
                 # Return the filtered links (PHP version names)
-                $fetchedVersionsGrouped[$key] = $filteredLinks
+                if ($filteredLinks.Count -gt 0) {
+                    $fetchedVersionsGrouped[$key] = $filteredLinks
+                }
             }
 
             return @{ pvmData = $fetchedVersionsGrouped }

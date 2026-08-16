@@ -50,17 +50,18 @@ function Get-PHPExtensionsFromSource {
             $availableExtensions = Show-SpinnerWhileJob -argumentList @($availableExtensions, $extCategory, $href) -scriptBlock {
                 param ($availableExtensions, $extCategory, $href)
 
+                $currentCategoryResult = [System.Collections.Generic.List[object]]::new()
                 $page = 1
                 do {
                     $hasMore = $false
                     $result = Get-ExtensionCategoriesByPage -extCategory $extCategory -link $href -page $page
-                    $availableExtensions[$extCategory] += $result.availableExtensions
+                    $currentCategoryResult.AddRange($result.availableExtensions)
                     $hasMore = $result.hasMore
                     $page++
                 } while ($hasMore)
 
-                if ($availableExtensions[$extCategory].Count -eq 0) {
-                    $availableExtensions.Remove($extCategory)
+                if ($currentCategoryResult.Count -gt 0) {
+                    $availableExtensions[$extCategory] = $currentCategoryResult
                 }
 
                 return @{ pvmData = $availableExtensions }

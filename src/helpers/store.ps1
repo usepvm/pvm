@@ -100,7 +100,7 @@ function Test-HasData {
         return $false
     }
 
-    if ($data -is [hashtable] -or $data -is [array]) {
+    if ($data -is [System.Collections.ICollection]) {
         return $data.Count -gt 0
     }
 

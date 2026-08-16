@@ -378,6 +378,20 @@ Describe "Get-AvailablePHPVersions" {
         $result = Get-AvailablePHPVersions
 
         $result | Should -Be -1
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter {
+            $message -like '*No PHP versions found in the source. Please check your internet connection or the source URLs*'
+        }
+    }
+
+    It "Returns -1 on empty archive and release list" {
+        Mock Get-PHPListToInstall { return @{ 'Archives' = @(); 'Releases' = @() } }
+
+        $result = Get-AvailablePHPVersions
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter {
+            $message -like '*No PHP versions found in the source. Please check your internet connection or the source URLs*'
+        }
     }
 
     It "Should handle exceptions gracefully" {

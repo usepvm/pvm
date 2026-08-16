@@ -63,9 +63,12 @@ function Get-AvailablePHPVersions {
 
         $fetchedVersionsGrouped = Get-PHPListToInstall
 
-        if (-not $fetchedVersionsGrouped -or
-            $fetchedVersionsGrouped.Count -eq 0 -or
-            ($fetchedVersionsGrouped.Archives.Count -eq 0 -and $fetchedVersionsGrouped.Releases.Count -eq 0)) {
+        if (Test-HasNoData -data $fetchedVersionsGrouped) {
+            Show-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
+            return -1
+        }
+
+        if ((Test-HasNoData -data $fetchedVersionsGrouped.Archives) -and (Test-HasNoData -data $fetchedVersionsGrouped.Releases)) {
             Show-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
             return -1
         }

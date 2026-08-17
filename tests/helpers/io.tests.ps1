@@ -186,10 +186,38 @@ Describe "New-Directory" {
 
         It "Returns -1 when exception is thrown" {
             Mock Test-DirectoryNotExists { return $true }
-            Mock New-Item { throw 'Error' }
+            Mock New-ItemWrapper { throw 'Error' }
             $result = New-Directory -path "$TEST_DRIVE\new_dir"
             $result | Should -Be -1
         }
+    }
+}
+
+Describe "New-File" {
+    It "Creates a new file successfully" {
+        $newFile = 'TestDrive:\new_file.txt'
+        $result = New-File -path $newFile
+        $result | Should -Be 0
+        Test-Path $newFile | Should -Be $true
+    }
+
+    It "Returns 0 for existing file" {
+        $existingFile = 'TestDrive:\existing_file.txt'
+        New-ItemWrapper -type File -path $existingFile
+        $result = New-File -path $existingFile
+        $result | Should -Be 0
+    }
+
+    It "Returns -1 for empty path" {
+        $result = New-File -path ''
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when exception is thrown" {
+        Mock Test-FileNotExists { return $true }
+        Mock New-ItemWrapper { throw 'Error' }
+        $result = New-File -path 'TestDrive:\new_file.txt'
+        $result | Should -Be -1
     }
 }
 
@@ -278,11 +306,11 @@ Describe "New-SymbolicLink" {
             # Mock Test-Admin to return true
             Mock Test-Admin { return $true }
 
-            # Mock New-Item to simulate successful symbolic link creation
-            Mock New-Item {
-                param ($ItemType, $Path, $Target)
+            # Mock New-ItemWrapper to simulate successful symbolic link creation
+            Mock New-ItemWrapper {
+                param ($type, $path, $target)
 
-                return @{ FullName = $Path }
+                return @{ FullName = $path }
             }
 
             $linkPath = "$TEST_DRIVE\test_link"
@@ -294,10 +322,10 @@ Describe "New-SymbolicLink" {
             $result.color | Should -Be 'DarkGreen'
 
             # Verify New-Item was called with correct parameters
-            Should -Invoke New-Item -ParameterFilter {
-                $ItemType -eq 'SymbolicLink' -and
-                $Path -eq $linkPath -and
-                $Target -eq $targetPath
+            Should -Invoke New-ItemWrapper -ParameterFilter {
+                $type -eq 'SymbolicLink' -and
+                $path -eq $linkPath -and
+                $target -eq $targetPath
             }
         }
 
@@ -411,10 +439,10 @@ Describe "New-SymbolicLink" {
             Mock Test-NotAdmin { return $false }
             Mock New-Directory -MockWith { return 0 }
             Mock Test-Path { return $false }
-            Mock New-Item {
-                param ($ItemType, $Path, $Target)
+            Mock New-ItemWrapper {
+                param ($type, $path, $target)
 
-                return @{ FullName = $Path }
+                return @{ FullName = $path }
             }
 
             $result = New-SymbolicLink -link $linkPath -target $targetPath

@@ -94,7 +94,26 @@ function New-Directory {
 
         $path = $path.Trim()
         if (Test-DirectoryNotExists -path $path) {
-            New-Item -ItemType Directory -Path $path -Force | Out-Null
+            New-ItemWrapper -type Directory -path $path
+        }
+
+        return 0
+    } catch {
+        return -1
+    }
+}
+
+function New-File {
+    param ($path)
+
+    try {
+        if ([string]::IsNullOrWhiteSpace($path)) {
+            return -1
+        }
+
+        $path = $path.Trim()
+        if (Test-FileNotExists -path $path) {
+            New-ItemWrapper -type File -path $path
         }
 
         return 0
@@ -142,7 +161,7 @@ function New-SymbolicLink {
             return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = 'DarkGreen' }
         }
 
-        New-Item -ItemType SymbolicLink -Path $link -Target $target | Out-Null
+        New-ItemWrapper -type SymbolicLink -path $link -target $target
         return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = 'DarkGreen' }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create symbolic link"; exception = $_ }

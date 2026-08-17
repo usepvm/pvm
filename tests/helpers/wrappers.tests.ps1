@@ -468,3 +468,54 @@ Describe "Get-ContentWrapper Tests" {
         { Get-ContentWrapper -path $path } | Should -Throw
     }
 }
+
+Describe "New-ItemWrapper Tests" {
+    It "Calls New-Item with the correct parameters - type File" {
+        Mock New-Item { }
+
+        $path = "$TEST_DRIVE\path\file.txt"
+
+        $null = New-File -path $path
+
+        Should -Invoke New-Item -Times 1 -ParameterFilter {
+            $Path -eq $path -and
+            $ItemType -eq 'File'
+        }
+    }
+
+    It "Calls New-Item with the correct parameters - type Directory" {
+        Mock New-Item { }
+
+        $path = "$TEST_DRIVE\path"
+
+        $null = New-Directory -path $path
+
+        Should -Invoke New-Item -Times 1 -ParameterFilter {
+            $Path -eq $path -and
+            $ItemType -eq 'Directory'
+        }
+    }
+
+    It "Calls New-Item with the correct parameters - type SymbolicLink" {
+        Mock New-Item { }
+
+        $path = "$TEST_DRIVE\path"
+        $target = "$TEST_DRIVE\target"
+
+        $null = New-ItemWrapper -type SymbolicLink -path $path -target $target
+
+        Should -Invoke New-Item -Times 1 -ParameterFilter {
+            $path -eq $path -and
+            $ItemType -eq 'SymbolicLink' -and
+            $target -eq $target
+        }
+    }
+
+    It "Throws when New-Item throws" {
+        Mock New-Item { throw 'Test error' }
+
+        $path = "$TEST_DRIVE\path"
+
+        { New-ItemWrapper -path $path } | Should -Throw
+    }
+}

@@ -108,3 +108,19 @@ function Get-ContentWrapper {
 
     return Get-Content -path $path -Raw:$raw -ErrorAction SilentlyContinue
 }
+
+function New-ItemWrapper {
+    param ($type, $path, $target)
+
+    $params = @{
+        ItemType = $type
+        Path     = $path
+        Force    = $true
+    }
+
+    if ($null -ne $target) {
+        $params['Target'] = $target
+    }
+
+    New-Item @params | Out-Null
+}

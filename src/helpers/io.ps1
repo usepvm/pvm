@@ -102,6 +102,7 @@ function New-Directory {
 
         return 0
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create directory '$path'"; exception = $_ }
         return -1
     }
 }
@@ -121,7 +122,7 @@ function New-File {
 
         return 0
     } catch {
-        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create directory '$path'"; exception = $_ }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create file '$path'"; exception = $_ }
         return -1
     }
 }

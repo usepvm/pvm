@@ -24,6 +24,7 @@ function Test-DirectoryExists {
         $path = $path.Trim()
         return (Test-Path -Path $path -PathType Container)
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check directory existence"; exception = $_ }
         return $false
     }
 }
@@ -44,6 +45,7 @@ function Test-FileExists {
         $path = $path.Trim()
         return (Test-Path -Path $path -PathType Leaf)
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check file existence"; exception = $_ }
         return $false
     }
 }
@@ -74,6 +76,7 @@ function Test-SymlinkExists {
 
         return [bool]($item.Attributes -band [IO.FileAttributes]::ReparsePoint)
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check symlink existence"; exception = $_ }
         return $false
     }
 }
@@ -118,6 +121,7 @@ function New-File {
 
         return 0
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create file '$path'"; exception = $_ }
         return -1
     }
 }

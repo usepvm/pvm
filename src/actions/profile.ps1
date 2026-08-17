@@ -26,6 +26,7 @@ function Set-IniSettingDirect {
         Set-ContentWrapper -path $iniPath -value $lines
         return 0
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set setting in php.ini"; exception = $_ }
         return -1
     }
 }
@@ -88,6 +89,7 @@ function Enable-IniExtensionDirect {
         Set-ContentWrapper -path $iniPath -value $lines
         return 0
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable extension in php.ini"; exception = $_ }
         return -1
     }
 }
@@ -146,6 +148,7 @@ function Disable-IniExtensionDirect {
         Set-ContentWrapper -path $iniPath -value $lines
         return 0
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to disable extension in php.ini"; exception = $_ }
         return -1
     }
 }
@@ -416,6 +419,7 @@ function Show-PHPProfiles {
                     File        = $file.Name
                 }
             } catch {
+                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to parse profile file '$($file.Name)'"; exception = $_ }
                 Show-Error -message "  Warning: Failed to parse $($file.Name)"
             }
         }
@@ -612,6 +616,7 @@ function Import-PHPProfile {
                 return -1
             }
         } catch {
+            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to import profile"; exception = $_ }
             Show-Error -message "`nInvalid JSON file: $($_.Exception.Message)"
             return -1
         }

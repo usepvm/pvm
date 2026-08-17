@@ -52,6 +52,7 @@ function Format-NiceTimestamp {
             DateTime = $dateTime
         }
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to parse timestamp"; exception = $_ }
         return @{
             Date     = $timestamp
             Time     = ''

@@ -13,6 +13,7 @@ function Get-LatestPHPVersion {
                         $url = $urls[$key]
                         $allVersions += Get-LatestPHPVersionFromUrl -url $url
                     } catch {
+                        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get latest PHP version from $url"; exception = $_ }
                         continue
                     }
                 }

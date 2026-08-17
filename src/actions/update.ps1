@@ -4,6 +4,7 @@ function Test-GitAvailable {
         $null = Get-Command -Name git -ErrorAction Stop
         return $true
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Git is not available"; exception = $_ }
         return $false
     }
 }
@@ -13,6 +14,7 @@ function Get-GitStatus {
         $status = git -C $PVMRoot status --porcelain
         return $status
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve git status"; exception = $_ }
         return $null
     }
 }
@@ -22,6 +24,7 @@ function Get-CurrentGitBranch {
         $branch = git -C $PVMRoot rev-parse --abbrev-ref HEAD
         return $branch.Trim()
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve current git branch"; exception = $_ }
         return $null
     }
 }
@@ -31,6 +34,7 @@ function Get-CurrentGitCommit {
         $commit = git -C $PVMRoot rev-parse HEAD
         return $commit.Trim()
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve current git commit"; exception = $_ }
         return $null
     }
 }
@@ -43,6 +47,7 @@ function Get-LatestGitCommit {
         $commit = git -C $PVMRoot rev-parse origin/$branch 2>$null
         return $commit.Trim()
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve latest git commit"; exception = $_ }
         return $null
     }
 }
@@ -55,6 +60,7 @@ function Get-PVMVersionFromGit {
         }
         return $null
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve PVM version from git"; exception = $_ }
         return $null
     }
 }
@@ -184,16 +190,9 @@ function Update-PVM {
             }
         }
 
-        return @{
-            code    = 0
-            message = "PVM has been updated successfully to version $newVersion."
-            color   = 'DarkGreen'
-        }
+        return @{ code = 0; message = "PVM has been updated successfully to version $newVersion."; color = 'DarkGreen' }
     } catch {
-        return @{
-            code    = -1
-            message = "Failed to pull updates: $_"
-            color   = 'DarkYellow'
-        }
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to pull updates"; exception = $_ }
+        return @{ code = -1; message = "Failed to pull updates: $_"; color = 'DarkYellow' }
     }
 }

@@ -18,6 +18,7 @@ function Find-PHPVersionFromProject {
                     return $matches[1]
                 }
             } catch {
+                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to parse composer.json"; exception = $_ }
                 Show-Error -message "`nFailed to parse composer.json: $_"
                 throw $_
             }

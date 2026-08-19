@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\log-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\log-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
@@ -139,7 +139,7 @@ Describe "Test-LogPageSize" {
 
 Describe "Get-LogEntries" {
     BeforeAll {
-        $script:LOG_ERROR_PATH = $PVMConfig.paths.logError
+        $script:LOG_ERROR_PATH = $PVMConfig.paths.files.logError
         New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
     }
 
@@ -321,7 +321,7 @@ Describe "Get-LogNavigation" {
 
 Describe "Show-Log" {
     BeforeAll {
-        $script:LOG_ERROR_PATH = $PVMConfig.paths.logError
+        $script:LOG_ERROR_PATH = $PVMConfig.paths.files.logError
         New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
     }
 

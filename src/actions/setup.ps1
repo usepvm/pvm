@@ -39,14 +39,14 @@ function Initialize-PVM {
 
 function Initialize-PVMDirectories {
     $dirs = @(
-        $PVMConfig.paths.storage,
-        $PVMConfig.paths.fakeStorage,
-        $PVMConfig.paths.php,
-        $PVMConfig.paths.data,
-        $PVMConfig.paths.templates,
-        $PVMConfig.paths.cache,
-        $PVMConfig.paths.profiles,
-        $PVMConfig.paths.log
+        $PVMConfig.paths.directories.storage,
+        $PVMConfig.paths.directories.fakeStorage,
+        $PVMConfig.paths.directories.php,
+        $PVMConfig.paths.directories.data,
+        $PVMConfig.paths.directories.templates,
+        $PVMConfig.paths.directories.cache,
+        $PVMConfig.paths.directories.profiles,
+        $PVMConfig.paths.directories.log
     )
 
     Show-Message -message "`nPVM environment directories:"
@@ -71,7 +71,7 @@ function Initialize-PVMFiles {
 
     $codes += $code = New-ExamplePHPProfile
     if ($code -eq 0) {
-        Show-Success -message "`nExample profile created successfully at '$($PVMConfig.paths.profileExample)'."
+        Show-Success -message "`nExample profile created successfully at '$($PVMConfig.paths.files.profileExample)'."
         Show-Message -message "- Use 'pvm help profile' to learn more."
     } else {
         Show-Error -message "`nFailed to create example profile."
@@ -79,7 +79,7 @@ function Initialize-PVMFiles {
 
     $codes += $code = New-ProfileTemplate
     if ($code -eq 0) {
-        Show-Success -message "`nProfile template created successfully at '$($PVMConfig.paths.profileTemplate)'."
+        Show-Success -message "`nProfile template created successfully at '$($PVMConfig.paths.files.profileTemplate)'."
         Show-Message -message '- Feel free to modify it.'
     } else {
         Show-Error -message "`nFailed to create profile template."
@@ -87,14 +87,14 @@ function Initialize-PVMFiles {
 
     $codes += $code = Set-ZendExtensionsList
     if ($code -eq 0) {
-        Show-Success -message "`nZend extensions list created successfully at '$($PVMConfig.paths.zendExtensionsList)'."
+        Show-Success -message "`nZend extensions list created successfully at '$($PVMConfig.paths.files.zendExtensionsList)'."
     } else {
         Show-Error -message "`nFailed to create zend extensions list."
     }
 
     $codes += $code = Set-AliasesList
     if ($code -eq 0) {
-        Show-Success -message "`nAliases list created successfully at '$($PVMConfig.paths.aliasesList)'."
+        Show-Success -message "`nAliases list created successfully at '$($PVMConfig.paths.files.aliasesList)'."
         Show-Message -message "- Use 'pvm aliases' to see available aliases."
         Show-Message -message "- Feel free to modify it."
     } else {
@@ -103,7 +103,7 @@ function Initialize-PVMFiles {
 
     $codes += $code = Set-ScriptsList
     if ($code -eq 0) {
-        Show-Success -message "`nScripts list created successfully at '$($PVMConfig.paths.scriptsList)'."
+        Show-Success -message "`nScripts list created successfully at '$($PVMConfig.paths.files.scriptsList)'."
         Show-Message -message "- Use 'pvm run list' to see available scripts."
         Show-Message -message "- Feel free to modify it."
     } else {

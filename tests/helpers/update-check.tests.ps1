@@ -2,7 +2,7 @@
 BeforeAll {
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\update-check-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\update-check-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
@@ -17,7 +17,7 @@ AfterAll {
 
 Describe "Get-LastUpdateCheckTimestamp" {
     BeforeAll {
-        $script:CACHE_PATH = $PVMConfig.paths.cache
+        $script:CACHE_PATH = $PVMConfig.paths.directories.cache
         New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
         $script:TIMESTAMP_FILE = "$CACHE_PATH\last_update_check.txt"
     }
@@ -58,7 +58,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
 
 Describe "Set-LastUpdateCheckTimestamp" {
     BeforeAll {
-        $script:CACHE_PATH = $PVMConfig.paths.cache
+        $script:CACHE_PATH = $PVMConfig.paths.directories.cache
         $script:TIMESTAMP_FILE = "$CACHE_PATH\last_update_check.txt"
     }
 

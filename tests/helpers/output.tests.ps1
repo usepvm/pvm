@@ -2,7 +2,7 @@
 BeforeAll {
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\output-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\output-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
@@ -64,7 +64,7 @@ Describe "Add-LogEntry" {
     }
     Context "When logging data" {
         It "Logs data successfully" {
-            $script:LOG_ERROR_PATH = $PVMConfig.paths.logError
+            $script:LOG_ERROR_PATH = $PVMConfig.paths.files.logError
             $result = Add-LogEntry -data @{
                 header = 'Test message'
                 exception = @{
@@ -216,7 +216,7 @@ Describe "Show-SpinnerWhileJob" {
         Mock Write-Yellow {}
         Mock Add-LogEntry {}
 
-        $PVMRoot = $PVMConfig.paths.pvmRoot
+        $PVMRoot = $PVMConfig.paths.directories.pvmRoot
         New-Item -Path "$PVMRoot\src" -ItemType Directory -Force | Out-Null
         Set-ContentWrapper -path "$PVMRoot\src\imports.ps1" -value '# no-op for tests'
 
@@ -913,7 +913,7 @@ Describe "Sound Functions" {
 
             Invoke-Sound -filename "song.mp3"
 
-            $script:playerCalls.Open | Should -Be "$($PVMConfig.paths.assets)\sounds\song.mp3"
+            $script:playerCalls.Open | Should -Be "$($PVMConfig.paths.directories.assets)\sounds\song.mp3"
             $script:playerCalls.Play | Should -BeTrue
             Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 3 }
         }

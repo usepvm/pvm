@@ -2,7 +2,7 @@
 function Set-AliasesList {
     try {
         $jsonContent = $PVMConfig.defaults.aliases | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $PVMConfig.paths.aliasesList -value $jsonContent
+        Set-ContentWrapper -path $PVMConfig.paths.files.aliasesList -value $jsonContent
 
         return 0
     } catch {
@@ -13,8 +13,8 @@ function Set-AliasesList {
 
 function Get-Aliases {
     try {
-        if (Test-FileExists -path $PVMConfig.paths.aliasesList) {
-            $data = (Get-ContentWrapper -path $PVMConfig.paths.aliasesList -raw | ConvertFrom-Json)
+        if (Test-FileExists -path $PVMConfig.paths.files.aliasesList) {
+            $data = (Get-ContentWrapper -path $PVMConfig.paths.files.aliasesList -raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}
                 $data.PSObject.Properties | ForEach-Object -Process { $ordered[$_.Name] = $_.Value }
@@ -35,7 +35,7 @@ function Get-FlagMap {
 function Set-ScriptsList {
     try {
         $jsonContent = $PVMConfig.defaults.scripts | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $PVMConfig.paths.scriptsList -value $jsonContent
+        Set-ContentWrapper -path $PVMConfig.paths.files.scriptsList -value $jsonContent
 
         return 0
     } catch {
@@ -46,8 +46,8 @@ function Set-ScriptsList {
 
 function Get-Scripts {
     try {
-        if (Test-FileExists -path $PVMConfig.paths.scriptsList) {
-            $data = (Get-ContentWrapper -path $PVMConfig.paths.scriptsList -raw | ConvertFrom-Json)
+        if (Test-FileExists -path $PVMConfig.paths.files.scriptsList) {
+            $data = (Get-ContentWrapper -path $PVMConfig.paths.files.scriptsList -raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}
                 $data.PSObject.Properties | ForEach-Object -Process { $ordered[$_.Name] = $_.Value }
@@ -148,23 +148,27 @@ function Get-Config {
         version  = '2.6' # PVM version
 
         paths    = [ordered]@{
-            pvmRoot            = $rootPath
-            storage            = $storage
-            fakeStorage        = $fakeStorage
-            php                = "$storage\php"
-            data               = $data
-            templates          = $templates
-            cache              = "$data\cache"
-            profiles           = $profiles
-            profileExample     = "$profiles\profile-example.json"
-            profileTemplate    = "$templates\profile-template.json"
-            zendExtensionsList = "$templates\zend_extensions.json"
-            aliasesList        = "$templates\aliases.json"
-            scriptsList        = "$templates\scripts.json"
-            log                = $logs
-            logError           = "$logs\error.log"
-            pathVarBackup      = "$logs\path.bak.log"
-            assets             = "$rootPath\assets"
+            directories = @{
+                pvmRoot            = $rootPath
+                storage            = $storage
+                fakeStorage        = $fakeStorage
+                php                = "$storage\php"
+                data               = $data
+                templates          = $templates
+                cache              = "$data\cache"
+                profiles           = $profiles
+                log                = $logs
+                assets             = "$rootPath\assets"
+            }
+            files       = @{
+                profileExample     = "$profiles\profile-example.json"
+                profileTemplate    = "$templates\profile-template.json"
+                zendExtensionsList = "$templates\zend_extensions.json"
+                aliasesList        = "$templates\aliases.json"
+                scriptsList        = "$templates\scripts.json"
+                logError           = "$logs\error.log"
+                pathVarBackup      = "$logs\path.bak.log"
+            }
         }
 
         links    = [ordered]@{
@@ -268,23 +272,24 @@ function Get-Config {
                 $fakeTemplates = "$fakeData\templates"
                 $fakeLogs = "$fakeStorage\logs"
 
-                $PVMConfig.paths.pvmRoot = $root
-                $PVMConfig.paths.storage = $fakeStorage
-                $PVMConfig.paths.fakeStorage = $fakeStorage
-                $PVMConfig.paths.php = "$fakeStorage\php"
-                $PVMConfig.paths.data = $fakeData
-                $PVMConfig.paths.templates = $fakeTemplates
-                $PVMConfig.paths.cache = "$fakeData\cache"
-                $PVMConfig.paths.profiles = $fakeProfiles
-                $PVMConfig.paths.profileExample = "$fakeProfiles\profile-example.json"
-                $PVMConfig.paths.profileTemplate = "$fakeTemplates\profile-template.json"
-                $PVMConfig.paths.zendExtensionsList = "$fakeTemplates\zend_extensions.json"
-                $PVMConfig.paths.aliasesList = "$fakeTemplates\aliases.json"
-                $PVMConfig.paths.scriptsList = "$fakeTemplates\scripts.json"
-                $PVMConfig.paths.log = $fakeLogs
-                $PVMConfig.paths.logError = "$fakeLogs\error.log"
-                $PVMConfig.paths.pathVarBackup = "$fakeLogs\path.bak.log"
-                $PVMConfig.paths.assets = "$root\assets"
+                $PVMConfig.paths.directories.pvmRoot = $root
+                $PVMConfig.paths.directories.storage = $fakeStorage
+                $PVMConfig.paths.directories.fakeStorage = $fakeStorage
+                $PVMConfig.paths.directories.php = "$fakeStorage\php"
+                $PVMConfig.paths.directories.data = $fakeData
+                $PVMConfig.paths.directories.templates = $fakeTemplates
+                $PVMConfig.paths.directories.cache = "$fakeData\cache"
+                $PVMConfig.paths.directories.profiles = $fakeProfiles
+                $PVMConfig.paths.directories.log = $fakeLogs
+                $PVMConfig.paths.directories.assets = "$root\assets"
+
+                $PVMConfig.paths.files.profileExample = "$fakeProfiles\profile-example.json"
+                $PVMConfig.paths.files.profileTemplate = "$fakeTemplates\profile-template.json"
+                $PVMConfig.paths.files.zendExtensionsList = "$fakeTemplates\zend_extensions.json"
+                $PVMConfig.paths.files.aliasesList = "$fakeTemplates\aliases.json"
+                $PVMConfig.paths.files.scriptsList = "$fakeTemplates\scripts.json"
+                $PVMConfig.paths.files.logError = "$fakeLogs\error.log"
+                $PVMConfig.paths.files.pathVarBackup = "$fakeLogs\path.bak.log"
 
                 $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$root\pvm\php"
             }

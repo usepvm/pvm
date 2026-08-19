@@ -1,11 +1,11 @@
 ﻿
 function Get-CacheFiles {
     try {
-        if (Test-DirectoryNotExists -path $PVMConfig.paths.cache) {
+        if (Test-DirectoryNotExists -path $PVMConfig.paths.directories.cache) {
             return $null
         }
 
-        $files = Get-ChildItemWrapper -path $PVMConfig.paths.cache -filter '*.json'
+        $files = Get-ChildItemWrapper -path $PVMConfig.paths.directories.cache -filter '*.json'
 
         return $files
     } catch {
@@ -16,7 +16,7 @@ function Get-CacheFiles {
 
 function Show-CacheFiles {
     try {
-        if (Test-DirectoryNotExists -path $PVMConfig.paths.cache) {
+        if (Test-DirectoryNotExists -path $PVMConfig.paths.directories.cache) {
             Show-Error -message "`nNo cache directory found."
             return -1
         }
@@ -123,7 +123,7 @@ function Clear-CacheFiles {
             }
         }
 
-        Remove-ItemWrapper -path "$($PVMConfig.paths.cache)\*"
+        Remove-ItemWrapper -path "$($PVMConfig.paths.directories.cache)\*"
 
         Show-Success -message "`nAll cache files deleted successfully."
 

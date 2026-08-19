@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\get-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\get-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     $script:testIniPath = "$TEST_DRIVE\php.ini"
@@ -9,7 +9,7 @@ BeforeAll {
     $script:testBackupPath = "$testIniPath.bak"
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
+    New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
 
     Mock Show-Warning {}
     Mock Show-Info {}

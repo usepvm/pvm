@@ -64,7 +64,7 @@ function Test-TwoPHPVersionsEqual {
 function Set-ZendExtensionsList {
     try {
         $jsonContent = $PVMConfig.defaults.zendExtensions | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $PVMConfig.paths.zendExtensionsList -value $jsonContent
+        Set-ContentWrapper -path $PVMConfig.paths.files.zendExtensionsList -value $jsonContent
 
         return 0
     } catch {
@@ -75,8 +75,8 @@ function Set-ZendExtensionsList {
 
 function Get-ZendExtensionsList {
     try {
-        if (Test-FileExists -path $PVMConfig.paths.zendExtensionsList) {
-            $data = (Get-ContentWrapper -path $PVMConfig.paths.zendExtensionsList -raw | ConvertFrom-Json)
+        if (Test-FileExists -path $PVMConfig.paths.files.zendExtensionsList) {
+            $data = (Get-ContentWrapper -path $PVMConfig.paths.files.zendExtensionsList -raw | ConvertFrom-Json)
             if ($null -ne $data -and $data.Count -gt 0) {
                 return $data
             }
@@ -102,7 +102,7 @@ function Update-InstalledPHPVersionsCache {
 
 function Get-InstalledPHPVersionsFromDisk {
     return Show-SpinnerWhileJob -scriptBlock {
-        $directories = Get-AllSubdirectories -path $PVMConfig.paths.php
+        $directories = Get-AllSubdirectories -path $PVMConfig.paths.directories.php
         $installedVersions = $directories | ForEach-Object -Process {
             if (Test-FileExists -path "$($_.FullName)\php.exe") {
                 $phpInfo = Get-PHPInstallInfo -path $_.FullName

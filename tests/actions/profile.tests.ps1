@@ -1,13 +1,13 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\profile-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\profile-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    $script:PROFILES_PATH = $PVMConfig.paths.profiles
-    $script:TEMPLATES_PATH = $PVMConfig.paths.templates
-    $script:PROFILE_TEMPLATE_PATH = $PVMConfig.paths.profileTemplate
-    $script:EXAMPLE_PROFILE_PATH = $PVMConfig.paths.profileExample
+    $script:PROFILES_PATH = $PVMConfig.paths.directories.profiles
+    $script:TEMPLATES_PATH = $PVMConfig.paths.directories.templates
+    $script:PROFILE_TEMPLATE_PATH = $PVMConfig.paths.files.profileTemplate
+    $script:EXAMPLE_PROFILE_PATH = $PVMConfig.paths.files.profileExample
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PROFILES_PATH -Force | Out-Null

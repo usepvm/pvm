@@ -2,12 +2,12 @@
 BeforeAll {
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\system-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\system-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    $script:LOG_ERROR_PATH = $PVMConfig.paths.logError
-    $script:STORAGE_PATH = $PVMConfig.paths.storage
-    $script:PATH_VAR_BACKUP_PATH = $PVMConfig.paths.pathVarBackup
+    $script:LOG_ERROR_PATH = $PVMConfig.paths.files.logError
+    $script:STORAGE_PATH = $PVMConfig.paths.directories.storage
+    $script:PATH_VAR_BACKUP_PATH = $PVMConfig.paths.files.pathVarBackup
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null

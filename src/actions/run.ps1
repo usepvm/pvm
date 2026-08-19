@@ -83,7 +83,7 @@ function Invoke-RunScripts {
                 Show-SubProcessOutput -output $result.output
                 New-Lines -count 3
             } catch {
-                Write-Yellow -message "`nFailed to run command: pvm $scriptCommand, check logs at '$($PVMConfig.paths.logError)'`n"
+                Write-Yellow -message "`nFailed to run command: pvm $scriptCommand, check logs at '$($PVMConfig.paths.files.logError)'`n"
                 $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run script"; exception = $_ }
                 $results += @{ code = -1; output = $null }
             }

@@ -90,7 +90,7 @@ function Get-CacheFilePath {
         $filename = "$filename.json"
     }
 
-    return "$($PVMConfig.paths.cache)\$filename"
+    return "$($PVMConfig.paths.directories.cache)\$filename"
 }
 
 function Test-HasData {

@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\restore-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\restore-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     $script:testIniPath = "$TEST_DRIVE\php.ini"

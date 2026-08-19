@@ -29,7 +29,7 @@ function Add-LogEntry {
     param ($data)
 
     try {
-        $logPath = if ($data.logPath) { $data.logPath } else { $PVMConfig.paths.logError }
+        $logPath = if ($data.logPath) { $data.logPath } else { $PVMConfig.paths.files.logError }
         $created = New-Directory -path (Split-Path -Path $logPath)
         if ($created -ne 0) {
             Show-Message -message "Failed to create directory $(Split-Path -Path $logPath)"
@@ -354,7 +354,7 @@ function Invoke-Sound {
         }
 
         $MediaPlayer = New-Player
-        $path = "$($PVMConfig.paths.assets)\sounds\$filename"
+        $path = "$($PVMConfig.paths.directories.assets)\sounds\$filename"
         $MediaPlayer.Open($path)
         $duration = Get-Sound-TotalSeconds -path $path
         $MediaPlayer.Play()

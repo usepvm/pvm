@@ -6,6 +6,7 @@ function Get-LastUpdateCheckTimestamp {
             return [DateTime](Get-ContentWrapper -path $timestampFile)
         }
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get last update check timestamp"; exception = $_ }
         return $null
     }
 }
@@ -17,6 +18,7 @@ function Set-LastUpdateCheckTimestamp {
         Set-ContentWrapper -path $timestampFile -value (Get-Date)
         return 0
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set last update check timestamp"; exception = $_ }
         return -1
     }
 }

@@ -171,7 +171,7 @@ function Update-PVM {
 
     try {
         $oldVersion = $PVMConfig.version
-        git -C $PVMRoot pull origin $currentBranch 2>$null
+        git -C $PVMRoot pull origin $currentBranch >$null 2>$null
 
         $newVersion = Get-PVMVersionFromGit
         if (-not $newVersion) {

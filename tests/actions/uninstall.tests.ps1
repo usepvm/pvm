@@ -30,6 +30,7 @@ Describe "Uninstall-PHP" {
             return $result.pvmData
         }
     }
+
     Context "When PHP version is found directly" {
         BeforeEach {
             Mock Get-MatchingPHPVersions -MockWith { }

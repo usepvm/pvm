@@ -167,6 +167,7 @@ Describe "Test-CheckForUpdatesQuietly" {
     BeforeAll {
         Mock Show-Info {}
     }
+
     Context "When an update check is not due" {
         It "Returns without calling Update-PVM" {
             Mock Test-ShouldCheckForUpdates { return $false }

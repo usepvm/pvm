@@ -18,6 +18,7 @@ Describe "Show-MsgByExitCode" {
     BeforeAll {
         Mock Write-Color {}
     }
+
     Context "When displaying messages" {
         It "Displays message without error" {
             $testResult = @{
@@ -62,6 +63,7 @@ Describe "Add-LogEntry" {
     BeforeAll {
         Mock Show-Error {}
     }
+
     Context "When logging data" {
         It "Logs data successfully" {
             $script:LOG_ERROR_PATH = $PVMConfig.paths.logError
@@ -247,6 +249,7 @@ Describe "Show-SpinnerWhileJob" {
             return $script:job
         }
     }
+
     Context "When executing job with spinner" {
         It "Executes script block and returns result" {
             Mock Start-Sleep { $null = $script:setState.Invoke($script:job, @([System.Management.Automation.JobState]::Completed)) }

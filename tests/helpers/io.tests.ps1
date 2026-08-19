@@ -321,7 +321,7 @@ Describe "New-SymbolicLink" {
             $result.message | Should -Match 'Created symbolic link'
             $result.color | Should -Be 'DarkGreen'
 
-            # Verify New-Item was called with correct parameters
+            # Verify New-ItemWrapper was called with correct parameters
             Should -Invoke New-ItemWrapper -ParameterFilter {
                 $type -eq 'SymbolicLink' -and
                 $path -eq $linkPath -and

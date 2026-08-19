@@ -110,7 +110,7 @@ function Get-ContentWrapper {
 }
 
 function New-ItemWrapper {
-    param ($type, $path, $target)
+    param ($type, $path, $target = $null)
 
     $params = @{
         ItemType = $type

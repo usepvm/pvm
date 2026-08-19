@@ -60,7 +60,7 @@ Describe "Show-MsgByExitCode" {
 
 Describe "Add-LogEntry" {
     BeforeAll {
-        Mock Show-Message {}
+        Mock Show-Error {}
     }
     Context "When logging data" {
         It "Logs data successfully" {
@@ -118,6 +118,7 @@ Describe "Add-LogEntry" {
                 exception = 'Test data'
             }
             $result | Should -Be -1
+            Should -Invoke Show-Error -Times 1
         }
     }
 }

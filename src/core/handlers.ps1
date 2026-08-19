@@ -519,9 +519,7 @@ function Invoke-Update {
 
     $checkOnly = $arguments -contains '--check'
 
-    $result = Update-PVM -checkOnly $checkOnly
-    Show-MsgByExitCode -result $result
-    return $result.code
+    return (Update-PVM -checkOnly $checkOnly)
 }
 
 function Invoke-Run {

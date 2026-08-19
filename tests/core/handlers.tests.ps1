@@ -1421,7 +1421,7 @@ Describe "Invoke-Info Tests" {
 
 Describe "Invoke-Update Tests" {
     It "Should call Update-PVM and return 0" {
-        Mock Update-PVM { @{ code = 0; message = 'Updated' } }
+        Mock Update-PVM { return 0 }
 
         $result = Invoke-Update -arguments @()
 
@@ -1430,7 +1430,7 @@ Describe "Invoke-Update Tests" {
     }
 
     It "Should call Update-PVM and return -1" {
-        Mock Update-PVM { @{ code = -1; message = 'Failed' } }
+        Mock Update-PVM { return -1 }
 
         $result = Invoke-Update -arguments @()
 

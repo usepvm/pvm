@@ -14,7 +14,11 @@ function Get-LastUpdateCheckTimestamp {
 function Set-LastUpdateCheckTimestamp {
     try {
         $timestampFile = "$($PVMConfig.paths.cache)\last_update_check.txt"
-        $null = New-Directory -path $PVMConfig.paths.cache
+        $created = New-Directory -path $PVMConfig.paths.cache
+        if ($created -ne 0) {
+            Show-Error -message "`nFailed to create cache directory."
+            return -1
+        }
         Set-ContentWrapper -path $timestampFile -value (Get-Date)
         return 0
     } catch {

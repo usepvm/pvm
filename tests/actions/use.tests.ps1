@@ -7,6 +7,9 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
 
+    Mock Write-Color {}
+    Mock Show-Info {}
+    Mock Show-Success {}
     Mock Show-Error {}
     Mock Show-Message {}
 
@@ -105,20 +108,20 @@ Describe "Update-PHPVersion" {
 
     It "Should successfully update to an exact version match" {
         $result = Update-PHPVersion -version '8.1'
-        $result.code | Should -Be 0
-        $result.message | Should -BeExactly 'Now using PHP 8.1'
+        $result | Should -Be 0
+        Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -eq 'Now using PHP 8.1' }
     }
 
     It "Should handle version not found when exact path doesn't exist" {
         $result = Update-PHPVersion -version '7.4'
-        $result.code | Should -Be -1
-        $result.message | Should -BeExactly 'PHP version 7.4 was not found!'
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq 'PHP version 7.4 was not found!' }
     }
 
     It "Should handle when no matching versions are found" {
         $result = Update-PHPVersion -version '5.6'
-        $result.code | Should -Be -1
-        $result.message | Should -BeExactly 'PHP version 5.6 was not found!'
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq 'PHP version 5.6 was not found!' }
     }
 
     It "Should return when switching to same current version" {
@@ -133,31 +136,30 @@ Describe "Update-PHPVersion" {
             buildType = 'TS'
         }}
         $result = Update-PHPVersion -version '8.2.0'
-        $result.code | Should -Be 0
-        $result.message | Should -BeExactly 'Already using PHP 8.2.0'
+        $result | Should -Be 0
+        Should -Invoke Show-Info -Exactly 1 -ParameterFilter { $message -eq 'Already using PHP 8.2.0' }
     }
 
     It "Should handle when New-SymbolicLink fails" {
         Mock New-SymbolicLink { return @{ code = -1; message = 'Failed to create link'; color = 'DarkYellow' } }
         $result = Update-PHPVersion -version '8.1'
-        $result.code | Should -Be -1
-        $result.message | Should -BeExactly 'Failed to create link'
-        $result.color | Should -Be 'DarkYellow'
+        $result | Should -Be -1
+        Should -Invoke Write-Color -Exactly 1 -ParameterFilter { $message -eq 'Failed to create link' }
     }
 
     It "Should handle exceptions gracefully" {
         # Force an exception by mocking Get-MatchingPHPVersions to throw
         Mock Get-MatchingPHPVersions { throw 'Test exception' }
         $result = Update-PHPVersion -version '8.1'
-        $result.code | Should -Be -1
-        $result.message | Should -Match 'No matching PHP versions found'
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'No matching PHP versions found' }
     }
 
     It "Should return error when pathVersionObject is null" {
         Mock Get-UserSelectedPHPVersion { return $null }
         $result = Update-PHPVersion -version '8.x'
-        $result.code | Should -Be -1
-        $result.message | Should -Match 'was not found'
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'was not found' }
     }
 
     It "Should return error when pathVersionObject has non-zero code" {

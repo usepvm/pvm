@@ -97,7 +97,7 @@ function Invoke-Install {
 
         if ($result.code -eq 0) {
             $version = $result.version
-            Show-MsgByExitCode -result $result -message "PHP $version is already installed!"
+            Write-Gray -message "`nPHP $version is already installed!"
             return -1
         }
 
@@ -118,9 +118,7 @@ function Invoke-Install {
         return -1
     }
 
-    $result = Install-PHP -version $version -arch $arch -buildType $buildType
-    Show-MsgByExitCode -result $result
-    return 0
+    return (Install-PHP -version $version -arch $arch -buildType $buildType)
 }
 
 function Invoke-Uninstall {
@@ -136,10 +134,7 @@ function Invoke-Uninstall {
     $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
     $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
 
-    $result = Uninstall-PHP -version $version -skipConfirmation $skipConfirmation
-
-    Show-MsgByExitCode -result $result
-    return 0
+    return (Uninstall-PHP -version $version -skipConfirmation $skipConfirmation)
 }
 
 function Invoke-Use {
@@ -155,16 +150,13 @@ function Invoke-Use {
     if ($version -eq 'auto') {
         $result = Select-PHPVersionAutomatically
         if ($result.code -ne 0) {
-            Show-MsgByExitCode -result $result
+            Write-Color -message $result.message -foreColor $result.color
             return -1
         }
         $version = $result.version
     }
 
-    $result = Update-PHPVersion -version $version
-
-    Show-MsgByExitCode -result $result
-    return 0
+    return (Update-PHPVersion -version $version)
 }
 
 function Invoke-Ini {
@@ -180,8 +172,7 @@ function Invoke-Ini {
         $arguments[1..($arguments.Count - 1)] | Where-Object -FilterScript { $_ -ne $arch }
     } else { @() }
 
-    $exitCode = Invoke-IniAction -action $action -params $remainingArgs
-    return $exitCode
+    return (Invoke-IniAction -action $action -params $remainingArgs)
 }
 
 function Invoke-Test {
@@ -245,7 +236,7 @@ function Invoke-Test {
         return -1
     }
 
-    return Initialize-Tests -testsNames $testsNames -options $options -exclude $exclude -pesterVersion $pesterVersion
+    return (Initialize-Tests -testsNames $testsNames -options $options -exclude $exclude -pesterVersion $pesterVersion)
 }
 
 function Invoke-Log {
@@ -259,8 +250,8 @@ function Invoke-Log {
     }
 
     $term = ($arguments | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-    $code = Show-Log -pageSize $pageSize -term $term
-    return $code
+    
+    return (Show-Log -pageSize $pageSize -term $term)
 }
 
 function Invoke-Version {
@@ -541,7 +532,5 @@ function Invoke-Run {
         return $true
     }
 
-    $code = Invoke-RunScripts -scriptName $scriptName -files $files
-
-    return $code
+    return (Invoke-RunScripts -scriptName $scriptName -files $files)
 }

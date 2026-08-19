@@ -199,7 +199,7 @@ Describe "Integration Tests" {
                 )
             }
             Mock Install-PHP { 0 }
-            Mock Update-PHPVersion { @{ code = 0; message = 'Version updated' } }
+            Mock Update-PHPVersion { 0 }
         }
 
         It "Should handle complete workflow: setup -> install -> use -> current" {

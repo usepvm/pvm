@@ -355,7 +355,8 @@ function Install-PHP {
                 }
                 $response = Read-HostWrapper -prompt "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
                 if (Test-NoResponse -response $response) {
-                    return @{ code = -1; message = 'Installation cancelled'; color = 'Gray' }
+                    Write-Gray -message 'Installation cancelled'
+                    return -1
                 }
                 $version = $familyVersion
             }
@@ -370,24 +371,29 @@ function Install-PHP {
             $msg += "`n- Check your internet connection or the source URL."
             $msg += "`n- Use 'pvm list available' to see available versions."
             $msg += "`n- If you are trying to install a version that was announced recently, it may not be available for download yet."
-            return @{ code = -1; message = $msg; color = 'DarkYellow' }
+
+            Show-Error -message $msg
+            return -1
         }
 
         $selectedVersionObject = Select-Version -matchingVersions $matchingVersions -version $version -arch $arch -buildType $buildType
         if (-not $selectedVersionObject) {
-            return @{ code = -1; message = 'Installation cancelled'; color = 'Gray' }
+            Write-Gray -message 'Installation cancelled'
+            return -1
         }
 
         if (Test-PHPVersionInstalled -version $selectedVersionObject) {
             $message = "Version '$($selectedVersionObject.version)' already installed"
             $message += "`nRun: pvm use $($selectedVersionObject.version)"
-            return @{ code = -1; message = $message; color = 'Gray' }
+            Write-Gray -message $message
+            return -1
         }
 
         $destination = Get-PHP -versionObject $selectedVersionObject
 
         if (-not $destination) {
-            return @{ code = -1; message = "Failed to download PHP version $version"; color = 'DarkYellow' }
+            Show-Error -message "Failed to download PHP version $version"
+            return -1
         }
 
         Show-Message -message "`nExtracting the downloaded zip ..."
@@ -401,9 +407,11 @@ function Install-PHP {
 
         $null = Update-InstalledPHPVersionsCache
 
-        return @{ code = 0; message = $message; color = 'DarkGreen' }
+        Show-Success -message $message
+        return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install PHP version $version"; exception = $_ }
-        return @{ code = -1; message = "Failed to install PHP version $version"; color = 'DarkYellow' }
+        Show-Error -message "Failed to install PHP version $version"
+        return -1
     }
 }

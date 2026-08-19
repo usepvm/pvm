@@ -12,6 +12,7 @@ BeforeAll {
     Mock Show-Message {}
     Mock Write-Color {}
     Mock Show-Info {}
+    Mock New-Line {}
 }
 
 AfterAll {
@@ -297,7 +298,7 @@ Describe "Invoke-Install Tests" {
 
 Describe "Invoke-Uninstall Tests" {
     BeforeEach {
-        Mock Uninstall-PHP { @{ code = 0; message = 'Uninstalled successfully' } }
+        Mock Uninstall-PHP { return 0 }
         Mock Show-MsgByExitCode { }
     }
 
@@ -315,7 +316,6 @@ Describe "Invoke-Uninstall Tests" {
         Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
             $version -eq '8.2.0' -and $skipConfirmation -eq $false
         }
-        Should -Invoke Show-MsgByExitCode -Exactly 1
     }
 
     It "Should pass skipConfirmation true when -y flag is provided" {
@@ -358,7 +358,7 @@ Describe "Invoke-Uninstall Tests" {
 Describe "Invoke-Use Tests" {
     BeforeEach {
         Mock Select-PHPVersionAutomatically { @{ code = 0; version = '8.2.0' } }
-        Mock Update-PHPVersion { @{ code = 0; message = 'Version updated' } }
+        Mock Update-PHPVersion { return 0 }
         Mock Show-MsgByExitCode { }
     }
 
@@ -380,7 +380,6 @@ Describe "Invoke-Use Tests" {
         Should -Invoke Update-PHPVersion -Times 1 -ParameterFilter {
             $version -eq '8.2.0'
         }
-        Should -Invoke Show-MsgByExitCode -Times 1
     }
 
     It "Should handle 'auto' version selection successfully" {
@@ -394,14 +393,13 @@ Describe "Invoke-Use Tests" {
     }
 
     It "Should return -1 when auto-selection fails" {
-        Mock Select-PHPVersionAutomatically { @{ code = 1; message = 'Auto selection failed' } }
+        Mock Select-PHPVersionAutomatically { @{ code = 1; message = 'Auto selection failed'; color = 'DarkYellow' } }
         $arguments = @('auto')
 
         $result = Invoke-Use -arguments $arguments
         $result | Should -Be -1
 
         Should -Invoke Select-PHPVersionAutomatically -Times 1
-        Should -Invoke Show-MsgByExitCode -Times 1
         Should -Invoke Update-PHPVersion -Times 0
     }
 }

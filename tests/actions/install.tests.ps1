@@ -130,6 +130,7 @@ BeforeAll {
     Mock Show-Error {}
     Mock Show-Success {}
     Mock Show-Message {}
+    Mock Write-Gray {}
 }
 
 AfterAll {
@@ -679,13 +680,13 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version '8.1'
 
-        $result.code | Should -Be 0
+        $result | Should -Be 0
     }
 
     It "Should return -1 if version already installed" {
         $result = Install-PHP -version '8.1'
 
-        $result.code | Should -Be -1
+        $result | Should -Be -1
     }
 
     It "Returns -1 when user declines family version install" {
@@ -700,7 +701,8 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version '8'
 
-        $result.code | Should -Be -1
+        $result | Should -Be -1
+        Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -eq 'Installation cancelled' }
     }
 
     It "Installs PHP when user accepts family version install" {
@@ -711,7 +713,7 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version '8'
 
-        $result.code | Should -Be 0
+        $result | Should -Be 0
     }
 
     It "Returns -1 when user selection is null" {
@@ -721,7 +723,8 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version '8.1'
 
-        $result.code | Should -Be -1
+        $result | Should -Be -1
+        Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -eq 'Installation cancelled' }
     }
 
     It "Returns -1 when user selection is already installed" {
@@ -732,7 +735,8 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version '8.1'
 
-        $result.code | Should -Be -1
+        $result | Should -Be -1
+        Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -like "*Version '8.1.15' already installed*" }
     }
 
     It "Returns -1 when user selection cannot be installed" {
@@ -744,8 +748,8 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version '8'
 
-        $result.code | Should -Be -1
-        $result.message | Should -Be "Failed to download PHP version 8"
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq 'Failed to download PHP version 8' }
     }
 
     It "Handles exception gracefully" {
@@ -755,7 +759,7 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version '8.1'
 
-        $result.code | Should -Be -1
+        $result | Should -Be -1
     }
 
     It "Should handle no matching versions found" {
@@ -764,7 +768,7 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version '9.0'
 
-        $result.code | Should -Be -1
+        $result | Should -Be -1
     }
 
     It "Should handle download failure" {
@@ -772,7 +776,7 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version '8.1'
 
-        $result.code | Should -Be -1
+        $result | Should -Be -1
     }
 
     It "Should prompt for family version when other versions exist" {
@@ -808,7 +812,7 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version '8.1'
 
-        $result.code | Should -Be 0
+        $result | Should -Be 0
     }
 
     It "Should cancel when user declines family version install" {
@@ -816,7 +820,7 @@ Describe "Install-PHP Integration Tests" {
 
         $result = Install-PHP -version '8.1'
 
-        $result.code | Should -Be -1
+        $result | Should -Be -1
     }
 }
 

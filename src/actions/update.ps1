@@ -98,7 +98,10 @@ function Update-PVM {
 
         $gitStatusText = '- ' + ($gitStatusText -join "`n- ")
 
-        Show-Error -message "You have uncommitted changes. Please commit or stash your changes before updating.`n`nGit status:`n$gitStatusText"
+        if (-not $quiet) {
+            Show-Error -message "You have uncommitted changes. Please commit or stash your changes before updating.`n`nGit status:`n$gitStatusText"
+        }
+
         return -1
     }
 

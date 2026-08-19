@@ -82,6 +82,15 @@ Describe "Update-PVM" {
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'file2.txt' }
         }
 
+        It "does not list changed files when quiet flag is set" {
+            Mock Get-GitStatus { return @('M  file1.txt', '?? file2.txt') }
+
+            $result = Update-PVM -checkOnly $true -quiet $true
+
+            $result | Should -Be -1
+            Should -Invoke Show-Error -Exactly 0
+        }
+
         It "collapses double spaces and trims a single status line" {
             Mock Get-GitStatus { return 'M  file.txt' }
 

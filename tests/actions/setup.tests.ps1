@@ -145,27 +145,21 @@ Describe "Initialize-PVM" {
         }
     }
 
-    Context "When directory creation is needed" {
-        It "Should create parent directory if it doesn't exist" {
-            Mock Get-EnvVarByName -MockWith { return '' }
-            Mock Test-DirectoryExists -ParameterFilter { $path -eq (Split-Path -Path $PHP_CURRENT_VERSION_PATH) } -MockWith { return $false }
+    Context "When PVM is not properly set up" {
+        It "Should set up PVM environment" {
+            Mock Get-EnvVarByName { return '' }
 
             $result = Initialize-PVM
 
             $result.code | Should -Be 0
-            Should -Invoke New-Directory -Exactly 1
-        }
-
-        It "Should not create directory if it already exists" {
-            Mock Get-EnvVarByName -MockWith { return '' }
-            Mock Test-DirectoryExists -ParameterFilter { $path -eq (Split-Path -Path $PHP_CURRENT_VERSION_PATH) } -MockWith { return $true }
-            Mock New-Item { }
-
-            $result = Initialize-PVM
-
-            $result.code | Should -Be 0
-            Should -Invoke New-Directory -Exactly 1
-            Should -Invoke New-Item -Exactly 0
+            Should -Invoke Set-EnvVar -Times 1 -ParameterFilter {
+                $name -eq $PVMConfig.env.PVM_ENV_VAR_NAME -and
+                $value -eq "$PVMRoot;$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)"
+            }
+            Should -Invoke Set-EnvVar -Times 1 -ParameterFilter {
+                $name -eq 'Path'
+                $value -eq ";%$($PVMConfig.env.PVM_ENV_VAR_NAME)%"
+            }
         }
     }
 

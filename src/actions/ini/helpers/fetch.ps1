@@ -79,7 +79,7 @@ function Get-PHPExtensionsFromSource {
             }
         )
         $availableExtensionsOrdered = [ordered] @{}
-        $availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object -Process { $availableExtensionsOrdered[$_.Key] = $_.Value }
+        $availableExtensions.GetEnumerator() | Sort-Object -Property Key | ForEach-Object -Process { $availableExtensionsOrdered[$_.Key] = $_.Value }
 
         return $availableExtensionsOrdered
     } catch {

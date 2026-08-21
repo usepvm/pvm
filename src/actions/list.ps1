@@ -95,7 +95,7 @@ function Get-AvailablePHPVersions {
         Write-Gray -message '------------------'
 
         $fetchedVersionsGroupedPartialList.GetEnumerator() |
-            Sort-Object Key |
+            Sort-Object -Property Key |
             ForEach-Object -Process {
                 $key = $_.Key
                 $fetchedVersionsGroupe = $_.Value

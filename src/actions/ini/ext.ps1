@@ -148,7 +148,7 @@ function Show-PHPExtensions {
 
             Show-Info -message "`nAvailable Extensions by Category:"
             Write-Gray -message '--------------------------------'
-            $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object -Process {
+            $availableExtensionsPartialList.GetEnumerator() | Sort-Object -Property Key | ForEach-Object -Process {
                 $key = "$($_.Key) "
                 $vals = ($_.Value | ForEach-Object -Process { $_.extName }) -join ', '
 

@@ -125,7 +125,7 @@ function Install-XDebugExtension {
         Group-Object xDebugVersion |
         Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
         ForEach-Object -Process {
-            $sortedGroup = $_.Group | Sort-Object `
+            $sortedGroup = $_.Group | Sort-Object -Property `
             @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
             @{ Expression     = {
                     switch ($_.arch) {
@@ -305,7 +305,7 @@ function Install-Extension {
             Group-Object extVersion |
             Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
             ForEach-Object -Process {
-                $sortedGroup = $_.Group | Sort-Object `
+                $sortedGroup = $_.Group | Sort-Object -Property `
                 @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
                 @{ Expression     = {
                         switch ($_.arch) {

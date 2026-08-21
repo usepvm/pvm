@@ -21,19 +21,18 @@ function Show-InstalledExtensions {
     $maxNameLength = ($extensions | ForEach-Object -Process { $_.name } | Measure-Object -Maximum Length).Maximum
     $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxNameLength + 40)
 
-    $extensions |
-    Sort-Object @{Expression = { -not $_.enabled }; Ascending = $true },
-    @{Expression = { $_.name }; Ascending = $true } |
-    ForEach-Object -Process {
-        $label = "  $($_.name) ".PadRight($maxLineLength, '.')
-        $status = if ($_.enabled) { 'Enabled' } else { 'Disabled' }
-        $color = if ($_.enabled) { 'DarkGreen' } else { 'DarkYellow' }
-        if ($_.comment) {
-            $status = "$status - $($_.comment)"
-        }
+    $extensions
+        | Sort-Object @{Expression = { -not $_.enabled }; Ascending = $true }, @{Expression = { $_.name }; Ascending = $true }
+        | ForEach-Object -Process {
+            $label = "  $($_.name) ".PadRight($maxLineLength, '.')
+            $status = if ($_.enabled) { 'Enabled' } else { 'Disabled' }
+            $color = if ($_.enabled) { 'DarkGreen' } else { 'DarkYellow' }
+            if ($_.comment) {
+                $status = "$status - $($_.comment)"
+            }
 
-        Show-Message -message "$label " -noNewLine
-        Write-Color -message $status -foreColor $color
+            Show-Message -message "$label " -noNewLine
+            Write-Color -message $status -foreColor $color
     }
 }
 

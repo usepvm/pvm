@@ -4,6 +4,7 @@ BeforeAll {
     $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\fetch-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
+    $script:PECL_BASE_URL = $PVMConfig.links.peclBase
     $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
@@ -68,10 +69,10 @@ Describe "Get-ExtensionCategoriesByPage Tests" {
         $result = Get-ExtensionCategoriesByPage -extCategory 'Caching' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
 
         $result.availableExtensions.Count | Should -Be 4
-        $result.availableExtensions[0].href | Should -Be '/package/APC'
-        $result.availableExtensions[1].href | Should -Be '/package/APCu'
-        $result.availableExtensions[2].href | Should -Be '/package/memcache'
-        $result.availableExtensions[3].href | Should -Be '/package/memcached'
+        $result.availableExtensions[0].href | Should -Be "$PECL_BASE_URL/package/APC"
+        $result.availableExtensions[1].href | Should -Be "$PECL_BASE_URL/package/APCu"
+        $result.availableExtensions[2].href | Should -Be "$PECL_BASE_URL/package/memcache"
+        $result.availableExtensions[3].href | Should -Be "$PECL_BASE_URL/package/memcached"
         $result.hasMore | Should -Be $false
     }
 

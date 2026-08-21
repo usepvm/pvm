@@ -18,13 +18,13 @@ function Get-ExtensionCategoriesByPage {
         $null = $_.outerHTML -match '(?s)<strong>(?<package>.*?)</strong>.*?<td[^>]*>(?<description>.*?)</td>'
         $description = $matches['description']
 
-        $extName = ($_.href -replace '/package/', '').Trim()
-        $linkItem = $_.psobject.copy()
-        $linkItem | Add-Member -NotePropertyName 'extName' -NotePropertyValue $extName -Force
-        $linkItem | Add-Member -NotePropertyName 'extCategory' -NotePropertyValue $extCategory -Force
-        $linkItem | Add-Member -NotePropertyName 'description' -NotePropertyValue $description -Force
-
-        $availableExtensions.Add($linkItem)
+        $availableExtensions.Add(@{
+            extName     = ($_.href -replace '/package/', '').Trim()
+            description = $description
+            href        = "$($PVMConfig.links.peclBase)$($_.href)"
+            extCategory = $extCategory
+            source      = (Get-BaseUrl -url $PVMConfig.links.peclBase)
+        })
     }
 
     return @{
@@ -74,6 +74,8 @@ function Get-PHPExtensionsFromSource {
                 href        = $PVMConfig.links.xdebugHistorical
                 extName     = 'xdebug'
                 extCategory = 'XDebug'
+                description = 'Xdebug is a debugging and productivity extension for PHP'
+                source      = (Get-BaseUrl -url $PVMConfig.links.xdebugBase)
             }
         )
         $availableExtensionsOrdered = [ordered] @{}
@@ -193,10 +195,13 @@ function Select-ExtensionFromMatches {
     Show-Info -message "`nMatching '$extName' extension:"
     $index = 0
 
-    $sorted = $linksMatchingExtName | Sort-Object -Property @{ Expression = { $_.extName } }
+    $sorted = $linksMatchingExtName | Sort-Object -Property source, extName, extCategory
+
+    $maxNameLength = ($sorted.extName | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     $sorted | ForEach-Object -Process {
-        $extItem = $_.extName
-        Show-Message -message "[$index] $extItem"
+        $extItem = "$($_.extName) ".PadRight($maxNameLength, '.')
+        $source = $_.source
+        Show-Message -message "[$index] $extItem $source"
         $index++
     }
 

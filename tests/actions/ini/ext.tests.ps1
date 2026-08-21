@@ -130,7 +130,7 @@ Describe "Show-PHPExtensions" {
         Mock Get-AvailablePHPExtensions { return Get-ExtensionList }
         $code = Show-PHPExtensions -iniPath $testIniPath -available $true -term 'pc'
         $code | Should -Be 0
-        Should -Invoke Show-Info -Exactly 1
+        Should -Invoke Show-Info -Exactly 2
         Should -Invoke Write-Gray -Exactly 1
     }
 

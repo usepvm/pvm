@@ -184,7 +184,7 @@ function Show-PHPExtensions {
             $msg = "`nThis is a partial list. For a complete list, visit:"
             $msg += "`nPHP Extensions : $($PVMConfig.links.peclPackages)"
             $msg += "`nXDebug : $($PVMConfig.links.xdebugHistorical)"
-            Show-Message -message $msg
+            Show-Info -message $msg
         }
 
         return 0

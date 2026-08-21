@@ -364,8 +364,8 @@ Describe "Get-AvailablePHPVersions" {
 
         $code | Should -Be 0
         Should -Invoke Show-Info -ParameterFilter { $message -like '*Available Versions*' }
-        Should -Invoke Show-Message -ParameterFilter { $message -like '*Archives*' }
-        Should -Invoke Show-Message -ParameterFilter { $message -like '*Releases*' }
+        Should -Invoke Show-Info -ParameterFilter { $message -like '*Archives*' }
+        Should -Invoke Show-Info -ParameterFilter { $message -like '*Releases*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.1.0*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.2.0*' }
     }

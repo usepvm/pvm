@@ -152,7 +152,7 @@ function Install-XDebugExtension {
                 Show-Message -message " [$($_.index)] $text"
             }
         }
-        Show-Message -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.xdebugHistorical)"
+        Show-Info -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.xdebugHistorical)"
 
         $packageIndex = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
         if ([string]::IsNullOrWhiteSpace($packageIndex)) {

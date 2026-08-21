@@ -618,9 +618,12 @@ Describe "Select-ExtensionFromMatches Tests" {
                 else { return '0' }
             }
 
-            $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
+            $extList = Get-ExtensionList
+            $result = Select-ExtensionFromMatches -linksMatchingExtName $extList
 
             $result.extName | Should -Be 'memcache'
+            Should -Invoke Show-Warning -ParameterFilter { $message -eq 'Please enter a valid positive number.'}
+            Should -Invoke Show-Warning -ParameterFilter { $message -eq "Number must be between 0 and $($extList.Length - 1)." }
         }
     }
 }

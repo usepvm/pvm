@@ -362,27 +362,28 @@ Describe "Uninstall-Extension" {
     It "Prints error message for non-valid number" {
         Mock Test-DirectoryNotExists { return $false }
         Mock Test-FileNotExists { return $false }
+        $matchingExtensions = @(@{
+            fullPath   = "$extDirectory\pdo_pgsql.dll"
+            fileName   = 'pdo_pgsql.dll'
+            name       = 'pdo_pgsql'
+            source     = 'ext,ini'
+            line       = 'extension=pdo_pgsql.dll'
+            lineNumber = 2
+            status     = 'Enabled'
+            color      = 'DarkGreen'
+        },
+        @{
+            fullPath   = "$extDirectory\pdo_mysql.dll"
+            fileName   = 'pdo_mysql.dll'
+            name       = 'pdo_mysql'
+            source     = 'ext,ini'
+            line       = 'extension=pdo_mysql.dll'
+            lineNumber = 4
+            status     = 'Disabled'
+            color      = 'DarkYellow'
+        })
         Mock Get-MatchingPHPExtensionsStatus {
-            return @(@{
-                    fullPath   = "$extDirectory\pdo_pgsql.dll"
-                    fileName   = 'pdo_pgsql.dll'
-                    name       = 'pdo_pgsql'
-                    source     = 'ext,ini'
-                    line       = 'extension=pdo_pgsql.dll'
-                    lineNumber = 2
-                    status     = 'Enabled'
-                    color      = 'DarkGreen'
-                },
-                @{
-                    fullPath   = "$extDirectory\pdo_mysql.dll"
-                    fileName   = 'pdo_mysql.dll'
-                    name       = 'pdo_mysql'
-                    source     = 'ext,ini'
-                    line       = 'extension=pdo_mysql.dll'
-                    lineNumber = 4
-                    status     = 'Disabled'
-                    color      = 'DarkYellow'
-                })
+            return $matchingExtensions
         }
         $script:callCount = 0
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
@@ -404,6 +405,8 @@ Describe "Uninstall-Extension" {
         Should -Invoke Write-Color -Times 1 -ParameterFilter {
             $message -eq ' Uninstalled'
         }
+        Should -Invoke Show-Warning -ParameterFilter { $message -eq 'Please enter a valid positive number.'}
+        Should -Invoke Show-Warning -ParameterFilter { $message -eq "Number must be between 0 and $($matchingExtensions.Length - 1)." }
     }
 
     It "Skips confirmation prompt and uninstalls when skipConfirmation is true" {

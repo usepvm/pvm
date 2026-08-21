@@ -195,7 +195,7 @@ function Select-ExtensionFromMatches {
     Show-Info -message "`nMatching '$extName' extension:"
     $index = 0
 
-    $sorted = $linksMatchingExtName | Sort-Object -Property source, extName, extCategory
+    $sorted = $linksMatchingExtName | Sort-Object -Property @{ Expression = { $_.source } }, @{ Expression = { $_.extName } }, @{ Expression = { $_.extCategory } }
 
     $maxNameLength = ($sorted.extName | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     $sorted | ForEach-Object -Process {

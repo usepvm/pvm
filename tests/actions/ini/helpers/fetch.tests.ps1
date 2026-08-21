@@ -583,9 +583,9 @@ Describe "Select-ExtensionFromMatches Tests" {
         BeforeEach {
             function Get-ExtensionList {
                 return @(
-                    @{ href = '/package/mysqlnd_memcache'; extName = 'mysqlnd_memcache' },
-                    @{ href = '/package/memcache'; extName = 'memcache' },
-                    @{ href = '/package/memcached'; extName = 'memcached' }
+                    @{ href = '/package/mysqlnd_memcache'; extName = 'mysqlnd_memcache'; extCategory = 'Database'; source = 'pecl.php.net' },
+                    @{ href = '/package/memcache'; extName = 'memcache'; extCategory = 'Caching'; source = 'pecl.php.net' },
+                    @{ href = '/package/memcached'; extName = 'memcached'; extCategory = 'Caching'; source = 'pecl.php.net' }
                 )
             }
         }

@@ -49,7 +49,7 @@ function Get-XDebugFromUrl {
             }
 
             $formattedList += @{
-                href          = $_.href
+                href          = "$($PVMConfig.links.xdebugBase)$($_.href)"
                 version       = $version
                 xDebugVersion = $xDebugVersion;
                 arch          = if ($fileName -match '(x86_64|x64)(?=\.dll$)') { 'x64' } else { 'x86' }
@@ -170,7 +170,7 @@ function Install-XDebugExtension {
             return -1
         }
 
-        $null = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -outFile $PVMConfig.paths.php
+        $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.php
         $phpPath = ($iniPath | Split-Path -Parent)
 
         if (-not $skipConfirmation) {

@@ -11,6 +11,7 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
 
+    $script:XDEBUG_BASE_URL = $PVMConfig.links.xdebugBase
     $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
     $script:XDEBUG_DOWNLOAD_URL = $PVMConfig.links.xdebugDownload
     $script:XDEBUG_HISTORICAL_URL = $PVMConfig.links.xdebugHistorical
@@ -119,11 +120,11 @@ Describe "Get-XDebugFromUrl Tests" {
 
     It "Should parse XDebug versions correctly" {
         $mockLinks = @(
-            @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x86_64.dll' },
-            @{ href = '/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll' },
-            @{ href = '/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll' },
-            @{ href = '/download/php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll' },
-            @{ href = '/download/php_random.dll' }
+            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x86_64.dll" },
+            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll" },
+            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll" },
+            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll" },
+            @{ href = "$XDEBUG_BASE_URL/download/php_random.dll" }
         )
         Set-MockWebResponse -url 'https://test.com' -links $mockLinks
 
@@ -144,8 +145,8 @@ Describe "Get-XDebugFromUrl Tests" {
 
     It "Should parse xdebug with x86 architecture and unknown compiler" {
         $mockLinks = @(
-            @{ href = '/download/php_xdebug-3.1.0-8.1-x86.dll' },
-            @{ href = '/download/php_xdebug-2.9.0-8.1-nts-x86.dll' }
+            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-x86.dll" },
+            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-nts-x86.dll" }
         )
         Set-MockWebResponse -url 'https://test.com' -links $mockLinks
 
@@ -169,10 +170,10 @@ Describe "Install-XDebugExtension" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.1.0" } }
         Mock Get-XDebugFromUrl {
             return @(
-                @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a href='/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'>php_xdebug-3.1.0-8.1-vs16-x64.dll</a>" }
-                @{ href = '/download/php_xdebug-2.9.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '2.9.0'; fileName = 'php_xdebug-2.9.0-8.1-vs16-x86_64.dll'; outerHTML = "<a href='/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll'>php_xdebug-2.9.0-8.1-vs16-x86_64.dll</a>" }
-                @{ href = '/download/php_xdebug-3.1.0-8.1-nts-vs16-x64.dll'; arch = 'x64'; buildType = 'nts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll'; outerHTML = "<a href='/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll'>php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll</a>" }
-                @{ href = '/download/php_xdebug-2.9.0-8.1-nts-vc16-x64.dll'; arch = 'x64'; buildType = 'nts'; version = '8.1'; xDebugVersion = '2.9.0'; fileName = 'php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll'; outerHTML = "<a href='/download/php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll'>php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a href='/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'>php_xdebug-3.1.0-8.1-vs16-x64.dll</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '2.9.0'; fileName = 'php_xdebug-2.9.0-8.1-vs16-x86_64.dll'; outerHTML = "<a href='/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll'>php_xdebug-2.9.0-8.1-vs16-x86_64.dll</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-nts-vs16-x64.dll"; arch = 'x64'; buildType = 'nts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll'; outerHTML = "<a href='/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll'>php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-nts-vc16-x64.dll"; arch = 'x64'; buildType = 'nts'; version = '8.1'; xDebugVersion = '2.9.0'; fileName = 'php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll'; outerHTML = "<a href='/download/php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll'>php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll</a>" }
             )
         }
         Mock Read-HostWrapper {
@@ -219,7 +220,7 @@ opcache.enable = 1
 "@
         Reset-MockState
         $mockLinks = @(
-            @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x64.dll' }
+            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x64.dll" }
         )
         Set-MockWebResponse -url $XDEBUG_HISTORICAL_URL -links $mockLinks
     }
@@ -274,8 +275,8 @@ opcache.enable = 1
         Mock Get-CurrentPHPVersion { return @{ version = '8.1'; arch = 'x86'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.1.0" } }
         Mock Get-XDebugFromUrl {
             return @(
-                @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
-                @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x86.dll'; arch = 'x86'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x86.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x86.dll"; arch = 'x86'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x86.dll'; outerHTML = "<a>test</a>" }
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
@@ -293,8 +294,8 @@ opcache.enable = 1
         Mock Get-CurrentPHPVersion { return @{ version = '8.1'; arch = 'x64'; buildType = 'nts'; path = "$TEST_DRIVE\php\8.1.0" } }
         Mock Get-XDebugFromUrl {
             return @(
-                @{ href = '/download/php_xdebug-3.1.0-8.1-ts-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-ts-x64.dll'; outerHTML = "<a>test</a>" }
-                @{ href = '/download/php_xdebug-3.1.0-8.1-nts-x64.dll'; arch = 'x64'; buildType = 'nts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-nts-x64.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-ts-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-ts-x64.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-nts-x64.dll"; arch = 'x64'; buildType = 'nts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-nts-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
@@ -312,10 +313,10 @@ opcache.enable = 1
         Mock Get-CurrentPHPVersion { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.1.0" } }
         Mock Get-XDebugFromUrl {
             return @(
-                @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
-                @{ href = '/download/php_xdebug-3.1.0rc1-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0rc1'; fileName = 'php_xdebug-3.1.0rc1-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
-                @{ href = '/download/php_xdebug-3.1.0beta1-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0beta1'; fileName = 'php_xdebug-3.1.0beta1-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
-                @{ href = '/download/php_xdebug-3.1.0alpha1-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0alpha1'; fileName = 'php_xdebug-3.1.0alpha1-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0rc1-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0rc1'; fileName = 'php_xdebug-3.1.0rc1-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0beta1-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0beta1'; fileName = 'php_xdebug-3.1.0beta1-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0alpha1-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0alpha1'; fileName = 'php_xdebug-3.1.0alpha1-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
@@ -333,7 +334,7 @@ opcache.enable = 1
         Mock Get-CurrentPHPVersion { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.1.0" } }
         Mock Get-XDebugFromUrl {
             return @(
-                @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
@@ -361,7 +362,7 @@ opcache.enable = 1
         Mock Get-CurrentPHPVersion { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.1.0" } }
         Mock Get-XDebugFromUrl {
             return @(
-                @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
@@ -382,7 +383,7 @@ opcache.enable = 1
         Mock Get-CurrentPHPVersion { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.1.0" } }
         Mock Get-XDebugFromUrl {
             return @(
-                @{ href = '/download/php_xdebug-2.9.0-8.1-vs16-x64.dll'; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '2.9.0'; fileName = 'php_xdebug-2.9.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '2.9.0'; fileName = 'php_xdebug-2.9.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
@@ -405,8 +406,8 @@ opcache.enable = 1
         Mock Get-CurrentPHPVersion { return @{ version = '8.1'; arch = $null; buildType = $null; path = "$TEST_DRIVE\php\8.1.0" } }
         Mock Get-XDebugFromUrl {
             return @(
-                @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x86.dll'; arch = 'x86'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x86.dll'; outerHTML = "<a>test</a>" }
-                @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x86_64.dll'; arch = 'x86_64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x86_64.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x86.dll"; arch = 'x86'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x86.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x86_64.dll"; arch = 'x86_64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x86_64.dll'; outerHTML = "<a>test</a>" }
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
@@ -424,8 +425,8 @@ opcache.enable = 1
         Mock Get-CurrentPHPVersion { return @{ version = '8.1'; arch = $null; buildType = $null; path = "$TEST_DRIVE\php\8.1.0" } }
         Mock Get-XDebugFromUrl {
             return @(
-                @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-x86.dll'; arch = 'x86'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x86.dll'; outerHTML = "<a>test</a>" }
-                @{ href = '/download/php_xdebug-3.1.0-8.1-vs16-arm64.dll'; arch = 'arm64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-arm64.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x86.dll"; arch = 'x86'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x86.dll'; outerHTML = "<a>test</a>" }
+                @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-arm64.dll"; arch = 'arm64'; buildType = 'ts'; version = '8.1'; xDebugVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-arm64.dll'; outerHTML = "<a>test</a>" }
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }

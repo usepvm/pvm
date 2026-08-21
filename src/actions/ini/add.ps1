@@ -55,8 +55,7 @@ function Get-XDebugFromUrl {
                 arch          = if ($fileName -match '(x86_64|x64)(?=\.dll$)') { 'x64' } else { 'x86' }
                 buildType     = if ($fileName -match '(?i)(?:^|-)nts(?:-|\.dll$)') { 'NTS' } else { 'TS' }
                 compiler      = if ($fileName -match '(?i)\b(vs|vc)\d+\b') { $matches[0].ToUpper() } else { 'unknown' }
-                fileName      = $fileName;
-                outerHTML     = $_.outerHTML
+                fileName      = $fileName
             }
         }
 

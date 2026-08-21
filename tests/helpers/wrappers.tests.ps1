@@ -57,6 +57,10 @@ Describe "Write-HostWrapper" {
 }
 
 Describe "Read-HostWrapper" {
+    BeforeEach {
+        Mock Invoke-PromptSound {}
+    }
+
     It "Calls Read-Host with no parameters" {
         Mock Read-Host { }
 
@@ -66,6 +70,7 @@ Describe "Read-HostWrapper" {
         Should -Invoke Read-Host -Times 1 -ParameterFilter {
             $Prompt -eq $null
         }
+        Should -Invoke Invoke-PromptSound -Times 0 -Exactly
     }
 
     It "Calls Read-Host with the correct parameters" {
@@ -79,6 +84,17 @@ Describe "Read-HostWrapper" {
         Should -Invoke Read-Host -Times 1 -ParameterFilter {
             $Prompt -eq $prompt
         }
+        Should -Invoke Invoke-PromptSound -Times 0 -Exactly
+    }
+
+    It "plays the prompt sound before waiting for input" {
+        $script:callOrder = [System.Collections.Generic.List[string]]::new()
+        Mock Invoke-PromptSound { $script:callOrder.Add('sound') }
+        Mock Read-Host { $script:callOrder.Add('read'); return 'Test response' }
+
+        Read-HostWrapper -prompt "Test prompt" -notifyUser | Should -Be 'Test response'
+
+        $script:callOrder | Should -Be @('sound', 'read')
     }
 
     It "Returns null when Read-Host returns empty string" {

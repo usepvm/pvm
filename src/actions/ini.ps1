@@ -107,8 +107,17 @@ function Invoke-IniAction {
                 $exitCode = Uninstall-Extension -iniPath $iniPath -extNames @($params) -skipConfirmation $skipConfirmation
             }
             'ext' {
-                $term = ($params | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-                $exitCode = Show-PHPExtensions -iniPath $iniPath -available ($params -contains 'available') -term $term
+                if ($params -contains 'info') {
+                    if ($params.Count -ne 2) {
+                        Show-Warning -message "`nPlease specify one extension name ('pvm ini ext info sql')."
+                        return -1
+                    }
+
+                    $exitCode = Show-PHPExtensionInfo -iniPath $iniPath -extName $params[1]
+                } else {
+                    $term = ($params | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
+                    $exitCode = Show-PHPExtensions -iniPath $iniPath -available ($params -contains 'available') -term $term
+                }
             }
             default {
                 Show-Error -message "`nUnknown action '$action' use one of following: 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'ext' or 'restore'."

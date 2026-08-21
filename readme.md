@@ -249,6 +249,10 @@ pvm ini ext --search=<extension>
 pvm ini ext available --search=<extension>
 # Example: pvm ini ext available --search=zip
 
+# Display metadata and local installation details for extension
+pvm ini ext info <extension>
+# Example: pvm ini ext info sql
+
 # Restore backup
 pvm ini restore # PVM automatically creates php.ini backups before modifying settings or extensions.
 

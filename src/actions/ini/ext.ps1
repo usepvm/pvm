@@ -1,4 +1,112 @@
 ﻿
+function Show-PHPExtensionInfo {
+    param ($iniPath, $extName)
+
+    try {
+        $normalizeId = {
+            param ($name)
+            if (-not $name) { return '' }
+            return ([System.IO.Path]::GetFileName($name.ToString().Trim('"', "'")) -replace '^php_', '' -replace '\.dll$', '').ToLower()
+        }
+
+        New-Line
+        $searchId = & $normalizeId $extName
+        $linksMatchingExtName = Get-ExtensionMatchingCategories -extName $searchId
+        $availableMatch = Select-ExtensionFromMatches -linksMatchingExtName $linksMatchingExtName
+
+        $matchesListStatus = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $availableMatch.extName -includeIniOnly $true # | Select-Object -First 1
+
+        if ($matchesListStatus.Length -gt 1) {
+            Show-Info -message "`nMultiple extensions match '$extName':`n"
+
+            $index = 0
+            $matchesListStatus | ForEach-Object -Process {
+                $name = $_.name
+                Show-Message -message "[$index] $name "
+                $index++
+            }
+
+            do {
+                $choiceRaw = Read-HostWrapper -prompt "`nSelect a number"
+                $choice = $null
+
+                if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
+                    Show-Warning -message 'Please enter a valid positive number.'
+                    continue
+                }
+
+                if ($choice -lt 0 -or $choice -gt $matchesListStatus.Length - 1) {
+                    Show-Warning -message "Number must be between 0 and $($matchesListStatus.Length - 1)."
+                    continue
+                }
+
+                break
+            } while ($true)
+
+            $localMatch = $matchesListStatus[$choice]
+        } else {
+            $localMatch = $($matchesListStatus)
+        }
+
+        if (-not $availableMatch -and -not $localMatch) {
+            Show-Error -message "`nExtension '$extName' not found"
+            return -1
+        }
+
+        Show-Info -message "`nExtension information: $extName"
+        if ($availableMatch) {
+            Show-Message -message "- Name ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message " $($availableMatch.extName)"
+            Show-Message -message "- Description ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message " $(if ($availableMatch.description) { $availableMatch.description } else { '(not available)' })"
+            Show-Message -message "- Category ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message " $(if ($availableMatch.extCategory) { $availableMatch.extCategory } else { '(not available)' })"
+            Show-Message -message "- Link ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message " $(if ($availableMatch.href) { $availableMatch.href } else { '(not available)' })"
+        } else {
+            Show-Message -message "- Public metadata ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message ' Not found in available extensions cache'
+        }
+
+        Show-Info -message "`nLocal installation"
+        if ($localMatch) {
+            Show-Message -message "- Name ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message " $($localMatch.name)"
+            Show-Message -message "- DLL name ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message " $(if ($localMatch.fileName) { $localMatch.fileName } else { '(not found)' })"
+            Show-Message -message "- Status ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Write-Color -message " $($localMatch.status)" -foreColor $localMatch.color
+            Show-Message -message "- INI line ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message " $(if ($localMatch.lineNumber) { $localMatch.lineNumber } else { '(not configured)' })"
+            Show-Message -message "- INI entry ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message " $(if ($localMatch.line) { $localMatch.line } else { '(not configured)' })"
+            Show-Message -message "- DLL path ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message " $(if ($localMatch.fullPath) { $localMatch.fullPath } else { '(not found)' })"
+            if ($localMatch.version) {
+                Show-Message -message "- DLL version ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+                Show-Message -message " $($localMatch.version)"
+            }
+            if ($localMatch.source) {
+                Show-Message -message "- Source ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+                Show-Message -message " $($localMatch.source)"
+            }
+            if ($localMatch.comment) {
+                Show-Message -message "- Note ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+                Show-Message -message " $($localMatch.comment)"
+            }
+        } else {
+            Show-Message -message "- Status ".PadRight($PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message ' Not installed or configured locally'
+        }
+
+        return 0
+    } catch {
+        Show-Error -message "`nFailed to get information for extension '$extName'"
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get extension info for '$extName'"; exception = $_ }
+        return -1
+    }
+}
+
 function Show-PHPExtensions {
     param ($iniPath, $available = $false, $term = $null)
 

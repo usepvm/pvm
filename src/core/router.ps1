@@ -185,42 +185,43 @@ function Get-IniAction {
                 'Manage PHP configuration (php.ini) settings and extensions for the currently active PHP version.'
             )
             ARGUMENTS   = @(
-                'set <setting>=<value> [--disable] ................. Set a php.ini configuration value'
-                'get <setting> ..................................... Get a php.ini configuration value'
-                'enable <extension> ................................ Enable a PHP extension'
-                'disable <extension> ............................... Disable a PHP extension'
-                'status <extension> ................................ Check if extension is enabled'
-                'info [extensions] [settings] [--search=<term>] .... Displays information about the environment and php.ini information summary'
-                'restore ........................................... Restore original php.ini from backup'
-                'add <extension> ................................... Install a PHP extension'
-                'remove <extension> ................................ Remove a PHP extension'
-                "ext [available] [--search=<term>] ............. Lists the PHP extensions. Type 'available' at the end to see what can be installed."
+                'set <setting>=<value> [--disable] ........................... Set a php.ini configuration value'
+                'get <setting> ............................................... Get a php.ini configuration value'
+                'enable <extension> .......................................... Enable a PHP extension'
+                'disable <extension> ......................................... Disable a PHP extension'
+                'status <extension> .......................................... Check if extension is enabled'
+                'info [extensions] [settings] [--search=<term>] .............. Displays information about the environment and php.ini information summary'
+                'restore ..................................................... Restore original php.ini from backup'
+                'add <extension> ............................................. Install a PHP extension'
+                'remove <extension> .......................................... Remove a PHP extension'
+                "ext [available] [--search=<term>]|[info <extension>] ........ Lists the PHP extensions. Type 'available' at the end to see what can be installed."
             )
             EXAMPLES    = @(
-                'pvm ini set memory_limit=256M ..................... Sets memory limit to 256MB and enables the setting'
-                'pvm ini set opcache.enable=1 --disable ............ Sets opcache.enable to 1 and disables the setting'
-                "pvm ini set memory=1G ............................. Shows matching settings for 'memory' then prompts for value and enables the setting"
-                "pvm ini set memory ................................ Shows matching settings for 'memory' then prompts for value and enables the setting"
-                'pvm ini get memory_limit .......................... Shows current memory limit setting'
-                "pvm ini get memory...... .......................... Shows matching settings for 'memory' setting"
-                'pvm ini enable mysqli ............................. Enables the mysqli extension'
-                "pvm ini enable sql ................................ Shows matching extensions for 'sql' then enables the chosen one"
-                'pvm ini disable xdebug ............................ Disables the xdebug extension'
-                "pvm ini disable sql ............................... Shows matching extensions for 'sql' then disables the chosen one"
-                'pvm ini status opcache ............................ Shows opcache extension status'
-                "pvm ini status sql ................................ Shows matching extensions status for 'sql'"
-                'pvm ini info ...................................... Lists php.ini settings and extensions'
-                "pvm ini info --search=cache ....................... Lists php.ini settings and extensions with 'cache' in their name"
-                'pvm ini info extensions ........................... Lists php.ini extensions only'
-                'pvm ini info settings ............................. Lists php.ini settings only'
-                'pvm ini add opcache ............................... Installs the opcache extension'
-                "pvm ini add sql ................................... Shows matching extensions for 'sql' then installs the chosen one"
-                'pvm ini remove xdebug ............................. Removes the xdebug extension'
-                "pvm ini remove sql ................................ Shows matching extensions for 'sql' then removes the chosen one"
-                'pvm ini ext ....................................... Lists the PHP extensions'
-                'pvm ini ext available ............................. Lists available PHP extensions'
-                "pvm ini ext --search=zip .......................... Lists PHP extensions with 'zip' in their name"
-                "pvm ini ext available --search=zip ................ Lists available PHP extensions with 'zip' in their name"
+                'pvm ini set memory_limit=256M ............................... Sets memory limit to 256MB and enables the setting'
+                'pvm ini set opcache.enable=1 --disable ...................... Sets opcache.enable to 1 and disables the setting'
+                "pvm ini set memory=1G ....................................... Shows matching settings for 'memory' then prompts for value and enables the setting"
+                "pvm ini set memory .......................................... Shows matching settings for 'memory' then prompts for value and enables the setting"
+                'pvm ini get memory_limit .................................... Shows current memory limit setting'
+                "pvm ini get memory...... .................................... Shows matching settings for 'memory' setting"
+                'pvm ini enable mysqli ....................................... Enables the mysqli extension'
+                "pvm ini enable sql .......................................... Shows matching extensions for 'sql' then enables the chosen one"
+                'pvm ini disable xdebug ...................................... Disables the xdebug extension'
+                "pvm ini disable sql ......................................... Shows matching extensions for 'sql' then disables the chosen one"
+                'pvm ini status opcache ...................................... Shows opcache extension status'
+                "pvm ini status sql .......................................... Shows matching extensions status for 'sql'"
+                'pvm ini info ................................................ Lists php.ini settings and extensions'
+                "pvm ini info --search=cache ................................. Lists php.ini settings and extensions with 'cache' in their name"
+                'pvm ini info extensions ..................................... Lists php.ini extensions only'
+                'pvm ini info settings ....................................... Lists php.ini settings only'
+                'pvm ini add opcache ......................................... Installs the opcache extension'
+                "pvm ini add sql ............................................. Shows matching extensions for 'sql' then installs the chosen one"
+                'pvm ini remove xdebug ....................................... Removes the xdebug extension'
+                "pvm ini remove sql .......................................... Shows matching extensions for 'sql' then removes the chosen one"
+                'pvm ini ext ................................................. Lists the PHP extensions'
+                'pvm ini ext available ....................................... Lists available PHP extensions'
+                "pvm ini ext --search=zip .................................... Lists PHP extensions with 'zip' in their name"
+                "pvm ini ext available --search=zip .......................... Lists available PHP extensions with 'zip' in their name"
+                "pvm ini ext info zip ........................................ Lists PHP extensions with 'zip' in their name and their information"
             )
         }
         action      = { return Invoke-Ini -arguments $arguments }

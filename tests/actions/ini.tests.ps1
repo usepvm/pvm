@@ -24,6 +24,7 @@ BeforeAll {
     Mock Show-Message {}
     Mock Show-Info {}
     Mock Write-Color {}
+    Mock New-Line {}
 
     function Reset-IniContent {
         # Create a test php.ini file
@@ -104,6 +105,24 @@ Describe "Invoke-IniAction" {
             Mock Test-FileNotExists { return $false }
             $result = Invoke-IniAction -action 'info' -params @('--search=cache')
             $result | Should -Be 0
+        }
+    }
+
+    Context "extension info action" {
+        It "Executes extension info action successfully" {
+            Mock Test-FileNotExists { return $false }
+            Mock Show-PHPExtensionInfo { return 0 }
+
+            $result = Invoke-IniAction -action 'ext' -params @('info', 'xdebug')
+
+            $result | Should -Be 0
+            Should -Invoke Show-PHPExtensionInfo -Exactly 1 -ParameterFilter { $extName -eq 'xdebug' }
+        }
+
+        It "Requires exactly one extension name" {
+            Mock Test-FileNotExists { return $false }
+
+            Invoke-IniAction -action 'ext' -params @('info') | Should -Be -1
         }
     }
 

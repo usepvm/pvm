@@ -25,8 +25,11 @@ function Write-HostWrapper {
 }
 
 function Read-HostWrapper {
-    param ($prompt = $null)
+    param ($prompt = $null, [switch]$notifyUser)
 
+    if ($notifyUser) {
+        Invoke-PromptSound
+    }
     $response = Read-Host -Prompt $prompt
 
     if ([string]::IsNullOrWhiteSpace($response)) {

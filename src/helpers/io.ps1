@@ -206,3 +206,9 @@ function Test-NoResponse {
 
     return -not (Test-YesResponse -response $response)
 }
+
+function Get-BaseUrl {
+    param ($url)
+
+    return ([System.Uri]$url).Host
+}

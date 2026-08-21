@@ -550,3 +550,25 @@ Describe "Test-NoResponse Tests" {
         Test-NoResponse -response 'Y' | Should -Be $false
     }
 }
+
+Describe "Get-BaseUrl" {
+    It "Should return the expected base URL" {
+        $result = Get-BaseUrl -url 'https://example.com/test'
+        $result | Should -Be 'example.com'
+    }
+
+    It "Should return an empty string for an invalid URL" {
+        $result = Get-BaseUrl -url 'invalid-url'
+        $result | Should -Be $null
+    }
+
+    It "Should return an empty string for an empty URL" {
+        $result = Get-BaseUrl -url ''
+        $result | Should -Be $null
+    }
+
+    It "Should return an empty string for a null URL" {
+        $result = Get-BaseUrl -url $null
+        $result | Should -Be $null
+    }
+}

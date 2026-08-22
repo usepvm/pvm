@@ -30,7 +30,7 @@ function Get-LatestPHPVersion {
         }
 
         # Sort by version number (descending) and return the first one
-        $latest = $versionsList | Sort-Object { [version]$_.version } -Descending | Select-Object -First 1
+        $latest = $versionsList | Sort-Object -Property { [version]$_.version } -Descending | Select-Object -First 1
 
         return $latest
     } catch {

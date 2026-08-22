@@ -148,7 +148,7 @@ function Show-PHPExtensions {
 
             Show-Info -message "`nAvailable Extensions by Category:"
             Write-Gray -message '--------------------------------'
-            $availableExtensionsPartialList.GetEnumerator() | Sort-Object Key | ForEach-Object -Process {
+            $availableExtensionsPartialList.GetEnumerator() | Sort-Object -Property Key | ForEach-Object -Process {
                 $key = "$($_.Key) "
                 $vals = ($_.Value | ForEach-Object -Process { $_.extName }) -join ', '
 
@@ -182,8 +182,8 @@ function Show-PHPExtensions {
             }
 
             $msg = "`nThis is a partial list. For a complete list, visit:"
-            $msg += "`nPHP Extensions : $($PVMConfig.links.peclPackages)"
-            $msg += "`nXDebug : $($PVMConfig.links.xdebugHistorical)"
+            $msg += "`n PHP Extensions : $($PVMConfig.links.peclPackages)"
+            $msg += "`n XDebug : $($PVMConfig.links.xdebugHistorical)"
             Show-Info -message $msg
         }
 

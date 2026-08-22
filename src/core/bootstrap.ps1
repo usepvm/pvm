@@ -13,7 +13,7 @@ function Show-Usage {
     $currentGroup = $null
 
     $actions.GetEnumerator() |
-        Sort-Object { $_.Value.order }, { $_.Value.itemOrder } |
+        Sort-Object -Property { $_.Value.order }, { $_.Value.itemOrder } |
         ForEach-Object -Process {
             $command = $_.Value.data.command
             $description = $_.Value.data.description

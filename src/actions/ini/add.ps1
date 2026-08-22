@@ -92,7 +92,7 @@ function Install-XDebugExtension {
     try {
         $currentVersionObj = Get-CurrentPHPVersion
         $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
-        $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions_$currentVersion`_xdebug" -compute {
+        $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions_$($currentVersion)_xdebug" -compute {
             return Show-SpinnerWhileJob -argumentList @($currentVersion) -scriptBlock {
                 param ($currentVersion)
 
@@ -125,7 +125,7 @@ function Install-XDebugExtension {
         Group-Object xDebugVersion |
         Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
         ForEach-Object -Process {
-            $sortedGroup = $_.Group | Sort-Object `
+            $sortedGroup = $_.Group | Sort-Object -Property `
             @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
             @{ Expression     = {
                     switch ($_.arch) {
@@ -305,7 +305,7 @@ function Install-Extension {
             Group-Object extVersion |
             Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
             ForEach-Object -Process {
-                $sortedGroup = $_.Group | Sort-Object `
+                $sortedGroup = $_.Group | Sort-Object -Property `
                 @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
                 @{ Expression     = {
                         switch ($_.arch) {
@@ -348,7 +348,7 @@ function Install-Extension {
         }
 
         $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.php
-        $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip", '').Trim()
+        $fileNamePath = $chosenItem.fileName -replace '.zip$', ''
         $extractPath = "$($PVMConfig.paths.php)\$fileNamePath"
         Expand-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
         $files = Get-ChildItemWrapper -path $extractPath

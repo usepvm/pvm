@@ -183,9 +183,9 @@ Describe "Select-ExtensionLinksFromURL" {
         $result = Select-ExtensionLinksFromURL -extName 'memcache'
 
         $result.Count | Should -Be 3
-        $result[0].href | Should -Be '/package/memcache/3.4.0/windows'
-        $result[1].href | Should -Be '/package/memcache/3.3.0/windows'
-        $result[2].href | Should -Be '/package/memcache/3.2.0/windows'
+        $result[0].href | Should -Be "$($PVMConfig.links.peclBase)/package/memcache/3.4.0/windows"
+        $result[1].href | Should -Be "$($PVMConfig.links.peclBase)/package/memcache/3.3.0/windows"
+        $result[2].href | Should -Be "$($PVMConfig.links.peclBase)/package/memcache/3.2.0/windows"
     }
 }
 
@@ -583,9 +583,9 @@ Describe "Select-ExtensionFromMatches Tests" {
         BeforeEach {
             function Get-ExtensionList {
                 return @(
-                    @{ href = '/package/mysqlnd_memcache'; extName = 'mysqlnd_memcache' },
-                    @{ href = '/package/memcache'; extName = 'memcache' },
-                    @{ href = '/package/memcached'; extName = 'memcached' }
+                    @{ href = '/package/mysqlnd_memcache'; extName = 'mysqlnd_memcache'; extCategory = 'Database'; source = 'pecl.php.net' },
+                    @{ href = '/package/memcache'; extName = 'memcache'; extCategory = 'Caching'; source = 'pecl.php.net' },
+                    @{ href = '/package/memcached'; extName = 'memcached'; extCategory = 'Caching'; source = 'pecl.php.net' }
                 )
             }
         }
@@ -618,9 +618,12 @@ Describe "Select-ExtensionFromMatches Tests" {
                 else { return '0' }
             }
 
-            $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
+            $extList = Get-ExtensionList
+            $result = Select-ExtensionFromMatches -linksMatchingExtName $extList
 
             $result.extName | Should -Be 'memcache'
+            Should -Invoke Show-Warning -ParameterFilter { $message -eq 'Please enter a valid positive number.'}
+            Should -Invoke Show-Warning -ParameterFilter { $message -eq "Number must be between 0 and $($extList.Length - 1)." }
         }
     }
 }

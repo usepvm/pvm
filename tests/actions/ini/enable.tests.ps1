@@ -168,20 +168,23 @@ extension=sqlite3
             else { return '3' }
         }
 
+        $dllFiles = @(
+            @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
+            @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$extDirectory\pdo_pgsql.dll" }
+            @{ BaseName = 'pdo_sqlite'; Name = 'pdo_sqlite.dll'; FullName = "$extDirectory\pdo_sqlite.dll" }
+            @{ BaseName = 'pgsql'; Name = 'pgsql.dll'; FullName = "$extDirectory\pgsql.dll" }
+            @{ BaseName = 'sqlite3'; Name = 'sqlite3.dll'; FullName = "$extDirectory\sqlite3.dll" }
+        )
         Mock Get-ChildItemWrapper {
             param ($path)
-            return @(
-                @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
-                @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$extDirectory\pdo_pgsql.dll" }
-                @{ BaseName = 'pdo_sqlite'; Name = 'pdo_sqlite.dll'; FullName = "$extDirectory\pdo_sqlite.dll" }
-                @{ BaseName = 'pgsql'; Name = 'pgsql.dll'; FullName = "$extDirectory\pgsql.dll" }
-                @{ BaseName = 'sqlite3'; Name = 'sqlite3.dll'; FullName = "$extDirectory\sqlite3.dll" }
-            )
+            return $dllFiles
         }
 
         Enable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
 
         (Get-ContentWrapper -path $testIniPath) -match '^extension\s*=\s*pgsql' | Should -Be $true
+        Should -Invoke Show-Warning -ParameterFilter { $message -eq 'Please enter a valid positive number.'}
+        Should -Invoke Show-Warning -ParameterFilter { $message -eq "Number must be between 0 and $($dllFiles.Length - 1)." }
     }
 
     It "Creates backup before modifying" {

@@ -348,7 +348,7 @@ function Install-Extension {
         }
 
         $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.php
-        $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip", '').Trim()
+        $fileNamePath = $chosenItem.fileName -replace '.zip$', ''
         $extractPath = "$($PVMConfig.paths.php)\$fileNamePath"
         Expand-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
         $files = Get-ChildItemWrapper -path $extractPath

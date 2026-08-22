@@ -51,7 +51,7 @@ function Get-XDebugFromUrl {
             $formattedList += @{
                 href          = "$($PVMConfig.links.xdebugBase)$($_.href)"
                 version       = $version
-                xDebugVersion = $xDebugVersion;
+                extVersion    = $xDebugVersion;
                 arch          = if ($fileName -match '(x86_64|x64)(?=\.dll$)') { 'x64' } else { 'x86' }
                 buildType     = if ($fileName -match '(?i)(?:^|-)nts(?:-|\.dll$)') { 'NTS' } else { 'TS' }
                 compiler      = if ($fileName -match '(?i)\b(vs|vc)\d+\b') { $matches[0].ToUpper() } else { 'unknown' }
@@ -121,29 +121,29 @@ function Install-XDebugExtension {
         $xDebugListGrouped = [ordered]@{}
         $index = 0
         $xDebugList |
-        Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
-        Group-Object xDebugVersion |
-        Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
-        ForEach-Object -Process {
-            $sortedGroup = $_.Group | Sort-Object -Property `
-            @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
-            @{ Expression     = {
-                    switch ($_.arch) {
-                        'x86_64' { 2 }
-                        'x64' { 2 }
-                        'x86' { 1 }
-                        default { 0 }
-                    }
-                }; Descending = $true
-            }
+            Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
+            Group-Object extVersion |
+            Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
+            ForEach-Object -Process {
+                $sortedGroup = $_.Group | Sort-Object -Property `
+                @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
+                @{ Expression     = {
+                        switch ($_.arch) {
+                            'x86_64' { 2 }
+                            'x64' { 2 }
+                            'x86' { 1 }
+                            default { 0 }
+                        }
+                    }; Descending = $true
+                }
 
-            $sortedGroup | ForEach-Object -Process {
-                $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
-                $index++
-            }
+                $sortedGroup | ForEach-Object -Process {
+                    $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
+                    $index++
+                }
 
-            $xDebugListGrouped[$_.Name] = $sortedGroup
-        }
+                $xDebugListGrouped[$_.Name] = $sortedGroup
+            }
 
         $xDebugListGrouped.GetEnumerator() | ForEach-Object -Process {
             Show-Message -message "`nXDebug $($_.Key)"
@@ -186,7 +186,7 @@ function Install-XDebugExtension {
 
         Move-ItemWrapper -path "$($PVMConfig.paths.php)\$($chosenItem.fileName)" -destination "$phpPath\ext"
         $xDebugConfig = Get-XdebugConfigV2 -XDebugPath $($chosenItem.fileName)
-        if ($chosenItem.xDebugVersion -like '3.*') {
+        if ($chosenItem.extVersion -like '3.*') {
             $xDebugConfig = Get-XdebugConfigV3 -XDebugPath $($chosenItem.fileName)
         }
         # check existence of previous xdebug

@@ -224,9 +224,9 @@ Describe "Get-PackagesFromSourceLinks Tests" {
         }
 
         $result = Get-PackagesFromSourceLinks -extName 'memcache' -version '8.2' -links @(
-            @{ href = '/package/memcache/3.4.0/windows' },
-            @{ href = '/package/memcache/3.3.0/windows' },
-            @{ href = '/package/memcache/3.2.0/windows' }
+            @{ href = "$PECL_BASE_URL/package/memcache/3.4.0/windows" },
+            @{ href = "$PECL_BASE_URL/package/memcache/3.3.0/windows" },
+            @{ href = "$PECL_BASE_URL/package/memcache/3.2.0/windows" }
         )
 
         $result.Count | Should -Be 6

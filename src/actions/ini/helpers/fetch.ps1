@@ -135,7 +135,7 @@ function Get-PackagesFromSourceLinks {
     $formattedList = [System.Collections.Generic.List[object]]::new()
     $links | ForEach-Object -Process {
         try {
-            $extVersion = $_.href -replace "/package/$extName/", '' -replace '/windows', ''
+            $extVersion = $_.href -replace "$($PVMConfig.links.peclBase)/package/$extName/", '' -replace '/windows', ''
             $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName/$extVersion/windows"
             $html.Links | ForEach-Object -Process {
                 if (-not $_.href) { return }

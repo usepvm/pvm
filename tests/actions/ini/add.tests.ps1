@@ -509,6 +509,7 @@ Describe "Add-MissingPHPExtensionToIni" {
     }
 
     It "Adds and configures xdebug in ini file" {
+        Mock Get-MatchingPHPExtensionsStatus { return @( @{ name = 'xdebug'; status = 'Enabled'; enabled = $true; color = 'DarkGreen' } )}
         Mock Test-Path { return $true }
         $result = Add-MissingPHPExtensionToIni -iniPath $testIniPath -extFileName 'php_xdebug.dll'
         $result | Should -Be 0

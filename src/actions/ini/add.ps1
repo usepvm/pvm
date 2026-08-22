@@ -238,14 +238,13 @@ function Add-MissingPHPExtensionToIni {
             return -1
         }
 
-        $lines = Get-ContentWrapper -path $iniPath
-        foreach ($line in $lines) {
-            if ($line -match "^(;)?\s*(zend_)?extension\s*=\s*$extFileName\s*") {
-                Show-Warning -message "- Extension '$extFileName' already exists in php.ini"
-                return 0
-            }
+        $matchesList = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $extFileName -includeIniOnly $true
+        if ($matchesList.Length -gt 0) {
+            Show-Warning -message "- Extension '$extFileName' already exists in php.ini"
+            return 0
         }
 
+        $lines = Get-ContentWrapper -path $iniPath
         $commented = if ($enable) { '' } else { ';' }
         $isZendExtension = Get-ZendExtensionsList | Where-Object -FilterScript { $extFileName -like "*$_*" }
         if ($isZendExtension) {

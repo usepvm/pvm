@@ -1142,6 +1142,53 @@ Describe "Install-Extension" {
             $Prompt -like '*already exists*'
         }
     }
+
+    It "Returns -1 when user does not choose a dll extension version to install" {
+        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0" } }
+        Mock Get-ExtensionFromURL {
+            return @{
+                extName = 'curl'
+                data    = @(
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                )
+            }
+        }
+        Mock Read-HostWrapper { }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+        $code | Should -Be -1
+        Should -Invoke Write-Gray -ParameterFilter { $message -like '*Installation cancelled*' }
+    }
+
+    It "Returns -1 when no matching extension is found" {
+        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0" } }
+        Mock Get-ExtensionFromURL {
+            return @{
+                extName = 'curl'
+                data    = @(
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                )
+            }
+        }
+        Mock Read-HostWrapper { '-1' }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+        $code | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*You chose the wrong index: -1*" }
+    }
+
+    It "Handles exception gracefully" {
+        Mock Get-CurrentPHPVersion { throw 'Error' }
+        Mock Add-LogEntry { return 0 }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+        $code | Should -Be -1
+        Should -Invoke Add-LogEntry
+    }
 }
 
 Describe "Install-IniExtension" {

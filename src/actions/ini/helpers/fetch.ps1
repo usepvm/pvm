@@ -119,8 +119,11 @@ function Select-ExtensionLinksFromURL {
     param ($extName)
 
     $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName"
-    $links = $html.Links | Where-Object -FilterScript {
-        $_.href -match "/package/$extName/([^/]+)/windows$"
+    $links = [System.Collections.Generic.List[object]]::new()
+    $null = $html.Links | Foreach-Object -Process {
+        if ($_.href -match "/package/$extName/([^/]+)/windows$") {
+            $links.Add(@{ href = "$($PVMConfig.links.peclBase)$($_.href)" })
+        }
     }
 
     return $links

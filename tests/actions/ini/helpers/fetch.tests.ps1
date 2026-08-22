@@ -183,9 +183,9 @@ Describe "Select-ExtensionLinksFromURL" {
         $result = Select-ExtensionLinksFromURL -extName 'memcache'
 
         $result.Count | Should -Be 3
-        $result[0].href | Should -Be '/package/memcache/3.4.0/windows'
-        $result[1].href | Should -Be '/package/memcache/3.3.0/windows'
-        $result[2].href | Should -Be '/package/memcache/3.2.0/windows'
+        $result[0].href | Should -Be "$($PVMConfig.links.peclBase)/package/memcache/3.4.0/windows"
+        $result[1].href | Should -Be "$($PVMConfig.links.peclBase)/package/memcache/3.3.0/windows"
+        $result[2].href | Should -Be "$($PVMConfig.links.peclBase)/package/memcache/3.2.0/windows"
     }
 }
 

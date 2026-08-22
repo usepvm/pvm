@@ -231,7 +231,7 @@ function Get-ExtensionLinksFromURL {
     param ($extName, $version)
 
     try {
-        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_pecl" -compute {
+        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$($version)_pecl" -compute {
             return Select-ExtensionLinksFromURL -extName $extName
         }
     } catch {
@@ -250,7 +250,7 @@ function Get-ExtensionLinksFromURL {
 
         $extName = $chosenItem.extName
         Show-Message -message "`nLoading links for '$extName'..."
-        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_pecl" -compute {
+        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$($version)_pecl" -compute {
             return Select-ExtensionLinksFromURL -extName $extName
         }
     }
@@ -271,7 +271,7 @@ function Get-ExtensionFromURL {
         return @{ extName = $extName; data = $null }
     }
 
-    $formattedList = Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_php_$version" -compute {
+    $formattedList = Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_php_$($version)_pecl" -compute {
         return Show-SpinnerWhileJob -argumentList @($linksObj, $version) -scriptBlock {
             param ($linksObj, $version)
 

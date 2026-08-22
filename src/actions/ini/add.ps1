@@ -92,7 +92,7 @@ function Install-XDebugExtension {
     try {
         $currentVersionObj = Get-CurrentPHPVersion
         $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
-        $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions_$currentVersion`_xdebug" -compute {
+        $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions_$($currentVersion)_xdebug" -compute {
             return Show-SpinnerWhileJob -argumentList @($currentVersion) -scriptBlock {
                 param ($currentVersion)
 

@@ -48,27 +48,25 @@ function Select-ExtensionPackageLink {
 function Get-XdebugConfigV2 {
     param ($XDebugPath)
 
-    return @"
-
-        [xdebug]
-        ;zend_extension="$XDebugPath"
-        xdebug.remote_enable=1
-        xdebug.remote_host=127.0.0.1
-        xdebug.remote_port=9000
-"@
+    return @(
+        '[xdebug]'
+        ";zend_extension='$XDebugPath'"
+        'xdebug.remote_enable=1'
+        'xdebug.remote_host=127.0.0.1'
+        'xdebug.remote_port=9000'
+    )
 }
 
 function Get-XdebugConfigV3 {
     param ($XDebugPath)
 
-    return @"
-
-        [xdebug]
-        ;zend_extension="$XDebugPath"
-        xdebug.mode=debug
-        xdebug.client_host=127.0.0.1
-        xdebug.client_port=9003
-"@
+    return @(
+        '[xdebug]'
+        ";zend_extension='$XDebugPath'"
+        'xdebug.mode=debug'
+        'xdebug.client_host=127.0.0.1'
+        'xdebug.client_port=9003'
+    )
 }
 
 function Get-XDebugFromUrl {

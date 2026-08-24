@@ -62,7 +62,7 @@ function Uninstall-Extension {
         $extDirectory = "$phpDirectory\ext"
 
         if (Test-DirectoryNotExists -path $extDirectory) {
-            Show-Error -Message "`nExtensions directory not found: $extDirectory"
+            Show-Error -message "`nExtensions directory not found: $extDirectory"
             return -1
         }
 

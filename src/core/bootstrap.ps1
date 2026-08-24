@@ -233,9 +233,9 @@ function Start-PVM {
         if (-not $actions.Contains($command)) {
             $suggestion = Get-ClosestCommandSuggestion -command $command -actions $actions
             if ([string]::IsNullOrWhiteSpace($suggestion)) {
-                Show-Error -Message "`n'$alias' is not a valid command."
+                Show-Error -message "`n'$alias' is not a valid command."
             } else {
-                Show-Error -Message "`n'$command' is not a valid command. Did you mean '$suggestion'?"
+                Show-Error -message "`n'$command' is not a valid command. Did you mean '$suggestion'?"
             }
             Show-Usage -arguments $arguments
             return 0
@@ -258,7 +258,7 @@ function Start-PVM {
         return $result
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during command '$command'"; exception = $_ }
-        Show-Error -Message "`nCommand canceled or failed to elevate privileges."
+        Show-Error -message "`nCommand canceled or failed to elevate privileges."
         return -1
     }
 }

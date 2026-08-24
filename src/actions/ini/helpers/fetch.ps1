@@ -243,7 +243,7 @@ function Get-ExtensionLinksFromURL {
         $linksMatchingExtName = Get-ExtensionMatchingCategories -extName $extName
 
         if ($linksMatchingExtName.Length -eq 0) {
-            Show-Error -Message "`nExtension '$extName' not found"
+            Show-Error -message "`nExtension '$extName' not found"
             return $null
         }
 

@@ -10,7 +10,7 @@ function Get-PHPInfo {
     $currentPHPVersion = Get-CurrentPHPVersion
 
     if (-not $currentPHPVersion -or -not $currentPHPVersion.version -or -not $currentPHPVersion.path) {
-        Show-Error -Message "`nFailed to get current PHP version."
+        Show-Error -message "`nFailed to get current PHP version."
         return -1
     }
 

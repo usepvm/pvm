@@ -11,7 +11,7 @@ function Invoke-Setup {
     }
     $optimized = Optimize-SystemPath
     if ($optimized -ne 0) {
-        Show-Error -Message "`nFailed to optimize system path."
+        Show-Error -message "`nFailed to optimize system path."
     }
 
     Show-MsgByExitCode -result $result
@@ -422,7 +422,7 @@ function Invoke-Aliases {
     $aliases = Get-Aliases
 
     if ($aliases.Count -eq 0) {
-        Show-Error -Message 'No aliases found.'
+        Show-Error -message 'No aliases found.'
         return -1
     }
 

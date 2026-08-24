@@ -219,7 +219,7 @@ function Add-MissingPHPExtensionToIni {
 
     try {
         if (Test-FileNotExists -path $iniPath) {
-            Show-Error -Message "`nphp.ini file not found: $iniPath"
+            Show-Error -message "`nphp.ini file not found: $iniPath"
             return -1
         }
 
@@ -229,12 +229,12 @@ function Add-MissingPHPExtensionToIni {
         $extDirectory = "$phpDirectory\ext"
 
         if (Test-DirectoryNotExists -path $extDirectory) {
-            Show-Error -Message "`nExtensions directory not found: $extDirectory"
+            Show-Error -message "`nExtensions directory not found: $extDirectory"
             return -1
         }
 
         if (Test-FileNotExists -path "$extDirectory\$extFileName") {
-            Show-Error -Message "`nExtension file not found: $extFileName"
+            Show-Error -message "`nExtension file not found: $extFileName"
             return -1
         }
 
@@ -272,7 +272,7 @@ function Install-Extension {
 
         if (($null -eq $extensionLinksObj) -or ($extensionLinksObj.Count -eq 0) -or ($null -eq $extensionLinksObj.data) -or ($extensionLinksObj.data.Count -eq 0)) {
             $extName = if ($extensionLinksObj) { $extensionLinksObj.extName } else { $extName }
-            Show-Error -Message "`nNo packages found for $extName"
+            Show-Error -message "`nNo packages found for $extName"
             return -1
         }
 
@@ -289,7 +289,7 @@ function Install-Extension {
         }
 
         if ($null -eq $extensionLinks -or $extensionLinks.Count -eq 0) {
-            Show-Error -Message "`nNo packages found for '$extName' matching current PHP architecture/build type"
+            Show-Error -message "`nNo packages found for '$extName' matching current PHP architecture/build type"
             return -1
         }
 
@@ -342,7 +342,7 @@ function Install-Extension {
         }
 
         if (-not $chosenItem) {
-            Show-Error -Message "`nYou chose the wrong index: $packageIndex"
+            Show-Error -message "`nYou chose the wrong index: $packageIndex"
             return -1
         }
 
@@ -355,7 +355,7 @@ function Install-Extension {
             ($_.Name -match "^php_$extName.*\.dll$")
         }
         if (-not $extFile) {
-            Show-Error -Message "`nFailed to find $extName"
+            Show-Error -message "`nFailed to find $extName"
             return -1
         }
 
@@ -376,7 +376,7 @@ function Install-Extension {
         Remove-ItemWrapper -path $extractPath
         $code = Add-MissingPHPExtensionToIni -iniPath $iniPath -extFileName $extFile.Name -enable $false
         if ($code -ne 0) {
-            Show-Error -Message "`nFailed to add $extName"
+            Show-Error -message "`nFailed to add $extName"
             return -1
         }
         Show-Success -message "`n$extName installed successfully"

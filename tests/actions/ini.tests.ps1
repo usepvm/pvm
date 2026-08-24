@@ -343,7 +343,7 @@ extension=php_curl.dll
             $result | Should -Be -1
         }
 
-        It "Installs extension with skip confirmation" {
+        It "Installs pecl extension with skip confirmation" {
             Mock Test-FileNotExists { return $false }
             $result = Invoke-IniAction -action 'add' -params @('pdo_mysql', '-y')
 
@@ -353,7 +353,7 @@ extension=php_curl.dll
             }
         }
 
-        It "Installs extension with skip confirmation" {
+        It "Installs xdebug extension with skip confirmation" {
             Mock Test-FileNotExists { return $false }
             $result = Invoke-IniAction -action 'add' -params @('xdebug', '-y')
 

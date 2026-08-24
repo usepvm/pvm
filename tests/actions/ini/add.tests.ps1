@@ -1179,7 +1179,7 @@ Describe "Install-Extension" {
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
         $code | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*You chose the wrong index: -1*" }
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*You chose the wrong index*" }
     }
 
     It "Handles exception gracefully" {

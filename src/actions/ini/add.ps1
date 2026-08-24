@@ -1,4 +1,50 @@
 ﻿
+function Select-ExtensionPackageLink {
+    param ($extName, $extensionLinks)
+
+    $extensionLinksGrouped = [ordered]@{}
+    $index = 0
+    $extensionLinks |
+        Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
+        Group-Object extVersion |
+        Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
+        ForEach-Object -Process {
+            $sortedGroup = $_.Group | Sort-Object -Property `
+            @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
+            @{ Expression     = {
+                    switch ($_.arch) {
+                        'x86_64' { 2 }
+                        'x64' { 2 }
+                        'x86' { 1 }
+                        default { 0 }
+                    }
+                }; Descending = $true
+            }
+            $sortedGroup | ForEach-Object -Process {
+                $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
+                $index++
+            }
+
+            $extensionLinksGrouped[$_.Name] = $sortedGroup
+        }
+
+    $extensionLinksGrouped.GetEnumerator() | ForEach-Object -Process {
+        Show-Message -message "`n$extName $($_.Key)"
+        $_.Value | ForEach-Object -Process {
+            $text = "PHP $extName $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
+            Show-Message -message " [$($_.index)] $text"
+        }
+    }
+
+    $packageIndex = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
+    if ([string]::IsNullOrWhiteSpace($packageIndex)) {
+        Write-Gray -message "`nInstallation cancelled"
+        return $null
+    }
+
+    return ($extensionLinks | Where-Object -FilterScript { $_.index -eq $packageIndex })
+}
+
 function Get-XdebugConfigV2 {
     param ($XDebugPath)
 
@@ -118,55 +164,11 @@ function Install-XDebugExtension {
             return $true
         }
 
-        $xDebugListGrouped = [ordered]@{}
-        $index = 0
-        $xDebugList |
-            Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
-            Group-Object extVersion |
-            Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
-            ForEach-Object -Process {
-                $sortedGroup = $_.Group | Sort-Object -Property `
-                @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
-                @{ Expression     = {
-                        switch ($_.arch) {
-                            'x86_64' { 2 }
-                            'x64' { 2 }
-                            'x86' { 1 }
-                            default { 0 }
-                        }
-                    }; Descending = $true
-                }
-
-                $sortedGroup | ForEach-Object -Process {
-                    $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
-                    $index++
-                }
-
-                $xDebugListGrouped[$_.Name] = $sortedGroup
-            }
-
-        $xDebugListGrouped.GetEnumerator() | ForEach-Object -Process {
-            Show-Message -message "`nXDebug $($_.Key)"
-            $_.Value | ForEach-Object -Process {
-                $text = "PHP XDebug $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
-                Show-Message -message " [$($_.index)] $text"
-            }
-        }
         Show-Info -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.xdebugHistorical)"
+        $chosenItem = Select-ExtensionPackageLink -extName 'Xdebug' -extensionLinks $xDebugList
 
-        $packageIndex = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
-        if ([string]::IsNullOrWhiteSpace($packageIndex)) {
-            Write-Gray -message "`nInstallation cancelled"
-            return -1
-        }
-
-        $chosenItem = $xDebugListGrouped.GetEnumerator() | ForEach-Object -Process {
-            $_.Value | Where-Object -FilterScript {
-                $_.index -eq $packageIndex
-            }
-        }
         if (-not $chosenItem) {
-            Show-Error -message "`nYou chose the wrong index: $packageIndex"
+            Show-Error -message "`nYou chose the wrong index"
             return -1
         }
 
@@ -297,52 +299,12 @@ function Install-Extension {
         if ($extensionLinks.Length -eq 1) {
             $chosenItem = $($extensionLinks)
         } else {
-            $extensionLinksGrouped = [ordered]@{}
-            $index = 0
-            $extensionLinks |
-            Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
-            Group-Object extVersion |
-            Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
-            ForEach-Object -Process {
-                $sortedGroup = $_.Group | Sort-Object -Property `
-                @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
-                @{ Expression     = {
-                        switch ($_.arch) {
-                            'x86_64' { 2 }
-                            'x64' { 2 }
-                            'x86' { 1 }
-                            default { 0 }
-                        }
-                    }; Descending = $true
-                }
-                $sortedGroup | ForEach-Object -Process {
-                    $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
-                    $index++
-                }
-
-                $extensionLinksGrouped[$_.Name] = $sortedGroup
-            }
-
-            $extensionLinksGrouped.GetEnumerator() | ForEach-Object -Process {
-                Show-Message -message "`n$extName $($_.Key)"
-                $_.Value | ForEach-Object -Process {
-                    $text = "PHP $extName $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
-                    Show-Message -message " [$($_.index)] $text"
-                }
-            }
             Show-Info -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.peclPackageRoot)/$extName"
-
-            $packageIndex = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
-            if ([string]::IsNullOrWhiteSpace($packageIndex)) {
-                Write-Gray -message "`nInstallation cancelled"
-                return -1
-            }
-
-            $chosenItem = $extensionLinks | Where-Object -FilterScript { $_.index -eq $packageIndex }
+            $chosenItem = Select-ExtensionPackageLink -extName $extName -extensionLinks $extensionLinks
         }
 
         if (-not $chosenItem) {
-            Show-Error -message "`nYou chose the wrong index: $packageIndex"
+            Show-Error -message "`nYou chose the wrong index"
             return -1
         }
 

@@ -189,20 +189,17 @@ function Install-XDebugExtension {
         if ($chosenItem.extVersion -like '3.*') {
             $xDebugConfig = Get-XdebugConfigV3 -XDebugPath $($chosenItem.fileName)
         }
-        # check existence of previous xdebug
-        $iniContent = Get-ContentWrapper -path $iniPath
-        $dllXDebugExists = $false
-        for ($i = 0; $i -lt $iniContent.Count; $i++) {
-            if ($iniContent[$i] -match '^(?<comment>;)?\s*zend_extension\s*=.*xdebug.*$') {
-                $iniContent[$i] = $iniContent[$i] -replace '^(?<comment>;)?(\s*zend_extension\s*=).*$', "zend_extension='$($chosenItem.fileName)'"
-                $dllXDebugExists = $true
-            }
-        }
-        if ($dllXDebugExists) {
-            Set-ContentWrapper -path $iniPath -value $iniContent
+
+        $code = Add-MissingPHPExtensionToIni -iniPath $iniPath -extFileName $chosenItem.fileName -enable $false
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to add XDebug"
+            return -1
         } else {
-            $xDebugConfig = $xDebugConfig -replace '\ +'
-            Add-ContentWrapper -path $iniPath -value $xDebugConfig
+            $iniContent = Get-ContentWrapper -path $iniPath
+            if ($iniContent -notcontains '[xdebug]') {
+                $xDebugConfig = "`n$($xDebugConfig -join "`n")"
+                Add-ContentWrapper -path $iniPath -value $xDebugConfig
+            }
         }
 
         Show-Success -message "`nXDebug installed successfully"

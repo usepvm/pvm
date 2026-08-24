@@ -250,16 +250,21 @@ opcache.enable = 1
     It "Returns 0 when user wants to overwrite existing dll extension version" {
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-2.9.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
-        Mock Test-Path { return $false }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Test-FileExists -ParameterFilter { $path -eq "$TEST_DRIVE\ext\php_xdebug-3.1.0-8.1-vs16-x64.dll" } -MockWith { return $true }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -like '*already exists. Would you like to overwrite it*' } -MockWith { return 'y' }
+        Mock Add-MissingPHPExtensionToIni { return 0 }
+        Mock Add-ContentWrapper { }
         Mock Remove-ItemWrapper { }
         Mock Move-ItemWrapper { }
+
         $code = Install-XDebugExtension -iniPath $testIniPath
         $code | Should -Be 0
     }
 
     It "Handles exception gracefully" {
         Mock Sort-Object { throw 'Error' }
+
         $code = Install-XDebugExtension -iniPath $testIniPath
         $code | Should -Be -1
     }
@@ -267,6 +272,7 @@ opcache.enable = 1
     It "Returns -1 when no compatible extension version is found" {
         Mock Test-CanUseCache { return $false }
         Mock Get-XDebugFromUrl { return @() }
+
         $code = Install-XDebugExtension -iniPath $testIniPath
         $code | Should -Be -1
     }
@@ -279,6 +285,7 @@ opcache.enable = 1
                 @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x86.dll"; arch = 'x86'; buildType = 'ts'; version = '8.1'; extVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x86.dll'; outerHTML = "<a>test</a>" }
             )
         }
+        Mock Add-MissingPHPExtensionToIni { return 0 }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
@@ -298,6 +305,7 @@ opcache.enable = 1
                 @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-nts-x64.dll"; arch = 'x64'; buildType = 'nts'; version = '8.1'; extVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-nts-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
+        Mock Add-MissingPHPExtensionToIni { return 0 }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
@@ -319,6 +327,7 @@ opcache.enable = 1
                 @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0alpha1-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; extVersion = '3.1.0alpha1'; fileName = 'php_xdebug-3.1.0alpha1-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
+        Mock Add-MissingPHPExtensionToIni { return 0 }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
@@ -330,32 +339,22 @@ opcache.enable = 1
         $code | Should -Be 0
     }
 
-    It "Replaces existing xdebug configuration in ini file" {
+    It "Returns -1 if fails to add xdebug to ini" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.1.0" } }
         Mock Get-XDebugFromUrl {
             return @(
                 @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; extVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
+        Mock Add-MissingPHPExtensionToIni { return -1 }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
         Mock Remove-ItemWrapper { }
 
-        # Simulate existing xdebug in ini
-        $existingIniContent = @(
-            "zend_extension=opcache",
-            ";zend_extension=php_xdebug-2.9.0-8.1-vs16-x64.dll",
-            "opcache.enable = 1"
-        )
-        Mock Get-ContentWrapper { return $existingIniContent }
-        Mock Set-ContentWrapper { }
-
         $code = Install-XDebugExtension -iniPath $testIniPath
-        $code | Should -Be 0
-
-        # Verify Set-ContentWrapper was called to update the ini
-        Should -Invoke Set-ContentWrapper -Times 1 -ParameterFilter { $Path -eq $testIniPath }
+        $code | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to add XDebug*' }
     }
 
     It "Adds xdebug v3 config when no existing xdebug found" {
@@ -365,6 +364,7 @@ opcache.enable = 1
                 @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; extVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
+        Mock Add-MissingPHPExtensionToIni { return 0 }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
@@ -386,6 +386,7 @@ opcache.enable = 1
                 @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; extVersion = '2.9.0'; fileName = 'php_xdebug-2.9.0-8.1-vs16-x64.dll'; outerHTML = "<a>test</a>" }
             )
         }
+        Mock Add-MissingPHPExtensionToIni { return 0 }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
@@ -410,6 +411,7 @@ opcache.enable = 1
                 @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x86_64.dll"; arch = 'x86_64'; buildType = 'ts'; version = '8.1'; extVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x86_64.dll'; outerHTML = "<a>test</a>" }
             )
         }
+        Mock Add-MissingPHPExtensionToIni { return 0 }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
@@ -429,6 +431,7 @@ opcache.enable = 1
                 @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-arm64.dll"; arch = 'arm64'; buildType = 'ts'; version = '8.1'; extVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-arm64.dll'; outerHTML = "<a>test</a>" }
             )
         }
+        Mock Add-MissingPHPExtensionToIni { return 0 }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
@@ -450,6 +453,7 @@ opcache.enable = 1
         Mock Move-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache" }
         Mock Add-ContentWrapper { }
+        Mock Add-MissingPHPExtensionToIni { return 0 }
 
         $code = Install-XDebugExtension -iniPath $testIniPath -skipConfirmation $true
 
@@ -485,6 +489,7 @@ opcache.enable = 1
         Mock Move-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache" }
         Mock Add-ContentWrapper { }
+        Mock Add-MissingPHPExtensionToIni { return 0 }
 
         $code = Install-XDebugExtension -iniPath $testIniPath -skipConfirmation $false
 

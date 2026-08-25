@@ -56,7 +56,8 @@ Describe "Enable-IniExtension" {
             param ($path)
             return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" } )
         }
-        Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
+        $code = Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug')
+        $code | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) -match '^extension=php_xdebug.dll' | Should -Be $true
     }
 
@@ -66,7 +67,8 @@ Describe "Enable-IniExtension" {
             return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
         }
 
-        Enable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
+        $code =Enable-IniExtension -iniPath $testIniPath -extNames @('curl')
+        $code | Should -Be 0
     }
 
     It "Returns 0 immediately when extension is already enabled" {
@@ -77,7 +79,8 @@ Describe "Enable-IniExtension" {
         }
         Mock Set-ContentWrapper { }
 
-        Enable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
+        $code = Enable-IniExtension -iniPath $testIniPath -extNames @('curl')
+        $code | Should -Be 0
         Should -Invoke Set-ContentWrapper -Times 0
     }
 
@@ -98,19 +101,23 @@ extension=php_curl.dll
             )
         }
 
-        Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
+        $code = Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug')
+        $code | Should -Be 0
         # File should remain unchanged since line didn't match
         (Get-ContentWrapper -path $testIniPath) | Should -Contain 'extension=php_xdebug.dll'
     }
 
     It "Returns -1 for non-existent extension" {
         Mock Get-ChildItemWrapper { return @() }
-        Enable-IniExtension -iniPath $testIniPath -extNames @('nonexistent_ext') | Should -Be -1
+        $code = Enable-IniExtension -iniPath $testIniPath -extNames @('nonexistent_ext')
+        $code | Should -Be -1
     }
 
     It "Requires extension name" {
-        Enable-IniExtension -iniPath $testIniPath -extNames '' | Should -Be -1
-        Enable-IniExtension -iniPath $testIniPath -extNames $null | Should -Be -1
+        $code = Enable-IniExtension -iniPath $testIniPath -extNames ''
+        $code | Should -Be -1
+        $code = Enable-IniExtension -iniPath $testIniPath -extNames $null
+        $code | Should -Be -1
     }
 
     It "Handles zend_extension" {
@@ -122,7 +129,8 @@ extension=php_curl.dll
             param ($path)
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
         }
-        Enable-IniExtension -iniPath $testIniPath -extNames @('opcache') | Should -Be 0
+        $code = Enable-IniExtension -iniPath $testIniPath -extNames @('opcache')
+        $code | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) -match '^zend_extension=php_opcache.dll' | Should -Be $true
     }
 
@@ -146,7 +154,8 @@ extension=sqlite3
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
 
-        Enable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
+        $code = Enable-IniExtension -iniPath $testIniPath -extNames @('sql')
+        $code | Should -Be 0
 
         (Get-ContentWrapper -path $testIniPath) -match '^extension\s*=\s*pdo_mysql' | Should -Be $true
     }
@@ -180,7 +189,8 @@ extension=sqlite3
             return $dllFiles
         }
 
-        Enable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
+        $code = Enable-IniExtension -iniPath $testIniPath -extNames @('sql')
+        $code | Should -Be 0
 
         (Get-ContentWrapper -path $testIniPath) -match '^extension\s*=\s*pgsql' | Should -Be $true
         Should -Invoke Show-Warning -ParameterFilter { $message -eq 'Please enter a valid positive number.'}
@@ -193,7 +203,10 @@ extension=sqlite3
     }
 
     It "Returns -1 on error" {
-        Mock Get-ContentWrapper { throw 'Access denied' }
-        Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be -1
+        Mock Add-LogEntry { 0 }
+        Mock Get-MatchingPHPExtensionsStatus { throw 'Access denied' }
+        $code = Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug')
+        $code | Should -Be -1
+        Should -Invoke Add-LogEntry -Times 1
     }
 }

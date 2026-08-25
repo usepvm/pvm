@@ -56,12 +56,14 @@ Describe "Disable-IniExtension" {
             param ($path)
             return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
         }
-        Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
+        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('curl')
+        $code | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) -match '^;extension=php_curl.dll' | Should -Be $true
     }
 
     It "Returns -1 for already disabled extension" {
-        Disable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be -1
+        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('xdebug')
+        $code | Should -Be -1
     }
 
     It "Returns 0 immediately when extension is already disabled" {
@@ -72,17 +74,21 @@ Describe "Disable-IniExtension" {
         }
         Mock Set-ContentWrapper { }
 
-        Disable-IniExtension -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
+        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('xdebug')
+        $code | Should -Be 0
         Should -Invoke Set-ContentWrapper -Times 0
     }
 
     It "Returns -1 for non-existent extension" {
-        Disable-IniExtension -iniPath $testIniPath -extNames @('nonexistent_ext') | Should -Be -1
+        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('nonexistent_ext')
+        $code | Should -Be -1
     }
 
     It "Requires extension name" {
-        Disable-IniExtension -iniPath $testIniPath -extNames '' | Should -Be -1
-        Disable-IniExtension -iniPath $testIniPath -extNames $null | Should -Be -1
+        $code = Disable-IniExtension -iniPath $testIniPath -extNames ''
+        $code | Should -Be -1
+        $code = Disable-IniExtension -iniPath $testIniPath -extNames $null
+        $code | Should -Be -1
     }
 
     It "Handles zend_extension" {
@@ -90,7 +96,8 @@ Describe "Disable-IniExtension" {
             param ($path)
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
         }
-        Disable-IniExtension -iniPath $testIniPath -extNames @('opcache') | Should -Be 0
+        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('opcache')
+        $code | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) -match '^;zend_extension=php_opcache.dll' | Should -Be $true
     }
 
@@ -103,7 +110,8 @@ Describe "Disable-IniExtension" {
         Mock Get-ContentWrapper { return @('extension=php_curl.dll') }
         Mock Set-ContentWrapper { }
 
-        Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be 0
+        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('curl')
+        $code | Should -Be 0
         Should -Invoke Set-ContentWrapper -Times 0
     }
 
@@ -127,7 +135,8 @@ extension=pgsql
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
 
-        Disable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
+        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('sql')
+        $code | Should -Be 0
 
         (Get-ContentWrapper -path $testIniPath) -match '^;extension\s*=\s*pdo_mysql' | Should -Be $true
     }
@@ -160,7 +169,8 @@ extension=pgsql
             param ($path)
             return $dllFiles
         }
-        Disable-IniExtension -iniPath $testIniPath -extNames @('sql') | Should -Be 0
+        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('sql')
+        $code | Should -Be 0
 
         (Get-ContentWrapper -path $testIniPath) -match '^;extension\s*=\s*pgsql' | Should -Be $true
         Should -Invoke Show-Warning -ParameterFilter { $message -eq 'Please enter a valid positive number.'}
@@ -173,7 +183,10 @@ extension=pgsql
     }
 
     It "Returns -1 on error" {
-        Mock Get-ContentWrapper { throw 'Access denied' }
-        Disable-IniExtension -iniPath $testIniPath -extNames @('curl') | Should -Be -1
+        Mock Add-LogEntry { 0 }
+        Mock Get-MatchingPHPExtensionsStatus { throw 'Access denied' }
+        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('curl')
+        $code | Should -Be -1
+        Should -Invoke Add-LogEntry -Times 1
     }
 }

@@ -389,7 +389,8 @@ Describe "New-SymbolicLink" {
             $targetPath = "$testDir\php\8.1"
 
             try {
-                Mock Test-Admin { return $true }
+                Mock Test-NotAdmin { return $false }
+                Mock New-ItemWrapper { }
                 Mock New-Directory { return 0 }
                 Mock Get-ItemWrapper { return @{ Attributes = 'ReparsePoint' } }
 

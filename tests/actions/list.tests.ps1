@@ -135,6 +135,7 @@ Describe "Get-PHPListToInstall" {
     It "Should fetch from source when cache is empty" {
         Mock Test-CanUseCache { return $true }
         Mock Get-DataFromCache { return @{} }
+        Mock Save-CachedData { return 0 }
         Mock Get-FromSource {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
@@ -153,6 +154,7 @@ Describe "Get-PHPListToInstall" {
 
     It "Should fetch from source" {
         Mock Test-CanUseCache { return $false }
+        Mock Save-CachedData { return 0 }
         Mock Get-FromSource {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
@@ -308,6 +310,7 @@ Describe "Get-AvailablePHPVersions" {
     It "Should fetch from source when cache is empty" {
         Mock Test-CanUseCache { return $true }
         Mock Get-DataFromCache { return @{} }
+        Mock Save-CachedData { return 0 }
         Mock Get-FromSource {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
@@ -325,6 +328,7 @@ Describe "Get-AvailablePHPVersions" {
     It "Should force fetch from source when cache not exists" {
         Mock Test-Path { return $false }
         Mock Get-DataFromCache { }  # Remove return value since it won't be called
+        Mock Save-CachedData { return 0 }
         Mock Get-FromSource {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')

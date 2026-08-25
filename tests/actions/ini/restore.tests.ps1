@@ -43,13 +43,15 @@ Describe "Restore-IniBackup" {
 
         # Modify original
         'modified content' | Set-ContentWrapper -path $testIniPath
-        Restore-IniBackup -iniPath $testIniPath | Should -Be 0
+        $code = Restore-IniBackup -iniPath $testIniPath
+        $code | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) | Should -Not -Be 'modified content'
     }
 
     It "Fails when backup doesn't exist" {
         Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
-        Restore-IniBackup -iniPath $testIniPath | Should -Be -1
+        $code = Restore-IniBackup -iniPath $testIniPath
+        $code | Should -Be -1
     }
 
     It "Returns -1 on error" {
@@ -57,7 +59,8 @@ Describe "Restore-IniBackup" {
         Mock Test-Path { return $true }
         Mock Copy-ItemWrapper { throw 'Access denied' }
         $null = Backup-IniFile -iniPath $testIniPath
-        Restore-IniBackup -iniPath $testIniPath | Should -Be -1
+        $code = Restore-IniBackup -iniPath $testIniPath
+        $code | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
     }
 }

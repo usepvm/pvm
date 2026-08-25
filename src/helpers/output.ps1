@@ -30,9 +30,9 @@ function Add-LogEntry {
 
     try {
         $logPath = if ($data.logPath) { $data.logPath } else { $PVMConfig.paths.logError }
-        $created = New-Directory -path (Split-Path -Path $logPath)
+        $created = New-Directory -path (Split-Path -Path $logPath -Parent)
         if ($created -ne 0) {
-            Show-Error -message "Failed to create directory $(Split-Path -Path $logPath)"
+            Show-Error -message "Failed to create directory $(Split-Path -Path $logPath -Parent)"
             return -1
         }
         $content = "`n$($PVMConfig.constants.LOG_SEPARATOR)"
@@ -332,7 +332,7 @@ function New-Player {
 function Get-Sound-TotalSeconds {
     param ($path)
 
-    $folder = Split-Path -Path $path
+    $folder = Split-Path -Path $path -Parent
     $file = Split-Path -Path $path -Leaf
     $shell = New-Object -ComObject Shell.Application
     $shellFolder = $shell.Namespace($folder)

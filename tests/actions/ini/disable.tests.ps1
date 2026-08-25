@@ -35,7 +35,6 @@ max_execution_time = 30
     # Create directory and symlink for current PHP version
     $phpVersionPath = "$TEST_DRIVE\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
-    New-Item -ItemType SymbolicLink -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
     Copy-ItemWrapper -path $testIniPath -destination "$phpVersionPath\php.ini"
 }
 

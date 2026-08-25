@@ -17,7 +17,6 @@ BeforeAll {
     # Create directory and symlink for current PHP version
     $phpVersionPath = "$($PVMConfig.paths.php)\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
-    New-Item -ItemType SymbolicLink -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
 
     Mock Show-Error {}
     Mock Show-Warning {}

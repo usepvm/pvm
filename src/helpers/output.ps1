@@ -332,8 +332,8 @@ function New-Player {
 function Get-Sound-TotalSeconds {
     param ($path)
 
-    $folder = Split-Path $path
-    $file = Split-Path $path -Leaf
+    $folder = Split-Path -Path $path
+    $file = Split-Path -Path $path -Leaf
     $shell = New-Object -ComObject Shell.Application
     $shellFolder = $shell.Namespace($folder)
     $shellFile = $shellFolder.ParseName($file)

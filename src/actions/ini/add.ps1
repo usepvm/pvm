@@ -171,7 +171,7 @@ function Install-XDebugExtension {
         }
 
         $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.php
-        $phpPath = ($iniPath | Split-Path -Parent)
+        $phpPath = Split-Path -Path $iniPath -Parent
 
         if (-not $skipConfirmation) {
             if (Test-FileExists -path "$phpPath\ext\$($chosenItem.fileName)") {
@@ -316,7 +316,7 @@ function Install-Extension {
             return -1
         }
 
-        $phpPath = ($iniPath | Split-Path -Parent)
+        $phpPath = Split-Path -Path $iniPath -Parent
 
         if (-not $skipConfirmation) {
             if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {

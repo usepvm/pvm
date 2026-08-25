@@ -1,6 +1,6 @@
 ﻿
 function Get-PHPStatus {
-    param ($phpPath)
+    param ($phpPath, $version = $null)
 
     try {
         $status = @()
@@ -9,8 +9,12 @@ function Get-PHPStatus {
             return $status
         }
 
-        $opcacheData = Get-MatchingPHPExtensionsStatus -iniPath $phpIniPath -extName 'opcache'
-        $status += if ($opcacheData) { $opcacheData.name = 'Zend OPcache'; $opcacheData } else { @{ name = 'Zend OPcache'; color = 'DarkGray'; text = 'Not Found' } }
+        if ($version -like '8.5*') {
+            $status += @{ name = 'Zend OPcache'; enabled = $true; status = 'Enabled'; color = 'DarkGreen' }
+        } else {
+            $opcacheData = Get-MatchingPHPExtensionsStatus -iniPath $phpIniPath -extName 'opcache'
+            $status += if ($opcacheData) { $opcacheData.name = 'Zend OPcache'; $opcacheData } else { @{ name = 'Zend OPcache'; color = 'DarkGray'; text = 'Not Found' } }
+        }
 
         $xdebugData = Get-MatchingPHPExtensionsStatus -iniPath $phpIniPath -extName 'xdebug'
         $status += if ($xdebugData) { $xdebugData.name = 'Xdebug'; $xdebugData } else { @{ name = 'Xdebug'; color = 'DarkGray'; text = 'Not Found' } }

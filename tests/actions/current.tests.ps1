@@ -149,6 +149,19 @@ Describe "Get-PHPStatus Function Tests" {
             $result.Length | Should -Be 0
         }
     }
+
+    Context "When current php is >= 8.5" {
+        It "Assumes opcache is enabled by default" {
+            Mock Test-FileNotExists { return $false }
+            Mock Get-MatchingPHPExtensionsStatus -ParameterFilter { $extName -match 'xdebug' } {
+                return @( @{ name = 'xdebug'; status = 'Enabled'; enabled = $true; color = 'DarkGreen' } )
+            }
+
+            $result = Get-PHPStatus -phpPath $PHP_DIR -version '8.5.9'
+
+            ($result | Where-Object -FilterScript { $_.Name -like '*opcache*' }).Enabled | Should -Be $true
+        }
+    }
 }
 
 Describe "Get-CurrentPHPVersion Function Tests" {

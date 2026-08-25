@@ -45,7 +45,7 @@ function Invoke-Current {
     }
     Show-Message -message $text
 
-    $status = Get-PHPStatus -phpPath $result.path
+    $status = Get-PHPStatus -phpPath $result.path -version $result.version
 
     if (-not $status -or $status.Length -eq 0) {
         Show-Warning -message 'No status information available for the current PHP version.'
@@ -250,7 +250,7 @@ function Invoke-Log {
     }
 
     $term = ($arguments | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-    
+
     return (Show-Log -pageSize $pageSize -term $term)
 }
 

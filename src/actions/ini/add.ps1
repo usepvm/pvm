@@ -265,7 +265,7 @@ function Install-Extension {
     try {
         $currentVersionObj = Get-CurrentPHPVersion
         $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
-        $extensionLinksObj = Get-ExtensionFromURL -extName $extName -version $currentVersion
+        $extensionLinksObj = Get-ExtensionPackages -extName $extName -version $currentVersion
 
         if (($null -eq $extensionLinksObj) -or ($extensionLinksObj.Count -eq 0) -or ($null -eq $extensionLinksObj.data) -or ($extensionLinksObj.data.Count -eq 0)) {
             $extName = if ($extensionLinksObj) { $extensionLinksObj.extName } else { $extName }

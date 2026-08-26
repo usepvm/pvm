@@ -165,7 +165,7 @@ Describe "Get-PHPExtensionsFromSource" {
     }
 }
 
-Describe "Select-ExtensionLinksFromURL" {
+Describe "Get-ExtensionAvailableReleasesLinks" {
     It "Returns filtered links for given extension" {
         Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
             return @{
@@ -180,7 +180,7 @@ Describe "Select-ExtensionLinksFromURL" {
             }
         }
 
-        $result = Select-ExtensionLinksFromURL -extName 'memcache'
+        $result = Get-ExtensionAvailableReleasesLinks -extName 'memcache'
 
         $result.Count | Should -Be 3
         $result[0].href | Should -Be "$($PVMConfig.links.peclBase)/package/memcache/3.4.0/windows"
@@ -628,14 +628,14 @@ Describe "Select-ExtensionFromMatches Tests" {
     }
 }
 
-Describe "Get-ExtensionLinksFromURL Tests" {
+Describe "Resolve-ExtensionLinks Tests" {
     BeforeEach {
         $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
     }
 
     It "Returns filtered links" {
         Mock Test-CanUseCache { return $false }
-        Mock Select-ExtensionLinksFromURL {
+        Mock Get-ExtensionAvailableReleasesLinks {
             return @(
                 @{ href = '/package/memcache/3.4.0/windows' },
                 @{ href = '/package/memcache/3.3.0/windows' },
@@ -643,7 +643,7 @@ Describe "Get-ExtensionLinksFromURL Tests" {
             )
         }
 
-        $result = Get-ExtensionLinksFromURL -extName 'memcache' -version '8.2'
+        $result = Resolve-ExtensionLinks -extName 'memcache' -version '8.2'
 
         $result.extName | Should -Be 'memcache'
         $result.links.Count | Should -Be 3
@@ -652,8 +652,8 @@ Describe "Get-ExtensionLinksFromURL Tests" {
     Context "When extension has no direct link" {
         BeforeEach {
             Mock Test-CanUseCache { return $false }
-            Mock Select-ExtensionLinksFromURL -ParameterFilter { $extName -eq 'mem' } { throw 'Error' }
-            Mock Select-ExtensionLinksFromURL -ParameterFilter { $extName -eq 'memcache' } {
+            Mock Get-ExtensionAvailableReleasesLinks -ParameterFilter { $extName -eq 'mem' } { throw 'Error' }
+            Mock Get-ExtensionAvailableReleasesLinks -ParameterFilter { $extName -eq 'memcache' } {
                 @{ href = '/package/memcache/3.4.0/windows' },
                 @{ href = '/package/memcache/3.3.0/windows' },
                 @{ href = '/package/memcache/3.2.0/windows' }
@@ -663,7 +663,7 @@ Describe "Get-ExtensionLinksFromURL Tests" {
         It "Returns null when no matching categories links found" {
             Mock Get-ExtensionMatchingCategories { return @() }
 
-            $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
+            $result = Resolve-ExtensionLinks -extName 'mem' -version '8.2'
 
             $result | Should -Be $null
         }
@@ -671,7 +671,7 @@ Describe "Get-ExtensionLinksFromURL Tests" {
         It "Takes the only link found" {
             Mock Get-ExtensionMatchingCategories { return @( @{ href = '/package/memcache'; extName = 'memcache' } ) }
 
-            $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
+            $result = Resolve-ExtensionLinks -extName 'mem' -version '8.2'
 
             $result.extName | Should -Be 'memcache'
             $result.links.Count | Should -Be 3
@@ -691,14 +691,14 @@ Describe "Get-ExtensionLinksFromURL Tests" {
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
         Mock Select-ExtensionFromMatches { return $null }
 
-        $result = Get-ExtensionLinksFromURL -extName 'mem' -version '8.2'
+        $result = Resolve-ExtensionLinks -extName 'mem' -version '8.2'
 
         # Should return null and show error message when chosen item is null
         $result | Should -Be $null
     }
 }
 
-Describe "Get-ExtensionFromURL Tests" {
+Describe "Get-ExtensionPackages Tests" {
     BeforeEach {
         Mock Show-SpinnerWhileJob {
             param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
@@ -709,7 +709,7 @@ Describe "Get-ExtensionFromURL Tests" {
 
     It "Should parse extension versions correctly" {
         Mock Test-CanUseCache { return $false }
-        Mock Get-ExtensionLinksFromURL {
+        Mock Resolve-ExtensionLinks {
             return @{
                 extName = 'memcache'
                 links = @(
@@ -726,7 +726,7 @@ Describe "Get-ExtensionFromURL Tests" {
                 @{ href = '/package/memcache/3.2.0/windows'; version = '8.2'; extVersion = '3.2.0'; fileName = '/memcache/3.2.0/php_memcache-3.2.0-8.2-ts-vs16-x64.zip' }
             )
         }
-        $result = Get-ExtensionFromURL -extName 'memcache' -version '8.2'
+        $result = Get-ExtensionPackages -extName 'memcache' -version '8.2'
 
         $result.data.Count | Should -Be 3
         $result.data[0].extVersion | Should -Be '3.4.0'
@@ -735,19 +735,19 @@ Describe "Get-ExtensionFromURL Tests" {
     }
 
     It "Returns null when no version found for extension" {
-        Mock Get-ExtensionLinksFromURL { return $null }
+        Mock Resolve-ExtensionLinks { return $null }
 
-        $result = Get-ExtensionFromURL -extName 'cache' -version '8.2'
+        $result = Get-ExtensionPackages -extName 'cache' -version '8.2'
 
         $result.data | Should -Be $null
     }
 
     It "Uses extName from linksObj when links are empty" {
-        Mock Get-ExtensionLinksFromURL {
+        Mock Resolve-ExtensionLinks {
             return @{ extName = 'memcache'; links = @() }
         }
 
-        $result = Get-ExtensionFromURL -extName 'mem' -version '8.2'
+        $result = Get-ExtensionPackages -extName 'mem' -version '8.2'
 
         $result.extName | Should -Be 'memcache'
         $result.data   | Should -Be $null

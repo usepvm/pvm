@@ -762,7 +762,7 @@ Describe "Install-Extension" {
 
     It "Returns -1 when no extension matching installed php version (arch & build type)" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = 'x64'; buildType = 'ts' } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -779,7 +779,7 @@ Describe "Install-Extension" {
 
     It "Returns -1 when no matching extension is found" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = 'x64'; buildType = 'ts' } }
-        Mock Get-ExtensionFromURL { return $null }
+        Mock Get-ExtensionPackages { return $null }
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
         $code | Should -Be -1
@@ -787,7 +787,7 @@ Describe "Install-Extension" {
 
     It "Installs extension successfully" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -885,7 +885,7 @@ Describe "Install-Extension" {
 
         It "Falls back to matching links if extension direct link is not found" {
             Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = 'x64'; buildType = 'ts' } }
-            Mock Get-ExtensionFromURL {
+            Mock Get-ExtensionPackages {
                 return @{
                     extName = 'courierauth'
                     data    = @(
@@ -926,7 +926,7 @@ Describe "Install-Extension" {
 
     It "Displays multiple extension versions with prerelease sorting" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = $null; buildType = $null } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -948,7 +948,7 @@ Describe "Install-Extension" {
 
     It "Sorts extensions with x86_64 architecture correctly" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = $null; buildType = $null } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -967,7 +967,7 @@ Describe "Install-Extension" {
 
     It "Sorts extensions with unknown architecture correctly" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = $null; buildType = $null } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -986,7 +986,7 @@ Describe "Install-Extension" {
 
     It "Returns -1 when no dll file matches the pattern" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -1006,7 +1006,7 @@ Describe "Install-Extension" {
 
     It "Prompts user when file already exists and user cancels" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -1027,7 +1027,7 @@ Describe "Install-Extension" {
 
     It "Prompts user when file already exists and user overwrites" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -1050,7 +1050,7 @@ Describe "Install-Extension" {
 
     It "Returns -1 when adding extension to ini fails" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -1072,7 +1072,7 @@ Describe "Install-Extension" {
 
     It "Skips overwrite prompt and installs when skipConfirmation is true and file exists" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -1098,7 +1098,7 @@ Describe "Install-Extension" {
 
     It "Prompts overwrite when skipConfirmation is false and file exists and user cancels" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -1123,7 +1123,7 @@ Describe "Install-Extension" {
 
     It "Prompts overwrite when skipConfirmation is false and file exists and user confirms" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -1150,7 +1150,7 @@ Describe "Install-Extension" {
 
     It "Returns -1 when user does not choose a dll extension version to install" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0" } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(
@@ -1169,7 +1169,7 @@ Describe "Install-Extension" {
 
     It "Returns -1 when no matching extension is found" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0" } }
-        Mock Get-ExtensionFromURL {
+        Mock Get-ExtensionPackages {
             return @{
                 extName = 'curl'
                 data    = @(

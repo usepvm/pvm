@@ -115,7 +115,7 @@ function Get-FilteredPHPExtensionsByCategory {
     return $result
 }
 
-function Select-ExtensionLinksFromURL {
+function Get-ExtensionAvailableReleasesLinks {
     param ($extName)
 
     $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName"
@@ -230,12 +230,12 @@ function Select-ExtensionFromMatches {
     } while ($true)
 }
 
-function Get-ExtensionLinksFromURL {
+function Resolve-ExtensionLinks {
     param ($extName, $version)
 
     try {
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$($version)_pecl" -compute {
-            return Select-ExtensionLinksFromURL -extName $extName
+            return Get-ExtensionAvailableReleasesLinks -extName $extName
         }
     } catch {
         Show-Message -message "`nDirect link for extension '$extName' not found, Loading matching extensions..."
@@ -254,7 +254,7 @@ function Get-ExtensionLinksFromURL {
         $extName = $chosenItem.extName
         Show-Message -message "`nLoading links for '$extName'..."
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$($version)_pecl" -compute {
-            return Select-ExtensionLinksFromURL -extName $extName
+            return Get-ExtensionAvailableReleasesLinks -extName $extName
         }
     }
 
@@ -264,10 +264,10 @@ function Get-ExtensionLinksFromURL {
     }
 }
 
-function Get-ExtensionFromURL {
+function Get-ExtensionPackages {
     param ($extName, $version)
 
-    $linksObj = Get-ExtensionLinksFromURL -extName $extName -version $version
+    $linksObj = Resolve-ExtensionLinks -extName $extName -version $version
 
     if (($null -eq $linksObj) -or ($linksObj.Count -eq 0) -or ($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
         $extName = if ($linksObj -and $linksObj.extName) { $linksObj.extName } else { $extName }

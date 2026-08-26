@@ -242,6 +242,14 @@ function Invoke-Test {
 function Invoke-Log {
     param ($arguments)
 
+    $clearLog = $arguments -contains '--clear'
+
+    if ($clearLog) {
+        Clear-ContentWrapper -path $PVMConfig.paths.logError
+        Show-Success -message "`nLog Cleared Successfully"
+        return 0
+    }
+
     $pageSizeArg = $arguments | Where-Object -FilterScript { $_ -match '^--pageSize=(.+)$' }
     if ($pageSizeArg) {
         $pageSize = $pageSizeArg -replace '^--pageSize=', ''

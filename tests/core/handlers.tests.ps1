@@ -10,6 +10,7 @@ BeforeAll {
     Mock Show-Error {}
     Mock Show-Warning {}
     Mock Show-Message {}
+    Mock Show-Success {}
     Mock Write-Color {}
     Mock Show-Info {}
     Mock New-Line {}
@@ -463,6 +464,15 @@ Describe "Invoke-Log Tests" {
         # Default log page size value for tests
         $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE = 5
         Mock Show-Log { 0 }
+    }
+
+    It "Clears log file" {
+        Mock Clear-ContentWrapper {}
+
+        Invoke-Log -arguments @('--clear') | Should -Be 0
+
+        Should -Invoke Clear-ContentWrapper -Exactly 1
+        Should -Invoke Show-Success -Exactly 1
     }
 
     It "Calls Show-Log with provided --pageSize argument" {

@@ -5,7 +5,7 @@ function Show-Usage {
     Show-PVMVersion
     Show-Message -message "`nUsage:`n"
 
-    $actions = Get-Actions -arguments $arguments
+    $actions = Get-Actions
     $maxLineLength = ($actions.GetEnumerator() | ForEach-Object -Process { $_.Value.data.command.Length } | Measure-Object -Maximum).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
     $maxDescLength = (Get-ConsoleWidth) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2))
     if ($maxDescLength -lt 100) { $maxDescLength = 100 }
@@ -228,7 +228,7 @@ function Start-PVM {
             return 0
         }
 
-        $actions = Get-Actions -arguments $arguments
+        $actions = Get-Actions
 
         if (-not $actions.Contains($command)) {
             $suggestion = Get-ClosestCommandSuggestion -command $command -actions $actions
@@ -248,7 +248,7 @@ function Start-PVM {
             return -1
         }
 
-        $result = $($actions[$command].data.action.Invoke())
+        $result = $(& $actions[$command].data.action -arguments $arguments)
 
         # Check for updates after successful command execution (skip for update command itself)
         if ($result -eq 0 -and $command -ne 'update') {

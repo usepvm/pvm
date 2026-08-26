@@ -623,18 +623,31 @@ Describe "Start-PVM Function Tests" {
     }
 
     Context "Edge Cases and Boundary Tests" {
+        BeforeEach {
+            $script:capturedArgs = $null
+            Mock Get-Actions {
+                return [ordered]@{
+                    'setup' = @{ data = @{ action = {
+                        param ($arguments)
+                        $script:capturedArgs = $arguments
+                        return 0
+                    } } }
+                }
+            }
+        }
+
         It "Should handle null arguments parameter" {
             $result = Start-PVM -command 'setup' -arguments $null
 
             $result | Should -Be 0
-            Should -Invoke Get-Actions -Times 1 -ParameterFilter { $arguments.Count -eq 0 }
+            $script:capturedArgs.Count | Should -Be 0
         }
 
         It "Should handle empty arguments array" {
             $result = Start-PVM -command 'setup' -arguments @()
 
             $result | Should -Be 0
-            Should -Invoke Get-Actions -Times 1 -ParameterFilter { $arguments.Count -eq 0 }
+            $script:capturedArgs.Count | Should -Be 0
         }
 
         It "Should handle large arguments array" {
@@ -643,7 +656,7 @@ Describe "Start-PVM Function Tests" {
             $result = Start-PVM -command 'setup' -arguments $largeArgs
 
             $result | Should -Be 0
-            Should -Invoke Get-Actions -Times 1 -ParameterFilter { $arguments.Count -eq 100 }
+            $script:capturedArgs.Count | Should -Be 100
         }
 
         It "Should handle multiple commands through alias handler" {
@@ -690,14 +703,11 @@ Describe "Start-PVM Function Tests" {
             $testArgs = @('arg1', '--flag', 'value with spaces', '123')
 
             Start-PVM -command 'setup' -arguments $testArgs
-
-            Should -Invoke Get-Actions -Times 1 -ParameterFilter {
-                $arguments.Count -eq 4 -and
-                $arguments[0] -eq 'arg1' -and
-                $arguments[1] -eq '--flag' -and
-                $arguments[2] -eq 'value with spaces' -and
-                $arguments[3] -eq '123'
-            }
+            $script:capturedArgs.Count | Should -Be 4
+            $script:capturedArgs[0] | Should -BeExactly 'arg1'
+            $script:capturedArgs[1] | Should -BeExactly '--flag'
+            $script:capturedArgs[2] | Should -BeExactly 'value with spaces'
+            $script:capturedArgs[3] | Should -BeExactly '123'
         }
     }
 

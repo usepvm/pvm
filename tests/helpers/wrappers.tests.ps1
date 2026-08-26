@@ -349,6 +349,28 @@ Describe "Remove-ItemWrapper Tests" {
     }
 }
 
+Describe "Clear-ContentWrapper Tests" {
+    It "Calls Clear-Content with the correct parameters" {
+        Mock Clear-Content { }
+
+        $path = "$TEST_DRIVE\path"
+
+        $null = Clear-ContentWrapper -path $path
+
+        Should -Invoke Clear-Content -Times 1 -ParameterFilter {
+            $Path -eq $path
+        }
+    }
+
+    It "Throws when Clear-Content throws" {
+        Mock Clear-Content { throw 'Test error' }
+
+        $path = "$TEST_DRIVE\path"
+
+        { Clear-ContentWrapper -path $path } | Should -Throw
+    }
+}
+
 Describe "Get-ItemWrapper Tests" {
     It "Calls Get-Item with the correct parameters" {
         Mock Get-Item { }

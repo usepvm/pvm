@@ -209,7 +209,7 @@ function Select-ExtensionFromMatches {
     }
 
     do {
-        $choiceRaw = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
+        $choiceRaw = Read-HostWrapper -prompt "`nEnter the [number] of your selection"
         if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
             Write-Gray -message "`nInstallation cancelled"
             return $null

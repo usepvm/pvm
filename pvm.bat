@@ -58,4 +58,4 @@ if defined ENGINE_OVERRIDE (
 
 %ENGINE% -NoProfile -ExecutionPolicy Bypass -File "%FILE_TARGET%" !ARGS!
 
-endlocal
+endlocal & exit /b %ERRORLEVEL%

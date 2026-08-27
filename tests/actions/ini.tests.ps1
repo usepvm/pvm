@@ -301,25 +301,9 @@ extension=php_curl.dll
                 DownloadFails = $false
             }
 
-            Mock Read-HostWrapper {
-                param ($Prompt)
-                if ($Prompt -eq "`nInsert the [number] you want to install") {
-                    return '0'
-                }
-            }
-
-            Mock Get-ChildItemWrapper {
-                if ($script:getRandomFile) {
-                    return @( @{ Name = 'random_file' } )
-                }
-                return @( @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\php_curl-1.4.0-7.4-ts-vc15-x86\php_curl.dll" } )
-            }
             Mock Expand-Zip { }
             Mock Remove-ItemWrapper { }
             Mock Move-ItemWrapper { }
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
-                return 'y'
-            }
             Mock Install-Extension { return 0 }
             Mock Install-XDebugExtension { return 0 }
         }

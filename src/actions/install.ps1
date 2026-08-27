@@ -303,7 +303,7 @@ function Select-Version {
         $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
         Show-Message -message $msg
-        $selectedVersionInput = Read-HostWrapper -prompt "`nInsert the [number] matching the version to install (or press Enter to cancel)"
+        $selectedVersionInput = Read-HostWrapper -prompt "`nEnter the [number] of your selection (or press Enter to cancel)"
 
         if (-not $selectedVersionInput) {
             return $null

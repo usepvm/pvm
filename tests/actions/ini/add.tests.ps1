@@ -177,7 +177,7 @@ Describe "Install-XDebugExtension" {
         }
         Mock Read-HostWrapper {
             param ($Prompt)
-            if ($Prompt -eq "`nInsert the [number] you want to install") {
+            if ($Prompt -eq "`nEnter the [number] of your selection") {
                 return ''
             }
         }
@@ -230,7 +230,7 @@ opcache.enable = 1
     }
 
     It "Returns -1 when user does choose a non valid dll extension version to install" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '-10' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '-10' }
         $code = Install-XDebugExtension -iniPath $testIniPath
         $code | Should -Be -1
     }
@@ -238,7 +238,7 @@ opcache.enable = 1
     It "Returns -1 when user does not want to overwrite existing dll extension version" {
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Mock Test-Path { return $true }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nphp_xdebug-3.1.0-8.1-vs16-x64.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { return 'n' }
         Mock Remove-ItemWrapper { }
 
@@ -249,7 +249,7 @@ opcache.enable = 1
     It "Returns 0 when user wants to overwrite existing dll extension version" {
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-2.9.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Test-FileExists -ParameterFilter { $path -eq "$TEST_DRIVE\ext\php_xdebug-3.1.0-8.1-vs16-x64.dll" } -MockWith { return $true }
         Mock Read-HostWrapper -ParameterFilter { $prompt -like '*already exists. Would you like to overwrite it*' } -MockWith { return 'y' }
         Mock Add-MissingPHPExtensionToIni { return 0 }
@@ -285,7 +285,7 @@ opcache.enable = 1
             )
         }
         Mock Add-MissingPHPExtensionToIni { return 0 }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache" }
@@ -305,7 +305,7 @@ opcache.enable = 1
             )
         }
         Mock Add-MissingPHPExtensionToIni { return 0 }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache" }
@@ -327,7 +327,7 @@ opcache.enable = 1
             )
         }
         Mock Add-MissingPHPExtensionToIni { return 0 }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
         Mock Get-ContentWrapper { return "zend_extension=opcache" }
@@ -346,7 +346,7 @@ opcache.enable = 1
             )
         }
         Mock Add-MissingPHPExtensionToIni { return -1 }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
         Mock Remove-ItemWrapper { }
@@ -364,7 +364,7 @@ opcache.enable = 1
             )
         }
         Mock Add-MissingPHPExtensionToIni { return 0 }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
         Mock Remove-ItemWrapper { }
@@ -386,7 +386,7 @@ opcache.enable = 1
             )
         }
         Mock Add-MissingPHPExtensionToIni { return 0 }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
         Mock Remove-ItemWrapper { }
@@ -411,7 +411,7 @@ opcache.enable = 1
             )
         }
         Mock Add-MissingPHPExtensionToIni { return 0 }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
         Mock Remove-ItemWrapper { }
@@ -431,7 +431,7 @@ opcache.enable = 1
             )
         }
         Mock Add-MissingPHPExtensionToIni { return 0 }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '1' }
         Mock Invoke-WebRequestWrapper { }
         Mock Move-ItemWrapper { }
         Mock Remove-ItemWrapper { }
@@ -446,7 +446,7 @@ opcache.enable = 1
         Mock Test-CanUseCache { return $false }
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-2.9.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Test-FileExists { return $true }
         Mock Remove-ItemWrapper { }
         Mock Move-ItemWrapper { }
@@ -464,7 +464,7 @@ opcache.enable = 1
 
     It "Prompts overwrite when skipConfirmation is false and file exists and user cancels" {
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Test-FileExists { return $true }
         Mock Read-HostWrapper -ParameterFilter { $prompt -like '*already exists*' } -MockWith { return 'n' }
         Mock Remove-ItemWrapper { }
@@ -481,7 +481,7 @@ opcache.enable = 1
         Mock Test-CanUseCache { return $false }
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-3.1.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
         Set-MockWebResponse -url "$XDEBUG_DOWNLOAD_URL/php_xdebug-2.9.0-8.1-vs16-x64.dll" -content 'XDebug DLL content'
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Test-FileExists { return $true }
         Mock Read-HostWrapper -ParameterFilter { $prompt -like '*already exists*' } -MockWith { return 'y' }
         Mock Remove-ItemWrapper { }
@@ -627,7 +627,7 @@ Describe "Install-Extension" {
 
         Mock Read-HostWrapper {
             param ($Prompt)
-            if ($Prompt -eq "`nInsert the [number] you want to install") {
+            if ($Prompt -eq "`nEnter the [number] of your selection") {
                 return '0'
             }
         }
@@ -719,14 +719,14 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when user does not choose a zip extension version to install" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { '' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { '' }
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
         $code | Should -Be -1
     }
 
     It "Returns -1 when user does choose a non valid zip extension version to install" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith {
             return '5'
         }
 
@@ -912,8 +912,19 @@ Describe "Install-Extension" {
         }
 
         It "Returns -1 when user does not choose a dll extension version to install" {
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { '' }
-            $code = Install-Extension -iniPath $testIniPath -extName 'cache'
+            Mock Get-ExtensionPackages {
+                return @{
+                    extName = 'courierauth'
+                    data    = @(
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-ts-vs16-x64.zip'; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip'>8.2 Thread Safe (TS) x64</a>" }
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-nts-vs16-x64.zip'; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x64.zip'>8.2 Non Thread Safe (NTS) x64</a>" }
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip'>8.2 Thread Safe (TS) x86</a>" }
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-nts-vs16-x86.zip'; outerHTML = "<a href='$PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x86.zip'>8.2 Non Thread Safe (NTS) x86</a>" }
+                    )
+                }
+            }
+            Mock Select-ExtensionPackageLink { return $null }
+            $code = Install-Extension -iniPath $testIniPath -extName 'courierauth'
             $code | Should -Be -1
         }
     }
@@ -938,7 +949,7 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Test-Path { return $false }
         Mock Add-MissingPHPExtensionToIni { return 0 }
 
@@ -957,7 +968,7 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Test-Path { return $false }
         Mock Add-MissingPHPExtensionToIni { return 0 }
 
@@ -976,7 +987,7 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '1' }
         Mock Test-Path { return $false }
         Mock Add-MissingPHPExtensionToIni { return 0 }
 

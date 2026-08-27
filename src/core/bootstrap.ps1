@@ -255,6 +255,8 @@ function Start-PVM {
             $null = (Test-CheckForUpdatesQuietly)
         }
 
+        New-Line
+
         return $result
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during command '$command'"; exception = $_ }

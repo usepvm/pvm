@@ -8,6 +8,7 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
+    Mock New-Line {}
     Mock Show-Info {}
     Mock Show-Message {}
     Mock Show-Error {}

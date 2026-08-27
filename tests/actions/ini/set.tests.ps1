@@ -37,7 +37,6 @@ max_execution_time = 30
     # Create directory and symlink for current PHP version
     $phpVersionPath = "$TEST_DRIVE\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
-    New-Item -ItemType SymbolicLink -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
     Copy-ItemWrapper -path $testIniPath -destination "$phpVersionPath\php.ini"
 }
 
@@ -70,19 +69,22 @@ Describe "Set-IniSetting" {
 
     It "Updates existing setting" {
         Mock Read-HostWrapper { return '256M' }
-        Set-IniSetting -iniPath $testIniPath -keys @('memory_limit') | Should -Be 0
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('memory_limit')
+        $code | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) -match '^memory_limit\s*=\s*256M' | Should -Be $true
     }
 
     It "Updates setting with spaces" {
         Mock Read-HostWrapper { return 'Off' }
-        Set-IniSetting -iniPath $testIniPath -keys @('display_errors') | Should -Be 0
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('display_errors')
+        $code | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) -match '^display_errors\s*=\s*Off' | Should -Be $true
     }
 
     It "Updates setting and disables" {
         Mock Read-HostWrapper { return '60' }
-        Set-IniSetting -iniPath $testIniPath -keys @('max_execution_time') -enable $false | Should -Be 0
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('max_execution_time') -enable $false
+        $code | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) -match '^;max_execution_time\s*=\s*60' | Should -Be $true
     }
 
@@ -95,7 +97,8 @@ opcache.protect_memory=1
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '4G' }
 
-        Set-IniSetting -iniPath $testIniPath -keys @('memory') | Should -Be 0
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('memory')
+        $code | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) -match '^memory_limit\s*=\s*4G' | Should -Be $true
     }
 
@@ -107,18 +110,20 @@ opcache.protect_memory=1
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
 
-        Set-IniSetting -iniPath $testIniPath -keys @('memory=2G') | Should -Be 0
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('memory=2G')
+        $code | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) -match '^memory_limit\s*=\s*2G' | Should -Be $true
     }
 
     It "Creates backup before modifying" {
         Mock Read-HostWrapper { return '256M' }
-        Set-IniSetting -iniPath $testIniPath -keys @('memory_limit')
+        $null = Set-IniSetting -iniPath $testIniPath -keys @('memory_limit')
         Test-Path $testBackupPath | Should -Be $true
     }
 
     It "Fails for non-existent setting" {
-        Set-IniSetting -iniPath $testIniPath -keys @('nonexistent_setting=value') | Should -Be -1
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('nonexistent_setting=value')
+        $code | Should -Be -1
     }
 
     It "Prints error message for non-valid number" {
@@ -135,7 +140,8 @@ opcache.protect_memory=1
             else { return '1' }
         }
 
-        Set-IniSetting -iniPath $testIniPath -keys @('memory=1G') | Should -Be 0
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('memory=1G')
+        $code | Should -Be 0
     }
 
     It "Displays '(not set)' when multiple matching settings include blank values" {
@@ -147,24 +153,32 @@ memory_limit=2G
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '3G' }
 
-        Set-IniSetting -iniPath $testIniPath -keys @('memory') | Should -Be 0
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('memory')
+        $code | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) -match '^memory_limit\s*=\s*3G' | Should -Be $true
     }
 
     It "Validates key=value format" {
-        Set-IniSetting -iniPath $testIniPath -keys @('invalidformat') | Should -Be -1
-        Set-IniSetting -iniPath $testIniPath -keys @('novalue=') | Should -Be -1
-        Set-IniSetting -iniPath $testIniPath -keys @('=nokey') | Should -Be -1
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('invalidformat')
+        $code | Should -Be -1
+
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('novalue=')
+        $code | Should -Be -1
+
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('=nokey')
+        $code | Should -Be -1
     }
 
     It "Handles values with special characters" {
         Mock Read-HostWrapper { return '10M' }
-        Set-IniSetting -iniPath $testIniPath -keys @('upload_max_filesize') | Should -Be 0
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('upload_max_filesize')
+        $code | Should -Be 0
         (Get-ContentWrapper -path $testIniPath) -match '^upload_max_filesize\s*=\s*10M' | Should -Be $true
     }
 
     It "Returns -1 on error" {
         Mock Get-ContentWrapper { throw 'Access denied' }
-        Set-IniSetting -iniPath $testIniPath -keys @('memory_limit=256M') | Should -Be -1
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('memory_limit=256M')
+        $code | Should -Be -1
     }
 }

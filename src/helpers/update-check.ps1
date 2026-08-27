@@ -6,6 +6,7 @@ function Get-LastUpdateCheckTimestamp {
             return [DateTime](Get-ContentWrapper -path $timestampFile)
         }
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get last update check timestamp"; exception = $_ }
         return $null
     }
 }
@@ -13,10 +14,15 @@ function Get-LastUpdateCheckTimestamp {
 function Set-LastUpdateCheckTimestamp {
     try {
         $timestampFile = "$($PVMConfig.paths.directories.cache)\last_update_check.txt"
-        $null = New-Directory -path $PVMConfig.paths.directories.cache
+        $created = New-Directory -path $PVMConfig.paths.directories.cache
+        if ($created -ne 0) {
+            Show-Error -message "`nFailed to create cache directory."
+            return -1
+        }
         Set-ContentWrapper -path $timestampFile -value (Get-Date)
         return 0
     } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set last update check timestamp"; exception = $_ }
         return -1
     }
 }
@@ -45,7 +51,7 @@ function Test-CheckForUpdatesQuietly {
         $null = Set-LastUpdateCheckTimestamp
 
         if ($result.code -eq 0 -and $result.message -like '*Update available*') {
-            Show-Info -Message "`n$($result.message) Run 'pvm update' to update."
+            Show-Info -message "`n$($result.message) Run 'pvm update' to update."
         }
 
         return $result.code

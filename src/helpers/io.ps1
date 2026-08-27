@@ -143,7 +143,7 @@ function New-SymbolicLink {
         }
 
         # Make sure parent directory exists
-        $parent = Split-Path -Path $link
+        $parent = Split-Path -Path $link -Parent
         if (Test-DirectoryNotExists -path $parent) {
             $created = New-Directory -path $parent
             if ($created -ne 0) {
@@ -205,4 +205,10 @@ function Test-NoResponse {
     param ($response)
 
     return -not (Test-YesResponse -response $response)
+}
+
+function Get-BaseUrl {
+    param ($url)
+
+    return ([System.Uri]$url).Host
 }

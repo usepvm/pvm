@@ -1,7 +1,5 @@
 ﻿
 function Get-HelpAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm help <command>';
         description = 'Display help for a command.';
@@ -12,7 +10,10 @@ function Get-HelpAction {
                 'If no command is provided, displays help for all commands.'
             );
         };
-        action      = { return Invoke-Help -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-Help -arguments $arguments
+        }
     }
 }
 
@@ -59,8 +60,6 @@ function Get-CurrentAction {
 }
 
 function Get-ListAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm list [available] [x86|x64] [ts|nts]';
         description = "List installed PHP versions, or use 'available' to show versions that can be installed.";
@@ -79,13 +78,14 @@ function Get-ListAction {
                 'pvm list available --search=8.2 .... Show available versions with 8.2 in the name'
             )
         };
-        action      = { return Invoke-List -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-List -arguments $arguments
+        }
     }
 }
 
 function Get-InstallAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm install <version>|[auto]|[latest] [x86|x64] [ts|nts]';
         description = "Install a specific PHP version, 'latest', or use 'auto' to install the version from composer.json or .php-version.";
@@ -107,13 +107,14 @@ function Get-InstallAction {
                 'pvm install latest ........... Install the latest available PHP version'
             )
         }
-        action      = { return Invoke-Install -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-Install -arguments $arguments
+        }
     }
 }
 
 function Get-UninstallAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm uninstall <version>';
         description = 'Remove an installed PHP version.';
@@ -127,13 +128,14 @@ function Get-UninstallAction {
                 '<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)'
             )
         }
-        action      = { return Invoke-Uninstall -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-Uninstall -arguments $arguments
+        }
     }
 }
 
 function Get-UseAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm use <version>|[auto]';
         description = "Switch to a specific PHP version, or use 'auto' to select the version from composer.json or .php-version.";
@@ -152,13 +154,14 @@ function Get-UseAction {
                 'auto ............. Auto-detect version from project files'
             )
         }
-        action      = { return Invoke-Use -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-Use -arguments $arguments
+        }
     }
 }
 
 function Get-InfoAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm info [--verbose]';
         description = 'Show PVM status and environment information.';
@@ -169,13 +172,14 @@ function Get-InfoAction {
                 'including PVM version, currently active PHP version, paths, and environment variables.'
             )
         }
-        action      = { return Invoke-Info -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-Info -arguments $arguments
+        }
     }
 }
 
 function Get-IniAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm ini <action> <args>';
         description = 'Manage php.ini settings and extensions for the active PHP version.';
@@ -185,51 +189,53 @@ function Get-IniAction {
                 'Manage PHP configuration (php.ini) settings and extensions for the currently active PHP version.'
             )
             ARGUMENTS   = @(
-                'set <setting>=<value> [--disable] ................. Set a php.ini configuration value'
-                'get <setting> ..................................... Get a php.ini configuration value'
-                'enable <extension> ................................ Enable a PHP extension'
-                'disable <extension> ............................... Disable a PHP extension'
-                'status <extension> ................................ Check if extension is enabled'
-                'info [extensions] [settings] [--search=<term>] .... Displays information about the environment and php.ini information summary'
-                'restore ........................................... Restore original php.ini from backup'
-                'add <extension> ................................... Install a PHP extension'
-                'remove <extension> ................................ Remove a PHP extension'
-                "ext [available] [--search=<term>] ............. Lists the PHP extensions. Type 'available' at the end to see what can be installed."
+                'set <setting>=<value> [--disable] ........................... Set a php.ini configuration value'
+                'get <setting> ............................................... Get a php.ini configuration value'
+                'enable <extension> .......................................... Enable a PHP extension'
+                'disable <extension> ......................................... Disable a PHP extension'
+                'status <extension> .......................................... Check if extension is enabled'
+                'info [extensions] [settings] [--search=<term>] .............. Displays information about the environment and php.ini information summary'
+                'restore ..................................................... Restore original php.ini from backup'
+                'add <extension> ............................................. Install a PHP extension'
+                'remove <extension> .......................................... Remove a PHP extension'
+                "ext [available] [--search=<term>]|[info <extension>] ........ Lists the PHP extensions. Type 'available' at the end to see what can be installed."
             )
             EXAMPLES    = @(
-                'pvm ini set memory_limit=256M ..................... Sets memory limit to 256MB and enables the setting'
-                'pvm ini set opcache.enable=1 --disable ............ Sets opcache.enable to 1 and disables the setting'
-                "pvm ini set memory=1G ............................. Shows matching settings for 'memory' then prompts for value and enables the setting"
-                "pvm ini set memory ................................ Shows matching settings for 'memory' then prompts for value and enables the setting"
-                'pvm ini get memory_limit .......................... Shows current memory limit setting'
-                "pvm ini get memory...... .......................... Shows matching settings for 'memory' setting"
-                'pvm ini enable mysqli ............................. Enables the mysqli extension'
-                "pvm ini enable sql ................................ Shows matching extensions for 'sql' then enables the chosen one"
-                'pvm ini disable xdebug ............................ Disables the xdebug extension'
-                "pvm ini disable sql ............................... Shows matching extensions for 'sql' then disables the chosen one"
-                'pvm ini status opcache ............................ Shows opcache extension status'
-                "pvm ini status sql ................................ Shows matching extensions status for 'sql'"
-                'pvm ini info ...................................... Lists php.ini settings and extensions'
-                "pvm ini info --search=cache ....................... Lists php.ini settings and extensions with 'cache' in their name"
-                'pvm ini info extensions ........................... Lists php.ini extensions only'
-                'pvm ini info settings ............................. Lists php.ini settings only'
-                'pvm ini add opcache ............................... Installs the opcache extension'
-                "pvm ini add sql ................................... Shows matching extensions for 'sql' then installs the chosen one"
-                'pvm ini remove xdebug ............................. Removes the xdebug extension'
-                "pvm ini remove sql ................................ Shows matching extensions for 'sql' then removes the chosen one"
-                'pvm ini ext ....................................... Lists the PHP extensions'
-                'pvm ini ext available ............................. Lists available PHP extensions'
-                "pvm ini ext --search=zip .......................... Lists PHP extensions with 'zip' in their name"
-                "pvm ini ext available --search=zip ................ Lists available PHP extensions with 'zip' in their name"
+                'pvm ini set memory_limit=256M ............................... Sets memory limit to 256MB and enables the setting'
+                'pvm ini set opcache.enable=1 --disable ...................... Sets opcache.enable to 1 and disables the setting'
+                "pvm ini set memory=1G ....................................... Shows matching settings for 'memory' then prompts for value and enables the setting"
+                "pvm ini set memory .......................................... Shows matching settings for 'memory' then prompts for value and enables the setting"
+                'pvm ini get memory_limit .................................... Shows current memory limit setting'
+                "pvm ini get memory...... .................................... Shows matching settings for 'memory' setting"
+                'pvm ini enable mysqli ....................................... Enables the mysqli extension'
+                "pvm ini enable sql .......................................... Shows matching extensions for 'sql' then enables the chosen one"
+                'pvm ini disable xdebug ...................................... Disables the xdebug extension'
+                "pvm ini disable sql ......................................... Shows matching extensions for 'sql' then disables the chosen one"
+                'pvm ini status opcache ...................................... Shows opcache extension status'
+                "pvm ini status sql .......................................... Shows matching extensions status for 'sql'"
+                'pvm ini info ................................................ Lists php.ini settings and extensions'
+                "pvm ini info --search=cache ................................. Lists php.ini settings and extensions with 'cache' in their name"
+                'pvm ini info extensions ..................................... Lists php.ini extensions only'
+                'pvm ini info settings ....................................... Lists php.ini settings only'
+                'pvm ini add opcache ......................................... Installs the opcache extension'
+                "pvm ini add sql ............................................. Shows matching extensions for 'sql' then installs the chosen one"
+                'pvm ini remove xdebug ....................................... Removes the xdebug extension'
+                "pvm ini remove sql .......................................... Shows matching extensions for 'sql' then removes the chosen one"
+                'pvm ini ext ................................................. Lists the PHP extensions'
+                'pvm ini ext available ....................................... Lists available PHP extensions'
+                "pvm ini ext --search=zip .................................... Lists PHP extensions with 'zip' in their name"
+                "pvm ini ext available --search=zip .......................... Lists available PHP extensions with 'zip' in their name"
+                "pvm ini ext info zip ........................................ Lists PHP extensions with 'zip' in their name and their information"
             )
         }
-        action      = { return Invoke-Ini -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-Ini -arguments $arguments
+        }
     }
 }
 
 function Get-ProfileAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm profile <action> <args>';
         description = 'Save, load, inspect, import, and export PHP configuration profiles.';
@@ -264,13 +270,14 @@ function Get-ProfileAction {
                 'pvm profile import ./profile.json custom ..... Imports with custom name'
             )
         }
-        action      = { return Invoke-Profile -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-Profile -arguments $arguments
+        }
     }
 }
 
 function Get-CacheAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm cache <action> <args>';
         description = 'List, inspect, delete, or clear PVM cache files.';
@@ -292,7 +299,10 @@ function Get-CacheAction {
                 'pvm cache clear .............................. Deletes all cache files'
             )
         }
-        action      = { return Invoke-Cache -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-Cache -arguments $arguments
+        }
     }
 }
 
@@ -328,8 +338,6 @@ function Get-RepairAction {
 }
 
 function Get-LogAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm log <options>';
         description = 'Display recent PVM log entries.';
@@ -345,13 +353,14 @@ function Get-LogAction {
                 "pvm log --search=error .... Shows entries matching 'error' term"
             )
         }
-        action      = { return Invoke-Log -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-Log -arguments $arguments
+        }
     }
 }
 
 function Get-TestAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm test <options>';
         description = 'Run the PVM test suite.';
@@ -393,13 +402,14 @@ function Get-TestAction {
                 '--mute ........................... Force mute mode (SOUNDS_DISABLED = false)'
             )
         }
-        action      = { return Invoke-Test -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-Test -arguments $arguments
+        }
     }
 }
 
 function Get-UpdateAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm update [--check]';
         description = 'Update PVM to the latest version from git repository.';
@@ -418,13 +428,14 @@ function Get-UpdateAction {
                 '--check .................... Only check for updates without applying them'
             )
         }
-        action      = { return Invoke-Update -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-Update -arguments $arguments
+        }
     }
 }
 
 function Get-RunAction {
-    param ($arguments)
-
     return @{
         command     = 'pvm run <script-name>|[list] [--mute]';
         description = 'Run a predefined script from the scripts configuration.';
@@ -447,17 +458,18 @@ function Get-RunAction {
                 'pvm run test:matrix --mute ................. Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
             )
         }
-        action      = { return Invoke-Run -arguments $arguments }
+        action      = {
+            param ($arguments)
+            return Invoke-Run -arguments $arguments
+        }
     }
 }
 
 function Get-Actions {
-    param ($arguments)
-
     return [ordered]@{
         'help' = @{
             order = 0; itemOrder = 0; group = 'Getting Started';
-            data = (Get-HelpAction -arguments $arguments)
+            data = (Get-HelpAction)
         }
         'version' = @{
             order = 0; itemOrder = 1; group = 'Getting Started';
@@ -473,35 +485,35 @@ function Get-Actions {
         }
         'list' = @{
             order = 1; itemOrder = 1; group = 'PHP Version Management';
-            data = (Get-ListAction -arguments $arguments)
+            data = (Get-ListAction)
         }
         'install' = @{
             order = 1; itemOrder = 2; group = 'PHP Version Management';
-            data = (Get-InstallAction -arguments $arguments)
+            data = (Get-InstallAction)
         }
         'use' = @{
             order = 1; itemOrder = 3; group = 'PHP Version Management';
-            data = (Get-UseAction -arguments $arguments)
+            data = (Get-UseAction)
         }
         'uninstall' = @{
             order = 1; itemOrder = 4; group = 'PHP Version Management';
-            data = (Get-UninstallAction -arguments $arguments)
+            data = (Get-UninstallAction)
         }
         'info' = @{
             order = 3; itemOrder = 0; group = 'Info and Diagnostics';
-            data = (Get-InfoAction -arguments $arguments)
+            data = (Get-InfoAction)
         }
         'ini' = @{
             order = 2; itemOrder = 0; group = 'PHP Configuration';
-            data = (Get-IniAction -arguments $arguments)
+            data = (Get-IniAction)
         }
         'profile' = @{
             order = 2; itemOrder = 1; group = 'PHP Configuration';
-            data = (Get-ProfileAction -arguments $arguments)
+            data = (Get-ProfileAction)
         }
         'cache' = @{
             order = 4; itemOrder = 1; group = 'Maintenance';
-            data = (Get-CacheAction -arguments $arguments)
+            data = (Get-CacheAction)
         }
         'aliases' = @{
             order = 3; itemOrder = 1; group = 'Info and Diagnostics';
@@ -513,19 +525,19 @@ function Get-Actions {
         }
         'test' = @{
             order = 5; itemOrder = 0; group = 'Development';
-            data = (Get-TestAction -arguments $arguments)
+            data = (Get-TestAction)
         }
         'update' = @{
             order = 4; itemOrder = 2; group = 'Maintenance';
-            data = (Get-UpdateAction -arguments $arguments)
+            data = (Get-UpdateAction)
         }
         'run' = @{
             order = 5; itemOrder = 1; group = 'Development';
-            data = (Get-RunAction -arguments $arguments)
+            data = (Get-RunAction)
         }
         'log' = @{
             order = 3; itemOrder = 2; group = 'Info and Diagnostics';
-            data = (Get-LogAction -arguments $arguments)
+            data = (Get-LogAction)
         }
     }
 }

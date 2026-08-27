@@ -1,28 +1,72 @@
 ﻿
+function Select-ExtensionPackageLink {
+    param ($extName, $extensionLinks)
+
+    $extensionLinksGrouped = [ordered]@{}
+    $index = 0
+    $extensionLinks |
+        Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
+        Group-Object extVersion |
+        Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
+        ForEach-Object -Process {
+            $sortedGroup = $_.Group | Sort-Object -Property `
+            @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
+            @{ Expression     = {
+                    switch ($_.arch) {
+                        'x86_64' { 2 }
+                        'x64' { 2 }
+                        'x86' { 1 }
+                        default { 0 }
+                    }
+                }; Descending = $true
+            }
+            $sortedGroup | ForEach-Object -Process {
+                $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
+                $index++
+            }
+
+            $extensionLinksGrouped[$_.Name] = $sortedGroup
+        }
+
+    $extensionLinksGrouped.GetEnumerator() | ForEach-Object -Process {
+        Show-Message -message "`n$extName $($_.Key)"
+        $_.Value | ForEach-Object -Process {
+            $text = "PHP $extName $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
+            Show-Message -message " [$($_.index)] $text"
+        }
+    }
+
+    $packageIndex = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
+    if ([string]::IsNullOrWhiteSpace($packageIndex)) {
+        Write-Gray -message "`nInstallation cancelled"
+        return $null
+    }
+
+    return ($extensionLinks | Where-Object -FilterScript { $_.index -eq $packageIndex })
+}
+
 function Get-XdebugConfigV2 {
     param ($XDebugPath)
 
-    return @"
-
-        [xdebug]
-        ;zend_extension="$XDebugPath"
-        xdebug.remote_enable=1
-        xdebug.remote_host=127.0.0.1
-        xdebug.remote_port=9000
-"@
+    return @(
+        '[xdebug]'
+        ";zend_extension='$XDebugPath'"
+        'xdebug.remote_enable=1'
+        'xdebug.remote_host=127.0.0.1'
+        'xdebug.remote_port=9000'
+    )
 }
 
 function Get-XdebugConfigV3 {
     param ($XDebugPath)
 
-    return @"
-
-        [xdebug]
-        ;zend_extension="$XDebugPath"
-        xdebug.mode=debug
-        xdebug.client_host=127.0.0.1
-        xdebug.client_port=9003
-"@
+    return @(
+        '[xdebug]'
+        ";zend_extension='$XDebugPath'"
+        'xdebug.mode=debug'
+        'xdebug.client_host=127.0.0.1'
+        'xdebug.client_port=9003'
+    )
 }
 
 function Get-XDebugFromUrl {
@@ -49,14 +93,13 @@ function Get-XDebugFromUrl {
             }
 
             $formattedList += @{
-                href          = $_.href
+                href          = "$($PVMConfig.links.xdebugBase)$($_.href)"
                 version       = $version
-                xDebugVersion = $xDebugVersion;
+                extVersion    = $xDebugVersion;
                 arch          = if ($fileName -match '(x86_64|x64)(?=\.dll$)') { 'x64' } else { 'x86' }
                 buildType     = if ($fileName -match '(?i)(?:^|-)nts(?:-|\.dll$)') { 'NTS' } else { 'TS' }
                 compiler      = if ($fileName -match '(?i)\b(vs|vc)\d+\b') { $matches[0].ToUpper() } else { 'unknown' }
-                fileName      = $fileName;
-                outerHTML     = $_.outerHTML
+                fileName      = $fileName
             }
         }
 
@@ -93,7 +136,7 @@ function Install-XDebugExtension {
     try {
         $currentVersionObj = Get-CurrentPHPVersion
         $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
-        $xDebugList = Get-OrUpdateCache -cacheFileName "available_xdebug_versions_$currentVersion`_xdebug" -compute {
+        $xDebugList = Get-OrUpdateCache -cacheFileName "packages_links_for_xdebug_php_$($currentVersion)_xdebug" -compute {
             return Show-SpinnerWhileJob -argumentList @($currentVersion) -scriptBlock {
                 param ($currentVersion)
 
@@ -119,60 +162,16 @@ function Install-XDebugExtension {
             return $true
         }
 
-        $xDebugListGrouped = [ordered]@{}
-        $index = 0
-        $xDebugList |
-        Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
-        Group-Object xDebugVersion |
-        Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
-        ForEach-Object -Process {
-            $sortedGroup = $_.Group | Sort-Object `
-            @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
-            @{ Expression     = {
-                    switch ($_.arch) {
-                        'x86_64' { 2 }
-                        'x64' { 2 }
-                        'x86' { 1 }
-                        default { 0 }
-                    }
-                }; Descending = $true
-            }
+        Show-Info -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.xdebugHistorical)"
+        $chosenItem = Select-ExtensionPackageLink -extName 'Xdebug' -extensionLinks $xDebugList
 
-            $sortedGroup | ForEach-Object -Process {
-                $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
-                $index++
-            }
-
-            $xDebugListGrouped[$_.Name] = $sortedGroup
-        }
-
-        $xDebugListGrouped.GetEnumerator() | ForEach-Object -Process {
-            Show-Message -message "`nXDebug $($_.Key)"
-            $_.Value | ForEach-Object -Process {
-                $text = "PHP XDebug $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
-                Show-Message -message " [$($_.index)] $text"
-            }
-        }
-        Show-Message -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.xdebugHistorical)"
-
-        $packageIndex = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
-        if ([string]::IsNullOrWhiteSpace($packageIndex)) {
-            Write-Gray -message "`nInstallation cancelled"
-            return -1
-        }
-
-        $chosenItem = $xDebugListGrouped.GetEnumerator() | ForEach-Object -Process {
-            $_.Value | Where-Object -FilterScript {
-                $_.index -eq $packageIndex
-            }
-        }
         if (-not $chosenItem) {
-            Show-Error -message "`nYou chose the wrong index: $packageIndex"
+            Show-Error -message "`nYou chose the wrong index"
             return -1
         }
 
-        $null = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.xdebugBase)/$($chosenItem.href.TrimStart('/'))" -outFile $PVMConfig.paths.directories.php
-        $phpPath = ($iniPath | Split-Path -Parent)
+        $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.directories.php
+        $phpPath = Split-Path -Path $iniPath -Parent
 
         if (-not $skipConfirmation) {
             if (Test-FileExists -path "$phpPath\ext\$($chosenItem.fileName)") {
@@ -187,23 +186,20 @@ function Install-XDebugExtension {
 
         Move-ItemWrapper -path "$($PVMConfig.paths.directories.php)\$($chosenItem.fileName)" -destination "$phpPath\ext"
         $xDebugConfig = Get-XdebugConfigV2 -XDebugPath $($chosenItem.fileName)
-        if ($chosenItem.xDebugVersion -like '3.*') {
+        if ($chosenItem.extVersion -like '3.*') {
             $xDebugConfig = Get-XdebugConfigV3 -XDebugPath $($chosenItem.fileName)
         }
-        # check existence of previous xdebug
-        $iniContent = Get-ContentWrapper -path $iniPath
-        $dllXDebugExists = $false
-        for ($i = 0; $i -lt $iniContent.Count; $i++) {
-            if ($iniContent[$i] -match '^(?<comment>;)?\s*zend_extension\s*=.*xdebug.*$') {
-                $iniContent[$i] = $iniContent[$i] -replace '^(?<comment>;)?(\s*zend_extension\s*=).*$', "zend_extension='$($chosenItem.fileName)'"
-                $dllXDebugExists = $true
-            }
-        }
-        if ($dllXDebugExists) {
-            Set-ContentWrapper -path $iniPath -value $iniContent
+
+        $code = Add-MissingPHPExtensionToIni -iniPath $iniPath -extFileName $chosenItem.fileName -enable $false
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to add XDebug"
+            return -1
         } else {
-            $xDebugConfig = $xDebugConfig -replace '\ +'
-            Add-ContentWrapper -path $iniPath -value $xDebugConfig
+            $iniContent = Get-ContentWrapper -path $iniPath
+            if ($iniContent -notcontains '[xdebug]') {
+                $xDebugConfig = "`n$($xDebugConfig -join "`n")"
+                Add-ContentWrapper -path $iniPath -value $xDebugConfig
+            }
         }
 
         Show-Success -message "`nXDebug installed successfully"
@@ -220,7 +216,7 @@ function Add-MissingPHPExtensionToIni {
 
     try {
         if (Test-FileNotExists -path $iniPath) {
-            Show-Error -Message "`nphp.ini file not found: $iniPath"
+            Show-Error -message "`nphp.ini file not found: $iniPath"
             return -1
         }
 
@@ -230,23 +226,22 @@ function Add-MissingPHPExtensionToIni {
         $extDirectory = "$phpDirectory\ext"
 
         if (Test-DirectoryNotExists -path $extDirectory) {
-            Show-Error -Message "`nExtensions directory not found: $extDirectory"
+            Show-Error -message "`nExtensions directory not found: $extDirectory"
             return -1
         }
 
         if (Test-FileNotExists -path "$extDirectory\$extFileName") {
-            Show-Error -Message "`nExtension file not found: $extFileName"
+            Show-Error -message "`nExtension file not found: $extFileName"
             return -1
         }
 
-        $lines = Get-ContentWrapper -path $iniPath
-        foreach ($line in $lines) {
-            if ($line -match "^(;)?\s*(zend_)?extension\s*=\s*$extFileName\s*") {
-                Show-Warning -message "- Extension '$extFileName' already exists in php.ini"
-                return 0
-            }
+        $matchesList = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $extFileName -includeIniOnly $true
+        if ($matchesList.Length -gt 0) {
+            Show-Warning -message "- Extension '$extFileName' already exists in php.ini"
+            return 0
         }
 
+        $lines = Get-ContentWrapper -path $iniPath
         $commented = if ($enable) { '' } else { ';' }
         $isZendExtension = Get-ZendExtensionsList | Where-Object -FilterScript { $extFileName -like "*$_*" }
         if ($isZendExtension) {
@@ -270,11 +265,11 @@ function Install-Extension {
     try {
         $currentVersionObj = Get-CurrentPHPVersion
         $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
-        $extensionLinksObj = Get-ExtensionFromURL -extName $extName -version $currentVersion
+        $extensionLinksObj = Get-ExtensionPackages -extName $extName -version $currentVersion
 
         if (($null -eq $extensionLinksObj) -or ($extensionLinksObj.Count -eq 0) -or ($null -eq $extensionLinksObj.data) -or ($extensionLinksObj.data.Count -eq 0)) {
             $extName = if ($extensionLinksObj) { $extensionLinksObj.extName } else { $extName }
-            Show-Error -Message "`nNo packages found for $extName"
+            Show-Error -message "`nNo packages found for $extName"
             return -1
         }
 
@@ -291,7 +286,7 @@ function Install-Extension {
         }
 
         if ($null -eq $extensionLinks -or $extensionLinks.Count -eq 0) {
-            Show-Error -Message "`nNo packages found for '$extName' matching current PHP architecture/build type"
+            Show-Error -message "`nNo packages found for '$extName' matching current PHP architecture/build type"
             return -1
         }
 
@@ -299,57 +294,17 @@ function Install-Extension {
         if ($extensionLinks.Length -eq 1) {
             $chosenItem = $($extensionLinks)
         } else {
-            $extensionLinksGrouped = [ordered]@{}
-            $index = 0
-            $extensionLinks |
-            Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
-            Group-Object extVersion |
-            Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
-            ForEach-Object -Process {
-                $sortedGroup = $_.Group | Sort-Object `
-                @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
-                @{ Expression     = {
-                        switch ($_.arch) {
-                            'x86_64' { 2 }
-                            'x64' { 2 }
-                            'x86' { 1 }
-                            default { 0 }
-                        }
-                    }; Descending = $true
-                }
-                $sortedGroup | ForEach-Object -Process {
-                    $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
-                    $index++
-                }
-
-                $extensionLinksGrouped[$_.Name] = $sortedGroup
-            }
-
-            $extensionLinksGrouped.GetEnumerator() | ForEach-Object -Process {
-                Show-Message -message "`n$extName $($_.Key)"
-                $_.Value | ForEach-Object -Process {
-                    $text = "PHP $extName $($_.version) $($_.compiler) $($_.buildType) $($_.arch)"
-                    Show-Message -message " [$($_.index)] $text"
-                }
-            }
             Show-Info -message "`nThis is a partial list. For a complete list, visit: $($PVMConfig.links.peclPackageRoot)/$extName"
-
-            $packageIndex = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
-            if ([string]::IsNullOrWhiteSpace($packageIndex)) {
-                Write-Gray -message "`nInstallation cancelled"
-                return -1
-            }
-
-            $chosenItem = $extensionLinks | Where-Object -FilterScript { $_.index -eq $packageIndex }
+            $chosenItem = Select-ExtensionPackageLink -extName $extName -extensionLinks $extensionLinks
         }
 
         if (-not $chosenItem) {
-            Show-Error -Message "`nYou chose the wrong index: $packageIndex"
+            Show-Error -message "`nYou chose the wrong index"
             return -1
         }
 
         $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.directories.php
-        $fileNamePath = ($chosenItem.href -replace "$($PVMConfig.links.peclWinExtDownload)/$extName/$($chosenItem.extVersion)/|.zip", '').Trim()
+        $fileNamePath = $chosenItem.fileName -replace '.zip$', ''
         $extractPath = "$($PVMConfig.paths.directories.php)\$fileNamePath"
         Expand-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
         $files = Get-ChildItemWrapper -path $extractPath
@@ -357,11 +312,11 @@ function Install-Extension {
             ($_.Name -match "^php_$extName.*\.dll$")
         }
         if (-not $extFile) {
-            Show-Error -Message "`nFailed to find $extName"
+            Show-Error -message "`nFailed to find $extName"
             return -1
         }
 
-        $phpPath = ($iniPath | Split-Path -Parent)
+        $phpPath = Split-Path -Path $iniPath -Parent
 
         if (-not $skipConfirmation) {
             if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
@@ -378,7 +333,7 @@ function Install-Extension {
         Remove-ItemWrapper -path $extractPath
         $code = Add-MissingPHPExtensionToIni -iniPath $iniPath -extFileName $extFile.Name -enable $false
         if ($code -ne 0) {
-            Show-Error -Message "`nFailed to add $extName"
+            Show-Error -message "`nFailed to add $extName"
             return -1
         }
         Show-Success -message "`n$extName installed successfully"

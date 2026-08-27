@@ -17,7 +17,7 @@ function Test-PVMSetup {
             $path = ''
         }
 
-        $parent = Split-Path -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        $parent = Split-Path -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Parent
         $pathEntries = $path -split ';' | Where-Object -FilterScript { $_ -ne '' }
         if (
             (

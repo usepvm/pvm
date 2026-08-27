@@ -17,13 +17,13 @@ BeforeAll {
     # Create directory and symlink for current PHP version
     $phpVersionPath = "$($PVMConfig.paths.directories.php)\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
-    New-Item -ItemType SymbolicLink -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
 
     Mock Show-Error {}
     Mock Show-Warning {}
     Mock Show-Message {}
     Mock Show-Info {}
     Mock Write-Color {}
+    Mock New-Line {}
 
     function Reset-IniContent {
         # Create a test php.ini file
@@ -104,6 +104,24 @@ Describe "Invoke-IniAction" {
             Mock Test-FileNotExists { return $false }
             $result = Invoke-IniAction -action 'info' -params @('--search=cache')
             $result | Should -Be 0
+        }
+    }
+
+    Context "extension info action" {
+        It "Executes extension info action successfully" {
+            Mock Test-FileNotExists { return $false }
+            Mock Show-PHPExtensionInfo { return 0 }
+
+            $result = Invoke-IniAction -action 'ext' -params @('info', 'xdebug')
+
+            $result | Should -Be 0
+            Should -Invoke Show-PHPExtensionInfo -Exactly 1 -ParameterFilter { $extName -eq 'xdebug' }
+        }
+
+        It "Requires exactly one extension name" {
+            Mock Test-FileNotExists { return $false }
+
+            Invoke-IniAction -action 'ext' -params @('info') | Should -Be -1
         }
     }
 
@@ -324,7 +342,7 @@ extension=php_curl.dll
             $result | Should -Be -1
         }
 
-        It "Installs extension with skip confirmation" {
+        It "Installs pecl extension with skip confirmation" {
             Mock Test-FileNotExists { return $false }
             $result = Invoke-IniAction -action 'add' -params @('pdo_mysql', '-y')
 
@@ -334,7 +352,7 @@ extension=php_curl.dll
             }
         }
 
-        It "Installs extension with skip confirmation" {
+        It "Installs xdebug extension with skip confirmation" {
             Mock Test-FileNotExists { return $false }
             $result = Invoke-IniAction -action 'add' -params @('xdebug', '-y')
 

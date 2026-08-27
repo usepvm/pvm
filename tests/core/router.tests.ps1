@@ -28,8 +28,7 @@ Describe "Get-Actions Tests" {
     }
 
     It "Should return ordered hashtable with all actions" {
-        $arguments = @('test', 'arg')
-        $actions = Get-Actions -arguments $arguments
+        $actions = Get-Actions
 
         $actions | Should -BeOfType [System.Collections.Specialized.OrderedDictionary]
         $actions.Keys | Should -Contain 'help'
@@ -52,35 +51,35 @@ Describe "Get-Actions Tests" {
 
     Context "Action Execution Tests" {
         It "Should execute help action correctly" {
-            $actions = Get-Actions -arguments @()
+            $actions = Get-Actions
             $actions['help'].data.action.Invoke()
 
             Should -Invoke Invoke-Help -Times 1
         }
 
         It "Should execute version action correctly" {
-            $actions = Get-Actions -arguments @()
+            $actions = Get-Actions
             $actions['version'].data.action.Invoke()
 
             Should -Invoke Invoke-Version -Times 1
         }
 
         It "Should execute setup action correctly" {
-            $actions = Get-Actions -arguments @()
+            $actions = Get-Actions
             $actions['setup'].data.action.Invoke()
 
             Should -Invoke Invoke-Setup -Times 1
         }
 
         It "Should execute repair action correctly" {
-            $actions = Get-Actions -arguments @()
+            $actions = Get-Actions
             $actions['repair'].data.action.Invoke()
 
             Should -Invoke Invoke-Repair -Times 1
         }
 
         It "Should execute current action correctly" {
-            $actions = Get-Actions -arguments @()
+            $actions = Get-Actions
             $actions['current'].data.action.Invoke()
 
             Should -Invoke Invoke-Current -Times 1
@@ -88,92 +87,92 @@ Describe "Get-Actions Tests" {
 
         It "Should execute list action with arguments" {
             $testArgs = @('available')
-            $actions = Get-Actions -arguments $testArgs
-            $actions['list'].data.action.Invoke()
+            $actions = Get-Actions
+            & $actions['list'].data.action -arguments $testArgs
 
             Should -Invoke Invoke-List -Times 1
         }
 
         It "Should execute install action correctly" {
-            $actions = Get-Actions -arguments @('8.2.0')
-            $actions['install'].data.action.Invoke()
+            $actions = Get-Actions
+            & $actions['install'].data.action -arguments @('8.2.0')
 
             Should -Invoke Invoke-Install -Times 1
         }
 
         It "Should execute uninstall action correctly" {
-            $actions = Get-Actions -arguments @('8.2.0')
-            $actions['uninstall'].data.action.Invoke()
+            $actions = Get-Actions
+            & $actions['uninstall'].data.action -arguments @('8.2.0')
 
             Should -Invoke Invoke-Uninstall -Times 1
         }
 
         It "Should execute use action correctly" {
-            $actions = Get-Actions -arguments @('8.2.0')
-            $actions['use'].data.action.Invoke()
+            $actions = Get-Actions
+            & $actions['use'].data.action -arguments @('8.2.0')
 
             Should -Invoke Invoke-Use -Times 1
         }
 
         It "Should execute ini action correctly" {
-            $actions = Get-Actions -arguments @('set', 'memory_limit=256M')
-            $actions['ini'].data.action.Invoke()
+            $actions = Get-Actions
+            & $actions['ini'].data.action -arguments @('set', 'memory_limit=256M')
 
             Should -Invoke Invoke-Ini -Times 1
         }
 
         It "Should execute info action" {
-            $actions = Get-Actions -arguments @()
+            $actions = Get-Actions
             $actions['info'].data.action.Invoke()
 
             Should -Invoke Invoke-Info -Times 1
         }
 
         It "Should execute log action" {
-            $actions = Get-Actions -arguments @("--pageSize=10")
-            $actions['log'].data.action.Invoke()
+            $actions = Get-Actions
+            & $actions['log'].data.action -arguments @("--pageSize=10")
 
             Should -Invoke Invoke-Log -Times 1
         }
 
         It "Should execute test action with verbosity" {
             $testArgs = @('TestFile.ps1', 'Detailed', "--tag=unit")
-            $actions = Get-Actions -arguments $testArgs
-            $actions['test'].data.action.Invoke()
+            $actions = Get-Actions
+            & $actions['test'].data.action -arguments $testArgs
 
             Should -Invoke Invoke-Test -Times 1
         }
 
         It "Should execute profile action" {
-            $actions = Get-Actions -arguments @('save')
-            $actions['profile'].data.action.Invoke()
+            $actions = Get-Actions
+            & $actions['profile'].data.action -arguments @('save')
 
             Should -Invoke Invoke-Profile -Times 1
         }
 
         It "Should execute cache action" {
-            $actions = Get-Actions -arguments @('list')
-            $actions['cache'].data.action.Invoke()
+            $actions = Get-Actions
+            & $actions['cache'].data.action -arguments @('list')
 
             Should -Invoke Invoke-Cache -Times 1
         }
 
         It "Should execute aliases action" {
-            $actions = Get-Actions -arguments @()
+            $actions = Get-Actions
             $actions['aliases'].data.action.Invoke()
 
             Should -Invoke Invoke-Aliases -Times 1
         }
 
         It "Should execute update action" {
-            $actions = Get-Actions -arguments @()
+            $actions = Get-Actions
             $actions['update'].data.action.Invoke()
 
             Should -Invoke Invoke-Update -Times 1
         }
 
         It "Should execute run action" {
-            $actions = Get-Actions -arguments @()
+            $actions = Get-Actions
             $actions['run'].data.action.Invoke()
 
             Should -Invoke Invoke-Run -Times 1
@@ -199,7 +198,7 @@ Describe "Integration Tests" {
                 )
             }
             Mock Install-PHP { 0 }
-            Mock Update-PHPVersion { @{ code = 0; message = 'Version updated' } }
+            Mock Update-PHPVersion { 0 }
         }
 
         It "Should handle complete workflow: setup -> install -> use -> current" {

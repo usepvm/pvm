@@ -75,28 +75,19 @@ function Update-PVM {
     param ($checkOnly = $false, $quiet = $false)
 
     if (-not (Test-GitAvailable)) {
-        return @{
-            code    = -1
-            message = 'Git is not installed or not available in PATH. Please install Git to use the update feature.'
-            color   = 'DarkYellow'
-        }
+        Show-Error -message 'Git is not installed or not available in PATH. Please install Git to use the update feature.'
+        return -1
     }
 
     if (Test-DirectoryNotExists -path "$PVMRoot\.git") {
-        return @{
-            code    = -1
-            message = 'PVM is not installed from a git repository. Cannot update.'
-            color   = 'DarkYellow'
-        }
+        Show-Error -message 'PVM is not installed from a git repository. Cannot update.'
+        return -1
     }
 
     $currentBranch = Get-CurrentGitBranch
     if (-not $currentBranch) {
-        return @{
-            code    = -1
-            message = 'Failed to determine current git branch.'
-            color   = 'DarkYellow'
-        }
+        Show-Error -message 'Failed to determine current git branch.'
+        return -1
     }
 
     $gitStatus = Get-GitStatus
@@ -107,20 +98,17 @@ function Update-PVM {
 
         $gitStatusText = '- ' + ($gitStatusText -join "`n- ")
 
-        return @{
-            code    = -1
-            message = "You have uncommitted changes. Please commit or stash your changes before updating.`n`nGit status:`n$gitStatusText"
-            color   = 'DarkYellow'
+        if (-not $quiet) {
+            Show-Error -message "You have uncommitted changes. Please commit or stash your changes before updating.`n`nGit status:`n$gitStatusText"
         }
+
+        return -1
     }
 
     $currentCommit = Get-CurrentGitCommit
     if (-not $currentCommit) {
-        return @{
-            code    = -1
-            message = 'Failed to get current git commit.'
-            color   = 'DarkYellow'
-        }
+        Show-Error -message 'Failed to get current git commit.'
+        return -1
     }
 
     if (-not $quiet) {
@@ -129,20 +117,14 @@ function Update-PVM {
 
     $latestCommit = Get-LatestGitCommit -branch $currentBranch
     if (-not $latestCommit) {
-        return @{
-            code    = -1
-            message = 'Failed to fetch latest updates from remote repository.'
-            color   = 'DarkYellow'
-        }
+        Show-Error -message 'Failed to fetch latest updates from remote repository.'
+        return -1
     }
 
     if ($currentCommit -eq $latestCommit) {
         $currentVersion = $PVMConfig.version
-        return @{
-            code    = 0
-            message = "PVM is already up to date (version $currentVersion)."
-            color   = 'DarkGreen'
-        }
+        Show-Success -message "PVM is already up to date (version $currentVersion)."
+        return 0
     }
 
     $currentVersion = Get-PVMVersionFromGit
@@ -160,18 +142,15 @@ function Update-PVM {
                 $msg += ": $currentVersion -> $latestVersion"
             }
         }
-        return @{
-            code    = 0
-            message = $msg
-            color   = 'DarkYellow'
-        }
+        Write-DarkYellow -message $msg
+        return 0
     }
 
     Show-Warning -message "Update available. Pulling changes..."
 
     try {
         $oldVersion = $PVMConfig.version
-        git -C $PVMRoot pull origin $currentBranch 2>$null
+        git -C $PVMRoot pull origin $currentBranch >$null 2>$null
 
         $newVersion = Get-PVMVersionFromGit
         if (-not $newVersion) {
@@ -183,16 +162,15 @@ function Update-PVM {
         $newVersionNormalized = Format-Version -version $newVersion
 
         if ($oldVersionNormalized -eq $newVersionNormalized) {
-            return @{
-                code    = 0
-                message = "PVM has been updated successfully. No version change (still $newVersion)."
-                color   = 'DarkGreen'
-            }
+            Show-Success -message "PVM has been updated successfully. No version change (still $newVersion)."
+            return 0
         }
 
-        return @{ code = 0; message = "PVM has been updated successfully to version $newVersion."; color = 'DarkGreen' }
+        Show-Success -message "PVM has been updated successfully to version $newVersion."
+        return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to pull updates"; exception = $_ }
-        return @{ code = -1; message = "Failed to pull updates: $_"; color = 'DarkYellow' }
+        Show-Error -message "Failed to pull updates: $_"
+        return -1
     }
 }

@@ -112,7 +112,7 @@ function Get-InstalledPHPVersionsFromDisk {
             return $null
         }
 
-        $installedVersions = ($installedVersions | Sort-Object { [version]$_.Version })
+        $installedVersions = ($installedVersions | Sort-Object -Property { [version]$_.Version })
 
         return @{ pvmData = $installedVersions }
     } -rethrow $true
@@ -138,7 +138,7 @@ function Get-InstalledPHPVersions {
             $installedVersions = $installedVersions | Where-Object -FilterScript { $_.BuildType -eq $buildType }
         }
 
-        $installedVersions = $installedVersions | Sort-Object { [version]$_.Version }
+        $installedVersions = $installedVersions | Sort-Object -Property { [version]$_.Version }
 
         return $installedVersions
     } catch {

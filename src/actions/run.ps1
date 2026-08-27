@@ -75,8 +75,8 @@ function Invoke-RunScripts {
                     $result = Invoke-PVMSubprocess -command $command -arguments $scriptArgs
                     $results += $result
                 } else {
-                    $actions = Get-Actions -arguments $scriptArgs
-                    $result = $($actions[$command].data.action.Invoke())
+                    $actions = Get-Actions
+                    $result = $(& $actions[$command].data.action -arguments $scriptArgs)
                     return $result
                 }
 

@@ -95,7 +95,7 @@ function Get-AvailablePHPVersions {
         Write-Gray -message '------------------'
 
         $fetchedVersionsGroupedPartialList.GetEnumerator() |
-            Sort-Object Key |
+            Sort-Object -Property Key |
             ForEach-Object -Process {
                 $key = $_.Key
                 $fetchedVersionsGroupe = $_.Value
@@ -113,7 +113,7 @@ function Get-AvailablePHPVersions {
         $msg = "`nThis is a partial list. For a complete list, visit:"
         $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
-        Show-Message -message $msg
+        Show-Info -message $msg
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"; exception = $_ }

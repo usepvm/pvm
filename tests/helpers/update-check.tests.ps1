@@ -88,6 +88,17 @@ Describe "Set-LastUpdateCheckTimestamp" {
     }
 
     Context "When writing fails" {
+        It "Returns -1 when New-Directory fails" {
+            Mock Show-Error {}
+            Mock New-Directory { return -1 }
+            Mock Set-ContentWrapper {}
+
+            $result = Set-LastUpdateCheckTimestamp
+
+            $result | Should -Be -1
+            Should -Invoke Show-Error -Times 1
+            Should -Invoke Set-ContentWrapper -Times 0
+        }
         It "Returns -1 when Set-ContentWrapper throws" {
             New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
             Mock Set-ContentWrapper { throw 'Test exception' }
@@ -156,6 +167,7 @@ Describe "Test-CheckForUpdatesQuietly" {
     BeforeAll {
         Mock Show-Info {}
     }
+
     Context "When an update check is not due" {
         It "Returns without calling Update-PVM" {
             Mock Test-ShouldCheckForUpdates { return $false }

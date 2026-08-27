@@ -15,6 +15,11 @@ BeforeAll {
     }
 
     New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
+
+    Mock Show-Success {}
+    Mock Show-Error {}
+    Mock Write-Gray {}
+    Mock Write-Color {}
 }
 
 AfterAll {
@@ -30,6 +35,7 @@ Describe "Uninstall-PHP" {
             return $result.pvmData
         }
     }
+
     Context "When PHP version is found directly" {
         BeforeEach {
             Mock Get-MatchingPHPVersions -MockWith { }
@@ -47,9 +53,8 @@ Describe "Uninstall-PHP" {
 
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $true
 
-            $result.code | Should -Be 0
-            $result.message | Should -BeLike '*PHP version 7.4 has been uninstalled successfully*'
-            $result.color | Should -Be 'DarkGreen'
+            $result | Should -Be 0
+            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -like '*PHP version 7.4 has been uninstalled successfully*' }
 
             Should -Invoke Remove-ItemWrapper -Exactly 1 -ParameterFilter {
                 $path -eq "$testPhpPath\7.4"
@@ -64,8 +69,8 @@ Describe "Uninstall-PHP" {
 
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $false
 
-            $result.code | Should -Be -1
-            $result.message | Should -Be 'Uninstallation cancelled'
+            $result | Should -Be -1
+            Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -eq 'Uninstallation cancelled' }
 
             Should -Invoke Read-HostWrapper -Exactly 1 -ParameterFilter {
                 $Prompt -like "*Are you sure you want to delete PHP version*"
@@ -82,8 +87,8 @@ Describe "Uninstall-PHP" {
 
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $false
 
-            $result.code | Should -Be 0
-            $result.message | Should -BeLike '*PHP version 7.4 has been uninstalled successfully*'
+            $result | Should -Be 0
+            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -like '*PHP version 7.4 has been uninstalled successfully*' }
 
             Should -Invoke Read-HostWrapper -Exactly 1
             Should -Invoke Remove-ItemWrapper -Exactly 1
@@ -105,7 +110,7 @@ Describe "Uninstall-PHP" {
 
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $false
 
-            $result.code | Should -Be -1
+            $result | Should -Be -1
             Should -Invoke Read-HostWrapper -Exactly 2
             Should -Invoke Remove-ItemWrapper -Exactly 0
         }
@@ -125,8 +130,9 @@ Describe "Uninstall-PHP" {
 
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $false
 
-            $result.code | Should -Be -1
-            $result.message | Should -Be 'Uninstallation cancelled'
+            $result | Should -Be -1
+            Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -eq 'Uninstallation cancelled' }
+
             Should -Invoke Read-HostWrapper -Exactly 2
             Should -Invoke Remove-ItemWrapper -Exactly 0
         }
@@ -142,7 +148,7 @@ Describe "Uninstall-PHP" {
 
             $result = Uninstall-PHP -version '8.0' -skipConfirmation $false
 
-            $result.code | Should -Be 0
+            $result | Should -Be 0
             Should -Invoke Read-HostWrapper -Exactly 2
             Should -Invoke Remove-ItemWrapper -Exactly 1
         }
@@ -157,7 +163,7 @@ Describe "Uninstall-PHP" {
 
             $result = Uninstall-PHP -version '8.0' -skipConfirmation $true
 
-            $result.code | Should -Be 0
+            $result | Should -Be 0
             Should -Invoke Read-HostWrapper -Exactly 0
             Should -Invoke Remove-ItemWrapper -Exactly 1
         }
@@ -181,9 +187,8 @@ Describe "Uninstall-PHP" {
 
             $result = Uninstall-PHP -version '8.*' -skipConfirmation $true
 
-            $result.code | Should -Be 0
-            $result.message | Should -BeLike '*PHP version 8.0 has been uninstalled successfully*'
-            $result.color | Should -Be 'DarkGreen'
+            $result | Should -Be 0
+            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -like '*PHP version 8.0 has been uninstalled successfully*' }
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
             Should -Invoke Get-UserSelectedPHPVersion -Exactly 1
@@ -206,9 +211,8 @@ Describe "Uninstall-PHP" {
         It "Should return version not found message" {
             $result = Uninstall-PHP -version '5.6' -skipConfirmation $true
 
-            $result.code | Should -Be -1
-            $result.message | Should -BeExactly 'PHP version 5.6 was not found!'
-            $result.color | Should -Be 'DarkYellow'
+            $result | Should -Be -1
+            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq 'PHP version 5.6 was not found!' }
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
             Should -Invoke Remove-ItemWrapper -Exactly 0
@@ -230,9 +234,8 @@ Describe "Uninstall-PHP" {
         It "Should return the user selection error" {
             $result = Uninstall-PHP -version '8.*' -skipConfirmation $true
 
-            $result.code | Should -Be -1
-            $result.message | Should -Be 'User cancelled the selection'
-            $result.color | Should -Be 'DarkYellow'
+            $result | Should -Be -1
+            Should -Invoke Write-Color -Exactly 1 -ParameterFilter { $message -eq 'User cancelled the selection' }
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
             Should -Invoke Get-UserSelectedPHPVersion -Exactly 1
@@ -251,9 +254,8 @@ Describe "Uninstall-PHP" {
         It "Should return version not found message" {
             $result = Uninstall-PHP -version '8.2' -skipConfirmation $true
 
-            $result.code | Should -Be -1
-            $result.message | Should -BeExactly 'PHP version 8.2 was not found!'
-            $result.color | Should -Be 'DarkYellow'
+            $result | Should -Be -1
+            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq 'PHP version 8.2 was not found!' }
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
             Should -Invoke Get-UserSelectedPHPVersion -Exactly 1
@@ -277,10 +279,8 @@ Describe "Uninstall-PHP" {
 
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $true
 
-            $result.code | Should -Be -1
-            $result.message | Should -Be "Failed to uninstall PHP version '7.4'"
-            $result.color | Should -Be 'DarkYellow'
-
+            $result | Should -Be -1
+            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq "Failed to uninstall PHP version '7.4'" }
             Should -Invoke Remove-ItemWrapper -Exactly 1
             Should -Invoke Add-LogEntry -Exactly 1
         }

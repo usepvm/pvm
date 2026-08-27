@@ -321,7 +321,7 @@ Describe "New-SymbolicLink" {
             $result.message | Should -Match 'Created symbolic link'
             $result.color | Should -Be 'DarkGreen'
 
-            # Verify New-Item was called with correct parameters
+            # Verify New-ItemWrapper was called with correct parameters
             Should -Invoke New-ItemWrapper -ParameterFilter {
                 $type -eq 'SymbolicLink' -and
                 $path -eq $linkPath -and
@@ -389,7 +389,8 @@ Describe "New-SymbolicLink" {
             $targetPath = "$testDir\php\8.1"
 
             try {
-                Mock Test-Admin { return $true }
+                Mock Test-NotAdmin { return $false }
+                Mock New-ItemWrapper { }
                 Mock New-Directory { return 0 }
                 Mock Get-ItemWrapper { return @{ Attributes = 'ReparsePoint' } }
 
@@ -548,5 +549,27 @@ Describe "Test-NoResponse Tests" {
     It "Should return false for other responses" {
         Test-NoResponse -response 'y' | Should -Be $false
         Test-NoResponse -response 'Y' | Should -Be $false
+    }
+}
+
+Describe "Get-BaseUrl" {
+    It "Should return the expected base URL" {
+        $result = Get-BaseUrl -url 'https://example.com/test'
+        $result | Should -Be 'example.com'
+    }
+
+    It "Should return an empty string for an invalid URL" {
+        $result = Get-BaseUrl -url 'invalid-url'
+        $result | Should -Be $null
+    }
+
+    It "Should return an empty string for an empty URL" {
+        $result = Get-BaseUrl -url ''
+        $result | Should -Be $null
+    }
+
+    It "Should return an empty string for a null URL" {
+        $result = Get-BaseUrl -url $null
+        $result | Should -Be $null
     }
 }

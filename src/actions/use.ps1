@@ -38,7 +38,8 @@ function Update-PHPVersion {
         $pathVersionObject = Get-UserSelectedPHPVersion -installedVersions $installedVersions
 
         if (-not $pathVersionObject) {
-            return @{ code = -1; message = "PHP version $version was not found!"; color = 'DarkYellow' }
+            Show-Error -message "PHP version $version was not found!"
+            return -1
         }
 
         if ($pathVersionObject.code -ne 0) {
@@ -48,20 +49,24 @@ function Update-PHPVersion {
         $currentVersion = Get-CurrentPHPVersion
         if ($currentVersion -and $currentVersion.version) {
             if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $pathVersionObject) {
-                return @{ code = 0; message = "Already using PHP $($pathVersionObject.version)"; color = 'DarkCyan' }
+                Show-Info -message "Already using PHP $($pathVersionObject.version)"
+                return 0
             }
         }
 
         $linkCreated = New-SymbolicLink -link $PVMConfig.env.PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
         if ($linkCreated.code -ne 0) {
-            return $linkCreated
+            Write-Color -message $linkCreated.message -foreColor $linkCreated.color
+            return -1
         }
         $text = ("Now using PHP $($pathVersionObject.version) $($pathVersionObject.buildType) $($pathVersionObject.arch)").Trim()
 
-        return @{ code = 0; message = $text; color = 'DarkGreen' }
+        Show-Success -message $text
+        return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to update PHP version to '$version'"; exception = $_ }
-        return @{ code = -1; message = "No matching PHP versions found for '$version', Use 'pvm list' to see installed versions."; color = 'DarkYellow' }
+        Show-Error -message "No matching PHP versions found for '$version', Use 'pvm list' to see installed versions."
+        return -1
     }
 }
 

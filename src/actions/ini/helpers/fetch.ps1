@@ -18,13 +18,13 @@ function Get-ExtensionCategoriesByPage {
         $null = $_.outerHTML -match '(?s)<strong>(?<package>.*?)</strong>.*?<td[^>]*>(?<description>.*?)</td>'
         $description = $matches['description']
 
-        $extName = ($_.href -replace '/package/', '').Trim()
-        $linkItem = $_.psobject.copy()
-        $linkItem | Add-Member -NotePropertyName 'extName' -NotePropertyValue $extName -Force
-        $linkItem | Add-Member -NotePropertyName 'extCategory' -NotePropertyValue $extCategory -Force
-        $linkItem | Add-Member -NotePropertyName 'description' -NotePropertyValue $description -Force
-
-        $availableExtensions.Add($linkItem)
+        $availableExtensions.Add(@{
+            extName     = ($_.href -replace '/package/', '').Trim()
+            description = $description
+            href        = "$($PVMConfig.links.peclBase)$($_.href)"
+            extCategory = $extCategory
+            source      = (Get-BaseUrl -url $PVMConfig.links.peclBase)
+        })
     }
 
     return @{
@@ -74,10 +74,12 @@ function Get-PHPExtensionsFromSource {
                 href        = $PVMConfig.links.xdebugHistorical
                 extName     = 'xdebug'
                 extCategory = 'XDebug'
+                description = 'Xdebug is a debugging and productivity extension for PHP'
+                source      = (Get-BaseUrl -url $PVMConfig.links.xdebugBase)
             }
         )
         $availableExtensionsOrdered = [ordered] @{}
-        $availableExtensions.GetEnumerator() | Sort-Object Key | ForEach-Object -Process { $availableExtensionsOrdered[$_.Key] = $_.Value }
+        $availableExtensions.GetEnumerator() | Sort-Object -Property Key | ForEach-Object -Process { $availableExtensionsOrdered[$_.Key] = $_.Value }
 
         return $availableExtensionsOrdered
     } catch {
@@ -113,12 +115,15 @@ function Get-FilteredPHPExtensionsByCategory {
     return $result
 }
 
-function Select-ExtensionLinksFromURL {
+function Get-ExtensionAvailableReleasesLinks {
     param ($extName)
 
     $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName"
-    $links = $html.Links | Where-Object -FilterScript {
-        $_.href -match "/package/$extName/([^/]+)/windows$"
+    $links = [System.Collections.Generic.List[object]]::new()
+    $null = $html.Links | Foreach-Object -Process {
+        if ($_.href -match "/package/$extName/([^/]+)/windows$") {
+            $links.Add(@{ href = "$($PVMConfig.links.peclBase)$($_.href)" })
+        }
     }
 
     return $links
@@ -130,7 +135,7 @@ function Get-PackagesFromSourceLinks {
     $formattedList = [System.Collections.Generic.List[object]]::new()
     $links | ForEach-Object -Process {
         try {
-            $extVersion = $_.href -replace "/package/$extName/", '' -replace '/windows', ''
+            $extVersion = $_.href -replace "$($PVMConfig.links.peclBase)/package/$extName/", '' -replace '/windows', ''
             $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName/$extVersion/windows"
             $html.Links | ForEach-Object -Process {
                 if (-not $_.href) { return }
@@ -193,10 +198,13 @@ function Select-ExtensionFromMatches {
     Show-Info -message "`nMatching '$extName' extension:"
     $index = 0
 
-    $sorted = $linksMatchingExtName | Sort-Object -Property @{ Expression = { $_.extName } }
+    $sorted = $linksMatchingExtName | Sort-Object -Property @{ Expression = { $_.source } }, @{ Expression = { $_.extName } }, @{ Expression = { $_.extCategory } }
+
+    $maxNameLength = ($sorted.extName | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     $sorted | ForEach-Object -Process {
-        $extItem = $_.extName
-        Show-Message -message "[$index] $extItem"
+        $extItem = "$($_.extName) ".PadRight($maxNameLength, '.')
+        $source = $_.source
+        Show-Message -message "[$index] $extItem $source"
         $index++
     }
 
@@ -222,12 +230,12 @@ function Select-ExtensionFromMatches {
     } while ($true)
 }
 
-function Get-ExtensionLinksFromURL {
+function Resolve-ExtensionLinks {
     param ($extName, $version)
 
     try {
-        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_pecl" -compute {
-            return Select-ExtensionLinksFromURL -extName $extName
+        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$($version)_pecl" -compute {
+            return Get-ExtensionAvailableReleasesLinks -extName $extName
         }
     } catch {
         Show-Message -message "`nDirect link for extension '$extName' not found, Loading matching extensions..."
@@ -235,7 +243,7 @@ function Get-ExtensionLinksFromURL {
         $linksMatchingExtName = Get-ExtensionMatchingCategories -extName $extName
 
         if ($linksMatchingExtName.Length -eq 0) {
-            Show-Error -Message "`nExtension '$extName' not found"
+            Show-Error -message "`nExtension '$extName' not found"
             return $null
         }
 
@@ -245,8 +253,8 @@ function Get-ExtensionLinksFromURL {
 
         $extName = $chosenItem.extName
         Show-Message -message "`nLoading links for '$extName'..."
-        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_pecl" -compute {
-            return Select-ExtensionLinksFromURL -extName $extName
+        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$($version)_pecl" -compute {
+            return Get-ExtensionAvailableReleasesLinks -extName $extName
         }
     }
 
@@ -256,17 +264,17 @@ function Get-ExtensionLinksFromURL {
     }
 }
 
-function Get-ExtensionFromURL {
+function Get-ExtensionPackages {
     param ($extName, $version)
 
-    $linksObj = Get-ExtensionLinksFromURL -extName $extName -version $version
+    $linksObj = Resolve-ExtensionLinks -extName $extName -version $version
 
     if (($null -eq $linksObj) -or ($linksObj.Count -eq 0) -or ($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
         $extName = if ($linksObj -and $linksObj.extName) { $linksObj.extName } else { $extName }
         return @{ extName = $extName; data = $null }
     }
 
-    $formattedList = Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_php_$version" -compute {
+    $formattedList = Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_php_$($version)_pecl" -compute {
         return Show-SpinnerWhileJob -argumentList @($linksObj, $version) -scriptBlock {
             param ($linksObj, $version)
 

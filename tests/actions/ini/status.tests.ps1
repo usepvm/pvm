@@ -35,7 +35,6 @@ max_execution_time = 30
     # Create directory and symlink for current PHP version
     $phpVersionPath = "$TEST_DRIVE\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
-    New-Item -ItemType SymbolicLink -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
     Copy-ItemWrapper -path $testIniPath -destination "$phpVersionPath\php.ini"
 }
 
@@ -55,7 +54,8 @@ Describe "Get-IniExtensionStatus" {
                 @{ name = 'curl'; id='curl'; status='Enabled'; color='DarkGreen'; line=0; lineNamber=0; source='ext,ini' }
             )
         }
-        Get-IniExtensionStatus -iniPath $testIniPath -extNames @('curl') | Should -Be 0
+        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('curl')
+        $code | Should -Be 0
     }
 
     It "Detects disabled extension" {
@@ -64,7 +64,8 @@ Describe "Get-IniExtensionStatus" {
                 @{ name = 'xdebug'; id='xdebug'; status='Disabled'; color='DarkYellow'; line=0; lineNamber=0; source='ext,ini' }
             )
         }
-        Get-IniExtensionStatus -iniPath $testIniPath -extNames @('xdebug') | Should -Be 0
+        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('xdebug')
+        $code | Should -Be 0
     }
 
     It "Detects enabled zend_extension" {
@@ -73,21 +74,27 @@ Describe "Get-IniExtensionStatus" {
                 @{ name = 'opcache'; id='opcache'; status='Enabled'; color='DarkGreen'; line=0; lineNamber=0; source='ext,ini' }
             )
         }
-        Get-IniExtensionStatus -iniPath $testIniPath -extNames @('opcache') | Should -Be 0
+        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('opcache')
+        $code | Should -Be 0
     }
 
     It "Returns -1 for non-existent extension" {
         Mock Read-HostWrapper { return 'n' }
-        Get-IniExtensionStatus -iniPath $testIniPath -extNames @('nonexistent_ext') | Should -Be -1
+        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('nonexistent_ext')
+        $code | Should -Be -1
     }
 
     It "Requires extension name" {
-        Get-IniExtensionStatus -iniPath $testIniPath -extNames '' | Should -Be -1
-        Get-IniExtensionStatus -iniPath $testIniPath -extNames $null | Should -Be -1
+        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames ''
+        $code | Should -Be -1
+
+        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames $null
+        $code | Should -Be -1
     }
 
     It "Returns -1 on error" {
         Mock Get-ContentWrapper { throw 'Access denied' }
-        Get-IniExtensionStatus -iniPath $testIniPath -extNames @('curl') | Should -Be -1
+        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('curl')
+        $code | Should -Be -1
     }
 }

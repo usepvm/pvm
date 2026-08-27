@@ -7,24 +7,28 @@ function Uninstall-PHP {
         $pathVersionObject = Get-UserSelectedPHPVersion -installedVersions $installedVersions
 
         if (-not $pathVersionObject) {
-            return @{ code = -1; message = "PHP version $version was not found!"; color = 'DarkYellow' }
+            Show-Error -message "PHP version $version was not found!"
+            return -1
         }
 
         if ($pathVersionObject.code -ne 0) {
-            return $pathVersionObject
+            Write-Color -message $pathVersionObject.message -foreColor $pathVersionObject.color
+            return -1
         }
 
         if (-not $skipConfirmation) {
             $response = Read-HostWrapper -prompt "`nAre you sure you want to delete PHP version '$($pathVersionObject.version)'? (y/n)"
             if (Test-NoResponse -response $response) {
-                return @{ code = -1; message = 'Uninstallation cancelled'; color = 'Gray' }
+                Write-Gray -message 'Uninstallation cancelled'
+                return -1
             }
 
             $currentVersion = Get-CurrentPHPVersion
             if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $pathVersionObject) {
                 $response = Read-HostWrapper -prompt "`nYou are trying to uninstall the currently active PHP version ($($pathVersionObject.version)). Are you sure? (y/n)"
                 if (Test-NoResponse -response $response) {
-                    return @{ code = -1; message = 'Uninstallation cancelled'; color = 'Gray' }
+                    Write-Gray -message 'Uninstallation cancelled'
+                    return -1
                 }
             }
         }
@@ -33,9 +37,11 @@ function Uninstall-PHP {
 
         $null = Update-InstalledPHPVersionsCache
 
-        return @{ code = 0; message = "PHP version $($pathVersionObject.version) has been uninstalled successfully"; color = 'DarkGreen' }
+        Show-Success -message "PHP version $($pathVersionObject.version) has been uninstalled successfully"
+        return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to uninstall PHP version '$version'"; exception = $_ }
-        return @{ code = -1; message = "Failed to uninstall PHP version '$version'"; color = 'DarkYellow' }
+        Show-Error -message "Failed to uninstall PHP version '$version'"
+        return -1
     }
 }

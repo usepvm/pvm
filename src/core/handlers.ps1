@@ -11,7 +11,7 @@ function Invoke-Setup {
     }
     $optimized = Optimize-SystemPath
     if ($optimized -ne 0) {
-        Show-Error -Message "`nFailed to optimize system path."
+        Show-Error -message "`nFailed to optimize system path."
     }
 
     Show-MsgByExitCode -result $result
@@ -45,7 +45,7 @@ function Invoke-Current {
     }
     Show-Message -message $text
 
-    $status = Get-PHPStatus -phpPath $result.path
+    $status = Get-PHPStatus -phpPath $result.path -version $result.version
 
     if (-not $status -or $status.Length -eq 0) {
         Show-Warning -message 'No status information available for the current PHP version.'
@@ -97,7 +97,7 @@ function Invoke-Install {
 
         if ($result.code -eq 0) {
             $version = $result.version
-            Show-MsgByExitCode -result $result -message "PHP $version is already installed!"
+            Write-Gray -message "`nPHP $version is already installed!"
             return -1
         }
 
@@ -118,9 +118,7 @@ function Invoke-Install {
         return -1
     }
 
-    $result = Install-PHP -version $version -arch $arch -buildType $buildType
-    Show-MsgByExitCode -result $result
-    return 0
+    return (Install-PHP -version $version -arch $arch -buildType $buildType)
 }
 
 function Invoke-Uninstall {
@@ -136,10 +134,7 @@ function Invoke-Uninstall {
     $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
     $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
 
-    $result = Uninstall-PHP -version $version -skipConfirmation $skipConfirmation
-
-    Show-MsgByExitCode -result $result
-    return 0
+    return (Uninstall-PHP -version $version -skipConfirmation $skipConfirmation)
 }
 
 function Invoke-Use {
@@ -155,16 +150,13 @@ function Invoke-Use {
     if ($version -eq 'auto') {
         $result = Select-PHPVersionAutomatically
         if ($result.code -ne 0) {
-            Show-MsgByExitCode -result $result
+            Write-Color -message $result.message -foreColor $result.color
             return -1
         }
         $version = $result.version
     }
 
-    $result = Update-PHPVersion -version $version
-
-    Show-MsgByExitCode -result $result
-    return 0
+    return (Update-PHPVersion -version $version)
 }
 
 function Invoke-Ini {
@@ -180,8 +172,7 @@ function Invoke-Ini {
         $arguments[1..($arguments.Count - 1)] | Where-Object -FilterScript { $_ -ne $arch }
     } else { @() }
 
-    $exitCode = Invoke-IniAction -action $action -params $remainingArgs
-    return $exitCode
+    return (Invoke-IniAction -action $action -params $remainingArgs)
 }
 
 function Invoke-Test {
@@ -245,11 +236,19 @@ function Invoke-Test {
         return -1
     }
 
-    return Initialize-Tests -testsNames $testsNames -options $options -exclude $exclude -pesterVersion $pesterVersion
+    return (Initialize-Tests -testsNames $testsNames -options $options -exclude $exclude -pesterVersion $pesterVersion)
 }
 
 function Invoke-Log {
     param ($arguments)
+
+    $clearLog = $arguments -contains '--clear'
+
+    if ($clearLog) {
+        Clear-ContentWrapper -path $PVMConfig.paths.file.logError
+        Show-Success -message "`nLog Cleared Successfully"
+        return 0
+    }
 
     $pageSizeArg = $arguments | Where-Object -FilterScript { $_ -match '^--pageSize=(.+)$' }
     if ($pageSizeArg) {
@@ -259,8 +258,8 @@ function Invoke-Log {
     }
 
     $term = ($arguments | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-    $code = Show-Log -pageSize $pageSize -term $term
-    return $code
+
+    return (Show-Log -pageSize $pageSize -term $term)
 }
 
 function Invoke-Version {
@@ -273,7 +272,7 @@ function Invoke-Help {
 
     $command = $arguments[0]
     if ($command) {
-        $actions = Get-Actions -arguments $arguments
+        $actions = Get-Actions
         $usage = $actions[$command].data.usage
         if ($null -eq $usage) {
             Show-Warning -message "`nNo usage information available for the '$command' command."
@@ -431,7 +430,7 @@ function Invoke-Aliases {
     $aliases = Get-Aliases
 
     if ($aliases.Count -eq 0) {
-        Show-Error -Message 'No aliases found.'
+        Show-Error -message 'No aliases found.'
         return -1
     }
 
@@ -522,9 +521,7 @@ function Invoke-Update {
 
     $checkOnly = $arguments -contains '--check'
 
-    $result = Update-PVM -checkOnly $checkOnly
-    Show-MsgByExitCode -result $result
-    return $result.code
+    return (Update-PVM -checkOnly $checkOnly)
 }
 
 function Invoke-Run {
@@ -546,7 +543,5 @@ function Invoke-Run {
         return $true
     }
 
-    $code = Invoke-RunScripts -scriptName $scriptName -files $files
-
-    return $code
+    return (Invoke-RunScripts -scriptName $scriptName -files $files)
 }

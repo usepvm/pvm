@@ -35,7 +35,7 @@ function Find-PesterVersion {
     param ($version, $availableVersions)
 
     if ([string]::IsNullOrWhiteSpace($version) -or $version -eq 'latest') {
-        return $availableVersions | Sort-Object Version -Descending | Select-Object -First 1
+        return $availableVersions | Sort-Object -Property Version -Descending | Select-Object -First 1
     }
 
     switch -Regex ($version) {
@@ -43,13 +43,13 @@ function Find-PesterVersion {
             return $availableVersions | Where-Object -FilterScript { $_.Version -eq $version } | Select-Object -First 1
         }
         '^\d+\.\d+$' {
-            return $availableVersions | Where-Object -FilterScript { $_.Version -like "$version.*" } | Sort-Object Version -Descending | Select-Object -First 1
+            return $availableVersions | Where-Object -FilterScript { $_.Version -like "$version.*" } | Sort-Object -Property Version -Descending | Select-Object -First 1
         }
         '^\d+$' {
-            return $availableVersions | Where-Object -FilterScript { $_.Version.Major -eq [int]$version } | Sort-Object Version -Descending | Select-Object -First 1
+            return $availableVersions | Where-Object -FilterScript { $_.Version.Major -eq [int]$version } | Sort-Object -Property Version -Descending | Select-Object -First 1
         }
         default {
-            return $availableVersions | Where-Object -FilterScript { $_.Version -le $version } | Sort-Object Version -Descending | Select-Object -First 1
+            return $availableVersions | Where-Object -FilterScript { $_.Version -le $version } | Sort-Object -Property Version -Descending | Select-Object -First 1
         }
     }
 }
@@ -402,9 +402,9 @@ function Write-TestsSummary {
     $grouped = if ($groupExpr) { $sorted | Group-Object -Property $groupExpr } else { @(@{ Name = $null; Group = $sorted }) }
 
     if ($options.groupBy -eq 'coverage') {
-        $grouped = $grouped | Sort-Object { Get-CoverageGroupRank -groupName $_.Name }
+        $grouped = $grouped | Sort-Object -Property { Get-CoverageGroupRank -groupName $_.Name }
     } elseif ($options.groupBy -eq 'folder') {
-        $grouped = $grouped | Sort-Object { $_.Name }
+        $grouped = $grouped | Sort-Object -Property { $_.Name }
     }
 
     foreach ($group in $grouped) {
@@ -536,7 +536,7 @@ function Get-SortedTests {
 
     switch ($by) {
         'duration' {
-            return $data | Sort-Object @{
+            return $data | Sort-Object -Property @{
                 Expression = {
                     if ($null -eq $_.testResultData.duration) {
                         [double]::PositiveInfinity
@@ -549,7 +549,7 @@ function Get-SortedTests {
             }
         }
         'coverage' {
-            return $data | Sort-Object @{
+            return $data | Sort-Object -Property @{
                 Expression = {
                     if ($null -eq $_.testResultData.coverageRaw) {
                         [double]::PositiveInfinity
@@ -562,7 +562,7 @@ function Get-SortedTests {
             }
         }
         'file' {
-            return $data | Sort-Object @{ Expression = { [string]$_.sortedName }; Descending = $direction }
+            return $data | Sort-Object -Property @{ Expression = { [string]$_.sortedName }; Descending = $direction }
         }
     }
 

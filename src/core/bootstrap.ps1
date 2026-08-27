@@ -5,7 +5,7 @@ function Show-Usage {
     Show-PVMVersion
     Show-Message -message "`nUsage:`n"
 
-    $actions = Get-Actions -arguments $arguments
+    $actions = Get-Actions
     $maxLineLength = ($actions.GetEnumerator() | ForEach-Object -Process { $_.Value.data.command.Length } | Measure-Object -Maximum).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
     $maxDescLength = (Get-ConsoleWidth) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2))
     if ($maxDescLength -lt 100) { $maxDescLength = 100 }
@@ -13,7 +13,7 @@ function Show-Usage {
     $currentGroup = $null
 
     $actions.GetEnumerator() |
-        Sort-Object { $_.Value.order }, { $_.Value.itemOrder } |
+        Sort-Object -Property { $_.Value.order }, { $_.Value.itemOrder } |
         ForEach-Object -Process {
             $command = $_.Value.data.command
             $description = $_.Value.data.description
@@ -228,14 +228,14 @@ function Start-PVM {
             return 0
         }
 
-        $actions = Get-Actions -arguments $arguments
+        $actions = Get-Actions
 
         if (-not $actions.Contains($command)) {
             $suggestion = Get-ClosestCommandSuggestion -command $command -actions $actions
             if ([string]::IsNullOrWhiteSpace($suggestion)) {
-                Show-Error -Message "`n'$alias' is not a valid command."
+                Show-Error -message "`n'$alias' is not a valid command."
             } else {
-                Show-Error -Message "`n'$command' is not a valid command. Did you mean '$suggestion'?"
+                Show-Error -message "`n'$command' is not a valid command. Did you mean '$suggestion'?"
             }
             Show-Usage -arguments $arguments
             return 0
@@ -248,7 +248,7 @@ function Start-PVM {
             return -1
         }
 
-        $result = $($actions[$command].data.action.Invoke())
+        $result = $(& $actions[$command].data.action -arguments $arguments)
 
         # Check for updates after successful command execution (skip for update command itself)
         if ($result -eq 0 -and $command -ne 'update') {
@@ -258,7 +258,7 @@ function Start-PVM {
         return $result
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during command '$command'"; exception = $_ }
-        Show-Error -Message "`nCommand canceled or failed to elevate privileges."
+        Show-Error -message "`nCommand canceled or failed to elevate privileges."
         return -1
     }
 }

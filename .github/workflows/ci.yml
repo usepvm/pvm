@@ -89,7 +89,7 @@ jobs:
     - name: Setup PVM
       run: |
         Write-Host -Object "Setting up PVM..." -ForegroundColor Yellow
-        pvm setup
+        .\pvm.bat setup
         if ($LASTEXITCODE -ne 0) {
           Write-Error -Message "PVM setup failed with exit code: $LASTEXITCODE"
           exit $LASTEXITCODE
@@ -105,7 +105,7 @@ jobs:
         Import-Module -Name Pester -RequiredVersion "${{ matrix.pesterVersion }}"
 
         # Run pvm directly and capture exit code
-        pvm test --coverage=85 --sort=coverage --group=folder --shell="${{ matrix.shell }}" --pester="${{ matrix.pesterVersion }}"
+        .\pvm.bat test --coverage=85 --sort=coverage --group=folder --shell="${{ matrix.shell }}" --pester="${{ matrix.pesterVersion }}"
         $exitCode = $LASTEXITCODE
 
         Write-Host -Object "Test execution completed with exit code: $exitCode"

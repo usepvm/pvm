@@ -94,6 +94,12 @@ function Remove-ItemWrapper {
     Remove-Item -Path $path -Force -Recurse -ErrorAction SilentlyContinue
 }
 
+function Clear-ContentWrapper {
+    param ($path)
+
+    Clear-Content -Path $path
+}
+
 function Get-ItemWrapper {
     param ($path)
 

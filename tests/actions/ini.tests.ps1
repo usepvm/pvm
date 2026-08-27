@@ -17,7 +17,6 @@ BeforeAll {
     # Create directory and symlink for current PHP version
     $phpVersionPath = "$($PVMConfig.paths.php)\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
-    New-Item -ItemType SymbolicLink -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Target $phpVersionPath -Force
 
     Mock Show-Error {}
     Mock Show-Warning {}
@@ -343,7 +342,7 @@ extension=php_curl.dll
             $result | Should -Be -1
         }
 
-        It "Installs extension with skip confirmation" {
+        It "Installs pecl extension with skip confirmation" {
             Mock Test-FileNotExists { return $false }
             $result = Invoke-IniAction -action 'add' -params @('pdo_mysql', '-y')
 
@@ -353,7 +352,7 @@ extension=php_curl.dll
             }
         }
 
-        It "Installs extension with skip confirmation" {
+        It "Installs xdebug extension with skip confirmation" {
             Mock Test-FileNotExists { return $false }
             $result = Invoke-IniAction -action 'add' -params @('xdebug', '-y')
 

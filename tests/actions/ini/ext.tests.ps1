@@ -292,7 +292,8 @@ Describe "Show-PHPExtensionInfo" {
     It "Returns -1 when extension lookup fails" {
         Mock Get-ExtensionMatchingCategories { throw 'Cache unavailable' }
 
-        Show-PHPExtensionInfo -iniPath $testIniPath -extName 'xdebug' | Should -Be -1
+        $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName 'xdebug'
+        $code | Should -Be -1
         Should -Invoke Show-Error -ParameterFilter { $message -like "`nFailed to get information for extension 'xdebug'" }
         Should -Invoke Add-LogEntry -Exactly 1
     }
@@ -301,7 +302,8 @@ Describe "Show-PHPExtensionInfo" {
         Mock Get-ExtensionMatchingCategories { return @() }
         Mock Get-MatchingPHPExtensionsStatus { return @() }
 
-        Show-PHPExtensionInfo -iniPath $testIniPath -extName 'missing' | Should -Be -1
+        $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName 'missing'
+        $code | Should -Be -1
         Should -Invoke Show-Error -ParameterFilter { $message -eq "`nExtension 'missing' not found" }
     }
 
@@ -309,6 +311,7 @@ Describe "Show-PHPExtensionInfo" {
         Mock Get-ExtensionMatchingCategories { return @() }
         Mock Get-MatchingPHPExtensionsStatus { return @() }
 
-        Show-PHPExtensionInfo -iniPath $testIniPath -extName '' | Should -Be -1
+        $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName ''
+        $code | Should -Be -1
     }
 }

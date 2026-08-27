@@ -143,7 +143,7 @@ function New-SymbolicLink {
         }
 
         # Make sure parent directory exists
-        $parent = Split-Path -Path $link
+        $parent = Split-Path -Path $link -Parent
         if (Test-DirectoryNotExists -path $parent) {
             $created = New-Directory -path $parent
             if ($created -ne 0) {

@@ -11,7 +11,7 @@ function Invoke-Setup {
     }
     $optimized = Optimize-SystemPath
     if ($optimized -ne 0) {
-        Show-Error -Message "`nFailed to optimize system path."
+        Show-Error -message "`nFailed to optimize system path."
     }
 
     Show-MsgByExitCode -result $result
@@ -45,7 +45,7 @@ function Invoke-Current {
     }
     Show-Message -message $text
 
-    $status = Get-PHPStatus -phpPath $result.path
+    $status = Get-PHPStatus -phpPath $result.path -version $result.version
 
     if (-not $status -or $status.Length -eq 0) {
         Show-Warning -message 'No status information available for the current PHP version.'
@@ -242,6 +242,14 @@ function Invoke-Test {
 function Invoke-Log {
     param ($arguments)
 
+    $clearLog = $arguments -contains '--clear'
+
+    if ($clearLog) {
+        Clear-ContentWrapper -path $PVMConfig.paths.logError
+        Show-Success -message "`nLog Cleared Successfully"
+        return 0
+    }
+
     $pageSizeArg = $arguments | Where-Object -FilterScript { $_ -match '^--pageSize=(.+)$' }
     if ($pageSizeArg) {
         $pageSize = $pageSizeArg -replace '^--pageSize=', ''
@@ -250,7 +258,7 @@ function Invoke-Log {
     }
 
     $term = ($arguments | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-    
+
     return (Show-Log -pageSize $pageSize -term $term)
 }
 
@@ -264,7 +272,7 @@ function Invoke-Help {
 
     $command = $arguments[0]
     if ($command) {
-        $actions = Get-Actions -arguments $arguments
+        $actions = Get-Actions
         $usage = $actions[$command].data.usage
         if ($null -eq $usage) {
             Show-Warning -message "`nNo usage information available for the '$command' command."
@@ -422,7 +430,7 @@ function Invoke-Aliases {
     $aliases = Get-Aliases
 
     if ($aliases.Count -eq 0) {
-        Show-Error -Message 'No aliases found.'
+        Show-Error -message 'No aliases found.'
         return -1
     }
 

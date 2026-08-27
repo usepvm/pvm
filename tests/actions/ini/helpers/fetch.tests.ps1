@@ -591,7 +591,7 @@ Describe "Select-ExtensionFromMatches Tests" {
         }
 
         It "Prompts user to select link when multiple found and returns selected" {
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '0' }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
 
             $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
 
@@ -599,7 +599,7 @@ Describe "Select-ExtensionFromMatches Tests" {
         }
 
         It "Returns null when user skips selection" {
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '' }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '' }
 
             $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
 
@@ -611,7 +611,7 @@ Describe "Select-ExtensionFromMatches Tests" {
 
         It "Reprompts user when typing invalid choice" {
             $script:callCount = 0
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith {
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith {
                 $script:callCount++
                 if ($script:callCount -eq 1) { return 'A' }
                 if ($script:callCount -eq 2) { return '-1' }
@@ -688,7 +688,6 @@ Describe "Resolve-ExtensionLinks Tests" {
         # Test the defensive check by having a null element in the array
         Mock Get-OrUpdateCache { throw 'Test exception' }
         Mock Get-ExtensionMatchingCategories { return @( @{ href = '/package/memcache'; extName = 'memcache' }, $null, @{ href = '/package/memcached'; extName = 'memcached' } ) }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nInsert the [number] you want to install" } -MockWith { return '1' }
         Mock Select-ExtensionFromMatches { return $null }
 
         $result = Resolve-ExtensionLinks -extName 'mem' -version '8.2'

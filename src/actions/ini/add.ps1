@@ -36,7 +36,7 @@ function Select-ExtensionPackageLink {
         }
     }
 
-    $packageIndex = Read-HostWrapper -prompt "`nInsert the [number] you want to install"
+    $packageIndex = Read-HostWrapper -prompt "`nEnter the [number] of your selection"
     if ([string]::IsNullOrWhiteSpace($packageIndex)) {
         Write-Gray -message "`nInstallation cancelled"
         return $null

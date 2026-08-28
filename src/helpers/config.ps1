@@ -233,23 +233,23 @@ function Get-Config {
                 '-h'        = 'help'
             }
             scripts        = [ordered]@{
-                'test:quiet'        = @('test --verbosity=None --coverage=85 --sort=coverage --group=folder')
-                'test:cov80'        = @('test --verbosity=None --coverage=80 --sort=coverage --group=folder')
-                'test:cov90'        = @('test --verbosity=None --coverage=90 --sort=coverage --group=folder')
-                'test:duration'     = @('test --verbosity=None --sort=-duration --group=folder')
-                'test:verbose'      = @('test --verbosity=Detailed --coverage=85 --sort=coverage --group=folder')
+                'test:quiet'        = @('--verbosity=None --coverage=85 --sort=coverage --group=folder')
+                'test:cov80'        = @('--verbosity=None --coverage=80 --sort=coverage --group=folder')
+                'test:cov90'        = @('--verbosity=None --coverage=90 --sort=coverage --group=folder')
+                'test:duration'     = @('--verbosity=None --sort=-duration --group=folder')
+                'test:verbose'      = @('--verbosity=Detailed --coverage=85 --sort=coverage --group=folder')
                 'test:shell'        = @(
-                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --shell=powershell'
-                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --shell=pwsh'
+                    '--verbosity=None --coverage=85 --sort=coverage --group=folder --shell=powershell'
+                    '--verbosity=None --coverage=85 --sort=coverage --group=folder --shell=pwsh'
                 )
                 'test:pester'       = @(
-                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --pester=5.7.1'
-                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --pester=6.0.0'
+                    '--verbosity=None --coverage=85 --sort=coverage --group=folder --pester=5.7.1'
+                    '--verbosity=None --coverage=85 --sort=coverage --group=folder --pester=6.0.0'
                 )
                 'test:matrix'       = @(
-                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --shell=powershell --pester=5.7.1'
-                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --shell=pwsh --pester=5.7.1'
-                    'test --verbosity=None --coverage=85 --sort=coverage --group=folder --shell=pwsh --pester=6.0.0'
+                    '--verbosity=None --coverage=85 --sort=coverage --group=folder --shell=powershell --pester=5.7.1'
+                    '--verbosity=None --coverage=85 --sort=coverage --group=folder --shell=pwsh --pester=5.7.1'
+                    '--verbosity=None --coverage=85 --sort=coverage --group=folder --shell=pwsh --pester=6.0.0'
                 )
             }
         }

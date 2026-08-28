@@ -263,7 +263,7 @@ function Invoke-TestFile {
         $config = $coverageConfig.config
     }
 
-    if (Test-IsNotQuiet -options $options) {
+    if (Test-IsNotQuiet -verbosity $options.verbosity) {
         Write-TestHeader -file $file -coveredFile $coveredFile -separatorWidth $separatorWidth
     }
 
@@ -447,7 +447,7 @@ function Invoke-Tests {
         }
 
         $psInfo = Get-PowerShellInfo
-        if (Test-IsNotQuiet -options $options) {
+        if (Test-IsNotQuiet -verbosity $options.verbosity) {
             Show-PesterVersion -pesterVersion $pesterInfo
             Show-PowerShellInfo -psInfo $psInfo
         } else {

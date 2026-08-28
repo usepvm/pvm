@@ -1,8 +1,8 @@
 ﻿
 function Test-IsNotQuiet {
-    param ($options)
+    param ($verbosity)
 
-    return ($options.verbosity -ne 'None')
+    return ($verbosity -ne 'None')
 }
 
 function Show-Scripts {

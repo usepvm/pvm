@@ -52,16 +52,8 @@ function Invoke-RunScripts {
         $results = @()
         foreach ($scriptCommand in $scriptCommands) {
             try {
-                Write-Gray -message "Command: pvm $scriptCommand"
-                $parts = $scriptCommand -split ' '
-                $command = $parts[0]
-                $scriptArgs = if ($parts.Count -gt 1) { $parts[1..($parts.Count - 1)] } else { @() }
-
-                if ($command -ne 'test') {
-                    Write-Yellow -message "`nInvalid command in script: '$command'`n"
-                    $results += @{ code = -1; output = $null }
-                    continue
-                }
+                Write-Gray -message "Command: pvm test $scriptCommand"
+                $scriptArgs = $scriptCommand -split ' '
 
                 if ($runInSubProcess) {
                     $verbosityArg = $scriptArgs | Where-Object -FilterScript { $_ -match '^--verbosity=' }
@@ -71,12 +63,11 @@ function Invoke-RunScripts {
                         continue
                     }
 
-                    $scriptArgs = $scriptArgs + $files
-                    $result = Invoke-PVMSubprocess -command $command -arguments $scriptArgs
+                    $result = Invoke-PVMSubprocess -command 'test' -arguments $scriptArgs
                     $results += $result
                 } else {
                     $actions = Get-Actions
-                    $result = $(& $actions[$command].data.action -arguments $scriptArgs)
+                    $result = $(& $actions['test'].data.action -arguments $scriptArgs)
                     return $result
                 }
 

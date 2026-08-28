@@ -217,4 +217,38 @@ Describe 'Invoke-RunScripts' {
             $arguments -join ' | ' -eq 'arg2 | --pester=5.7 | --verbosity=None | file1.ps1 | file2.ps1'
         }
     }
+
+    It "Run scripts with empty files argument" {
+        Mock Get-Scripts { @{'testscript' = @('arg1 --verbosity=None', 'arg2 --pester=5.7 --verbosity=None')} }
+        Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
+
+        $result = Invoke-RunScripts -scriptName 'testscript' -files @()
+
+        $result | Should -Be 0
+        Should -Invoke Invoke-PVMSubprocess -Times 1 -ParameterFilter {
+            $command -eq 'test' -and
+            $arguments -join ' | ' -eq 'arg1 | --verbosity=None'
+        }
+        Should -Invoke Invoke-PVMSubprocess -Times 1 -ParameterFilter {
+            $command -eq 'test' -and
+            $arguments -join ' | ' -eq 'arg2 | --pester=5.7 | --verbosity=None'
+        }
+    }
+
+    It "Run scripts with null files argument" {
+        Mock Get-Scripts { @{'testscript' = @('arg1 --verbosity=None', 'arg2 --pester=5.7 --verbosity=None')} }
+        Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
+
+        $result = Invoke-RunScripts -scriptName 'testscript' -files $null
+
+        $result | Should -Be 0
+        Should -Invoke Invoke-PVMSubprocess -Times 1 -ParameterFilter {
+            $command -eq 'test' -and
+            $arguments -join ' | ' -eq 'arg1 | --verbosity=None'
+        }
+        Should -Invoke Invoke-PVMSubprocess -Times 1 -ParameterFilter {
+            $command -eq 'test' -and
+            $arguments -join ' | ' -eq 'arg2 | --pester=5.7 | --verbosity=None'
+        }
+    }
 }

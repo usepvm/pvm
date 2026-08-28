@@ -23,7 +23,7 @@ function Show-SubProcessOutput {
 }
 
 function Invoke-RunScripts {
-    param ($scriptName, $files = @())
+    param ($scriptName, $files = $null)
 
     try {
         if ([string]::IsNullOrWhiteSpace($scriptName)) {
@@ -63,6 +63,9 @@ function Invoke-RunScripts {
                         continue
                     }
 
+                    if ($files) {
+                        $scriptArgs = $scriptArgs + $files
+                    }
                     $result = Invoke-PVMSubprocess -command 'test' -arguments $scriptArgs
                     $results += $result
                 } else {

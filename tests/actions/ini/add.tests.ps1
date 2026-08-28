@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\add-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\add-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     $script:testIniPath = "$TEST_DRIVE\php.ini"
@@ -9,7 +9,7 @@ BeforeAll {
     $script:testBackupPath = "$testIniPath.bak"
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
+    New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
 
     $script:XDEBUG_BASE_URL = $PVMConfig.links.xdebugBase
     $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages

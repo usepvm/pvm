@@ -146,7 +146,7 @@ function Install-XDebugExtension {
         }
 
         if ($null -eq $xDebugList -or $xDebugList.Count -eq 0) {
-            Show-Error -message "`nNo match was found, check the '$($PVMConfig.paths.logError)' for any potentiel errors"
+            Show-Error -message "`nNo match was found, check the '$($PVMConfig.paths.files.logError)' for any potentiel errors"
             return -1
         }
 
@@ -170,21 +170,21 @@ function Install-XDebugExtension {
             return -1
         }
 
-        $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.php
+        $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.directories.php
         $phpPath = Split-Path -Path $iniPath -Parent
 
         if (-not $skipConfirmation) {
             if (Test-FileExists -path "$phpPath\ext\$($chosenItem.fileName)") {
                 $response = Read-HostWrapper -prompt "`n$($chosenItem.fileName) already exists. Would you like to overwrite it? (y/n)"
                 if (Test-NoResponse -response $response) {
-                    Remove-ItemWrapper -path "$($PVMConfig.paths.php)\$($chosenItem.fileName)"
+                    Remove-ItemWrapper -path "$($PVMConfig.paths.directories.php)\$($chosenItem.fileName)"
                     Write-Gray -message "`nInstallation cancelled"
                     return -1
                 }
             }
         }
 
-        Move-ItemWrapper -path "$($PVMConfig.paths.php)\$($chosenItem.fileName)" -destination "$phpPath\ext"
+        Move-ItemWrapper -path "$($PVMConfig.paths.directories.php)\$($chosenItem.fileName)" -destination "$phpPath\ext"
         $xDebugConfig = Get-XdebugConfigV2 -XDebugPath $($chosenItem.fileName)
         if ($chosenItem.extVersion -like '3.*') {
             $xDebugConfig = Get-XdebugConfigV3 -XDebugPath $($chosenItem.fileName)
@@ -303,9 +303,9 @@ function Install-Extension {
             return -1
         }
 
-        $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.php
+        $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.directories.php
         $fileNamePath = $chosenItem.fileName -replace '.zip$', ''
-        $extractPath = "$($PVMConfig.paths.php)\$fileNamePath"
+        $extractPath = "$($PVMConfig.paths.directories.php)\$fileNamePath"
         Expand-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
         $files = Get-ChildItemWrapper -path $extractPath
         $extFile = $files | Where-Object -FilterScript {
@@ -322,7 +322,7 @@ function Install-Extension {
             if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
                 $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
                 if (Test-NoResponse -response $response) {
-                    Remove-ItemWrapper -path "$($PVMConfig.paths.php)\$fileNamePath"
+                    Remove-ItemWrapper -path "$($PVMConfig.paths.directories.php)\$fileNamePath"
                     Write-Gray -message "`nInstallation cancelled"
                     return -1
                 }

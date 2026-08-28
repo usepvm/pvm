@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\ini-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\ini-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     $script:testIniPath = "$TEST_DRIVE\php.ini"
@@ -12,10 +12,10 @@ BeforeAll {
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
+    New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
 
     # Create directory and symlink for current PHP version
-    $phpVersionPath = "$($PVMConfig.paths.php)\php-8.2"
+    $phpVersionPath = "$($PVMConfig.paths.directories.php)\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
 
     Mock Show-Error {}

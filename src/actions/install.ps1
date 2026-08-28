@@ -182,7 +182,7 @@ function Get-PHP {
         $buildType = $versionObject.BuildType
         $arch = $versionObject.arch
 
-        $destination = $PVMConfig.paths.php
+        $destination = $PVMConfig.paths.directories.php
         $created = New-Directory -path $destination
         if ($created -ne 0) {
             Show-Error -message "Failed to create directory $destination"

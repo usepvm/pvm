@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\fetch-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\fetch-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     $script:PECL_BASE_URL = $PVMConfig.links.peclBase
@@ -630,7 +630,7 @@ Describe "Select-ExtensionFromMatches Tests" {
 
 Describe "Resolve-ExtensionLinks Tests" {
     BeforeEach {
-        $PVMConfig.paths.cache = "$TEST_DRIVE\cache"
+        $PVMConfig.paths.directories.cache = "$TEST_DRIVE\cache"
     }
 
     It "Returns filtered links" {

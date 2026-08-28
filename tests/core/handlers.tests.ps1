@@ -2,7 +2,7 @@
 BeforeAll {
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\handlers-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\handlers-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     Import-Module -Name PowerShellGet -ErrorAction SilentlyContinue

@@ -114,7 +114,7 @@ Describe 'Invoke-RunScripts' {
     }
 
     It "Runs single command in subprocess and returns result with no arguments" {
-        Mock Get-Scripts { @{'testscript' = @('test')} }
+        Mock Get-Scripts { @{'testscript' = @('arg1')} }
         Mock Get-Actions { @{ 'test' = @{ data = @{ action = { return 0 } } } } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
@@ -125,7 +125,7 @@ Describe 'Invoke-RunScripts' {
     }
 
     It 'Runs single command directly and returns result' {
-        Mock Get-Scripts { @{'testscript' = @('test arg1')} }
+        Mock Get-Scripts { @{'testscript' = @('arg1')} }
         Mock Get-Actions { @{ 'test' = @{ data = @{ action = { return 0 } } } } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
@@ -136,7 +136,7 @@ Describe 'Invoke-RunScripts' {
     }
 
     It 'Runs multiple commands in subprocess' {
-        Mock Get-Scripts { @{'testscript' = @('test arg1', 'test arg2')} }
+        Mock Get-Scripts { @{'testscript' = @('arg1', 'arg2')} }
         Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
@@ -147,7 +147,7 @@ Describe 'Invoke-RunScripts' {
     }
 
     It 'Returns -1 when any subprocess command fails' {
-        Mock Get-Scripts { @{'testscript' = @('test arg1', 'test arg2')} }
+        Mock Get-Scripts { @{'testscript' = @('arg1', 'arg2')} }
         Mock Invoke-PVMSubprocess { @{ code = -1; output = '' } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
@@ -165,7 +165,7 @@ Describe 'Invoke-RunScripts' {
     }
 
     It 'Handles mixed success and failure in subprocess' {
-        Mock Get-Scripts { @{'testscript' = @('test arg1', 'test arg2')} }
+        Mock Get-Scripts { @{'testscript' = @('arg1', 'arg2')} }
         Mock Invoke-PVMSubprocess {
             param ($command, $arguments)
             if ($arguments -eq 'arg1') { return @{ code = 0; output = '' } }
@@ -190,19 +190,19 @@ Describe 'Invoke-RunScripts' {
     }
 
     It "Returns -1 when multi-command script has invalid verbosity" {
-        Mock Get-Scripts { @{'testscript' = @('test arg1 --verbosity=None', 'test arg2 --verbosity=Normal')} }
+        Mock Get-Scripts { @{'testscript' = @('arg1 --verbosity=None', 'arg2 --verbosity=Normal')} }
         Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
 
         $result | Should -Be -1
         Should -Invoke Write-Yellow -ParameterFilter {
-            $message -like "*Invalid verbosity in multi-command script 'testscript': 'test arg2 --verbosity=Normal' (only --verbosity=None is allowed when a script has more than one command)*"
+            $message -like "*Invalid verbosity in multi-command script 'testscript': 'arg2 --verbosity=Normal' (only --verbosity=None is allowed when a script has more than one command)*"
         } -Exactly 1
     }
 
     It "Runs scripts with custom files" {
-        Mock Get-Scripts { @{'testscript' = @('test arg1 --verbosity=None', 'test arg2 --pester=5.7 --verbosity=None')} }
+        Mock Get-Scripts { @{'testscript' = @('arg1 --verbosity=None', 'arg2 --pester=5.7 --verbosity=None')} }
         Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
 
         $result = Invoke-RunScripts -scriptName 'testscript' -files @('file1.ps1', 'file2.ps1')
@@ -215,6 +215,40 @@ Describe 'Invoke-RunScripts' {
         Should -Invoke Invoke-PVMSubprocess -Times 1 -ParameterFilter {
             $command -eq 'test' -and
             $arguments -join ' | ' -eq 'arg2 | --pester=5.7 | --verbosity=None | file1.ps1 | file2.ps1'
+        }
+    }
+
+    It "Run scripts with empty files argument" {
+        Mock Get-Scripts { @{'testscript' = @('arg1 --verbosity=None', 'arg2 --pester=5.7 --verbosity=None')} }
+        Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
+
+        $result = Invoke-RunScripts -scriptName 'testscript' -files @()
+
+        $result | Should -Be 0
+        Should -Invoke Invoke-PVMSubprocess -Times 1 -ParameterFilter {
+            $command -eq 'test' -and
+            $arguments -join ' | ' -eq 'arg1 | --verbosity=None'
+        }
+        Should -Invoke Invoke-PVMSubprocess -Times 1 -ParameterFilter {
+            $command -eq 'test' -and
+            $arguments -join ' | ' -eq 'arg2 | --pester=5.7 | --verbosity=None'
+        }
+    }
+
+    It "Run scripts with null files argument" {
+        Mock Get-Scripts { @{'testscript' = @('arg1 --verbosity=None', 'arg2 --pester=5.7 --verbosity=None')} }
+        Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
+
+        $result = Invoke-RunScripts -scriptName 'testscript' -files $null
+
+        $result | Should -Be 0
+        Should -Invoke Invoke-PVMSubprocess -Times 1 -ParameterFilter {
+            $command -eq 'test' -and
+            $arguments -join ' | ' -eq 'arg1 | --verbosity=None'
+        }
+        Should -Invoke Invoke-PVMSubprocess -Times 1 -ParameterFilter {
+            $command -eq 'test' -and
+            $arguments -join ' | ' -eq 'arg2 | --pester=5.7 | --verbosity=None'
         }
     }
 }

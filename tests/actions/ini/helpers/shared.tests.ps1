@@ -32,6 +32,78 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
+Describe "ConvertTo-ExtensionId" {
+    It "Returns empty string for null input" {
+        $res = ConvertTo-ExtensionId -name $null
+        $res | Should -BeNullOrEmpty
+    }
+
+    It "Returns empty string for whitespaced input" {
+        $res = ConvertTo-ExtensionId -name '    '
+        $res | Should -BeNullOrEmpty
+    }
+
+    It "returns an empty string for an empty string" {
+        $res = ConvertTo-ExtensionId -name ''
+        $res | Should -Be ''
+    }
+
+    It 'trims surrounding double quotes' {
+        $res = ConvertTo-ExtensionId -name '"xdebug"'
+        $res | Should -Be 'xdebug'
+    }
+
+    It 'trims surrounding single quotes' {
+        $res = ConvertTo-ExtensionId -name "'xdebug'"
+        $res | Should -Be 'xdebug'
+    }
+
+    It 'extracts filename from a full path' {
+        $res = ConvertTo-ExtensionId -name 'C:\php\ext\php_xdebug.dll'
+        $res | Should -Be 'xdebug'
+    }
+
+    It 'extracts filename from a unix-style path' {
+        $res = ConvertTo-ExtensionId -name '/usr/lib/php/extensions/php_redis.dll'
+        $res | Should -Be 'redis'
+    }
+
+    It 'strips the php_ prefix' {
+        $res = ConvertTo-ExtensionId -name 'php_mbstring.dll'
+        $res | Should -Be 'mbstring'
+    }
+
+    It 'strips the .dll extension' {
+        $res = ConvertTo-ExtensionId -name 'opcache.dll'
+        $res | Should -Be 'opcache'
+    }
+
+    It 'strips a trailing version suffix' {
+        $res = ConvertTo-ExtensionId -name 'php_xdebug-3.2.1.dll'
+        $res | Should -Be 'xdebug'
+    }
+
+    It 'strips a trailing version suffix with extra text' {
+        $res = ConvertTo-ExtensionId -name 'php_xdebug-3.2.1-8.2-vs16-x86_64.dll'
+        $res | Should -Be 'xdebug'
+    }
+
+    It 'lowercases the result' {
+        $res = ConvertTo-ExtensionId -name 'PHP_XDEBUG.DLL'
+        $res | Should -Be 'xdebug'
+    }
+
+    It 'handles a bare extension name with no prefix, suffix, or path' {
+        $res = ConvertTo-ExtensionId -name 'redis'
+        $res | Should -Be 'redis'
+    }
+
+    It 'handles combined quotes, path, prefix, version, and case' {
+        $res = ConvertTo-ExtensionId -name '"C:\ext\PHP_Imagick-3.7.0-8.2-nts-vs16-x64.dll"'
+        $res | Should -Be 'imagick'
+    }
+}
+
 Describe "Backup-IniFile" {
     It "Creates a backup when none exists" {
         Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue

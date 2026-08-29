@@ -3,14 +3,8 @@ function Show-PHPExtensionInfo {
     param ($iniPath, $extName)
 
     try {
-        $normalizeId = {
-            param ($name)
-            if (-not $name) { return '' }
-            return ([System.IO.Path]::GetFileName($name.ToString().Trim('"', "'")) -replace '^php_', '' -replace '\.dll$', '').ToLower()
-        }
-
         New-Line
-        $searchId = & $normalizeId $extName
+        $searchId = ConvertTo-ExtensionId -name $extName
         $linksMatchingExtName = Get-ExtensionMatchingCategories -extName $searchId
         $availableMatch = Select-ExtensionFromMatches -linksMatchingExtName $linksMatchingExtName
 

@@ -1,4 +1,16 @@
 ﻿
+function ConvertTo-ExtensionId {
+    param ($name)
+
+    if ([string]::IsNullOrWhiteSpace($name)) { return '' }
+
+    $s = $name.ToString()
+    $s = $s.Trim('"', "'")
+    $s = [System.IO.Path]::GetFileName($s)
+    $s = $s -replace '^php_', '' -replace '\.dll$', '' -replace '-[\d\.]+.*$', ''
+    return $s.ToLower()
+}
+
 function Backup-IniFile {
     param ($iniPath)
 
@@ -23,17 +35,6 @@ function Get-AllPHPExtensionsStatus {
 
     $matchesInExt = @()
 
-    # helper to normalize extension identifiers for comparison
-    $normalizeId = {
-        param ($n)
-        if (-not $n) { return '' }
-        $s = $n.ToString()
-        $s = $s.Trim('"', "'")
-        $s = [System.IO.Path]::GetFileName($s)
-        $s = $s -replace '^php_', '' -replace '\.dll$', ''
-        return $s.ToLower()
-    }
-
     # Step 1: All dlls in ext directory
     $phpDirectory = Split-Path -Path $iniPath -Parent
     $extDirectory = "$phpDirectory\ext"
@@ -41,7 +42,7 @@ function Get-AllPHPExtensionsStatus {
     if (Test-DirectoryExists -path $extDirectory) {
         $dllFiles = Get-ChildItemWrapper -path $extDirectory -filter '*.dll' -file
         foreach ($file in $dllFiles) {
-            $fileId = & $normalizeId $file.BaseName
+            $fileId = ConvertTo-ExtensionId -name $file.BaseName
             if (-not $fileId) { continue }
             $matchesInExt += @{
                 name     = $file.BaseName
@@ -62,7 +63,7 @@ function Get-AllPHPExtensionsStatus {
     foreach ($line in $lines) {
         if ($line -match $enabledPattern) {
             $displayName = $matches['ext'].Trim('"', "'")
-            $id = & $normalizeId $displayName
+            $id = ConvertTo-ExtensionId -name $displayName
             if (-not $id) { $lineNumber++; continue }
             $iniMatches[$id] = @{
                 name       = $displayName
@@ -75,7 +76,7 @@ function Get-AllPHPExtensionsStatus {
         }
         if ($line -match $disabledPattern) {
             $displayName = $matches['ext'].Trim('"', "'")
-            $id = & $normalizeId $displayName
+            $id = ConvertTo-ExtensionId -name $displayName
             if (-not $id) { $lineNumber++; continue }
             $iniMatches[$id] = @{
                 name       = $displayName
@@ -183,7 +184,7 @@ function Get-MatchingPHPExtensionsStatus {
         return @()
     }
 
-    $searchId = $extName.Trim('"', "'").ToLower() -replace '^php_', '' -replace '\.dll$', ''
+    $searchId = ConvertTo-ExtensionId -name $extName
 
     $allExtensions = @(Get-AllPHPExtensionsStatus -iniPath $iniPath -includeIniOnly $includeIniOnly)
     $extensionsMatches = $allExtensions | Where-Object -FilterScript {

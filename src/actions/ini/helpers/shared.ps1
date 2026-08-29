@@ -27,7 +27,7 @@ function Backup-IniFile {
 }
 
 function Get-AllPHPExtensionsStatus {
-    param ($iniPath, $includeIniOnly = $false)
+    param ($iniPath, $includeIniOnly = $false, $addToIniFileIfMissing = $true)
 
     $enabledPattern = "^\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*)\2\s*(;.*)?$"
     $disabledPattern = "^\s*;\s*(zend_)?extension\s*=\s*([`"']?)([^\s`"';]*[/\\])?(?<ext>[^\s`"';]*)\2\s*(;.*)?$"
@@ -116,40 +116,35 @@ function Get-AllPHPExtensionsStatus {
             $isZendExtension = Get-ZendExtensionsList | Where-Object -FilterScript { $extMatch.name -like "*$_*" }
             $extensionLine = if ($isZendExtension) { ";zend_extension=$($extMatch.name).dll" } else { ";extension=$($extMatch.name).dll" }
 
-            try {
-                $lines += $extensionLine
-                Set-ContentWrapper -path $iniPath -value $lines
-                $matchesList += @{
-                    name       = $extMatch.name
-                    id         = $id
-                    status     = 'Disabled'
-                    enabled    = $false
-                    color      = 'DarkYellow'
-                    line       = $extensionLine
-                    lineNumber = $lines.Count
-                    source     = 'ext,ini'
-                    fullPath   = $extMatch.fullPath
-                    fileName   = $extMatch.fileName
-                    version    = $extMatch.version
-                    copyRight  = $extMatch.copyRight
-                }
-            } catch {
-                $matchesList += @{
-                    name       = $extMatch.name
-                    id         = $id
-                    status     = 'Disabled'
-                    enabled    = $false
-                    comment    = 'Available (not configured)'
-                    color      = 'DarkCyan'
-                    line       = "Found in ext directory: $($extMatch.fullPath)"
-                    lineNumber = 0
-                    source     = 'ext'
-                    fullPath   = $extMatch.fullPath
-                    fileName   = $extMatch.fileName
-                    version    = $extMatch.version
-                    copyRight  = $extMatch.copyRight
-                }
+            $entry = @{
+                name       = $extMatch.name
+                id         = $id
+                status     = 'Disabled'
+                enabled    = $false
+                comment    = 'Available (not configured)'
+                color      = 'DarkCyan'
+                line       = "Found in ext directory: $($extMatch.fullPath)"
+                lineNumber = 0
+                source     = 'ext'
+                fullPath   = $extMatch.fullPath
+                fileName   = $extMatch.fileName
+                version    = $extMatch.version
+                copyRight  = $extMatch.copyRight
             }
+
+            if ($addToIniFileIfMissing) {
+                try {
+                    $lines += $extensionLine
+                    Set-ContentWrapper -path $iniPath -value $lines
+                    $entry.color      = 'DarkYellow'
+                    $entry.line       = $extensionLine
+                    $entry.lineNumber = $lines.Count
+                    $entry.source     = 'ext,ini'
+                    $entry.Remove('comment')
+                } catch {}
+            }
+
+            $matchesList += $entry
         }
     }
 
@@ -178,7 +173,7 @@ function Get-AllPHPExtensionsStatus {
 }
 
 function Get-MatchingPHPExtensionsStatus {
-    param ($iniPath, $extName, $includeIniOnly = $false)
+    param ($iniPath, $extName, $includeIniOnly = $false, $addToIniFileIfMissing = $true)
 
     if ([string]::IsNullOrWhiteSpace($extName)) {
         return @()
@@ -186,7 +181,7 @@ function Get-MatchingPHPExtensionsStatus {
 
     $searchId = ConvertTo-ExtensionId -name $extName
 
-    $allExtensions = @(Get-AllPHPExtensionsStatus -iniPath $iniPath -includeIniOnly $includeIniOnly)
+    $allExtensions = @(Get-AllPHPExtensionsStatus -iniPath $iniPath -includeIniOnly $includeIniOnly -addToIniFileIfMissing $addToIniFileIfMissing)
     $extensionsMatches = $allExtensions | Where-Object -FilterScript {
         $_.name -like "*$extName*" -or $_.id -like "*$searchId*"
     }

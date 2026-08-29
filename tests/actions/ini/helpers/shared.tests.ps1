@@ -310,6 +310,20 @@ extension=pdo_mysql
         $res.Length     | Should -Be 1
         $res[0]['name'] | Should -Be 'pdo_mysql'
     }
+
+    It "Skips adding extension with dll found to ini file" {
+        '' | Set-ContentWrapper -path $testIniPath
+        Mock Get-ChildItemWrapper -ParameterFilter { $Path -like '*ext*' } {
+            return @(
+                [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
+            )
+        }
+        $res = @(Get-AllPHPExtensionsStatus -iniPath $testIniPath -addToIniFileIfMissing $false)
+        $res.Length     | Should -Be 1
+        $res[0]['name'] | Should -Be 'pdo_mysql'
+        $res[0]['line'] | Should -BeLike '*Found in ext directory*'
+        Get-ContentWrapper -path $testIniPath | Should -Not -Contain ';extension=pdo_mysql.dll'
+    }
 }
 
 Describe "Get-MatchingPHPExtensionsStatus" {

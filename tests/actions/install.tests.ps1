@@ -1,10 +1,10 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\install-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\install-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    $script:PHP_DIR = $PVMConfig.paths.php
+    $script:PHP_DIR = $PVMConfig.paths.directories.php
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 

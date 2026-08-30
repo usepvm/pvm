@@ -131,9 +131,9 @@ function Update-PVM {
     $latestVersion = git -C $PVMRoot describe --tags --abbrev=0 origin/$currentBranch 2>$null
 
     if ($checkOnly) {
-        $msg = "Update available!"
+        $msg = "`nUpdate available!"
         if ($currentVersion -and $latestVersion) {
-            $msg = "Update available"
+            $msg = "`nUpdate available"
 
             $currentVersionNormalized = Format-Version -version $currentVersion
             $latestVersionNormalized = Format-Version -version $latestVersion
@@ -146,7 +146,7 @@ function Update-PVM {
         return 0
     }
 
-    Show-Warning -message "Update available. Pulling changes..."
+    Show-Warning -message "`nUpdate available. Pulling changes..."
 
     try {
         $oldVersion = $PVMConfig.version

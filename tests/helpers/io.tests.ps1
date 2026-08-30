@@ -2,10 +2,10 @@
 BeforeAll {
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\io-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\io-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    $script:STORAGE_PATH = $PVMConfig.paths.storage
+    $script:STORAGE_PATH = $PVMConfig.paths.directories.storage
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null

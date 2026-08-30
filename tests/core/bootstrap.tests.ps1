@@ -1,7 +1,7 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\bootstrap-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\bootstrap-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     $PVMConfig.version = '1.0.0'

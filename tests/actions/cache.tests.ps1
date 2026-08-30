@@ -1,12 +1,12 @@
 ﻿
 BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\cache-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\cache-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    $script:CACHE_PATH = $PVMConfig.paths.cache
+    $script:CACHE_PATH = $PVMConfig.paths.directories.cache
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    New-Item -ItemType Directory -Path $PVMConfig.paths.cache -Force | Out-Null
+    New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
 
     Mock Show-Error {}
     Mock Show-Info {}

@@ -233,12 +233,12 @@ function Show-Log {
         $pageSize = [int]$pageSize
 
         # Check if log file exists
-        if (Test-FileNotExists -path $PVMConfig.paths.logError) {
-            Show-Error -message "`nLog file not found: $($PVMConfig.paths.logError)"
+        if (Test-FileNotExists -path $PVMConfig.paths.files.logError) {
+            Show-Error -message "`nLog file not found: $($PVMConfig.paths.files.logError)"
             return -1
         }
 
-        $entries = @(Get-LogEntries -path $PVMConfig.paths.logError -term $term)
+        $entries = @(Get-LogEntries -path $PVMConfig.paths.files.logError -term $term)
 
         if ($entries.Length -eq 0) {
             Show-Warning -message "`nNo log entries found."
@@ -264,7 +264,7 @@ function Show-Log {
         Clear-Host
         return 0
     } catch {
-        Show-Error -message "`nFailed to show log: $($PVMConfig.paths.logError)"
+        Show-Error -message "`nFailed to show log: $($PVMConfig.paths.files.logError)"
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show log"; exception = $_ }
         return -1
     }

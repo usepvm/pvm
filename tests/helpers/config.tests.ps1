@@ -2,12 +2,12 @@
 BeforeAll {
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.fakeStorage)\config-drive"
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\config-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    $script:TEMPLATES_PATH = $PVMConfig.paths.templates
-    $script:ALIASES_LIST_PATH = $PVMConfig.paths.aliasesList
-    $script:SCRIPTS_LIST_PATH = $PVMConfig.paths.scriptsList
+    $script:TEMPLATES_PATH = $PVMConfig.paths.directories.templates
+    $script:ALIASES_LIST_PATH = $PVMConfig.paths.files.aliasesList
+    $script:SCRIPTS_LIST_PATH = $PVMConfig.paths.files.scriptsList
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
@@ -406,14 +406,14 @@ MIN_LINE_LENGTH=50
 
         It "Sets paths correctly" {
             $result = Get-Config -rootPath $testRoot
-            $result.paths.storage | Should -Be "$testRoot\storage"
-            $result.paths.php | Should -Be "$testRoot\storage\php"
-            $result.paths.data | Should -Be "$testRoot\storage\data"
-            $result.paths.templates | Should -Be "$testRoot\storage\data\templates"
-            $result.paths.cache | Should -Be "$testRoot\storage\data\cache"
-            $result.paths.profiles | Should -Be "$testRoot\storage\data\profiles"
-            $result.paths.log | Should -Be "$testRoot\storage\logs"
-            $result.paths.logError | Should -Be "$testRoot\storage\logs\error.log"
+            $result.paths.directories.storage | Should -Be "$testRoot\storage"
+            $result.paths.directories.php | Should -Be "$testRoot\storage\php"
+            $result.paths.directories.data | Should -Be "$testRoot\storage\data"
+            $result.paths.directories.templates | Should -Be "$testRoot\storage\data\templates"
+            $result.paths.directories.cache | Should -Be "$testRoot\storage\data\cache"
+            $result.paths.directories.profiles | Should -Be "$testRoot\storage\data\profiles"
+            $result.paths.directories.log | Should -Be "$testRoot\storage\logs"
+            $result.paths.files.logError | Should -Be "$testRoot\storage\logs\error.log"
         }
 
         It "Uses TEST_DRIVE from .env for fake storage when provided" {
@@ -432,7 +432,7 @@ TEST_DRIVE=C:\fake-storage
 
             $result = Get-Config -rootPath $customRoot
 
-            $result.paths.fakeStorage | Should -Be 'C:\fake-storage'
+            $result.paths.directories.fakeStorage | Should -Be 'C:\fake-storage'
         }
 
         It "Falls back to storage/tests when TEST_DRIVE is not set" {
@@ -450,7 +450,7 @@ MIN_LINE_LENGTH=50
 
             $result = Get-Config -rootPath $fallbackRoot
 
-            $result.paths.fakeStorage | Should -Be "$fallbackRoot\storage\tests"
+            $result.paths.directories.fakeStorage | Should -Be "$fallbackRoot\storage\tests"
         }
 
         It "Falls back to storage/tests when TEST_DRIVE is not a valid path" {
@@ -469,7 +469,7 @@ TEST_DRIVE=bad<path
 
             $result = Get-Config -rootPath $invalidRoot
 
-            $result.paths.fakeStorage | Should -Be "$invalidRoot\storage\tests"
+            $result.paths.directories.fakeStorage | Should -Be "$invalidRoot\storage\tests"
         }
 
         It "Sets env variables from .env file" {
@@ -531,28 +531,26 @@ MIN_LINE_LENGTH=50
             $fakeRoot = "$TEST_DRIVE\fake-root"
             $PVMConfig.test.setFakePaths.Invoke($fakeRoot)
 
-            $PVMConfig.paths.pvmRoot | Should -Be $fakeRoot
-            $PVMConfig.paths.storage | Should -Be "$fakeRoot\storage"
+            $PVMConfig.paths.directories.pvmRoot | Should -Be $fakeRoot
+            $PVMConfig.paths.directories.storage | Should -Be "$fakeRoot\storage"
 
-            $PVMConfig.paths.fakeStorage | Should -Be "$fakeRoot\storage"
+            $PVMConfig.paths.directories.fakeStorage | Should -Be "$fakeRoot\storage"
 
-            $PVMConfig.paths.php | Should -Be "$fakeRoot\storage\php"
-            $PVMConfig.paths.data | Should -Be "$fakeRoot\storage\data"
-            $PVMConfig.paths.cache | Should -Be "$fakeRoot\storage\data\cache"
-            $PVMConfig.paths.templates | Should -Be "$fakeRoot\storage\data\templates"
-            $PVMConfig.paths.profiles | Should -Be "$fakeRoot\storage\data\profiles"
+            $PVMConfig.paths.directories.php | Should -Be "$fakeRoot\storage\php"
+            $PVMConfig.paths.directories.data | Should -Be "$fakeRoot\storage\data"
+            $PVMConfig.paths.directories.cache | Should -Be "$fakeRoot\storage\data\cache"
+            $PVMConfig.paths.directories.templates | Should -Be "$fakeRoot\storage\data\templates"
+            $PVMConfig.paths.directories.profiles | Should -Be "$fakeRoot\storage\data\profiles"
+            $PVMConfig.paths.directories.log | Should -Be "$fakeRoot\storage\logs"
+            $PVMConfig.paths.directories.assets | Should -Be "$fakeRoot\assets"
 
-            $PVMConfig.paths.profileExample | Should -Be "$fakeRoot\storage\data\profiles\profile-example.json"
-            $PVMConfig.paths.profileTemplate | Should -Be "$fakeRoot\storage\data\templates\profile-template.json"
-            $PVMConfig.paths.zendExtensionsList | Should -Be "$fakeRoot\storage\data\templates\zend_extensions.json"
-            $PVMConfig.paths.aliasesList | Should -Be "$fakeRoot\storage\data\templates\aliases.json"
-            $PVMConfig.paths.scriptsList | Should -Be "$fakeRoot\storage\data\templates\scripts.json"
-
-            $PVMConfig.paths.log | Should -Be "$fakeRoot\storage\logs"
-            $PVMConfig.paths.logError | Should -Be "$fakeRoot\storage\logs\error.log"
-            $PVMConfig.paths.pathVarBackup | Should -Be "$fakeRoot\storage\logs\path.bak.log"
-
-            $PVMConfig.paths.assets | Should -Be "$fakeRoot\assets"
+            $PVMConfig.paths.files.profileExample | Should -Be "$fakeRoot\storage\data\profiles\profile-example.json"
+            $PVMConfig.paths.files.profileTemplate | Should -Be "$fakeRoot\storage\data\templates\profile-template.json"
+            $PVMConfig.paths.files.zendExtensionsList | Should -Be "$fakeRoot\storage\data\templates\zend_extensions.json"
+            $PVMConfig.paths.files.aliasesList | Should -Be "$fakeRoot\storage\data\templates\aliases.json"
+            $PVMConfig.paths.files.scriptsList | Should -Be "$fakeRoot\storage\data\templates\scripts.json"
+            $PVMConfig.paths.files.logError | Should -Be "$fakeRoot\storage\logs\error.log"
+            $PVMConfig.paths.files.pathVarBackup | Should -Be "$fakeRoot\storage\logs\path.bak.log"
         }
 
         It "Rewrites env.PHP_CURRENT_VERSION_PATH under the given root" {
@@ -585,8 +583,8 @@ MIN_LINE_LENGTH=50
             $PVMConfig.test.setFakePaths.Invoke($firstRoot)
             $PVMConfig.test.setFakePaths.Invoke($secondRoot)
 
-            $PVMConfig.paths.pvmRoot | Should -Be $secondRoot
-            $PVMConfig.paths.storage | Should -Be "$secondRoot\storage"
+            $PVMConfig.paths.directories.pvmRoot | Should -Be $secondRoot
+            $PVMConfig.paths.directories.storage | Should -Be "$secondRoot\storage"
             $PVMConfig.env.PHP_CURRENT_VERSION_PATH | Should -Be "$secondRoot\pvm\php"
         }
     }

@@ -245,7 +245,7 @@ function Invoke-Log {
     $clearLog = $arguments -contains '--clear'
 
     if ($clearLog) {
-        Clear-ContentWrapper -path $PVMConfig.paths.logError
+        Clear-ContentWrapper -path $PVMConfig.paths.file.logError
         Show-Success -message "`nLog Cleared Successfully"
         return 0
     }
@@ -471,7 +471,7 @@ function Invoke-Info {
     $config = [ordered]@{
         'PVM Version'      = $PVMConfig.version
         'PVM Root'         = $PVMRoot
-        'Storage Path'     = $PVMConfig.paths.storage
+        'Storage Path'     = $PVMConfig.paths.directories.storage
         'Current PHP'      = $currentPhpVersion
         'Real PHP Path'    = $currentPhpPath
         'Active PHP Path'  = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
@@ -480,7 +480,7 @@ function Invoke-Info {
         'Profiles'         = @(Get-ProfileFiles).Count
         'Cached Files'     = @(Get-CacheFiles).Count
     }
-    $allKeys = $config.Keys + $PVMConfig.paths.Keys + $PVMConfig.env.Keys
+    $allKeys = $config.Keys + $PVMConfig.paths.directories.Keys + $PVMConfig.paths.files.Keys + $PVMConfig.env.Keys
     $maxNameLength = ($allKeys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
 
     Show-Info -message "`n`nPVM status:`n"
@@ -491,10 +491,13 @@ function Invoke-Info {
 
     if ($arguments -contains '--verbose') {
         $PVM_PATHS = [ordered]@{}
-        foreach ($entry in $PVMConfig.paths.GetEnumerator()) {
+        $PVM_PATHS['Current PHP Path'] = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        foreach ($entry in $PVMConfig.paths.directories.GetEnumerator()) {
             $PVM_PATHS[$entry.Key] = $entry.Value
         }
-        $PVM_PATHS['Current PHP Path'] = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        foreach ($entry in $PVMConfig.paths.files.GetEnumerator()) {
+            $PVM_PATHS[$entry.Key] = $entry.Value
+        }
 
         Show-Info -message "`n`nPVM paths:`n"
         foreach ($entry in $PVM_PATHS.GetEnumerator()) {

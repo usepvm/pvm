@@ -131,11 +131,11 @@ function Optimize-SystemPath {
 
         # Saving Path to log
         $outputLog = Add-LogEntry -data @{
-            logPath = $PVMConfig.paths.pathVarBackup
+            logPath = $PVMConfig.paths.files.pathVarBackup
             header  = "Original PATH`n$oldPath"
         }
         if ($outputLog -eq 0) {
-            Show-Message -message "`nOriginal Path saved to '$($PVMConfig.paths.pathVarBackup)'"
+            Show-Message -message "`nOriginal Path saved to '$($PVMConfig.paths.files.pathVarBackup)'"
         }
 
         $output = 0

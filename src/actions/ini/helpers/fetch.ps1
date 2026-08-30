@@ -1,4 +1,230 @@
 ﻿
+function Get-ExtensionHandlers {
+    return @{
+        SourceHandlers = @{
+            'xdebug.org' = @{
+                GetPackages = {
+                    param ($version)
+                    return Get-OrUpdateCache -cacheFileName "packages_links_for_xdebug_php_$($version)_xdebug" -compute {
+                        return Show-SpinnerWhileJob -argumentList @($version) -scriptBlock {
+                            param ($version)
+                            $data = Get-XDebugFromUrl -url $PVMConfig.links.xdebugHistorical -version $version
+                            return @{ pvmData = $data }
+                        } -rethrow $true
+                    }
+                }
+                Download = {
+                    param ($chosenItem, $phpPath, $skipConfirmation)
+
+                    try {
+                        $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.directories.php
+                        $extFile = @{
+                            Name = $chosenItem.fileName
+                            FullName = "$($PVMConfig.paths.directories.php)\$($chosenItem.fileName)"
+                        }
+
+                        if (-not $skipConfirmation) {
+                            if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
+                                $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
+                                if (Test-NoResponse -response $response) {
+                                    Remove-ItemWrapper -path $extFile.FullName
+                                    Write-Gray -message "`nInstallation cancelled"
+                                    return $null
+                                }
+                            }
+                        }
+
+                        Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
+                        return $extFile
+                    } catch {
+                        $null = Add-LogEntry -data @{ header = "Xdebug.org Handler - Failed to download extension"; exception = $_ }
+                        return $null
+                    }
+                }
+                MoreInfoUrl = $PVMConfig.links.xdebugHistorical
+            }
+            'pecl.php.net' = @{
+                GetPackages = {
+                    param ($version, $linksObj)
+                    if (($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
+                        return $null
+                    }
+                    return Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_php_$($version)_pecl" -compute {
+                        return Show-SpinnerWhileJob -argumentList @($linksObj, $version) -scriptBlock {
+                            param ($linksObj, $version)
+                            $data = Get-PackagesFromSourceLinks -extName $linksObj.extName -version $version -links $linksObj.links
+                            return @{ pvmData = $data }
+                        } -rethrow $true
+                    }
+                }
+                Download = {
+                    param ($chosenItem, $phpPath, $skipConfirmation, $extName)
+
+                    try {
+                        $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.directories.php
+                        $fileNamePath = $chosenItem.fileName -replace '.zip$', ''
+                        $extractPath = "$($PVMConfig.paths.directories.php)\$fileNamePath"
+                        Expand-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
+                        $files = Get-ChildItemWrapper -path $extractPath
+                        $extFile = $files | Where-Object -FilterScript {
+                            ($_.Name -match "^php_$extName.*\.dll$")
+                        }
+
+                        if (-not $extFile) {
+                            Remove-ItemWrapper -path $extractPath
+                            return $null
+                        }
+
+                        if (-not $skipConfirmation) {
+                            if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
+                                $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
+                                if (Test-NoResponse -response $response) {
+                                    Remove-ItemWrapper -path $extractPath
+                                    Write-Gray -message "`nInstallation cancelled"
+                                    return $null
+                                }
+                            }
+                        }
+
+                        Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
+                        Remove-ItemWrapper -path $extractPath
+                        return $extFile
+                    } catch {
+                        $null = Add-LogEntry -data @{ header = "PECL Handler - Failed to download extension"; exception = $_ }
+                        return $null
+                    }
+                }
+                MoreInfoUrl = {
+                    param ($extName)
+                    return "$($PVMConfig.links.peclPackageRoot)/$extName"
+                }
+            }
+        }
+        ExtensionConfigHandlers = @{
+            'xdebug' = {
+                param ($iniPath, $fileName, $extVersion)
+
+                try {
+                    $xDebugConfig = Get-XdebugConfigV2 -XDebugPath $fileName
+                    if ($extVersion -like '3.*') {
+                        $xDebugConfig = Get-XdebugConfigV3 -XDebugPath $fileName
+                    }
+
+                    $iniContent = Get-ContentWrapper -path $iniPath
+                    if ($iniContent -notcontains '[xdebug]') {
+                        $xDebugConfig = "`n$($xDebugConfig -join "`n")"
+                        Add-ContentWrapper -path $iniPath -value $xDebugConfig
+                    }
+
+                    return 0
+                } catch {
+                    $null = Add-LogEntry -data @{ header = "Xdebug Config Handler - Failed to apply configuration"; exception = $_ }
+                    return -1
+                }
+            }
+            'default' = {
+                param ($iniPath, $fileName, $extVersion)
+
+                return (Add-MissingPHPExtensionToIni -iniPath $iniPath -extFileName $extFile.Name -enable $false)
+            }
+        }
+    }
+}
+
+function Get-SourceHandler {
+    param ($sourceUrl)
+
+    $handlers = Get-ExtensionHandlers
+    $sourceHandlers = $handlers.SourceHandlers
+
+    if ($sourceHandlers.ContainsKey($sourceUrl)) {
+        return $sourceHandlers[$sourceUrl]
+    }
+
+    # Default to PECL handler for unknown sources
+    return $sourceHandlers['pecl.php.net']
+}
+
+function Get-ExtensionConfigHandler {
+    param ($extName)
+
+    $handlers = Get-ExtensionHandlers
+    $configHandlers = $handlers.ExtensionConfigHandlers
+
+    $baseExtName = ConvertTo-ExtensionId -name $extName
+
+    if ($configHandlers.ContainsKey($baseExtName)) {
+        return $configHandlers[$baseExtName]
+    }
+
+    # Default handler - no special configuration needed
+    return $configHandlers['default']
+}
+
+function Get-XDebugFromUrl {
+    param ($url, $version)
+
+    try {
+        $html = Invoke-WebRequestWrapper -uri $url
+        $links = $html.Links
+
+        $formattedList = @()
+        $links | ForEach-Object -Process {
+            if (-not $_.href) { return }
+
+            $fileName = [System.IO.Path]::GetFileName($_.href)
+
+            if ($fileName -notmatch '^php_xdebug-.*\.dll$') { return }
+
+            if ($fileName -notmatch "php_xdebug-[\d\.a-zA-Z]+-$version-") { return }
+
+            $xDebugVersion = '2.0'
+            if ($fileName -match 'php_xdebug-([^-]+)') {
+                $xDebugVersion = $matches[1]
+            }
+
+            $formattedList += @{
+                href          = "$($PVMConfig.links.xdebugBase)$($_.href)"
+                version       = $version
+                extVersion    = $xDebugVersion;
+                arch          = if ($fileName -match '(x86_64|x64)(?=\.dll$)') { 'x64' } else { 'x86' }
+                buildType     = if ($fileName -match '(?i)(?:^|-)nts(?:-|\.dll$)') { 'NTS' } else { 'TS' }
+                compiler      = if ($fileName -match '(?i)\b(vs|vc)\d+\b') { $matches[0].ToUpper() } else { 'unknown' }
+                fileName      = $fileName
+            }
+        }
+
+        return $formattedList
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch xdebug versions from $url"; exception = $_ }
+        return @()
+    }
+}
+
+function Get-XdebugConfigV2 {
+    param ($XDebugPath)
+
+    return @(
+        '[xdebug]'
+        ";zend_extension='$XDebugPath'"
+        'xdebug.remote_enable=1'
+        'xdebug.remote_host=127.0.0.1'
+        'xdebug.remote_port=9000'
+    )
+}
+
+function Get-XdebugConfigV3 {
+    param ($XDebugPath)
+
+    return @(
+        '[xdebug]'
+        ";zend_extension='$XDebugPath'"
+        'xdebug.mode=debug'
+        'xdebug.client_host=127.0.0.1'
+        'xdebug.client_port=9003'
+    )
+}
+
 function Get-ExtensionCategoriesByPage {
     param ($extCategory, $link, $page = 1)
 
@@ -237,6 +463,7 @@ function Resolve-ExtensionLinks {
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$($version)_pecl" -compute {
             return Get-ExtensionAvailableReleasesLinks -extName $extName
         }
+        $source = 'pecl.php.net'
     } catch {
         Show-Message -message "`nDirect link for extension '$extName' not found, Loading matching extensions..."
 
@@ -252,15 +479,23 @@ function Resolve-ExtensionLinks {
         if (-not $chosenItem) { return $null }
 
         $extName = $chosenItem.extName
+        $source = $chosenItem.source
         Show-Message -message "`nLoading links for '$extName'..."
-        $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$($version)_pecl" -compute {
-            return Get-ExtensionAvailableReleasesLinks -extName $extName
+
+        # Only get PECL links if the source is pecl.php.net
+        if ($source -eq 'pecl.php.net') {
+            $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$($version)_pecl" -compute {
+                return Get-ExtensionAvailableReleasesLinks -extName $extName
+            }
+        } else {
+            $links = @()
         }
     }
 
     return @{
         extName = $extName
         links   = $links
+        source  = $source
     }
 }
 
@@ -269,22 +504,28 @@ function Get-ExtensionPackages {
 
     $linksObj = Resolve-ExtensionLinks -extName $extName -version $version
 
-    if (($null -eq $linksObj) -or ($linksObj.Count -eq 0) -or ($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {
-        $extName = if ($linksObj -and $linksObj.extName) { $linksObj.extName } else { $extName }
-        return @{ extName = $extName; data = $null }
+    if ($null -eq $linksObj) {
+        return @{ extName = $extName; data = $null; source = 'unknown' }
     }
 
-    $formattedList = Get-OrUpdateCache -cacheFileName "packages_links_for_$($linksObj.extName)_php_$($version)_pecl" -compute {
-        return Show-SpinnerWhileJob -argumentList @($linksObj, $version) -scriptBlock {
-            param ($linksObj, $version)
+    $handler = Get-SourceHandler -sourceUrl $linksObj.source
+    if (-not $handler) {
+        return @{ extName = $linksObj.extName; data = $null; source = $linksObj.source }
+    }
 
-            $data = Get-PackagesFromSourceLinks -extName $linksObj.extName -version $version -links $linksObj.links
-            return @{ pvmData = $data }
-        } -rethrow $true
+    $formattedList = if ($linksObj.source -eq 'pecl.php.net') {
+        & $handler.GetPackages -version $version -linksObj $linksObj
+    } else {
+        & $handler.GetPackages -version $version
+    }
+
+    if ($null -eq $formattedList) {
+        return @{ extName = $linksObj.extName; data = $null; source = $linksObj.source }
     }
 
     return @{
         extName = $linksObj.extName
         data    = $formattedList
+        source  = $linksObj.source
     }
 }

@@ -9,7 +9,8 @@ function Initialize-PVM {
         $parent = Split-Path -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Parent
         $created = New-Directory -path $parent
         if ($created -ne 0) {
-            return @{ code = -1; message = 'Failed to create directory for PHP version.'; color = 'DarkYellow' }
+            Show-Error -message 'Failed to create directory for PHP version.'
+            return -1
         }
 
         $pvmEnvVarContent = Get-EnvVarByName -name 'PVM'
@@ -22,15 +23,16 @@ function Initialize-PVM {
             $newPath += ";%$($PVMConfig.env.PVM_ENV_VAR_NAME)%"
         }
 
-        $result = @{ code = 0; message = 'PVM environment has been set up.'; color = 'DarkGreen' }
         if ($newPath -ne $path) {
             $code = Set-EnvVar -name 'Path' -value $newPath
             if ($code -ne 0) {
-                $result = @{ code = -1; message = 'Failed to set Path environment variable.'; color = 'DarkYellow' }
+                Show-Error -message 'Failed to set Path environment variable.'
+                return -1
             }
         }
 
-        return $result
+        Show-Success -message 'PVM environment has been set up.'
+        return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set up PVM environment"; exception = $_ }
         return @{ code = -1; message = 'Failed to set up PVM environment.'; color = 'DarkYellow' }

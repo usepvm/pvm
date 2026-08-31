@@ -214,12 +214,13 @@ function Install-IniExtension {
             return -1
         }
 
-        $overallCode = 0
+        $codes = @()
         foreach ($extName in $extNames) {
-            $overallCode = Install-Extension -iniPath $iniPath -extName $extName -skipConfirmation $skipConfirmation
+            $codes += Install-Extension -iniPath $iniPath -extName $extName -skipConfirmation $skipConfirmation
         }
 
-        return $overallCode
+        if ($codes | Where-Object -FilterScript { $_ -ne 0 }) { return -1 }
+        return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install '$($extNames -join ', ')'"; exception = $_ }
         return -1

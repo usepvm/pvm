@@ -1032,32 +1032,32 @@ Describe "Install-Extension" {
 
 Describe "Install-IniExtension" {
     It "Handles null extension name" {
-        $code = Install-IniExtension -iniPath $testIniPath -extName $null
+        $code = Install-IniExtension -iniPath $testIniPath -extNames $null
         $code | Should -Be -1
     }
 
     It "Installs xdebug" {
         Mock Install-Extension { return 0 }
-        $code = Install-IniExtension -iniPath $testIniPath -extName 'xdebug'
+        $code = Install-IniExtension -iniPath $testIniPath -extNames 'xdebug'
         $code | Should -Be 0
     }
 
     It "Installs pecl extension" {
         Mock Install-Extension { return 0 }
-        $code = Install-IniExtension -iniPath $testIniPath -extName 'curl'
+        $code = Install-IniExtension -iniPath $testIniPath -extNames 'curl'
         $code | Should -Be 0
     }
 
     It "Returns -1 on error" {
         Mock Install-Extension { return -1 }
-        $code = Install-IniExtension -iniPath $testIniPath -extName 'curl'
+        $code = Install-IniExtension -iniPath $testIniPath -extNames 'curl'
         $code | Should -Be -1
     }
 
     It "Handles thrown exception" {
         Mock Add-LogEntry { return 0 }
         Mock Install-Extension { throw 'Network error' }
-        $code = Install-IniExtension -iniPath $testIniPath -extName 'curl'
+        $code = Install-IniExtension -iniPath $testIniPath -extNames 'curl'
         $code | Should -Be -1
     }
 
@@ -1103,6 +1103,19 @@ Describe "Install-IniExtension" {
         Should -Invoke Install-Extension -Exactly 1 -ParameterFilter {
             $skipConfirmation -eq $false
         }
+    }
+
+    It "Returns -1 if one extension fails to install" {
+        Mock Install-Extension {
+            param ($extName)
+
+            if ($extName -eq 'unknown') { return -1 }
+            return 0
+        }
+
+        $code = Install-IniExtension -iniPath $testIniPath -extNames @('curl', 'unknown')
+
+        $code | Should -Be -1
     }
 }
 

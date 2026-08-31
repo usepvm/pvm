@@ -81,11 +81,11 @@ Describe "Invoke-Setup Tests" {
         Should -Invoke Wait-ForEnvEdit -Times 1
         Should -Invoke Initialize-PVM -Times 1
     }
-    
+
     It "Returns -1 when PVM fails to initialize" {
         Mock Test-PVMNotSetup { $true }
         Mock Initialize-PVM { -1 }
-        
+
         $result = Invoke-Setup
         $result | Should -Be -1
     }
@@ -1341,7 +1341,7 @@ Describe "Invoke-Info Tests" {
             @('cache1.json')
         }
         Mock Test-CanUseCache { return $false }
-        Mock Get-OrUpdateCache {
+        Mock Get-InstalledPHPVersionsFromDisk {
             @(
                 @{ version = '8.2' }
                 @{ version = '8.3' }

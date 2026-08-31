@@ -181,4 +181,13 @@ memory_limit=2G
         $code = Set-IniSetting -iniPath $testIniPath -keys @('memory_limit=256M')
         $code | Should -Be -1
     }
+
+    It "Returns -1 if no match is found for any setting" {
+        @"
+memory_limit=2G
+"@ | Set-ContentWrapper -path $testIniPath
+
+        $code = Set-IniSetting -iniPath $testIniPath -keys @('memory_limit=256M', 'unknown')
+        $code | Should -Be -1
+    }
 }

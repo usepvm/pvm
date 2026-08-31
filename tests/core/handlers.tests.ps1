@@ -1341,7 +1341,7 @@ Describe "Invoke-Info Tests" {
             @('cache1.json')
         }
         Mock Test-CanUseCache { return $false }
-        Mock Get-OrUpdateCache {
+        Mock Get-InstalledPHPVersionsFromDisk {
             @(
                 @{ version = '8.2' }
                 @{ version = '8.3' }

@@ -1037,26 +1037,14 @@ Describe "Install-Extension" {
         Should -Invoke Add-LogEntry
     }
 
-    # It "Returns -1 when no handler is found" {
-    #     Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0" } }
-    #     Mock Get-ExtensionPackages {
-    #         return @{
-    #             extName = 'curl'
-    #             source  = 'pecl.php.net'
-    #             data    = @(
-    #                 @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-    #                 @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
-    #                 @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-    #             )
-    #         }
-    #     }
-    #     Mock Get-SourceHandler { return $null }
+    It "Returns -1 when no source supports the extension" {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '1' }
 
-    #     $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
 
-    #     $code | Should -Be -1
-    #     Should -Invoke Show-Error -ParameterFilter { $message -like "*No handler found for source*" }
-    # }
+        $code | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Source 'xdebug.org' does not support extension 'curl'*" }
+    }
 
     It "Shows the more info url" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0" } }

@@ -3,6 +3,7 @@ function Get-ExtensionHandlers {
     return @{
         SourceHandlers = @{
             'xdebug.org' = @{
+                SupportedExtensions = @('xdebug')
                 ResolveLinks = {
                     param ($extName)
 
@@ -66,6 +67,7 @@ function Get-ExtensionHandlers {
                 MoreInfoUrl = $PVMConfig.links.xdebugHistorical
             }
             'pecl.php.net' = @{
+                SupportedExtensions = @('*')
                 ResolveLinks = {
                     param ($extName)
 

@@ -148,6 +148,14 @@ function Install-Extension {
             return -1
         }
 
+        if ($handler.SupportedExtensions -and $handler.SupportedExtensions -notcontains '*') {
+            $normalizedExtName = ConvertTo-ExtensionId -name $extName
+            if ($handler.SupportedExtensions -notcontains $normalizedExtName) {
+                Show-Error -message "`nSource '$selectedSource' does not support extension '$extName'. Supported extensions: $($handler.SupportedExtensions -join ', ')"
+                return -1
+            }
+        }
+
         $extensionLinksObj = & $handler.ResolveLinks -extName $extName
 
         if (($null -eq $extensionLinksObj) -or ($extensionLinksObj.Count -eq 0) -or ($null -eq $extensionLinksObj.data) -or ($extensionLinksObj.data.Count -eq 0)) {

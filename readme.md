@@ -15,6 +15,8 @@ PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that make
 - [Usage](#usage)
   - [Automatic Version Detection](#automatic-version-detection)
   - [Managing php.ini](#manage-phpini-settings-and-extensions)
+  - [Repair PVM Environment](#repair-pvm-environment)
+  - [Check logs](#check-logs)
   - [Profiles](#manage-php-configuration-profiles)
   - [Cache](#managing-cache)
   - [Performance & User Experience](#performance--user-experience)
@@ -270,6 +272,16 @@ pvm ini info --search=<term>
 # Example: pvm ini info --search=cache
 ```
 
+### Repair PVM Environment
+
+Repair the PVM environment by recreating missing directories, templates, and configuration files, and fixing the .env file:
+
+```sh
+pvm repair
+```
+
+This command is safe to run multiple times — existing files and directories are left untouched. It's useful after a partial installation or when files are accidentally deleted.
+
 ### Check logs
 
 ```sh
@@ -280,6 +292,9 @@ pvm log --pageSize=<number>
 
 pvm log  --search=<term>
 # Example: pvm log --search=error
+
+pvm log --clear
+# Clears the log file
 ```
 
 ### Manage PHP Configuration Profiles
@@ -386,6 +401,20 @@ To view the complete list from the CLI:
 
 ```sh
 pvm aliases
+```
+
+**Usage Examples:**
+
+```sh
+# Using aliases instead of full commands
+pvm i 8.4              # Same as: pvm install 8.4
+pvm ls                  # Same as: pvm list
+pvm use 8.4             # Same as: pvm use 8.4
+pvm cur                 # Same as: pvm current
+pvm rm 8.4              # Same as: pvm uninstall 8.4
+pvm ? setup             # Same as: pvm help setup
+pvm fix                 # Same as: pvm repair
+pvm upgrade             # Same as: pvm update
 ```
 
 | Alias  | Command   |

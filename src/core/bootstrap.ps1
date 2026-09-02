@@ -214,8 +214,6 @@ function Start-PVM {
                 $command   = $flagCommand
                 $arguments = @($arguments | Where-Object -FilterScript { -not (Get-FlagMap).Contains($_) })
             }
-        } else {
-            $command = $command.Trim().ToLower()
         }
 
         $command, $arguments = Resolve-NestedCommand -command $command -arguments $arguments

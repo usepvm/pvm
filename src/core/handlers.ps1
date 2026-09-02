@@ -306,7 +306,7 @@ function Invoke-Profile {
 
     $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
 
-    $action = Resolve-Alias -alias $action.ToLower()
+    $action = Resolve-Alias -alias $action
 
     switch ($action.ToLower()) {
         'save' {
@@ -392,7 +392,7 @@ function Invoke-Cache {
 
     $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
 
-    $action = Resolve-Alias -alias $action.ToLower()
+    $action = Resolve-Alias -alias $action
 
     switch ($action.ToLower()) {
         'list' {

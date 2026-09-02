@@ -24,42 +24,39 @@ AfterAll {
 
 Describe "Invoke-Setup Tests" {
     BeforeEach {
-        Mock Test-PVMSetup { $true }
-        Mock Initialize-PVM { @{ code = 0; message = 'Setup completed' } }
+        Mock Test-PVMNotSetup { $false }
+        Mock Initialize-PVM { 0 }
         Mock Optimize-SystemPath { 0 }
         Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
         Mock New-EnvFile { 0 }
         Mock Wait-ForEnvEdit { }
-        Mock Show-MsgByExitCode { }
     }
 
     It "Should return 0 when PVM is already setup" {
-        Mock Test-PVMSetup { $true }
+        Mock Test-PVMNotSetup { $false }
 
         $result = Invoke-Setup
         $result | Should -Be 0
 
-        Should -Invoke Test-PVMSetup -Times 1
+        Should -Invoke Test-PVMNotSetup -Times 1
         Should -Invoke Initialize-PVM -Times 0
         Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 0
         Should -Invoke New-EnvFile -Times 0
         Should -Invoke Optimize-SystemPath -Times 1
-        Should -Invoke Show-MsgByExitCode -Times 1
     }
 
     It "Should setup PVM when not already setup" {
-        Mock Test-PVMSetup { $false }
-        Mock Initialize-PVM { @{ code = 0; message = 'Setup completed successfully' } }
+        Mock Test-PVMNotSetup { $true }
+        Mock Initialize-PVM { 0 }
 
         $result = Invoke-Setup
         $result | Should -Be 0
 
-        Should -Invoke Test-PVMSetup -Times 1
+        Should -Invoke Test-PVMNotSetup -Times 1
         Should -Invoke Initialize-PVM -Times 1
         Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
         Should -Invoke New-EnvFile -Times 1
         Should -Invoke Optimize-SystemPath -Times 1
-        Should -Invoke Show-MsgByExitCode -Times 1
     }
 
     It "Should display warning when system path optimization fails" {
@@ -72,10 +69,10 @@ Describe "Invoke-Setup Tests" {
     }
 
     It "Should pause for env edit after creating env file" {
-        Mock Test-PVMSetup { $false }
+        Mock Test-PVMNotSetup { $true }
         Mock New-EnvFile { return 0 }
         Mock Wait-ForEnvEdit { }
-        Mock Initialize-PVM { @{ code = 0; message = 'Setup completed successfully' } }
+        Mock Initialize-PVM { 0 }
 
         $result = Invoke-Setup
         $result | Should -Be 0
@@ -83,6 +80,14 @@ Describe "Invoke-Setup Tests" {
         Should -Invoke New-EnvFile -Times 1
         Should -Invoke Wait-ForEnvEdit -Times 1
         Should -Invoke Initialize-PVM -Times 1
+    }
+
+    It "Returns -1 when PVM fails to initialize" {
+        Mock Test-PVMNotSetup { $true }
+        Mock Initialize-PVM { -1 }
+
+        $result = Invoke-Setup
+        $result | Should -Be -1
     }
 }
 
@@ -300,7 +305,6 @@ Describe "Invoke-Install Tests" {
 Describe "Invoke-Uninstall Tests" {
     BeforeEach {
         Mock Uninstall-PHP { return 0 }
-        Mock Show-MsgByExitCode { }
     }
 
     It "Should return -1 when no version is provided" {
@@ -360,7 +364,6 @@ Describe "Invoke-Use Tests" {
     BeforeEach {
         Mock Select-PHPVersionAutomatically { @{ code = 0; version = '8.2.0' } }
         Mock Update-PHPVersion { return 0 }
-        Mock Show-MsgByExitCode { }
     }
 
     It "Should return -1 when no version is provided" {
@@ -1359,7 +1362,8 @@ Describe "Invoke-Info Tests" {
         }
 
         It "Returns 0" {
-            Invoke-Info -arguments @() | Should -Be 0
+            $code = Invoke-Info -arguments @()
+            $code | Should -Be 0
         }
 
         It "Displays status section" {

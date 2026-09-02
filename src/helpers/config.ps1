@@ -145,7 +145,7 @@ function Get-Config {
     }
 
     return @{
-        version  = '2.6' # PVM version
+        version  = '2.7' # PVM version
 
         paths    = [ordered]@{
             directories = @{

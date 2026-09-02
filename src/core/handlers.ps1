@@ -1,21 +1,22 @@
 ﻿
 function Invoke-Setup {
-    $result = @{ code = 0; message = 'PVM is already setup' }
     if (Test-PVMNotSetup) {
         $null = Initialize-EnvironmentDirectoriesAndFiles
         $envCode = New-EnvFile -overwrite $true
 
         if ($envCode -eq 0) { Wait-ForEnvEdit }
 
-        $result = Initialize-PVM
+        $code = Initialize-PVM
+    } else {
+        Show-Info -message "`nPVM is already setup"
+        $code = 0
     }
     $optimized = Optimize-SystemPath
     if ($optimized -ne 0) {
         Show-Error -message "`nFailed to optimize system path."
     }
 
-    Show-MsgByExitCode -result $result
-    return 0
+    return $code
 }
 
 function Invoke-Repair {
@@ -305,7 +306,7 @@ function Invoke-Profile {
 
     $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
 
-    $action = Resolve-Alias -alias $action.ToLower()
+    $action = Resolve-Alias -alias $action
 
     switch ($action.ToLower()) {
         'save' {
@@ -391,7 +392,7 @@ function Invoke-Cache {
 
     $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
 
-    $action = Resolve-Alias -alias $action.ToLower()
+    $action = Resolve-Alias -alias $action
 
     switch ($action.ToLower()) {
         'list' {

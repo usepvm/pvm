@@ -188,9 +188,8 @@ Describe "Integration Tests" {
             Mock Test-PVMSetup { $true }
             Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
             Mock New-EnvFile { 0 }
-            Mock Initialize-PVM { @{ code = 0; message = 'Setup completed' } }
+            Mock Initialize-PVM { 0 }
             Mock Optimize-SystemPath { 0 }
-            Mock Show-MsgByExitCode { }
             Mock Get-CurrentPHPVersion { @{ version = '8.2.0'; path = 'C:\PHP\8.2.0' } }
             Mock Get-PHPStatus {
                 return @(
@@ -232,16 +231,14 @@ Describe "Integration Tests" {
             Mock Test-PVMSetup { $false }
             Mock Initialize-EnvironmentDirectoriesAndFiles { -1 }
             Mock New-EnvFile { -1 }
-            Mock Initialize-PVM { @{ code = 1; message = 'Setup failed' } }
+            Mock Initialize-PVM { -1 }
             Mock Optimize-SystemPath { -1 }
-            Mock Show-MsgByExitCode { }
 
             $result = Invoke-Setup
-            $result | Should -Be 0
+            $result | Should -Be -1
 
             Should -Invoke Initialize-PVM -Times 1
             Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to optimize system path*' }
-            Should -Invoke Show-MsgByExitCode -Times 1
         }
     }
 }

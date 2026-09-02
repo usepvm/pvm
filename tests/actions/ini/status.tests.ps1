@@ -97,4 +97,17 @@ Describe "Get-IniExtensionStatus" {
         $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('curl')
         $code | Should -Be -1
     }
+
+    It "Returns -1 if no match is found for any extension" {
+        Mock Get-MatchingPHPExtensionsStatus {
+            param ($extName)
+
+            if ($extName -eq 'unknown') { return @() }
+            return @( @{ name = 'curl'; id='curl'; status='Enabled'; color='DarkGreen'; line=0; lineNamber=0; source='ext,ini' } )
+        }
+
+        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('curl', 'unknown')
+
+        $code | Should -Be -1
+    }
 }

@@ -92,8 +92,8 @@ Describe "Initialize-PVM" {
 
             $result = Initialize-PVM
 
-            $result.code | Should -Be 0
-            $result.message | Should -Be 'PVM environment has been set up.'
+            $result | Should -Be 0
+            Should -Invoke Show-Success -ParameterFilter { $message -eq 'PVM environment has been set up.' }
             Should -Invoke Set-EnvVar -ParameterFilter { $name -eq 'Path' -and $value -like "*$PVM_ENV_VAR_NAME*" } -Exactly 1
         }
     }
@@ -109,8 +109,8 @@ Describe "Initialize-PVM" {
 
             $result = Initialize-PVM
 
-            $result.code | Should -Be 0
-            $result.message | Should -Be 'PVM environment has been set up.'
+            $result | Should -Be 0
+            Should -Invoke Show-Success -ParameterFilter { $message -eq 'PVM environment has been set up.' }
             Should -Invoke Set-EnvVar -ParameterFilter { $name -eq 'Path' -and $value -like "*$PVM_ENV_VAR_NAME*" } -Exactly 1
         }
 
@@ -124,8 +124,8 @@ Describe "Initialize-PVM" {
 
             $result = Initialize-PVM
 
-            $result.code | Should -Be 0
-            $result.message | Should -Be 'PVM environment has been set up.'
+            $result | Should -Be 0
+            Should -Invoke Show-Success -ParameterFilter { $message -eq 'PVM environment has been set up.' }
             Should -Invoke Set-EnvVar -ParameterFilter { $name -eq 'Path' } -Exactly 0
         }
 
@@ -139,8 +139,8 @@ Describe "Initialize-PVM" {
 
             $result = Initialize-PVM
 
-            $result.code | Should -Be 0
-            $result.message | Should -Be 'PVM environment has been set up.'
+            $result | Should -Be 0
+            Should -Invoke Show-Success -ParameterFilter { $message -eq 'PVM environment has been set up.' }
             Should -Invoke Set-EnvVar -ParameterFilter { $name -eq 'Path' } -Exactly 0
         }
     }
@@ -151,7 +151,7 @@ Describe "Initialize-PVM" {
 
             $result = Initialize-PVM
 
-            $result.code | Should -Be 0
+            $result | Should -Be 0
             Should -Invoke Set-EnvVar -Times 1 -ParameterFilter {
                 $name -eq $PVMConfig.env.PVM_ENV_VAR_NAME -and
                 $value -eq "$PVMRoot;$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)"
@@ -180,8 +180,8 @@ Describe "Initialize-PVM" {
 
             $result = Initialize-PVM
 
-            $result.code | Should -Be -1
-            $result.message | Should -Be 'Failed to create directory for PHP version.'
+            $result | Should -Be -1
+            Should -Invoke Show-Error -ParameterFilter { $message -eq 'Failed to create directory for PHP version.' }
         }
 
         It "Returns error code when Set-EnvVar fails" {
@@ -195,8 +195,8 @@ Describe "Initialize-PVM" {
 
             $result = Initialize-PVM
 
-            $result.code | Should -Be -1
-            $result.message | Should -Be 'Failed to set Path environment variable.'
+            $result | Should -Be -1
+            Should -Invoke Show-Error -ParameterFilter { $message -eq 'Failed to set Path environment variable.' }
             Should -Invoke Set-EnvVar -ParameterFilter { $name -eq 'Path' -and $value -like "*$PVM_ENV_VAR_NAME*" } -Exactly 1
         }
     }

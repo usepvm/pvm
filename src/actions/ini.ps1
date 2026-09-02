@@ -18,9 +18,10 @@ function Invoke-IniAction {
             return -1
         }
 
-        $action = Resolve-Alias -alias $action.ToLower()
+        $action = Resolve-Alias -alias $action
+        $params = @($params | Select-Object -Unique)
 
-        switch ($action.ToLower()) {
+        switch ($action) {
             'info' {
                 $term = ($params | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
                 $exitCode = Get-PHPInfo -term $term -extensions ($params -contains 'extensions') -settings ($params -contains 'settings')

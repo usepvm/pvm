@@ -127,6 +127,9 @@ function Get-UninstallAction {
             ARGUMENTS   = @(
                 '<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)'
             )
+            OPTIONS     = @(
+                '--yes|-y .................... Skip confirmation prompt'
+            )
         }
         action      = {
             param ($arguments)
@@ -196,8 +199,8 @@ function Get-IniAction {
                 'status <extension> .......................................... Check if extension is enabled'
                 'info [extensions] [settings] [--search=<term>] .............. Displays information about the environment and php.ini information summary'
                 'restore ..................................................... Restore original php.ini from backup'
-                'add <extension> ............................................. Install a PHP extension'
-                'remove <extension> .......................................... Remove a PHP extension'
+                'add <extension> [--yes|-y] ................................ Install a PHP extension'
+                'remove <extension> [--yes|-y] .............................. Remove a PHP extension'
                 "ext [available] [--search=<term>]|[info <extension>] ........ Lists the PHP extensions. Type 'available' at the end to see what can be installed."
             )
             EXAMPLES    = @(
@@ -251,8 +254,8 @@ function Get-ProfileAction {
                 'load <name> .................................. Load and apply a saved profile'
                 'list ......................................... List all available profiles'
                 'show <name> .................................. Show detailed profile contents'
-                'delete <name> ................................ Delete a profile'
-                'clear ........................................ Delete all profiles files'
+                'delete <name> [--yes|-y] ........................ Delete a profile'
+                'clear [--yes|-y] ................................ Delete all profiles files'
                 'export <name> <path> ......................... Export profile to a JSON file'
                 'import <path> <name> ......................... Import profile from a JSON file'
             )
@@ -289,8 +292,8 @@ function Get-CacheAction {
             ARGUMENTS   = @(
                 'list ......................................... List all available cache files'
                 'show <name> .................................. Show detailed cache file contents'
-                'delete <name> ................................ Delete a cache file'
-                'clear ........................................ Delete all cache files'
+                'delete <name> [--yes|-y] ........................ Delete a cache file'
+                'clear [--yes|-y] ................................ Delete all cache files'
             )
             EXAMPLES    = @(
                 'pvm cache list ............................... Lists all available cache files'
@@ -342,7 +345,7 @@ function Get-LogAction {
         command     = 'pvm log <options>';
         description = 'Display recent PVM log entries.';
         usage       = [ordered]@{
-            USAGE       = "pvm log [--pageSize=<number>] [--search=<term>] (default is $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE))"
+            USAGE       = "pvm log [--pageSize=<number>] [--search=<term>] [--clear] (default is $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE))"
             DESCRIPTION = @(
                 'Displays the PVM log file contents, showing recent errors,'
                 'and system messages. Useful for troubleshooting issues.'
@@ -351,6 +354,10 @@ function Get-LogAction {
                 "pvm log ................... Shows the last $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE) entries of the log file"
                 'pvm log --pageSize=50 ..... Shows the last 50 entries of the log file'
                 "pvm log --search=error .... Shows entries matching 'error' term"
+                'pvm log --clear ........... Clears the log file'
+            )
+            OPTIONS     = @(
+                '--clear .................... Clear the log file'
             )
         }
         action      = {
@@ -365,7 +372,7 @@ function Get-TestAction {
         command     = 'pvm test <options>';
         description = 'Run the PVM test suite.';
         usage       = [ordered]@{
-            USAGE       = 'pvm test <files> [--exclude=<files>] [--coverage[=<number>]] [--verbosity=<verbosity] [--tag=<tag>] [--sort=<sort>] [--group=<group>] [--shell=<shell>] [--pester=<version>] [--mute]'
+            USAGE       = 'pvm test <files> [--exclude=<files>] [--coverage[=<number>]] [--verbosity=<verbosity>] [--tag=<tag>] [--sort=<sort>] [--group=<group>] [--shell=<shell>] [--pester=<version>] [--mute]'
             DESCRIPTION = @(
                 'Runs the PVM test suite to verify that the installation and configuration'
                 'are working correctly. This includes testing PHP version switching,'

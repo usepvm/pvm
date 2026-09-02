@@ -408,6 +408,89 @@ extension=php_curl.dll
         }
     }
 
+    Context "when duplicate extension/settings names are provided" {
+        BeforeEach {
+            Mock Test-FileNotExists { return $false }
+        }
+
+        It "Removes duplicate ext names and calls Get-IniSetting once" {
+            Mock Get-IniSetting { return 0 }
+
+            $code = Invoke-IniAction -action 'get' -params @('memory', 'memory')
+
+            $code | Should -Be 0
+            Should -Invoke Get-IniSetting -ParameterFilter {
+                $keys -eq @('memory')
+            }
+        }
+
+        It "Removes duplicate ext names and calls Set-IniSetting once" {
+            Mock Set-IniSetting { return 0 }
+
+            $code = Invoke-IniAction -action 'set' -params @('memory', 'memory')
+
+            $code | Should -Be 0
+            Should -Invoke Set-IniSetting -ParameterFilter {
+                $keys -eq @('memory')
+            }
+        }
+
+        It "Removes duplicate ext names and calls Enable-IniExtension once" {
+            Mock Enable-IniExtension { return 0 }
+
+            $code = Invoke-IniAction -action 'enable' -params @('sql', 'sql')
+
+            $code | Should -Be 0
+            Should -Invoke Enable-IniExtension -ParameterFilter {
+                $extNames -eq @('sql')
+            }
+        }
+
+        It "Removes duplicate ext names and calls Disable-IniExtension once" {
+            Mock Disable-IniExtension { return 0 }
+
+            $code = Invoke-IniAction -action 'disable' -params @('sql', 'sql')
+
+            $code | Should -Be 0
+            Should -Invoke Disable-IniExtension -ParameterFilter {
+                $extNames -eq @('sql')
+            }
+        }
+
+        It "Removes duplicate ext names and calls Get-IniExtensionStatus" {
+            Mock Get-IniExtensionStatus { return 0 }
+
+            $code = Invoke-IniAction -action 'status' -params @('sql', 'sql')
+
+            $code | Should -Be 0
+            Should -Invoke Get-IniExtensionStatus -ParameterFilter {
+                $extNames -eq @('sql')
+            }
+        }
+
+        It "Removes duplicate ext names and calls Install-IniExtension" {
+            Mock Install-IniExtension { return 0 }
+
+            $code = Invoke-IniAction -action 'add' -params @('sql', 'sql')
+
+            $code | Should -Be 0
+            Should -Invoke Install-IniExtension -ParameterFilter {
+                $extNames -eq @('sql')
+            }
+        }
+
+        It "Removes duplicate ext names and calls Uninstall-Extension" {
+            Mock Uninstall-Extension { return 0 }
+
+            $code = Invoke-IniAction -action 'remove' -params @('sql', 'sql')
+
+            $code | Should -Be 0
+            Should -Invoke Uninstall-Extension -ParameterFilter {
+                $extNames -eq @('sql')
+            }
+        }
+    }
+
     Context "error handling" {
         It "Handles invalid action" {
             Mock Test-FileNotExists { return $false }

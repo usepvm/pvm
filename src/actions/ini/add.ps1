@@ -89,7 +89,7 @@ function Add-MissingPHPExtensionToIni {
             return -1
         }
 
-        $matchesList = (Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $extFileName -includeIniOnly $true -addToIniFileIfMissing $false) | Select-Object -First 1 
+        $matchesList = (Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $extFileName -includeIniOnly $true -addToIniFileIfMissing $false) | Select-Object -First 1
         if ($matchesList.Length -gt 0 -and $matchesList.LineNumber -gt 0) {
             Show-Warning -message "- Extension '$extFileName' already exists in php.ini"
             return 0

@@ -19,6 +19,7 @@ function Invoke-IniAction {
         }
 
         $action = Resolve-Alias -alias $action
+        $params = @($params | Select-Object -Unique)
 
         switch ($action) {
             'info' {

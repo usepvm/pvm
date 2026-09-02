@@ -97,7 +97,7 @@ function Add-MissingPHPExtensionToIni {
 
         $lines = Get-ContentWrapper -path $iniPath
         $commented = if ($enable) { '' } else { ';' }
-        $isZendExtension = Get-ZendExtensionsList | Where-Object -FilterScript { $extFileName -like "*$_*" }
+        $isZendExtension = [bool](Get-ZendExtensionsList | Where-Object -FilterScript { $extFileName -like "*$_*" } | Select-Object -First 1)
         if ($isZendExtension) {
             $lines += "`n$commented" + "zend_extension=$extFileName"
         } else {

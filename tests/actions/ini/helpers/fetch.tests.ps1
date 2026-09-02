@@ -103,6 +103,51 @@ Describe "Get-SourceHandler Tests" {
             }
         }
 
+        It "Returns data null when no handler found for xdebug" {
+            Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.2.0" } }
+            Mock Get-OrUpdateCache { return $null }
+
+            $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
+
+            Mock Get-SourceHandler { return $null }
+            $result = & $handler.ResolveLinks -extName 'xdebug'
+
+            $result.data | Should -BeNullOrEmpty
+        }
+
+        It "Returns data null when no packages found" {
+            Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.2.0" } }
+            Mock Get-OrUpdateCache { return $null }
+
+            $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
+
+            $result = & $handler.ResolveLinks -extName 'xdebug'
+
+            $result.data | Should -BeNullOrEmpty
+        }
+
+        It "Resolves and returns xdebug links" {
+            Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.2.0" } }
+            Mock Get-OrUpdateCache {
+                return @{
+                    extName = 'curl'
+                    data    = @(
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
+                    )
+                }
+            }
+
+            $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
+
+            $result = & $handler.ResolveLinks -extName 'xdebug'
+
+            $result.source | Should -Be 'xdebug.org'
+            $result.data.Count | Should -Be 2
+            $result.extName | Should -Be 'xdebug'
+        }
+
         It "Returns null when user cancels" {
             Mock Get-XDebugFromUrl { return $null }
             Mock Invoke-WebRequestWrapper { return $null }
@@ -180,6 +225,29 @@ Describe "Get-SourceHandler Tests" {
                 $result = & $scriptBlock @argumentList
                 return $result.pvmData
             }
+        }
+
+        It "Resolves and returns extension links" {
+            Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.2.0" } }
+            Mock Get-ExtensionPackages {
+                return @{
+                    extName = 'curl'
+                    source  = 'pecl.php.net'
+                    data    = @(
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
+                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                    )
+                }
+            }
+
+            $handler = Get-SourceHandler -sourceUrl 'pecl.php.net'
+
+            $result = & $handler.ResolveLinks -extName 'curl'
+
+            $result.source | Should -Be 'pecl.php.net'
+            $result.data.Count | Should -Be 3
+            $result.extName | Should -Be 'curl'
         }
 
         It "Returns null when no dll file found in downloaded zip" {

@@ -3,6 +3,28 @@ function Get-ExtensionHandlers {
     return @{
         SourceHandlers = @{
             'xdebug.org' = @{
+                ResolveLinks = {
+                    param ($extName)
+
+                    $currentVersionObj = Get-CurrentPHPVersion
+                    $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
+
+                    $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
+                    if (-not $handler) {
+                        return @{ extName = 'xdebug'; data = $null; source = 'xdebug.org' }
+                    }
+
+                    $formattedList = & $handler.GetPackages -version $currentVersion
+                    if ($null -eq $formattedList) {
+                        return @{ extName = 'xdebug'; data = $null; source = 'xdebug.org' }
+                    }
+
+                    return @{
+                        extName = $extName
+                        data    = $formattedList
+                        source  = 'xdebug.org'
+                    }
+                }
                 GetPackages = {
                     param ($version)
                     return Get-OrUpdateCache -cacheFileName "packages_links_for_xdebug_php_$($version)_xdebug" -compute {
@@ -44,6 +66,14 @@ function Get-ExtensionHandlers {
                 MoreInfoUrl = $PVMConfig.links.xdebugHistorical
             }
             'pecl.php.net' = @{
+                ResolveLinks = {
+                    param ($extName)
+
+                    $currentVersionObj = Get-CurrentPHPVersion
+                    $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
+
+                    return (Get-ExtensionPackages -extName $extName -version $currentVersion)
+                }
                 GetPackages = {
                     param ($version, $linksObj)
                     if (($null -eq $linksObj.links) -or ($linksObj.links.Count -eq 0)) {

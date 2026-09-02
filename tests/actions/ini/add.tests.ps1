@@ -18,6 +18,7 @@ BeforeAll {
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
 
+    Mock New-Line {}
     Mock Show-Warning {}
     Mock Show-Message {}
     Mock Show-Error {}
@@ -221,6 +222,8 @@ Describe "Install-Extension Tests" {
     }
 
     It "Uses extension config handler for configuration" {
+        $mockFile = @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\extracted\php_curl.dll" }
+        Mock Get-ChildItemWrapper { return @( $mockFile ) }
         Mock Get-ExtensionConfigHandler {
             param ($extName)
             return {
@@ -463,6 +466,52 @@ Describe "Install-Extension" {
         }
     }
 
+    It "Returns -1 when user cancels the extension installation" {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { '' }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+
+        $code | Should -Be -1
+        Should -Invoke Write-Gray -Times 1 -ParameterFilter { $message -like '*Installation cancelled*' }
+    }
+
+    It "Returns -1 when user enters an invalid selection" {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { 'unknown' }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+
+        $code | Should -Be -1
+        Should -Invoke Show-Warning -Times 1 -ParameterFilter { $message -like '*You answer is invalid*' }
+    }
+
+    It "Returns -1 when user enters a negative selection" {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { -1 }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+
+        $code | Should -Be -1
+        Should -Invoke Show-Warning -Times 1 -ParameterFilter { $message -like '*Number must be between 0 and 1*' }
+    }
+
+    It "Returns -1 when user enters a selection outside the valid range" {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { 5 }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+
+        $code | Should -Be -1
+        Should -Invoke Show-Warning -Times 1 -ParameterFilter { $message -like '*Number must be between 0 and 1*' }
+    }
+
+    It "Returns -1 when no handler is found for the selected source" {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { 0 }
+        Mock Get-SourceHandler { return $null }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*No handler found for source*' }
+    }
+
     It "Returns -1 when gets empty list from extension" {
         $code = Install-Extension -iniPath $testIniPath -extName 'nonexistent_ext'
         $code | Should -Be -1
@@ -681,9 +730,15 @@ Describe "Install-Extension" {
                     )
                 }
             }
-            Mock Select-ExtensionPackageLink { return $null }
+            $script:callCount = 0
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith {
+                $script:callCount++
+                if ($script:callCount -eq 1) { return '0' }
+                return ''
+            }
             $code = Install-Extension -iniPath $testIniPath -extName 'courierauth'
             $code | Should -Be -1
+            Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*You chose the wrong index*' }
         }
     }
 
@@ -748,7 +803,7 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '1' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Test-Path { return $false }
         Mock Add-MissingPHPExtensionToIni { return 0 }
 
@@ -960,7 +1015,13 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Read-HostWrapper { '-1' }
+
+        $script:callCount = 0
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith {
+            $script:callCount++
+            if ($script:callCount -eq 1) { return '0' }
+            return '-1'
+        }
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
         $code | Should -Be -1
@@ -976,33 +1037,50 @@ Describe "Install-Extension" {
         Should -Invoke Add-LogEntry
     }
 
-    It "Returns -1 when no handler is found" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0" } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                )
-            }
-        }
-        Mock Get-SourceHandler { return $null }
+    # It "Returns -1 when no handler is found" {
+    #     Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0" } }
+    #     Mock Get-ExtensionPackages {
+    #         return @{
+    #             extName = 'curl'
+    #             source  = 'pecl.php.net'
+    #             data    = @(
+    #                 @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+    #                 @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
+    #                 @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+    #             )
+    #         }
+    #     }
+    #     Mock Get-SourceHandler { return $null }
 
-        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+    #     $code = Install-Extension -iniPath $testIniPath -extName 'curl'
 
-        $code | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*No handler found for source*" }
-    }
+    #     $code | Should -Be -1
+    #     Should -Invoke Show-Error -ParameterFilter { $message -like "*No handler found for source*" }
+    # }
 
     It "Shows the more info url" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$TEST_DRIVE\php\8.2.0" } }
         Mock Get-SourceHandler {
             param ($sourceUrl)
             return @{
-                GetPackages = { return 0 }
+                ResolveLinks = {
+                    return @{
+                        extName = 'xdebug'
+                        source = 'xdebug.org'
+                        data = @(
+                            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-1.4.1-8.2-ts-vs16-x86.dll"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-1.4.1-8.2-nts-vs16-x86.dll"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
+                            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-1.4.0-8.2-nts-vs16-x64.dll"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                        )
+                    }
+                }
+                GetPackages = {
+                    return @(
+                        @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-1.4.1-8.2-ts-vs16-x86.dll"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                        @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-1.4.1-8.2-nts-vs16-x86.dll"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
+                        @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-1.4.0-8.2-nts-vs16-x64.dll"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                    )
+                }
                 Download = { return @{ Name = 'php_xdebug.dll'; FullName = "$TEST_DRIVE\extracted\php_xdebug.dll" } }
                 MoreInfoUrl = $XDEBUG_HISTORICAL_URL
             }
@@ -1022,6 +1100,7 @@ Describe "Install-Extension" {
                 )
             }
         }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '1' }
 
         $code = Install-Extension -iniPath $testIniPath -extName 'xdebug'
 

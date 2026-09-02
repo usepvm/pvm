@@ -117,9 +117,38 @@ function Install-Extension {
     param ($iniPath, $extName, $skipConfirmation = $false)
 
     try {
-        $currentVersionObj = Get-CurrentPHPVersion
-        $currentVersion = $currentVersionObj.version -replace '^(\d+\.\d+)\..*$', '$1'
-        $extensionLinksObj = Get-ExtensionPackages -extName $extName -version $currentVersion
+        New-Line
+        $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+        $sourceNames = @($sourceHandlers.Keys) | Sort-Object
+        $index = 0
+        $sourceNames | Foreach-Object -Process {
+            Show-Message -message "[$index] $_"
+            $index++
+        }
+        $selectedIndex = Read-HostWrapper -prompt "`nEnter the [number] of your selection"
+        if ([string]::IsNullOrWhiteSpace($selectedIndex)) {
+            Write-Gray -message "`nInstallation cancelled"
+            return -1
+        }
+        $choice = $null
+        if (-not [int]::TryParse($selectedIndex, [ref]$choice)) {
+            Show-Warning -message "`nYou answer is invalid!"
+            return -1
+        }
+        if ($choice -lt 0 -or $choice -gt $sourceHandlers.Count - 1) {
+            Show-Warning -message "Number must be between 0 and $($sourceHandlers.Count - 1)."
+            return -1
+        }
+
+        $selectedSource = $sourceNames[$choice]
+        $handler = Get-SourceHandler -sourceUrl $selectedSource
+
+        if (-not $handler) {
+            Show-Error -message "`nNo handler found for source: $source"
+            return -1
+        }
+
+        $extensionLinksObj = & $handler.ResolveLinks -extName $extName
 
         if (($null -eq $extensionLinksObj) -or ($extensionLinksObj.Count -eq 0) -or ($null -eq $extensionLinksObj.data) -or ($extensionLinksObj.data.Count -eq 0)) {
             $extName = if ($extensionLinksObj) { $extensionLinksObj.extName } else { $extName }
@@ -127,6 +156,7 @@ function Install-Extension {
             return -1
         }
 
+        $currentVersionObj = Get-CurrentPHPVersion
         $extensionLinks = $extensionLinksObj.data | Where-Object -FilterScript {
             if ($null -ne $currentVersionObj.arch) {
                 if ($_.arch -ne $currentVersionObj.arch) { return $false }
@@ -146,13 +176,6 @@ function Install-Extension {
 
         $extName = $extensionLinksObj.extName
         $source = $extensionLinksObj.source
-
-        $handler = Get-SourceHandler -sourceUrl $source
-
-        if (-not $handler) {
-            Show-Error -message "`nNo handler found for source: $source"
-            return -1
-        }
 
         if ($extensionLinks.Length -eq 1) {
             $chosenItem = $($extensionLinks)

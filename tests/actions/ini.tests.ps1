@@ -304,8 +304,7 @@ extension=php_curl.dll
             Mock Expand-Zip { }
             Mock Remove-ItemWrapper { }
             Mock Move-ItemWrapper { }
-            Mock Install-Extension { return 0 }
-            Mock Install-XDebugExtension { return 0 }
+            Mock Install-IniExtension { return 0 }
         }
 
         It "Installs extension" {
@@ -331,7 +330,7 @@ extension=php_curl.dll
             $result = Invoke-IniAction -action 'add' -params @('pdo_mysql', '-y')
 
             $result | Should -Be 0
-            Should -Invoke Install-Extension -Times 1 -ParameterFilter {
+            Should -Invoke Install-IniExtension -Times 1 -ParameterFilter {
                 $skipConfirmation -eq $true
             }
         }
@@ -341,7 +340,7 @@ extension=php_curl.dll
             $result = Invoke-IniAction -action 'add' -params @('xdebug', '-y')
 
             $result | Should -Be 0
-            Should -Invoke Install-XDebugExtension -Times 1 -ParameterFilter {
+            Should -Invoke Install-IniExtension -Times 1 -ParameterFilter {
                 $skipConfirmation -eq $true
             }
         }

@@ -72,83 +72,52 @@ function Get-LatestPHPVersionFromUrl {
     }
 }
 
-function Get-PHPVersionsFromUrl {
-    param ($url, $version)
-
-    try {
-        $html = Invoke-WebRequestWrapper -uri $url
-        $links = $html.Links
-
-        $formattedList = @()
-        $null = $links | Where-Object -FilterScript {
-            if (-not $_.href) { return $false }
-            if ($_.href -match 'php-debug') { return $false }
-            if ($_.href -match 'php-devel') { return $false }
-            if ($_.href -notmatch "php-$version(\.\d+)*-(?:nts-)?win.*\.zip$") { return $false }
-
-            $fileVersion = $_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|.zip', ''
-            $fileName = $_.href -split '/'
-            $fileName = $fileName[$fileName.Count - 1]
-            $formattedList += @{
-                href      = $_.href
-                version   = $fileVersion
-                fileName  = $fileName
-                BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
-                arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
-            }
-        }
-
-        return $formattedList
-    } catch {
-        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch versions from $url"; exception = $_ }
-        return @()
-    }
-}
-
 function Get-PHPVersions {
     param ($version, $arch = $null, $buildType = $null)
 
     try {
-        $urls = Get-SourceUrls
-        $rawByKey = Show-SpinnerWhileJob -argumentList @($urls, $version, $arch, $buildType) -scriptBlock {
-            param ($urls, $version, $arch, $buildType)
+        Show-Message -message "`nLoading the matching versions..."
 
-            $rawByKey = @{}
-            foreach ($key in $urls.Keys) {
-                $fetched = Get-PHPVersionsFromUrl -url $urls[$key] -version $version
-                if ($fetched.Count -eq 0) {
-                    continue
-                }
-                if ($null -ne $arch) { $fetched = $fetched | Where-Object -FilterScript { $_.arch -eq $arch } }
-                if ($null -ne $buildType) { $fetched = $fetched | Where-Object -FilterScript { $_.buildType -eq $buildType } }
-                if ($fetched.Count -eq 0) { continue }
-                $rawByKey[$key] = $fetched
-            }
+        $fetchedVersionsGrouped = Get-PHPListToInstall
 
-            return @{ pvmData = $rawByKey }
-        } -rethrow $true
+        if (Test-HasNoData -data $fetchedVersionsGrouped) {
+            Show-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
+            return @{}
+        }
+
+        if ((Test-HasNoData -data $fetchedVersionsGrouped.Archives) -and (Test-HasNoData -data $fetchedVersionsGrouped.Releases)) {
+            Show-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
+            return @{}
+        }
 
         $fetchedVersions = [ordered]@{}
-        foreach ($key in $urls.Keys) {
-            $fetchedVersions[$key] = @()
-        }
-
         $found = @()
-        foreach ($key in @('Releases', 'Archives')) {
-            if (-not $rawByKey.ContainsKey($key)) {
-                continue
-            }
-            $rawByKey[$key] | ForEach-Object -Process {
-                if ($found -notcontains $_.fileName) {
-                    $fetchedVersions[$key] += $_
-                    $found += $_.fileName
-                }
-            }
-        }
 
-        foreach ($key in @($fetchedVersions.Keys)) {
-            if ($fetchedVersions[$key].Count -eq 0) {
-                $fetchedVersions.Remove($key)
+        $fetchedVersionsGrouped.PSObject.Properties | ForEach-Object -Process {
+            $searchResult = $_.Value | Where-Object -FilterScript {
+                $_.Version -like "$version*" -and
+                (($null -eq $arch) -or ($_.Arch -eq $arch)) -and
+                (($null -eq $buildType) -or ($_.BuildType -eq $buildType))
+            }
+
+            if ($searchResult -and $searchResult.Count -ne 0) {
+                $filteredVersions = @()
+                $searchResult | ForEach-Object -Process {
+                    if ($found -notcontains $_.Link) {
+                        $filteredVersions += @{
+                            href      = $_.Link
+                            version   = $_.Version
+                            fileName  = $_.fileName
+                            BuildType = $_.BuildType
+                            arch      = $_.Arch
+                        }
+                        $found += $_.Link
+                    }
+                }
+
+                if ($filteredVersions.Count -gt 0) {
+                    $fetchedVersions[$_.Name] = $filteredVersions
+                }
             }
         }
 
@@ -302,7 +271,7 @@ function Select-Version {
         $msg = "`nThis is a partial list (latest matches only). For the complete list, visit:"
         $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
-        Show-Message -message $msg
+        Show-Info -message $msg
         $selectedVersionInput = Read-HostWrapper -prompt "`nEnter the [number] of your selection (or press Enter to cancel)"
 
         if (-not $selectedVersionInput) {
@@ -362,7 +331,6 @@ function Install-PHP {
             }
         }
 
-        Show-Message -message "`nLoading the matching versions..."
         $matchingVersions = Get-PHPVersions -version $version -arch $arch -buildType $buildType
 
         if ($matchingVersions.Count -eq 0) {

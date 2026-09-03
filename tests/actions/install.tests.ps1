@@ -343,94 +343,74 @@ Describe "Get-LatestPHPVersion Tests" {
     }
 }
 
-Describe "Get-PHPVersionsFromUrl Tests" {
-    BeforeEach {
-        Reset-MockState
-    }
-
-    It "Should parse PHP versions correctly" {
-        $mockLinks = @(
-            @{ href = $null },
-            @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' },
-            @{ href = '/downloads/releases/php-8.1.1-Win32-vs16-x64.zip' },
-            @{ href = '/downloads/releases/php-debug-pack-8.3.32-Win32-vs16-x64.zip' }
-            @{ href = '/downloads/releases/php-devel-pack-8.3.32-Win32-vs16-x64.zip' }
-            @{ href = '/downloads/releases/php-test-pack-8.3.32.zip' }
-        )
-        Set-MockWebResponse -url 'https://test.com' -links $mockLinks
-
-        $result = Get-PHPVersionsFromUrl -url 'https://test.com' -version '8.1'
-
-        $result.Count | Should -Be 2
-        $result[0].version | Should -Be '8.1.0'
-        $result[1].version | Should -Be '8.1.1'
-    }
-
-    It "Should handle network errors gracefully" {
-        $script:MockFileSystem.DownloadFails = $true
-
-        $result = Get-PHPVersionsFromUrl -url 'https://test.com' -version '8.1'
-
-        $result | Should -Be @()
-    }
-
-    It "Should filter out debug and nts versions" {
-        $mockLinks = @(
-            @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' },
-            @{ href = '/downloads/releases/php-debug-8.1.0-Win32-vs16-x64.zip' },
-            @{ href = '/downloads/releases/php-devel-8.1.0-Win32-vs16-x64.zip' },
-            @{ href = '/downloads/releases/php-8.1.0-nts-Win32-vs16-x64.zip' }
-        )
-        Set-MockWebResponse -url 'https://test.com' -links $mockLinks
-
-        $result = Get-PHPVersionsFromUrl -url 'https://test.com' -version '8.1'
-
-        $result.Length | Should -Be 2
-        $result[0].version | Should -Be '8.1.0'
-        $result[1].version | Should -Be '8.1.0'
-    }
-}
-
 Describe "Get-PHPVersions Tests" {
     BeforeEach {
-        Mock Show-SpinnerWhileJob {
-            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            $result = & $scriptBlock @argumentList
-            return $result.pvmData
-        }
         Reset-MockState
+        # Mock Test-HasNoData { param($data) return $false }
+    }
+
+    It "Should return empty hashtable when no versions found" {
+        Mock Get-PHPListToInstall { return @{} }
+
+        $result = Get-PHPVersions -version '8.1' -arch 'x64'
+
+        $result | Should -BeOfType [hashtable]
+        $result.Count | Should -Be 0
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -like '*No PHP versions found in the source. Please check your internet connection or the source URLs.*'
+        }
+    }
+
+    It "Should return empty hashtable when no archives or releases found" {
+        Mock Get-PHPListToInstall { return @{ 'Archives' = @(); 'Releases' = @() } }
+
+        $result = Get-PHPVersions -version '8.1' -arch 'x64'
+
+        $result | Should -BeOfType [hashtable]
+        $result.Count | Should -Be 0
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter {
+            $message -like '*No PHP versions found in the source. Please check your internet connection or the source URLs*'
+        }
     }
 
     It "Should return versions for x64 architecture" {
-        $mockLinks = @(
-            @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' },
-            @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-x86.zip' }
-        )
-
-        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
-        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
+        Mock Get-PHPListToInstall {
+            return [PSCustomObject]@{
+                Archives = @(
+                    [PSCustomObject]@{ Version = '8.1.0'; Arch = 'x64'; BuildType = 'TS'; Link = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' }
+                    [PSCustomObject]@{ Version = '8.1.0'; Arch = 'x86'; BuildType = 'TS'; Link = '/downloads/releases/php-8.1.0-Win32-vs16-x86.zip' }
+                )
+                Releases = @()
+            }
+        }
 
         $result = Get-PHPVersions -version '8.1' -arch 'x64'
 
         $result.Count | Should -BeGreaterThan 0
+        $result.Archives.Count | Should -BeGreaterThan 0
+        $result.Archives[0].arch | Should -Be 'x64'
     }
 
     It "Should return versions for NTS Build type" {
-        $mockLinks = @(
-            @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-nts-x64.zip' },
-            @{ href = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' }
-        )
+        Mock Get-PHPListToInstall {
+            return [PSCustomObject]@{
+                Archives = @(
+                    [PSCustomObject]@{ Version = '8.1.0'; Arch = 'x64'; BuildType = 'NTS'; Link = '/downloads/releases/php-8.1.0-nts-Win32-vs16-x64.zip' }
+                    [PSCustomObject]@{ Version = '8.1.0'; Arch = 'x64'; BuildType = 'TS'; Link = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' }
+                )
+                Releases = @()
+            }
+        }
 
-        Set-MockWebResponse -url $PHP_WIN_ARCHIVES_URL -links $mockLinks
-        Set-MockWebResponse -url $PHP_WIN_RELEASES_URL -links $mockLinks
-
-        $result = Get-PHPVersions -version '8.1' -buildType 'nts'
+        $result = Get-PHPVersions -version '8.1' -buildType 'NTS'
 
         $result.Count | Should -BeGreaterThan 0
+        $result.Archives.Count | Should -BeGreaterThan 0
+        $result.Archives[0].BuildType | Should -Be 'NTS'
     }
 
     It "Should handle exception gracefully" {
-        Mock Get-SourceUrls { throw 'Error' }
+        Mock Get-PHPListToInstall { throw 'Error' }
 
         $result = Get-PHPVersions -version '8.1'
 
@@ -438,15 +418,37 @@ Describe "Get-PHPVersions Tests" {
         $result.Count | Should -Be 0
     }
 
-    It "Should skip when fetched is empty after filtering" {
-        Mock Get-PHPVersionsFromUrl { return @(
-            @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0'; buildType = 'nts'; arch = 'x86' }
-            @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0'; buildType = 'ts'; arch = 'x86' }
-        ) }
+    It "Should return empty when no matching versions found" {
+        Mock Get-PHPListToInstall {
+            return [PSCustomObject]@{
+                Archives = @(
+                    [PSCustomObject]@{ Version = '8.2.0'; Arch = 'x64'; BuildType = 'TS'; Link = '/downloads/releases/php-8.2.0-Win32-vs16-x64.zip' }
+                )
+                Releases = @()
+            }
+        }
 
-        $result = Get-PHPVersions -version '8.1' -arch 'x64'
+        $result = Get-PHPVersions -version '8.1'
 
         $result.Count | Should -Be 0
+    }
+
+    It "Should filter by version prefix" {
+        Mock Get-PHPListToInstall {
+            return [PSCustomObject]@{
+                Archives = @(
+                    [PSCustomObject]@{ Version = '8.1.0'; Arch = 'x64'; BuildType = 'TS'; Link = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' }
+                    [PSCustomObject]@{ Version = '8.1.1'; Arch = 'x64'; BuildType = 'TS'; Link = '/downloads/releases/php-8.1.1-Win32-vs16-x64.zip' }
+                    [PSCustomObject]@{ Version = '8.2.0'; Arch = 'x64'; BuildType = 'TS'; Link = '/downloads/releases/php-8.2.0-Win32-vs16-x64.zip' }
+                )
+                Releases = @()
+            }
+        }
+
+        $result = Get-PHPVersions -version '8.1'
+
+        $result.Count | Should -BeGreaterThan 0
+        $result.Archives.Count | Should -Be 2
     }
 }
 

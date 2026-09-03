@@ -20,6 +20,7 @@ function Get-FromSource {
                     $fileName = $fileName[$fileName.Count - 1]
 
                     $filteredLinks.Add(@{
+                        fileName = $fileName
                         Version   = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
                         Arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
                         BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }

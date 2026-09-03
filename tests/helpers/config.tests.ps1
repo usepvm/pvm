@@ -401,7 +401,7 @@ MIN_LINE_LENGTH=50
 
         It "Sets the correct version" {
             $result = Get-Config -rootPath $testRoot
-            $result.version | Should -Be '2.6'
+            $result.version | Should -Be '2.7'
         }
 
         It "Sets paths correctly" {

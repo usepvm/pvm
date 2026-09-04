@@ -246,7 +246,7 @@ function Invoke-Log {
     $clearLog = $arguments -contains '--clear'
 
     if ($clearLog) {
-        Clear-ContentWrapper -path $PVMConfig.paths.file.logError
+        Clear-ContentWrapper -path $PVMConfig.paths.files.logError
         Show-Success -message "`nLog Cleared Successfully"
         return 0
     }

@@ -19,7 +19,7 @@ function Uninstall-PHP {
         if (-not $skipConfirmation) {
             $response = Read-HostWrapper -prompt "`nAre you sure you want to delete PHP version '$($pathVersionObject.version)'? (y/n)" -notifyUser
             if (Test-NoResponse -response $response) {
-                Write-Gray -message 'Uninstallation cancelled'
+                Write-Gray -message "`nUninstallation cancelled"
                 return -1
             }
 

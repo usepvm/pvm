@@ -246,6 +246,15 @@ function Invoke-Log {
     $clearLog = $arguments -contains '--clear'
 
     if ($clearLog) {
+        $skipConfirmation = [bool]($arguments | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+        if (-not $skipConfirmation) {
+            $response = Read-HostWrapper -prompt "`nAre you sure you want to clear the log? (y/n)"
+            if (Test-NoResponse -response $response) {
+                Write-Gray -message "`nLog clearing cancelled"
+                return -1
+            }
+        }
+
         Clear-ContentWrapper -path $PVMConfig.paths.files.logError
         Show-Success -message "`nLog Cleared Successfully"
         return 0

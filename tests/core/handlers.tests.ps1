@@ -469,11 +469,31 @@ Describe "Invoke-Log Tests" {
         Mock Show-Log { 0 }
     }
 
-    It "Clears log file" {
+    It "Should skip confirmation and clear log file" {
         Mock Clear-ContentWrapper {}
 
-        Invoke-Log -arguments @('--clear') | Should -Be 0
+        Invoke-Log -arguments @('--clear', '-y') | Should -Be 0
 
+        Should -Invoke Clear-ContentWrapper -Exactly 1
+        Should -Invoke Show-Success -Exactly 1
+    }
+
+    It "Should prompt for confirmation and cancel log clearing when user responds with 'n'" {
+        Mock Read-HostWrapper { return 'n' }
+        Mock Write-Gray {}
+
+        Invoke-Log -arguments @('--clear') | Should -Be -1
+
+        Should -Invoke Read-HostWrapper -ParameterFilter { $prompt -like '*Are you sure you want to clear the log?*' }
+        Should -Invoke Write-Gray -ParameterFilter { $message -like '*Log clearing cancelled*' }
+    }
+
+    It "Should prompt for confirmation and proceed with log clearing when user responds with 'y'" {
+        Mock Clear-ContentWrapper {}
+        Mock Show-Success {}
+        Mock Read-HostWrapper { return 'y' }
+
+        Invoke-Log -arguments @('--clear') | Should -Be 0
         Should -Invoke Clear-ContentWrapper -Exactly 1
         Should -Invoke Show-Success -Exactly 1
     }

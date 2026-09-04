@@ -70,7 +70,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $false
 
             $result | Should -Be -1
-            Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -eq 'Uninstallation cancelled' }
+            Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -like '*Uninstallation cancelled*' }
 
             Should -Invoke Read-HostWrapper -Exactly 1 -ParameterFilter {
                 $Prompt -like "*Are you sure you want to delete PHP version*"

@@ -48,7 +48,7 @@ function Get-ExtensionHandlers {
 
                         if (-not $skipConfirmation) {
                             if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
-                                $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
+                                $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
                                 if (Test-NoResponse -response $response) {
                                     Remove-ItemWrapper -path $extFile.FullName
                                     Write-Gray -message "`nInstallation cancelled"
@@ -109,7 +109,7 @@ function Get-ExtensionHandlers {
 
                         if (-not $skipConfirmation) {
                             if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
-                                $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)"
+                                $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
                                 if (Test-NoResponse -response $response) {
                                     Remove-ItemWrapper -path $extractPath
                                     Write-Gray -message "`nInstallation cancelled"
@@ -467,7 +467,7 @@ function Select-ExtensionFromMatches {
     }
 
     do {
-        $choiceRaw = Read-HostWrapper -prompt "`nEnter the [number] of your selection"
+        $choiceRaw = Read-HostWrapper -prompt "`nEnter the [number] of your selection" -notifyUser
         if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
             Write-Gray -message "`nInstallation cancelled"
             return $null

@@ -84,16 +84,16 @@ function Invoke-RunScripts {
         }
 
         if ($results | Where-Object -FilterScript { $_ -and $_.code -eq -1 }) {
-            Invoke-ErrorSound
+            Invoke-ErrorSound -wait
             return -1
         }
 
         if ($results | Where-Object -FilterScript { $_ -and $_.code -eq -2 }) {
-            Invoke-NotifySound
+            Invoke-NotifySound -wait
             return -1
         }
 
-        Invoke-SuccessSound
+        Invoke-SuccessSound -wait
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run script"; exception = $_ }

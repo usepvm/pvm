@@ -7,6 +7,7 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
+
     Mock Show-Error {}
 }
 
@@ -230,6 +231,18 @@ Describe "Save-CachedData" {
         Mock ConvertTo-Json { throw 'Simulated exception' }
         $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be -1
+    }
+}
+
+Describe "Get-CacheFilePath" {
+    It "Returns the correct cache file path for a given filename" {
+        $path = Get-CacheFilePath -filename 'test'
+        $path | Should -Be "$($PVMConfig.paths.directories.cache)\test.json"
+    }
+
+    It "Handles filenames with .json extension" {
+        $path = Get-CacheFilePath -filename 'test.json'
+        $path | Should -Be "$($PVMConfig.paths.directories.cache)\test.json"
     }
 }
 

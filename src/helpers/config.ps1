@@ -294,6 +294,8 @@ function Get-Config {
                 $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$root\pvm\php"
             }
         }
+
+        subprocess = @{ enabled = $false; structuredOutput = @() }
     }
 }
 

@@ -17,15 +17,15 @@ AfterAll {
 
 Describe "Write-HostWrapper" {
     BeforeEach {
-        $script:currentPVMSubprocess = @{ enabled = $Global:PVMSubprocess.enabled; structuredOutput = $Global:PVMSubprocess.structuredOutput }
+        $script:currentPVMSubprocess = @{ enabled = $Global:PVMConfig.subprocess.enabled; structuredOutput = $Global:PVMConfig.subprocess.structuredOutput }
     }
 
     AfterEach {
-        $Global:PVMSubprocess = $script:currentPVMSubprocess
+        $Global:PVMConfig.subprocess = $script:currentPVMSubprocess
     }
 
     It "Calls Write-Host with the correct parameters" {
-        $Global:PVMSubprocess.enabled = $false
+        $Global:PVMConfig.subprocess.enabled = $false
         Mock Write-Host { }
 
         $object = "Test message"
@@ -42,17 +42,17 @@ Describe "Write-HostWrapper" {
     }
 
     It "Stores structured output when subprocess mode is enabled" {
-        $Global:PVMSubprocess.structuredOutput = @()
-        $Global:PVMSubprocess.enabled = $true
+        $Global:PVMConfig.subprocess.structuredOutput = @()
+        $Global:PVMConfig.subprocess.enabled = $true
         Mock Write-Host {}
 
         Write-HostWrapper -object 'Test message' -foregroundColor 'Red'
 
         Should -Invoke Write-Host -Exactly 0
-        $Global:PVMSubprocess.structuredOutput.Count | Should -Be 1
-        $Global:PVMSubprocess.structuredOutput[0].message | Should -Be 'Test message'
-        $Global:PVMSubprocess.structuredOutput[0].color | Should -Be 'Red'
-        $Global:PVMSubprocess.structuredOutput[0].noNewLine | Should -Be $false
+        $Global:PVMConfig.subprocess.structuredOutput.Count | Should -Be 1
+        $Global:PVMConfig.subprocess.structuredOutput[0].message | Should -Be 'Test message'
+        $Global:PVMConfig.subprocess.structuredOutput[0].color | Should -Be 'Red'
+        $Global:PVMConfig.subprocess.structuredOutput[0].noNewLine | Should -Be $false
     }
 }
 

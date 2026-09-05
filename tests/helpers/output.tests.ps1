@@ -848,11 +848,11 @@ Describe "Sound Functions" {
     }
 
     BeforeEach {
-        $script:currentPVMSubprocess = @{ enabled = $Global:PVMSubprocess.enabled; structuredOutput = $Global:PVMSubprocess.structuredOutput }
+        $script:currentPVMSubprocess = @{ enabled = $Global:PVMConfig.subprocess.enabled; structuredOutput = $Global:PVMConfig.subprocess.structuredOutput }
     }
 
     AfterEach {
-        $Global:PVMSubprocess = $script:currentPVMSubprocess
+        $Global:PVMConfig.subprocess = $script:currentPVMSubprocess
     }
 
     Context "New-Player" {
@@ -912,7 +912,7 @@ Describe "Sound Functions" {
         }
 
         It "opens the file, plays it, and sleeps for its duration" {
-            $Global:PVMSubprocess.enabled = $false
+            $Global:PVMConfig.subprocess.enabled = $false
             $PVMConfig.env.SOUNDS_DISABLED = $false
 
             Invoke-Sound -filename "song.mp3"
@@ -923,7 +923,7 @@ Describe "Sound Functions" {
         }
 
         It "logs and does not throw when playback fails" {
-            $Global:PVMSubprocess.enabled = $false
+            $Global:PVMConfig.subprocess.enabled = $false
             $PVMConfig.env.SOUNDS_DISABLED = $false
 
             Mock New-Player { throw "boom" }
@@ -934,7 +934,7 @@ Describe "Sound Functions" {
 
         It "does not play sound in subprocess mode" {
             Mock New-Player {}
-            $Global:PVMSubprocess.enabled = $true
+            $Global:PVMConfig.subprocess.enabled = $true
 
             Invoke-Sound -filename "song.mp3"
 
@@ -943,7 +943,7 @@ Describe "Sound Functions" {
 
         It "does not play sound when sounds are disabled" {
             Mock New-Player {}
-            $Global:PVMSubprocess.enabled = $false
+            $Global:PVMConfig.subprocess.enabled = $false
             $PVMConfig.env.SOUNDS_DISABLED = $true
 
             Invoke-Sound -filename "song.mp3"

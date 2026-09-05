@@ -349,7 +349,7 @@ function Invoke-Sound {
     param ($filename)
 
     try {
-        if ($Global:PVMSubprocess.enabled -or $PVMConfig.env.SOUNDS_DISABLED) {
+        if ($Global:PVMConfig.subprocess.enabled -or $PVMConfig.env.SOUNDS_DISABLED) {
             return
         }
 

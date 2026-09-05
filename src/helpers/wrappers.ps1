@@ -3,8 +3,8 @@ function Write-HostWrapper {
     param ([Parameter(ValueFromPipeline)]$object, $foregroundColor = $null, [switch]$noNewLine)
 
     process {
-        if ($Global:PVMSubprocess.enabled) {
-            $Global:PVMSubprocess.structuredOutput += @{
+        if ($Global:PVMConfig.subprocess.enabled) {
+            $Global:PVMConfig.subprocess.structuredOutput += @{
                 message = $object
                 color = $foregroundColor
                 noNewLine = $noNewLine.IsPresent

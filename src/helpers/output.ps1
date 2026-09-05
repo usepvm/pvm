@@ -346,7 +346,7 @@ function Get-Sound-TotalSeconds {
 }
 
 function Invoke-Sound {
-    param ($filename)
+    param ($filename, [switch]$wait)
 
     try {
         if ($Global:PVMConfig.subprocess.enabled -or $PVMConfig.env.SOUNDS_DISABLED) {
@@ -358,25 +358,35 @@ function Invoke-Sound {
         $MediaPlayer.Open($path)
         $duration = Get-Sound-TotalSeconds -path $path
         $MediaPlayer.Play()
-        Start-Sleep -Seconds $duration
-        $MediaPlayer.Close()
+        if ($wait) {
+            Start-Sleep -Seconds $duration
+            $MediaPlayer.Close()
+        }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to play sound"; exception = $_ }
     }
 }
 
 function Invoke-SuccessSound {
-    Invoke-Sound -filename 'success.mp3'
+    param ([switch]$wait)
+
+    Invoke-Sound -filename 'success.mp3' -wait:$wait
 }
 
 function Invoke-ErrorSound {
-    Invoke-Sound -filename 'error.mp3'
+    param ([switch]$wait)
+
+    Invoke-Sound -filename 'error.mp3' -wait:$wait
 }
 
 function Invoke-NotifySound {
-    Invoke-Sound -filename 'notify.mp3'
+    param ([switch]$wait)
+
+    Invoke-Sound -filename 'notify.mp3' -wait:$wait
 }
 
 function Invoke-PromptSound {
-    Invoke-Sound -filename 'prompt.mp3'
+    param ([switch]$wait)
+
+    Invoke-Sound -filename 'prompt.mp3' -wait:$wait
 }

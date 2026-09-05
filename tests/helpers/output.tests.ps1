@@ -911,7 +911,18 @@ Describe "Sound Functions" {
             Mock Add-LogEntry {}
         }
 
-        It "opens the file, plays it, and sleeps for its duration" {
+        It "opens the file, plays it, and sleeps for its duration when 'wait' is specified" {
+            $Global:PVMConfig.subprocess.enabled = $false
+            $PVMConfig.env.SOUNDS_DISABLED = $false
+
+            Invoke-Sound -filename "song.mp3" -wait
+
+            $script:playerCalls.Open | Should -Be "$($PVMConfig.paths.directories.assets)\sounds\song.mp3"
+            $script:playerCalls.Play | Should -BeTrue
+            Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 3 }
+        }
+
+        It "opens the file, plays it, and does not sleep when 'wait' is not specified" {
             $Global:PVMConfig.subprocess.enabled = $false
             $PVMConfig.env.SOUNDS_DISABLED = $false
 
@@ -919,7 +930,7 @@ Describe "Sound Functions" {
 
             $script:playerCalls.Open | Should -Be "$($PVMConfig.paths.directories.assets)\sounds\song.mp3"
             $script:playerCalls.Play | Should -BeTrue
-            Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 3 }
+            Should -Invoke Start-Sleep -Times 0
         }
 
         It "logs and does not throw when playback fails" {

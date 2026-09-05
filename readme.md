@@ -73,7 +73,7 @@ pvm repair
 
 The `.env` file lets you customize how PVM behaves. Key configuration options include:
 
-- `SOUNDS_DISABLED` - Disable sound notifications (default: false)
+- `SOUNDS_DISABLED` - Disable sound notifications (default: true)
 - `CACHE_MAX_HOURS` - Cached available versions expiration in hours (default: 168)
 - `ENABLE_UPDATE_CHECK` - Enable automatic update checks (default: true)
 - `UPDATE_CHECK_INTERVAL_HOURS` - Update check interval in hours (default: 24)
@@ -379,10 +379,10 @@ PVM can play optional notification sounds when long-running commands complete or
 Configure the feature in `.env`:
 
 ```env
-# Enable sound notifications (default)
+# Enable sound notifications
 SOUNDS_DISABLED=false
 
-# Disable sound notifications
+# Disable sound notifications (default)
 SOUNDS_DISABLED=true
 ```
 

@@ -2,9 +2,9 @@
 function Get-HelpAction {
     return @{
         command     = 'pvm help <command>';
-        description = 'Display help for a command.';
+        description = 'Display help, add <command> to get specific help for a command.';
         usage       = [ordered]@{
-            USAGE       = 'pvm help <command>';
+            USAGE       = 'pvm help|-h|--help <command>';
             DESCRIPTION = @(
                 'Displays help for a command.',
                 'If no command is provided, displays help for all commands.'
@@ -22,7 +22,7 @@ function Get-VersionAction {
         command     = 'pvm version';
         description = 'Display the current PVM version.';
         usage       = [ordered]@{
-            USAGE       = 'pvm version'
+            USAGE       = 'pvm version|-v|--version'
             DESCRIPTION = @('Displays the current PVM version.')
         }
         action      = { return Invoke-Version }

@@ -3,9 +3,10 @@ BeforeAll {
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
     $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\update-check-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
     Mock Show-Error {}
 }
 

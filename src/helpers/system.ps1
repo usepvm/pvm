@@ -103,12 +103,12 @@ function ConvertTo-EnvEntries {
         $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     }
 
-    $rebuiltValue = $value -split ';' |
-        ForEach-Object -Process { $_.Trim() } |
-        Where-Object -FilterScript { -not [string]::IsNullOrWhiteSpace($_) }
+    $rebuiltValue = foreach ($item in $value -split ';') {
+        $trimmedItem = $item.Trim()
+        if ([string]::IsNullOrWhiteSpace($trimmedItem)) { continue }
+        if ($removeDuplicates -and -not $seen.Add($trimmedItem)) { continue }
 
-    if ($removeDuplicates) {
-        $rebuiltValue = $rebuiltValue | Where-Object -FilterScript { $seen.Add($_) }
+        $trimmedItem
     }
 
     return ($rebuiltValue -join ';')

@@ -48,11 +48,13 @@ function Invoke-RunScripts {
 
         Write-Cyan -message "`nRunning script: $scriptName ($($scriptCommands.Count) commands)`n"
 
+        $index = 1
         $runInSubProcess = $scriptCommands.Count -gt 1
         $results = @()
         foreach ($scriptCommand in $scriptCommands) {
             try {
-                Write-Gray -message "Command: pvm test $scriptCommand"
+                Write-Gray -message "Command $index`: pvm test $scriptCommand"
+                $index++
                 $scriptArgs = $scriptCommand -split ' '
 
                 if ($runInSubProcess) {
@@ -75,7 +77,9 @@ function Invoke-RunScripts {
                 }
 
                 Show-SubProcessOutput -output $result.output
-                New-Lines -count 3
+                if ($index -le $scriptCommands.Count) {
+                    Write-Yellow -message "`n========================================================================================`n"
+                }
             } catch {
                 Write-Yellow -message "`nFailed to run command: pvm $scriptCommand, check logs at '$($PVMConfig.paths.files.logError)'`n"
                 $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run script"; exception = $_ }

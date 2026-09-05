@@ -75,20 +75,6 @@ Describe "Get-AllEnvVarsCore" {
     }
 }
 
-Describe "Get-EnvVarByNameCore" {
-    It "Returns environment variable value by name" {
-        # Test with a known system variable that should exist
-        $result = Get-EnvVarByNameCore -name 'Path'
-        $result | Should -Not -BeNullOrEmpty
-        $result | Should -BeOfType [string]
-    }
-
-    It "Returns null for non-existent variable" {
-        $result = Get-EnvVarByNameCore -name 'NONEXISTENT_VAR_12345'
-        $result | Should -BeNullOrEmpty
-    }
-}
-
 Describe "Get-AllEnvVars" {
     BeforeAll {
         Mock Get-AllEnvVarsCore {
@@ -116,6 +102,20 @@ Describe "Get-AllEnvVars" {
             $result = Get-AllEnvVars
             $result | Should -BeNullOrEmpty
         }
+    }
+}
+
+Describe "Get-EnvVarByNameCore" {
+    It "Returns environment variable value by name" {
+        # Test with a known system variable that should exist
+        $result = Get-EnvVarByNameCore -name 'Path'
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeOfType [string]
+    }
+
+    It "Returns null for non-existent variable" {
+        $result = Get-EnvVarByNameCore -name 'NONEXISTENT_VAR_12345'
+        $result | Should -BeNullOrEmpty
     }
 }
 
@@ -233,6 +233,79 @@ Describe "Set-EnvVar" {
             $result = Set-EnvVar -name 'SIMULATED_EXCEPTION' -value 'TEST_VALUE'
             $result | Should -Be -1
         }
+    }
+}
+
+Describe "Get-OptimizedEnv" {
+    It "Replaces matching environment paths with variable references" {
+        Mock Get-AllEnvVars {
+            return @{
+                TOOLS_HOME = 'C:\Tools'
+                OTHER_HOME = 'C:\Other'
+            }
+        }
+
+        $result = Get-OptimizedEnv -name 'Path' -value 'C:\Tools;C:\Other;C:\Unmanaged'
+
+        $result | Should -Be '%TOOLS_HOME%;%OTHER_HOME%;C:\Unmanaged'
+        Should -Invoke Get-AllEnvVars -Times 1
+    }
+
+    It "Does not replace the requested variable or system paths" {
+        Mock Get-AllEnvVars {
+            return @{
+                Path       = 'C:\Tools'
+                WINDOWS    = 'C:\Windows'
+                SYSTEM_DIR = 'C:\Windows\System32'
+                TOOLS_HOME = 'C:\Tools'
+            }
+        }
+
+        $result = Get-OptimizedEnv -name 'Path' -value 'C:\Tools;C:\Windows;C:\Windows\System32'
+
+        $result | Should -Be '%TOOLS_HOME%;C:\Windows;C:\Windows\System32'
+    }
+
+    It "Returns an empty value when the input contains no path" {
+        Mock Get-AllEnvVars { return @{} }
+
+        $result = Get-OptimizedEnv -name 'Path' -value ''
+
+        $result | Should -Be ''
+    }
+}
+
+Describe "Format-EnvContent" {
+    It "Trims entries and removes empty path segments" {
+        $result = Format-EnvContent -value ' C:\One ; ;C:\Two;  ; C:\Three '
+
+        $result | Should -Be 'C:\One;C:\Two;C:\Three'
+    }
+
+    It "Returns an empty value for empty content" {
+        $result = Format-EnvContent -value ' ;  ; '
+
+        $result | Should -Be ''
+    }
+}
+
+Describe "Remove-PathDuplicates" {
+    It "Removes duplicate paths while preserving the first occurrence" {
+        $result = Remove-PathDuplicates -path 'C:\One;C:\Two;C:\One;C:\Three;C:\Two'
+
+        $result | Should -Be 'C:\One;C:\Two;C:\Three'
+    }
+
+    It "Treats paths with different casing as duplicates and trims entries" {
+        $result = Remove-PathDuplicates -path ' C:\One ; c:\one; C:\Two ; '
+
+        $result | Should -Be 'C:\One;C:\Two'
+    }
+
+    It "Removes empty path segments" {
+        $result = Remove-PathDuplicates -path ';C:\One;; '
+
+        $result | Should -Be 'C:\One'
     }
 }
 

@@ -275,6 +275,32 @@ Describe "Get-OptimizedEnv" {
     }
 }
 
+Describe "ConvertTo-EnvEntries" {
+    It "Trims entries and removes empty path segments" {
+        $result = ConvertTo-EnvEntries -value ' C:\One ; ;C:\Two;  ; C:\Three '
+
+        $result | Should -Be 'C:\One;C:\Two;C:\Three'
+    }
+
+    It "Removes duplicate paths while preserving the first occurrence" {
+        $result = ConvertTo-EnvEntries -value 'C:\One;C:\Two;C:\One;C:\Three;C:\Two' -RemoveDuplicates
+
+        $result | Should -Be 'C:\One;C:\Two;C:\Three'
+    }
+
+    It "Treats paths with different casing as duplicates and trims entries" {
+        $result = ConvertTo-EnvEntries -value ' C:\One ; c:\one; C:\Two ; ' -RemoveDuplicates
+
+        $result | Should -Be 'C:\One;C:\Two'
+    }
+
+    It "Removes empty path segments" {
+        $result = ConvertTo-EnvEntries -value ';C:\One;; '
+
+        $result | Should -Be 'C:\One'
+    }
+}
+
 Describe "Format-EnvContent" {
     It "Trims entries and removes empty path segments" {
         $result = Format-EnvContent -value ' C:\One ; ;C:\Two;  ; C:\Three '

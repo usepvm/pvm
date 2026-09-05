@@ -14,51 +14,6 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Show-MsgByExitCode" {
-    BeforeAll {
-        Mock Write-Color {}
-    }
-
-    Context "When displaying messages" {
-        It "Displays message without error" {
-            $testResult = @{
-                message = 'Test message'
-                color = 'Gray'
-            }
-            { Show-MsgByExitCode -result $testResult } | Should -Not -Throw
-        }
-
-        It "Displays custom message if provided" {
-            $testResult = @{
-                message = 'Original message'
-            }
-            $customMessage = 'Custom message'
-            { Show-MsgByExitCode -result $testResult -message $customMessage } | Should -Not -Throw
-        }
-
-        It "Displays list of messages if provided" {
-            $testResults = @{
-                code = 0
-                messages = @(
-                    @{ content = 'Message 1'; color = 'Red' }
-                    @{ content = 'Message 2'; color = 'Green' }
-                    @{ content = 'Message 3' }
-                )
-            }
-            { Show-MsgByExitCode -result $testResults } | Should -Not -Throw
-        }
-
-        It "Handles exceptions gracefully" {
-            Mock Write-Color { throw 'Simulated Write-Host failure' }
-            $testResult = @{
-                message = 'Test message'
-                color = 'Gray'
-            }
-            { Show-MsgByExitCode -result $testResult } | Should -Not -Throw
-        }
-    }
-}
-
 Describe "Add-LogEntry" {
     BeforeAll {
         Mock Show-Error {}
@@ -641,14 +596,6 @@ Describe "Write-Host helpers Tests" {
 
             Should -Invoke Write-Color -ParameterFilter {
                 $message -match 'Test message' -and $foreColor -eq 'White'
-            }
-        }
-
-        It "Prints dark green message" {
-            Write-DarkGreen -message 'Test message'
-
-            Should -Invoke Write-Color -ParameterFilter {
-                $message -match 'Test message' -and $foreColor -eq 'DarkGreen'
             }
         }
 

@@ -208,9 +208,26 @@ Describe "Set-EnvVar" {
             Set-EnvVar -name 'TEST_VAR_SET' -value $null
         }
 
-        It "Returns -1 for empty name" {
-            $result = Set-EnvVar -name '' -value 'TEST_VALUE'
+        It "Set-EnvVar should handle null/empty names" {
+            $result = Set-EnvVar -name '' -value 'test'
             $result | Should -Be -1
+
+            $result = Set-EnvVar -name '   ' -value 'test'
+            $result | Should -Be -1
+
+            $result = Set-EnvVar -name $null -value 'test'
+            $result | Should -Be -1
+        }
+        
+        
+        It "Set-EnvVar should handle registry errors" {
+            $script:MockRegistryThrowException = $true
+
+            $result = Set-EnvVar -name 'TEST' -value 'value'
+
+            $result | Should -Be -1
+            
+            $script:MockRegistryThrowException = $false
         }
     }
 

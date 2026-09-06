@@ -119,7 +119,7 @@ Describe "Show-Usage" {
     }
 }
 
-Describe "Show-PVMVersion Function" {
+Describe "Show-PVMVersion" {
     BeforeEach {
         $PVMConfig.version = '1.2.3'
     }
@@ -152,6 +152,56 @@ Describe "Show-PVMVersion Function" {
         Should -Invoke Show-Message -Times 1 -ParameterFilter {
             $message -eq "`nPVM version 1.0.0-RC1+build.123"
         }
+    }
+}
+
+Describe "Get-NestedCommands" {
+    It "Should return the expected nested commands" {
+        $expected = @('ini', 'profile', 'cache', 'help')
+        $result = Get-NestedCommands
+
+        $result | Should -BeExactly $expected
+    }
+}
+
+Describe "Resolve-NestedCommand" {
+    It "Should return command and arguments unchanged for non-nested command" {
+        $command = 'install'
+        $arguments = @('8.2.0')
+
+        $result = Resolve-NestedCommand -command $command -arguments $arguments
+
+        $result[0] | Should -BeExactly $command
+        $result[1] | Should -BeExactly $arguments
+    }
+
+    It "Should resolve nested command and adjust arguments" {
+        $command = 'ini:get'
+        $arguments = @('someArg')
+
+        $result = Resolve-NestedCommand -command $command -arguments $arguments
+
+        $result[0] | Should -BeExactly 'ini'
+        $result[1] | Should -BeExactly @('get', 'someArg')
+    }
+
+    It "Should return original command if nested command is not recognized" {
+        $command = 'unknown:nested'
+        $arguments = @('arg1')
+
+        $result = Resolve-NestedCommand -command $command -arguments $arguments
+
+        $result[0] | Should -BeExactly 'unknown:nested'
+        $result[1] | Should -BeExactly @('arg1')
+    }
+}
+
+Describe "Get-AllowedCommands" {
+    It "Should return the expected allowed commands" {
+        $expected = @('help', 'setup', 'repair', 'log', 'update')
+        $result = Get-AllowedCommands
+
+        $result | Should -BeExactly $expected
     }
 }
 
@@ -220,7 +270,7 @@ Describe "Get-ClosestCommandSuggestion" {
     }
 }
 
-Describe "Start-PVM Function" {
+Describe "Start-PVM" {
     BeforeEach {
         Mock Show-Usage { }
         Mock Show-PVMVersion { }

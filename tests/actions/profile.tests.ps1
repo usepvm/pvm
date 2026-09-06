@@ -9,6 +9,9 @@ BeforeAll {
     $script:PROFILE_TEMPLATE_PATH = $PVMConfig.paths.files.profileTemplate
     $script:EXAMPLE_PROFILE_PATH = $PVMConfig.paths.files.profileExample
 
+    $script:DEFAULT_SETTINGS = $PVMConfig.defaults.settings
+    $script:DEFAULT_EXTENSIONS = $PVMConfig.defaults.extensions
+
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PROFILES_PATH -Force | Out-Null
 
@@ -54,7 +57,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Set-IniSettingDirect Tests" {
+Describe "Set-IniSettingDirect" {
     BeforeEach {
         $testIniPath = "$TEST_DRIVE\test.ini"
         'setting1 = value1' | Set-ContentWrapper -path $testIniPath
@@ -96,7 +99,7 @@ Describe "Set-IniSettingDirect Tests" {
     }
 }
 
-Describe "Enable/Disable-IniExtensionDirect Tests" {
+Describe "Enable-IniExtensionDirect" {
     BeforeEach {
         $testIniPath = "$TEST_DRIVE\extensions.ini"
         @(
@@ -109,12 +112,6 @@ Describe "Enable/Disable-IniExtensionDirect Tests" {
         $result = Enable-IniExtensionDirect -iniPath "$TEST_DRIVE\extensions.ini" -extName 'curl'
         $result | Should -Be 0
         (Get-ContentWrapper -path "$TEST_DRIVE\extensions.ini") | Should -Contain 'extension=php_curl.dll'
-    }
-
-    It "Should disable an extension" {
-        $result = Disable-IniExtensionDirect -iniPath "$TEST_DRIVE\extensions.ini" -extName 'opcache' -extType 'zend_extension'
-        $result | Should -Be 0
-        (Get-ContentWrapper -path "$TEST_DRIVE\extensions.ini") | Should -Contain ';zend_extension=php_opcache.dll'
     }
 
     It "Should enable a commented zend_extension" {
@@ -158,6 +155,22 @@ Describe "Enable/Disable-IniExtensionDirect Tests" {
         $result = Enable-IniExtensionDirect -iniPath "$TEST_DRIVE\extensions.ini" -extName 'curl'
         $result | Should -Be -1
     }
+}
+
+Describe "Disable-IniExtensionDirect" {
+    BeforeEach {
+        $testIniPath = "$TEST_DRIVE\extensions.ini"
+        @(
+            ';extension=php_curl.dll',
+            'zend_extension=php_opcache.dll'
+        ) | Set-ContentWrapper -path $testIniPath
+    }
+
+    It "Should disable an extension" {
+        $result = Disable-IniExtensionDirect -iniPath "$TEST_DRIVE\extensions.ini" -extName 'opcache' -extType 'zend_extension'
+        $result | Should -Be 0
+        (Get-ContentWrapper -path "$TEST_DRIVE\extensions.ini") | Should -Contain ';zend_extension=php_opcache.dll'
+    }
 
     It "Should disable an enabled regular extension" {
         $testIniPath = "$TEST_DRIVE\extensions5.ini"
@@ -180,7 +193,76 @@ Describe "Enable/Disable-IniExtensionDirect Tests" {
     }
 }
 
-Describe "Save-PHPProfile Tests" {
+Describe "Get-PopularPHPSettings" {
+    BeforeEach {
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        $testContent = @{ 'settings' = @('memory_limit', 'display_errors') }
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $PROFILE_TEMPLATE_PATH
+        $PVMConfig.defaults.settings = $script:DEFAULT_SETTINGS
+    }
+
+    AfterAll {
+        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH -ErrorAction SilentlyContinue
+    }
+
+    It "Should return popular PHP settings" {
+        $settings = Get-PopularPHPSettings
+        $settings | Should -Not -Be $null
+        $settings.Count | Should -Be 2
+        $settings | Should -Contain 'memory_limit'
+        $settings | Should -Contain 'display_errors'
+    }
+
+    It "Should fallback to default popular PHP settings" {
+        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
+        $settings = Get-PopularPHPSettings
+        $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
+    }
+
+    It "Returns default value when exception is thrown" {
+        Mock Test-FileExists { return $true }
+        Mock Get-ContentWrapper { throw 'Test exception' }
+        $settings = Get-PopularPHPSettings
+        $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
+    }
+}
+
+Describe "Get-PopularPHPExtensions" {
+    BeforeEach {
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        $testContent = @{ 'extensions' = @('curl', 'mbstring', 'opcache') }
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $PROFILE_TEMPLATE_PATH
+        $PVMConfig.defaults.extensions = $script:DEFAULT_EXTENSIONS
+    }
+
+    AfterAll {
+        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH -ErrorAction SilentlyContinue
+    }
+
+    It "Should return popular PHP extensions" {
+        $extensions = Get-PopularPHPExtensions
+        $extensions | Should -Not -Be $null
+        $extensions.Count | Should -Be 3
+        $extensions | Should -Contain 'curl'
+        $extensions | Should -Contain 'mbstring'
+        $extensions | Should -Contain 'opcache'
+    }
+
+    It "Should fallback to default popular PHP extensions" {
+        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
+        $extensions = Get-PopularPHPExtensions
+        $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
+    }
+
+    It "Returns default value when exception is thrown" {
+        Mock Test-FileExists { return $true }
+        Mock Get-ContentWrapper { throw 'Test exception' }
+        $extensions = Get-PopularPHPExtensions
+        $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
+    }
+}
+
+Describe "Save-PHPProfile" {
     BeforeAll {
         # Create PHP directory and php.ini file
         $phpDir = "$TEST_DRIVE\php\8.2.0"
@@ -275,7 +357,7 @@ Describe "Save-PHPProfile Tests" {
     }
 }
 
-Describe "Use-PHPProfile Tests" {
+Describe "Use-PHPProfile" {
     BeforeEach {
         # Create test profile
         $testProfile = @{
@@ -361,20 +443,17 @@ Describe "Use-PHPProfile Tests" {
         Mock Disable-IniExtensionDirect -ParameterFilter {$extName -eq 'pdo_sqlite'} -MockWith { return -1 }
 
         $result = Use-PHPProfile -profileName 'testprofile'
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Should -Invoke Show-Info -ParameterFilter {
             $message -eq '  Settings ignored (not popular): 1'
         } -Exactly 1
-
         Should -Invoke Show-Warning -ParameterFilter {
             $message -eq '  Settings skipped: 1'
         } -Exactly 1
-
         Should -Invoke Show-Info -ParameterFilter {
             $message -eq '  Extensions ignored (not popular): 1'
         } -Exactly 1
-
         Should -Invoke Show-Warning -ParameterFilter {
             $message -eq '  Extensions skipped: 2'
         } -Exactly 1
@@ -417,7 +496,7 @@ Describe "Use-PHPProfile Tests" {
     }
 }
 
-Describe "Get-ProfileFiles Tests" {
+Describe "Get-ProfileFiles" {
     It "Should return a list of profile files" {
         Mock Get-ChildItemWrapper {
             return @(
@@ -445,7 +524,7 @@ Describe "Get-ProfileFiles Tests" {
     }
 }
 
-Describe "Show-PHPProfiles Tests" {
+Describe "Show-PHPProfiles" {
     BeforeEach {
         # Create test profiles
         @{
@@ -533,68 +612,7 @@ Describe "Show-PHPProfiles Tests" {
     }
 }
 
-Describe "Get-PopularPHPSettings Tests" {
-    BeforeEach {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $testContent = @{ 'settings' = @('memory_limit', 'display_errors') }
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $PROFILE_TEMPLATE_PATH
-        $script:DEFAULT_SETTINGS = $PVMConfig.defaults.settings
-    }
-
-    It "Should return popular PHP settings" {
-        $settings = Get-PopularPHPSettings
-        $settings | Should -Not -Be $null
-        $settings.Count | Should -Be 2
-        $settings | Should -Contain 'memory_limit'
-        $settings | Should -Contain 'display_errors'
-    }
-
-    It "Should fallback to default popular PHP settings" {
-        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
-        $settings = Get-PopularPHPSettings
-        $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
-    }
-
-    It "Returns default value when exception is thrown" {
-        Mock Test-FileExists { return $true }
-        Mock Get-ContentWrapper { throw 'Test exception' }
-        $settings = Get-PopularPHPSettings
-        $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
-    }
-}
-
-Describe "Get-PopularPHPExtensions Tests" {
-    BeforeEach {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $testContent = @{ 'extensions' = @('curl', 'mbstring', 'opcache') }
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $PROFILE_TEMPLATE_PATH
-        $script:DEFAULT_EXTENSIONS = $PVMConfig.defaults.extensions
-    }
-
-    It "Should return popular PHP extensions" {
-        $extensions = Get-PopularPHPExtensions
-        $extensions | Should -Not -Be $null
-        $extensions.Count | Should -Be 3
-        $extensions | Should -Contain 'curl'
-        $extensions | Should -Contain 'mbstring'
-        $extensions | Should -Contain 'opcache'
-    }
-
-    It "Should fallback to default popular PHP extensions" {
-        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
-        $extensions = Get-PopularPHPExtensions
-        $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
-    }
-
-    It "Returns default value when exception is thrown" {
-        Mock Test-FileExists { return $true }
-        Mock Get-ContentWrapper { throw 'Test exception' }
-        $extensions = Get-PopularPHPExtensions
-        $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
-    }
-}
-
-Describe "Show-PHPProfile Tests" {
+Describe "Show-PHPProfile" {
     BeforeEach {
         Mock Add-LogEntry { return 0 }
 
@@ -1054,7 +1072,7 @@ Describe "Show-PHPProfile Tests" {
     }
 }
 
-Describe "Remove-PHPProfile Tests" {
+Describe "Remove-PHPProfile" {
     BeforeEach {
         Mock Add-LogEntry { return 0 }
 
@@ -1312,7 +1330,7 @@ Describe "Remove-PHPProfile Tests" {
     }
 }
 
-Describe "Clear-PHPProfiles Tests" {
+Describe "Clear-PHPProfiles" {
     BeforeEach {
         Remove-ItemWrapper -path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
 
@@ -1459,7 +1477,7 @@ Describe "Clear-PHPProfiles Tests" {
     }
 }
 
-Describe "Export-PHPProfile Tests" {
+Describe "Export-PHPProfile" {
     BeforeEach {
         Mock Add-LogEntry { return 0 }
 
@@ -1667,7 +1685,7 @@ Describe "Export-PHPProfile Tests" {
     }
 }
 
-Describe "Import-PHPProfile Tests" {
+Describe "Import-PHPProfile" {
     BeforeEach {
         Mock Add-LogEntry { return 0 }
         Mock New-Directory { return 0 }
@@ -1993,7 +2011,7 @@ Describe "Import-PHPProfile Tests" {
     }
 }
 
-Describe "New-ExamplePHPProfile Tests" {
+Describe "New-ExamplePHPProfile" {
     It "Should create an example profile" {
         $result = New-ExamplePHPProfile
         $result | Should -Be 0
@@ -2008,7 +2026,7 @@ Describe "New-ExamplePHPProfile Tests" {
     }
 }
 
-Describe "New-ProfileTemplate Tests" {
+Describe "New-ProfileTemplate" {
     It "Should create a profile template" {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $result = New-ProfileTemplate

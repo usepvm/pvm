@@ -1,14 +1,4 @@
 ﻿
-BeforeAll {
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-}
-
-AfterAll {
-    $Global:PVMRoot = $PVMRootBackup
-    $Global:PVMConfig = $PVMConfigBackup
-}
-
 Describe "Resolve-Alias" {
     $testCases = @(
         @{ Command = '?'; Expected = 'help' }

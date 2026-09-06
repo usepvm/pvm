@@ -571,7 +571,7 @@ Describe "Show-SpinnerWhileProcess" {
     }
 }
 
-Describe "Write-Host helpers Tests" {
+Describe "Write-Host helpers" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {
             Mock Write-HostWrapper {}

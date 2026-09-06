@@ -22,7 +22,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Invoke-Setup Tests" {
+Describe "Invoke-Setup" {
     BeforeEach {
         Mock Test-PVMNotSetup { $false }
         Mock Initialize-PVM { 0 }
@@ -91,7 +91,7 @@ Describe "Invoke-Setup Tests" {
     }
 }
 
-Describe "Invoke-Repair Tests" {
+Describe "Invoke-Repair" {
     BeforeAll {
         Mock Wait-ForEnvEdit { }
     }
@@ -138,7 +138,7 @@ Describe "Invoke-Repair Tests" {
     }
 }
 
-Describe "Invoke-Current Tests" {
+Describe "Invoke-Current" {
     It "Should display current PHP version and extensions when version is set" {
         Mock Get-PHPStatus {
             return @(
@@ -206,7 +206,7 @@ Describe "Invoke-Current Tests" {
     }
 }
 
-Describe "Invoke-List Tests" {
+Describe "Invoke-List" {
     BeforeEach {
         Mock Get-AvailablePHPVersions { return 0 }
         Mock Show-InstalledPHPVersions { return 0 }
@@ -233,7 +233,7 @@ Describe "Invoke-List Tests" {
     }
 }
 
-Describe "Invoke-Install Tests" {
+Describe "Invoke-Install" {
     BeforeEach {
         Mock Install-PHP { 0 }
     }
@@ -302,7 +302,7 @@ Describe "Invoke-Install Tests" {
     }
 }
 
-Describe "Invoke-Uninstall Tests" {
+Describe "Invoke-Uninstall" {
     BeforeEach {
         Mock Uninstall-PHP { return 0 }
     }
@@ -360,7 +360,7 @@ Describe "Invoke-Uninstall Tests" {
     }
 }
 
-Describe "Invoke-Use Tests" {
+Describe "Invoke-Use" {
     BeforeEach {
         Mock Select-PHPVersionAutomatically { @{ code = 0; version = '8.2.0' } }
         Mock Update-PHPVersion { return 0 }
@@ -408,7 +408,7 @@ Describe "Invoke-Use Tests" {
     }
 }
 
-Describe "Invoke-Ini Tests" {
+Describe "Invoke-Ini" {
     BeforeEach {
         Mock Invoke-IniAction { 0 }
     }
@@ -462,7 +462,7 @@ Describe "Invoke-Ini Tests" {
     }
 }
 
-Describe "Invoke-Log Tests" {
+Describe "Invoke-Log" {
     BeforeAll {
         # Default log page size value for tests
         $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE = 5
@@ -521,7 +521,7 @@ Describe "Invoke-Log Tests" {
     }
 }
 
-Describe "Invoke-Version Tests" {
+Describe "Invoke-Version" {
     It "Should show version and return 0" {
         Mock Show-PVMVersion { }
         $result = Invoke-Version
@@ -531,7 +531,7 @@ Describe "Invoke-Version Tests" {
     }
 }
 
-Describe "Invoke-Help Tests" {
+Describe "Invoke-Help" {
     It "Should display help for setup command" {
         $result = Invoke-Help -arguments @('setup')
         $result | Should -Be 0
@@ -548,7 +548,7 @@ Describe "Invoke-Help Tests" {
     }
 }
 
-Describe "Invoke-Test Tests" {
+Describe "Invoke-Test" {
     BeforeAll {
         Mock Initialize-Tests { 0 }
     }
@@ -796,7 +796,7 @@ Describe "Invoke-Test Tests" {
     }
 }
 
-Describe "Invoke-Profile Tests" {
+Describe "Invoke-Profile" {
     BeforeEach {
         Mock Save-PHPProfile { 0 }
         Mock Use-PHPProfile { 0 }
@@ -1134,7 +1134,7 @@ Describe "Invoke-Profile Tests" {
     }
 }
 
-Describe "Invoke-Cache Tests" {
+Describe "Invoke-Cache" {
     BeforeEach {
         Mock Show-CacheFiles { 0 }
         Mock Show-CachedData { 0 }
@@ -1325,7 +1325,7 @@ Describe "Invoke-Cache Tests" {
     }
 }
 
-Describe "Invoke-Aliases Tests" {
+Describe "Invoke-Aliases" {
     It "Should return -1 when no aliases are found" {
         Mock Get-Aliases { return @{} }
 
@@ -1345,7 +1345,7 @@ Describe "Invoke-Aliases Tests" {
     }
 }
 
-Describe "Invoke-Info Tests" {
+Describe "Invoke-Info" {
     BeforeEach {
         $Global:PVMRoot = 'C:\pvm'
         $PVMConfig.version = '2.6'
@@ -1451,7 +1451,7 @@ Describe "Invoke-Info Tests" {
     }
 }
 
-Describe "Invoke-Update Tests" {
+Describe "Invoke-Update" {
     It "Should call Update-PVM and return 0" {
         Mock Update-PVM { return 0 }
 
@@ -1471,7 +1471,7 @@ Describe "Invoke-Update Tests" {
     }
 }
 
-Describe "Invoke-Run Tests" {
+Describe "Invoke-Run" {
     It "Should call Invoke-RunScripts and return 0" {
         Mock Invoke-RunScripts { 0 }
 

@@ -6,7 +6,7 @@ BeforeAll {
     Mock New-Line {}
 }
 
-Describe "Get-Actions Tests" {
+Describe "Get-Actions" {
     BeforeEach {
         Mock Invoke-Version { }
         Mock Invoke-Help { }

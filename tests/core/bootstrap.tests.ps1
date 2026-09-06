@@ -19,7 +19,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Show-Usage Tests" {
+Describe "Show-Usage" {
     BeforeEach {
         Mock Get-CurrentPHPVersion { @{ version = '8.2.0' } }
 
@@ -119,7 +119,7 @@ Describe "Show-Usage Tests" {
     }
 }
 
-Describe "Show-PVMVersion Function Tests" {
+Describe "Show-PVMVersion Function" {
     BeforeEach {
         $PVMConfig.version = '1.2.3'
     }
@@ -155,7 +155,7 @@ Describe "Show-PVMVersion Function Tests" {
     }
 }
 
-Describe "Get-LevenshteinDistance tests" {
+Describe "Get-LevenshteinDistance" {
     It "Should return zero distance for identical strings" {
         $result = Get-LevenshteinDistance -first 'test' -second 'test'
         $result | Should -Be 0
@@ -172,7 +172,7 @@ Describe "Get-LevenshteinDistance tests" {
     }
 }
 
-Describe "Get-ClosestCommandSuggestion tests" {
+Describe "Get-ClosestCommandSuggestion" {
     It "Should return null suggestion for whitespace command" {
         Mock Get-Aliases { @{} }
         $actions = [ordered]@{
@@ -220,7 +220,7 @@ Describe "Get-ClosestCommandSuggestion tests" {
     }
 }
 
-Describe "Start-PVM Function Tests" {
+Describe "Start-PVM Function" {
     BeforeEach {
         Mock Show-Usage { }
         Mock Show-PVMVersion { }

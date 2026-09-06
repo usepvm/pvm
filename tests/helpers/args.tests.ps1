@@ -9,7 +9,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Resolve-Alias Tests" {
+Describe "Resolve-Alias" {
     $testCases = @(
         @{ Command = '?'; Expected = 'help' }
         @{ Command = 'h'; Expected = 'help' }

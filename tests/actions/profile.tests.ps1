@@ -2011,9 +2011,9 @@ Describe "Import-PHPProfile" {
     }
 }
 
-Describe "New-ExamplePHPProfile" {
+Describe "New-ProfileExample" {
     It "Should create an example profile" {
-        $result = New-ExamplePHPProfile
+        $result = New-ProfileExample
         $result | Should -Be 0
 
         Test-Path $EXAMPLE_PROFILE_PATH | Should -Be $true
@@ -2021,7 +2021,7 @@ Describe "New-ExamplePHPProfile" {
 
     It "Returns -1 when exception is thrown" {
         Mock Set-ContentWrapper { throw 'Test exception' }
-        $result = New-ExamplePHPProfile
+        $result = New-ProfileExample
         $result | Should -Be -1
     }
 }

@@ -213,7 +213,7 @@ Describe "Initialize-PVMDirectories" {
 
 Describe "Initialize-PVMFiles" {
     BeforeAll {
-        Mock New-ExamplePHPProfile { return 0 }
+        Mock New-ProfileExample { return 0 }
         Mock New-ProfileTemplate { return 0 }
         Mock Set-ZendExtensionsList { return 0 }
         Mock Set-AliasesList { return 0 }
@@ -226,7 +226,7 @@ Describe "Initialize-PVMFiles" {
     }
 
     It "Returns -1 when the example profile creation fails" {
-        Mock New-ExamplePHPProfile { return -1 }
+        Mock New-ProfileExample { return -1 }
         $result = Initialize-PVMFiles
         $result | Should -Be @(-1, 0, 0, 0, 0)
     }

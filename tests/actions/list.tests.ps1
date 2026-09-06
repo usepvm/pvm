@@ -423,8 +423,9 @@ Describe "Show-InstalledPHPVersions" {
             @{Version = '7.4.33'; Arch = 'x64'; BuildType = 'NTS'}
         )}
 
-        Show-InstalledPHPVersions
+        $code = Show-InstalledPHPVersions
 
+        $code | Should -Be 0
         Should -Invoke Show-Info -ParameterFilter { $message -like '*Installed Versions*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.2.0*(Current)*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.1.5*' }
@@ -439,6 +440,19 @@ Describe "Show-InstalledPHPVersions" {
         )}
         $code = Show-InstalledPHPVersions -term '8.2'
         $code | Should -Be 0
+    }
+
+    It "Return -1 when no installed versions matching filter" {
+        Mock Get-InstalledPHPVersions { return @(
+            @{Version = '8.2.0'; Arch = 'x64'; BuildType = 'NTS'}
+            @{Version = '8.2.0'; Arch = 'x64'; BuildType = 'TS'}
+            @{Version = '8.1.5'; Arch = 'x64'; BuildType = 'NTS'}
+        )}
+
+        $code = Show-InstalledPHPVersions -term '8.3'
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*No PHP versions found matching '8.3'*" }
     }
 
     It "Should handle no installed versions" {

@@ -15,7 +15,7 @@ BeforeAll {
 
     Mock Get-MatchingPHPVersions {
         param ($version)
-        # Mock implementation
+
         if ($version -like '8.*') {
             return @(
                 @{version='8.1'; path='C:\php\8.1'},
@@ -27,6 +27,7 @@ BeforeAll {
 
     Mock Get-UserSelectedPHPVersion {
         param ($installedVersions)
+
         # If we're in the Auto-Select test and a specific version was detected
         if ($script:TestScenario -eq 'composer' -or $script:TestScenario -eq '.php-version' -and $installedVersions) {
             # Find the version that matches what we detected (8.2)
@@ -43,17 +44,9 @@ BeforeAll {
         return $null
     }
 
-    Mock New-SymbolicLink {
-        param ($link, $target)
-        # Mock implementation
-        return @{ code = 0 }
-    }
+    Mock New-SymbolicLink { return @{ code = 0 } }
 
-    Mock Add-LogEntry {
-        param ($logPath, $message, $data)
-        # Mock implementation
-        return $true
-    }
+    Mock Add-LogEntry { return 0 }
 }
 
 AfterAll {

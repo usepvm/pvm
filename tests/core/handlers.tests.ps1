@@ -22,6 +22,33 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
+Describe "Invoke-Help" {
+    It "Should display help for setup command" {
+        $result = Invoke-Help -arguments @('setup')
+        $result | Should -Be 0
+    }
+
+    It "Should return -1 for non-existent usage" {
+        $result = Invoke-Help -arguments @('nonexistent')
+        $result | Should -Be -1
+    }
+
+    It "Should display general help when no command is provided" {
+        $result = Invoke-Help -arguments @()
+        $result | Should -Be 0
+    }
+}
+
+Describe "Invoke-Version" {
+    It "Should show version and return 0" {
+        Mock Show-PVMVersion { }
+        $result = Invoke-Version
+
+        $result | Should -Be 0
+        Should -Invoke Show-PVMVersion -Times 1
+    }
+}
+
 Describe "Invoke-Setup" {
     BeforeEach {
         Mock Test-PVMNotSetup { $false }
@@ -88,53 +115,6 @@ Describe "Invoke-Setup" {
 
         $result = Invoke-Setup
         $result | Should -Be -1
-    }
-}
-
-Describe "Invoke-Repair" {
-    BeforeAll {
-        Mock Wait-ForEnvEdit { }
-    }
-
-    It "Should return 0 when all actions succeed" {
-        Mock New-EnvFile { 0 }
-        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
-
-        $result = Invoke-Repair
-        $result | Should -Be 0
-        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
-    }
-
-    It "Should return -1 when Initialize-EnvironmentDirectoriesAndFiles fails" {
-        Mock Initialize-EnvironmentDirectoriesAndFiles { -1 }
-        Mock New-EnvFile { 0 }
-
-        $result = Invoke-Repair
-        $result | Should -Be -1
-        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
-        Should -Invoke New-EnvFile -Times 1
-    }
-
-    It "Should return -1 when New-EnvFile fails" {
-        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
-        Mock New-EnvFile { -1 }
-
-        $result = Invoke-Repair
-        $result | Should -Be -1
-        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
-        Should -Invoke New-EnvFile -Times 1
-    }
-
-    It "Should pause for env edit after creating env file" {
-        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
-        Mock New-EnvFile { 0 }
-        Mock Wait-ForEnvEdit { }
-
-        $result = Invoke-Repair
-        $result | Should -Be 0
-        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
-        Should -Invoke New-EnvFile -Times 1
-        Should -Invoke Wait-ForEnvEdit -Times 1
     }
 }
 
@@ -302,6 +282,54 @@ Describe "Invoke-Install" {
     }
 }
 
+Describe "Invoke-Use" {
+    BeforeEach {
+        Mock Select-PHPVersionAutomatically { @{ code = 0; version = '8.2.0' } }
+        Mock Update-PHPVersion { return 0 }
+    }
+
+    It "Should return -1 when no version is provided" {
+        $arguments = @()
+
+        $result = Invoke-Use -arguments $arguments
+        $result | Should -Be -1
+
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Please provide a PHP version to use*' }
+    }
+
+    It "Should use specific PHP version" {
+        $arguments = @('8.2.0')
+
+        $result = Invoke-Use -arguments $arguments
+        $result | Should -Be 0
+
+        Should -Invoke Update-PHPVersion -Times 1 -ParameterFilter {
+            $version -eq '8.2.0'
+        }
+    }
+
+    It "Should handle 'auto' version selection successfully" {
+        $arguments = @('auto')
+
+        $result = Invoke-Use -arguments $arguments
+        $result | Should -Be 0
+
+        Should -Invoke Select-PHPVersionAutomatically -Times 1
+        Should -Invoke Update-PHPVersion -Times 1 -ParameterFilter { $version -eq '8.2.0' }
+    }
+
+    It "Should return -1 when auto-selection fails" {
+        Mock Select-PHPVersionAutomatically { @{ code = 1; message = 'Auto selection failed'; color = 'DarkYellow' } }
+        $arguments = @('auto')
+
+        $result = Invoke-Use -arguments $arguments
+        $result | Should -Be -1
+
+        Should -Invoke Select-PHPVersionAutomatically -Times 1
+        Should -Invoke Update-PHPVersion -Times 0
+    }
+}
+
 Describe "Invoke-Uninstall" {
     BeforeEach {
         Mock Uninstall-PHP { return 0 }
@@ -360,54 +388,6 @@ Describe "Invoke-Uninstall" {
     }
 }
 
-Describe "Invoke-Use" {
-    BeforeEach {
-        Mock Select-PHPVersionAutomatically { @{ code = 0; version = '8.2.0' } }
-        Mock Update-PHPVersion { return 0 }
-    }
-
-    It "Should return -1 when no version is provided" {
-        $arguments = @()
-
-        $result = Invoke-Use -arguments $arguments
-        $result | Should -Be -1
-
-        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Please provide a PHP version to use*' }
-    }
-
-    It "Should use specific PHP version" {
-        $arguments = @('8.2.0')
-
-        $result = Invoke-Use -arguments $arguments
-        $result | Should -Be 0
-
-        Should -Invoke Update-PHPVersion -Times 1 -ParameterFilter {
-            $version -eq '8.2.0'
-        }
-    }
-
-    It "Should handle 'auto' version selection successfully" {
-        $arguments = @('auto')
-
-        $result = Invoke-Use -arguments $arguments
-        $result | Should -Be 0
-
-        Should -Invoke Select-PHPVersionAutomatically -Times 1
-        Should -Invoke Update-PHPVersion -Times 1 -ParameterFilter { $version -eq '8.2.0' }
-    }
-
-    It "Should return -1 when auto-selection fails" {
-        Mock Select-PHPVersionAutomatically { @{ code = 1; message = 'Auto selection failed'; color = 'DarkYellow' } }
-        $arguments = @('auto')
-
-        $result = Invoke-Use -arguments $arguments
-        $result | Should -Be -1
-
-        Should -Invoke Select-PHPVersionAutomatically -Times 1
-        Should -Invoke Update-PHPVersion -Times 0
-    }
-}
-
 Describe "Invoke-Ini" {
     BeforeEach {
         Mock Invoke-IniAction { 0 }
@@ -458,340 +438,6 @@ Describe "Invoke-Ini" {
             $result | Should -Be 0
 
             Should -Invoke Invoke-IniAction -ParameterFilter { $action -eq $testAction }
-        }
-    }
-}
-
-Describe "Invoke-Log" {
-    BeforeAll {
-        # Default log page size value for tests
-        $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE = 5
-        Mock Show-Log { 0 }
-    }
-
-    It "Should skip confirmation and clear log file" {
-        Mock Clear-ContentWrapper {}
-
-        Invoke-Log -arguments @('--clear', '-y') | Should -Be 0
-
-        Should -Invoke Clear-ContentWrapper -Exactly 1
-        Should -Invoke Show-Success -Exactly 1
-    }
-
-    It "Should prompt for confirmation and cancel log clearing when user responds with 'n'" {
-        Mock Read-HostWrapper { return 'n' }
-        Mock Write-Gray {}
-
-        Invoke-Log -arguments @('--clear') | Should -Be -1
-
-        Should -Invoke Read-HostWrapper -ParameterFilter { $prompt -like '*Are you sure you want to clear the log?*' }
-        Should -Invoke Write-Gray -ParameterFilter { $message -like '*Log clearing cancelled*' }
-    }
-
-    It "Should prompt for confirmation and proceed with log clearing when user responds with 'y'" {
-        Mock Clear-ContentWrapper {}
-        Mock Show-Success {}
-        Mock Read-HostWrapper { return 'y' }
-
-        Invoke-Log -arguments @('--clear') | Should -Be 0
-        Should -Invoke Clear-ContentWrapper -Exactly 1
-        Should -Invoke Show-Success -Exactly 1
-    }
-
-    It "Calls Show-Log with provided --pageSize argument" {
-        $arguments = @('--pageSize=5')
-        Invoke-Log -arguments $arguments | Should -Be 0
-
-        Should -Invoke Show-Log -Exactly 1 -ParameterFilter { $pageSize -eq '5' }
-    }
-
-    It "Calls Show-Log with default page size when no argument is given" {
-        $arguments = @()
-        Invoke-Log -arguments $arguments | Should -Be 0
-
-        Should -Invoke Show-Log -Exactly 1 -ParameterFilter { $pageSize -eq 5 }
-    }
-
-    It "Passes return code from Show-Log back to caller" {
-        Mock Show-Log { return 0 }
-        (Invoke-Log -arguments @('--pageSize=2')) | Should -Be 0
-
-        Mock Show-Log { return -1 }
-        (Invoke-Log -arguments @('--pageSize=2')) | Should -Be -1
-    }
-}
-
-Describe "Invoke-Version" {
-    It "Should show version and return 0" {
-        Mock Show-PVMVersion { }
-        $result = Invoke-Version
-
-        $result | Should -Be 0
-        Should -Invoke Show-PVMVersion -Times 1
-    }
-}
-
-Describe "Invoke-Help" {
-    It "Should display help for setup command" {
-        $result = Invoke-Help -arguments @('setup')
-        $result | Should -Be 0
-    }
-
-    It "Should return -1 for non-existent usage" {
-        $result = Invoke-Help -arguments @('nonexistent')
-        $result | Should -Be -1
-    }
-
-    It "Should display general help when no command is provided" {
-        $result = Invoke-Help -arguments @()
-        $result | Should -Be 0
-    }
-}
-
-Describe "Invoke-Test" {
-    BeforeAll {
-        Mock Initialize-Tests { 0 }
-    }
-
-    It "Installs Pester module when not already installed" {
-        Mock Get-Module -ParameterFilter { $ListAvailable -and $Name -eq 'Pester' } -MockWith { return $null }
-        Mock Install-Module -ParameterFilter { $Name -eq 'Pester' } -MockWith { }
-
-        $result = Invoke-Test -arguments @()
-        $result | Should -Be 0
-    }
-
-    It "Should call Run-Tests with no arguments" {
-        $result = Invoke-Test -arguments @()
-        $result | Should -Be 0
-    }
-
-    It "Should call Run-Tests with provided arguments" {
-        $result = Invoke-Test -arguments @(
-            'TestFile.ps1', 'TestFile2.ps1',
-            '--coverage=80', '--verbosity=detailed', '--tag=unit', '--sort=coverage', '--exclude=TestFile3.ps1'
-        )
-        $result | Should -Be 0
-    }
-
-    It "Should keep grouping disabled by default" {
-        Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
-
-        $result = Invoke-Test -arguments @()
-
-        $result.groupBy | Should -BeNullOrEmpty
-    }
-
-    It "Should pass coverage grouping option to Initialize-Tests" {
-        Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
-
-        $result = Invoke-Test -arguments @('--group=coverage')
-
-        $result.groupBy | Should -Be 'coverage'
-    }
-
-    Context "Handle invalid coverage target values" {
-        It "Should return -1 for over 100 coverage target" {
-            $result = Invoke-Test -arguments @('TestFile.ps1', '--coverage=150')
-            $result | Should -Be -1
-        }
-
-        It "Should return -1 for negative coverage value" {
-            $result = Invoke-Test -arguments @('TestFile.ps1', '--coverage=-10')
-            $result | Should -Be -1
-        }
-    }
-
-    It "Should handle unknown flags gracefully" {
-        $result = Invoke-Test -arguments @('-i', '--unknown')
-        $result | Should -Be 0
-    }
-
-    Context "Pester version parsing" {
-        It "Should parse --pester argument correctly" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
-
-            $result = Invoke-Test -arguments @('--pester=5.5')
-
-            $result | Should -Be '5.5'
-        }
-
-        It "Should pass null when no --pester argument" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
-
-            $result = Invoke-Test -arguments @()
-
-            $result | Should -Be $null
-        }
-
-        It "Should pass 'latest' when --pester=latest is specified" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
-
-            $result = Invoke-Test -arguments @('--pester=latest')
-
-            $result | Should -Be 'latest'
-        }
-
-        It "Should pass pesterVersion to Initialize-Tests" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
-
-            $result = Invoke-Test -arguments @('--pester=5.6.0')
-
-            Should -Invoke Initialize-Tests -ParameterFilter {
-                $pesterVersion -eq '5.6.0'
-            } -Times 1
-        }
-
-        It "Should pass null pesterVersion when no --pester argument" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
-
-            $result = Invoke-Test -arguments @()
-
-            Should -Invoke Initialize-Tests -ParameterFilter {
-                $pesterVersion -eq $null
-            } -Times 1
-        }
-    }
-
-    Context "Test argument parsing" {
-        It "Should filter out --pester argument from test names" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $testsNames }
-
-            $result = Invoke-Test -arguments @('TestFile.ps1', '--pester=5.5')
-
-            $result | Should -Not -Contain '--pester=5.5'
-        }
-
-        It "Should parse --exclude argument correctly" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $exclude }
-
-            $result = Invoke-Test -arguments @('--exclude=TestFile1.ps1,TestFile2.ps1')
-
-            $result | Should -Be @('TestFile1.ps1', 'TestFile2.ps1')
-        }
-
-        It "Should parse --sort argument correctly" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
-
-            $result = Invoke-Test -arguments @('--sort=coverage')
-
-            $result.sortBy | Should -Be 'coverage'
-        }
-
-        It "Should parse --group argument correctly" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
-
-            $result = Invoke-Test -arguments @('--group=folder')
-
-            $result.groupBy | Should -Be 'folder'
-        }
-
-        It "Should parse --tag argument correctly" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
-
-            $result = Invoke-Test -arguments @('--tag=unit')
-
-            $result.tag | Should -Be 'unit'
-        }
-
-        It "Should parse --coverage argument with custom target" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
-
-            $result = Invoke-Test -arguments @('--coverage=85')
-
-            $result.coverage | Should -Be $true
-            $result.target | Should -Be 85
-        }
-
-        It "Should parse --coverage argument without target (default $($PVMConfig.test.coverage.default))" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
-
-            $result = Invoke-Test -arguments @('--coverage')
-
-            $result.coverage | Should -Be $true
-            $result.target | Should -Be $PVMConfig.test.coverage.default
-        }
-
-        It "Should parse --verbosity argument correctly" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
-
-            $result = Invoke-Test -arguments @('--verbosity=detailed')
-
-            $result.verbosity | Should -Be 'detailed'
-        }
-
-        It "Should filter out flag arguments from test names" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $testsNames }
-
-            $result = Invoke-Test -arguments @('TestFile.ps1', '--unknown', '-x')
-
-            $result | Should -Be @('TestFile.ps1')
-        }
-
-        It "Should pass non-flag arguments as test names" {
-            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $testsNames }
-
-            $result = Invoke-Test -arguments @('TestFile1.ps1', 'TestFile2.ps1')
-
-            $result | Should -Be @('TestFile1.ps1', 'TestFile2.ps1')
-        }
-    }
-
-    Context "Coverage validation" {
-        It "Should return -1 when coverage target is over 100" {
-            $result = Invoke-Test -arguments @('--coverage=150')
-
-            $result | Should -Be -1
-
-            Should -Invoke Show-Warning -ParameterFilter {
-                $message -like '*Invalid coverage value*'
-            }
-        }
-
-        It "Should return -1 when coverage target is negative" {
-            $result = Invoke-Test -arguments @('--coverage=-10')
-
-            $result | Should -Be -1
-
-            Should -Invoke Show-Warning -ParameterFilter {
-                $message -like '*Invalid coverage value*'
-            }
-        }
-
-        It "Should accept coverage target of 0" {
-            Mock Initialize-Tests { 0 }
-
-            $result = Invoke-Test -arguments @('--coverage=0')
-
-            $result | Should -Be 0
-        }
-
-        It "Should accept coverage target of 100" {
-            Mock Initialize-Tests { 0 }
-
-            $result = Invoke-Test -arguments @('--coverage=100')
-
-            $result | Should -Be 0
-        }
-    }
-
-    Context "Muted validation" {
-        It "Should set SOUNDS_DISABLED to true when --mute is specified" {
-            Mock Initialize-Tests { 0 }
-            $PVMConfig.env.SOUNDS_DISABLED = $false
-
-            $null = Invoke-Test -arguments @('--mute')
-
-            $PVMConfig.env.SOUNDS_DISABLED | Should -Be $true
-        }
-
-        It "Should not set SOUNDS_DISABLED when --mute is not specified" {
-            Mock Initialize-Tests { 0 }
-            $PVMConfig.env.SOUNDS_DISABLED = $false
-
-            $null = Invoke-Test -arguments @()
-
-            $PVMConfig.env.SOUNDS_DISABLED | Should -Be $false
         }
     }
 }
@@ -1134,6 +780,238 @@ Describe "Invoke-Profile" {
     }
 }
 
+Describe "Invoke-Info" {
+    BeforeEach {
+        $Global:PVMRoot = 'C:\pvm'
+        $PVMConfig.version = '2.6'
+        $PVMConfig.env = @{
+            CACHE_MAX_HOURS      = 168
+            MIN_PAD_RIGHT_LENGTH = 2
+            PHP_CURRENT_VERSION_PATH = 'C:\pvm'
+        }
+        Mock Get-ProfileFiles {
+            @('profile1.json', 'profile2.json')
+        }
+        Mock Get-CacheFiles {
+            @('cache1.json')
+        }
+        Mock Test-CanUseCache { return $false }
+        Mock Get-InstalledPHPVersionsFromDisk {
+            @(
+                @{ version = '8.2' }
+                @{ version = '8.3' }
+            )
+        }
+    }
+
+    Context "Default output" {
+        BeforeEach {
+            Mock Get-CurrentPHPVersion {
+                @{
+                    version   = '8.3.28'
+                    arch      = 'x64'
+                    buildType = 'TS'
+                    path      = 'C:\pvm\storage\php\8.3.28'
+                }
+            }
+        }
+
+        It "Returns 0" {
+            $code = Invoke-Info -arguments @()
+            $code | Should -Be 0
+        }
+
+        It "Displays status section" {
+            Invoke-Info -arguments @()
+
+            Should -Invoke Show-Info -ParameterFilter {
+                $message -like '*PVM status*'
+            }
+        }
+
+        It "Does not display verbose sections" {
+            Invoke-Info -arguments @()
+
+            Should -Not -Invoke Show-Info -ParameterFilter {
+                $message -like '*PVM paths*'
+            }
+        }
+    }
+
+    Context "When no PHP version is active" {
+        BeforeEach {
+            Mock Get-CurrentPHPVersion { $null }
+        }
+
+        It "Returns 0" {
+            Invoke-Info -arguments @() | Should -Be 0
+        }
+
+        It "Completes successfully" {
+            { Invoke-Info -arguments @() } | Should -Not -Throw
+        }
+    }
+
+    Context "Verbose output" {
+        BeforeEach {
+            Mock Get-CurrentPHPVersion {
+                @{
+                    version   = '8.3.28'
+                    arch      = 'x64'
+                    buildType = 'TS'
+                    path      = 'C:\pvm\storage\php\8.3.28'
+                }
+            }
+        }
+
+        It "Displays environment paths section" {
+            Invoke-Info -arguments @('--verbose')
+
+            Should -Invoke Show-Info -ParameterFilter {
+                $message -like '*PVM paths*'
+            }
+        }
+
+        It "Displays environment paths section" {
+            Invoke-Info -arguments @('--verbose')
+
+            Should -Invoke Show-Info -ParameterFilter {
+                $message -like '*PVM environment variables*'
+            }
+        }
+
+        It "Returns 0" {
+            Invoke-Info -arguments @('--verbose') | Should -Be 0
+        }
+    }
+}
+
+Describe "Invoke-Aliases" {
+    It "Should return -1 when no aliases are found" {
+        Mock Get-Aliases { return @{} }
+
+        $result = Invoke-Aliases
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*No aliases found.*' }
+    }
+
+    It "Should return 0 when aliases are found" {
+        Mock Get-Aliases { return @{ 'alias1' = 'command1'; 'alias2' = 'command2' } }
+
+        $result = Invoke-Aliases
+
+        $result | Should -Be 0
+        Should -Invoke Show-Message -Times 2
+    }
+}
+
+Describe "Invoke-Log" {
+    BeforeAll {
+        # Default log page size value for tests
+        $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE = 5
+        Mock Show-Log { 0 }
+    }
+
+    It "Should skip confirmation and clear log file" {
+        Mock Clear-ContentWrapper {}
+
+        Invoke-Log -arguments @('--clear', '-y') | Should -Be 0
+
+        Should -Invoke Clear-ContentWrapper -Exactly 1
+        Should -Invoke Show-Success -Exactly 1
+    }
+
+    It "Should prompt for confirmation and cancel log clearing when user responds with 'n'" {
+        Mock Read-HostWrapper { return 'n' }
+        Mock Write-Gray {}
+
+        Invoke-Log -arguments @('--clear') | Should -Be -1
+
+        Should -Invoke Read-HostWrapper -ParameterFilter { $prompt -like '*Are you sure you want to clear the log?*' }
+        Should -Invoke Write-Gray -ParameterFilter { $message -like '*Log clearing cancelled*' }
+    }
+
+    It "Should prompt for confirmation and proceed with log clearing when user responds with 'y'" {
+        Mock Clear-ContentWrapper {}
+        Mock Show-Success {}
+        Mock Read-HostWrapper { return 'y' }
+
+        Invoke-Log -arguments @('--clear') | Should -Be 0
+        Should -Invoke Clear-ContentWrapper -Exactly 1
+        Should -Invoke Show-Success -Exactly 1
+    }
+
+    It "Calls Show-Log with provided --pageSize argument" {
+        $arguments = @('--pageSize=5')
+        Invoke-Log -arguments $arguments | Should -Be 0
+
+        Should -Invoke Show-Log -Exactly 1 -ParameterFilter { $pageSize -eq '5' }
+    }
+
+    It "Calls Show-Log with default page size when no argument is given" {
+        $arguments = @()
+        Invoke-Log -arguments $arguments | Should -Be 0
+
+        Should -Invoke Show-Log -Exactly 1 -ParameterFilter { $pageSize -eq 5 }
+    }
+
+    It "Passes return code from Show-Log back to caller" {
+        Mock Show-Log { return 0 }
+        (Invoke-Log -arguments @('--pageSize=2')) | Should -Be 0
+
+        Mock Show-Log { return -1 }
+        (Invoke-Log -arguments @('--pageSize=2')) | Should -Be -1
+    }
+}
+
+Describe "Invoke-Repair" {
+    BeforeAll {
+        Mock Wait-ForEnvEdit { }
+    }
+
+    It "Should return 0 when all actions succeed" {
+        Mock New-EnvFile { 0 }
+        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
+
+        $result = Invoke-Repair
+        $result | Should -Be 0
+        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
+    }
+
+    It "Should return -1 when Initialize-EnvironmentDirectoriesAndFiles fails" {
+        Mock Initialize-EnvironmentDirectoriesAndFiles { -1 }
+        Mock New-EnvFile { 0 }
+
+        $result = Invoke-Repair
+        $result | Should -Be -1
+        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
+        Should -Invoke New-EnvFile -Times 1
+    }
+
+    It "Should return -1 when New-EnvFile fails" {
+        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
+        Mock New-EnvFile { -1 }
+
+        $result = Invoke-Repair
+        $result | Should -Be -1
+        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
+        Should -Invoke New-EnvFile -Times 1
+    }
+
+    It "Should pause for env edit after creating env file" {
+        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
+        Mock New-EnvFile { 0 }
+        Mock Wait-ForEnvEdit { }
+
+        $result = Invoke-Repair
+        $result | Should -Be 0
+        Should -Invoke Initialize-EnvironmentDirectoriesAndFiles -Times 1
+        Should -Invoke New-EnvFile -Times 1
+        Should -Invoke Wait-ForEnvEdit -Times 1
+    }
+}
+
 Describe "Invoke-Cache" {
     BeforeEach {
         Mock Show-CacheFiles { 0 }
@@ -1325,132 +1203,6 @@ Describe "Invoke-Cache" {
     }
 }
 
-Describe "Invoke-Aliases" {
-    It "Should return -1 when no aliases are found" {
-        Mock Get-Aliases { return @{} }
-
-        $result = Invoke-Aliases
-
-        $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*No aliases found.*' }
-    }
-
-    It "Should return 0 when aliases are found" {
-        Mock Get-Aliases { return @{ 'alias1' = 'command1'; 'alias2' = 'command2' } }
-
-        $result = Invoke-Aliases
-
-        $result | Should -Be 0
-        Should -Invoke Show-Message -Times 2
-    }
-}
-
-Describe "Invoke-Info" {
-    BeforeEach {
-        $Global:PVMRoot = 'C:\pvm'
-        $PVMConfig.version = '2.6'
-        $PVMConfig.env = @{
-            CACHE_MAX_HOURS      = 168
-            MIN_PAD_RIGHT_LENGTH = 2
-            PHP_CURRENT_VERSION_PATH = 'C:\pvm'
-        }
-        Mock Get-ProfileFiles {
-            @('profile1.json', 'profile2.json')
-        }
-        Mock Get-CacheFiles {
-            @('cache1.json')
-        }
-        Mock Test-CanUseCache { return $false }
-        Mock Get-InstalledPHPVersionsFromDisk {
-            @(
-                @{ version = '8.2' }
-                @{ version = '8.3' }
-            )
-        }
-    }
-
-    Context "Default output" {
-        BeforeEach {
-            Mock Get-CurrentPHPVersion {
-                @{
-                    version   = '8.3.28'
-                    arch      = 'x64'
-                    buildType = 'TS'
-                    path      = 'C:\pvm\storage\php\8.3.28'
-                }
-            }
-        }
-
-        It "Returns 0" {
-            $code = Invoke-Info -arguments @()
-            $code | Should -Be 0
-        }
-
-        It "Displays status section" {
-            Invoke-Info -arguments @()
-
-            Should -Invoke Show-Info -ParameterFilter {
-                $message -like '*PVM status*'
-            }
-        }
-
-        It "Does not display verbose sections" {
-            Invoke-Info -arguments @()
-
-            Should -Not -Invoke Show-Info -ParameterFilter {
-                $message -like '*PVM paths*'
-            }
-        }
-    }
-
-    Context "When no PHP version is active" {
-        BeforeEach {
-            Mock Get-CurrentPHPVersion { $null }
-        }
-
-        It "Returns 0" {
-            Invoke-Info -arguments @() | Should -Be 0
-        }
-
-        It "Completes successfully" {
-            { Invoke-Info -arguments @() } | Should -Not -Throw
-        }
-    }
-
-    Context "Verbose output" {
-        BeforeEach {
-            Mock Get-CurrentPHPVersion {
-                @{
-                    version   = '8.3.28'
-                    arch      = 'x64'
-                    buildType = 'TS'
-                    path      = 'C:\pvm\storage\php\8.3.28'
-                }
-            }
-        }
-
-        It "Displays environment paths section" {
-            Invoke-Info -arguments @('--verbose')
-
-            Should -Invoke Show-Info -ParameterFilter {
-                $message -like '*PVM paths*'
-            }
-        }
-
-        It "Displays environment paths section" {
-            Invoke-Info -arguments @('--verbose')
-
-            Should -Invoke Show-Info -ParameterFilter {
-                $message -like '*PVM environment variables*'
-            }
-        }
-
-        It "Returns 0" {
-            Invoke-Info -arguments @('--verbose') | Should -Be 0
-        }
-    }
-}
-
 Describe "Invoke-Update" {
     It "Should call Update-PVM and return 0" {
         Mock Update-PVM { return 0 }
@@ -1468,6 +1220,254 @@ Describe "Invoke-Update" {
 
         $result | Should -Be -1
         Should -Invoke Update-PVM -Times 1
+    }
+}
+
+Describe "Invoke-Test" {
+    BeforeAll {
+        Mock Initialize-Tests { 0 }
+    }
+
+    It "Installs Pester module when not already installed" {
+        Mock Get-Module -ParameterFilter { $ListAvailable -and $Name -eq 'Pester' } -MockWith { return $null }
+        Mock Install-Module -ParameterFilter { $Name -eq 'Pester' } -MockWith { }
+
+        $result = Invoke-Test -arguments @()
+        $result | Should -Be 0
+    }
+
+    It "Should call Run-Tests with no arguments" {
+        $result = Invoke-Test -arguments @()
+        $result | Should -Be 0
+    }
+
+    It "Should call Run-Tests with provided arguments" {
+        $result = Invoke-Test -arguments @(
+            'TestFile.ps1', 'TestFile2.ps1',
+            '--coverage=80', '--verbosity=detailed', '--tag=unit', '--sort=coverage', '--exclude=TestFile3.ps1'
+        )
+        $result | Should -Be 0
+    }
+
+    It "Should keep grouping disabled by default" {
+        Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
+
+        $result = Invoke-Test -arguments @()
+
+        $result.groupBy | Should -BeNullOrEmpty
+    }
+
+    It "Should pass coverage grouping option to Initialize-Tests" {
+        Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
+
+        $result = Invoke-Test -arguments @('--group=coverage')
+
+        $result.groupBy | Should -Be 'coverage'
+    }
+
+    Context "Handle invalid coverage target values" {
+        It "Should return -1 for over 100 coverage target" {
+            $result = Invoke-Test -arguments @('TestFile.ps1', '--coverage=150')
+            $result | Should -Be -1
+        }
+
+        It "Should return -1 for negative coverage value" {
+            $result = Invoke-Test -arguments @('TestFile.ps1', '--coverage=-10')
+            $result | Should -Be -1
+        }
+    }
+
+    It "Should handle unknown flags gracefully" {
+        $result = Invoke-Test -arguments @('-i', '--unknown')
+        $result | Should -Be 0
+    }
+
+    Context "Pester version parsing" {
+        It "Should parse --pester argument correctly" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+
+            $result = Invoke-Test -arguments @('--pester=5.5')
+
+            $result | Should -Be '5.5'
+        }
+
+        It "Should pass null when no --pester argument" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+
+            $result = Invoke-Test -arguments @()
+
+            $result | Should -Be $null
+        }
+
+        It "Should pass 'latest' when --pester=latest is specified" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+
+            $result = Invoke-Test -arguments @('--pester=latest')
+
+            $result | Should -Be 'latest'
+        }
+
+        It "Should pass pesterVersion to Initialize-Tests" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+
+            $result = Invoke-Test -arguments @('--pester=5.6.0')
+
+            Should -Invoke Initialize-Tests -ParameterFilter {
+                $pesterVersion -eq '5.6.0'
+            } -Times 1
+        }
+
+        It "Should pass null pesterVersion when no --pester argument" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
+
+            $result = Invoke-Test -arguments @()
+
+            Should -Invoke Initialize-Tests -ParameterFilter {
+                $pesterVersion -eq $null
+            } -Times 1
+        }
+    }
+
+    Context "Test argument parsing" {
+        It "Should filter out --pester argument from test names" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $testsNames }
+
+            $result = Invoke-Test -arguments @('TestFile.ps1', '--pester=5.5')
+
+            $result | Should -Not -Contain '--pester=5.5'
+        }
+
+        It "Should parse --exclude argument correctly" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $exclude }
+
+            $result = Invoke-Test -arguments @('--exclude=TestFile1.ps1,TestFile2.ps1')
+
+            $result | Should -Be @('TestFile1.ps1', 'TestFile2.ps1')
+        }
+
+        It "Should parse --sort argument correctly" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
+
+            $result = Invoke-Test -arguments @('--sort=coverage')
+
+            $result.sortBy | Should -Be 'coverage'
+        }
+
+        It "Should parse --group argument correctly" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
+
+            $result = Invoke-Test -arguments @('--group=folder')
+
+            $result.groupBy | Should -Be 'folder'
+        }
+
+        It "Should parse --tag argument correctly" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
+
+            $result = Invoke-Test -arguments @('--tag=unit')
+
+            $result.tag | Should -Be 'unit'
+        }
+
+        It "Should parse --coverage argument with custom target" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
+
+            $result = Invoke-Test -arguments @('--coverage=85')
+
+            $result.coverage | Should -Be $true
+            $result.target | Should -Be 85
+        }
+
+        It "Should parse --coverage argument without target (default $($PVMConfig.test.coverage.default))" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
+
+            $result = Invoke-Test -arguments @('--coverage')
+
+            $result.coverage | Should -Be $true
+            $result.target | Should -Be $PVMConfig.test.coverage.default
+        }
+
+        It "Should parse --verbosity argument correctly" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
+
+            $result = Invoke-Test -arguments @('--verbosity=detailed')
+
+            $result.verbosity | Should -Be 'detailed'
+        }
+
+        It "Should filter out flag arguments from test names" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $testsNames }
+
+            $result = Invoke-Test -arguments @('TestFile.ps1', '--unknown', '-x')
+
+            $result | Should -Be @('TestFile.ps1')
+        }
+
+        It "Should pass non-flag arguments as test names" {
+            Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $testsNames }
+
+            $result = Invoke-Test -arguments @('TestFile1.ps1', 'TestFile2.ps1')
+
+            $result | Should -Be @('TestFile1.ps1', 'TestFile2.ps1')
+        }
+    }
+
+    Context "Coverage validation" {
+        It "Should return -1 when coverage target is over 100" {
+            $result = Invoke-Test -arguments @('--coverage=150')
+
+            $result | Should -Be -1
+
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like '*Invalid coverage value*'
+            }
+        }
+
+        It "Should return -1 when coverage target is negative" {
+            $result = Invoke-Test -arguments @('--coverage=-10')
+
+            $result | Should -Be -1
+
+            Should -Invoke Show-Warning -ParameterFilter {
+                $message -like '*Invalid coverage value*'
+            }
+        }
+
+        It "Should accept coverage target of 0" {
+            Mock Initialize-Tests { 0 }
+
+            $result = Invoke-Test -arguments @('--coverage=0')
+
+            $result | Should -Be 0
+        }
+
+        It "Should accept coverage target of 100" {
+            Mock Initialize-Tests { 0 }
+
+            $result = Invoke-Test -arguments @('--coverage=100')
+
+            $result | Should -Be 0
+        }
+    }
+
+    Context "Muted validation" {
+        It "Should set SOUNDS_DISABLED to true when --mute is specified" {
+            Mock Initialize-Tests { 0 }
+            $PVMConfig.env.SOUNDS_DISABLED = $false
+
+            $null = Invoke-Test -arguments @('--mute')
+
+            $PVMConfig.env.SOUNDS_DISABLED | Should -Be $true
+        }
+
+        It "Should not set SOUNDS_DISABLED when --mute is not specified" {
+            Mock Initialize-Tests { 0 }
+            $PVMConfig.env.SOUNDS_DISABLED = $false
+
+            $null = Invoke-Test -arguments @()
+
+            $PVMConfig.env.SOUNDS_DISABLED | Should -Be $false
+        }
     }
 }
 

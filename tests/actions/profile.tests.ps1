@@ -23,7 +23,6 @@ BeforeAll {
     Mock Show-Value {}
     Mock Write-Color {}
     Mock Write-Gray {}
-    # Mock helper functions
     Mock Get-CurrentPHPVersion {
         return @{
             version = '8.2.0'
@@ -264,7 +263,6 @@ Describe "Get-PopularPHPExtensions" {
 
 Describe "Save-PHPProfile" {
     BeforeAll {
-        # Create PHP directory and php.ini file
         $phpDir = "$TEST_DRIVE\php\8.2.0"
         New-Item -ItemType Directory -Force -Path $phpDir | Out-Null
         '' | Set-ContentWrapper -path "$phpDir\php.ini"
@@ -323,7 +321,6 @@ Describe "Save-PHPProfile" {
     }
 
     It "Should create a profile file with correct structure" {
-        # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
 
         $result = Save-PHPProfile -profileName 'testprofile' -description 'Test profile'
@@ -359,7 +356,6 @@ Describe "Save-PHPProfile" {
 
 Describe "Use-PHPProfile" {
     BeforeEach {
-        # Create test profile
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -380,11 +376,9 @@ Describe "Use-PHPProfile" {
             }
         }
 
-        # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
         $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
 
-        # Create PHP directory and php.ini file
         $phpDir = "$TEST_DRIVE\php\8.2.0"
         New-Item -ItemType Directory -Force -Path $phpDir | Out-Null
         '' | Set-ContentWrapper -path "$phpDir\php.ini"
@@ -395,7 +389,6 @@ Describe "Use-PHPProfile" {
                 path = $phpDir
             }
         }
-
         Mock Set-IniSettingDirect { return 0 }
         Mock Enable-IniExtensionDirect { return 0 }
         Mock Disable-IniExtensionDirect { return 0 }
@@ -526,7 +519,6 @@ Describe "Get-ProfileFiles" {
 
 Describe "Show-PHPProfiles" {
     BeforeEach {
-        # Create test profiles
         @{
             name = 'profile1'
             description = 'First profile'
@@ -535,7 +527,6 @@ Describe "Show-PHPProfiles" {
             settings = @{}
             extensions = @{}
         } | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\profile1.json"
-
         @{
             name = 'profile2'
             description = 'Second profile'
@@ -566,7 +557,6 @@ Describe "Show-PHPProfiles" {
     }
 
     It "Should handle empty profiles directory" {
-        # Remove all profiles
         Remove-ItemWrapper -path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
 
         $result = Show-PHPProfiles
@@ -615,8 +605,6 @@ Describe "Show-PHPProfiles" {
 Describe "Show-PHPProfile" {
     BeforeEach {
         Mock Add-LogEntry { return 0 }
-
-        # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
     }
 
@@ -634,7 +622,6 @@ Describe "Show-PHPProfile" {
     }
 
     It "Should return -1 when JSON parsing fails" {
-        # Create invalid JSON file
         'invalid json content {{{{ }' | Set-ContentWrapper -path "$PROFILES_PATH\invalid.json"
 
         $result = Show-PHPProfile -profileName 'invalid'
@@ -800,12 +787,10 @@ Describe "Show-PHPProfile" {
         $result = Show-PHPProfile -profileName 'mixedsettings'
         $result | Should -Be 0
 
-        # Check for enabled setting status with DarkGreen
         Should -Invoke Write-Color -ParameterFilter {
             $message -eq 'Enabled' -and $foreColor -eq 'DarkGreen'
         } -Exactly 1
 
-        # Check for disabled setting status with DarkYellow
         Should -Invoke Write-Color -ParameterFilter {
             $message -eq 'Disabled' -and $foreColor -eq 'DarkYellow'
         } -Exactly 1
@@ -828,12 +813,10 @@ Describe "Show-PHPProfile" {
         $result = Show-PHPProfile -profileName 'mixedextensions'
         $result | Should -Be 0
 
-        # Check for enabled extension status with DarkGreen
         Should -Invoke Write-Color -ParameterFilter {
             $message -eq 'Enabled' -and $foreColor -eq 'DarkGreen'
         } -Exactly 1
 
-        # Check for disabled extension status with DarkYellow
         Should -Invoke Write-Color -ParameterFilter {
             $message -eq 'Disabled' -and $foreColor -eq 'DarkYellow'
         } -Exactly 1
@@ -1039,12 +1022,10 @@ Describe "Show-PHPProfile" {
         $settings = @{}
         $extensions = @{}
 
-        # Add 10 settings
         1..10 | ForEach-Object -Process {
             $settings["setting$_"] = @{ value = 'value$_'; enabled = ($_ % 2 -eq 0) }
         }
 
-        # Add 10 extensions
         1..10 | ForEach-Object -Process {
             $extensions["ext$_"] = @{ enabled = ($_ % 2 -eq 0); type = if ($_ % 3 -eq 0) { 'zend_extension' } else { 'extension' } }
         }
@@ -1076,7 +1057,6 @@ Describe "Remove-PHPProfile" {
     BeforeEach {
         Mock Add-LogEntry { return 0 }
 
-        # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
     }
 
@@ -1090,7 +1070,6 @@ Describe "Remove-PHPProfile" {
     }
 
     It "Should return -1 when user cancels deletion with 'n'" {
-        # Create test profile
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -1106,7 +1085,6 @@ Describe "Remove-PHPProfile" {
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
 
-        # Verify file still exists
         Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $true
 
         Should -Invoke Write-Gray -ParameterFilter {
@@ -1117,7 +1095,6 @@ Describe "Remove-PHPProfile" {
     }
 
     It "Should return -1 when user cancels deletion with empty response" {
-        # Create test profile
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -1133,7 +1110,6 @@ Describe "Remove-PHPProfile" {
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
 
-        # Verify file still exists
         Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $true
 
         Should -Invoke Write-Gray -ParameterFilter {
@@ -1142,7 +1118,6 @@ Describe "Remove-PHPProfile" {
     }
 
     It "Should return -1 when user cancels deletion with 'no'" {
-        # Create test profile
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -1158,7 +1133,6 @@ Describe "Remove-PHPProfile" {
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
 
-        # Verify file still exists
         Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $true
 
         Should -Invoke Write-Gray -ParameterFilter {
@@ -1167,7 +1141,6 @@ Describe "Remove-PHPProfile" {
     }
 
     It "Should successfully delete profile when user confirms with 'y'" {
-        # Create test profile
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -1183,7 +1156,6 @@ Describe "Remove-PHPProfile" {
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be 0
 
-        # Verify file is deleted
         Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $false
 
         Should -Invoke Show-Success -ParameterFilter {
@@ -1196,7 +1168,6 @@ Describe "Remove-PHPProfile" {
     }
 
     It "Should successfully delete profile when user confirms with 'Y'" {
-        # Create test profile
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -1212,7 +1183,6 @@ Describe "Remove-PHPProfile" {
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be 0
 
-        # Verify file is deleted
         Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $false
 
         Should -Invoke Show-Success -ParameterFilter {
@@ -1231,7 +1201,6 @@ Describe "Remove-PHPProfile" {
     }
 
     It "Should return -1 and log error when Remove-ItemWrapper fails" {
-        # Create test profile
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -1256,7 +1225,6 @@ Describe "Remove-PHPProfile" {
     }
 
     It "Should display correct confirmation prompt with profile name" {
-        # Create test profile
         $testProfile = @{
             name = 'myprofile'
             description = 'My profile'
@@ -1279,7 +1247,6 @@ Describe "Remove-PHPProfile" {
     }
 
     It "Should handle deletion of profile with complex name" {
-        # Create test profile with special characters in name
         $testProfile = @{
             name = 'test-profile_123'
             description = 'Test profile with special chars'
@@ -1295,7 +1262,6 @@ Describe "Remove-PHPProfile" {
         $result = Remove-PHPProfile -profileName 'test-profile_123'
         $result | Should -Be 0
 
-        # Verify file is deleted
         Test-Path "$PROFILES_PATH\test-profile_123.json" | Should -Be $false
 
         Should -Invoke Show-Success -ParameterFilter {
@@ -1304,7 +1270,6 @@ Describe "Remove-PHPProfile" {
     }
 
     It "Should handle case-insensitive confirmation correctly" {
-        # Test that both 'y' and 'Y' work, but other variations don't
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -1315,13 +1280,11 @@ Describe "Remove-PHPProfile" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
 
-        # Test that 'yes' (not just 'y') is rejected
         Mock Read-HostWrapper { return 'yes' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
 
-        # Verify file still exists
         Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $true
 
         Should -Invoke Write-Gray -ParameterFilter {
@@ -1481,14 +1444,11 @@ Describe "Export-PHPProfile" {
     BeforeEach {
         Mock Add-LogEntry { return 0 }
 
-        # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
 
-        # Create export directory and set it as current location
         $exportDir = "$TEST_DRIVE\export"
         New-Item -ItemType Directory -Force -Path $exportDir | Out-Null
 
-        # Mock Get-Location - when used in string interpolation "$(Get-Location)",
         # PowerShell converts it to string, so returning a string works
         Mock Get-Location { return $exportDir }
     }
@@ -1503,7 +1463,6 @@ Describe "Export-PHPProfile" {
     }
 
     It "Should export profile to default location when exportPath not provided" {
-        # Create test profile
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -1521,7 +1480,6 @@ Describe "Export-PHPProfile" {
         $result = Export-PHPProfile -profileName 'testprofile'
         $result | Should -Be 0
 
-        # Verify content matches
         $exportPath = "$TEST_DRIVE\export\testprofile.json"
         $exportedContent = Get-ContentWrapper -path $exportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
@@ -1535,7 +1493,6 @@ Describe "Export-PHPProfile" {
     }
 
     It "Should export profile to specified location when exportPath provided" {
-        # Create test profile
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -1552,10 +1509,8 @@ Describe "Export-PHPProfile" {
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath $customExportPath
         $result | Should -Be 0
 
-        # Verify file was exported to custom location
         Test-Path $customExportPath | Should -Be $true
 
-        # Verify content matches
         $exportedContent = Get-ContentWrapper -path $customExportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
 
@@ -1565,7 +1520,6 @@ Describe "Export-PHPProfile" {
     }
 
     It "Should overwrite existing file when exporting to existing path" {
-        # Create test profile
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -1584,14 +1538,12 @@ Describe "Export-PHPProfile" {
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath $exportPath
         $result | Should -Be 0
 
-        # Verify file was overwritten with new content
         $exportedContent = Get-ContentWrapper -path $exportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
         $exportedContent.settings.memory_limit.value | Should -Be '256M'
     }
 
     It "Should return -1 and log error when Copy-ItemWrapper fails" {
-        # Create test profile
         $testProfile = @{
             name = 'testprofile'
             description = 'Test profile'
@@ -1615,7 +1567,6 @@ Describe "Export-PHPProfile" {
     }
 
     It "Should export profile with complex name correctly" {
-        # Create test profile with special characters
         $testProfile = @{
             name = 'test-profile_123'
             description = 'Test profile'
@@ -1638,7 +1589,6 @@ Describe "Export-PHPProfile" {
     }
 
     It "Should export profile with all fields preserved" {
-        # Create comprehensive test profile
         $testProfile = @{
             name = 'fullprofile'
             description = 'Full profile description'
@@ -1659,7 +1609,6 @@ Describe "Export-PHPProfile" {
         $result = Export-PHPProfile -profileName 'fullprofile' -exportPath $exportPath
         $result | Should -Be 0
 
-        # Verify all fields are preserved
         $exportedContent = Get-ContentWrapper -path $exportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'fullprofile'
         $exportedContent.description | Should -Be 'Full profile description'
@@ -1690,7 +1639,6 @@ Describe "Import-PHPProfile" {
         Mock Add-LogEntry { return 0 }
         Mock New-Directory { return 0 }
 
-        # Ensure profiles directory exists
         New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
     }
 
@@ -1704,7 +1652,6 @@ Describe "Import-PHPProfile" {
     }
 
     It "Should return -1 when JSON file is invalid" {
-        # Create invalid JSON file
         'invalid json content {{{{ }' | Set-ContentWrapper -path "$TEST_DRIVE\invalid.json"
 
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\invalid.json"
@@ -1779,7 +1726,6 @@ Describe "Import-PHPProfile" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\originalname.json"
         $result | Should -Be 0
 
-        # Verify profile was imported with original name
         $importedPath = "$PROFILES_PATH\originalname.json"
         Test-Path $importedPath | Should -Be $true
 
@@ -1805,7 +1751,6 @@ Describe "Import-PHPProfile" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\originalname.json" -profileName 'customname'
         $result | Should -Be 0
 
-        # Verify profile was imported with custom name
         $importedPath = "$PROFILES_PATH\customname.json"
         Test-Path $importedPath | Should -Be $true
 
@@ -1833,11 +1778,9 @@ Describe "Import-PHPProfile" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\originalname.json" -profileName 'newname'
         $result | Should -Be 0
 
-        # Verify profile name was updated
         $importedPath = "$PROFILES_PATH\newname.json"
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'newname'
-        # Verify other fields are preserved
         $importedContent.settings.memory_limit.value | Should -Be '256M'
     }
 
@@ -1855,7 +1798,6 @@ Describe "Import-PHPProfile" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\samename.json" -profileName 'samename'
         $result | Should -Be 0
 
-        # Verify profile was imported
         $importedPath = "$PROFILES_PATH\samename.json"
         Test-Path $importedPath | Should -Be $true
     }
@@ -1901,7 +1843,6 @@ Describe "Import-PHPProfile" {
         $result = Import-PHPProfile -importPath "$TEST_DRIVE\fullprofile.json"
         $result | Should -Be 0
 
-        # Verify all fields are preserved
         $importedPath = "$PROFILES_PATH\fullprofile.json"
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'fullprofile'

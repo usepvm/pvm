@@ -218,15 +218,14 @@ Describe "Set-EnvVar" {
             $result = Set-EnvVar -name $null -value 'test'
             $result | Should -Be -1
         }
-        
-        
+
         It "Set-EnvVar should handle registry errors" {
             $script:MockRegistryThrowException = $true
 
             $result = Set-EnvVar -name 'TEST' -value 'value'
 
             $result | Should -Be -1
-            
+
             $script:MockRegistryThrowException = $false
         }
     }

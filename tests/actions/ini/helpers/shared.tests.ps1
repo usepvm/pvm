@@ -11,7 +11,6 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
     function Reset-IniContent {
-        # Create a test php.ini file
         @"
 memory_limit = 128M
 ;zend_extension=php_xdebug.dll
@@ -23,7 +22,6 @@ max_execution_time = 30
 "@ | Set-ContentWrapper -path $testIniPath
     }
 
-    # Create initial ini content first
     Reset-IniContent
 }
 

@@ -1208,7 +1208,6 @@ Describe "Resolve-ExtensionLinks Tests" {
 
         $result = Resolve-ExtensionLinks -extName 'mem' -version '8.2'
 
-        # Should return null and show error message when chosen item is null
         $result | Should -Be $null
     }
 }

@@ -168,7 +168,6 @@ Describe "Show-PHPExtensions" {
                 )
             }
         }
-        # Mock $Host.UI.RawUI.WindowSize to trigger the maxDescLength < 100 condition
         Mock Get-ConsoleWidth { 80 }
         $code = Show-PHPExtensions -iniPath $testIniPath -available $true
         $code | Should -Be 0

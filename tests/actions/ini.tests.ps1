@@ -14,7 +14,6 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
 
-    # Create directory and symlink for current PHP version
     $phpVersionPath = "$($PVMConfig.paths.directories.php)\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
 
@@ -26,7 +25,6 @@ BeforeAll {
     Mock New-Line {}
 
     function Reset-IniContent {
-        # Create a test php.ini file
         @"
 memory_limit = 128M
 ;extension=php_xdebug.dll
@@ -38,18 +36,12 @@ max_execution_time = 30
 "@ | Set-ContentWrapper -path $testIniPath
     }
 
-    # Create initial ini content first
     Reset-IniContent
 
     Copy-ItemWrapper -path $testIniPath -destination "$phpVersionPath\php.ini"
 
-    # Mock Add-LogEntry function
-    Mock Add-LogEntry {
-        param ($logPath, $message, $data)
-        return $true
-    }
+    Mock Add-LogEntry { return 0 }
 
-    # Mock Get-CurrentPHPVersion function
     Mock Get-CurrentPHPVersion {
         return @{
             version = '8.2.0'
@@ -243,15 +235,15 @@ extension=php_curl.dll
     Context "restore action" {
         It "Restores from backup" {
             Mock Test-FileNotExists { return $false } -ParameterFilter { $Path -eq "$phpVersionPath\php.ini" }
-
             $script:callCount = 0
             Mock Test-FileNotExists {
                 $script:callCount++
                 if ($script:callCount -eq 1) { return $true }
                 else { return $false }
             } -ParameterFilter { $Path -eq "$phpVersionPath\php.ini.bak" }
-            # Create a backup first
+
             $null = Backup-IniFile -iniPath "$phpVersionPath\php.ini"
+
             $result = Invoke-IniAction -action 'restore' -params @()
             $result | Should -Be 0
         }

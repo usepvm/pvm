@@ -29,7 +29,6 @@ BeforeAll {
         DownloadFails = $false
     }
 
-    # Test helper functions
     function Reset-MockState {
         $script:MockRegistryThrowException = $false
         $script:MockFileSystem.DownloadFails = $false
@@ -51,8 +50,7 @@ BeforeAll {
         }
     }
 
-    # Mock functions for testing
-    Mock Add-LogEntry { return $true }
+    Mock Add-LogEntry { return 0 }
 
     Mock Invoke-WebRequestWrapper {
         param ($Uri, $OutFile = $null)
@@ -92,7 +90,6 @@ BeforeAll {
 
     Mock Test-NotAdmin { return $false }
 
-    # Environment variable wrapper functions
     Mock Get-AllEnvVarsCore {
         if ($script:MockRegistryThrowException) {
             throw $script:MockRegistryException
@@ -336,7 +333,6 @@ Describe "Get-LatestPHPVersionFromUrl" {
 Describe "Get-PHPVersions" {
     BeforeEach {
         Reset-MockState
-        # Mock Test-HasNoData { param($data) return $false }
     }
 
     It "Should return empty hashtable when no versions found" {
@@ -451,7 +447,6 @@ Describe "Get-PHPFromUrl" {
         $urls = Get-SourceUrls
         $versionObject = @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
 
-        # Mock the actual URL that will be called
         $expectedUrl = "$($urls['Archives'])/php-8.1.0-Win32-vs16-x64.zip"
         Set-MockWebResponse -url $expectedUrl -content 'Downloaded content'
 
@@ -657,7 +652,6 @@ Describe "Install-PHP" {
         $script:MockUserInput = ''
         $script:MockFileSystem.Files["$TEST_DRIVE\pvm\pvm"] = 'PVM executable'
 
-        # Mock PHP versions response
         $mockLinks = @(
             @{ href = '/downloads/releases/php-8.1.15-Win32-vs16-x64.zip' }
         )

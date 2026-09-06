@@ -14,7 +14,6 @@ BeforeAll {
     Mock Show-Info { }
     Mock Write-Gray { }
 
-    # Mock external functions that aren't defined in the provided code
     Mock New-Directory { return 0 }
     Mock Add-LogEntry { param ($logPath, $message, $data) return 0 }
     Mock Get-SourceUrls {
@@ -39,7 +38,6 @@ Describe "Get-FromSource" {
             $result = & $scriptBlock @argumentList
             return $result.pvmData
         }
-        # Clean test directory
         if (Test-Path "$TEST_DRIVE\data") {
             Remove-ItemWrapper -path "$TEST_DRIVE\data" -Recurse -Force
         }
@@ -48,7 +46,6 @@ Describe "Get-FromSource" {
     }
 
     It "Should fetch and filter PHP versions from source" {
-        # Mock web response
         $mockLinks = @(
             @{ href = $null },
             @{ href = 'php-8.2.0-Win32-x64.zip' },
@@ -60,11 +57,9 @@ Describe "Get-FromSource" {
             @{ href = 'php-test-pack-8.3.32.zip' }
             @{ href = 'php-8.2.0-nts-Win32-x64.zip' }
         )
-
         Mock Invoke-WebRequestWrapper {
             return @{ Links = $mockLinks }
         }
-
         Mock Save-CachedData { }
 
         $result = Get-FromSource
@@ -327,7 +322,7 @@ Describe "Get-AvailablePHPVersions" {
 
     It "Should force fetch from source when cache not exists" {
         Mock Test-Path { return $false }
-        Mock Get-DataFromCache { }  # Remove return value since it won't be called
+        Mock Get-DataFromCache { }
         Mock Save-CachedData { return 0 }
         Mock Get-FromSource {
             return @{

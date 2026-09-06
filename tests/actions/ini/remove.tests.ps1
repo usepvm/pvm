@@ -20,7 +20,6 @@ BeforeAll {
     Mock Add-LogEntry { return 0 }
 
     function Reset-IniContent {
-        # Create a test php.ini file
         @"
 memory_limit = 128M
 extension=php_curl.dll
@@ -30,7 +29,6 @@ display_errors = On
 "@ | Set-ContentWrapper -path $testIniPath
     }
 
-    # Create initial ini content first
     Reset-IniContent
 }
 

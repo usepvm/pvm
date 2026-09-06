@@ -17,7 +17,6 @@ BeforeAll {
     Mock Write-Color {}
 
     function Reset-IniContent {
-    # Create a test php.ini file
     @"
 memory_limit = 128M
 ;extension=php_xdebug.dll
@@ -29,10 +28,8 @@ max_execution_time = 30
 "@ | Set-ContentWrapper -path $testIniPath
     }
 
-    # Create initial ini content first
     Reset-IniContent
 
-    # Create directory and symlink for current PHP version
     $phpVersionPath = "$TEST_DRIVE\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
     Copy-ItemWrapper -path $testIniPath -destination "$phpVersionPath\php.ini"

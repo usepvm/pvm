@@ -12,10 +12,7 @@ BeforeAll {
 
     Mock Show-Error {}
 
-    Mock Add-LogEntry {
-        param ($data)
-        return $true
-    }
+    Mock Add-LogEntry { return 0 }
 }
 
 AfterAll {
@@ -167,7 +164,6 @@ Describe "Get-PHPStatus Function Tests" {
 Describe "Get-CurrentPHPVersion Function Tests" {
     Context "When PHP current version symlink exists and is valid" {
         BeforeEach {
-            # Mock Get-ItemWrapper to return a symlink object
             Mock Get-ItemWrapper {
                 return @{
                     FullName = 'C:\php\current'

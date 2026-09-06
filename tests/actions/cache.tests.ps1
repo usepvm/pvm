@@ -50,7 +50,6 @@ Describe "Get-CacheFiles Tests" {
 
 Describe "Show-CacheFiles Tests" {
     BeforeEach {
-        # Clean slate for each test
         Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
         Mock Add-LogEntry { return 0 }
@@ -144,7 +143,6 @@ Describe "Show-CachedData Tests" {
     }
 
     It "Should return -1 when cache file exists but contains no data" {
-        # Get-DataFromCache returns null / empty
         Mock Get-DataFromCache { return $null }
         Mock Test-FileNotExists { return $false }
 

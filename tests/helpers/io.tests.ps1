@@ -454,7 +454,7 @@ Describe "New-SymbolicLink" {
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $parent } -MockWith { return $true }
             Mock Test-NotAdmin { return $false }
-            Mock New-Directory -MockWith { return 0 }
+            Mock New-Directory { return 0 }
             Mock Test-Path { return $false }
             Mock New-ItemWrapper {
                 param ($type, $path, $target)
@@ -471,7 +471,7 @@ Describe "New-SymbolicLink" {
             $targetPath = "$STORAGE_PATH\php\8.1"
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq "$TEST_DRIVE\test_parent" } -MockWith { return $true }
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
-            Mock New-Directory -MockWith { return -1 }
+            Mock New-Directory { return -1 }
             $result = New-SymbolicLink -link $linkPath -target $targetPath
             $result.code | Should -Be -1
         }

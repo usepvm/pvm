@@ -75,7 +75,7 @@ Describe "Show-PHPExtensions" {
                 )
             }
         }
-        Mock Get-AvailablePHPExtensions -MockWith { return Get-ExtensionList }
+        Mock Get-AvailablePHPExtensions { return Get-ExtensionList }
         Mock Show-ExtensionsStates {}
         Mock Show-InstalledExtensions {}
     }

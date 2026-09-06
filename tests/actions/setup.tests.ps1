@@ -75,12 +75,12 @@ Describe "Initialize-PVM" {
             }
         }
 
-        Mock Get-EnvVarByName -MockWith { return $null }
-        Mock Set-EnvVar -MockWith { return 0 }
-        Mock Test-DirectoryExists -MockWith { return $false }
+        Mock Get-EnvVarByName { return $null }
+        Mock Set-EnvVar { return 0 }
+        Mock Test-DirectoryExists { return $false }
         Mock New-Directory { return 0 }
-        Mock Add-LogEntry -MockWith { return 0 }
-        Mock Optimize-SystemPath -MockWith {}
+        Mock Add-LogEntry { return 0 }
+        Mock Optimize-SystemPath {}
     }
 
     Context "When Path environment variable is empty" {
@@ -165,7 +165,7 @@ Describe "Initialize-PVM" {
 
     Context "When errors occur" {
         It "Should handle exceptions and log them" {
-            Mock Get-EnvVarByName -MockWith { throw 'Test exception' }
+            Mock Get-EnvVarByName { throw 'Test exception' }
 
             $result = Initialize-PVM
 
@@ -175,8 +175,8 @@ Describe "Initialize-PVM" {
         }
 
         It "Returns error code when New-Directory fails" {
-            Mock Get-EnvVarByName -MockWith { return $null }
-            Mock New-Directory -MockWith { return -1 }
+            Mock Get-EnvVarByName { return $null }
+            Mock New-Directory { return -1 }
 
             $result = Initialize-PVM
 

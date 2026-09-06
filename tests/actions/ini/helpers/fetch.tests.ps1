@@ -1027,7 +1027,7 @@ Describe "Get-ExtensionMatchingCategories Tests" {
                 )
             }
         }
-        Mock Get-AvailablePHPExtensions -MockWith { return Get-ExtensionList }
+        Mock Get-AvailablePHPExtensions { return Get-ExtensionList }
     }
 
     BeforeEach {

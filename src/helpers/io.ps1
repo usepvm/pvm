@@ -62,6 +62,12 @@ function Test-PathExists {
     return (Test-DirectoryExists $path) -or (Test-FileExists $path)
 }
 
+function Test-PathNotExists {
+    param ($path)
+
+    return -not (Test-PathExists -path $path)
+}
+
 function Test-SymlinkExists {
     param ($path)
 

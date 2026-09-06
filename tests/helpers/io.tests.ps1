@@ -191,6 +191,22 @@ Describe "Test-PathExists" {
     }
 }
 
+Describe "Test-PathNotExists" {
+    It "Returns true for non-existent path" {
+        Mock Test-PathExists { return $false }
+
+        $result = Test-PathNotExists -path "$TEST_DRIVE\Nonexistent\Path"
+        $result | Should -Be $true
+    }
+
+    It "Returns false for existing path" {
+        Mock Test-PathExists { return $true }
+
+        $result = Test-PathNotExists -path 'C:\Directory\Exists'
+        $result | Should -Be $false
+    }
+}
+
 Describe "Test-SymlinkExists" {
     It "Returns false for null path" {
         $result = Test-SymlinkExists -path $null

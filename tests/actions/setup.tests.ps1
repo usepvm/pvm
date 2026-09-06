@@ -7,7 +7,6 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    # Mock global variables that the function depends on
     $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
     $script:PVMRoot = "$TEST_DRIVE\PVM"
     $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME
@@ -26,7 +25,6 @@ AfterAll {
 
 Describe "Initialize-PVM" {
     BeforeAll {
-        # Initialize mock registry
         $script:MockRegistry = @{
             Machine = @{
                 'Path' = 'C:\Windows\System32'
@@ -35,12 +33,10 @@ Describe "Initialize-PVM" {
             }
         }
 
-        # Mock Add-LogEntry function
         Mock Add-LogEntry { return 0 }
 
         Mock Test-NotAdmin { return $false }
 
-        # Mock the System.Environment methods
         Mock Get-EnvVarByNameCore {
             param ($name)
 
@@ -67,7 +63,6 @@ Describe "Initialize-PVM" {
     }
 
     BeforeEach {
-        # Reset mock registry before each test
         $script:MockRegistry = @{
             Machine = @{
                 'Path' = 'C:\Windows\System32'

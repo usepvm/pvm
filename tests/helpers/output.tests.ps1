@@ -35,13 +35,10 @@ Describe "Add-LogEntry" {
             }
             $result | Should -Be 0
             Test-Path $LOG_ERROR_PATH | Should -Be $true
-            # Get the actual content
             $content = Get-ContentWrapper -path $LOG_ERROR_PATH -Raw
 
-            # Verify the complete log format
             $content | Should -Match '\[.*\] Test message(.|\s)*Message: Test data'
 
-            # Alternatively, you could check parts separately
             $content | Should -Match 'Test message'
             $content | Should -Match 'Test data'
             $content | Should -Match (Get-Date -Format 'yyyy-MM-dd')
@@ -49,11 +46,7 @@ Describe "Add-LogEntry" {
 
         It "Returns -1 when unable to create directory" {
             Mock New-Directory { throw 'Failed to create directory' }
-            # Try to log to a protected location
-            $result = Add-LogEntry -data @{
-                header = 'Test message'
-                exception = 'Test data'
-            }
+            $result = Add-LogEntry -data @{ header = 'Test message'; exception = 'Test data' }
             $result | Should -Be -1
         }
 
@@ -69,11 +62,7 @@ Describe "Add-LogEntry" {
 
         It "Returns -1 when unable to create log file" {
             Mock New-Directory { return -1 }
-            # Try to log to a protected location
-            $result = Add-LogEntry -data @{
-                header = 'Test message'
-                exception = 'Test data'
-            }
+            $result = Add-LogEntry -data @{ header = 'Test message'; exception = 'Test data' }
             $result | Should -Be -1
             Should -Invoke Show-Error -Times 1
         }
@@ -249,13 +238,13 @@ Describe "Show-SpinnerWhileJob" {
             Mock Receive-Job {
                 return @{ pvmData = @{ result = 'success' } }
             }
+            Mock Write-HostWrapper { }
 
             $scriptBlock = { return @{ result = 'success' } }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' } -noClear
 
-            # Verify that the clear line (spaces) is not called when noClear is set
-            # The clear happens at line 114 in the source
             Should -Invoke Write-Color -Times 1
+            Should -Invoke Write-HostWrapper -Times 0
         }
 
         It "Clears spinner line by default" {
@@ -342,7 +331,6 @@ Describe "Show-SpinnerWhileJob" {
         It "Removes job properties from result" {
             $script:keepRunning = $false
             Mock Receive-Job {
-                # Return an object with the actual job properties that need filtering
                 $result = [PSCustomObject]@{
                     pvmData = @{ result = 'success' }
                     result = 'success'
@@ -377,7 +365,6 @@ Describe "Show-SpinnerWhileJob" {
             }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
 
-            # Start-Sleep should be called during spinner loop
             Should -Invoke Start-Sleep
         }
 
@@ -390,10 +377,7 @@ Describe "Show-SpinnerWhileJob" {
             $scriptBlock = { return @{ result = 'success' } }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock
 
-            # Verify Start-Job was called with initializationScript parameter
-            Should -Invoke Start-Job -ParameterFilter {
-                $null -ne $initializationScript
-            }
+            Should -Invoke Start-Job -ParameterFilter { $null -ne $initializationScript }
         }
     }
 }
@@ -460,11 +444,12 @@ Describe "Show-SpinnerWhileProcess" {
 
     Context "When clearing the spinner" {
         It "Does not clear the spinner line when noClear is set" {
+            Mock Write-HostWrapper { }
+
             $null = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -noClear
 
-            # Verify that the clear line (spaces) is not called when noClear is set
-            # The clear happens at line 114 in the source
             Should -Invoke Write-Color -Times 1
+            Should -Invoke Write-HostWrapper -Times 0
         }
     }
 

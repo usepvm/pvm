@@ -22,8 +22,6 @@ AfterAll {
 Describe "Show-Usage" {
     BeforeEach {
         Mock Get-CurrentPHPVersion { @{ version = '8.2.0' } }
-
-        # Mock the Get-Actions function to return a predictable set
         Mock Get-Actions {
             [ordered]@{
                 'setup' = @{
@@ -818,7 +816,6 @@ Describe "Start-PVM" {
                 }
             }
             Mock Resolve-Alias { param ($alias) return $alias }
-            # Test-PVMSetup should not be called for setup command
 
             $result = Start-PVM -command 'setup' -arguments @()
 

@@ -20,7 +20,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe 'Show-SubProcessOutput' {
+Describe "Show-SubProcessOutput" {
     It 'Handles string output that is valid JSON array' {
         Mock Write-Color {}
         Mock Show-Message {}
@@ -55,7 +55,7 @@ Describe 'Show-SubProcessOutput' {
     }
 }
 
-Describe 'Invoke-RunScripts' {
+Describe "Invoke-RunScripts" {
     BeforeEach {
         Mock Write-Yellow {}
         Mock Show-Scripts {}

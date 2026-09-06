@@ -12,18 +12,6 @@ BeforeAll {
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
 
     Mock Add-LogEntry { 0 }
-    # Create a mock registry to simulate environment variables
-    $script:MockRegistry = @{
-        Machine = @{
-            'Path' = 'C:\Windows\System32;C:\Program Files\Git\bin;C:\CustomApp;C:\Program Files\Java\bin'
-            'JAVA_HOME' = 'C:\Program Files\Java'
-            'GIT_HOME' = 'C:\Program Files\Git\bin'
-            'CUSTOM_APP' = 'C:\CustomApp'
-            'WINDOWS_DIR' = 'C:\Windows'
-            'SYSTEM32_DIR' = 'C:\Windows\System32'
-            'REGULAR_VAR' = 'SomeValue'
-        }
-    }
 }
 
 AfterAll {
@@ -58,7 +46,6 @@ Describe "Get-AllSubdirectories" {
         }
 
         It "Returns null when an exception occurs" {
-            # Simulate an exception by passing a path that causes an error
             Mock Get-ChildItemWrapper { throw 'Simulated exception' }
             $result = Get-AllSubdirectories -path $STORAGE_PATH
             $result | Should -Be $null
@@ -319,10 +306,8 @@ Describe "New-File" {
 Describe "New-SymbolicLink" {
     Context "When creating symbolic links" {
         It "Creates a symbolic link successfully when running as admin" {
-            # Mock Test-Admin to return true
             Mock Test-Admin { return $true }
 
-            # Mock New-ItemWrapper to simulate successful symbolic link creation
             Mock New-ItemWrapper {
                 param ($type, $path, $target)
 
@@ -337,7 +322,6 @@ Describe "New-SymbolicLink" {
             $result.message | Should -Match 'Created symbolic link'
             $result.color | Should -Be 'DarkGreen'
 
-            # Verify New-ItemWrapper was called with correct parameters
             Should -Invoke New-ItemWrapper -ParameterFilter {
                 $type -eq 'SymbolicLink' -and
                 $path -eq $linkPath -and
@@ -398,7 +382,6 @@ Describe "New-SymbolicLink" {
         }
 
         It "Deletes existing symbolic link and creates new one" {
-            # Use project storage path for testing
             $STORAGE_PATH_TEMP = (Resolve-Path -Path $STORAGE_PATH).ProviderPath
             $testDir = "$STORAGE_PATH_TEMP\tests\symlink_test"
             $linkPath = "$testDir\test_link"
@@ -413,7 +396,7 @@ Describe "New-SymbolicLink" {
                 New-Item -ItemType Directory -Path $testDir -Force | Out-Null
                 New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
 
-                # # Create a directory at the link path to simulate an existing item
+                # Create a directory at the link path to simulate an existing item
                 New-Item -ItemType Directory -Path $linkPath -Force | Out-Null
 
                 $result = New-SymbolicLink -link $linkPath -target $targetPath
@@ -480,7 +463,6 @@ Describe "New-SymbolicLink" {
 
 Describe "Expand-ZipCore" {
     It "Loads System.IO.Compression.FileSystem assembly and extracts zip" {
-        # Use project storage path for testing
         $STORAGE_PATH_TEMP = (Resolve-Path -Path $STORAGE_PATH).ProviderPath
         $testDir = "$STORAGE_PATH_TEMP\tests\zip_test"
         $zipPath = "$testDir\test.zip"
@@ -522,7 +504,6 @@ Describe "Expand-Zip" {
     }
 
     It "Should extract zip without errors" {
-        # This is a basic test since we're mocking the zip extraction
         { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' } | Should -Not -Throw
         Should -Invoke Expand-ZipCore -Times 1
     }

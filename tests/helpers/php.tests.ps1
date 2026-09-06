@@ -16,7 +16,6 @@ BeforeAll {
     Mock Show-Message {}
 
     function Reset-IniContent {
-    # Create a test php.ini file
     @"
 memory_limit = 128M
 ;extension=php_xdebug.dll
@@ -43,7 +42,6 @@ Describe "Get-PHPInstallInfo" {
             $testPath = "$TEST_DRIVE\php\8.3"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
 
-            # Create a mock NTS DLL file
             New-Item -Path "$testPath\php8nts.dll" -ItemType File -Force | Out-Null
 
             Mock Get-ChildItemWrapper {

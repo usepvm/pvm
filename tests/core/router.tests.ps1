@@ -526,7 +526,6 @@ Describe "Get-Actions" {
 Describe "Integration Tests" {
     Context "Command Flow Integration" {
         BeforeEach {
-            # Setup comprehensive mocks for integration testing
             Mock Test-PVMSetup { $true }
             Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
             Mock New-EnvFile { 0 }

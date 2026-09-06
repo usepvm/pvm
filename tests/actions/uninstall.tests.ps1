@@ -97,7 +97,6 @@ Describe "Uninstall-PHP" {
             }
             Mock Get-CurrentPHPVersion { @{ version = '7.4'; arch = 'x64'; buildType = 'nts' } }
             Mock Test-TwoPHPVersionsEqual { $true }
-            # First call: general confirm 'y', second call: current-version prompt returns nothing (cancel)
             $script:readHostCalls = 0
             Mock Read-HostWrapper {
                 $script:readHostCalls++

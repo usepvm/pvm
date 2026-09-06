@@ -28,16 +28,13 @@ BeforeAll {
     Mock Get-UserSelectedPHPVersion {
         param ($installedVersions)
 
-        # If we're in the Auto-Select test and a specific version was detected
         if ($script:TestScenario -eq 'composer' -or $script:TestScenario -eq '.php-version' -and $installedVersions) {
-            # Find the version that matches what we detected (8.2)
             $selected = $installedVersions | Where-Object -FilterScript { $_.version -eq '8.2' }
             if ($selected) {
                 return @{code=0; version=$selected.version; path=$selected.path}
             }
         }
 
-        # Default behavior - select first version
         if ($installedVersions -and $installedVersions.Count -gt 0) {
             return @{code=0; version=$installedVersions[0].version; path=$installedVersions[0].path}
         }
@@ -141,7 +138,6 @@ Describe "Update-PHPVersion" {
     }
 
     It "Should handle exceptions gracefully" {
-        # Force an exception by mocking Get-MatchingPHPVersions to throw
         Mock Get-MatchingPHPVersions { throw 'Test exception' }
         $result = Update-PHPVersion -version '8.1'
         $result | Should -Be -1

@@ -107,7 +107,6 @@ Describe "Get-AllEnvVars" {
 
 Describe "Get-EnvVarByNameCore" {
     It "Returns environment variable value by name" {
-        # Test with a known system variable that should exist
         $result = Get-EnvVarByNameCore -name 'Path'
         $result | Should -Not -BeNullOrEmpty
         $result | Should -BeOfType [string]
@@ -144,13 +143,11 @@ Describe "Get-EnvVarByName" {
 
     Context "When variable exists" {
         It "Returns the variable value" {
-            # Set a test variable
             Set-EnvVar -name 'TEST_VAR' -value 'TEST_VALUE'
 
             $result = Get-EnvVarByName -name 'TEST_VAR'
             $result | Should -Be 'TEST_VALUE'
 
-            # Cleanup
             Set-EnvVar -name 'TEST_VAR' -value $null
         }
     }
@@ -208,7 +205,6 @@ Describe "Set-EnvVar" {
             $value = Get-EnvVarByName -name 'TEST_VAR_SET'
             $value | Should -Be 'TEST_VALUE'
 
-            # Cleanup
             Set-EnvVar -name 'TEST_VAR_SET' -value $null
         }
 
@@ -360,7 +356,6 @@ Describe "Optimize-SystemPath" {
 
     Context "When optimizing system PATH" {
         BeforeEach {
-            # Set a test PATH with some variables
             $testPath = 'C:\Test1;C:\Test2;C:\Windows\System32'
             Set-EnvVar -name 'TEST_PATH1' -value 'C:\Test1'
             Set-EnvVar -name 'TEST_PATH2' -value 'C:\Test2'
@@ -368,7 +363,6 @@ Describe "Optimize-SystemPath" {
         }
 
         AfterEach {
-            # Cleanup
             Set-EnvVar -name 'TEST_PATH1' -value $null
             Set-EnvVar -name 'TEST_PATH2' -value $null
         }
@@ -398,7 +392,6 @@ Describe "Optimize-SystemPath" {
             $result = Optimize-SystemPath
             $result | Should -Be -1
 
-            # Check that an error was logged
             Test-Path $LOG_ERROR_PATH | Should -Be $true
             Get-ContentWrapper -path $LOG_ERROR_PATH -Raw | Should -Match 'Optimize-SystemPath - Failed to optimize system PATH variable'
         }

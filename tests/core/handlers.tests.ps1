@@ -908,7 +908,6 @@ Describe "Invoke-Aliases" {
 
 Describe "Invoke-Log" {
     BeforeAll {
-        # Default log page size value for tests
         $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE = 5
         Mock Show-Log { 0 }
     }

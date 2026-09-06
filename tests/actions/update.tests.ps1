@@ -4,8 +4,6 @@ BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    $PVMConfig.version = 'v1.0.0'
-
     Mock Show-Success {}
     Mock Show-Error {}
     Mock Show-Info {}
@@ -243,6 +241,7 @@ Describe "Update-PVM" {
 
     Context "Already up to date" {
         It "returns success with the current config version" {
+            $PVMConfig.version = 'v1.0.0'
             Mock Get-CurrentGitCommit { return 'same' }
             Mock Get-LatestGitCommit { return 'same' }
 

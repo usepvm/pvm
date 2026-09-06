@@ -8,10 +8,10 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    Mock New-Line {}
-    Mock Show-Info {}
-    Mock Show-Message {}
-    Mock Show-Error {}
+    Mock New-Line { }
+    Mock Show-Info { }
+    Mock Show-Message { }
+    Mock Show-Error { }
 }
 
 AfterAll {
@@ -273,7 +273,7 @@ Describe "Start-PVM" {
         Mock Show-Usage { }
         Mock Show-PVMVersion { }
         Mock Resolve-FlagCommand { return $null }
-        Mock Test-CheckForUpdatesQuietly {}
+        Mock Test-CheckForUpdatesQuietly { }
         Mock Get-Actions {
             [ordered]@{
                 'version' = @{ data = @{ action = { return 0 } } }

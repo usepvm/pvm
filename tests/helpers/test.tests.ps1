@@ -15,9 +15,9 @@ Describe "Test-IsNotQuiet" {
 
 Describe "Show-Scripts" {
     BeforeEach {
-        Mock Write-Cyan {}
-        Mock Write-White {}
-        Mock Write-DarkGray {}
+        Mock Write-Cyan { }
+        Mock Write-White { }
+        Mock Write-DarkGray { }
     }
 
     It "Displays the available scripts and commands" {

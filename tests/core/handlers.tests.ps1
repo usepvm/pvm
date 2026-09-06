@@ -7,13 +7,13 @@ BeforeAll {
 
     Import-Module -Name PowerShellGet -ErrorAction SilentlyContinue
 
-    Mock Show-Error {}
-    Mock Show-Warning {}
-    Mock Show-Message {}
-    Mock Show-Success {}
-    Mock Write-Color {}
-    Mock Show-Info {}
-    Mock New-Line {}
+    Mock Show-Error { }
+    Mock Show-Warning { }
+    Mock Show-Message { }
+    Mock Show-Success { }
+    Mock Write-Color { }
+    Mock Show-Info { }
+    Mock New-Line { }
 }
 
 AfterAll {
@@ -913,7 +913,7 @@ Describe "Invoke-Log" {
     }
 
     It "Should skip confirmation and clear log file" {
-        Mock Clear-ContentWrapper {}
+        Mock Clear-ContentWrapper { }
 
         Invoke-Log -arguments @('--clear', '-y') | Should -Be 0
 
@@ -923,7 +923,7 @@ Describe "Invoke-Log" {
 
     It "Should prompt for confirmation and cancel log clearing when user responds with 'n'" {
         Mock Read-HostWrapper { return 'n' }
-        Mock Write-Gray {}
+        Mock Write-Gray { }
 
         Invoke-Log -arguments @('--clear') | Should -Be -1
 
@@ -932,8 +932,8 @@ Describe "Invoke-Log" {
     }
 
     It "Should prompt for confirmation and proceed with log clearing when user responds with 'y'" {
-        Mock Clear-ContentWrapper {}
-        Mock Show-Success {}
+        Mock Clear-ContentWrapper { }
+        Mock Show-Success { }
         Mock Read-HostWrapper { return 'y' }
 
         Invoke-Log -arguments @('--clear') | Should -Be 0

@@ -8,11 +8,11 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
 
-    Mock Show-Error {}
-    Mock Show-Info {}
-    Mock Write-Gray {}
-    Mock Show-Message {}
-    Mock Show-Success {}
+    Mock Show-Error { }
+    Mock Show-Info { }
+    Mock Write-Gray { }
+    Mock Show-Message { }
+    Mock Show-Success { }
 }
 
 AfterAll {

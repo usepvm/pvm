@@ -132,7 +132,7 @@ Describe "Backup-IniFile" {
 Describe "Get-AllPHPExtensionsStatus" {
     BeforeEach {
         Reset-IniContent
-        Mock Backup-IniFile {}
+        Mock Backup-IniFile { }
         Mock Test-DirectoryExists { return $true }
         Mock Get-ZendExtensionsList { return @('xdebug', 'opcache') }
     }
@@ -396,7 +396,7 @@ Describe "Get-MatchingPHPExtensionsStatus" {
 Describe "Get-AllPHPSettings" {
     BeforeEach {
         Reset-IniContent
-        Mock Backup-IniFile {}
+        Mock Backup-IniFile { }
     }
 
     It "Returns empty when ini has no key=value lines" {

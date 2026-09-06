@@ -8,11 +8,11 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    Mock Show-Error {}
-    Mock Show-Message {}
-    Mock Show-Info {}
-    Mock Write-Gray {}
-    Mock New-Line {}
+    Mock Show-Error { }
+    Mock Show-Message { }
+    Mock Show-Info { }
+    Mock Write-Gray { }
+    Mock New-Line { }
 }
 
 AfterAll {
@@ -76,8 +76,8 @@ Describe "Show-PHPExtensions" {
             }
         }
         Mock Get-AvailablePHPExtensions { return Get-ExtensionList }
-        Mock Show-ExtensionsStates {}
-        Mock Show-InstalledExtensions {}
+        Mock Show-ExtensionsStates { }
+        Mock Show-InstalledExtensions { }
     }
 
     It "Returns 0 when no extensions are installed" {
@@ -198,9 +198,9 @@ Describe "Show-PHPExtensionInfo" {
                 @{ name = 'php_xdebug'; id = 'xdebug'; fileName = 'php_xdebug.dll'; fullPath = 'C:\php\ext\php_xdebug.dll'; version = '1.2.3'; status = 'Enabled'; color = 'DarkGreen'; lineNumber = 4; line = 'zend_extension=php_xdebug.dll'; source = 'ext,ini' }
             )
         }
-        Mock Show-Warning {}
-        Mock Add-LogEntry {}
-        Mock Write-Color {}
+        Mock Show-Warning { }
+        Mock Add-LogEntry { }
+        Mock Write-Color { }
     }
 
     It "Displays cached metadata and local installation details" {

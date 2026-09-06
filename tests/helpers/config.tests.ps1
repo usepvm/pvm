@@ -244,7 +244,7 @@ Describe "Get-EnvConfig" {
     Context "When .env file exists" {
         It "Writes a verbose message with the env file path" {
             Set-ContentWrapper -path "$envRoot\.env" -value 'KEY=value'
-            Mock Write-Verbose {}
+            Mock Write-Verbose { }
 
             Get-EnvConfig -rootPath $envRoot -Verbose
 

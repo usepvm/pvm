@@ -1,9 +1,9 @@
 ﻿
 BeforeAll {
-    Mock Show-Message {}
-    Mock Show-Error {}
-    Mock Write-Color {}
-    Mock New-Line {}
+    Mock Show-Message { }
+    Mock Show-Error { }
+    Mock Write-Color { }
+    Mock New-Line { }
 }
 
 Describe "Get-HelpAction" {

@@ -13,10 +13,10 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
 
-    Mock Show-Success {}
-    Mock Show-Error {}
-    Mock Write-Gray {}
-    Mock Write-Color {}
+    Mock Show-Success { }
+    Mock Show-Error { }
+    Mock Write-Gray { }
+    Mock Write-Color { }
 }
 
 AfterAll {

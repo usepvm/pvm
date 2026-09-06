@@ -123,11 +123,11 @@ BeforeAll {
             $script:MockRegistry.Machine[$name] = $value
         }
     }
-    Mock Show-Info {}
-    Mock Show-Error {}
-    Mock Show-Success {}
-    Mock Show-Message {}
-    Mock Write-Gray {}
+    Mock Show-Info { }
+    Mock Show-Error { }
+    Mock Show-Success { }
+    Mock Show-Message { }
+    Mock Write-Gray { }
 }
 
 AfterAll {

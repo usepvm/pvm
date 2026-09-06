@@ -10,7 +10,7 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PHP_CURRENT_DIR -Force | Out-Null
 
-    Mock Show-Error {}
+    Mock Show-Error { }
 
     Mock Add-LogEntry { return 0 }
 }
@@ -20,7 +20,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Get-PHPStatus Function Tests" {
+Describe "Get-PHPStatus" {
     Context "When php.ini file exists and is valid" {
         It "Should detect enabled opcache extension" {
             # Arrange
@@ -161,7 +161,7 @@ Describe "Get-PHPStatus Function Tests" {
     }
 }
 
-Describe "Get-CurrentPHPVersion Function Tests" {
+Describe "Get-CurrentPHPVersion" {
     Context "When PHP current version symlink exists and is valid" {
         BeforeEach {
             Mock Get-ItemWrapper {

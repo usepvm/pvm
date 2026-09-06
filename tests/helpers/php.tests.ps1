@@ -13,7 +13,7 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $testPhpPath -Force | Out-Null
 
-    Mock Show-Message {}
+    Mock Show-Message { }
 
     function Reset-IniContent {
     @"

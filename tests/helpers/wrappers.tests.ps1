@@ -43,7 +43,7 @@ Describe "Write-HostWrapper" {
     It "Stores structured output when subprocess mode is enabled" {
         $Global:PVMConfig.subprocess.structuredOutput = @()
         $Global:PVMConfig.subprocess.enabled = $true
-        Mock Write-Host {}
+        Mock Write-Host { }
 
         Write-HostWrapper -object 'Test message' -foregroundColor 'Red'
 
@@ -121,7 +121,7 @@ Describe "Read-HostWrapper" {
 
 Describe "Add-ContentWrapper" {
     It "Calls Add-Content with the correct parameters and UTF8 encoding" {
-        Mock Add-Content {}
+        Mock Add-Content { }
 
         $path = "$TEST_DRIVE\test.txt"
         $content = "Test content"
@@ -147,7 +147,7 @@ Describe "Add-ContentWrapper" {
 
 Describe "Set-ContentWrapper" {
     It "Calls Set-Content with the correct parameters and UTF8 encoding" {
-        Mock Set-Content {}
+        Mock Set-Content { }
 
         $path = "$TEST_DRIVE\test.txt"
         $content = "Test content"

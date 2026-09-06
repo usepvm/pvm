@@ -15,14 +15,14 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PROFILES_PATH -Force | Out-Null
 
-    Mock Show-Success {}
-    Mock Show-Info {}
-    Mock Show-Warning {}
-    Mock Show-Message {}
-    Mock Show-Error {}
-    Mock Show-Value {}
-    Mock Write-Color {}
-    Mock Write-Gray {}
+    Mock Show-Success { }
+    Mock Show-Info { }
+    Mock Show-Warning { }
+    Mock Show-Message { }
+    Mock Show-Error { }
+    Mock Show-Value { }
+    Mock Write-Color { }
+    Mock Write-Gray { }
     Mock Get-CurrentPHPVersion {
         return @{
             version = '8.2.0'

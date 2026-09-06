@@ -14,11 +14,11 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    Mock Show-Message {}
-    Mock Show-Error {}
-    Mock Show-Info {}
-    Mock Write-Gray {}
-    Mock Show-Warning {}
+    Mock Show-Message { }
+    Mock Show-Error { }
+    Mock Show-Info { }
+    Mock Write-Gray { }
+    Mock Show-Warning { }
 
     $script:MockFileSystem = @{
         Directories   = @()

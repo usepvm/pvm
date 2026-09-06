@@ -18,13 +18,13 @@ BeforeAll {
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
 
-    Mock New-Line {}
-    Mock Show-Warning {}
-    Mock Show-Message {}
-    Mock Show-Error {}
-    Mock Show-Success {}
-    Mock Show-Info {}
-    Mock Write-Gray {}
+    Mock New-Line { }
+    Mock Show-Warning { }
+    Mock Show-Message { }
+    Mock Show-Error { }
+    Mock Show-Success { }
+    Mock Show-Info { }
+    Mock Write-Gray { }
 
     function Reset-IniContent {
         @"

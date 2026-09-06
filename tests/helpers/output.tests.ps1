@@ -16,7 +16,7 @@ AfterAll {
 
 Describe "Add-LogEntry" {
     BeforeAll {
-        Mock Show-Error {}
+        Mock Show-Error { }
     }
 
     Context "When logging data" {
@@ -158,10 +158,10 @@ Describe "Get-ConsoleWidth" {
 
 Describe "Show-SpinnerWhileJob" {
     BeforeAll {
-        Mock Write-HostWrapper {}
-        Mock Write-Color {}
-        Mock Write-Yellow {}
-        Mock Add-LogEntry {}
+        Mock Write-HostWrapper { }
+        Mock Write-Color { }
+        Mock Write-Yellow { }
+        Mock Add-LogEntry { }
 
         $PVMRoot = $PVMConfig.paths.directories.pvmRoot
         New-Item -Path "$PVMRoot\src" -ItemType Directory -Force | Out-Null
@@ -302,7 +302,7 @@ Describe "Show-SpinnerWhileJob" {
                 return @{ pvmData = @{ result = 'success' } }
             }
 
-            Mock Remove-ItemWrapper {}
+            Mock Remove-ItemWrapper { }
 
             $scriptBlock = { return @{ result = 'success' } }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock
@@ -318,7 +318,7 @@ Describe "Show-SpinnerWhileJob" {
                 throw "Job failed"
             }
 
-            Mock Remove-ItemWrapper {}
+            Mock Remove-ItemWrapper { }
 
             $scriptBlock = { throw "Job failed" }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
@@ -384,8 +384,8 @@ Describe "Show-SpinnerWhileJob" {
 
 Describe "Show-SpinnerWhileProcess" {
     BeforeAll {
-        Mock Write-Color {}
-        Mock Add-LogEntry {}
+        Mock Write-Color { }
+        Mock Add-LogEntry { }
     }
 
     Context "When process succeeds" {
@@ -472,7 +472,7 @@ Describe "Show-SpinnerWhileProcess" {
 
     Context "Finally block" {
         BeforeEach {
-            Mock Write-Color {}
+            Mock Write-Color { }
 
             $script:killed = $false
             $script:disposed = $false
@@ -497,7 +497,7 @@ Describe "Show-SpinnerWhileProcess" {
             }
 
             $script:fakeProc | Add-Member ScriptMethod Start { $true }
-            $script:fakeProc | Add-Member ScriptMethod WaitForExit {}
+            $script:fakeProc | Add-Member ScriptMethod WaitForExit { }
             $script:fakeProc | Add-Member ScriptMethod Kill {
                 $script:killed = $true
             }
@@ -559,7 +559,7 @@ Describe "Show-SpinnerWhileProcess" {
 Describe "Write-Host helpers" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {
-            Mock Write-HostWrapper {}
+            Mock Write-HostWrapper { }
 
             Write-Color -message 'Test message' -foreColor 'Red'
 
@@ -573,7 +573,7 @@ Describe "Write-Host helpers" {
 
     Context "Write-Color wrappers Tests" {
         BeforeEach {
-            Mock Write-Color {}
+            Mock Write-Color { }
         }
 
         It "Prints white message" {
@@ -651,7 +651,7 @@ Describe "Write-Host helpers" {
 
     Context "Show-* Tests" {
         It "Prints success message" {
-            Mock Write-DarkGreen {}
+            Mock Write-DarkGreen { }
 
             Show-Success -message 'Test message'
 
@@ -661,7 +661,7 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints error message" {
-            Mock Write-DarkYellow {}
+            Mock Write-DarkYellow { }
 
             Show-Error -message 'Test message'
 
@@ -671,7 +671,7 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints warning message" {
-            Mock Write-Yellow {}
+            Mock Write-Yellow { }
 
             Show-Warning -message 'Test message'
 
@@ -681,7 +681,7 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints info message" {
-            Mock Write-Cyan {}
+            Mock Write-Cyan { }
 
             Show-Info -message 'Test message'
 
@@ -691,7 +691,7 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints header message" {
-            Mock Write-Magenta {}
+            Mock Write-Magenta { }
 
             Show-Header -message 'Test message'
 
@@ -701,7 +701,7 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints section message" {
-            Mock Write-Blue {}
+            Mock Write-Blue { }
 
             Show-Section -message 'Test message'
 
@@ -711,7 +711,7 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints debug message" {
-            Mock Write-DarkGray {}
+            Mock Write-DarkGray { }
 
             Show-Debug -message 'Test message'
 
@@ -721,7 +721,7 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints verbose message" {
-            Mock Write-Gray {}
+            Mock Write-Gray { }
 
             Show-Verbose -message 'Test message'
 
@@ -731,7 +731,7 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints value message" {
-            Mock Write-White {}
+            Mock Write-White { }
 
             Show-Value -message 'Test message'
 
@@ -741,7 +741,7 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints host message" {
-            Mock Write-White {}
+            Mock Write-White { }
 
             Show-Message -message 'Test message'
 
@@ -753,7 +753,7 @@ Describe "Write-Host helpers" {
 
     Context "New-Line* Test" {
         It "Prints new lines" {
-            Mock Write-HostWrapper {}
+            Mock Write-HostWrapper { }
 
             New-Lines -count 5
 
@@ -763,7 +763,7 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints new line" {
-            Mock New-Lines {}
+            Mock New-Lines { }
 
             New-Line
 
@@ -789,7 +789,7 @@ Describe "Sound Functions" {
 
     Context "New-Player" {
         It "loads PresentationCore and returns a MediaPlayer instance" {
-            Mock Add-Type {}
+            Mock Add-Type { }
             Mock New-Object { @{ PSTypeName = 'FakeMediaPlayer' } }
 
             $result = New-Player
@@ -839,8 +839,8 @@ Describe "Sound Functions" {
 
             Mock New-Player { $script:fakePlayer }
             Mock Get-Sound-TotalSeconds { 3 }
-            Mock Start-Sleep {}
-            Mock Add-LogEntry {}
+            Mock Start-Sleep { }
+            Mock Add-LogEntry { }
         }
 
         It "opens the file, plays it, and sleeps for its duration" {
@@ -865,7 +865,7 @@ Describe "Sound Functions" {
         }
 
         It "does not play sound in subprocess mode" {
-            Mock New-Player {}
+            Mock New-Player { }
             $Global:PVMConfig.subprocess.enabled = $true
 
             Invoke-Sound -filename "song.mp3"
@@ -874,7 +874,7 @@ Describe "Sound Functions" {
         }
 
         It "does not play sound when sounds are disabled" {
-            Mock New-Player {}
+            Mock New-Player { }
             $Global:PVMConfig.subprocess.enabled = $false
             $PVMConfig.env.SOUNDS_DISABLED = $true
 
@@ -886,7 +886,7 @@ Describe "Sound Functions" {
 
     Context "Invoke-<Type>Sound wrappers" {
         BeforeEach {
-            Mock Invoke-Sound {}
+            Mock Invoke-Sound { }
         }
 
         It "Invoke-SuccessSound plays success.mp3 from assets path" {

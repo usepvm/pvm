@@ -11,9 +11,9 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
 
-    Mock Show-Error {}
-    Mock Show-Message {}
-    Mock Write-Color {}
+    Mock Show-Error { }
+    Mock Show-Message { }
+    Mock Write-Color { }
 
     function Reset-IniContent {
         @"

@@ -4,11 +4,11 @@ BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    Mock Show-Success {}
-    Mock Show-Error {}
-    Mock Show-Info {}
-    Mock Show-Warning {}
-    Mock Write-DarkYellow {}
+    Mock Show-Success { }
+    Mock Show-Error { }
+    Mock Show-Info { }
+    Mock Show-Warning { }
+    Mock Write-DarkYellow { }
 }
 
 AfterAll {

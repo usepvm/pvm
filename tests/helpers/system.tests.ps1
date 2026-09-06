@@ -13,9 +13,9 @@ BeforeAll {
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
 
-    Mock Show-Message {}
-    Mock Show-Error {}
-    Mock Show-Success {}
+    Mock Show-Message { }
+    Mock Show-Error { }
+    Mock Show-Success { }
 
     # Create a mock registry to simulate environment variables
     $script:MockRegistry = @{
@@ -436,7 +436,7 @@ Describe "Invoke-PSCommand" {
     Context "When executing PowerShell commands" {
         It "Passes -NoProfile and Bypass execution policy" {
             $mockProcess = @{ ExitCode = 0 }
-            $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
+            $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value { }
             Mock Start-Process { return $mockProcess }
 
             $result = Invoke-PSCommand -command "Write-Output -InputObject 'hello'"
@@ -452,7 +452,7 @@ Describe "Invoke-PSCommand" {
 
         It "Returns the process exit code" {
             $mockProcess = @{ ExitCode = 42 }
-            $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
+            $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value { }
             Mock Start-Process { return $mockProcess }
 
             $result = Invoke-PSCommand -command "Write-Error 'fail'"

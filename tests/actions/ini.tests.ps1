@@ -17,12 +17,12 @@ BeforeAll {
     $phpVersionPath = "$($PVMConfig.paths.directories.php)\php-8.2"
     New-Item -ItemType Directory -Path $phpVersionPath -Force
 
-    Mock Show-Error {}
-    Mock Show-Warning {}
-    Mock Show-Message {}
-    Mock Show-Info {}
-    Mock Write-Color {}
-    Mock New-Line {}
+    Mock Show-Error { }
+    Mock Show-Warning { }
+    Mock Show-Message { }
+    Mock Show-Info { }
+    Mock Write-Color { }
+    Mock New-Line { }
 
     function Reset-IniContent {
         @"

@@ -10,8 +10,8 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    Mock Show-Error {}
-    Mock Show-Success {}
+    Mock Show-Error { }
+    Mock Show-Success { }
 
     function Reset-IniContent {
     @"

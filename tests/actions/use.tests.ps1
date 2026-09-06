@@ -7,11 +7,11 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
 
-    Mock Write-Color {}
-    Mock Show-Info {}
-    Mock Show-Success {}
-    Mock Show-Error {}
-    Mock Show-Message {}
+    Mock Write-Color { }
+    Mock Show-Info { }
+    Mock Show-Success { }
+    Mock Show-Error { }
+    Mock Show-Message { }
 
     Mock Get-MatchingPHPVersions {
         param ($version)

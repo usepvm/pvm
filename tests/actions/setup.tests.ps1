@@ -11,10 +11,10 @@ BeforeAll {
     $script:PVMRoot = "$TEST_DRIVE\PVM"
     $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME
 
-    Mock Show-Message {}
-    Mock Show-Success {}
-    Mock Show-Error {}
-    Mock Show-Info {}
+    Mock Show-Message { }
+    Mock Show-Success { }
+    Mock Show-Error { }
+    Mock Show-Info { }
 }
 
 AfterAll {
@@ -75,7 +75,7 @@ Describe "Initialize-PVM" {
         Mock Test-DirectoryExists { return $false }
         Mock New-Directory { return 0 }
         Mock Add-LogEntry { return 0 }
-        Mock Optimize-SystemPath {}
+        Mock Optimize-SystemPath { }
     }
 
     Context "When Path environment variable is empty" {

@@ -8,7 +8,7 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
 
-    Mock Show-Error {}
+    Mock Show-Error { }
 }
 
 AfterAll {

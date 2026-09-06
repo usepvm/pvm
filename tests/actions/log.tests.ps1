@@ -6,15 +6,15 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    Mock Show-Error {}
-    Mock Show-Warning {}
-    Mock Show-Message {}
-    Mock Show-Value {}
-    Mock Show-Debug {}
-    Mock Show-Info {}
-    Mock Show-Header {}
-    Mock Clear-Host {}
-    Mock Write-DarkGray {}
+    Mock Show-Error { }
+    Mock Show-Warning { }
+    Mock Show-Message { }
+    Mock Show-Value { }
+    Mock Show-Debug { }
+    Mock Show-Info { }
+    Mock Show-Header { }
+    Mock Clear-Host { }
+    Mock Write-DarkGray { }
 }
 
 AfterAll {
@@ -223,7 +223,7 @@ Describe "Write-LogEntry" {
 
 Describe "Write-LogPage" {
     It "writes all log entries to console" {
-        Mock Write-LogEntry {}
+        Mock Write-LogEntry { }
         $header1 = 'Test log entry 1 :'; $errorMessage1 = 'Issue 1'; $position1 = 'At D:\Code\Tools\pvm\file.ps1:10 char:9'
         $message1 = $header + "`nMessage : $errorMessage" + "`nPosition : $position" + '+         throw "Issue $limit"' + '+         ~~~~~~~~~~~~~~~~~~~~'
         $header2 = 'Test log entry 2 :'; $errorMessage2 = 'Issue 2'; $position2 = 'At D:\Code\Tools\pvm\file.ps1:12 char:5'

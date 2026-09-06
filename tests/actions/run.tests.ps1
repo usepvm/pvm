@@ -7,11 +7,12 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    Mock Write-Color {}
-    Mock Show-Message {}
-    Mock Write-Yellow {}
-    Mock Write-Cyan {}
-    Mock Write-Gray {}
+    Mock Write-Color { }
+    Mock Show-Message { }
+    Mock Write-Yellow { }
+    Mock Write-Cyan { }
+    Mock Write-Gray { }
+    Mock New-Lines { }
 }
 
 AfterAll {
@@ -22,9 +23,6 @@ AfterAll {
 
 Describe "Show-SubProcessOutput" {
     It 'Handles string output that is valid JSON array' {
-        Mock Write-Color {}
-        Mock Show-Message {}
-
         $jsonOutput = '[{"message":"test","color":"red","noNewLine":false}]'
         Show-SubProcessOutput -output $jsonOutput
 
@@ -33,9 +31,6 @@ Describe "Show-SubProcessOutput" {
     }
 
     It 'Handles string output that is invalid JSON' {
-        Mock Write-Color {}
-        Mock Show-Message {}
-
         $invalidJson = 'not json'
         Show-SubProcessOutput -output $invalidJson
 
@@ -44,9 +39,6 @@ Describe "Show-SubProcessOutput" {
     }
 
     It 'Handles non-string output' {
-        Mock Write-Color {}
-        Mock Show-Message {}
-
         $arrayOutput = @('line1', 'line2')
         Show-SubProcessOutput -output $arrayOutput
 
@@ -57,17 +49,13 @@ Describe "Show-SubProcessOutput" {
 
 Describe "Invoke-RunScripts" {
     BeforeEach {
-        Mock Write-Yellow {}
-        Mock Show-Scripts {}
+        Mock Show-Scripts { }
         Mock Get-Scripts { @{} }
-        Mock Write-Cyan {}
-        Mock Write-Gray {}
         Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
         Mock Get-Actions { @{} }
-        Mock Show-SubProcessOutput {}
-        Mock New-Lines {}
-        Mock Add-LogEntry {}
-        Mock Invoke-Sound {}
+        Mock Show-SubProcessOutput { }
+        Mock Add-LogEntry { }
+        Mock Invoke-Sound { }
     }
 
     It 'Returns -1 when scriptName is null or whitespace' {

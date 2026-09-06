@@ -11,10 +11,10 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
 
-    Mock Show-Warning {}
-    Mock Write-Color {}
-    Mock Show-Error {}
-    Mock Show-Message {}
+    Mock Show-Warning { }
+    Mock Write-Color { }
+    Mock Show-Error { }
+    Mock Show-Message { }
 
     function Reset-IniContent {
     @"

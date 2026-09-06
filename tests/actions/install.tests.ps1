@@ -496,6 +496,14 @@ Describe "Get-PHP" {
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
         $result | Should -BeNullOrEmpty
     }
+
+    It "Returns null if download fails" {
+        Mock Get-PHPFromUrl { return $null }
+
+        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
+
+        $result | Should -BeNullOrEmpty
+    }
 }
 
 Describe "Expand-AndConfigurePHP" {

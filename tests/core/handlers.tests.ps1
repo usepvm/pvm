@@ -807,7 +807,7 @@ Describe "Invoke-Info" {
     Context "Default output" {
         BeforeEach {
             Mock Get-CurrentPHPVersion {
-                @{
+                return @{
                     version   = '8.3.28'
                     arch      = 'x64'
                     buildType = 'TS'
@@ -855,7 +855,7 @@ Describe "Invoke-Info" {
     Context "Verbose output" {
         BeforeEach {
             Mock Get-CurrentPHPVersion {
-                @{
+                return @{
                     version   = '8.3.28'
                     arch      = 'x64'
                     buildType = 'TS'

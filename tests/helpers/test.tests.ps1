@@ -22,7 +22,7 @@ Describe "Show-Scripts" {
 
     It "Displays the available scripts and commands" {
         Mock Get-Scripts {
-            [ordered]@{
+            return [ordered]@{
                 build = @('test --filter build', 'test --filter unit')
                 lint  = @('test --filter lint')
             }

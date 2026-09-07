@@ -260,7 +260,7 @@ Describe "Get-ClosestCommandSuggestion" {
     }
 
     It "Should return alias mapping when alias is the best suggestion" {
-        Mock Get-Aliases { [ordered]@{ 'ls' = 'list' } }
+        Mock Get-Aliases { return [ordered]@{ 'ls' = 'list' } }
         $actions = [ordered]@{}
 
         $result = Get-ClosestCommandSuggestion -command 'ls' -actions $actions

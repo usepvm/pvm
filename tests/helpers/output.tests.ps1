@@ -479,12 +479,12 @@ Describe "Show-SpinnerWhileProcess" {
 
             $stdout = [pscustomobject]@{}
             $stdout | Add-Member ScriptMethod ReadToEndAsync {
-                [pscustomobject]@{ Result = '' }
+                return [pscustomobject]@{ Result = '' }
             }
 
             $stderr = [pscustomobject]@{}
             $stderr | Add-Member ScriptMethod ReadToEndAsync {
-                [pscustomobject]@{ Result = '' }
+                return [pscustomobject]@{ Result = '' }
             }
 
             $script:fakeProc = [pscustomobject]@{
@@ -496,7 +496,7 @@ Describe "Show-SpinnerWhileProcess" {
                 HasExited      = $true
             }
 
-            $script:fakeProc | Add-Member ScriptMethod Start { $true }
+            $script:fakeProc | Add-Member ScriptMethod Start { return $true }
             $script:fakeProc | Add-Member ScriptMethod WaitForExit { }
             $script:fakeProc | Add-Member ScriptMethod Kill {
                 $script:killed = $true
@@ -806,14 +806,14 @@ Describe "Sound Functions" {
             $script:fakeShellFolder = [PSCustomObject]@{}
             $script:fakeShell = [PSCustomObject]@{}
 
-            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name ParseName -Value { param($f) $script:fakeShellFile }
-            $script:fakeShell | Add-Member -MemberType ScriptMethod -Name Namespace -Value { param($f) $script:fakeShellFolder }
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name ParseName -Value { param($f) return $script:fakeShellFile }
+            $script:fakeShell | Add-Member -MemberType ScriptMethod -Name Namespace -Value { param($f) return $script:fakeShellFolder }
 
             Mock New-Object { return $script:fakeShell } -ParameterFilter { $ComObject -eq 'Shell.Application' }
         }
 
         It "returns TotalSeconds when duration is greater than 1 second" {
-            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) "0:00:05" } -Force
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) return "0:00:05" } -Force
 
             $result = Get-Sound-TotalSeconds -path "C:\music\song.mp3"
 
@@ -821,7 +821,7 @@ Describe "Sound Functions" {
         }
 
         It "returns 1 when duration is 1 second or less" {
-            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) "0:00:00" } -Force
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) return "0:00:00" } -Force
 
             $result = Get-Sound-TotalSeconds -path "C:\music\song.mp3"
 

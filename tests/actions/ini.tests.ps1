@@ -113,7 +113,9 @@ Describe "Invoke-IniAction" {
         It "Requires exactly one extension name" {
             Mock Test-FileNotExists { return $false }
 
-            Invoke-IniAction -action 'ext' -params @('info') | Should -Be -1
+            $code = Invoke-IniAction -action 'ext' -params @('info')
+
+            $code | Should -Be -1
         }
     }
 

@@ -42,39 +42,53 @@ AfterAll {
 
 Describe "Get-IniSetting" {
     It "Gets existing setting" {
-        Get-IniSetting -iniPath $testIniPath -keys @('upload_max_filesize') | Should -Be 0
+        $code = Get-IniSetting -iniPath $testIniPath -keys @('upload_max_filesize')
+
+        $code | Should -Be 0
     }
 
     It "Gets setting with spaces in value" {
-        Get-IniSetting -iniPath $testIniPath -keys @('display_errors') | Should -Be 0
+        $code = Get-IniSetting -iniPath $testIniPath -keys @('display_errors')
+
+        $code | Should -Be 0
     }
 
     It "Returns -1 for commented settings" {
-        Get-IniSetting -iniPath $testIniPath -keys @('xdebug') | Should -Be -1
+        $code = Get-IniSetting -iniPath $testIniPath -keys @('xdebug')
+
+        $code | Should -Be -1
     }
 
     It "Returns -1 for non-existent setting" {
-        Get-IniSetting -iniPath $testIniPath -keys @('nonexistent_setting') | Should -Be -1
+        $code = Get-IniSetting -iniPath $testIniPath -keys @('nonexistent_setting')
+
+        $code | Should -Be -1
     }
 
     It "Requires key parameter" {
-        Get-IniSetting -iniPath $testIniPath -keys '' | Should -Be -1
-        Get-IniSetting -iniPath $testIniPath -keys $null | Should -Be -1
+        $code = Get-IniSetting -iniPath $testIniPath -keys ''
+        $code | Should -Be -1
+
+        $code = Get-IniSetting -iniPath $testIniPath -keys $null
+        $code | Should -Be -1
     }
 
     It "Handles regex special characters in key names" {
-        Get-IniSetting -iniPath $testIniPath -keys @('memory_limit') | Should -Be 0
+        $code = Get-IniSetting -iniPath $testIniPath -keys @('memory_limit')
+        $code | Should -Be 0
     }
 
     It "Displays '(not set)' for empty value entries" {
         @"
 memory_limit =
 "@ | Set-ContentWrapper -path $testIniPath
-        Get-IniSetting -iniPath $testIniPath -keys @('memory_limit') | Should -Be 0
+        $code = Get-IniSetting -iniPath $testIniPath -keys @('memory_limit')
+        $code | Should -Be 0
     }
 
     It "Returns -1 on error" {
         Mock Get-ContentWrapper { throw 'Access denied' }
-        Get-IniSetting -iniPath $testIniPath -keys @('memory_limit') | Should -Be -1
+        $code = Get-IniSetting -iniPath $testIniPath -keys @('memory_limit')
+        $code | Should -Be -1
     }
 }

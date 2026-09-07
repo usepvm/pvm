@@ -844,7 +844,9 @@ Describe "Invoke-Info" {
         }
 
         It "Returns 0" {
-            Invoke-Info -arguments @() | Should -Be 0
+            $code = Invoke-Info -arguments @()
+
+            $code | Should -Be 0
         }
 
         It "Completes successfully" {
@@ -881,7 +883,9 @@ Describe "Invoke-Info" {
         }
 
         It "Returns 0" {
-            Invoke-Info -arguments @('--verbose') | Should -Be 0
+            $code = Invoke-Info -arguments @('--verbose')
+
+            $code | Should -Be 0
         }
     }
 }
@@ -915,7 +919,9 @@ Describe "Invoke-Log" {
     It "Should skip confirmation and clear log file" {
         Mock Clear-ContentWrapper { }
 
-        Invoke-Log -arguments @('--clear', '-y') | Should -Be 0
+        $code = Invoke-Log -arguments @('--clear', '-y')
+
+        $code | Should -Be 0
 
         Should -Invoke Clear-ContentWrapper -Exactly 1
         Should -Invoke Show-Success -Exactly 1
@@ -925,7 +931,9 @@ Describe "Invoke-Log" {
         Mock Read-HostWrapper { return 'n' }
         Mock Write-Gray { }
 
-        Invoke-Log -arguments @('--clear') | Should -Be -1
+        $code = Invoke-Log -arguments @('--clear')
+
+        $code | Should -Be -1
 
         Should -Invoke Read-HostWrapper -ParameterFilter { $prompt -like '*Are you sure you want to clear the log?*' }
         Should -Invoke Write-Gray -ParameterFilter { $message -like '*Log clearing cancelled*' }
@@ -936,31 +944,37 @@ Describe "Invoke-Log" {
         Mock Show-Success { }
         Mock Read-HostWrapper { return 'y' }
 
-        Invoke-Log -arguments @('--clear') | Should -Be 0
+        $code = Invoke-Log -arguments @('--clear')
+
+        $code | Should -Be 0
         Should -Invoke Clear-ContentWrapper -Exactly 1
         Should -Invoke Show-Success -Exactly 1
     }
 
     It "Calls Show-Log with provided --pageSize argument" {
         $arguments = @('--pageSize=5')
-        Invoke-Log -arguments $arguments | Should -Be 0
+        $code = Invoke-Log -arguments $arguments
 
+        $code | Should -Be 0
         Should -Invoke Show-Log -Exactly 1 -ParameterFilter { $pageSize -eq '5' }
     }
 
     It "Calls Show-Log with default page size when no argument is given" {
         $arguments = @()
-        Invoke-Log -arguments $arguments | Should -Be 0
+        $code = Invoke-Log -arguments $arguments
 
+        $code | Should -Be 0
         Should -Invoke Show-Log -Exactly 1 -ParameterFilter { $pageSize -eq 5 }
     }
 
     It "Passes return code from Show-Log back to caller" {
         Mock Show-Log { return 0 }
-        (Invoke-Log -arguments @('--pageSize=2')) | Should -Be 0
+        $code = Invoke-Log -arguments @('--pageSize=2')
+        $code | Should -Be 0
 
         Mock Show-Log { return -1 }
-        (Invoke-Log -arguments @('--pageSize=2')) | Should -Be -1
+        $code = Invoke-Log -arguments @('--pageSize=2')
+        $code | Should -Be -1
     }
 }
 

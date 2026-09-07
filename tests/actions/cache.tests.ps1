@@ -20,7 +20,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Get-CacheFiles Tests" {
+Describe "Get-CacheFiles" {
     It "Should return a list of cache files" {
         Mock Get-ChildItemWrapper {
             return @(
@@ -48,7 +48,7 @@ Describe "Get-CacheFiles Tests" {
     }
 }
 
-Describe "Show-CacheFiles Tests" {
+Describe "Show-CacheFiles" {
     BeforeEach {
         Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
@@ -122,7 +122,7 @@ Describe "Show-CacheFiles Tests" {
     }
 }
 
-Describe "Show-CachedData Tests" {
+Describe "Show-CachedData" {
     BeforeEach {
         Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
@@ -209,7 +209,7 @@ Describe "Show-CachedData Tests" {
     }
 }
 
-Describe "Remove-CacheFile Tests" {
+Describe "Remove-CacheFile" {
     BeforeEach {
         Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
@@ -363,7 +363,7 @@ Describe "Remove-CacheFile Tests" {
     }
 }
 
-Describe "Clear-CacheFiles Tests" {
+Describe "Clear-CacheFiles" {
     BeforeEach {
         Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 

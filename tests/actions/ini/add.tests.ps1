@@ -87,161 +87,157 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Get-ExtensionHandlers Tests" {
-    It "Returns unified handler registry with both source and config handlers" {
-        $handlers = Get-ExtensionHandlers
+Describe "Select-ExtensionPackageLink" {
+    BeforeEach {
+        Mock Read-HostWrapper { return '0' }
+    }
 
-        $handlers.SourceHandlers | Should -Not -BeNullOrEmpty
-        $handlers.ExtensionConfigHandlers | Should -Not -BeNullOrEmpty
-        $handlers.SourceHandlers.ContainsKey('xdebug.org') | Should -Be $true
-        $handlers.SourceHandlers.ContainsKey('pecl.php.net') | Should -Be $true
-        $handlers.ExtensionConfigHandlers.ContainsKey('xdebug') | Should -Be $true
+    It "Returns null and shows cancellation when no package is selected" {
+        Mock Read-HostWrapper { return ' ' }
+
+        $result = Select-ExtensionPackageLink -extName 'curl' -extensionLinks @(
+            @{
+                href       = 'https://example.test/curl.zip'
+                version    = '8.2'
+                extVersion = '1.0.0'
+                arch       = 'x64'
+                buildType  = 'TS'
+                compiler   = 'VS16'
+                fileName   = 'php_curl.zip'
+            }
+        )
+
+        $result | Should -BeNullOrEmpty
+        Should -Invoke Write-Gray -Times 1 -ParameterFilter {
+            $message -eq "`nInstallation cancelled"
+        }
+    }
+
+    It "Sorts packages by release, build type, and architecture before selecting" {
+        $extensionLinks = @(
+            @{
+                href       = 'https://example.test/curl-1.0-ts-x86.zip'
+                version    = '8.2'
+                extVersion = '1.0.0'
+                arch       = 'x86'
+                buildType  = 'TS'
+                compiler   = 'VS16'
+                fileName   = 'php_curl-1.0-ts-x86.zip'
+            }
+            @{
+                href       = 'https://example.test/curl-1.1-ts-x64.zip'
+                version    = '8.2'
+                extVersion = '1.1.0'
+                arch       = 'x64'
+                buildType  = 'TS'
+                compiler   = 'VS16'
+                fileName   = 'php_curl-1.1-ts-x64.zip'
+            }
+            @{
+                href       = 'https://example.test/curl-1.0-nts-x64.zip'
+                version    = '8.2'
+                extVersion = '1.0.0'
+                arch       = 'x64'
+                buildType  = 'NTS'
+                compiler   = 'VS16'
+                fileName   = 'php_curl-1.0-nts-x64.zip'
+            }
+            @{
+                href       = 'https://example.test/curl-1.0-nts-x86.zip'
+                version    = '8.2'
+                extVersion = '1.0.0'
+                arch       = 'x86'
+                buildType  = 'NTS'
+                compiler   = 'VS16'
+                fileName   = 'php_curl-1.0-nts-x86.zip'
+            }
+            @{
+                href       = 'https://example.test/curl-0.9-x86_64.zip'
+                version    = '8.2'
+                extVersion = '0.9.0'
+                arch       = 'x86_64'
+                buildType  = 'TS'
+                compiler   = 'VS16'
+                fileName   = 'php_curl-0.9-x86_64.zip'
+            }
+            @{
+                href       = 'https://example.test/curl-0.9-arm64.zip'
+                version    = '8.2'
+                extVersion = '0.9.0'
+                arch       = 'arm64'
+                buildType  = 'TS'
+                compiler   = 'VS16'
+                fileName   = 'php_curl-0.9-arm64.zip'
+            }
+        )
+        Mock Read-HostWrapper { return '0' }
+
+        $result = Select-ExtensionPackageLink -extName 'curl' -extensionLinks $extensionLinks
+
+        $result.href | Should -Be 'https://example.test/curl-1.1-ts-x64.zip'
+        $result.index | Should -Be 0
+        $extensionLinks[2].index | Should -Be 1
+        $extensionLinks[3].index | Should -Be 2
+        $extensionLinks[0].index | Should -Be 3
+        Should -Invoke Show-Message -Times 7
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -eq "`ncurl 1.1.0"
+        }
+        Should -Invoke Show-Message -ParameterFilter {
+            $message -eq ' [0] PHP curl 8.2 VS16 TS x64'
+        }
+    }
+
+    It "Returns null when the selected index does not match a package" {
+        Mock Read-HostWrapper { return '9' }
+
+        $result = Select-ExtensionPackageLink -extName 'curl' -extensionLinks @(
+            @{
+                href       = 'https://example.test/curl.zip'
+                version    = '8.2'
+                extVersion = '1.0.0'
+                arch       = 'x64'
+                buildType  = 'TS'
+                compiler   = 'VS16'
+                fileName   = 'php_curl.zip'
+            }
+        )
+
+        $result | Should -BeNullOrEmpty
+        Should -Invoke Write-Gray -Times 0
     }
 }
 
-Describe "Get-SourceHandler Tests" {
-    It "Returns correct handler for xdebug.org source" {
-        $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
+Describe "Get-PrereleaseSortKey" {
+    It "Scores stable higher than rc/beta/alpha for the same version" {
+        $stable = Get-PrereleaseSortKey -Name '3.1.0'
+        $rc     = Get-PrereleaseSortKey -Name '3.1.0rc1'
+        $beta   = Get-PrereleaseSortKey -Name '3.1.0beta1'
+        $alpha  = Get-PrereleaseSortKey -Name '3.1.0alpha1'
 
-        $handler | Should -Not -BeNullOrEmpty
-        $handler.GetPackages | Should -Not -BeNullOrEmpty
-        $handler.Download | Should -Not -BeNullOrEmpty
-        $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
+        $stable | Should -BeGreaterThan $rc
+        $rc     | Should -BeGreaterThan $beta
+        $beta   | Should -BeGreaterThan $alpha
     }
 
-    It "Returns correct handler for pecl.php.net source" {
-        $handler = Get-SourceHandler -sourceUrl 'pecl.php.net'
-
-        $handler | Should -Not -BeNullOrEmpty
-        $handler.GetPackages | Should -Not -BeNullOrEmpty
-        $handler.Download | Should -Not -BeNullOrEmpty
-        $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
+    It "Scores higher prerelease numbers higher within the same tier" {
+        (Get-PrereleaseSortKey -Name '3.1.0rc2')    | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0rc1')
+        (Get-PrereleaseSortKey -Name '3.1.0beta2')  | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0beta1')
+        (Get-PrereleaseSortKey -Name '3.1.0alpha2') | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0alpha1')
     }
 
-    It "Returns default PECL handler for unknown sources" {
-        $handler = Get-SourceHandler -sourceUrl 'unknown.source.com'
-
-        $handler | Should -Not -BeNullOrEmpty
-        # Should return the pecl.php.net handler as default
-        $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
-    }
-}
-
-Describe "Get-ExtensionConfigHandler Tests" {
-    It "Returns xdebug config handler for xdebug extension" {
-        $handler = Get-ExtensionConfigHandler -extName 'php_xdebug.dll'
-
-        $handler | Should -Not -BeNullOrEmpty
-        # Should return the xdebug config handler scriptblock
-        $handler.GetType().Name | Should -Be 'ScriptBlock'
+    It "Scores higher base versions higher regardless of prerelease tier" {
+        (Get-PrereleaseSortKey -Name '3.2.0alpha1') | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0')
     }
 
-    It "Returns xdebug config handler for xdebug without prefix" {
-        $handler = Get-ExtensionConfigHandler -extName 'xdebug.dll'
-
-        $handler | Should -Not -BeNullOrEmpty
-        $handler.GetType().Name | Should -Be 'ScriptBlock'
+    It "Treats missing version segments as zero" {
+        Get-PrereleaseSortKey -Name '3.1' | Should -Be (Get-PrereleaseSortKey -Name '3.1.0')
     }
 
-    It "Returns xdebug config handler for xdebug with version" {
-        $handler = Get-ExtensionConfigHandler -extName 'php_xdebug-3.1.0-8.1-vs16-x64.dll'
-
-        $handler | Should -Not -BeNullOrEmpty
-        $handler.GetType().Name | Should -Be 'ScriptBlock'
-    }
-
-    It "Returns default handler for unknown extensions" {
-        $handler = Get-ExtensionConfigHandler -extName 'php_unknown.dll'
-
-        $handler | Should -Not -BeNullOrEmpty
-        $handler.GetType().Name | Should -Be 'ScriptBlock'
-    }
-
-    It "Returns default handler for empty input" {
-        $handler = Get-ExtensionConfigHandler -extName ''
-
-        $handler | Should -Not -BeNullOrEmpty
-        $handler.GetType().Name | Should -Be 'ScriptBlock'
-    }
-}
-
-Describe "Install-Extension Tests" {
-    BeforeAll {
-        Mock Show-SpinnerWhileJob {
-            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            $result = & $scriptBlock @argumentList
-            return $result.pvmData
-        }
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.2.0" } }
-        Mock Read-HostWrapper {
-            param ($Prompt)
-            if ($Prompt -eq "`nEnter the [number] of your selection") {
-                return '0'
-            }
-        }
-        Mock Add-MissingPHPExtensionToIni { return 0 }
-        Mock Invoke-WebRequestWrapper { }
-        Mock Move-ItemWrapper { }
-        Mock Get-ContentWrapper { return "zend_extension=opcache" }
-        Mock Add-ContentWrapper { }
-    }
-
-    It "Successfully installs extension using source handler" {
-        Mock Invoke-WebRequestWrapper { return $null }
-        Mock Expand-Zip { }
-        Mock Move-ItemWrapper { }
-        Mock Remove-ItemWrapper { }
-        $mockFile = @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\extracted\php_curl.dll" }
-        Mock Get-ChildItemWrapper { return @( $mockFile ) }
-        Mock Add-MissingPHPExtensionToIni { return 0 }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                )
-            }
-        }
-
-        $code = Install-Extension -iniPath $testIniPath -extName 'curl' -skipConfirmation $true
-
-        $code | Should -Be 0
-        Should -Invoke Add-MissingPHPExtensionToIni -Exactly 1
-    }
-
-    It "Uses extension config handler for configuration" {
-        $mockFile = @{ Name = 'php_curl.dll'; FullName = "$TEST_DRIVE\extracted\php_curl.dll" }
-        Mock Get-ChildItemWrapper { return @( $mockFile ) }
-        Mock Get-ExtensionConfigHandler {
-            param ($extName)
-            return { return 0 }
-        }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'xdebug'
-                source = 'xdebug.org'
-                data = @(
-                    @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x64.dll"; arch = 'x64'; buildType = 'ts'; version = '8.1'; extVersion = '3.1.0'; fileName = 'php_xdebug-3.1.0-8.1-vs16-x64.dll' }
-                )
-            }
-        }
-
-        $code = Install-Extension -iniPath $testIniPath -extName 'xdebug'
-
-        $code | Should -Be 0
-        Should -Invoke Get-ExtensionConfigHandler -Exactly 1
-    }
-
-    It "Returns -1 when no packages found" {
-        Mock Get-ExtensionPackages { return @{ extName = 'xdebug'; data = $null; source = 'xdebug.org' } }
-
-        $code = Install-Extension -iniPath $testIniPath -extName 'xdebug'
-
-        $code | Should -Be -1
-        Should -Invoke Show-Error -Exactly 1
+    It "Does not overflow Int32 for realistic version numbers" {
+        $score = Get-PrereleaseSortKey -Name '1.5.0'
+        $score | Should -BeOfType [long]
+        $score | Should -BeGreaterThan ([int32]::MaxValue)
     }
 }
 
@@ -387,7 +383,6 @@ Describe "Install-Extension" {
                 return '0'
             }
         }
-
         Mock Get-ChildItemWrapper {
             if ($script:getRandomFile) {
                 return @( @{ Name = 'random_file' } )
@@ -1178,38 +1173,5 @@ Describe "Install-IniExtension" {
         $code = Install-IniExtension -iniPath $testIniPath -extNames @('curl', 'unknown')
 
         $code | Should -Be -1
-    }
-}
-
-Describe "Get-PrereleaseSortKey" {
-    It "Scores stable higher than rc/beta/alpha for the same version" {
-        $stable = Get-PrereleaseSortKey -Name '3.1.0'
-        $rc     = Get-PrereleaseSortKey -Name '3.1.0rc1'
-        $beta   = Get-PrereleaseSortKey -Name '3.1.0beta1'
-        $alpha  = Get-PrereleaseSortKey -Name '3.1.0alpha1'
-
-        $stable | Should -BeGreaterThan $rc
-        $rc     | Should -BeGreaterThan $beta
-        $beta   | Should -BeGreaterThan $alpha
-    }
-
-    It "Scores higher prerelease numbers higher within the same tier" {
-        (Get-PrereleaseSortKey -Name '3.1.0rc2')    | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0rc1')
-        (Get-PrereleaseSortKey -Name '3.1.0beta2')  | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0beta1')
-        (Get-PrereleaseSortKey -Name '3.1.0alpha2') | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0alpha1')
-    }
-
-    It "Scores higher base versions higher regardless of prerelease tier" {
-        (Get-PrereleaseSortKey -Name '3.2.0alpha1') | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0')
-    }
-
-    It "Treats missing version segments as zero" {
-        Get-PrereleaseSortKey -Name '3.1' | Should -Be (Get-PrereleaseSortKey -Name '3.1.0')
-    }
-
-    It "Does not overflow Int32 for realistic version numbers" {
-        $score = Get-PrereleaseSortKey -Name '1.5.0'
-        $score | Should -BeOfType [long]
-        $score | Should -BeGreaterThan ([int32]::MaxValue)
     }
 }

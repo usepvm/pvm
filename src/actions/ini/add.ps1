@@ -6,7 +6,7 @@ function Select-ExtensionPackageLink {
     $index = 0
     $extensionLinks |
         Select-Object -First $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
-        Group-Object extVersion |
+        Group-Object { $_.extVersion } |
         Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
         ForEach-Object -Process {
             $sortedGroup = $_.Group | Sort-Object -Property `

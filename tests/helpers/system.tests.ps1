@@ -13,9 +13,9 @@ BeforeAll {
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
 
-    Mock Show-Message {}
-    Mock Show-Error {}
-    Mock Show-Success {}
+    Mock Show-Message { }
+    Mock Show-Error { }
+    Mock Show-Success { }
 
     # Create a mock registry to simulate environment variables
     $script:MockRegistry = @{
@@ -75,20 +75,6 @@ Describe "Get-AllEnvVarsCore" {
     }
 }
 
-Describe "Get-EnvVarByNameCore" {
-    It "Returns environment variable value by name" {
-        # Test with a known system variable that should exist
-        $result = Get-EnvVarByNameCore -name 'Path'
-        $result | Should -Not -BeNullOrEmpty
-        $result | Should -BeOfType [string]
-    }
-
-    It "Returns null for non-existent variable" {
-        $result = Get-EnvVarByNameCore -name 'NONEXISTENT_VAR_12345'
-        $result | Should -BeNullOrEmpty
-    }
-}
-
 Describe "Get-AllEnvVars" {
     BeforeAll {
         Mock Get-AllEnvVarsCore {
@@ -119,6 +105,19 @@ Describe "Get-AllEnvVars" {
     }
 }
 
+Describe "Get-EnvVarByNameCore" {
+    It "Returns environment variable value by name" {
+        $result = Get-EnvVarByNameCore -name 'Path'
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeOfType [string]
+    }
+
+    It "Returns null for non-existent variable" {
+        $result = Get-EnvVarByNameCore -name 'NONEXISTENT_VAR_12345'
+        $result | Should -BeNullOrEmpty
+    }
+}
+
 Describe "Get-EnvVarByName" {
     BeforeAll {
         Mock Test-NotAdmin { return $false }
@@ -144,13 +143,11 @@ Describe "Get-EnvVarByName" {
 
     Context "When variable exists" {
         It "Returns the variable value" {
-            # Set a test variable
             Set-EnvVar -name 'TEST_VAR' -value 'TEST_VALUE'
 
             $result = Get-EnvVarByName -name 'TEST_VAR'
             $result | Should -Be 'TEST_VALUE'
 
-            # Cleanup
             Set-EnvVar -name 'TEST_VAR' -value $null
         }
     }
@@ -208,13 +205,28 @@ Describe "Set-EnvVar" {
             $value = Get-EnvVarByName -name 'TEST_VAR_SET'
             $value | Should -Be 'TEST_VALUE'
 
-            # Cleanup
             Set-EnvVar -name 'TEST_VAR_SET' -value $null
         }
 
-        It "Returns -1 for empty name" {
-            $result = Set-EnvVar -name '' -value 'TEST_VALUE'
+        It "Set-EnvVar should handle null/empty names" {
+            $result = Set-EnvVar -name '' -value 'test'
             $result | Should -Be -1
+
+            $result = Set-EnvVar -name '   ' -value 'test'
+            $result | Should -Be -1
+
+            $result = Set-EnvVar -name $null -value 'test'
+            $result | Should -Be -1
+        }
+
+        It "Set-EnvVar should handle registry errors" {
+            $script:MockRegistryThrowException = $true
+
+            $result = Set-EnvVar -name 'TEST' -value 'value'
+
+            $result | Should -Be -1
+
+            $script:MockRegistryThrowException = $false
         }
     }
 
@@ -233,6 +245,105 @@ Describe "Set-EnvVar" {
             $result = Set-EnvVar -name 'SIMULATED_EXCEPTION' -value 'TEST_VALUE'
             $result | Should -Be -1
         }
+    }
+}
+
+Describe "Get-OptimizedEnv" {
+    It "Replaces matching environment paths with variable references" {
+        Mock Get-AllEnvVars {
+            return @{
+                TOOLS_HOME = 'C:\Tools'
+                OTHER_HOME = 'C:\Other'
+            }
+        }
+
+        $result = Get-OptimizedEnv -name 'Path' -value 'C:\Tools;C:\Other;C:\Unmanaged'
+
+        $result | Should -Be '%TOOLS_HOME%;%OTHER_HOME%;C:\Unmanaged'
+        Should -Invoke Get-AllEnvVars -Times 1
+    }
+
+    It "Does not replace the requested variable or system paths" {
+        Mock Get-AllEnvVars {
+            return @{
+                Path       = 'C:\Tools'
+                WINDOWS    = 'C:\Windows'
+                SYSTEM_DIR = 'C:\Windows\System32'
+                TOOLS_HOME = 'C:\Tools'
+            }
+        }
+
+        $result = Get-OptimizedEnv -name 'Path' -value 'C:\Tools;C:\Windows;C:\Windows\System32'
+
+        $result | Should -Be '%TOOLS_HOME%;C:\Windows;C:\Windows\System32'
+    }
+
+    It "Returns an empty value when the input contains no path" {
+        Mock Get-AllEnvVars { return @{} }
+
+        $result = Get-OptimizedEnv -name 'Path' -value ''
+
+        $result | Should -Be ''
+    }
+}
+
+Describe "ConvertTo-EnvEntries" {
+    It "Trims entries and removes empty path segments" {
+        $result = ConvertTo-EnvEntries -value ' C:\One ; ;C:\Two;  ; C:\Three '
+
+        $result | Should -Be 'C:\One;C:\Two;C:\Three'
+    }
+
+    It "Removes duplicate paths while preserving the first occurrence" {
+        $result = ConvertTo-EnvEntries -value 'C:\One;C:\Two;C:\One;C:\Three;C:\Two' -RemoveDuplicates
+
+        $result | Should -Be 'C:\One;C:\Two;C:\Three'
+    }
+
+    It "Treats paths with different casing as duplicates and trims entries" {
+        $result = ConvertTo-EnvEntries -value ' C:\One ; c:\one; C:\Two ; ' -RemoveDuplicates
+
+        $result | Should -Be 'C:\One;C:\Two'
+    }
+
+    It "Removes empty path segments" {
+        $result = ConvertTo-EnvEntries -value ';C:\One;; '
+
+        $result | Should -Be 'C:\One'
+    }
+}
+
+Describe "Format-EnvContent" {
+    It "Trims entries and removes empty path segments" {
+        $result = Format-EnvContent -value ' C:\One ; ;C:\Two;  ; C:\Three '
+
+        $result | Should -Be 'C:\One;C:\Two;C:\Three'
+    }
+
+    It "Returns an empty value for empty content" {
+        $result = Format-EnvContent -value ' ;  ; '
+
+        $result | Should -Be ''
+    }
+}
+
+Describe "Remove-PathDuplicates" {
+    It "Removes duplicate paths while preserving the first occurrence" {
+        $result = Remove-PathDuplicates -path 'C:\One;C:\Two;C:\One;C:\Three;C:\Two'
+
+        $result | Should -Be 'C:\One;C:\Two;C:\Three'
+    }
+
+    It "Treats paths with different casing as duplicates and trims entries" {
+        $result = Remove-PathDuplicates -path ' C:\One ; c:\one; C:\Two ; '
+
+        $result | Should -Be 'C:\One;C:\Two'
+    }
+
+    It "Removes empty path segments" {
+        $result = Remove-PathDuplicates -path ';C:\One;; '
+
+        $result | Should -Be 'C:\One'
     }
 }
 
@@ -261,7 +372,6 @@ Describe "Optimize-SystemPath" {
 
     Context "When optimizing system PATH" {
         BeforeEach {
-            # Set a test PATH with some variables
             $testPath = 'C:\Test1;C:\Test2;C:\Windows\System32'
             Set-EnvVar -name 'TEST_PATH1' -value 'C:\Test1'
             Set-EnvVar -name 'TEST_PATH2' -value 'C:\Test2'
@@ -269,7 +379,6 @@ Describe "Optimize-SystemPath" {
         }
 
         AfterEach {
-            # Cleanup
             Set-EnvVar -name 'TEST_PATH1' -value $null
             Set-EnvVar -name 'TEST_PATH2' -value $null
         }
@@ -299,7 +408,6 @@ Describe "Optimize-SystemPath" {
             $result = Optimize-SystemPath
             $result | Should -Be -1
 
-            # Check that an error was logged
             Test-Path $LOG_ERROR_PATH | Should -Be $true
             Get-ContentWrapper -path $LOG_ERROR_PATH -Raw | Should -Match 'Optimize-SystemPath - Failed to optimize system PATH variable'
         }
@@ -328,7 +436,7 @@ Describe "Invoke-PSCommand" {
     Context "When executing PowerShell commands" {
         It "Passes -NoProfile and Bypass execution policy" {
             $mockProcess = @{ ExitCode = 0 }
-            $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
+            $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value { }
             Mock Start-Process { return $mockProcess }
 
             $result = Invoke-PSCommand -command "Write-Output -InputObject 'hello'"
@@ -344,7 +452,7 @@ Describe "Invoke-PSCommand" {
 
         It "Returns the process exit code" {
             $mockProcess = @{ ExitCode = 42 }
-            $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {}
+            $mockProcess | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value { }
             Mock Start-Process { return $mockProcess }
 
             $result = Invoke-PSCommand -command "Write-Error 'fail'"

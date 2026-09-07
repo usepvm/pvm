@@ -1,12 +1,11 @@
 ﻿
-
 BeforeAll {
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
     $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\wrappers-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 }
 
 AfterAll {
@@ -44,7 +43,7 @@ Describe "Write-HostWrapper" {
     It "Stores structured output when subprocess mode is enabled" {
         $Global:PVMConfig.subprocess.structuredOutput = @()
         $Global:PVMConfig.subprocess.enabled = $true
-        Mock Write-Host {}
+        Mock Write-Host { }
 
         Write-HostWrapper -object 'Test message' -foregroundColor 'Red'
 
@@ -138,7 +137,7 @@ Describe "Read-HostWrapper" {
 
 Describe "Add-ContentWrapper" {
     It "Calls Add-Content with the correct parameters and UTF8 encoding" {
-        Mock Add-Content {}
+        Mock Add-Content { }
 
         $path = "$TEST_DRIVE\test.txt"
         $content = "Test content"
@@ -162,9 +161,9 @@ Describe "Add-ContentWrapper" {
     }
 }
 
-Describe "Set-ContentWrapper Tests" {
+Describe "Set-ContentWrapper" {
     It "Calls Set-Content with the correct parameters and UTF8 encoding" {
-        Mock Set-Content {}
+        Mock Set-Content { }
 
         $path = "$TEST_DRIVE\test.txt"
         $content = "Test content"
@@ -188,7 +187,7 @@ Describe "Set-ContentWrapper Tests" {
     }
 }
 
-Describe "Invoke-WebRequestWrapper Tests" {
+Describe "Invoke-WebRequestWrapper" {
     Context "When making web requests" {
         It "Calls Invoke-WebRequest with UseBasicParsing" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
@@ -293,7 +292,7 @@ Describe "Invoke-WebRequestWrapper Tests" {
     }
 }
 
-Describe "Move-ItemWrapper Tests" {
+Describe "Move-ItemWrapper" {
     It "Calls Move-Item with the correct parameters" {
         Mock Move-Item { }
 
@@ -318,7 +317,7 @@ Describe "Move-ItemWrapper Tests" {
     }
 }
 
-Describe "Copy-ItemWrapper Tests" {
+Describe "Copy-ItemWrapper" {
     It "Calls Copy-Item with the correct parameters" {
         Mock Copy-Item { }
 
@@ -343,7 +342,7 @@ Describe "Copy-ItemWrapper Tests" {
     }
 }
 
-Describe "Remove-ItemWrapper Tests" {
+Describe "Remove-ItemWrapper" {
     It "Calls Remove-Item with the correct parameters" {
         Mock Remove-Item { }
 
@@ -365,7 +364,7 @@ Describe "Remove-ItemWrapper Tests" {
     }
 }
 
-Describe "Clear-ContentWrapper Tests" {
+Describe "Clear-ContentWrapper" {
     It "Calls Clear-Content with the correct parameters" {
         Mock Clear-Content { }
 
@@ -387,7 +386,7 @@ Describe "Clear-ContentWrapper Tests" {
     }
 }
 
-Describe "Get-ItemWrapper Tests" {
+Describe "Get-ItemWrapper" {
     It "Calls Get-Item with the correct parameters" {
         Mock Get-Item { }
 
@@ -409,7 +408,7 @@ Describe "Get-ItemWrapper Tests" {
     }
 }
 
-Describe "Get-ChildItemWrapper Tests" {
+Describe "Get-ChildItemWrapper" {
     It "Calls Get-ChildItem with the correct parameters" {
         Mock Get-ChildItem { }
 
@@ -484,7 +483,7 @@ Describe "Get-ChildItemWrapper Tests" {
     }
 }
 
-Describe "Get-ContentWrapper Tests" {
+Describe "Get-ContentWrapper" {
     It "Calls Get-Content with the correct parameters" {
         Mock Get-Content { }
 
@@ -507,7 +506,7 @@ Describe "Get-ContentWrapper Tests" {
     }
 }
 
-Describe "New-ItemWrapper Tests" {
+Describe "New-ItemWrapper" {
     It "Calls New-Item with the correct parameters - type File" {
         Mock New-Item { }
 

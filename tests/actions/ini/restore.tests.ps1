@@ -10,11 +10,10 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    Mock Show-Error {}
-    Mock Show-Success {}
+    Mock Show-Error { }
+    Mock Show-Success { }
 
     function Reset-IniContent {
-    # Create a test php.ini file
     @"
 memory_limit = 128M
 ;extension=php_xdebug.dll
@@ -26,7 +25,6 @@ max_execution_time = 30
 "@ | Set-ContentWrapper -path $testIniPath
     }
 
-    # Create initial ini content first
     Reset-IniContent
 }
 
@@ -55,7 +53,7 @@ Describe "Restore-IniBackup" {
     }
 
     It "Returns -1 on error" {
-        Mock Add-LogEntry { 0 }
+        Mock Add-LogEntry { return 0 }
         Mock Test-Path { return $true }
         Mock Copy-ItemWrapper { throw 'Access denied' }
         $null = Backup-IniFile -iniPath $testIniPath

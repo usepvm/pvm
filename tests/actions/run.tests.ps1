@@ -7,11 +7,12 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    Mock Write-Color {}
-    Mock Show-Message {}
-    Mock Write-Yellow {}
-    Mock Write-Cyan {}
-    Mock Write-Gray {}
+    Mock Write-Color { }
+    Mock Show-Message { }
+    Mock Write-Yellow { }
+    Mock Write-Cyan { }
+    Mock Write-Gray { }
+    Mock New-Lines { }
 }
 
 AfterAll {
@@ -20,11 +21,8 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe 'Show-SubProcessOutput' {
+Describe "Show-SubProcessOutput" {
     It 'Handles string output that is valid JSON array' {
-        Mock Write-Color {}
-        Mock Show-Message {}
-
         $jsonOutput = '[{"message":"test","color":"red","noNewLine":false}]'
         Show-SubProcessOutput -output $jsonOutput
 
@@ -33,9 +31,6 @@ Describe 'Show-SubProcessOutput' {
     }
 
     It 'Handles string output that is invalid JSON' {
-        Mock Write-Color {}
-        Mock Show-Message {}
-
         $invalidJson = 'not json'
         Show-SubProcessOutput -output $invalidJson
 
@@ -44,9 +39,6 @@ Describe 'Show-SubProcessOutput' {
     }
 
     It 'Handles non-string output' {
-        Mock Write-Color {}
-        Mock Show-Message {}
-
         $arrayOutput = @('line1', 'line2')
         Show-SubProcessOutput -output $arrayOutput
 
@@ -55,19 +47,15 @@ Describe 'Show-SubProcessOutput' {
     }
 }
 
-Describe 'Invoke-RunScripts' {
+Describe "Invoke-RunScripts" {
     BeforeEach {
-        Mock Write-Yellow {}
-        Mock Show-Scripts {}
-        Mock Get-Scripts { @{} }
-        Mock Write-Cyan {}
-        Mock Write-Gray {}
-        Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
-        Mock Get-Actions { @{} }
-        Mock Show-SubProcessOutput {}
-        Mock New-Lines {}
-        Mock Add-LogEntry {}
-        Mock Invoke-Sound {}
+        Mock Show-Scripts { }
+        Mock Get-Scripts { return @{} }
+        Mock Invoke-PVMSubprocess { return @{ code = 0; output = '' } }
+        Mock Get-Actions { return @{} }
+        Mock Show-SubProcessOutput { }
+        Mock Add-LogEntry { }
+        Mock Invoke-Sound { }
     }
 
     It 'Returns -1 when scriptName is null or whitespace' {
@@ -95,7 +83,7 @@ Describe 'Invoke-RunScripts' {
     }
 
     It 'Returns -1 when script is not found' {
-        Mock Get-Scripts { @{'existing' = @()} }
+        Mock Get-Scripts { return @{'existing' = @()} }
 
         $result = Invoke-RunScripts -scriptName 'nonexistent'
 
@@ -105,7 +93,7 @@ Describe 'Invoke-RunScripts' {
     }
 
     It 'Returns -1 when command is not test' {
-        Mock Get-Scripts { @{'testscript' = @('invalid command')} }
+        Mock Get-Scripts { return @{'testscript' = @('invalid command')} }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
 
@@ -114,8 +102,8 @@ Describe 'Invoke-RunScripts' {
     }
 
     It "Runs single command in subprocess and returns result with no arguments" {
-        Mock Get-Scripts { @{'testscript' = @('arg1')} }
-        Mock Get-Actions { @{ 'test' = @{ data = @{ action = { return 0 } } } } }
+        Mock Get-Scripts { return @{'testscript' = @('arg1')} }
+        Mock Get-Actions { return @{ 'test' = @{ data = @{ action = { return 0 } } } } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
 
@@ -125,8 +113,8 @@ Describe 'Invoke-RunScripts' {
     }
 
     It 'Runs single command directly and returns result' {
-        Mock Get-Scripts { @{'testscript' = @('arg1')} }
-        Mock Get-Actions { @{ 'test' = @{ data = @{ action = { return 0 } } } } }
+        Mock Get-Scripts { return @{'testscript' = @('arg1')} }
+        Mock Get-Actions { return @{ 'test' = @{ data = @{ action = { return 0 } } } } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
 
@@ -136,8 +124,8 @@ Describe 'Invoke-RunScripts' {
     }
 
     It 'Runs multiple commands in subprocess' {
-        Mock Get-Scripts { @{'testscript' = @('arg1', 'arg2')} }
-        Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
+        Mock Get-Scripts { return @{'testscript' = @('arg1', 'arg2')} }
+        Mock Invoke-PVMSubprocess { return @{ code = 0; output = '' } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
 
@@ -147,8 +135,8 @@ Describe 'Invoke-RunScripts' {
     }
 
     It 'Returns -1 when any subprocess command fails' {
-        Mock Get-Scripts { @{'testscript' = @('arg1', 'arg2')} }
-        Mock Invoke-PVMSubprocess { @{ code = -1; output = '' } }
+        Mock Get-Scripts { return @{'testscript' = @('arg1', 'arg2')} }
+        Mock Invoke-PVMSubprocess { return @{ code = -1; output = '' } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
 
@@ -165,7 +153,7 @@ Describe 'Invoke-RunScripts' {
     }
 
     It 'Handles mixed success and failure in subprocess' {
-        Mock Get-Scripts { @{'testscript' = @('arg1', 'arg2')} }
+        Mock Get-Scripts { return @{'testscript' = @('arg1', 'arg2')} }
         Mock Invoke-PVMSubprocess {
             param ($command, $arguments)
             if ($arguments -eq 'arg1') { return @{ code = 0; output = '' } }
@@ -179,7 +167,7 @@ Describe 'Invoke-RunScripts' {
 
     It "Handles exception in subprocess" {
         $scripts =@('test arg1', 'test arg2')
-        Mock Get-Scripts { @{'testscript' = $scripts } }
+        Mock Get-Scripts { return @{'testscript' = $scripts } }
         Mock Invoke-PVMSubprocess { throw 'Test exception' }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
@@ -190,8 +178,8 @@ Describe 'Invoke-RunScripts' {
     }
 
     It "Returns -1 when multi-command script has invalid verbosity" {
-        Mock Get-Scripts { @{'testscript' = @('arg1 --verbosity=None', 'arg2 --verbosity=Normal')} }
-        Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
+        Mock Get-Scripts { return @{'testscript' = @('arg1 --verbosity=None', 'arg2 --verbosity=Normal')} }
+        Mock Invoke-PVMSubprocess { return @{ code = 0; output = '' } }
 
         $result = Invoke-RunScripts -scriptName 'testscript'
 
@@ -202,8 +190,8 @@ Describe 'Invoke-RunScripts' {
     }
 
     It "Runs scripts with custom files" {
-        Mock Get-Scripts { @{'testscript' = @('arg1 --verbosity=None', 'arg2 --pester=5.7 --verbosity=None')} }
-        Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
+        Mock Get-Scripts { return @{'testscript' = @('arg1 --verbosity=None', 'arg2 --pester=5.7 --verbosity=None')} }
+        Mock Invoke-PVMSubprocess { return @{ code = 0; output = '' } }
 
         $result = Invoke-RunScripts -scriptName 'testscript' -files @('file1.ps1', 'file2.ps1')
 
@@ -219,8 +207,8 @@ Describe 'Invoke-RunScripts' {
     }
 
     It "Run scripts with empty files argument" {
-        Mock Get-Scripts { @{'testscript' = @('arg1 --verbosity=None', 'arg2 --pester=5.7 --verbosity=None')} }
-        Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
+        Mock Get-Scripts { return @{'testscript' = @('arg1 --verbosity=None', 'arg2 --pester=5.7 --verbosity=None')} }
+        Mock Invoke-PVMSubprocess { return @{ code = 0; output = '' } }
 
         $result = Invoke-RunScripts -scriptName 'testscript' -files @()
 
@@ -236,8 +224,8 @@ Describe 'Invoke-RunScripts' {
     }
 
     It "Run scripts with null files argument" {
-        Mock Get-Scripts { @{'testscript' = @('arg1 --verbosity=None', 'arg2 --pester=5.7 --verbosity=None')} }
-        Mock Invoke-PVMSubprocess { @{ code = 0; output = '' } }
+        Mock Get-Scripts { return @{'testscript' = @('arg1 --verbosity=None', 'arg2 --pester=5.7 --verbosity=None')} }
+        Mock Invoke-PVMSubprocess { return @{ code = 0; output = '' } }
 
         $result = Invoke-RunScripts -scriptName 'testscript' -files $null
 

@@ -10,16 +10,16 @@ function Select-ExtensionPackageLink {
         Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
         ForEach-Object -Process {
             $sortedGroup = $_.Group | Sort-Object -Property `
-            @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
-            @{ Expression     = {
-                    switch ($_.arch) {
-                        'x86_64' { 2 }
-                        'x64' { 2 }
-                        'x86' { 1 }
-                        default { 0 }
-                    }
-                }; Descending = $true
-            }
+                @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
+                @{ Expression = {
+                        switch ($_.arch) {
+                            'x86_64' { 2 }
+                            'x64' { 2 }
+                            'x86' { 1 }
+                            default { 0 }
+                        }
+                    }; Descending = $true
+                }
             $sortedGroup | ForEach-Object -Process {
                 $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
                 $index++

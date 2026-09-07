@@ -7,15 +7,14 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
-    # Mock global variables that the function depends on
     $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
     $script:PVMRoot = "$TEST_DRIVE\PVM"
     $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME
 
-    Mock Show-Message {}
-    Mock Show-Success {}
-    Mock Show-Error {}
-    Mock Show-Info {}
+    Mock Show-Message { }
+    Mock Show-Success { }
+    Mock Show-Error { }
+    Mock Show-Info { }
 }
 
 AfterAll {
@@ -26,7 +25,6 @@ AfterAll {
 
 Describe "Initialize-PVM" {
     BeforeAll {
-        # Initialize mock registry
         $script:MockRegistry = @{
             Machine = @{
                 'Path' = 'C:\Windows\System32'
@@ -35,12 +33,10 @@ Describe "Initialize-PVM" {
             }
         }
 
-        # Mock Add-LogEntry function
         Mock Add-LogEntry { return 0 }
 
         Mock Test-NotAdmin { return $false }
 
-        # Mock the System.Environment methods
         Mock Get-EnvVarByNameCore {
             param ($name)
 
@@ -67,7 +63,6 @@ Describe "Initialize-PVM" {
     }
 
     BeforeEach {
-        # Reset mock registry before each test
         $script:MockRegistry = @{
             Machine = @{
                 'Path' = 'C:\Windows\System32'
@@ -75,12 +70,12 @@ Describe "Initialize-PVM" {
             }
         }
 
-        Mock Get-EnvVarByName -MockWith { return $null }
-        Mock Set-EnvVar -MockWith { return 0 }
-        Mock Test-DirectoryExists -MockWith { return $false }
+        Mock Get-EnvVarByName { return $null }
+        Mock Set-EnvVar { return 0 }
+        Mock Test-DirectoryExists { return $false }
         Mock New-Directory { return 0 }
-        Mock Add-LogEntry -MockWith { return 0 }
-        Mock Optimize-SystemPath -MockWith {}
+        Mock Add-LogEntry { return 0 }
+        Mock Optimize-SystemPath { }
     }
 
     Context "When Path environment variable is empty" {
@@ -165,7 +160,7 @@ Describe "Initialize-PVM" {
 
     Context "When errors occur" {
         It "Should handle exceptions and log them" {
-            Mock Get-EnvVarByName -MockWith { throw 'Test exception' }
+            Mock Get-EnvVarByName { throw 'Test exception' }
 
             $result = Initialize-PVM
 
@@ -175,8 +170,8 @@ Describe "Initialize-PVM" {
         }
 
         It "Returns error code when New-Directory fails" {
-            Mock Get-EnvVarByName -MockWith { return $null }
-            Mock New-Directory -MockWith { return -1 }
+            Mock Get-EnvVarByName { return $null }
+            Mock New-Directory { return -1 }
 
             $result = Initialize-PVM
 
@@ -191,7 +186,7 @@ Describe "Initialize-PVM" {
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
                 return "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
             }
-            Mock Set-EnvVar { -1 }
+            Mock Set-EnvVar { return -1 }
 
             $result = Initialize-PVM
 
@@ -218,7 +213,7 @@ Describe "Initialize-PVMDirectories" {
 
 Describe "Initialize-PVMFiles" {
     BeforeAll {
-        Mock New-ExamplePHPProfile { return 0 }
+        Mock New-ProfileExample { return 0 }
         Mock New-ProfileTemplate { return 0 }
         Mock Set-ZendExtensionsList { return 0 }
         Mock Set-AliasesList { return 0 }
@@ -231,7 +226,7 @@ Describe "Initialize-PVMFiles" {
     }
 
     It "Returns -1 when the example profile creation fails" {
-        Mock New-ExamplePHPProfile { return -1 }
+        Mock New-ProfileExample { return -1 }
         $result = Initialize-PVMFiles
         $result | Should -Be @(-1, 0, 0, 0, 0)
     }

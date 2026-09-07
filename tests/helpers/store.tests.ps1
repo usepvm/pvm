@@ -7,7 +7,8 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
-    Mock Show-Error {}
+
+    Mock Show-Error { }
 }
 
 AfterAll {
@@ -233,6 +234,18 @@ Describe "Save-CachedData" {
     }
 }
 
+Describe "Get-CacheFilePath" {
+    It "Returns the correct cache file path for a given filename" {
+        $path = Get-CacheFilePath -filename 'test'
+        $path | Should -Be "$($PVMConfig.paths.directories.cache)\test.json"
+    }
+
+    It "Handles filenames with .json extension" {
+        $path = Get-CacheFilePath -filename 'test.json'
+        $path | Should -Be "$($PVMConfig.paths.directories.cache)\test.json"
+    }
+}
+
 Describe "Test-HasData" {
     It "Returns false for null data" {
         $result = Test-HasData -data $null
@@ -344,7 +357,7 @@ Describe "Get-OrUpdateCache" {
         }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Get-Example
+            return Get-Example
         }
 
         Should -Invoke Get-DataFromCache -Exactly 1
@@ -363,7 +376,7 @@ Describe "Get-OrUpdateCache" {
         Mock Test-CanUseCache { return $false }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Get-Example
+            return Get-Example
         }
 
         Should -Invoke Get-Example -Exactly 1
@@ -376,7 +389,7 @@ Describe "Get-OrUpdateCache" {
         Mock Get-Example { return $null }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Get-Example
+            return Get-Example
         }
 
         Should -Invoke Get-DataFromCache -Exactly 1
@@ -394,7 +407,7 @@ Describe "Get-OrUpdateCache" {
         }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Get-Example
+            return Get-Example
         }
 
         Should -Invoke Get-DataFromCache -Exactly 1
@@ -412,7 +425,7 @@ Describe "Get-OrUpdateCache" {
         Mock Test-CanUseCache { return $false }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Get-Example
+            return Get-Example
         }
 
         Should -Invoke Get-Example -Exactly 1
@@ -430,7 +443,7 @@ Describe "Get-OrUpdateCache" {
         Mock Test-CanUseCache { return $false }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Get-Example
+            return Get-Example
         }
 
         Should -Invoke Get-Example -Exactly 1

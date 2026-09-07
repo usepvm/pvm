@@ -3,10 +3,11 @@ BeforeAll {
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
     $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\update-check-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    Mock Show-Error {}
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+
+    Mock Show-Error { }
 }
 
 AfterAll {
@@ -64,9 +65,7 @@ Describe "Set-LastUpdateCheckTimestamp" {
 
     Context "When writing succeeds" {
         It "Creates the cache directory" {
-            Mock New-Directory {
-                return 0
-            }
+            Mock New-Directory { return 0 }
             Mock Get-Date { return [datetime]'2026-01-01' }
 
             $result = Set-LastUpdateCheckTimestamp
@@ -89,9 +88,9 @@ Describe "Set-LastUpdateCheckTimestamp" {
 
     Context "When writing fails" {
         It "Returns -1 when New-Directory fails" {
-            Mock Show-Error {}
+            Mock Show-Error { }
             Mock New-Directory { return -1 }
-            Mock Set-ContentWrapper {}
+            Mock Set-ContentWrapper { }
 
             $result = Set-LastUpdateCheckTimestamp
 
@@ -114,7 +113,7 @@ Describe "Test-ShouldCheckForUpdates" {
     Context "When update checks are disabled" {
         It "Returns false without checking the last timestamp" {
             $PVMConfig.env.ENABLE_UPDATE_CHECK = $false
-            Mock Get-LastUpdateCheckTimestamp {}
+            Mock Get-LastUpdateCheckTimestamp { }
 
             $result = Test-ShouldCheckForUpdates
 
@@ -165,14 +164,14 @@ Describe "Test-ShouldCheckForUpdates" {
 
 Describe "Test-CheckForUpdatesQuietly" {
     BeforeAll {
-        Mock Show-Info {}
+        Mock Show-Info { }
     }
 
     Context "When an update check is not due" {
         It "Returns without calling Update-PVM" {
             Mock Test-ShouldCheckForUpdates { return $false }
-            Mock Update-PVM {}
-            Mock Set-LastUpdateCheckTimestamp {}
+            Mock Update-PVM { }
+            Mock Set-LastUpdateCheckTimestamp { }
 
             $result = Test-CheckForUpdatesQuietly
 
@@ -186,7 +185,7 @@ Describe "Test-CheckForUpdatesQuietly" {
         It "Calls Update-PVM with checkOnly and records the timestamp" {
             Mock Test-ShouldCheckForUpdates { return $true }
             Mock Update-PVM { return @{ code = 0; message = 'No update available' } }
-            Mock Set-LastUpdateCheckTimestamp {}
+            Mock Set-LastUpdateCheckTimestamp { }
 
             $result = Test-CheckForUpdatesQuietly
 
@@ -200,7 +199,7 @@ Describe "Test-CheckForUpdatesQuietly" {
         It "Writes a message to the host when an update is available" {
             Mock Test-ShouldCheckForUpdates { return $true }
             Mock Update-PVM { return @{ code = 0; message = 'Update available: v2.7.0' } }
-            Mock Set-LastUpdateCheckTimestamp {}
+            Mock Set-LastUpdateCheckTimestamp { }
 
             $result = Test-CheckForUpdatesQuietly
 
@@ -213,7 +212,7 @@ Describe "Test-CheckForUpdatesQuietly" {
         It "Does not write to the host when the result code is not 0" {
             Mock Test-ShouldCheckForUpdates { return $true }
             Mock Update-PVM { return @{ code = -1; message = 'Update available: v2.7.0' } }
-            Mock Set-LastUpdateCheckTimestamp {}
+            Mock Set-LastUpdateCheckTimestamp { }
 
             $result = Test-CheckForUpdatesQuietly
 
@@ -224,7 +223,7 @@ Describe "Test-CheckForUpdatesQuietly" {
         It "Does not write to the host when no update is available" {
             Mock Test-ShouldCheckForUpdates { return $true }
             Mock Update-PVM { return @{ code = 0; message = 'PVM is already up to date' } }
-            Mock Set-LastUpdateCheckTimestamp {}
+            Mock Set-LastUpdateCheckTimestamp { }
 
             $result = Test-CheckForUpdatesQuietly
 
@@ -235,8 +234,8 @@ Describe "Test-CheckForUpdatesQuietly" {
         It "Returns -1 and logs error when Update-PVM throws exception" {
             Mock Test-ShouldCheckForUpdates { return $true }
             Mock Update-PVM { throw 'Network error' }
-            Mock Set-LastUpdateCheckTimestamp {}
-            Mock Add-LogEntry {}
+            Mock Set-LastUpdateCheckTimestamp { }
+            Mock Add-LogEntry { }
 
             $result = Test-CheckForUpdatesQuietly
 

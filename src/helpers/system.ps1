@@ -96,27 +96,34 @@ function Get-OptimizedEnv {
     return $value
 }
 
+function ConvertTo-EnvEntries {
+    param ($value, [switch]$removeDuplicates)
+
+    if ($removeDuplicates) {
+        $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    }
+
+    $rebuiltValue = foreach ($item in $value -split ';') {
+        $trimmedItem = $item.Trim()
+        if ([string]::IsNullOrWhiteSpace($trimmedItem)) { continue }
+        if ($removeDuplicates -and -not $seen.Add($trimmedItem)) { continue }
+
+        $trimmedItem
+    }
+
+    return ($rebuiltValue -join ';')
+}
+
 function Format-EnvContent {
     param ($value)
 
-    $rebuiltValue = $value -split ';' |
-    ForEach-Object -Process { $_.Trim() } |
-    Where-Object -FilterScript { -not [string]::IsNullOrWhiteSpace($_) }
-
-    return ($rebuiltValue -join ';')
+   return ConvertTo-EnvEntries -value $value
 }
 
 function Remove-PathDuplicates {
     param ($path)
 
-    $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-
-    $entries = $Path -split ';' |
-    ForEach-Object -Process { $_.Trim() } |
-    Where-Object -FilterScript { -not [string]::IsNullOrWhiteSpace($_) } |
-    Where-Object -FilterScript { $seen.Add($_) }
-
-    return ($entries -join ';')
+    return ConvertTo-EnvEntries -value $path -RemoveDuplicates
 }
 
 function Optimize-SystemPath {

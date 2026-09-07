@@ -652,7 +652,7 @@ function Import-PHPProfile {
     }
 }
 
-function New-ExamplePHPProfile {
+function New-ProfileExample {
     try {
         $profileExample = [ordered]@{
             name        = 'profile-example'

@@ -7,15 +7,15 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
 
-    Mock Write-Color {}
-    Mock Show-Info {}
-    Mock Show-Success {}
-    Mock Show-Error {}
-    Mock Show-Message {}
+    Mock Write-Color { }
+    Mock Show-Info { }
+    Mock Show-Success { }
+    Mock Show-Error { }
+    Mock Show-Message { }
 
     Mock Get-MatchingPHPVersions {
         param ($version)
-        # Mock implementation
+
         if ($version -like '8.*') {
             return @(
                 @{version='8.1'; path='C:\php\8.1'},
@@ -27,33 +27,23 @@ BeforeAll {
 
     Mock Get-UserSelectedPHPVersion {
         param ($installedVersions)
-        # If we're in the Auto-Select test and a specific version was detected
+
         if ($script:TestScenario -eq 'composer' -or $script:TestScenario -eq '.php-version' -and $installedVersions) {
-            # Find the version that matches what we detected (8.2)
             $selected = $installedVersions | Where-Object -FilterScript { $_.version -eq '8.2' }
             if ($selected) {
                 return @{code=0; version=$selected.version; path=$selected.path}
             }
         }
 
-        # Default behavior - select first version
         if ($installedVersions -and $installedVersions.Count -gt 0) {
             return @{code=0; version=$installedVersions[0].version; path=$installedVersions[0].path}
         }
         return $null
     }
 
-    Mock New-SymbolicLink {
-        param ($link, $target)
-        # Mock implementation
-        return @{ code = 0 }
-    }
+    Mock New-SymbolicLink { return @{ code = 0 } }
 
-    Mock Add-LogEntry {
-        param ($logPath, $message, $data)
-        # Mock implementation
-        return $true
-    }
+    Mock Add-LogEntry { return 0 }
 }
 
 AfterAll {
@@ -148,7 +138,6 @@ Describe "Update-PHPVersion" {
     }
 
     It "Should handle exceptions gracefully" {
-        # Force an exception by mocking Get-MatchingPHPVersions to throw
         Mock Get-MatchingPHPVersions { throw 'Test exception' }
         $result = Update-PHPVersion -version '8.1'
         $result | Should -Be -1

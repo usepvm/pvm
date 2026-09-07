@@ -14,7 +14,6 @@ BeforeAll {
     Mock Show-Info { }
     Mock Write-Gray { }
 
-    # Mock external functions that aren't defined in the provided code
     Mock New-Directory { return 0 }
     Mock Add-LogEntry { param ($logPath, $message, $data) return 0 }
     Mock Get-SourceUrls {
@@ -39,7 +38,6 @@ Describe "Get-FromSource" {
             $result = & $scriptBlock @argumentList
             return $result.pvmData
         }
-        # Clean test directory
         if (Test-Path "$TEST_DRIVE\data") {
             Remove-ItemWrapper -path "$TEST_DRIVE\data" -Recurse -Force
         }
@@ -48,7 +46,6 @@ Describe "Get-FromSource" {
     }
 
     It "Should fetch and filter PHP versions from source" {
-        # Mock web response
         $mockLinks = @(
             @{ href = $null },
             @{ href = 'php-8.2.0-Win32-x64.zip' },
@@ -60,11 +57,9 @@ Describe "Get-FromSource" {
             @{ href = 'php-test-pack-8.3.32.zip' }
             @{ href = 'php-8.2.0-nts-Win32-x64.zip' }
         )
-
         Mock Invoke-WebRequestWrapper {
             return @{ Links = $mockLinks }
         }
-
         Mock Save-CachedData { }
 
         $result = Get-FromSource
@@ -116,7 +111,7 @@ Describe "Get-PHPListToInstall" {
     It "Should read from cache" {
         Mock Test-Path { return $true }
         $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString('yyyy-MM-ddTHH:mm:ss.fffffffK')
-        Mock Get-ItemWrapper { @{ LastWriteTime = $timeWithinLastWeek } }
+        Mock Get-ItemWrapper { return @{ LastWriteTime = $timeWithinLastWeek } }
         Mock Get-DataFromCache {
             return @{
                 'Archives' = @('php-8.1.0-Win32-x64.zip')
@@ -263,7 +258,7 @@ Describe "Get-AvailablePHPVersions" {
         }
         Mock Test-Path { return $true }
         $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString('yyyy-MM-ddTHH:mm:ss.fffffffK')
-        Mock Get-ItemWrapper { @{ LastWriteTime = $timeWithinLastWeek } }
+        Mock Get-ItemWrapper { return @{ LastWriteTime = $timeWithinLastWeek } }
 
         $code = Get-AvailablePHPVersions
 
@@ -327,7 +322,7 @@ Describe "Get-AvailablePHPVersions" {
 
     It "Should force fetch from source when cache not exists" {
         Mock Test-Path { return $false }
-        Mock Get-DataFromCache { }  # Remove return value since it won't be called
+        Mock Get-DataFromCache { }
         Mock Save-CachedData { return 0 }
         Mock Get-FromSource {
             return @{
@@ -362,7 +357,7 @@ Describe "Get-AvailablePHPVersions" {
         }
         Mock Test-Path { return $true }
         $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString('yyyy-MM-ddTHH:mm:ss.fffffffK')
-        Mock Get-ItemWrapper { @{ LastWriteTime = $timeWithinLastWeek } }
+        Mock Get-ItemWrapper { return @{ LastWriteTime = $timeWithinLastWeek } }
 
         $code = Get-AvailablePHPVersions
 
@@ -423,8 +418,9 @@ Describe "Show-InstalledPHPVersions" {
             @{Version = '7.4.33'; Arch = 'x64'; BuildType = 'NTS'}
         )}
 
-        Show-InstalledPHPVersions
+        $code = Show-InstalledPHPVersions
 
+        $code | Should -Be 0
         Should -Invoke Show-Info -ParameterFilter { $message -like '*Installed Versions*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.2.0*(Current)*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.1.5*' }
@@ -439,6 +435,19 @@ Describe "Show-InstalledPHPVersions" {
         )}
         $code = Show-InstalledPHPVersions -term '8.2'
         $code | Should -Be 0
+    }
+
+    It "Return -1 when no installed versions matching filter" {
+        Mock Get-InstalledPHPVersions { return @(
+            @{Version = '8.2.0'; Arch = 'x64'; BuildType = 'NTS'}
+            @{Version = '8.2.0'; Arch = 'x64'; BuildType = 'TS'}
+            @{Version = '8.1.5'; Arch = 'x64'; BuildType = 'NTS'}
+        )}
+
+        $code = Show-InstalledPHPVersions -term '8.3'
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*No PHP versions found matching '8.3'*" }
     }
 
     It "Should handle no installed versions" {

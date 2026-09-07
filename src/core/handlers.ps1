@@ -1,4 +1,35 @@
 ﻿
+function Invoke-Help {
+    param ($arguments)
+
+    $command = $arguments[0]
+    if ($command) {
+        $actions = Get-Actions
+        $usage = $actions[$command].data.usage
+        if ($null -eq $usage) {
+            Show-Warning -message "`nNo usage information available for the '$command' command."
+            return -1
+        }
+        foreach ($key in $usage.Keys) {
+            Show-Info -message "`n$key`:"
+            if ($usage[$key] -is [array]) {
+                $($usage.$key) | ForEach-Object -Process { Show-Message -message "  $_" }
+            } else {
+                Show-Message -message "  $($usage[$key])"
+            }
+        }
+    } else {
+        Show-Usage -arguments $arguments
+    }
+
+    return 0
+}
+
+function Invoke-Version {
+    Show-PVMVersion
+    return 0
+}
+
 function Invoke-Setup {
     if (Test-PVMNotSetup) {
         $null = Initialize-EnvironmentDirectoriesAndFiles
@@ -17,18 +48,6 @@ function Invoke-Setup {
     }
 
     return $code
-}
-
-function Invoke-Repair {
-    $codes = @()
-    $codes += Initialize-EnvironmentDirectoriesAndFiles
-
-    $envCode = New-EnvFile
-    if ($envCode -eq 0) { Wait-ForEnvEdit }
-    $codes += if ($envCode -eq -1) { -1 } else { 0 }
-
-    if ($codes | Where-Object -FilterScript { $_ -ne 0 }) { return -1 }
-    return 0
 }
 
 function Invoke-Current {
@@ -122,22 +141,6 @@ function Invoke-Install {
     return (Install-PHP -version $version -arch $arch -buildType $buildType)
 }
 
-function Invoke-Uninstall {
-    param ($arguments)
-
-    $version = $arguments[0]
-
-    if (-not $version) {
-        Show-Warning -message "`nPlease provide a PHP version to uninstall"
-        return -1
-    }
-
-    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
-    $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
-
-    return (Uninstall-PHP -version $version -skipConfirmation $skipConfirmation)
-}
-
 function Invoke-Use {
     param ($arguments)
 
@@ -160,6 +163,22 @@ function Invoke-Use {
     return (Update-PHPVersion -version $version)
 }
 
+function Invoke-Uninstall {
+    param ($arguments)
+
+    $version = $arguments[0]
+
+    if (-not $version) {
+        Show-Warning -message "`nPlease provide a PHP version to uninstall"
+        return -1
+    }
+
+    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
+    $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+
+    return (Uninstall-PHP -version $version -skipConfirmation $skipConfirmation)
+}
+
 function Invoke-Ini {
     param ($arguments)
 
@@ -174,133 +193,6 @@ function Invoke-Ini {
     } else { @() }
 
     return (Invoke-IniAction -action $action -params $remainingArgs)
-}
-
-function Invoke-Test {
-    param ($arguments)
-
-    $options = @{
-        exclude   = $null
-        verbosity = $PVMConfig.test.verbosity.default
-        coverage  = $PVMConfig.test.coverage.enabled
-        target    = $PVMConfig.test.coverage.default
-        tag       = $null
-        sortBy    = $null
-        groupBy   = $null
-    }
-    $exclude = $null
-    $pesterVersion = $null
-    $testsNames = $arguments | Where-Object -FilterScript {
-        if (($_ -join (',') -match '^--exclude=(.+)$')) {
-            $exclude = $Matches[1] -split ','
-            return $false
-        }
-        if ($_ -match '^--sort=(.+)$') {
-            $options.sortBy = $Matches[1]
-            return $false
-        }
-        if ($_ -match '^--group=(.+)$') {
-            $options.groupBy = $Matches[1]
-            return $false
-        }
-        if ($_ -match '^--tag=(.+)$') {
-            $options.tag = $Matches[1]
-            return $false
-        }
-        if ($_ -match '^--coverage(?:=(\-?\d+(?:\.\d+)?))?$') {
-            $options.coverage = $true
-            if ($Matches[1]) {
-                $options.target = [decimal] $Matches[1]
-            }
-            return $false
-        }
-        if ($_ -match '^--verbosity=(.+)$') {
-            $options.verbosity = $Matches[1]
-            return $false
-        }
-        if ($_ -match '^--pester=(.+)$') {
-            $pesterVersion = $Matches[1]
-            return $false
-        }
-        if ($_ -match '^--mute') {
-            $PVMConfig.env.SOUNDS_DISABLED = $true
-            return $false
-        }
-        if ($_ -match '^-{1,2}') {
-            return $false
-        }
-        return $true
-    }
-
-    if ($options.target -lt 0 -or $options.target -gt 100) {
-        Show-Warning -message "`nInvalid coverage value : $($options.target) | Min: 0, Max: 100"
-        return -1
-    }
-
-    return (Initialize-Tests -testsNames $testsNames -options $options -exclude $exclude -pesterVersion $pesterVersion)
-}
-
-function Invoke-Log {
-    param ($arguments)
-
-    $clearLog = $arguments -contains '--clear'
-
-    if ($clearLog) {
-        $skipConfirmation = [bool]($arguments | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
-        if (-not $skipConfirmation) {
-            $response = Read-HostWrapper -prompt "`nAre you sure you want to clear the log? (y/n)"
-            if (Test-NoResponse -response $response) {
-                Write-Gray -message "`nLog clearing cancelled"
-                return -1
-            }
-        }
-
-        Clear-ContentWrapper -path $PVMConfig.paths.files.logError
-        Show-Success -message "`nLog Cleared Successfully"
-        return 0
-    }
-
-    $pageSizeArg = $arguments | Where-Object -FilterScript { $_ -match '^--pageSize=(.+)$' }
-    if ($pageSizeArg) {
-        $pageSize = $pageSizeArg -replace '^--pageSize=', ''
-    } else {
-        $pageSize = $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE
-    }
-
-    $term = ($arguments | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
-
-    return (Show-Log -pageSize $pageSize -term $term)
-}
-
-function Invoke-Version {
-    Show-PVMVersion
-    return 0
-}
-
-function Invoke-Help {
-    param ($arguments)
-
-    $command = $arguments[0]
-    if ($command) {
-        $actions = Get-Actions
-        $usage = $actions[$command].data.usage
-        if ($null -eq $usage) {
-            Show-Warning -message "`nNo usage information available for the '$command' command."
-            return -1
-        }
-        foreach ($key in $usage.Keys) {
-            Show-Info -message "`n$key`:"
-            if ($usage[$key] -is [array]) {
-                $($usage.$key) | ForEach-Object -Process { Show-Message -message "  $_" }
-            } else {
-                Show-Message -message "  $($usage[$key])"
-            }
-        }
-    } else {
-        Show-Usage -arguments $arguments
-    }
-
-    return 0
 }
 
 function Invoke-Profile {
@@ -389,73 +281,6 @@ function Invoke-Profile {
     }
 }
 
-function Invoke-Cache {
-    param ($arguments)
-
-    $action = $arguments[0]
-
-    if (-not $action) {
-        Show-Warning -message "`nPlease specify an action for 'pvm cache'. Use 'list', 'show', 'delete', 'clear'."
-        return -1
-    }
-
-    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
-
-    $action = Resolve-Alias -alias $action
-
-    switch ($action.ToLower()) {
-        'list' {
-            return (Show-CacheFiles)
-        }
-        'show' {
-            if ($remainingArgs.Count -eq 0) {
-                Show-Warning -message "`nPlease provide a cache name: pvm cache show <name>"
-                return -1
-            }
-            $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
-            return (Show-CachedData -cacheName $cacheName)
-        }
-        'delete' {
-            if ($remainingArgs.Count -eq 0) {
-                Show-Warning -message "`nPlease provide a cache name: pvm cache delete <name>"
-                return -1
-            }
-
-            $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
-            $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
-            return (Remove-CacheFile -cacheName $cacheName -skipConfirmation $skipConfirmation)
-        }
-        'clear' {
-            $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
-            return (Clear-CacheFiles -skipConfirmation $skipConfirmation)
-        }
-        default {
-            Show-Error -message "`nUnknown action '$action'. Use 'list', 'show', 'delete', or 'clear'."
-            return -1
-        }
-    }
-}
-
-function Invoke-Aliases {
-    $aliases = Get-Aliases
-
-    if ($aliases.Count -eq 0) {
-        Show-Error -message 'No aliases found.'
-        return -1
-    }
-
-    Show-Message -message "`n`nAvailable Aliases:`n"
-    $maxAliasLength = ($aliases.Keys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-    $aliases.Keys | ForEach-Object -Process {
-        $alias = "$_ ".PadRight($maxAliasLength, '.')
-        $command = $aliases[$_]
-
-        Show-Message -message "  $alias $command"
-    }
-
-    return 0
-}
-
 function Invoke-Info {
     param ($arguments)
 
@@ -526,12 +351,187 @@ function Invoke-Info {
     return 0
 }
 
+function Invoke-Aliases {
+    $aliases = Get-Aliases
+
+    if ($aliases.Count -eq 0) {
+        Show-Error -message 'No aliases found.'
+        return -1
+    }
+
+    Show-Message -message "`n`nAvailable Aliases:`n"
+    $maxAliasLength = ($aliases.Keys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+    $aliases.Keys | ForEach-Object -Process {
+        $alias = "$_ ".PadRight($maxAliasLength, '.')
+        $command = $aliases[$_]
+
+        Show-Message -message "  $alias $command"
+    }
+
+    return 0
+}
+
+function Invoke-Log {
+    param ($arguments)
+
+    $clearLog = $arguments -contains '--clear'
+
+    if ($clearLog) {
+        $skipConfirmation = [bool]($arguments | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+        if (-not $skipConfirmation) {
+            $response = Read-HostWrapper -prompt "`nAre you sure you want to clear the log? (y/n)"
+            if (Test-NoResponse -response $response) {
+                Write-Gray -message "`nLog clearing cancelled"
+                return -1
+            }
+        }
+
+        Clear-ContentWrapper -path $PVMConfig.paths.files.logError
+        Show-Success -message "`nLog Cleared Successfully"
+        return 0
+    }
+
+    $pageSizeArg = $arguments | Where-Object -FilterScript { $_ -match '^--pageSize=(.+)$' }
+    if ($pageSizeArg) {
+        $pageSize = $pageSizeArg -replace '^--pageSize=', ''
+    } else {
+        $pageSize = $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE
+    }
+
+    $term = ($arguments | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
+
+    return (Show-Log -pageSize $pageSize -term $term)
+}
+
+function Invoke-Repair {
+    $codes = @()
+    $codes += Initialize-EnvironmentDirectoriesAndFiles
+
+    $envCode = New-EnvFile
+    if ($envCode -eq 0) { Wait-ForEnvEdit }
+    $codes += if ($envCode -eq -1) { -1 } else { 0 }
+
+    if ($codes | Where-Object -FilterScript { $_ -ne 0 }) { return -1 }
+    return 0
+}
+
+function Invoke-Cache {
+    param ($arguments)
+
+    $action = $arguments[0]
+
+    if (-not $action) {
+        Show-Warning -message "`nPlease specify an action for 'pvm cache'. Use 'list', 'show', 'delete', 'clear'."
+        return -1
+    }
+
+    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
+
+    $action = Resolve-Alias -alias $action
+
+    switch ($action.ToLower()) {
+        'list' {
+            return (Show-CacheFiles)
+        }
+        'show' {
+            if ($remainingArgs.Count -eq 0) {
+                Show-Warning -message "`nPlease provide a cache name: pvm cache show <name>"
+                return -1
+            }
+            $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
+            return (Show-CachedData -cacheName $cacheName)
+        }
+        'delete' {
+            if ($remainingArgs.Count -eq 0) {
+                Show-Warning -message "`nPlease provide a cache name: pvm cache delete <name>"
+                return -1
+            }
+
+            $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
+            $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+            return (Remove-CacheFile -cacheName $cacheName -skipConfirmation $skipConfirmation)
+        }
+        'clear' {
+            $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
+            return (Clear-CacheFiles -skipConfirmation $skipConfirmation)
+        }
+        default {
+            Show-Error -message "`nUnknown action '$action'. Use 'list', 'show', 'delete', or 'clear'."
+            return -1
+        }
+    }
+}
+
 function Invoke-Update {
     param ($arguments)
 
     $checkOnly = $arguments -contains '--check'
 
     return (Update-PVM -checkOnly $checkOnly)
+}
+
+function Invoke-Test {
+    param ($arguments)
+
+    $options = @{
+        exclude   = $null
+        verbosity = $PVMConfig.test.verbosity.default
+        coverage  = $PVMConfig.test.coverage.enabled
+        target    = $PVMConfig.test.coverage.default
+        tag       = $null
+        sortBy    = $null
+        groupBy   = $null
+    }
+    $exclude = $null
+    $pesterVersion = $null
+    $testsNames = $arguments | Where-Object -FilterScript {
+        if (($_ -join (',') -match '^--exclude=(.+)$')) {
+            $exclude = $Matches[1] -split ','
+            return $false
+        }
+        if ($_ -match '^--sort=(.+)$') {
+            $options.sortBy = $Matches[1]
+            return $false
+        }
+        if ($_ -match '^--group=(.+)$') {
+            $options.groupBy = $Matches[1]
+            return $false
+        }
+        if ($_ -match '^--tag=(.+)$') {
+            $options.tag = $Matches[1]
+            return $false
+        }
+        if ($_ -match '^--coverage(?:=(\-?\d+(?:\.\d+)?))?$') {
+            $options.coverage = $true
+            if ($Matches[1]) {
+                $options.target = [decimal] $Matches[1]
+            }
+            return $false
+        }
+        if ($_ -match '^--verbosity=(.+)$') {
+            $options.verbosity = $Matches[1]
+            return $false
+        }
+        if ($_ -match '^--pester=(.+)$') {
+            $pesterVersion = $Matches[1]
+            return $false
+        }
+        if ($_ -match '^--mute') {
+            $PVMConfig.env.SOUNDS_DISABLED = $true
+            return $false
+        }
+        if ($_ -match '^-{1,2}') {
+            return $false
+        }
+        return $true
+    }
+
+    if ($options.target -lt 0 -or $options.target -gt 100) {
+        Show-Warning -message "`nInvalid coverage value : $($options.target) | Min: 0, Max: 100"
+        return -1
+    }
+
+    return (Initialize-Tests -testsNames $testsNames -options $options -exclude $exclude -pesterVersion $pesterVersion)
 }
 
 function Invoke-Run {

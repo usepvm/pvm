@@ -15,14 +15,14 @@ Describe "Test-IsNotQuiet" {
 
 Describe "Show-Scripts" {
     BeforeEach {
-        Mock Write-Cyan {}
-        Mock Write-White {}
-        Mock Write-DarkGray {}
+        Mock Write-Cyan { }
+        Mock Write-White { }
+        Mock Write-DarkGray { }
     }
 
     It "Displays the available scripts and commands" {
         Mock Get-Scripts {
-            [ordered]@{
+            return [ordered]@{
                 build = @('test --filter build', 'test --filter unit')
                 lint  = @('test --filter lint')
             }
@@ -42,7 +42,7 @@ Describe "Show-Scripts" {
     }
 
     It "Displays no script entries when no scripts are available" {
-        Mock Get-Scripts { @{} }
+        Mock Get-Scripts { return @{} }
 
         Show-Scripts
 

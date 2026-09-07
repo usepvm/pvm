@@ -114,30 +114,6 @@ function Get-InstallAction {
     }
 }
 
-function Get-UninstallAction {
-    return @{
-        command     = 'pvm uninstall <version>';
-        description = 'Remove an installed PHP version.';
-        usage       = [ordered]@{
-            USAGE       = 'pvm uninstall <version> (alias: pvm rm <version>)'
-            DESCRIPTION = @(
-                'Removes the specified PHP version from your system.'
-                'The version must be a version number that is currently installed.'
-            )
-            ARGUMENTS   = @(
-                '<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)'
-            )
-            OPTIONS     = @(
-                '--yes|-y .................... Skip confirmation prompt'
-            )
-        }
-        action      = {
-            param ($arguments)
-            return Invoke-Uninstall -arguments $arguments
-        }
-    }
-}
-
 function Get-UseAction {
     return @{
         command     = 'pvm use <version>|[auto]';
@@ -164,20 +140,26 @@ function Get-UseAction {
     }
 }
 
-function Get-InfoAction {
+function Get-UninstallAction {
     return @{
-        command     = 'pvm info [--verbose]';
-        description = 'Show PVM status and environment information.';
+        command     = 'pvm uninstall <version>';
+        description = 'Remove an installed PHP version.';
         usage       = [ordered]@{
-            USAGE       = 'pvm info | pvm info --verbose'
+            USAGE       = 'pvm uninstall <version> (alias: pvm rm <version>)'
             DESCRIPTION = @(
-                'Displays information about the environment,'
-                'including PVM version, currently active PHP version, paths, and environment variables.'
+                'Removes the specified PHP version from your system.'
+                'The version must be a version number that is currently installed.'
+            )
+            ARGUMENTS   = @(
+                '<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)'
+            )
+            OPTIONS     = @(
+                '--yes|-y .................... Skip confirmation prompt'
             )
         }
         action      = {
             param ($arguments)
-            return Invoke-Info -arguments $arguments
+            return Invoke-Uninstall -arguments $arguments
         }
     }
 }
@@ -280,6 +262,82 @@ function Get-ProfileAction {
     }
 }
 
+function Get-InfoAction {
+    return @{
+        command     = 'pvm info [--verbose]';
+        description = 'Show PVM status and environment information.';
+        usage       = [ordered]@{
+            USAGE       = 'pvm info | pvm info --verbose'
+            DESCRIPTION = @(
+                'Displays information about the environment,'
+                'including PVM version, currently active PHP version, paths, and environment variables.'
+            )
+        }
+        action      = {
+            param ($arguments)
+            return Invoke-Info -arguments $arguments
+        }
+    }
+}
+
+function Get-AliasesAction {
+    return @{
+        command     = 'pvm aliases';
+        description = 'List all command aliases.';
+        usage       = [ordered]@{
+            USAGE       = 'pvm aliases'
+            DESCRIPTION = @(
+                'Lists all available aliases.'
+            )
+        }
+        action      = { return Invoke-Aliases }
+    }
+}
+
+function Get-LogAction {
+    return @{
+        command     = 'pvm log <options>';
+        description = 'Display recent PVM log entries.';
+        usage       = [ordered]@{
+            USAGE       = "pvm log [--pageSize=<number>] [--search=<term>] [--clear] (default is $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE))"
+            DESCRIPTION = @(
+                'Displays the PVM log file contents, showing recent errors,'
+                'and system messages. Useful for troubleshooting issues.'
+            )
+            EXAMPLES    = @(
+                "pvm log ................... Shows the last $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE) entries of the log file"
+                'pvm log --pageSize=50 ..... Shows the last 50 entries of the log file'
+                "pvm log --search=error .... Shows entries matching 'error' term"
+                'pvm log --clear ........... Clears the log file'
+            )
+            OPTIONS     = @(
+                '--clear .................... Clear the log file'
+            )
+        }
+        action      = {
+            param ($arguments)
+            return Invoke-Log -arguments $arguments
+        }
+    }
+}
+
+function Get-RepairAction {
+    return @{
+        command     = 'pvm repair';
+        description = 'Repair the PVM environment and fix the .env file.';
+        usage       = [ordered]@{
+            USAGE       = 'pvm repair'
+            DESCRIPTION = @(
+                'Ensures all required PVM directories and default files exist.',
+                'Safe to run multiple times — existing files and directories are left untouched.',
+                'Useful after a partial installation or when files are accidentally deleted.'
+                'Also checks and fixes the .env file to ensure it is valid and contains all required variables.'
+            )
+        }
+        action      = { return Invoke-Repair }
+    }
+}
+
 function Get-CacheAction {
     return @{
         command     = 'pvm cache <action> <args>';
@@ -309,60 +367,28 @@ function Get-CacheAction {
     }
 }
 
-function Get-AliasesAction {
+function Get-UpdateAction {
     return @{
-        command     = 'pvm aliases';
-        description = 'List all command aliases.';
+        command     = 'pvm update [--check]';
+        description = 'Update PVM to the latest version from git repository.';
         usage       = [ordered]@{
-            USAGE       = 'pvm aliases'
+            USAGE       = 'pvm update [--check]'
             DESCRIPTION = @(
-                'Lists all available aliases.'
-            )
-        }
-        action      = { return Invoke-Aliases }
-    }
-}
-
-function Get-RepairAction {
-    return @{
-        command     = 'pvm repair';
-        description = 'Repair the PVM environment and fix the .env file.';
-        usage       = [ordered]@{
-            USAGE       = 'pvm repair'
-            DESCRIPTION = @(
-                'Ensures all required PVM directories and default files exist.',
-                'Safe to run multiple times — existing files and directories are left untouched.',
-                'Useful after a partial installation or when files are accidentally deleted.'
-                'Also checks and fixes the .env file to ensure it is valid and contains all required variables.'
-            )
-        }
-        action      = { return Invoke-Repair }
-    }
-}
-
-function Get-LogAction {
-    return @{
-        command     = 'pvm log <options>';
-        description = 'Display recent PVM log entries.';
-        usage       = [ordered]@{
-            USAGE       = "pvm log [--pageSize=<number>] [--search=<term>] [--clear] (default is $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE))"
-            DESCRIPTION = @(
-                'Displays the PVM log file contents, showing recent errors,'
-                'and system messages. Useful for troubleshooting issues.'
+                'Updates PVM by pulling the latest changes from the git repository.',
+                'Requires Git to be installed and PVM to be installed from a git clone.',
+                'Checks for uncommitted changes before updating.'
             )
             EXAMPLES    = @(
-                "pvm log ................... Shows the last $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE) entries of the log file"
-                'pvm log --pageSize=50 ..... Shows the last 50 entries of the log file'
-                "pvm log --search=error .... Shows entries matching 'error' term"
-                'pvm log --clear ........... Clears the log file'
+                'pvm update ................. Updates PVM to the latest version'
+                'pvm update --check ......... Checks for updates without applying them'
             )
             OPTIONS     = @(
-                '--clear .................... Clear the log file'
+                '--check .................... Only check for updates without applying them'
             )
         }
         action      = {
             param ($arguments)
-            return Invoke-Log -arguments $arguments
+            return Invoke-Update -arguments $arguments
         }
     }
 }
@@ -412,32 +438,6 @@ function Get-TestAction {
         action      = {
             param ($arguments)
             return Invoke-Test -arguments $arguments
-        }
-    }
-}
-
-function Get-UpdateAction {
-    return @{
-        command     = 'pvm update [--check]';
-        description = 'Update PVM to the latest version from git repository.';
-        usage       = [ordered]@{
-            USAGE       = 'pvm update [--check]'
-            DESCRIPTION = @(
-                'Updates PVM by pulling the latest changes from the git repository.',
-                'Requires Git to be installed and PVM to be installed from a git clone.',
-                'Checks for uncommitted changes before updating.'
-            )
-            EXAMPLES    = @(
-                'pvm update ................. Updates PVM to the latest version'
-                'pvm update --check ......... Checks for updates without applying them'
-            )
-            OPTIONS     = @(
-                '--check .................... Only check for updates without applying them'
-            )
-        }
-        action      = {
-            param ($arguments)
-            return Invoke-Update -arguments $arguments
         }
     }
 }

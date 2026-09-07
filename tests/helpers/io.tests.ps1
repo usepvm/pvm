@@ -11,19 +11,7 @@ BeforeAll {
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
     New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
 
-    Mock Add-LogEntry { 0 }
-    # Create a mock registry to simulate environment variables
-    $script:MockRegistry = @{
-        Machine = @{
-            'Path' = 'C:\Windows\System32;C:\Program Files\Git\bin;C:\CustomApp;C:\Program Files\Java\bin'
-            'JAVA_HOME' = 'C:\Program Files\Java'
-            'GIT_HOME' = 'C:\Program Files\Git\bin'
-            'CUSTOM_APP' = 'C:\CustomApp'
-            'WINDOWS_DIR' = 'C:\Windows'
-            'SYSTEM32_DIR' = 'C:\Windows\System32'
-            'REGULAR_VAR' = 'SomeValue'
-        }
-    }
+    Mock Add-LogEntry { return 0 }
 }
 
 AfterAll {
@@ -58,7 +46,6 @@ Describe "Get-AllSubdirectories" {
         }
 
         It "Returns null when an exception occurs" {
-            # Simulate an exception by passing a path that causes an error
             Mock Get-ChildItemWrapper { throw 'Simulated exception' }
             $result = Get-AllSubdirectories -path $STORAGE_PATH
             $result | Should -Be $null
@@ -165,62 +152,6 @@ Describe "Test-FileNotExists" {
     }
 }
 
-Describe "New-Directory" {
-    Context "When creating directories" {
-        It "Creates a new directory successfully" {
-            $newDir = "$TEST_DRIVE\new_dir"
-            $result = New-Directory -path $newDir
-            $result | Should -Be 0
-            Test-Path $newDir | Should -Be $true
-        }
-
-        It "Returns 0 for existing directory" {
-            $result = New-Directory -path $STORAGE_PATH
-            $result | Should -Be 0
-        }
-
-        It "Returns -1 for empty path" {
-            $result = New-Directory -path ''
-            $result | Should -Be -1
-        }
-
-        It "Returns -1 when exception is thrown" {
-            Mock Test-DirectoryNotExists { return $true }
-            Mock New-ItemWrapper { throw 'Error' }
-            $result = New-Directory -path "$TEST_DRIVE\new_dir"
-            $result | Should -Be -1
-        }
-    }
-}
-
-Describe "New-File" {
-    It "Creates a new file successfully" {
-        $newFile = 'TestDrive:\new_file.txt'
-        $result = New-File -path $newFile
-        $result | Should -Be 0
-        Test-Path $newFile | Should -Be $true
-    }
-
-    It "Returns 0 for existing file" {
-        $existingFile = 'TestDrive:\existing_file.txt'
-        New-ItemWrapper -type File -path $existingFile
-        $result = New-File -path $existingFile
-        $result | Should -Be 0
-    }
-
-    It "Returns -1 for empty path" {
-        $result = New-File -path ''
-        $result | Should -Be -1
-    }
-
-    It "Returns -1 when exception is thrown" {
-        Mock Test-FileNotExists { return $true }
-        Mock New-ItemWrapper { throw 'Error' }
-        $result = New-File -path 'TestDrive:\new_file.txt'
-        $result | Should -Be -1
-    }
-}
-
 Describe "Test-PathExists" {
     It "Returns false for non-existent path" {
         Mock Test-DirectoryExists { return $false }
@@ -244,6 +175,22 @@ Describe "Test-PathExists" {
 
         $result = Test-PathExists -path 'C:\File\Exists.txt'
         $result | Should -Be $true
+    }
+}
+
+Describe "Test-PathNotExists" {
+    It "Returns true for non-existent path" {
+        Mock Test-PathExists { return $false }
+
+        $result = Test-PathNotExists -path "$TEST_DRIVE\Nonexistent\Path"
+        $result | Should -Be $true
+    }
+
+    It "Returns false for existing path" {
+        Mock Test-PathExists { return $true }
+
+        $result = Test-PathNotExists -path 'C:\Directory\Exists'
+        $result | Should -Be $false
     }
 }
 
@@ -300,13 +247,67 @@ Describe "Test-SymlinkNotExists" {
     }
 }
 
+Describe "New-Directory" {
+    Context "When creating directories" {
+        It "Creates a new directory successfully" {
+            $newDir = "$TEST_DRIVE\new_dir"
+            $result = New-Directory -path $newDir
+            $result | Should -Be 0
+            Test-Path $newDir | Should -Be $true
+        }
+
+        It "Returns 0 for existing directory" {
+            $result = New-Directory -path $STORAGE_PATH
+            $result | Should -Be 0
+        }
+
+        It "Returns -1 for empty path" {
+            $result = New-Directory -path ''
+            $result | Should -Be -1
+        }
+
+        It "Returns -1 when exception is thrown" {
+            Mock Test-DirectoryNotExists { return $true }
+            Mock New-ItemWrapper { throw 'Error' }
+            $result = New-Directory -path "$TEST_DRIVE\new_dir"
+            $result | Should -Be -1
+        }
+    }
+}
+
+Describe "New-File" {
+    It "Creates a new file successfully" {
+        $newFile = 'TestDrive:\new_file.txt'
+        $result = New-File -path $newFile
+        $result | Should -Be 0
+        Test-Path $newFile | Should -Be $true
+    }
+
+    It "Returns 0 for existing file" {
+        $existingFile = 'TestDrive:\existing_file.txt'
+        New-ItemWrapper -type File -path $existingFile
+        $result = New-File -path $existingFile
+        $result | Should -Be 0
+    }
+
+    It "Returns -1 for empty path" {
+        $result = New-File -path ''
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when exception is thrown" {
+        Mock Test-FileNotExists { return $true }
+        Mock New-ItemWrapper { throw 'Error' }
+        $result = New-File -path 'TestDrive:\new_file.txt'
+        $result | Should -Be -1
+    }
+}
+
 Describe "New-SymbolicLink" {
     Context "When creating symbolic links" {
         It "Creates a symbolic link successfully when running as admin" {
-            # Mock Test-Admin to return true
             Mock Test-Admin { return $true }
 
-            # Mock New-ItemWrapper to simulate successful symbolic link creation
             Mock New-ItemWrapper {
                 param ($type, $path, $target)
 
@@ -321,7 +322,6 @@ Describe "New-SymbolicLink" {
             $result.message | Should -Match 'Created symbolic link'
             $result.color | Should -Be 'DarkGreen'
 
-            # Verify New-ItemWrapper was called with correct parameters
             Should -Invoke New-ItemWrapper -ParameterFilter {
                 $type -eq 'SymbolicLink' -and
                 $path -eq $linkPath -and
@@ -382,7 +382,6 @@ Describe "New-SymbolicLink" {
         }
 
         It "Deletes existing symbolic link and creates new one" {
-            # Use project storage path for testing
             $STORAGE_PATH_TEMP = (Resolve-Path -Path $STORAGE_PATH).ProviderPath
             $testDir = "$STORAGE_PATH_TEMP\tests\symlink_test"
             $linkPath = "$testDir\test_link"
@@ -397,7 +396,7 @@ Describe "New-SymbolicLink" {
                 New-Item -ItemType Directory -Path $testDir -Force | Out-Null
                 New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
 
-                # # Create a directory at the link path to simulate an existing item
+                # Create a directory at the link path to simulate an existing item
                 New-Item -ItemType Directory -Path $linkPath -Force | Out-Null
 
                 $result = New-SymbolicLink -link $linkPath -target $targetPath
@@ -438,7 +437,7 @@ Describe "New-SymbolicLink" {
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $parent } -MockWith { return $true }
             Mock Test-NotAdmin { return $false }
-            Mock New-Directory -MockWith { return 0 }
+            Mock New-Directory { return 0 }
             Mock Test-Path { return $false }
             Mock New-ItemWrapper {
                 param ($type, $path, $target)
@@ -455,16 +454,15 @@ Describe "New-SymbolicLink" {
             $targetPath = "$STORAGE_PATH\php\8.1"
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq "$TEST_DRIVE\test_parent" } -MockWith { return $true }
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
-            Mock New-Directory -MockWith { return -1 }
+            Mock New-Directory { return -1 }
             $result = New-SymbolicLink -link $linkPath -target $targetPath
             $result.code | Should -Be -1
         }
     }
 }
 
-Describe "Expand-ZipCore Tests" {
+Describe "Expand-ZipCore" {
     It "Loads System.IO.Compression.FileSystem assembly and extracts zip" {
-        # Use project storage path for testing
         $STORAGE_PATH_TEMP = (Resolve-Path -Path $STORAGE_PATH).ProviderPath
         $testDir = "$STORAGE_PATH_TEMP\tests\zip_test"
         $zipPath = "$testDir\test.zip"
@@ -498,7 +496,7 @@ Describe "Expand-ZipCore Tests" {
     }
 }
 
-Describe "Expand-Zip Tests" {
+Describe "Expand-Zip" {
     BeforeEach {
         Mock Expand-ZipCore { }
         Mock Remove-ItemWrapper { }
@@ -506,7 +504,6 @@ Describe "Expand-Zip Tests" {
     }
 
     It "Should extract zip without errors" {
-        # This is a basic test since we're mocking the zip extraction
         { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' } | Should -Not -Throw
         Should -Invoke Expand-ZipCore -Times 1
     }
@@ -528,7 +525,7 @@ Describe "Expand-Zip Tests" {
     }
 }
 
-Describe "Test-YesResponse Tests" {
+Describe "Test-YesResponse" {
     It "Should return true for 'y' and 'Y' responses" {
         Test-YesResponse -response 'y' | Should -Be $true
         Test-YesResponse -response 'Y' | Should -Be $true
@@ -540,7 +537,7 @@ Describe "Test-YesResponse Tests" {
     }
 }
 
-Describe "Test-NoResponse Tests" {
+Describe "Test-NoResponse" {
     It "Should return true for 'n' and 'N' responses" {
         Test-NoResponse -response 'n' | Should -Be $true
         Test-NoResponse -response 'N' | Should -Be $true

@@ -4,18 +4,172 @@ BeforeAll {
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    $PVMConfig.version = 'v1.0.0'
-
-    Mock Show-Success {}
-    Mock Show-Error {}
-    Mock Show-Info {}
-    Mock Show-Warning {}
-    Mock Write-DarkYellow {}
+    Mock Show-Success { }
+    Mock Show-Error { }
+    Mock Show-Info { }
+    Mock Show-Warning { }
+    Mock Write-DarkYellow { }
 }
 
 AfterAll {
     $Global:PVMRoot = $PVMRootBackup
     $Global:PVMConfig = $PVMConfigBackup
+}
+
+Describe "Test-GitAvailable" {
+    It "returns true when git command resolves" {
+        Mock Get-Command { return @{ Name = 'git' } }
+
+        $code = Test-GitAvailable
+
+        $code | Should -Be $true
+    }
+
+    It "returns false when git command is not found" {
+        Mock Get-Command { throw 'command not found' }
+
+        $code = Test-GitAvailable
+
+        $code | Should -Be $false
+    }
+}
+
+Describe "Get-GitStatus" {
+    It "returns porcelain status output" {
+        Mock git { return 'M file.txt' }
+
+        $code = Get-GitStatus
+
+        $code | Should -Be 'M file.txt'
+    }
+
+    It "returns null when git throws" {
+        Mock git { throw 'not a repo' }
+
+        $code = Get-GitStatus
+
+        $code | Should -BeNullOrEmpty
+    }
+}
+
+Describe "Get-CurrentGitBranch" {
+    It "returns a trimmed branch name" {
+        Mock git { return "main`n" }
+
+        $code = Get-CurrentGitBranch
+
+        $code | Should -Be 'main'
+    }
+
+    It "returns null when git throws" {
+        Mock git { throw 'error' }
+
+        $code = Get-CurrentGitBranch
+
+        $code | Should -BeNullOrEmpty
+    }
+}
+
+Describe "Get-CurrentGitCommit" {
+    It "returns a trimmed commit hash" {
+        Mock git { return "abc123`n" }
+
+        $code = Get-CurrentGitCommit
+
+        $code | Should -Be 'abc123'
+    }
+
+    It "returns null when git throws" {
+        Mock git { throw 'error' }
+
+        $code = Get-CurrentGitCommit
+
+        $code | Should -BeNullOrEmpty
+    }
+}
+
+Describe "Get-LatestGitCommit" {
+    It "fetches origin and returns the trimmed remote commit" {
+        Mock git {
+            if ($args -contains 'fetch') { return $null }
+            return "def456`n"
+        }
+
+        $code = Get-LatestGitCommit -branch 'main'
+
+        $code | Should -Be 'def456'
+    }
+
+    It "returns null when fetch/rev-parse throws" {
+        Mock git { throw 'network error' }
+
+        $code = Get-LatestGitCommit -branch 'main'
+
+        $code | Should -BeNullOrEmpty
+    }
+
+    It "defaults branch to 'main' when not specified" {
+        Mock git {
+            if ($args -contains 'fetch') { return $null }
+            return 'def456'
+        }
+
+        $code = Get-LatestGitCommit
+
+        $code | Should -Be 'def456'
+    }
+}
+
+Describe "Get-PVMVersionFromGit" {
+    It "returns the trimmed latest tag" {
+        Mock git { return "v1.2.3`n" }
+
+        $code = Get-PVMVersionFromGit
+
+        $code | Should -Be 'v1.2.3'
+    }
+
+    It "returns null when no tags exist" {
+        Mock git { return $null }
+
+        $code = Get-PVMVersionFromGit
+
+        $code | Should -BeNullOrEmpty
+    }
+
+    It "returns null when git throws" {
+        Mock git { throw 'error' }
+
+        $code = Get-PVMVersionFromGit
+
+        $code | Should -BeNullOrEmpty
+    }
+}
+
+Describe "Format-Version" {
+    It "strips a leading 'v' prefix" {
+        $code = Format-Version -version 'v1.2.3'
+
+        $code | Should -Be '1.2.3'
+    }
+
+    It "strips a single trailing .0 segment" {
+        $code = Format-Version -version 'v1.2.0'
+
+        $code | Should -Be '1.2'
+    }
+
+    It "strips multiple trailing .0 segments" {
+        $code = Format-Version -version 'v1.0.0'
+
+        $code | Should -Be '1'
+    }
+
+    It "leaves a version with no prefix or trailing zeros unchanged" {
+        $code = Format-Version -version '1.2.3'
+
+        $code | Should -Be '1.2.3'
+    }
 }
 
 Describe "Update-PVM" {
@@ -123,6 +277,7 @@ Describe "Update-PVM" {
 
     Context "Already up to date" {
         It "returns success with the current config version" {
+            $PVMConfig.version = 'v1.0.0'
             Mock Get-CurrentGitCommit { return 'same' }
             Mock Get-LatestGitCommit { return 'same' }
 
@@ -175,8 +330,9 @@ Describe "Update-PVM" {
             Mock Get-PVMVersionFromGit { return 'v1.0.0' }
             Mock git { return 'v1.1.0' }
 
-            Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly $true
 
+            $result | Should -Be 0
             Should -Invoke -CommandName git -ParameterFilter { $args -contains 'pull' } -Times 0
         }
     }
@@ -229,125 +385,5 @@ Describe "Update-PVM" {
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to pull updates' }
         }
-    }
-}
-
-Describe "Test-GitAvailable" {
-    It "returns true when git command resolves" {
-        Mock Get-Command { return @{ Name = 'git' } }
-
-        Test-GitAvailable | Should -Be $true
-    }
-
-    It "returns false when git command is not found" {
-        Mock Get-Command { throw 'command not found' }
-
-        Test-GitAvailable | Should -Be $false
-    }
-}
-
-Describe "Get-GitStatus" {
-    It "returns porcelain status output" {
-        Mock git { return 'M file.txt' }
-
-        Get-GitStatus | Should -Be 'M file.txt'
-    }
-
-    It "returns null when git throws" {
-        Mock git { throw 'not a repo' }
-
-        Get-GitStatus | Should -BeNullOrEmpty
-    }
-}
-
-Describe "Get-CurrentGitBranch" {
-    It "returns a trimmed branch name" {
-        Mock git { return "main`n" }
-
-        Get-CurrentGitBranch | Should -Be 'main'
-    }
-
-    It "returns null when git throws" {
-        Mock git { throw 'error' }
-
-        Get-CurrentGitBranch | Should -BeNullOrEmpty
-    }
-}
-
-Describe "Get-CurrentGitCommit" {
-    It "returns a trimmed commit hash" {
-        Mock git { return "abc123`n" }
-
-        Get-CurrentGitCommit | Should -Be 'abc123'
-    }
-
-    It "returns null when git throws" {
-        Mock git { throw 'error' }
-
-        Get-CurrentGitCommit | Should -BeNullOrEmpty
-    }
-}
-
-Describe "Get-LatestGitCommit" {
-    It "fetches origin and returns the trimmed remote commit" {
-        Mock git {
-            if ($args -contains 'fetch') { return $null }
-            return "def456`n"
-        }
-
-        Get-LatestGitCommit -branch 'main' | Should -Be 'def456'
-    }
-
-    It "returns null when fetch/rev-parse throws" {
-        Mock git { throw 'network error' }
-
-        Get-LatestGitCommit -branch 'main' | Should -BeNullOrEmpty
-    }
-
-    It "defaults branch to 'main' when not specified" {
-        Mock git {
-            if ($args -contains 'fetch') { return $null }
-            return 'def456'
-        }
-
-        Get-LatestGitCommit | Should -Be 'def456'
-    }
-}
-
-Describe "Get-PVMVersionFromGit" {
-    It "returns the trimmed latest tag" {
-        Mock git { return "v1.2.3`n" }
-
-        Get-PVMVersionFromGit | Should -Be 'v1.2.3'
-    }
-
-    It "returns null when no tags exist" {
-        Mock git { return $null }
-
-        Get-PVMVersionFromGit | Should -BeNullOrEmpty
-    }
-
-    It "returns null when git throws" {
-        Mock git { throw 'error' }
-
-        Get-PVMVersionFromGit | Should -BeNullOrEmpty
-    }
-}
-
-Describe "Format-Version" {
-    It "strips a leading 'v' prefix" {
-        Format-Version -version 'v1.2.3' | Should -Be '1.2.3'
-    }
-
-    It "strips a single trailing .0 segment" {
-        Format-Version -version 'v1.2.0' | Should -Be '1.2'
-    }
-
-    It "strips multiple trailing .0 segments" {
-        Format-Version -version 'v1.0.0' | Should -Be '1'
-    }
-
-    It "leaves a version with no prefix or trailing zeros unchanged" {
-        Format-Version -version '1.2.3' | Should -Be '1.2.3'
     }
 }

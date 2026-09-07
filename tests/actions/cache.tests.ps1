@@ -8,11 +8,11 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
 
-    Mock Show-Error {}
-    Mock Show-Info {}
-    Mock Write-Gray {}
-    Mock Show-Message {}
-    Mock Show-Success {}
+    Mock Show-Error { }
+    Mock Show-Info { }
+    Mock Write-Gray { }
+    Mock Show-Message { }
+    Mock Show-Success { }
 }
 
 AfterAll {
@@ -20,7 +20,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Get-CacheFiles Tests" {
+Describe "Get-CacheFiles" {
     It "Should return a list of cache files" {
         Mock Get-ChildItemWrapper {
             return @(
@@ -48,9 +48,8 @@ Describe "Get-CacheFiles Tests" {
     }
 }
 
-Describe "Show-CacheFiles Tests" {
+Describe "Show-CacheFiles" {
     BeforeEach {
-        # Clean slate for each test
         Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
         Mock Add-LogEntry { return 0 }
@@ -123,7 +122,7 @@ Describe "Show-CacheFiles Tests" {
     }
 }
 
-Describe "Show-CachedData Tests" {
+Describe "Show-CachedData" {
     BeforeEach {
         Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
@@ -144,7 +143,6 @@ Describe "Show-CachedData Tests" {
     }
 
     It "Should return -1 when cache file exists but contains no data" {
-        # Get-DataFromCache returns null / empty
         Mock Get-DataFromCache { return $null }
         Mock Test-FileNotExists { return $false }
 
@@ -211,7 +209,7 @@ Describe "Show-CachedData Tests" {
     }
 }
 
-Describe "Remove-CacheFile Tests" {
+Describe "Remove-CacheFile" {
     BeforeEach {
         Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 
@@ -365,7 +363,7 @@ Describe "Remove-CacheFile Tests" {
     }
 }
 
-Describe "Clear-CacheFiles Tests" {
+Describe "Clear-CacheFiles" {
     BeforeEach {
         Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
 

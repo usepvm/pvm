@@ -128,42 +128,64 @@ Describe "Get-Scripts" {
 
 Describe "Get-EnvBool" {
     It 'returns $true for "true" (any case)' {
-        Get-EnvBool 'true' | Should -BeTrue
-        Get-EnvBool 'True' | Should -BeTrue
-        Get-EnvBool 'TRUE' | Should -BeTrue
+        $code = Get-EnvBool 'true'
+        $code | Should -BeTrue
+
+        $code = Get-EnvBool 'True'
+        $code | Should -BeTrue
+
+        $code = Get-EnvBool 'TRUE'
+        $code | Should -BeTrue
     }
 
     It 'returns $false for "false" (any case)' {
-        Get-EnvBool 'false' | Should -BeFalse
-        Get-EnvBool 'False' | Should -BeFalse
-        Get-EnvBool 'FALSE' | Should -BeFalse
+        $code = Get-EnvBool 'false'
+        $code | Should -BeFalse
+
+        $code = Get-EnvBool 'False'
+        $code | Should -BeFalse
+
+        $code = Get-EnvBool 'FALSE'
+        $code | Should -BeFalse
     }
 
     It 'returns the default when value is $null' {
-        Get-EnvBool $null $true | Should -BeTrue
-        Get-EnvBool $null $false | Should -BeFalse
+        $code = Get-EnvBool $null $true
+        $code | Should -BeTrue
+
+        $code = Get-EnvBool $null $false
+        $code | Should -BeFalse
     }
 
     It 'returns the default when value is empty string' {
-        Get-EnvBool '' $true | Should -BeTrue
+        $code = Get-EnvBool '' $true
+        $code | Should -BeTrue
     }
 
     It 'returns the default when value is whitespace only' {
-        Get-EnvBool '   ' $true | Should -BeTrue
+        $code = Get-EnvBool '   ' $true
+        $code | Should -BeTrue
     }
 
     It 'returns the default when value is unparsable garbage' {
-        Get-EnvBool 'yes' $true | Should -BeTrue
-        Get-EnvBool '1' $false | Should -BeFalse
-        Get-EnvBool 'not-a-bool' $true | Should -BeTrue
+        $code = Get-EnvBool 'yes' $true
+        $code | Should -BeTrue
+
+        $code = Get-EnvBool '1' $false
+        $code | Should -BeFalse
+
+        $code = Get-EnvBool 'not-a-bool' $true
+        $code | Should -BeTrue
     }
 
     It 'defaults to $false when no default is supplied and value is invalid' {
-        Get-EnvBool 'garbage' | Should -BeFalse
+        $code = Get-EnvBool 'garbage'
+        $code | Should -BeFalse
     }
 
     It 'trims surrounding whitespace around a valid value' {
-        Get-EnvBool '  true  ' | Should -BeTrue
+        $code = Get-EnvBool '  true  '
+        $code | Should -BeTrue
     }
 
     It 'does not throw on any input' {
@@ -175,43 +197,53 @@ Describe "Get-EnvBool" {
 
 Describe "Get-EnvInt" {
     It 'parses a valid positive integer' {
-        Get-EnvInt '42' | Should -Be 42
+        $code = Get-EnvInt '42'
+        $code | Should -Be 42
     }
 
     It 'parses a valid negative integer' {
-        Get-EnvInt '-5' | Should -Be -5
+        $code = Get-EnvInt '-5'
+        $code | Should -Be -5
     }
 
     It 'parses zero' {
-        Get-EnvInt '0' | Should -Be 0
+        $code = Get-EnvInt '0'
+        $code | Should -Be 0
     }
 
     It 'returns the default when value is $null' {
-        Get-EnvInt $null 24 | Should -Be 24
+        $code = Get-EnvInt $null 24
+        $code | Should -Be 24
     }
 
     It 'returns the default when value is empty string' {
-        Get-EnvInt '' 24 | Should -Be 24
+        $code = Get-EnvInt '' 24
+        $code | Should -Be 24
     }
 
     It 'returns the default when value is whitespace only' {
-        Get-EnvInt '   ' 10 | Should -Be 10
+        $code = Get-EnvInt '   ' 10
+        $code | Should -Be 10
     }
 
     It 'returns the default when value is non-numeric' {
-        Get-EnvInt 'abc' 10 | Should -Be 10
+        $code = Get-EnvInt 'abc' 10
+        $code | Should -Be 10
     }
 
     It 'returns the default when value is a decimal (not a valid int)' {
-        Get-EnvInt '3.14' 10 | Should -Be 10
+        $code = Get-EnvInt '3.14' 10
+        $code | Should -Be 10
     }
 
     It 'defaults to 0 when no default is supplied and value is invalid' {
-        Get-EnvInt 'garbage' | Should -Be 0
+        $code = Get-EnvInt 'garbage'
+        $code | Should -Be 0
     }
 
     It 'trims surrounding whitespace around a valid value' {
-        Get-EnvInt '  42  ' | Should -Be 42
+        $code = Get-EnvInt '  42  '
+        $code | Should -Be 42
     }
 
     It 'does not throw on any input' {
@@ -221,7 +253,8 @@ Describe "Get-EnvInt" {
     }
 
     It 'handles values exceeding Int32 range by falling back to default' {
-        Get-EnvInt '99999999999999999999' 5 | Should -Be 5
+        $code = Get-EnvInt '99999999999999999999' 5
+        $code | Should -Be 5
     }
 }
 
@@ -244,7 +277,7 @@ Describe "Get-EnvConfig" {
     Context "When .env file exists" {
         It "Writes a verbose message with the env file path" {
             Set-ContentWrapper -path "$envRoot\.env" -value 'KEY=value'
-            Mock Write-Verbose {}
+            Mock Write-Verbose { }
 
             Get-EnvConfig -rootPath $envRoot -Verbose
 

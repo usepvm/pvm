@@ -1,8 +1,8 @@
 
 BeforeAll {
-    Mock Show-Message {}
-    Mock Show-Error {}
-    Mock Write-Color {}
+    Mock Show-Message { }
+    Mock Show-Error { }
+    Mock Write-Color { }
 }
 
 Describe "Show-ExtensionsStates" {

@@ -10,12 +10,9 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PHP_CURRENT_DIR -Force | Out-Null
 
-    Mock Show-Error {}
+    Mock Show-Error { }
 
-    Mock Add-LogEntry {
-        param ($data)
-        return $true
-    }
+    Mock Add-LogEntry { return 0 }
 }
 
 AfterAll {
@@ -23,7 +20,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Get-PHPStatus Function Tests" {
+Describe "Get-PHPStatus" {
     Context "When php.ini file exists and is valid" {
         It "Should detect enabled opcache extension" {
             # Arrange
@@ -164,10 +161,9 @@ Describe "Get-PHPStatus Function Tests" {
     }
 }
 
-Describe "Get-CurrentPHPVersion Function Tests" {
+Describe "Get-CurrentPHPVersion" {
     Context "When PHP current version symlink exists and is valid" {
         BeforeEach {
-            # Mock Get-ItemWrapper to return a symlink object
             Mock Get-ItemWrapper {
                 return @{
                     FullName = 'C:\php\current'
@@ -239,9 +235,7 @@ Describe "Get-CurrentPHPVersion Function Tests" {
 
     Context "When Get-ItemWrapper returns null" {
         BeforeEach {
-            Mock Get-ItemWrapper {
-                return $null
-            } -ParameterFilter { $path -eq $PHP_CURRENT_DIR }
+            Mock Get-ItemWrapper { return $null } -ParameterFilter { $path -eq $PHP_CURRENT_DIR }
         }
 
         It "Should handle null Get-ItemWrapper result" {

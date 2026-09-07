@@ -11,16 +11,15 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $extDirectory -Force | Out-Null
 
-    Mock Show-Warning {}
-    Mock Show-Error {}
-    Mock Show-Info {}
-    Mock Show-Message {}
-    Mock Write-Color {}
+    Mock Show-Warning { }
+    Mock Show-Error { }
+    Mock Show-Info { }
+    Mock Show-Message { }
+    Mock Write-Color { }
 
     Mock Add-LogEntry { return 0 }
 
     function Reset-IniContent {
-        # Create a test php.ini file
         @"
 memory_limit = 128M
 extension=php_curl.dll
@@ -30,7 +29,6 @@ display_errors = On
 "@ | Set-ContentWrapper -path $testIniPath
     }
 
-    # Create initial ini content first
     Reset-IniContent
 }
 

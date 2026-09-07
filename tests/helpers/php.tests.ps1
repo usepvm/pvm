@@ -13,10 +13,9 @@ BeforeAll {
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $testPhpPath -Force | Out-Null
 
-    Mock Show-Message {}
+    Mock Show-Message { }
 
     function Reset-IniContent {
-    # Create a test php.ini file
     @"
 memory_limit = 128M
 ;extension=php_xdebug.dll
@@ -43,7 +42,6 @@ Describe "Get-PHPInstallInfo" {
             $testPath = "$TEST_DRIVE\php\8.3"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
 
-            # Create a mock NTS DLL file
             New-Item -Path "$testPath\php8nts.dll" -ItemType File -Force | Out-Null
 
             Mock Get-ChildItemWrapper {
@@ -125,24 +123,555 @@ Describe "Get-PHPInstallInfo" {
     }
 }
 
-Describe "Get-SourceUrls" {
-    It "Should return correct URL structure" {
-        $result = Get-SourceUrls
+Describe "Get-BinaryArchitectureFromDLL" {
+    Context "Reading PE format from binary files" {
+        It "Returns x64 architecture when machine type is 0x8664" {
+            $dllPath = "$TEST_DRIVE\php\php8_x64.dll"
+            New-Item -Path $dllPath -ItemType File -Force | Out-Null
 
-        $result | Should -BeOfType [System.Collections.Specialized.OrderedDictionary]
-        $result.Keys.Count | Should -Be 2
-        $result.Keys -contains 'Archives' | Should -Be $true
-        $result.Keys -contains 'Releases' | Should -Be $true
+            # Convert TestDrive path to actual filesystem path
+            $actualPath = (Resolve-Path -Path $dllPath).ProviderPath
+
+            # Create a minimal PE file structure for x64
+            # PE Header starts at offset 0x3C
+            $bytes = [byte[]]::new(1024)
+
+            # Write MZ header
+            $bytes[0] = 0x4D  # 'M'
+            $bytes[1] = 0x5A  # 'Z'
+
+            # PE offset is at 0x3C (60 decimal)
+            $peOffset = 0x80
+            [BitConverter]::GetBytes($peOffset).CopyTo($bytes, 0x3C)
+
+            # At PE offset, write "PE\0\0"
+            $bytes[$peOffset] = 0x50      # 'P'
+            $bytes[$peOffset + 1] = 0x45  # 'E'
+
+            # Machine type at PE offset + 4 (0x8664 for x64)
+            [BitConverter]::GetBytes([uint16]0x8664).CopyTo($bytes, $peOffset + 4)
+
+            [System.IO.File]::WriteAllBytes($actualPath, $bytes)
+
+            $result = Get-BinaryArchitectureFromDLL -path $actualPath
+            $result | Should -Be 'x64'
+        }
+
+        It "Returns x86 architecture when machine type is 0x014c" {
+            $dllPath = "$TEST_DRIVE\php\php8_x86.dll"
+            New-Item -Path $dllPath -ItemType File -Force | Out-Null
+
+            # Convert TestDrive path to actual filesystem path
+            $actualPath = (Resolve-Path -Path $dllPath).ProviderPath
+
+            # Create a minimal PE file structure for x86
+            $bytes = [byte[]]::new(1024)
+
+            # Write MZ header
+            $bytes[0] = 0x4D  # 'M'
+            $bytes[1] = 0x5A  # 'Z'
+
+            # PE offset is at 0x3C (60 decimal)
+            $peOffset = 0x80
+            [BitConverter]::GetBytes($peOffset).CopyTo($bytes, 0x3C)
+
+            # At PE offset, write "PE\0\0"
+            $bytes[$peOffset] = 0x50      # 'P'
+            $bytes[$peOffset + 1] = 0x45  # 'E'
+
+            # Machine type at PE offset + 4 (0x014c for x86)
+            [BitConverter]::GetBytes([uint16]0x014c).CopyTo($bytes, $peOffset + 4)
+
+            [System.IO.File]::WriteAllBytes($actualPath, $bytes)
+
+            $result = Get-BinaryArchitectureFromDLL -path $actualPath
+            $result | Should -Be 'x86'
+        }
+
+        It "Returns Unknown for unknown machine type" {
+            $dllPath = "$TEST_DRIVE\php\php8_unknown.dll"
+            New-Item -Path $dllPath -ItemType File -Force | Out-Null
+
+            # Convert TestDrive path to actual filesystem path
+            $actualPath = (Resolve-Path -Path $dllPath).ProviderPath
+
+            # Create a minimal PE file structure with unknown type
+            $bytes = [byte[]]::new(1024)
+
+            # Write MZ header
+            $bytes[0] = 0x4D  # 'M'
+            $bytes[1] = 0x5A  # 'Z'
+
+            # PE offset is at 0x3C (60 decimal)
+            $peOffset = 0x80
+            [BitConverter]::GetBytes($peOffset).CopyTo($bytes, 0x3C)
+
+            # At PE offset, write "PE\0\0"
+            $bytes[$peOffset] = 0x50      # 'P'
+            $bytes[$peOffset + 1] = 0x45  # 'E'
+
+            # Machine type at PE offset + 4 (0x0000 for unknown)
+            [BitConverter]::GetBytes([uint16]0x0000).CopyTo($bytes, $peOffset + 4)
+
+            [System.IO.File]::WriteAllBytes($actualPath, $bytes)
+
+            $result = Get-BinaryArchitectureFromDLL -path $actualPath
+            $result | Should -Be 'Unknown'
+        }
     }
 
-    It "Should return correct Archive URL" {
-        $result = Get-SourceUrls
-        $result['Archives'] | Should -Be 'https://windows.php.net/downloads/releases/archives'
+    It "Returns Unknown when file does not exist" {
+        Mock Test-FileNotExists { return $true }
+
+        $result = Get-BinaryArchitectureFromDLL -path "$TEST_DRIVE\php\php8.dll"
+
+        $result | Should -Be 'Unknown'
+    }
+}
+
+Describe "Test-TwoPHPVersionsEqual" {
+    Context "When both versions are equal" {
+        It "Returns true when all properties match" {
+            $version1 = @{
+                version = '8.3.0'
+                arch = 'x64'
+                buildType = 'NTS'
+            }
+            $version2 = @{
+                version = '8.3.0'
+                arch = 'x64'
+                buildType = 'NTS'
+            }
+
+            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
+            $result | Should -Be $true
+        }
+
+        It "Returns true for x86 TS build versions" {
+            $version1 = @{
+                version = '8.1.5'
+                arch = 'x86'
+                buildType = 'TS'
+            }
+            $version2 = @{
+                version = '8.1.5'
+                arch = 'x86'
+                buildType = 'TS'
+            }
+
+            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
+            $result | Should -Be $true
+        }
     }
 
-    It "Should return correct Releases URL" {
-        $result = Get-SourceUrls
-        $result['Releases'] | Should -Be 'https://windows.php.net/downloads/releases'
+    Context "When versions differ" {
+        It "Returns false when version numbers differ" {
+            $version1 = @{
+                version = '8.3.0'
+                arch = 'x64'
+                buildType = 'NTS'
+            }
+            $version2 = @{
+                version = '8.2.0'
+                arch = 'x64'
+                buildType = 'NTS'
+            }
+
+            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
+            $result | Should -Be $false
+        }
+
+        It "Returns false when architecture differs" {
+            $version1 = @{
+                version = '8.3.0'
+                arch = 'x64'
+                buildType = 'NTS'
+            }
+            $version2 = @{
+                version = '8.3.0'
+                arch = 'x86'
+                buildType = 'NTS'
+            }
+
+            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
+            $result | Should -Be $false
+        }
+
+        It "Returns false when build type differs" {
+            $version1 = @{
+                version = '8.3.0'
+                arch = 'x64'
+                buildType = 'NTS'
+            }
+            $version2 = @{
+                version = '8.3.0'
+                arch = 'x64'
+                buildType = 'TS'
+            }
+
+            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
+            $result | Should -Be $false
+        }
+    }
+
+    Context "With null or incomplete versions" {
+        It "Returns false when first version is null" {
+            $version2 = @{
+                version = '8.3.0'
+                arch = 'x64'
+                buildType = 'NTS'
+            }
+
+            $result = Test-TwoPHPVersionsEqual -version1 $null -version2 $version2
+            $result | Should -Be $false
+        }
+
+        It "Returns false when second version is null" {
+            $version1 = @{
+                version = '8.3.0'
+                arch = 'x64'
+                buildType = 'NTS'
+            }
+
+            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $null
+            $result | Should -Be $false
+        }
+
+        It "Returns false when both versions are null" {
+            $result = Test-TwoPHPVersionsEqual -version1 $null -version2 $null
+            $result | Should -Be $false
+        }
+
+        It "Returns false when a property value is missing (null)" {
+            $version1 = @{
+                version = '8.3.0'
+                arch = $null
+                buildType = 'NTS'
+            }
+            $version2 = @{
+                version = '8.3.0'
+                arch = 'x64'
+                buildType = 'NTS'
+            }
+
+            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
+            $result | Should -Be $false
+        }
+    }
+
+    Context "With edge cases" {
+        It "Returns true for versions with additional properties" {
+            $version1 = @{
+                version = '8.3.0'
+                arch = 'x64'
+                buildType = 'NTS'
+                Dll = 'php8_nts.dll'
+                InstallPath = 'C:\php\8.3'
+            }
+            $version2 = @{
+                version = '8.3.0'
+                arch = 'x64'
+                buildType = 'NTS'
+            }
+
+            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
+            $result | Should -Be $true
+        }
+
+        It "Returns false when version is empty string vs null" {
+            $version1 = @{
+                version = ''
+                arch = 'x64'
+                buildType = 'NTS'
+            }
+            $version2 = @{
+                version = '8.3.0'
+                arch = 'x64'
+                buildType = 'NTS'
+            }
+
+            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
+            $result | Should -Be $false
+        }
+    }
+}
+
+Describe "Set-ZendExtensionsList" {
+    BeforeAll {
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions
+    }
+
+    It "Creates zend_extensions.json" {
+        $result = Set-ZendExtensionsList
+        $result | Should -Be 0
+
+        $result = Get-ZendExtensionsList
+        $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
+    }
+
+    It "Returns -1 when exception is thrown" {
+        Mock Set-ContentWrapper { throw 'Test exception' }
+        $result = Set-ZendExtensionsList
+        $result | Should -Be -1
+    }
+}
+
+Describe "Get-ZendExtensionsList" {
+    BeforeAll {
+        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        $testContent = @('opcache', 'xdebug', 'swoole')
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $ZEND_EXTENSIONS_LIST_PATH
+        $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions
+    }
+
+    It "Returns the zend_extensions.json content as a hashtable" {
+        $result = Get-ZendExtensionsList
+        $result.Count | Should -Be 3
+        $result | Should -Contain 'opcache'
+        $result | Should -Contain 'xdebug'
+        $result | Should -Contain 'swoole'
+    }
+
+    It "Falls back to DEFAULT_ZEND_EXTENSIONS value" {
+        Remove-ItemWrapper -path "$TEMPLATES_PATH\zend_extensions.json"
+        $result = Get-ZendExtensionsList
+        $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
+    }
+
+    It "Returns default value when exception is thrown" {
+        Mock Test-FileExists { return $true }
+        Mock Get-ContentWrapper { throw 'Test exception' }
+        $result = Get-ZendExtensionsList
+        $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
+    }
+}
+
+Describe "Update-InstalledPHPVersionsCache" {
+    Context "When cache is successfully refreshed" {
+        It "Should return 0 on success" {
+            Mock Get-InstalledPHPVersionsFromDisk {
+                return @(
+                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                    @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
+                )
+            }
+            Mock Save-CachedData { return 0 }
+
+            $result = Update-InstalledPHPVersionsCache
+            $result | Should -Be 0
+        }
+
+        It "Should call Get-InstalledPHPVersionsFromDisk" {
+            Mock Get-InstalledPHPVersionsFromDisk {
+                return @(
+                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                )
+            }
+            Mock Save-CachedData { return 0 }
+
+            $null = Update-InstalledPHPVersionsCache
+
+            Should -Invoke Get-InstalledPHPVersionsFromDisk -Exactly 1
+        }
+
+        It "Should call Save-CachedData with installed_php_versions file and depth 1" {
+            Mock Get-InstalledPHPVersionsFromDisk {
+                return @(
+                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                )
+            }
+            Mock Save-CachedData { return 0 }
+
+            $code = Update-InstalledPHPVersionsCache
+
+            $code | Should -Be 0
+            Should -Invoke Save-CachedData -Exactly 1 -ParameterFilter {
+                $cacheFileName -eq 'installed_php_versions' -and $depth -eq 1
+            }
+        }
+
+        It "Should cache the results from Get-InstalledPHPVersionsFromDisk" {
+            $mockVersions = @(
+                @{Version = '7.4'; Arch = 'x64'; BuildType = 'NTS'}
+                @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+            )
+            Mock Get-InstalledPHPVersionsFromDisk { return $mockVersions }
+            Mock Save-CachedData { return 0 }
+
+            $null = Update-InstalledPHPVersionsCache
+
+            Should -Invoke Save-CachedData -Exactly 1 -ParameterFilter {
+                $data.Count -eq 2 -and $data[0].Version -eq '7.4'
+            }
+        }
+    }
+
+    Context "When exceptions occur" {
+        It "Should return -1 when Save-CachedData returns -1" {
+            Mock Get-InstalledPHPVersionsFromDisk {
+                return @(
+                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                )
+            }
+            Mock Save-CachedData { return -1 }
+
+            $result = Update-InstalledPHPVersionsCache
+            $result | Should -Be -1
+        }
+
+        It "Should return -1 on exception" {
+            Mock Get-InstalledPHPVersionsFromDisk { throw 'Test exception' }
+            Mock Add-LogEntry { return 0 }
+
+            $result = Update-InstalledPHPVersionsCache
+            $result | Should -Be -1
+        }
+
+        It "Should log error when exception occurs" {
+            Mock Get-InstalledPHPVersionsFromDisk { throw 'Test exception' }
+            Mock Add-LogEntry { return 0 }
+
+            $null = Update-InstalledPHPVersionsCache
+
+            Should -Invoke Add-LogEntry -Exactly 1 -ParameterFilter {
+                $data.header -eq 'Update-InstalledPHPVersionsCache - Failed to refresh installed PHP versions cache'
+            }
+        }
+
+        It "Should return -1 when Save-CachedData throws exception" {
+            Mock Get-InstalledPHPVersionsFromDisk {
+                return @(@{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'})
+            }
+            Mock Save-CachedData { throw 'Cache exception' }
+            Mock Add-LogEntry { return 0 }
+
+            $result = Update-InstalledPHPVersionsCache
+            $result | Should -Be -1
+        }
+    }
+}
+
+Describe "Get-InstalledPHPVersionsFromDisk" {
+    BeforeAll {
+        $script:STORAGE_PATH = "$TEST_DRIVE\storage"
+    }
+
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
+
+    Context "When PHP versions exist" {
+        It "Should return installed PHP versions with php.exe present" {
+            Mock Get-AllSubdirectories {
+                return @(
+                    @{FullName = "$TEST_DRIVE\storage\php\8.1"}
+                    @{FullName = "$TEST_DRIVE\storage\php\8.2"}
+                )
+            }
+            Mock Test-Path { return $true }
+            Mock Get-PHPInstallInfo {
+                param ($path)
+                if ($path -eq "$TEST_DRIVE\storage\php\8.1") {
+                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = "$TEST_DRIVE\storage\php\8.1"}
+                } else {
+                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = "$TEST_DRIVE\storage\php\8.2"}
+                }
+            }
+
+            $result = Get-InstalledPHPVersionsFromDisk
+            $result.Count | Should -Be 2
+        }
+
+        It "Should skip directories without php.exe" {
+            Mock Get-AllSubdirectories {
+                return @(
+                    @{FullName = "$TEST_DRIVE\storage\php\8.1"}
+                    @{FullName = "$TEST_DRIVE\storage\php\invalid"}
+                    @{FullName = "$TEST_DRIVE\storage\php\8.2"}
+                )
+            }
+            Mock Test-Path {
+                param ($path)
+                return $path -notmatch 'invalid'
+            }
+            Mock Get-PHPInstallInfo {
+                param ($path)
+                if ($path -eq "$TEST_DRIVE\storage\php\8.1") {
+                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                } elseif ($path -eq "$TEST_DRIVE\storage\php\8.2") {
+                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
+                }
+            }
+
+            $result = Get-InstalledPHPVersionsFromDisk
+            $result.Count | Should -Be 2
+        }
+
+        It "Should return versions sorted by version number" {
+            Mock Get-AllSubdirectories {
+                return @(
+                    @{FullName = "$TEST_DRIVE\storage\php\8.2"}
+                    @{FullName = "$TEST_DRIVE\storage\php\7.4"}
+                    @{FullName = "$TEST_DRIVE\storage\php\8.1"}
+                )
+            }
+            Mock Test-Path { return $true }
+            Mock Get-PHPInstallInfo {
+                param ($path)
+                if ($path -eq "$TEST_DRIVE\storage\php\8.2") {
+                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
+                } elseif ($path -eq "$TEST_DRIVE\storage\php\7.4") {
+                    return @{Version = '7.4'; Arch = 'x86'; BuildType = 'TS'}
+                } else {
+                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                }
+            }
+
+            $result = Get-InstalledPHPVersionsFromDisk
+            $result.Count | Should -Be 3
+            $result[0].Version | Should -Be '7.4'
+            $result[1].Version | Should -Be '8.1'
+            $result[2].Version | Should -Be '8.2'
+        }
+    }
+
+    Context "When no PHP versions exist" {
+        It "Should return empty array when no directories exist" {
+            Mock Get-AllSubdirectories { return @() }
+
+            $result = Get-InstalledPHPVersionsFromDisk
+            $result.Count | Should -Be 0
+        }
+
+        It "Should return empty array when no php.exe files are present" {
+            Mock Get-AllSubdirectories {
+                return @(
+                    @{FullName = "$TEST_DRIVE\storage\php\invalid1"}
+                    @{FullName = "$TEST_DRIVE\storage\php\invalid2"}
+                )
+            }
+            Mock Test-Path { return $false }
+
+            $result = Get-InstalledPHPVersionsFromDisk
+            $result.Count | Should -Be 0
+        }
+    }
+
+    Context "When calling Get-AllSubdirectories" {
+        It "Should call Get-AllSubdirectories with php storage path" {
+            Mock Get-AllSubdirectories { return @() }
+
+            Get-InstalledPHPVersionsFromDisk
+
+            Should -Invoke Get-AllSubdirectories -Exactly 1 -ParameterFilter {
+                $path -eq $PVMConfig.paths.directories.php
+            }
+        }
     }
 }
 
@@ -432,555 +961,24 @@ Describe "Test-PHPVersionInstalled" {
     }
 }
 
-Describe "Update-InstalledPHPVersionsCache" {
-    Context "When cache is successfully refreshed" {
-        It "Should return 0 on success" {
-            Mock Get-InstalledPHPVersionsFromDisk {
-                return @(
-                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
-                )
-            }
-            Mock Save-CachedData { return 0 }
+Describe "Get-SourceUrls" {
+    It "Should return correct URL structure" {
+        $result = Get-SourceUrls
 
-            $result = Update-InstalledPHPVersionsCache
-            $result | Should -Be 0
-        }
-
-        It "Should call Get-InstalledPHPVersionsFromDisk" {
-            Mock Get-InstalledPHPVersionsFromDisk {
-                return @(
-                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                )
-            }
-            Mock Save-CachedData { return 0 }
-
-            $null = Update-InstalledPHPVersionsCache
-
-            Should -Invoke Get-InstalledPHPVersionsFromDisk -Exactly 1
-        }
-
-        It "Should call Save-CachedData with installed_php_versions file and depth 1" {
-            Mock Get-InstalledPHPVersionsFromDisk {
-                return @(
-                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                )
-            }
-            Mock Save-CachedData { return 0 }
-
-            $code = Update-InstalledPHPVersionsCache
-
-            $code | Should -Be 0
-            Should -Invoke Save-CachedData -Exactly 1 -ParameterFilter {
-                $cacheFileName -eq 'installed_php_versions' -and $depth -eq 1
-            }
-        }
-
-        It "Should cache the results from Get-InstalledPHPVersionsFromDisk" {
-            $mockVersions = @(
-                @{Version = '7.4'; Arch = 'x64'; BuildType = 'NTS'}
-                @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-            )
-            Mock Get-InstalledPHPVersionsFromDisk { return $mockVersions }
-            Mock Save-CachedData { return 0 }
-
-            $null = Update-InstalledPHPVersionsCache
-
-            Should -Invoke Save-CachedData -Exactly 1 -ParameterFilter {
-                $data.Count -eq 2 -and $data[0].Version -eq '7.4'
-            }
-        }
+        $result | Should -BeOfType [System.Collections.Specialized.OrderedDictionary]
+        $result.Keys.Count | Should -Be 2
+        $result.Keys -contains 'Archives' | Should -Be $true
+        $result.Keys -contains 'Releases' | Should -Be $true
     }
 
-    Context "When exceptions occur" {
-        It "Should return -1 when Save-CachedData returns -1" {
-            Mock Get-InstalledPHPVersionsFromDisk {
-                return @(
-                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                )
-            }
-            Mock Save-CachedData { return -1 }
-
-            $result = Update-InstalledPHPVersionsCache
-            $result | Should -Be -1
-        }
-
-        It "Should return -1 on exception" {
-            Mock Get-InstalledPHPVersionsFromDisk { throw 'Test exception' }
-            Mock Add-LogEntry { return 0 }
-
-            $result = Update-InstalledPHPVersionsCache
-            $result | Should -Be -1
-        }
-
-        It "Should log error when exception occurs" {
-            Mock Get-InstalledPHPVersionsFromDisk { throw 'Test exception' }
-            Mock Add-LogEntry { return 0 }
-
-            $null = Update-InstalledPHPVersionsCache
-
-            Should -Invoke Add-LogEntry -Exactly 1 -ParameterFilter {
-                $data.header -eq 'Update-InstalledPHPVersionsCache - Failed to refresh installed PHP versions cache'
-            }
-        }
-
-        It "Should return -1 when Save-CachedData throws exception" {
-            Mock Get-InstalledPHPVersionsFromDisk {
-                return @(@{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'})
-            }
-            Mock Save-CachedData { throw 'Cache exception' }
-            Mock Add-LogEntry { return 0 }
-
-            $result = Update-InstalledPHPVersionsCache
-            $result | Should -Be -1
-        }
-    }
-}
-
-Describe "Get-InstalledPHPVersionsFromDisk" {
-    BeforeAll {
-        $script:STORAGE_PATH = "$TEST_DRIVE\storage"
+    It "Should return correct Archive URL" {
+        $result = Get-SourceUrls
+        $result['Archives'] | Should -Be 'https://windows.php.net/downloads/releases/archives'
     }
 
-    BeforeEach {
-        Mock Show-SpinnerWhileJob {
-            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            $result = & $scriptBlock @argumentList
-            return $result.pvmData
-        }
-    }
-
-    Context "When PHP versions exist" {
-        It "Should return installed PHP versions with php.exe present" {
-            Mock Get-AllSubdirectories {
-                return @(
-                    @{FullName = "$TEST_DRIVE\storage\php\8.1"}
-                    @{FullName = "$TEST_DRIVE\storage\php\8.2"}
-                )
-            }
-            Mock Test-Path { return $true }
-            Mock Get-PHPInstallInfo {
-                param ($path)
-                if ($path -eq "$TEST_DRIVE\storage\php\8.1") {
-                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = "$TEST_DRIVE\storage\php\8.1"}
-                } else {
-                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = "$TEST_DRIVE\storage\php\8.2"}
-                }
-            }
-
-            $result = Get-InstalledPHPVersionsFromDisk
-            $result.Count | Should -Be 2
-        }
-
-        It "Should skip directories without php.exe" {
-            Mock Get-AllSubdirectories {
-                return @(
-                    @{FullName = "$TEST_DRIVE\storage\php\8.1"}
-                    @{FullName = "$TEST_DRIVE\storage\php\invalid"}
-                    @{FullName = "$TEST_DRIVE\storage\php\8.2"}
-                )
-            }
-            Mock Test-Path {
-                param ($path)
-                return $path -notmatch 'invalid'
-            }
-            Mock Get-PHPInstallInfo {
-                param ($path)
-                if ($path -eq "$TEST_DRIVE\storage\php\8.1") {
-                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                } elseif ($path -eq "$TEST_DRIVE\storage\php\8.2") {
-                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
-                }
-            }
-
-            $result = Get-InstalledPHPVersionsFromDisk
-            $result.Count | Should -Be 2
-        }
-
-        It "Should return versions sorted by version number" {
-            Mock Get-AllSubdirectories {
-                return @(
-                    @{FullName = "$TEST_DRIVE\storage\php\8.2"}
-                    @{FullName = "$TEST_DRIVE\storage\php\7.4"}
-                    @{FullName = "$TEST_DRIVE\storage\php\8.1"}
-                )
-            }
-            Mock Test-Path { return $true }
-            Mock Get-PHPInstallInfo {
-                param ($path)
-                if ($path -eq "$TEST_DRIVE\storage\php\8.2") {
-                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
-                } elseif ($path -eq "$TEST_DRIVE\storage\php\7.4") {
-                    return @{Version = '7.4'; Arch = 'x86'; BuildType = 'TS'}
-                } else {
-                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                }
-            }
-
-            $result = Get-InstalledPHPVersionsFromDisk
-            $result.Count | Should -Be 3
-            $result[0].Version | Should -Be '7.4'
-            $result[1].Version | Should -Be '8.1'
-            $result[2].Version | Should -Be '8.2'
-        }
-    }
-
-    Context "When no PHP versions exist" {
-        It "Should return empty array when no directories exist" {
-            Mock Get-AllSubdirectories { return @() }
-
-            $result = Get-InstalledPHPVersionsFromDisk
-            $result.Count | Should -Be 0
-        }
-
-        It "Should return empty array when no php.exe files are present" {
-            Mock Get-AllSubdirectories {
-                return @(
-                    @{FullName = "$TEST_DRIVE\storage\php\invalid1"}
-                    @{FullName = "$TEST_DRIVE\storage\php\invalid2"}
-                )
-            }
-            Mock Test-Path { return $false }
-
-            $result = Get-InstalledPHPVersionsFromDisk
-            $result.Count | Should -Be 0
-        }
-    }
-
-    Context "When calling Get-AllSubdirectories" {
-        It "Should call Get-AllSubdirectories with php storage path" {
-            Mock Get-AllSubdirectories { return @() }
-
-            Get-InstalledPHPVersionsFromDisk
-
-            Should -Invoke Get-AllSubdirectories -Exactly 1 -ParameterFilter {
-                $path -eq $PVMConfig.paths.directories.php
-            }
-        }
-    }
-}
-
-Describe "Test-TwoPHPVersionsEqual" {
-    Context "When both versions are equal" {
-        It "Returns true when all properties match" {
-            $version1 = @{
-                version = '8.3.0'
-                arch = 'x64'
-                buildType = 'NTS'
-            }
-            $version2 = @{
-                version = '8.3.0'
-                arch = 'x64'
-                buildType = 'NTS'
-            }
-
-            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
-            $result | Should -Be $true
-        }
-
-        It "Returns true for x86 TS build versions" {
-            $version1 = @{
-                version = '8.1.5'
-                arch = 'x86'
-                buildType = 'TS'
-            }
-            $version2 = @{
-                version = '8.1.5'
-                arch = 'x86'
-                buildType = 'TS'
-            }
-
-            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
-            $result | Should -Be $true
-        }
-    }
-
-    Context "When versions differ" {
-        It "Returns false when version numbers differ" {
-            $version1 = @{
-                version = '8.3.0'
-                arch = 'x64'
-                buildType = 'NTS'
-            }
-            $version2 = @{
-                version = '8.2.0'
-                arch = 'x64'
-                buildType = 'NTS'
-            }
-
-            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
-            $result | Should -Be $false
-        }
-
-        It "Returns false when architecture differs" {
-            $version1 = @{
-                version = '8.3.0'
-                arch = 'x64'
-                buildType = 'NTS'
-            }
-            $version2 = @{
-                version = '8.3.0'
-                arch = 'x86'
-                buildType = 'NTS'
-            }
-
-            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
-            $result | Should -Be $false
-        }
-
-        It "Returns false when build type differs" {
-            $version1 = @{
-                version = '8.3.0'
-                arch = 'x64'
-                buildType = 'NTS'
-            }
-            $version2 = @{
-                version = '8.3.0'
-                arch = 'x64'
-                buildType = 'TS'
-            }
-
-            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
-            $result | Should -Be $false
-        }
-    }
-
-    Context "With null or incomplete versions" {
-        It "Returns false when first version is null" {
-            $version2 = @{
-                version = '8.3.0'
-                arch = 'x64'
-                buildType = 'NTS'
-            }
-
-            $result = Test-TwoPHPVersionsEqual -version1 $null -version2 $version2
-            $result | Should -Be $false
-        }
-
-        It "Returns false when second version is null" {
-            $version1 = @{
-                version = '8.3.0'
-                arch = 'x64'
-                buildType = 'NTS'
-            }
-
-            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $null
-            $result | Should -Be $false
-        }
-
-        It "Returns false when both versions are null" {
-            $result = Test-TwoPHPVersionsEqual -version1 $null -version2 $null
-            $result | Should -Be $false
-        }
-
-        It "Returns false when a property value is missing (null)" {
-            $version1 = @{
-                version = '8.3.0'
-                arch = $null
-                buildType = 'NTS'
-            }
-            $version2 = @{
-                version = '8.3.0'
-                arch = 'x64'
-                buildType = 'NTS'
-            }
-
-            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
-            $result | Should -Be $false
-        }
-    }
-
-    Context "With edge cases" {
-        It "Returns true for versions with additional properties" {
-            $version1 = @{
-                version = '8.3.0'
-                arch = 'x64'
-                buildType = 'NTS'
-                Dll = 'php8_nts.dll'
-                InstallPath = 'C:\php\8.3'
-            }
-            $version2 = @{
-                version = '8.3.0'
-                arch = 'x64'
-                buildType = 'NTS'
-            }
-
-            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
-            $result | Should -Be $true
-        }
-
-        It "Returns false when version is empty string vs null" {
-            $version1 = @{
-                version = ''
-                arch = 'x64'
-                buildType = 'NTS'
-            }
-            $version2 = @{
-                version = '8.3.0'
-                arch = 'x64'
-                buildType = 'NTS'
-            }
-
-            $result = Test-TwoPHPVersionsEqual -version1 $version1 -version2 $version2
-            $result | Should -Be $false
-        }
-    }
-}
-
-Describe "Get-BinaryArchitectureFromDLL" {
-    Context "Reading PE format from binary files" {
-        It "Returns x64 architecture when machine type is 0x8664" {
-            $dllPath = "$TEST_DRIVE\php\php8_x64.dll"
-            New-Item -Path $dllPath -ItemType File -Force | Out-Null
-
-            # Convert TestDrive path to actual filesystem path
-            $actualPath = (Resolve-Path -Path $dllPath).ProviderPath
-
-            # Create a minimal PE file structure for x64
-            # PE Header starts at offset 0x3C
-            $bytes = [byte[]]::new(1024)
-
-            # Write MZ header
-            $bytes[0] = 0x4D  # 'M'
-            $bytes[1] = 0x5A  # 'Z'
-
-            # PE offset is at 0x3C (60 decimal)
-            $peOffset = 0x80
-            [BitConverter]::GetBytes($peOffset).CopyTo($bytes, 0x3C)
-
-            # At PE offset, write "PE\0\0"
-            $bytes[$peOffset] = 0x50      # 'P'
-            $bytes[$peOffset + 1] = 0x45  # 'E'
-
-            # Machine type at PE offset + 4 (0x8664 for x64)
-            [BitConverter]::GetBytes([uint16]0x8664).CopyTo($bytes, $peOffset + 4)
-
-            [System.IO.File]::WriteAllBytes($actualPath, $bytes)
-
-            $result = Get-BinaryArchitectureFromDLL -path $actualPath
-            $result | Should -Be 'x64'
-        }
-
-        It "Returns x86 architecture when machine type is 0x014c" {
-            $dllPath = "$TEST_DRIVE\php\php8_x86.dll"
-            New-Item -Path $dllPath -ItemType File -Force | Out-Null
-
-            # Convert TestDrive path to actual filesystem path
-            $actualPath = (Resolve-Path -Path $dllPath).ProviderPath
-
-            # Create a minimal PE file structure for x86
-            $bytes = [byte[]]::new(1024)
-
-            # Write MZ header
-            $bytes[0] = 0x4D  # 'M'
-            $bytes[1] = 0x5A  # 'Z'
-
-            # PE offset is at 0x3C (60 decimal)
-            $peOffset = 0x80
-            [BitConverter]::GetBytes($peOffset).CopyTo($bytes, 0x3C)
-
-            # At PE offset, write "PE\0\0"
-            $bytes[$peOffset] = 0x50      # 'P'
-            $bytes[$peOffset + 1] = 0x45  # 'E'
-
-            # Machine type at PE offset + 4 (0x014c for x86)
-            [BitConverter]::GetBytes([uint16]0x014c).CopyTo($bytes, $peOffset + 4)
-
-            [System.IO.File]::WriteAllBytes($actualPath, $bytes)
-
-            $result = Get-BinaryArchitectureFromDLL -path $actualPath
-            $result | Should -Be 'x86'
-        }
-
-        It "Returns Unknown for unknown machine type" {
-            $dllPath = "$TEST_DRIVE\php\php8_unknown.dll"
-            New-Item -Path $dllPath -ItemType File -Force | Out-Null
-
-            # Convert TestDrive path to actual filesystem path
-            $actualPath = (Resolve-Path -Path $dllPath).ProviderPath
-
-            # Create a minimal PE file structure with unknown type
-            $bytes = [byte[]]::new(1024)
-
-            # Write MZ header
-            $bytes[0] = 0x4D  # 'M'
-            $bytes[1] = 0x5A  # 'Z'
-
-            # PE offset is at 0x3C (60 decimal)
-            $peOffset = 0x80
-            [BitConverter]::GetBytes($peOffset).CopyTo($bytes, 0x3C)
-
-            # At PE offset, write "PE\0\0"
-            $bytes[$peOffset] = 0x50      # 'P'
-            $bytes[$peOffset + 1] = 0x45  # 'E'
-
-            # Machine type at PE offset + 4 (0x0000 for unknown)
-            [BitConverter]::GetBytes([uint16]0x0000).CopyTo($bytes, $peOffset + 4)
-
-            [System.IO.File]::WriteAllBytes($actualPath, $bytes)
-
-            $result = Get-BinaryArchitectureFromDLL -path $actualPath
-            $result | Should -Be 'Unknown'
-        }
-    }
-
-    It "Returns Unknown when file does not exist" {
-        Mock Test-FileNotExists { return $true }
-
-        $result = Get-BinaryArchitectureFromDLL -path "$TEST_DRIVE\php\php8.dll"
-
-        $result | Should -Be 'Unknown'
-    }
-}
-
-Describe "Set-ZendExtensionsList" {
-    BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions
-    }
-
-    It "Creates zend_extensions.json" {
-        $result = Set-ZendExtensionsList
-        $result | Should -Be 0
-
-        $result = Get-ZendExtensionsList
-        $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
-    }
-
-    It "Returns -1 when exception is thrown" {
-        Mock Set-ContentWrapper { throw 'Test exception' }
-        $result = Set-ZendExtensionsList
-        $result | Should -Be -1
-    }
-}
-
-Describe "Get-ZendExtensionsList" {
-    BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $testContent = @('opcache', 'xdebug', 'swoole')
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $ZEND_EXTENSIONS_LIST_PATH
-        $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions
-    }
-
-    It "Returns the zend_extensions.json content as a hashtable" {
-        $result = Get-ZendExtensionsList
-        $result.Count | Should -Be 3
-        $result | Should -Contain 'opcache'
-        $result | Should -Contain 'xdebug'
-        $result | Should -Contain 'swoole'
-    }
-
-    It "Falls back to DEFAULT_ZEND_EXTENSIONS value" {
-        Remove-ItemWrapper -path "$TEMPLATES_PATH\zend_extensions.json"
-        $result = Get-ZendExtensionsList
-        $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
-    }
-
-    It "Returns default value when exception is thrown" {
-        Mock Test-FileExists { return $true }
-        Mock Get-ContentWrapper { throw 'Test exception' }
-        $result = Get-ZendExtensionsList
-        $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
+    It "Should return correct Releases URL" {
+        $result = Get-SourceUrls
+        $result['Releases'] | Should -Be 'https://windows.php.net/downloads/releases'
     }
 }
 

@@ -14,54 +14,9 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Show-MsgByExitCode" {
-    BeforeAll {
-        Mock Write-Color {}
-    }
-
-    Context "When displaying messages" {
-        It "Displays message without error" {
-            $testResult = @{
-                message = 'Test message'
-                color = 'Gray'
-            }
-            { Show-MsgByExitCode -result $testResult } | Should -Not -Throw
-        }
-
-        It "Displays custom message if provided" {
-            $testResult = @{
-                message = 'Original message'
-            }
-            $customMessage = 'Custom message'
-            { Show-MsgByExitCode -result $testResult -message $customMessage } | Should -Not -Throw
-        }
-
-        It "Displays list of messages if provided" {
-            $testResults = @{
-                code = 0
-                messages = @(
-                    @{ content = 'Message 1'; color = 'Red' }
-                    @{ content = 'Message 2'; color = 'Green' }
-                    @{ content = 'Message 3' }
-                )
-            }
-            { Show-MsgByExitCode -result $testResults } | Should -Not -Throw
-        }
-
-        It "Handles exceptions gracefully" {
-            Mock Write-Color { throw 'Simulated Write-Host failure' }
-            $testResult = @{
-                message = 'Test message'
-                color = 'Gray'
-            }
-            { Show-MsgByExitCode -result $testResult } | Should -Not -Throw
-        }
-    }
-}
-
 Describe "Add-LogEntry" {
     BeforeAll {
-        Mock Show-Error {}
+        Mock Show-Error { }
     }
 
     Context "When logging data" {
@@ -80,13 +35,10 @@ Describe "Add-LogEntry" {
             }
             $result | Should -Be 0
             Test-Path $LOG_ERROR_PATH | Should -Be $true
-            # Get the actual content
             $content = Get-ContentWrapper -path $LOG_ERROR_PATH -Raw
 
-            # Verify the complete log format
             $content | Should -Match '\[.*\] Test message(.|\s)*Message: Test data'
 
-            # Alternatively, you could check parts separately
             $content | Should -Match 'Test message'
             $content | Should -Match 'Test data'
             $content | Should -Match (Get-Date -Format 'yyyy-MM-dd')
@@ -94,11 +46,7 @@ Describe "Add-LogEntry" {
 
         It "Returns -1 when unable to create directory" {
             Mock New-Directory { throw 'Failed to create directory' }
-            # Try to log to a protected location
-            $result = Add-LogEntry -data @{
-                header = 'Test message'
-                exception = 'Test data'
-            }
+            $result = Add-LogEntry -data @{ header = 'Test message'; exception = 'Test data' }
             $result | Should -Be -1
         }
 
@@ -114,11 +62,7 @@ Describe "Add-LogEntry" {
 
         It "Returns -1 when unable to create log file" {
             Mock New-Directory { return -1 }
-            # Try to log to a protected location
-            $result = Add-LogEntry -data @{
-                header = 'Test message'
-                exception = 'Test data'
-            }
+            $result = Add-LogEntry -data @{ header = 'Test message'; exception = 'Test data' }
             $result | Should -Be -1
             Should -Invoke Show-Error -Times 1
         }
@@ -214,10 +158,10 @@ Describe "Get-ConsoleWidth" {
 
 Describe "Show-SpinnerWhileJob" {
     BeforeAll {
-        Mock Write-HostWrapper {}
-        Mock Write-Color {}
-        Mock Write-Yellow {}
-        Mock Add-LogEntry {}
+        Mock Write-HostWrapper { }
+        Mock Write-Color { }
+        Mock Write-Yellow { }
+        Mock Add-LogEntry { }
 
         $PVMRoot = $PVMConfig.paths.directories.pvmRoot
         New-Item -Path "$PVMRoot\src" -ItemType Directory -Force | Out-Null
@@ -294,13 +238,13 @@ Describe "Show-SpinnerWhileJob" {
             Mock Receive-Job {
                 return @{ pvmData = @{ result = 'success' } }
             }
+            Mock Write-HostWrapper { }
 
             $scriptBlock = { return @{ result = 'success' } }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' } -noClear
 
-            # Verify that the clear line (spaces) is not called when noClear is set
-            # The clear happens at line 114 in the source
             Should -Invoke Write-Color -Times 1
+            Should -Invoke Write-HostWrapper -Times 0
         }
 
         It "Clears spinner line by default" {
@@ -358,7 +302,7 @@ Describe "Show-SpinnerWhileJob" {
                 return @{ pvmData = @{ result = 'success' } }
             }
 
-            Mock Remove-ItemWrapper {}
+            Mock Remove-ItemWrapper { }
 
             $scriptBlock = { return @{ result = 'success' } }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock
@@ -374,7 +318,7 @@ Describe "Show-SpinnerWhileJob" {
                 throw "Job failed"
             }
 
-            Mock Remove-ItemWrapper {}
+            Mock Remove-ItemWrapper { }
 
             $scriptBlock = { throw "Job failed" }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
@@ -387,7 +331,6 @@ Describe "Show-SpinnerWhileJob" {
         It "Removes job properties from result" {
             $script:keepRunning = $false
             Mock Receive-Job {
-                # Return an object with the actual job properties that need filtering
                 $result = [PSCustomObject]@{
                     pvmData = @{ result = 'success' }
                     result = 'success'
@@ -422,7 +365,6 @@ Describe "Show-SpinnerWhileJob" {
             }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
 
-            # Start-Sleep should be called during spinner loop
             Should -Invoke Start-Sleep
         }
 
@@ -435,18 +377,15 @@ Describe "Show-SpinnerWhileJob" {
             $scriptBlock = { return @{ result = 'success' } }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock
 
-            # Verify Start-Job was called with initializationScript parameter
-            Should -Invoke Start-Job -ParameterFilter {
-                $null -ne $initializationScript
-            }
+            Should -Invoke Start-Job -ParameterFilter { $null -ne $initializationScript }
         }
     }
 }
 
 Describe "Show-SpinnerWhileProcess" {
     BeforeAll {
-        Mock Write-Color {}
-        Mock Add-LogEntry {}
+        Mock Write-Color { }
+        Mock Add-LogEntry { }
     }
 
     Context "When process succeeds" {
@@ -505,11 +444,12 @@ Describe "Show-SpinnerWhileProcess" {
 
     Context "When clearing the spinner" {
         It "Does not clear the spinner line when noClear is set" {
+            Mock Write-HostWrapper { }
+
             $null = Show-SpinnerWhileProcess -fileName 'cmd.exe' -processArgs @('/c', 'echo hi') -noClear
 
-            # Verify that the clear line (spaces) is not called when noClear is set
-            # The clear happens at line 114 in the source
             Should -Invoke Write-Color -Times 1
+            Should -Invoke Write-HostWrapper -Times 0
         }
     }
 
@@ -532,19 +472,19 @@ Describe "Show-SpinnerWhileProcess" {
 
     Context "Finally block" {
         BeforeEach {
-            Mock Write-Color {}
+            Mock Write-Color { }
 
             $script:killed = $false
             $script:disposed = $false
 
             $stdout = [pscustomobject]@{}
             $stdout | Add-Member ScriptMethod ReadToEndAsync {
-                [pscustomobject]@{ Result = '' }
+                return [pscustomobject]@{ Result = '' }
             }
 
             $stderr = [pscustomobject]@{}
             $stderr | Add-Member ScriptMethod ReadToEndAsync {
-                [pscustomobject]@{ Result = '' }
+                return [pscustomobject]@{ Result = '' }
             }
 
             $script:fakeProc = [pscustomobject]@{
@@ -556,8 +496,8 @@ Describe "Show-SpinnerWhileProcess" {
                 HasExited      = $true
             }
 
-            $script:fakeProc | Add-Member ScriptMethod Start { $true }
-            $script:fakeProc | Add-Member ScriptMethod WaitForExit {}
+            $script:fakeProc | Add-Member ScriptMethod Start { return $true }
+            $script:fakeProc | Add-Member ScriptMethod WaitForExit { }
             $script:fakeProc | Add-Member ScriptMethod Kill {
                 $script:killed = $true
             }
@@ -565,7 +505,7 @@ Describe "Show-SpinnerWhileProcess" {
                 $script:disposed = $true
             }
 
-            Mock New-Process { $script:fakeProc }
+            Mock New-Process { return $script:fakeProc }
         }
 
         It "Disposes the process" {
@@ -616,10 +556,10 @@ Describe "Show-SpinnerWhileProcess" {
     }
 }
 
-Describe "Write-Host helpers Tests" {
+Describe "Write-Host helpers" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {
-            Mock Write-HostWrapper {}
+            Mock Write-HostWrapper { }
 
             Write-Color -message 'Test message' -foreColor 'Red'
 
@@ -633,7 +573,7 @@ Describe "Write-Host helpers Tests" {
 
     Context "Write-Color wrappers Tests" {
         BeforeEach {
-            Mock Write-Color {}
+            Mock Write-Color { }
         }
 
         It "Prints white message" {
@@ -641,14 +581,6 @@ Describe "Write-Host helpers Tests" {
 
             Should -Invoke Write-Color -ParameterFilter {
                 $message -match 'Test message' -and $foreColor -eq 'White'
-            }
-        }
-
-        It "Prints dark green message" {
-            Write-DarkGreen -message 'Test message'
-
-            Should -Invoke Write-Color -ParameterFilter {
-                $message -match 'Test message' -and $foreColor -eq 'DarkGreen'
             }
         }
 
@@ -719,7 +651,7 @@ Describe "Write-Host helpers Tests" {
 
     Context "Show-* Tests" {
         It "Prints success message" {
-            Mock Write-DarkGreen {}
+            Mock Write-DarkGreen { }
 
             Show-Success -message 'Test message'
 
@@ -729,7 +661,7 @@ Describe "Write-Host helpers Tests" {
         }
 
         It "Prints error message" {
-            Mock Write-DarkYellow {}
+            Mock Write-DarkYellow { }
 
             Show-Error -message 'Test message'
 
@@ -739,7 +671,7 @@ Describe "Write-Host helpers Tests" {
         }
 
         It "Prints warning message" {
-            Mock Write-Yellow {}
+            Mock Write-Yellow { }
 
             Show-Warning -message 'Test message'
 
@@ -749,7 +681,7 @@ Describe "Write-Host helpers Tests" {
         }
 
         It "Prints info message" {
-            Mock Write-Cyan {}
+            Mock Write-Cyan { }
 
             Show-Info -message 'Test message'
 
@@ -759,7 +691,7 @@ Describe "Write-Host helpers Tests" {
         }
 
         It "Prints header message" {
-            Mock Write-Magenta {}
+            Mock Write-Magenta { }
 
             Show-Header -message 'Test message'
 
@@ -769,7 +701,7 @@ Describe "Write-Host helpers Tests" {
         }
 
         It "Prints section message" {
-            Mock Write-Blue {}
+            Mock Write-Blue { }
 
             Show-Section -message 'Test message'
 
@@ -779,7 +711,7 @@ Describe "Write-Host helpers Tests" {
         }
 
         It "Prints debug message" {
-            Mock Write-DarkGray {}
+            Mock Write-DarkGray { }
 
             Show-Debug -message 'Test message'
 
@@ -789,7 +721,7 @@ Describe "Write-Host helpers Tests" {
         }
 
         It "Prints verbose message" {
-            Mock Write-Gray {}
+            Mock Write-Gray { }
 
             Show-Verbose -message 'Test message'
 
@@ -799,7 +731,7 @@ Describe "Write-Host helpers Tests" {
         }
 
         It "Prints value message" {
-            Mock Write-White {}
+            Mock Write-White { }
 
             Show-Value -message 'Test message'
 
@@ -809,7 +741,7 @@ Describe "Write-Host helpers Tests" {
         }
 
         It "Prints host message" {
-            Mock Write-White {}
+            Mock Write-White { }
 
             Show-Message -message 'Test message'
 
@@ -821,7 +753,7 @@ Describe "Write-Host helpers Tests" {
 
     Context "New-Line* Test" {
         It "Prints new lines" {
-            Mock Write-HostWrapper {}
+            Mock Write-HostWrapper { }
 
             New-Lines -count 5
 
@@ -831,7 +763,7 @@ Describe "Write-Host helpers Tests" {
         }
 
         It "Prints new line" {
-            Mock New-Lines {}
+            Mock New-Lines { }
 
             New-Line
 
@@ -857,8 +789,8 @@ Describe "Sound Functions" {
 
     Context "New-Player" {
         It "loads PresentationCore and returns a MediaPlayer instance" {
-            Mock Add-Type {}
-            Mock New-Object { @{ PSTypeName = 'FakeMediaPlayer' } }
+            Mock Add-Type { }
+            Mock New-Object { return @{ PSTypeName = 'FakeMediaPlayer' } }
 
             $result = New-Player
 
@@ -874,14 +806,14 @@ Describe "Sound Functions" {
             $script:fakeShellFolder = [PSCustomObject]@{}
             $script:fakeShell = [PSCustomObject]@{}
 
-            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name ParseName -Value { param($f) $script:fakeShellFile }
-            $script:fakeShell | Add-Member -MemberType ScriptMethod -Name Namespace -Value { param($f) $script:fakeShellFolder }
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name ParseName -Value { param($f) return $script:fakeShellFile }
+            $script:fakeShell | Add-Member -MemberType ScriptMethod -Name Namespace -Value { param($f) return $script:fakeShellFolder }
 
-            Mock New-Object { $script:fakeShell } -ParameterFilter { $ComObject -eq 'Shell.Application' }
+            Mock New-Object { return $script:fakeShell } -ParameterFilter { $ComObject -eq 'Shell.Application' }
         }
 
         It "returns TotalSeconds when duration is greater than 1 second" {
-            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) "0:00:05" } -Force
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) return "0:00:05" } -Force
 
             $result = Get-Sound-TotalSeconds -path "C:\music\song.mp3"
 
@@ -889,7 +821,7 @@ Describe "Sound Functions" {
         }
 
         It "returns 1 when duration is 1 second or less" {
-            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) "0:00:00" } -Force
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) return "0:00:00" } -Force
 
             $result = Get-Sound-TotalSeconds -path "C:\music\song.mp3"
 
@@ -905,10 +837,10 @@ Describe "Sound Functions" {
             $script:fakePlayer | Add-Member -MemberType ScriptMethod -Name Play -Value { $script:playerCalls.Play = $true }
             $script:fakePlayer | Add-Member -MemberType ScriptMethod -Name Close -Value { }
 
-            Mock New-Player { $script:fakePlayer }
-            Mock Get-Sound-TotalSeconds { 3 }
-            Mock Start-Sleep {}
-            Mock Add-LogEntry {}
+            Mock New-Player { return $script:fakePlayer }
+            Mock Get-Sound-TotalSeconds { return 3 }
+            Mock Start-Sleep { }
+            Mock Add-LogEntry { }
         }
 
         It "opens the file, plays it, and sleeps for its duration when 'wait' is specified" {
@@ -944,7 +876,7 @@ Describe "Sound Functions" {
         }
 
         It "does not play sound in subprocess mode" {
-            Mock New-Player {}
+            Mock New-Player { }
             $Global:PVMConfig.subprocess.enabled = $true
 
             Invoke-Sound -filename "song.mp3"
@@ -953,7 +885,7 @@ Describe "Sound Functions" {
         }
 
         It "does not play sound when sounds are disabled" {
-            Mock New-Player {}
+            Mock New-Player { }
             $Global:PVMConfig.subprocess.enabled = $false
             $PVMConfig.env.SOUNDS_DISABLED = $true
 
@@ -965,7 +897,7 @@ Describe "Sound Functions" {
 
     Context "Invoke-<Type>Sound wrappers" {
         BeforeEach {
-            Mock Invoke-Sound {}
+            Mock Invoke-Sound { }
         }
 
         It "Invoke-SuccessSound plays success.mp3 from assets path" {

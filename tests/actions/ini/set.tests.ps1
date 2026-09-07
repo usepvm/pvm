@@ -4,22 +4,24 @@ BeforeAll {
     $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\set-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    $script:testIniPath = "$TEST_DRIVE\php.ini"
-    $script:extDirectory = "$TEST_DRIVE\ext"
+    $script:phpVersionPath = "$TEST_DRIVE\php-8.2"
+    $script:testIniPath = "$phpVersionPath\php.ini"
+    $script:extDirectory = "$phpVersionPath\ext"
     $script:testBackupPath = "$testIniPath.bak"
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
+    New-Item -ItemType Directory -Path $phpVersionPath -Force | Out-Null
+    New-Item -ItemType Directory -Path $extDirectory -Force | Out-Null
 
-    Mock Show-Warning {}
-    Mock Show-Message {}
-    Mock Show-Error {}
-    Mock Show-Info {}
-    Mock Write-Color {}
-    Mock New-Line {}
+    Mock Show-Warning { }
+    Mock Show-Message { }
+    Mock Show-Error { }
+    Mock Show-Info { }
+    Mock Write-Color { }
+    Mock New-Line { }
 
     function Reset-IniContent {
-    # Create a test php.ini file
     @"
 memory_limit = 128M
 ;extension=php_xdebug.dll
@@ -31,13 +33,7 @@ max_execution_time = 30
 "@ | Set-ContentWrapper -path $testIniPath
     }
 
-    # Create initial ini content first
     Reset-IniContent
-
-    # Create directory and symlink for current PHP version
-    $phpVersionPath = "$TEST_DRIVE\php-8.2"
-    New-Item -ItemType Directory -Path $phpVersionPath -Force
-    Copy-ItemWrapper -path $testIniPath -destination "$phpVersionPath\php.ini"
 }
 
 AfterAll {

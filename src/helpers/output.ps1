@@ -1,30 +1,4 @@
 ﻿
-function Show-MsgByExitCode {
-    param ($result, $message = $null)
-
-    try {
-        if ($result.messages -and $result.messages.Count -gt 1) {
-            foreach ($msg in $result.messages) {
-                if (-not $msg.color) {
-                    $msg.color = 'White'
-                }
-                Write-Color -message $($msg.content) -foreColor $msg.color
-            }
-        } else {
-            if ($message) {
-                $result.message = $message
-            }
-            if (-not $result.color) {
-                $result.color = 'Gray'
-            }
-
-            Write-Color -message "`n$($result.message)" -foreColor $result.color
-        }
-    } catch {
-        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to display message by exit code"; exception = $_ }
-    }
-}
-
 function Add-LogEntry {
     param ($data)
 

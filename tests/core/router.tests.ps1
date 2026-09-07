@@ -526,20 +526,20 @@ Describe "Get-Actions" {
 Describe "Integration Tests" {
     Context "Command Flow Integration" {
         BeforeEach {
-            Mock Test-PVMSetup { $true }
-            Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
-            Mock New-EnvFile { 0 }
-            Mock Initialize-PVM { 0 }
-            Mock Optimize-SystemPath { 0 }
-            Mock Get-CurrentPHPVersion { @{ version = '8.2.0'; path = 'C:\PHP\8.2.0' } }
+            Mock Test-PVMSetup { return $true }
+            Mock Initialize-EnvironmentDirectoriesAndFiles { return 0 }
+            Mock New-EnvFile { return 0 }
+            Mock Initialize-PVM { return 0 }
+            Mock Optimize-SystemPath { return 0 }
+            Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = 'C:\PHP\8.2.0' } }
             Mock Get-PHPStatus {
                 return @(
                     @{ name = 'Xdebug'; version = '3.2.0'; copyright = 'Xdebug'; color = 'DarkGreen'; status = 'Enabled' },
                     @{ name = 'Zend Opcache'; version = '8.2.0'; copyright = 'Zend'; color = 'DarkYellow'; status = 'Disabled' }
                 )
             }
-            Mock Install-PHP { 0 }
-            Mock Update-PHPVersion { 0 }
+            Mock Install-PHP { return 0 }
+            Mock Update-PHPVersion { return 0 }
         }
 
         It "Should handle complete workflow: setup -> install -> use -> current" {
@@ -569,11 +569,11 @@ Describe "Integration Tests" {
 
     Context "Error Handling Integration" {
         It "Should handle cascading failures gracefully" {
-            Mock Test-PVMSetup { $false }
-            Mock Initialize-EnvironmentDirectoriesAndFiles { -1 }
-            Mock New-EnvFile { -1 }
-            Mock Initialize-PVM { -1 }
-            Mock Optimize-SystemPath { -1 }
+            Mock Test-PVMSetup { return $false }
+            Mock Initialize-EnvironmentDirectoriesAndFiles { return -1 }
+            Mock New-EnvFile { return -1 }
+            Mock Initialize-PVM { return -1 }
+            Mock Optimize-SystemPath { return -1 }
 
             $result = Invoke-Setup
             $result | Should -Be -1

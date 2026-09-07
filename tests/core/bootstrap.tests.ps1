@@ -21,9 +21,9 @@ AfterAll {
 
 Describe "Show-Usage" {
     BeforeEach {
-        Mock Get-CurrentPHPVersion { @{ version = '8.2.0' } }
+        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0' } }
         Mock Get-Actions {
-            [ordered]@{
+            return [ordered]@{
                 'setup' = @{
                     order = 0
                     group = 'Getting Started'
@@ -65,10 +65,10 @@ Describe "Show-Usage" {
     }
 
     It "Uses fallback maxDescLength when window is small" {
-        Mock Get-ConsoleWidth { 80 }
+        Mock Get-ConsoleWidth { return 80 }
 
         Mock Get-Actions {
-            [ordered]@{
+            return [ordered]@{
                 'testcmd' = @{
                     order = 0; group = 'Getting Started';
                     data = @{ command = 'pvm testcmd'; description = ('X' * 200) }
@@ -85,7 +85,7 @@ Describe "Show-Usage" {
     It "Breaks mid-word when no space within maxDescLength" {
         $noSpace = ('A' * 150) + ' rest of description'
         Mock Get-Actions {
-            [ordered]@{
+            return [ordered]@{
                 'nospace' = @{
                     order = 0; group = 'Getting Started';
                     data = @{ command = 'pvm nospace'; description = $noSpace }
@@ -102,7 +102,7 @@ Describe "Show-Usage" {
         # Create description with spaces to force multiple wrapped lines
         $spaced = (1..10 | ForEach-Object -Process { ('word' + $_) }) -join ' '
         Mock Get-Actions {
-            [ordered]@{
+            return [ordered]@{
                 'multiline' = @{
                     order = 0; group = 'Getting Started';
                     data = @{ command = 'pvm multiline'; description = $spaced }
@@ -222,7 +222,7 @@ Describe "Get-LevenshteinDistance" {
 
 Describe "Get-ClosestCommandSuggestion" {
     It "Should return null suggestion for whitespace command" {
-        Mock Get-Aliases { @{} }
+        Mock Get-Aliases { return @{} }
         $actions = [ordered]@{
             'install' = @{ action = { return 0 } }
         }
@@ -232,7 +232,7 @@ Describe "Get-ClosestCommandSuggestion" {
     }
 
     It "Should return null when no candidate commands exist" {
-        Mock Get-Aliases { @{} }
+        Mock Get-Aliases { return @{} }
         $actions = [ordered]@{}
 
         $result = Get-ClosestCommandSuggestion -command 'anything' -actions $actions
@@ -240,7 +240,7 @@ Describe "Get-ClosestCommandSuggestion" {
     }
 
     It "Should use max distance 1 for short commands" {
-        Mock Get-Aliases { @{} }
+        Mock Get-Aliases { return @{} }
         $actions = [ordered]@{
             'list' = @{ action = { return 0 } }
         }
@@ -250,7 +250,7 @@ Describe "Get-ClosestCommandSuggestion" {
     }
 
     It "Should use max distance 3 for medium commands" {
-        Mock Get-Aliases { @{} }
+        Mock Get-Aliases { return @{} }
         $actions = [ordered]@{
             'install' = @{ action = { return 0 } }
         }
@@ -275,7 +275,7 @@ Describe "Start-PVM" {
         Mock Resolve-FlagCommand { return $null }
         Mock Test-CheckForUpdatesQuietly { }
         Mock Get-Actions {
-            [ordered]@{
+            return [ordered]@{
                 'version' = @{ data = @{ action = { return 0 } } }
                 'setup' = @{ data = @{ action = { return 0 } } }
                 'install' = @{ data = @{ action = { return 0 } } }
@@ -283,8 +283,8 @@ Describe "Start-PVM" {
                 'list' = @{ data = @{ action = { return 0 } } }
             }
         }
-        Mock Test-PVMSetup { $true }
-        Mock Add-LogEntry { 0 }
+        Mock Test-PVMSetup { return $true }
+        Mock Add-LogEntry { return 0 }
         Mock Resolve-Alias {
             param ($alias)
 
@@ -363,7 +363,7 @@ Describe "Start-PVM" {
 
         It "Should suggest the closest valid command when a typo is entered" {
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'cache' = @{ action = { return 0 } }
                     'help' = @{ action = { return 0 } }
                 }
@@ -379,7 +379,7 @@ Describe "Start-PVM" {
 
         It "Should suggest aliases when command is a prefix of aliases" {
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'aliases' = @{ action = { return 0 } }
                     'help' = @{ action = { return 0 } }
                 }
@@ -395,7 +395,7 @@ Describe "Start-PVM" {
 
         It "Should not suggest unrelated commands for very different invalid input" {
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'install' = @{ action = { return 0 } }
                     'help' = @{ action = { return 0 } }
                     'list' = @{ action = { return 0 } }
@@ -428,7 +428,7 @@ Describe "Start-PVM" {
         }
 
         It "Should handle case where Get-Actions returns empty hashtable" {
-            Mock Get-Actions { @{} }
+            Mock Get-Actions { return @{} }
 
             $result = Start-PVM -command 'install' -arguments @()
 
@@ -439,7 +439,7 @@ Describe "Start-PVM" {
 
     Context "Setup Validation Path Tests" {
         It "Should skip setup check for setup command" {
-            Mock Test-PVMSetup { $false }
+            Mock Test-PVMSetup { return $false }
 
             $result = Start-PVM -command 'setup' -arguments @()
 
@@ -449,7 +449,7 @@ Describe "Start-PVM" {
         }
 
         It "Should require setup when PVM is not setup for non-setup command" {
-            Mock Test-PVMSetup { $false }
+            Mock Test-PVMSetup { return $false }
 
             $result = Start-PVM -command 'install' -arguments @()
 
@@ -461,7 +461,7 @@ Describe "Start-PVM" {
         }
 
         It "Should proceed when PVM is setup for non-setup command" {
-            Mock Test-PVMSetup { $true }
+            Mock Test-PVMSetup { return $true }
 
             $result = Start-PVM -command 'install' -arguments @()
 
@@ -474,11 +474,11 @@ Describe "Start-PVM" {
 
         It "Should handle different commands requiring setup check" {
             $commandsRequiringSetup = @('install', 'use', 'list', 'current', 'ini', 'profile', 'cache')
-            Mock Test-PVMSetup { $false }
+            Mock Test-PVMSetup { return $false }
 
             foreach ($op in $commandsRequiringSetup) {
                 Mock Get-Actions {
-                    [ordered]@{
+                    return [ordered]@{
                         $op = @{ action = { return 0 } }
                     }
                 }
@@ -496,7 +496,7 @@ Describe "Start-PVM" {
     Context "Action Execution Path Tests" {
         It "Should execute action and return 0" {
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'install' = @{ data = @{ action = { return 0 } } }
                 }
             }
@@ -508,7 +508,7 @@ Describe "Start-PVM" {
 
         It "Should execute action and return non-zero exit code" {
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'install' = @{ data = @{ action = { return -1 } } }
                 }
             }
@@ -520,7 +520,7 @@ Describe "Start-PVM" {
 
         It "Should execute action and return custom exit code" {
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'use' = @{ data = @{ action = { return 42 } } }
                 }
             }
@@ -531,9 +531,9 @@ Describe "Start-PVM" {
         }
 
         It "Should execute complex action logic" {
-            Mock Test-Path { $true }
+            Mock Test-Path { return $true }
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'test' = @{
                         data = @{
                             action = { if (Test-Path 'C:\Test') { return 0 } else { return -1 } }
@@ -552,7 +552,7 @@ Describe "Start-PVM" {
     Context "Error Handling Path Tests" {
         It "Should catch exception and return -1" {
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'install' = @{
                         data = @{
                             action = { throw 'Test exception' }
@@ -572,7 +572,7 @@ Describe "Start-PVM" {
 
         It "Should handle exception with proper logging data" {
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'install' = @{
                         data = @{
                             action = { throw 'Detailed test exception' }
@@ -600,7 +600,7 @@ Describe "Start-PVM" {
 
             foreach ($exception in $exceptions) {
                 Mock Get-Actions {
-                    [ordered]@{
+                    return [ordered]@{
                         'test' = @{
                             data = @{
                                 action = { throw $exception }
@@ -652,9 +652,9 @@ Describe "Start-PVM" {
         }
 
         It "Should handle exception when Add-LogEntry fails" {
-            Mock Add-LogEntry { -1 }
+            Mock Add-LogEntry { return -1 }
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'install' = @{
                         data = @{
                             action = { throw 'Test exception' }
@@ -727,7 +727,7 @@ Describe "Start-PVM" {
 
             foreach ($case in $testCases) {
                 Mock Get-Actions {
-                    [ordered]@{
+                    return [ordered]@{
                         'install' = @{ data = @{ action = { return 10 } } }
                         'use' = @{ data = @{ action = { return 20 } } }
                         'list' = @{ data = @{ action = { return 30 } } }
@@ -763,7 +763,7 @@ Describe "Start-PVM" {
     Context "Nested Command Tests" {
         BeforeEach {
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'install' = @{ data = @{ action = { return Invoke-Install -arguments @() } } }
                     'list' = @{ data = @{ action = { return Invoke-List -arguments @() } } }
                     'ini' = @{ data = @{ action = { return Invoke-Ini -arguments @() } } }
@@ -792,11 +792,11 @@ Describe "Start-PVM" {
     Context "Integration Path Tests" {
         It "Should execute complete happy path" {
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'install' = @{ data = @{ action = { return 0 } } }
                 }
             }
-            Mock Test-PVMSetup { $true }
+            Mock Test-PVMSetup { return $true }
 
             $result = Start-PVM -command 'install' -arguments @('8.2.0')
 
@@ -811,7 +811,7 @@ Describe "Start-PVM" {
 
         It "Should handle complete setup workflow" {
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'setup' = @{ data = @{ action = { return 0 } } }
                 }
             }
@@ -828,15 +828,15 @@ Describe "Start-PVM" {
 
         It "Should handle complete error workflow" {
             Mock Get-Actions {
-                [ordered]@{
+                return [ordered]@{
                     'install' = @{
                         action = { throw [System.UnauthorizedAccessException]::new('Access denied') }
                     }
                 }
             }
             Mock Resolve-Alias { param ($alias) return $alias }
-            Mock Test-PVMSetup { $true }
-            Mock Add-LogEntry { 0 }
+            Mock Test-PVMSetup { return $true }
+            Mock Add-LogEntry { return 0 }
 
             $result = Start-PVM -command 'install' -arguments @('8.2.0')
 

@@ -186,7 +186,7 @@ Describe "Initialize-PVM" {
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
                 return "$PVMRoot;$PHP_CURRENT_VERSION_PATH"
             }
-            Mock Set-EnvVar { -1 }
+            Mock Set-EnvVar { return -1 }
 
             $result = Initialize-PVM
 

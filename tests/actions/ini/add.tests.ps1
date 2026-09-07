@@ -464,7 +464,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when user cancels the extension installation" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { '' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '' }
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
 
@@ -473,7 +473,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when user enters an invalid selection" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { 'unknown' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return 'unknown' }
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
 
@@ -482,7 +482,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when user enters a negative selection" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { -1 }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return -1 }
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
 
@@ -491,7 +491,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when user enters a selection outside the valid range" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { 5 }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return 5 }
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
 
@@ -500,7 +500,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when no handler is found for the selected source" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { 0 }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return 0 }
         Mock Get-SourceHandler { return $null }
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
@@ -521,16 +521,14 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when user does not choose a zip extension version to install" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { '' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '' }
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
         $code | Should -Be -1
     }
 
     It "Returns -1 when user does choose a non valid zip extension version to install" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith {
-            return '5'
-        }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '5' }
 
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
         $code | Should -Be -1

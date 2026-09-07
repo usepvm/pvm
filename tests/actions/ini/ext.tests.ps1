@@ -168,7 +168,7 @@ Describe "Show-PHPExtensions" {
                 )
             }
         }
-        Mock Get-ConsoleWidth { 80 }
+        Mock Get-ConsoleWidth { return 80 }
         $code = Show-PHPExtensions -iniPath $testIniPath -available $true
         $code | Should -Be 0
     }
@@ -240,7 +240,15 @@ Describe "Show-PHPExtensionInfo" {
                 @{ name = 'xdebug-2'; id = 'xdebug'; status = 'Disabled'; color = 'DarkYellow' }
             )
         }
-        Mock Read-HostWrapper { $script:selectionAttempts++ ; if ($script:selectionAttempts -eq 1) { return 'bad' } elseif ($script:selectionAttempts -eq 2) { return '2' } return '0' }
+        Mock Read-HostWrapper {
+            $script:selectionAttempts++
+            if ($script:selectionAttempts -eq 1) {
+                return 'bad'
+            } elseif ($script:selectionAttempts -eq 2) {
+                return '2'
+            }
+            return '0'
+        }
         $script:selectionAttempts = 0
 
         $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName 'xdebug'

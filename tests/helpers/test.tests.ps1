@@ -42,7 +42,7 @@ Describe "Show-Scripts" {
     }
 
     It "Displays no script entries when no scripts are available" {
-        Mock Get-Scripts { @{} }
+        Mock Get-Scripts { return @{} }
 
         Show-Scripts
 

@@ -51,16 +51,16 @@ Describe "Invoke-Version" {
 
 Describe "Invoke-Setup" {
     BeforeEach {
-        Mock Test-PVMNotSetup { $false }
-        Mock Initialize-PVM { 0 }
-        Mock Optimize-SystemPath { 0 }
-        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
-        Mock New-EnvFile { 0 }
+        Mock Test-PVMNotSetup { return $false }
+        Mock Initialize-PVM { return 0 }
+        Mock Optimize-SystemPath { return 0 }
+        Mock Initialize-EnvironmentDirectoriesAndFiles { return 0 }
+        Mock New-EnvFile { return 0 }
         Mock Wait-ForEnvEdit { }
     }
 
     It "Should return 0 when PVM is already setup" {
-        Mock Test-PVMNotSetup { $false }
+        Mock Test-PVMNotSetup { return $false }
 
         $result = Invoke-Setup
         $result | Should -Be 0
@@ -73,8 +73,8 @@ Describe "Invoke-Setup" {
     }
 
     It "Should setup PVM when not already setup" {
-        Mock Test-PVMNotSetup { $true }
-        Mock Initialize-PVM { 0 }
+        Mock Test-PVMNotSetup { return $true }
+        Mock Initialize-PVM { return 0 }
 
         $result = Invoke-Setup
         $result | Should -Be 0
@@ -87,7 +87,7 @@ Describe "Invoke-Setup" {
     }
 
     It "Should display warning when system path optimization fails" {
-        Mock Optimize-SystemPath { -1 }
+        Mock Optimize-SystemPath { return -1 }
 
         $result = Invoke-Setup
         $result | Should -Be 0
@@ -96,10 +96,10 @@ Describe "Invoke-Setup" {
     }
 
     It "Should pause for env edit after creating env file" {
-        Mock Test-PVMNotSetup { $true }
+        Mock Test-PVMNotSetup { return $true }
         Mock New-EnvFile { return 0 }
         Mock Wait-ForEnvEdit { }
-        Mock Initialize-PVM { 0 }
+        Mock Initialize-PVM { return 0 }
 
         $result = Invoke-Setup
         $result | Should -Be 0
@@ -110,8 +110,8 @@ Describe "Invoke-Setup" {
     }
 
     It "Returns -1 when PVM fails to initialize" {
-        Mock Test-PVMNotSetup { $true }
-        Mock Initialize-PVM { -1 }
+        Mock Test-PVMNotSetup { return $true }
+        Mock Initialize-PVM { return -1 }
 
         $result = Invoke-Setup
         $result | Should -Be -1
@@ -126,7 +126,7 @@ Describe "Invoke-Current" {
                 @{ name = 'Zend Opcache'; version = '8.2.0'; copyright = 'Zend'; color = 'DarkYellow'; status = 'Disabled' }
             )
         }
-        Mock Get-CurrentPHPVersion { @{
+        Mock Get-CurrentPHPVersion { return @{
                 version   = '8.2.0'
                 arch      = 'x64'
                 buildType = 'TS'
@@ -149,7 +149,7 @@ Describe "Invoke-Current" {
                 @{ name = 'Zend Opcache'; text = 'Not Found'; color = 'DarkGray' }
             )
         }
-        Mock Get-CurrentPHPVersion { @{
+        Mock Get-CurrentPHPVersion { return @{
                 version   = '8.2.0'
                 arch      = 'x64'
                 buildType = 'TS'
@@ -167,7 +167,7 @@ Describe "Invoke-Current" {
     }
 
     It "Should return -1 when no PHP version is set" {
-        Mock Get-CurrentPHPVersion { @{ version = $null; status = $null; path = $null } }
+        Mock Get-CurrentPHPVersion { return @{ version = $null; status = $null; path = $null } }
 
         $result = Invoke-Current
         $result | Should -Be -1
@@ -177,7 +177,7 @@ Describe "Invoke-Current" {
 
     It "Should handle missing status information" {
         Mock Get-PHPStatus { return $null }
-        Mock Get-CurrentPHPVersion { @{ version = '8.2.0'; status = $null; path = 'C:\PHP\8.2.0' } }
+        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; status = $null; path = 'C:\PHP\8.2.0' } }
 
         $result = Invoke-Current
         $result | Should -Be -1
@@ -215,7 +215,7 @@ Describe "Invoke-List" {
 
 Describe "Invoke-Install" {
     BeforeEach {
-        Mock Install-PHP { 0 }
+        Mock Install-PHP { return 0 }
     }
 
     It "Should return -1 when no version is provided" {
@@ -284,7 +284,7 @@ Describe "Invoke-Install" {
 
 Describe "Invoke-Use" {
     BeforeEach {
-        Mock Select-PHPVersionAutomatically { @{ code = 0; version = '8.2.0' } }
+        Mock Select-PHPVersionAutomatically { return @{ code = 0; version = '8.2.0' } }
         Mock Update-PHPVersion { return 0 }
     }
 
@@ -319,7 +319,7 @@ Describe "Invoke-Use" {
     }
 
     It "Should return -1 when auto-selection fails" {
-        Mock Select-PHPVersionAutomatically { @{ code = 1; message = 'Auto selection failed'; color = 'DarkYellow' } }
+        Mock Select-PHPVersionAutomatically { return @{ code = 1; message = 'Auto selection failed'; color = 'DarkYellow' } }
         $arguments = @('auto')
 
         $result = Invoke-Use -arguments $arguments
@@ -390,7 +390,7 @@ Describe "Invoke-Uninstall" {
 
 Describe "Invoke-Ini" {
     BeforeEach {
-        Mock Invoke-IniAction { 0 }
+        Mock Invoke-IniAction { return 0 }
     }
 
     It "Should return -1 when no action is provided" {
@@ -444,14 +444,14 @@ Describe "Invoke-Ini" {
 
 Describe "Invoke-Profile" {
     BeforeEach {
-        Mock Save-PHPProfile { 0 }
-        Mock Use-PHPProfile { 0 }
-        Mock Show-PHPProfiles { 0 }
-        Mock Show-PHPProfile { 0 }
-        Mock Remove-PHPProfile { 0 }
-        Mock Clear-PHPProfiles { 0 }
-        Mock Export-PHPProfile { 0 }
-        Mock Import-PHPProfile { 0 }
+        Mock Save-PHPProfile { return 0 }
+        Mock Use-PHPProfile { return 0 }
+        Mock Show-PHPProfiles { return 0 }
+        Mock Show-PHPProfile { return 0 }
+        Mock Remove-PHPProfile { return 0 }
+        Mock Clear-PHPProfiles { return 0 }
+        Mock Export-PHPProfile { return 0 }
+        Mock Import-PHPProfile { return 0 }
     }
 
     Context "No action provided" {
@@ -840,7 +840,7 @@ Describe "Invoke-Info" {
 
     Context "When no PHP version is active" {
         BeforeEach {
-            Mock Get-CurrentPHPVersion { $null }
+            Mock Get-CurrentPHPVersion { return $null }
         }
 
         It "Returns 0" {
@@ -909,7 +909,7 @@ Describe "Invoke-Aliases" {
 Describe "Invoke-Log" {
     BeforeAll {
         $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE = 5
-        Mock Show-Log { 0 }
+        Mock Show-Log { return 0 }
     }
 
     It "Should skip confirmation and clear log file" {
@@ -970,8 +970,8 @@ Describe "Invoke-Repair" {
     }
 
     It "Should return 0 when all actions succeed" {
-        Mock New-EnvFile { 0 }
-        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
+        Mock New-EnvFile { return 0 }
+        Mock Initialize-EnvironmentDirectoriesAndFiles { return 0 }
 
         $result = Invoke-Repair
         $result | Should -Be 0
@@ -979,8 +979,8 @@ Describe "Invoke-Repair" {
     }
 
     It "Should return -1 when Initialize-EnvironmentDirectoriesAndFiles fails" {
-        Mock Initialize-EnvironmentDirectoriesAndFiles { -1 }
-        Mock New-EnvFile { 0 }
+        Mock Initialize-EnvironmentDirectoriesAndFiles { return -1 }
+        Mock New-EnvFile { return 0 }
 
         $result = Invoke-Repair
         $result | Should -Be -1
@@ -989,8 +989,8 @@ Describe "Invoke-Repair" {
     }
 
     It "Should return -1 when New-EnvFile fails" {
-        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
-        Mock New-EnvFile { -1 }
+        Mock Initialize-EnvironmentDirectoriesAndFiles { return 0 }
+        Mock New-EnvFile { return -1 }
 
         $result = Invoke-Repair
         $result | Should -Be -1
@@ -999,8 +999,8 @@ Describe "Invoke-Repair" {
     }
 
     It "Should pause for env edit after creating env file" {
-        Mock Initialize-EnvironmentDirectoriesAndFiles { 0 }
-        Mock New-EnvFile { 0 }
+        Mock Initialize-EnvironmentDirectoriesAndFiles { return 0 }
+        Mock New-EnvFile { return 0 }
         Mock Wait-ForEnvEdit { }
 
         $result = Invoke-Repair
@@ -1013,10 +1013,10 @@ Describe "Invoke-Repair" {
 
 Describe "Invoke-Cache" {
     BeforeEach {
-        Mock Show-CacheFiles { 0 }
-        Mock Show-CachedData { 0 }
-        Mock Remove-CacheFile { 0 }
-        Mock Clear-CacheFiles { 0 }
+        Mock Show-CacheFiles { return 0 }
+        Mock Show-CachedData { return 0 }
+        Mock Remove-CacheFile { return 0 }
+        Mock Clear-CacheFiles { return 0 }
     }
 
     Context "No action provided" {
@@ -1224,7 +1224,7 @@ Describe "Invoke-Update" {
 
 Describe "Invoke-Test" {
     BeforeAll {
-        Mock Initialize-Tests { 0 }
+        Mock Initialize-Tests { return 0 }
     }
 
     It "Installs Pester module when not already installed" {
@@ -1433,7 +1433,7 @@ Describe "Invoke-Test" {
         }
 
         It "Should accept coverage target of 0" {
-            Mock Initialize-Tests { 0 }
+            Mock Initialize-Tests { return 0 }
 
             $result = Invoke-Test -arguments @('--coverage=0')
 
@@ -1441,7 +1441,7 @@ Describe "Invoke-Test" {
         }
 
         It "Should accept coverage target of 100" {
-            Mock Initialize-Tests { 0 }
+            Mock Initialize-Tests { return 0 }
 
             $result = Invoke-Test -arguments @('--coverage=100')
 
@@ -1451,7 +1451,7 @@ Describe "Invoke-Test" {
 
     Context "Muted validation" {
         It "Should set SOUNDS_DISABLED to true when --mute is specified" {
-            Mock Initialize-Tests { 0 }
+            Mock Initialize-Tests { return 0 }
             $PVMConfig.env.SOUNDS_DISABLED = $false
 
             $null = Invoke-Test -arguments @('--mute')
@@ -1460,7 +1460,7 @@ Describe "Invoke-Test" {
         }
 
         It "Should not set SOUNDS_DISABLED when --mute is not specified" {
-            Mock Initialize-Tests { 0 }
+            Mock Initialize-Tests { return 0 }
             $PVMConfig.env.SOUNDS_DISABLED = $false
 
             $null = Invoke-Test -arguments @()
@@ -1472,7 +1472,7 @@ Describe "Invoke-Test" {
 
 Describe "Invoke-Run" {
     It "Should call Invoke-RunScripts and return 0" {
-        Mock Invoke-RunScripts { 0 }
+        Mock Invoke-RunScripts { return 0 }
 
         $result = Invoke-Run -arguments @('script.ps1')
 
@@ -1481,7 +1481,7 @@ Describe "Invoke-Run" {
     }
 
     It "Should call Invoke-RunScripts and return -1" {
-        Mock Invoke-RunScripts { -1 }
+        Mock Invoke-RunScripts { return -1 }
 
         $result = Invoke-Run -arguments @('script.ps1')
 
@@ -1490,7 +1490,7 @@ Describe "Invoke-Run" {
     }
 
     It "Should call Invoke-RunScripts with custom files" {
-        Mock Invoke-RunScripts { 0 }
+        Mock Invoke-RunScripts { return 0 }
 
         $result = Invoke-Run -arguments @('script.ps1', 'file2.ps1')
 
@@ -1502,7 +1502,7 @@ Describe "Invoke-Run" {
     }
 
     It "Should set SOUNDS_DISABLED when --mute is specified" {
-        Mock Invoke-RunScripts { 0 }
+        Mock Invoke-RunScripts { return 0 }
         $PVMConfig.env.SOUNDS_DISABLED = $false
 
         $null = Invoke-Run -arguments @('script.ps1', '--mute')
@@ -1511,7 +1511,7 @@ Describe "Invoke-Run" {
     }
 
     It "Should not set SOUNDS_DISABLED when --mute is not specified" {
-        Mock Invoke-RunScripts { 0 }
+        Mock Invoke-RunScripts { return 0 }
         $PVMConfig.env.SOUNDS_DISABLED = $false
 
         $null = Invoke-Run -arguments @('script.ps1')
@@ -1520,7 +1520,7 @@ Describe "Invoke-Run" {
     }
 
     It "Filters out script name and unknown arguments from the list of files" {
-        Mock Invoke-RunScripts { 0 }
+        Mock Invoke-RunScripts { return 0 }
 
         $null = Invoke-Run -arguments @('script', '--unknown', 'file.ps1', 'file2.ps1')
 

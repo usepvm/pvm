@@ -235,9 +235,7 @@ Describe "Get-CurrentPHPVersion" {
 
     Context "When Get-ItemWrapper returns null" {
         BeforeEach {
-            Mock Get-ItemWrapper {
-                return $null
-            } -ParameterFilter { $path -eq $PHP_CURRENT_DIR }
+            Mock Get-ItemWrapper { return $null } -ParameterFilter { $path -eq $PHP_CURRENT_DIR }
         }
 
         It "Should handle null Get-ItemWrapper result" {

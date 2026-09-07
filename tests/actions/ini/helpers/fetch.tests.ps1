@@ -409,7 +409,7 @@ Describe "Get-ExtensionConfigHandler Tests" {
     }
 
     It "Returns default handler for unknown extensions" {
-        Mock Add-MissingPHPExtensionToIni { 0 }
+        Mock Add-MissingPHPExtensionToIni { return 0 }
 
         $handler = Get-ExtensionConfigHandler -extName 'php_unknown.dll'
 
@@ -1158,9 +1158,11 @@ Describe "Resolve-ExtensionLinks Tests" {
             Mock Test-CanUseCache { return $false }
             Mock Get-ExtensionAvailableReleasesLinks -ParameterFilter { $extName -eq 'mem' } { throw 'Error' }
             Mock Get-ExtensionAvailableReleasesLinks -ParameterFilter { $extName -eq 'memcache' } {
-                @{ href = '/package/memcache/3.4.0/windows' },
-                @{ href = '/package/memcache/3.3.0/windows' },
-                @{ href = '/package/memcache/3.2.0/windows' }
+                return @(
+                    @{ href = '/package/memcache/3.4.0/windows' },
+                    @{ href = '/package/memcache/3.3.0/windows' },
+                    @{ href = '/package/memcache/3.2.0/windows' }
+                )
             }
         }
 

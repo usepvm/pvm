@@ -357,7 +357,7 @@ Describe "Get-OrUpdateCache" {
         }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Get-Example
+            return Get-Example
         }
 
         Should -Invoke Get-DataFromCache -Exactly 1
@@ -376,7 +376,7 @@ Describe "Get-OrUpdateCache" {
         Mock Test-CanUseCache { return $false }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Get-Example
+            return Get-Example
         }
 
         Should -Invoke Get-Example -Exactly 1
@@ -389,7 +389,7 @@ Describe "Get-OrUpdateCache" {
         Mock Get-Example { return $null }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Get-Example
+            return Get-Example
         }
 
         Should -Invoke Get-DataFromCache -Exactly 1
@@ -407,7 +407,7 @@ Describe "Get-OrUpdateCache" {
         }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Get-Example
+            return Get-Example
         }
 
         Should -Invoke Get-DataFromCache -Exactly 1
@@ -425,7 +425,7 @@ Describe "Get-OrUpdateCache" {
         Mock Test-CanUseCache { return $false }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Get-Example
+            return Get-Example
         }
 
         Should -Invoke Get-Example -Exactly 1
@@ -443,7 +443,7 @@ Describe "Get-OrUpdateCache" {
         Mock Test-CanUseCache { return $false }
 
         $null = Get-OrUpdateCache -cacheFileName 'file.json' -compute {
-            Get-Example
+            return Get-Example
         }
 
         Should -Invoke Get-Example -Exactly 1

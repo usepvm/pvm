@@ -65,9 +65,7 @@ Describe "Set-LastUpdateCheckTimestamp" {
 
     Context "When writing succeeds" {
         It "Creates the cache directory" {
-            Mock New-Directory {
-                return 0
-            }
+            Mock New-Directory { return 0 }
             Mock Get-Date { return [datetime]'2026-01-01' }
 
             $result = Set-LastUpdateCheckTimestamp

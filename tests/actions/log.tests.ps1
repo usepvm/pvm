@@ -258,7 +258,7 @@ Describe "Write-LogPage" {
 
 Describe "Get-LogNavigation" {
     It "returns null if currentIndex is out of range" {
-        Mock Get-ConsoleKey { @{ Key = 'Q' } }
+        Mock Get-ConsoleKey { return @{ Key = 'Q' } }
 
         $result = Get-LogNavigation -currentIndex 99 -pageSize 3 -totalEntries 100
 
@@ -268,7 +268,7 @@ Describe "Get-LogNavigation" {
     }
 
     It "go back one page from the end" {
-        Mock Get-ConsoleKey { @{ Key = 'LeftArrow' } }
+        Mock Get-ConsoleKey { return @{ Key = 'LeftArrow' } }
 
         $currentIndex = 99; $pageSize = 3
         $result = Get-LogNavigation -currentIndex $currentIndex -pageSize $pageSize -totalEntries 100
@@ -279,7 +279,7 @@ Describe "Get-LogNavigation" {
     }
 
     It "prevents navigation beyond the start of the log" {
-        Mock Get-ConsoleKey { @{ Key = 'LeftArrow' } }
+        Mock Get-ConsoleKey { return @{ Key = 'LeftArrow' } }
 
         $currentIndex = 0; $pageSize = 5
         $result = Get-LogNavigation -currentIndex $currentIndex -pageSize $pageSize -totalEntries 100
@@ -289,7 +289,7 @@ Describe "Get-LogNavigation" {
     }
 
     It "go forward one page" {
-        Mock Get-ConsoleKey { @{ Key = 'RightArrow' } }
+        Mock Get-ConsoleKey { return @{ Key = 'RightArrow' } }
 
         $currentIndex = 0; $pageSize = 5
         $result = Get-LogNavigation -currentIndex $currentIndex -pageSize $pageSize -totalEntries 100
@@ -299,7 +299,7 @@ Describe "Get-LogNavigation" {
     }
 
     It "returns null when user presses Q" {
-        Mock Get-ConsoleKey { @{ Key = 'Q' } }
+        Mock Get-ConsoleKey { return @{ Key = 'Q' } }
 
         $currentIndex = 0; $pageSize = 5
         $result = Get-LogNavigation -currentIndex $currentIndex -pageSize $pageSize -totalEntries 100
@@ -309,7 +309,7 @@ Describe "Get-LogNavigation" {
     }
 
     It "returns currentIndex when user presses any other key" {
-        Mock Get-ConsoleKey { @{ Key = 'A' } }
+        Mock Get-ConsoleKey { return @{ Key = 'A' } }
 
         $currentIndex = 0; $pageSize = 5
         $result = Get-LogNavigation -currentIndex $currentIndex -pageSize $pageSize -totalEntries 100

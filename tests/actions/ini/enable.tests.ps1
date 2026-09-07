@@ -199,7 +199,7 @@ extension=sqlite3
     }
 
     It "Returns -1 on error" {
-        Mock Add-LogEntry { 0 }
+        Mock Add-LogEntry { return 0 }
         Mock Get-MatchingPHPExtensionsStatus { throw 'Access denied' }
         $code = Enable-IniExtension -iniPath $testIniPath -extNames @('xdebug')
         $code | Should -Be -1

@@ -505,7 +505,7 @@ Describe "Show-SpinnerWhileProcess" {
                 $script:disposed = $true
             }
 
-            Mock New-Process { $script:fakeProc }
+            Mock New-Process { return $script:fakeProc }
         }
 
         It "Disposes the process" {
@@ -790,7 +790,7 @@ Describe "Sound Functions" {
     Context "New-Player" {
         It "loads PresentationCore and returns a MediaPlayer instance" {
             Mock Add-Type { }
-            Mock New-Object { @{ PSTypeName = 'FakeMediaPlayer' } }
+            Mock New-Object { return @{ PSTypeName = 'FakeMediaPlayer' } }
 
             $result = New-Player
 
@@ -809,7 +809,7 @@ Describe "Sound Functions" {
             $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name ParseName -Value { param($f) $script:fakeShellFile }
             $script:fakeShell | Add-Member -MemberType ScriptMethod -Name Namespace -Value { param($f) $script:fakeShellFolder }
 
-            Mock New-Object { $script:fakeShell } -ParameterFilter { $ComObject -eq 'Shell.Application' }
+            Mock New-Object { return $script:fakeShell } -ParameterFilter { $ComObject -eq 'Shell.Application' }
         }
 
         It "returns TotalSeconds when duration is greater than 1 second" {
@@ -837,8 +837,8 @@ Describe "Sound Functions" {
             $script:fakePlayer | Add-Member -MemberType ScriptMethod -Name Play -Value { $script:playerCalls.Play = $true }
             $script:fakePlayer | Add-Member -MemberType ScriptMethod -Name Close -Value { }
 
-            Mock New-Player { $script:fakePlayer }
-            Mock Get-Sound-TotalSeconds { 3 }
+            Mock New-Player { return $script:fakePlayer }
+            Mock Get-Sound-TotalSeconds { return 3 }
             Mock Start-Sleep { }
             Mock Add-LogEntry { }
         }

@@ -148,8 +148,8 @@ Describe "Invoke-IniAction" {
 
         It "Sets multiple settings" {
             Mock Test-FileNotExists { return $false }
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { '512M' }
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'max_execution_time'" } -MockWith { '60' }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '512M' }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'max_execution_time'" } -MockWith { return '60' }
 
             $result = Invoke-IniAction -action 'set' -params @('memory_limit', 'max_execution_time')
             $result | Should -Be 0

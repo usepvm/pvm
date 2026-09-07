@@ -162,11 +162,11 @@ function Update-PVM {
         $newVersionNormalized = Format-Version -version $newVersion
 
         if ($oldVersionNormalized -eq $newVersionNormalized) {
-            Show-Success -message "PVM has been updated successfully. No version change (still $newVersion)."
+            Show-Success -message "`nPVM has been updated successfully. No version change (still $newVersion)."
             return 0
         }
 
-        Show-Success -message "PVM has been updated successfully to version $newVersion."
+        Show-Success -message "`nPVM has been updated successfully to version $newVersion."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to pull updates"; exception = $_ }

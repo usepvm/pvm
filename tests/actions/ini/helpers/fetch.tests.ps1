@@ -4,8 +4,8 @@ BeforeAll {
     $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\fetch-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    $script:testIniPath = "$TEST_DRIVE\php.ini"
     $script:testPhpPath = "$TEST_DRIVE\php"
+    $script:testIniPath = "$testIniPath\php.ini"
     $script:XDEBUG_HISTORICAL_URL = $PVMConfig.links.xdebugHistorical
     $script:PECL_BASE_URL = $PVMConfig.links.peclBase
     $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
@@ -55,7 +55,7 @@ AfterAll {
     $Global:PVMConfig = $PVMConfigBackup
 }
 
-Describe "Get-ExtensionHandlers Tests" {
+Describe "Get-ExtensionHandlers" {
     It "Returns unified handler registry with both source and config handlers" {
         $handlers = Get-ExtensionHandlers
 
@@ -65,35 +65,7 @@ Describe "Get-ExtensionHandlers Tests" {
         $handlers.SourceHandlers.ContainsKey('pecl.php.net') | Should -Be $true
         $handlers.ExtensionConfigHandlers.ContainsKey('xdebug') | Should -Be $true
     }
-}
-
-Describe "Get-SourceHandler Tests" {
-    It "Returns correct handler for xdebug.org source" {
-        $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
-
-        $handler | Should -Not -BeNullOrEmpty
-        $handler.GetPackages | Should -Not -BeNullOrEmpty
-        $handler.Download | Should -Not -BeNullOrEmpty
-        $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
-    }
-
-    It "Returns correct handler for pecl.php.net source" {
-        $handler = Get-SourceHandler -sourceUrl 'pecl.php.net'
-
-        $handler | Should -Not -BeNullOrEmpty
-        $handler.GetPackages | Should -Not -BeNullOrEmpty
-        $handler.Download | Should -Not -BeNullOrEmpty
-        $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
-    }
-
-    It "Returns default PECL handler for unknown sources" {
-        $handler = Get-SourceHandler -sourceUrl 'unknown.source.com'
-
-        $handler | Should -Not -BeNullOrEmpty
-        # Should return the pecl.php.net handler as default
-        $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
-    }
-
+    
     Context "When running source actions (download, configure and link) from xdebug source handler" {
         BeforeEach {
             Mock Show-SpinnerWhileJob {
@@ -106,10 +78,11 @@ Describe "Get-SourceHandler Tests" {
         It "Returns data null when no handler found for xdebug" {
             Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.2.0" } }
             Mock Get-OrUpdateCache { return $null }
-
-            $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
-
             Mock Get-SourceHandler { return $null }
+
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['xdebug.org']
+
             $result = & $handler.ResolveLinks -extName 'xdebug'
 
             $result.data | Should -BeNullOrEmpty
@@ -119,7 +92,8 @@ Describe "Get-SourceHandler Tests" {
             Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.2.0" } }
             Mock Get-OrUpdateCache { return $null }
 
-            $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['xdebug.org']
 
             $result = & $handler.ResolveLinks -extName 'xdebug'
 
@@ -139,7 +113,8 @@ Describe "Get-SourceHandler Tests" {
                 }
             }
 
-            $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['xdebug.org']
 
             $result = & $handler.ResolveLinks -extName 'xdebug'
 
@@ -156,7 +131,8 @@ Describe "Get-SourceHandler Tests" {
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
             Mock Remove-ItemWrapper { }
 
-            $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['xdebug.org']
 
             $handler | Should -Not -BeNullOrEmpty
             $handler.GetPackages | Should -Not -BeNullOrEmpty
@@ -178,7 +154,8 @@ Describe "Get-SourceHandler Tests" {
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Move-ItemWrapper { }
 
-            $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['xdebug.org']
 
             $handler | Should -Not -BeNullOrEmpty
             $handler.GetPackages | Should -Not -BeNullOrEmpty
@@ -201,7 +178,8 @@ Describe "Get-SourceHandler Tests" {
             Mock Invoke-WebRequestWrapper { throw 'Error' }
             Mock Add-LogEntry { return 0 }
 
-            $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['xdebug.org']
 
             $handler | Should -Not -BeNullOrEmpty
             $handler.GetPackages | Should -Not -BeNullOrEmpty
@@ -241,7 +219,8 @@ Describe "Get-SourceHandler Tests" {
                 }
             }
 
-            $handler = Get-SourceHandler -sourceUrl 'pecl.php.net'
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['pecl.php.net']
 
             $result = & $handler.ResolveLinks -extName 'curl'
 
@@ -258,7 +237,8 @@ Describe "Get-SourceHandler Tests" {
             Mock Get-ChildItemWrapper { return @() }
             Mock Remove-ItemWrapper { }
 
-            $handler = Get-SourceHandler -sourceUrl 'pecl.php.net'
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['pecl.php.net']
 
             $handler | Should -Not -BeNullOrEmpty
             $handler.GetPackages | Should -Not -BeNullOrEmpty
@@ -281,6 +261,26 @@ Describe "Get-SourceHandler Tests" {
             $result | Should -BeNullOrEmpty
             Should -Invoke Get-PackagesFromSourceLinks -Times 1
         }
+        
+        It "Returns null when empty links provided" {
+            
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['pecl.php.net']
+            
+            $handler | Should -Not -BeNullOrEmpty
+            $handler.GetPackages | Should -Not -BeNullOrEmpty
+            $handler.Download | Should -Not -BeNullOrEmpty
+            $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
+            
+            $links = @{
+                extName = 'xdebug'
+                source = 'pecl.php.net'
+                links = @()
+            }
+            $result = & $handler.GetPackages -version '8.5' -linksObj $links
+            
+            $result | Should -BeNullOrEmpty
+        }
 
         It "Returns null when user cancels" {
             Mock Get-PackagesFromSourceLinks { return $null }
@@ -293,7 +293,8 @@ Describe "Get-SourceHandler Tests" {
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($mockFile.Name) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
             Mock Remove-ItemWrapper { }
 
-            $handler = Get-SourceHandler -sourceUrl 'pecl.php.net'
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['pecl.php.net']
 
             $handler | Should -Not -BeNullOrEmpty
             $handler.GetPackages | Should -Not -BeNullOrEmpty
@@ -329,7 +330,8 @@ Describe "Get-SourceHandler Tests" {
             Mock Get-ChildItemWrapper { return @( $mockFile ) }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
 
-            $handler = Get-SourceHandler -sourceUrl 'pecl.php.net'
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['pecl.php.net']
 
             $handler | Should -Not -BeNullOrEmpty
             $handler.GetPackages | Should -Not -BeNullOrEmpty
@@ -358,7 +360,8 @@ Describe "Get-SourceHandler Tests" {
             Mock Invoke-WebRequestWrapper { throw 'Error' }
             Mock Add-LogEntry { return 0 }
 
-            $handler = Get-SourceHandler -sourceUrl 'pecl.php.net'
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['pecl.php.net']
 
             $handler | Should -Not -BeNullOrEmpty
             $handler.GetPackages | Should -Not -BeNullOrEmpty
@@ -383,9 +386,79 @@ Describe "Get-SourceHandler Tests" {
             Should -Invoke Add-LogEntry -Times 1
         }
     }
+    Context "When running config actions from selected config handler" {
+        It "Configures xdebug in ini file" {
+            Mock Get-ContentWrapper { return '' }
+            Mock Add-ContentWrapper { }
+
+            $configHandlers = (Get-ExtensionHandlers).ExtensionConfigHandlers
+            $configHandler = $configHandlers['xdebug']
+
+            $result = & $configHandler -iniPath $testIniPath -fileName 'php_xdebug.dll' -extVersion '3.5'
+
+            $configHandler | Should -Not -BeNullOrEmpty
+            $result | Should -Be 0
+            Should -Invoke Add-ContentWrapper -Times 1
+        }
+
+        It "Handles exception gracefully" {
+            Mock Get-ContentWrapper { throw 'Error' }
+            Mock Add-LogEntry { return 0 }
+
+            $configHandlers = (Get-ExtensionHandlers).ExtensionConfigHandlers
+            $configHandler = $configHandlers['xdebug']
+
+            $result = & $configHandler -iniPath $testIniPath -fileName 'php_xdebug.dll' -extVersion '3.5'
+
+            $configHandler | Should -Not -BeNullOrEmpty
+            $result | Should -Be -1
+            Should -Invoke Add-LogEntry -Times 1
+        }
+
+        It "Configures curl in ini file" {
+            Mock Add-MissingPHPExtensionToIni { return 0 }
+
+            $configHandlers = (Get-ExtensionHandlers).ExtensionConfigHandlers
+            $configHandler = $configHandlers['default']
+
+            $result = & $configHandler -iniPath $testIniPath -fileName 'php_curl.dll' -extVersion '1.5'
+
+            $configHandler | Should -Not -BeNullOrEmpty
+            $result | Should -Be 0
+            Should -Invoke Add-MissingPHPExtensionToIni -Times 1
+        }
+    }
 }
 
-Describe "Get-ExtensionConfigHandler Tests" {
+Describe "Get-SourceHandler" {
+    It "Returns correct handler for xdebug.org source" {
+        $handler = Get-SourceHandler -sourceUrl 'xdebug.org'
+
+        $handler | Should -Not -BeNullOrEmpty
+        $handler.GetPackages | Should -Not -BeNullOrEmpty
+        $handler.Download | Should -Not -BeNullOrEmpty
+        $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
+    }
+
+    It "Returns correct handler for pecl.php.net source" {
+        $handler = Get-SourceHandler -sourceUrl 'pecl.php.net'
+
+        $handler | Should -Not -BeNullOrEmpty
+        $handler.GetPackages | Should -Not -BeNullOrEmpty
+        $handler.Download | Should -Not -BeNullOrEmpty
+        $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
+    }
+
+    It "Returns default PECL handler for unknown sources" {
+        $handler = Get-SourceHandler -sourceUrl 'unknown.source.com'
+
+        $handler | Should -Not -BeNullOrEmpty
+        # Should return the pecl.php.net handler as default
+        $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
+    }
+}
+
+Describe "Get-ExtensionConfigHandler" {
     It "Returns xdebug config handler for xdebug extension" {
         $handler = Get-ExtensionConfigHandler -extName 'php_xdebug.dll'
 
@@ -427,48 +500,10 @@ Describe "Get-ExtensionConfigHandler Tests" {
         $handler.GetType().Name | Should -Be 'ScriptBlock'
     }
 
-    Context "When running config actions from selected config handler" {
-        It "Configures xdebug in ini file" {
-            Mock Get-ContentWrapper { return '' }
-            Mock Add-ContentWrapper { }
 
-            $configHandler = Get-ExtensionConfigHandler -extName 'xdebug'
-
-            $result = & $configHandler -iniPath $testIniPath -fileName 'php_xdebug.dll' -extVersion '3.5'
-
-            $configHandler | Should -Not -BeNullOrEmpty
-            $result | Should -Be 0
-            Should -Invoke Add-ContentWrapper -Times 1
-        }
-
-        It "Handles exception gracefully" {
-            Mock Get-ContentWrapper { throw 'Error' }
-            Mock Add-LogEntry { return 0 }
-
-            $configHandler = Get-ExtensionConfigHandler -extName 'xdebug'
-
-            $result = & $configHandler -iniPath $testIniPath -fileName 'php_xdebug.dll' -extVersion '3.5'
-
-            $configHandler | Should -Not -BeNullOrEmpty
-            $result | Should -Be -1
-            Should -Invoke Add-LogEntry -Times 1
-        }
-
-        It "Configures curl in ini file" {
-            Mock Add-MissingPHPExtensionToIni { return 0 }
-
-            $configHandler = Get-ExtensionConfigHandler -extName 'curl'
-
-            $result = & $configHandler -iniPath $testIniPath -fileName 'php_curl.dll' -extVersion '1.5'
-
-            $configHandler | Should -Not -BeNullOrEmpty
-            $result | Should -Be 0
-            Should -Invoke Add-MissingPHPExtensionToIni -Times 1
-        }
-    }
 }
 
-Describe "Get-XDebugFromUrl Tests" {
+Describe "Get-XDebugFromUrl" {
     BeforeAll {
         function Reset-MockState {
             $script:MockRegistryThrowException = $false
@@ -532,7 +567,7 @@ Describe "Get-XDebugFromUrl Tests" {
     }
 }
 
-Describe "Get-XdebugConfigV2 Tests" {
+Describe "Get-XdebugConfigV2" {
     It "Fetchs xdebug v2 config" {
         $res = Get-XdebugConfigV2 -XDebugPath 'php_xdebug.dll'
 
@@ -544,7 +579,7 @@ Describe "Get-XdebugConfigV2 Tests" {
     }
 }
 
-Describe "Get-XdebugConfigV2 Tests" {
+Describe "Get-XdebugConfigV3" {
     It "Fetchs xdebug v3 config" {
         $res = Get-XdebugConfigV3 -XDebugPath 'php_xdebug.dll'
 
@@ -556,7 +591,7 @@ Describe "Get-XdebugConfigV2 Tests" {
     }
 }
 
-Describe "Get-ExtensionCategoriesByPage Tests" {
+Describe "Get-ExtensionCategoriesByPage" {
     It "Returns extensions links by page" {
         Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
@@ -669,89 +704,7 @@ Describe "Get-PHPExtensionsFromSource" {
     }
 }
 
-Describe "Get-ExtensionAvailableReleasesLinks" {
-    It "Returns filtered links for given extension" {
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
-            return @{
-                Content = 'Mocked memcache content'
-                Links = @(
-                    @{ href = '/package/memcache/3.4.0/windows' },
-                    @{ href = '/package/memcache/3.3.0/windows' }
-                    @{ href = '/package/memcache/3.2.0/windows' }
-                    @{ href = $null }
-                    @{ href = 'random_link' }
-                )
-            }
-        }
-
-        $result = Get-ExtensionAvailableReleasesLinks -extName 'memcache'
-
-        $result.Count | Should -Be 3
-        $result[0].href | Should -Be "$PECL_BASE_URL/package/memcache/3.4.0/windows"
-        $result[1].href | Should -Be "$PECL_BASE_URL/package/memcache/3.3.0/windows"
-        $result[2].href | Should -Be "$PECL_BASE_URL/package/memcache/3.2.0/windows"
-    }
-}
-
-Describe "Get-PackagesFromSourceLinks Tests" {
-    It "Returns formatted list for matching packages" {
-        Mock Add-LogEntry { return 0 }
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" } -MockWith {
-            return @{
-                Content = 'Mocked PHP memcache 3.4.0 content'
-                Links = @(
-                    @{ href = 'other_link' },
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x86.zip" },
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x64.zip" }
-                )
-            }
-        }
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.3.0/windows" } -MockWith {
-            return @{
-                Content = 'Mocked PHP memcache 3.4.0 content'
-                Links = @(
-                    @{ href = 'other_link' },
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.3.0/php_memcache-3.3.0-8.2-ts-vs16-x86.zip" },
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.3.0/php_memcache-3.3.0-8.2-ts-vs16-x64.zip" }
-                )
-            }
-        }
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.2.0/windows" } -MockWith {
-            return @{
-                Content = 'Mocked PHP memcache 3.4.0 content'
-                Links = @(
-                    @{ href = 'other_link' },
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.2.0/php_memcache-3.2.0-8.2-nts-vs16-x86.zip" },
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.2.0/php_memcache-3.2.0-8.2-ts-x64.zip" }
-                )
-            }
-        }
-
-        $result = Get-PackagesFromSourceLinks -extName 'memcache' -version '8.2' -links @(
-            @{ href = "$PECL_BASE_URL/package/memcache/3.4.0/windows" },
-            @{ href = "$PECL_BASE_URL/package/memcache/3.3.0/windows" },
-            @{ href = "$PECL_BASE_URL/package/memcache/3.2.0/windows" }
-        )
-
-        $result.Count | Should -Be 6
-        $result[0].extVersion | Should -Be '3.4.0'
-        $result[1].arch | Should -Be 'x64'
-        $result[2].arch | Should -Be 'x86'
-        $result[3].extVersion | Should -Be '3.3.0'
-        $result[4].buildType | Should -Be 'NTS'
-        $result[5].compiler | Should -Be 'unknown'
-    }
-
-    It "Handles exception gracefully" {
-        Mock Invoke-WebRequestWrapper { throw 'Network error' }
-
-        $result = Get-PackagesFromSourceLinks -extName 'memcache' -version '8.2' -links @( @{ href = '/package/memcache/3.4.0/windows' } )
-
-        $result.Count | Should -Be 0
-    }
-}
-
-Describe "Get-AvailablePHPExtensions Tests" {
+Describe "Get-AvailablePHPExtensions" {
     BeforeAll {
         function Get-ExtensionList {
             return [pscustomobject] @{
@@ -847,7 +800,7 @@ Describe "Get-AvailablePHPExtensions Tests" {
     }
 }
 
-Describe "Get-FilteredPHPExtensionsByCategory Tests" {
+Describe "Get-FilteredPHPExtensionsByCategory" {
     BeforeAll {
         function Get-ExtensionList {
             return [pscustomobject] @{
@@ -968,7 +921,89 @@ Describe "Get-FilteredPHPExtensionsByCategory Tests" {
     }
 }
 
-Describe "Get-ExtensionMatchingCategories Tests" {
+Describe "Get-ExtensionAvailableReleasesLinks" {
+    It "Returns filtered links for given extension" {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
+            return @{
+                Content = 'Mocked memcache content'
+                Links = @(
+                    @{ href = '/package/memcache/3.4.0/windows' },
+                    @{ href = '/package/memcache/3.3.0/windows' }
+                    @{ href = '/package/memcache/3.2.0/windows' }
+                    @{ href = $null }
+                    @{ href = 'random_link' }
+                )
+            }
+        }
+
+        $result = Get-ExtensionAvailableReleasesLinks -extName 'memcache'
+
+        $result.Count | Should -Be 3
+        $result[0].href | Should -Be "$PECL_BASE_URL/package/memcache/3.4.0/windows"
+        $result[1].href | Should -Be "$PECL_BASE_URL/package/memcache/3.3.0/windows"
+        $result[2].href | Should -Be "$PECL_BASE_URL/package/memcache/3.2.0/windows"
+    }
+}
+
+Describe "Get-PackagesFromSourceLinks" {
+    It "Returns formatted list for matching packages" {
+        Mock Add-LogEntry { return 0 }
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" } -MockWith {
+            return @{
+                Content = 'Mocked PHP memcache 3.4.0 content'
+                Links = @(
+                    @{ href = 'other_link' },
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x86.zip" },
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x64.zip" }
+                )
+            }
+        }
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.3.0/windows" } -MockWith {
+            return @{
+                Content = 'Mocked PHP memcache 3.4.0 content'
+                Links = @(
+                    @{ href = 'other_link' },
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.3.0/php_memcache-3.3.0-8.2-ts-vs16-x86.zip" },
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.3.0/php_memcache-3.3.0-8.2-ts-vs16-x64.zip" }
+                )
+            }
+        }
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.2.0/windows" } -MockWith {
+            return @{
+                Content = 'Mocked PHP memcache 3.4.0 content'
+                Links = @(
+                    @{ href = 'other_link' },
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.2.0/php_memcache-3.2.0-8.2-nts-vs16-x86.zip" },
+                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.2.0/php_memcache-3.2.0-8.2-ts-x64.zip" }
+                )
+            }
+        }
+
+        $result = Get-PackagesFromSourceLinks -extName 'memcache' -version '8.2' -links @(
+            @{ href = "$PECL_BASE_URL/package/memcache/3.4.0/windows" },
+            @{ href = "$PECL_BASE_URL/package/memcache/3.3.0/windows" },
+            @{ href = "$PECL_BASE_URL/package/memcache/3.2.0/windows" }
+        )
+
+        $result.Count | Should -Be 6
+        $result[0].extVersion | Should -Be '3.4.0'
+        $result[1].arch | Should -Be 'x64'
+        $result[2].arch | Should -Be 'x86'
+        $result[3].extVersion | Should -Be '3.3.0'
+        $result[4].buildType | Should -Be 'NTS'
+        $result[5].compiler | Should -Be 'unknown'
+    }
+
+    It "Handles exception gracefully" {
+        Mock Invoke-WebRequestWrapper { throw 'Network error' }
+
+        $result = Get-PackagesFromSourceLinks -extName 'memcache' -version '8.2' -links @( @{ href = '/package/memcache/3.4.0/windows' } )
+
+        $result.Count | Should -Be 0
+    }
+}
+
+Describe "Get-ExtensionMatchingCategories" {
     BeforeAll {
         function Get-ExtensionList {
             return [pscustomobject] @{
@@ -1065,7 +1100,7 @@ Describe "Get-ExtensionMatchingCategories Tests" {
     }
 }
 
-Describe "Select-ExtensionFromMatches Tests" {
+Describe "Select-ExtensionFromMatches" {
     Context "When no extensions found" {
         It "Returns null" {
             $result = Select-ExtensionFromMatches -linksMatchingExtName @()
@@ -1132,7 +1167,7 @@ Describe "Select-ExtensionFromMatches Tests" {
     }
 }
 
-Describe "Resolve-ExtensionLinks Tests" {
+Describe "Resolve-ExtensionLinks" {
     BeforeEach {
         $PVMConfig.paths.directories.cache = "$TEST_DRIVE\cache"
     }
@@ -1214,7 +1249,7 @@ Describe "Resolve-ExtensionLinks Tests" {
     }
 }
 
-Describe "Get-ExtensionPackages Tests" {
+Describe "Get-ExtensionPackages" {
     BeforeEach {
         Mock Show-SpinnerWhileJob {
             param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)

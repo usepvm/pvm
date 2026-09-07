@@ -4,8 +4,9 @@ BeforeAll {
     $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\ini-drive"
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
 
-    $script:testIniPath = "$TEST_DRIVE\php.ini"
-    $script:extDirectory = "$TEST_DRIVE\ext"
+    $script:phpVersionPath = "$TEST_DRIVE\php-8.2"
+    $script:extDirectory = "$phpVersionPath\ext"
+    $script:testIniPath = "$phpVersionPath\php.ini"
     $script:testBackupPath = "$testIniPath.bak"
 
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
@@ -13,9 +14,8 @@ BeforeAll {
 
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
-
-    $phpVersionPath = "$($PVMConfig.paths.directories.php)\php-8.2"
-    New-Item -ItemType Directory -Path $phpVersionPath -Force
+    New-Item -ItemType Directory -Path $phpVersionPath -Force | Out-Null
+    New-Item -ItemType Directory -Path $extDirectory -Force | Out-Null
 
     Mock Show-Error { }
     Mock Show-Warning { }
@@ -37,8 +37,6 @@ max_execution_time = 30
     }
 
     Reset-IniContent
-
-    Copy-ItemWrapper -path $testIniPath -destination "$phpVersionPath\php.ini"
 
     Mock Add-LogEntry { return 0 }
 

@@ -65,7 +65,7 @@ Describe "Get-ExtensionHandlers" {
         $handlers.SourceHandlers.ContainsKey('pecl.php.net') | Should -Be $true
         $handlers.ExtensionConfigHandlers.ContainsKey('xdebug') | Should -Be $true
     }
-    
+
     Context "When running source actions (download, configure and link) from xdebug source handler" {
         BeforeEach {
             Mock Show-SpinnerWhileJob {
@@ -261,24 +261,23 @@ Describe "Get-ExtensionHandlers" {
             $result | Should -BeNullOrEmpty
             Should -Invoke Get-PackagesFromSourceLinks -Times 1
         }
-        
+
         It "Returns null when empty links provided" {
-            
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
             $handler = $sourceHandlers['pecl.php.net']
-            
+
             $handler | Should -Not -BeNullOrEmpty
             $handler.GetPackages | Should -Not -BeNullOrEmpty
             $handler.Download | Should -Not -BeNullOrEmpty
             $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
-            
+
             $links = @{
                 extName = 'xdebug'
                 source = 'pecl.php.net'
                 links = @()
             }
             $result = & $handler.GetPackages -version '8.5' -linksObj $links
-            
+
             $result | Should -BeNullOrEmpty
         }
 
@@ -499,8 +498,6 @@ Describe "Get-ExtensionConfigHandler" {
         $handler | Should -Not -BeNullOrEmpty
         $handler.GetType().Name | Should -Be 'ScriptBlock'
     }
-
-
 }
 
 Describe "Get-XDebugFromUrl" {

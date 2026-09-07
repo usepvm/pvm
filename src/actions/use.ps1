@@ -74,7 +74,7 @@ function Select-PHPVersionAutomatically {
     $version = Find-PHPVersionFromProject
 
     if (-not $version) {
-        $version = Read-HostWrapper -prompt "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)"
+        $version = Read-HostWrapper -prompt "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" -notifyUser
 
         if (-not (Test-PHPVersionFormat -version $version)) {
             return @{ code = -1; message = "Invalid version format: '$version'. Expected e.g. 8, 8.3 or 8.3.1"; color = 'DarkYellow' }

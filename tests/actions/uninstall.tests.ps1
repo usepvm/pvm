@@ -127,7 +127,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $false
 
             $result | Should -Be -1
-            Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -eq 'Uninstallation cancelled' }
+            Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -like '*Uninstallation cancelled*' }
 
             Should -Invoke Read-HostWrapper -Exactly 2
             Should -Invoke Remove-ItemWrapper -Exactly 0
@@ -206,7 +206,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version '5.6' -skipConfirmation $true
 
             $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq 'PHP version 5.6 was not found!' }
+            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like '*PHP version 5.6 was not found!*' }
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
             Should -Invoke Remove-ItemWrapper -Exactly 0
@@ -249,7 +249,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version '8.2' -skipConfirmation $true
 
             $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq 'PHP version 8.2 was not found!' }
+            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like '*PHP version 8.2 was not found!*' }
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
             Should -Invoke Get-UserSelectedPHPVersion -Exactly 1
@@ -274,7 +274,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $true
 
             $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq "Failed to uninstall PHP version '7.4'" }
+            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like "*Failed to uninstall PHP version '7.4'*" }
             Should -Invoke Remove-ItemWrapper -Exactly 1
             Should -Invoke Add-LogEntry -Exactly 1
         }

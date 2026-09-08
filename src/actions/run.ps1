@@ -53,7 +53,7 @@ function Invoke-RunScripts {
         $results = @()
         foreach ($scriptCommand in $scriptCommands) {
             try {
-                Write-Gray -message "Command $index`: pvm test $scriptCommand"
+                Write-Gray -message "Command ($index/$($scriptCommands.Count))`: pvm test $scriptCommand"
                 $index++
                 $scriptArgs = $scriptCommand -split ' '
 

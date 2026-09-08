@@ -52,6 +52,30 @@ function Get-LatestGitCommit {
     }
 }
 
+function Get-GitCommitDifference {
+    param ($currentCommit, $latestCommit)
+
+    try {
+        $difference = git -C $PVMRoot rev-list --left-right --count "$currentCommit...$latestCommit" 2>$null
+        if (-not $difference) {
+            return $null
+        }
+
+        $counts = $difference.Trim() -split '\s+'
+        if ($counts.Count -ne 2) {
+            return $null
+        }
+
+        return @{
+            local = [int]$counts[0]
+            remote = [int]$counts[1]
+        }
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to compare git commits"; exception = $_ }
+        return $null
+    }
+}
+
 function Get-PVMVersionFromGit {
     try {
         $version = git -C $PVMRoot describe --tags --abbrev=0 2>$null
@@ -122,10 +146,21 @@ function Update-PVM {
             return -1
         }
 
-        if ($currentCommit -eq $latestCommit) {
+        $commitDifference = Get-GitCommitDifference -currentCommit $currentCommit -latestCommit $latestCommit
+        if (-not $commitDifference) {
+            Show-Error -message "`nFailed to compare current and latest git commits."
+            return -1
+        }
+
+        if ($commitDifference.remote -eq 0) {
             $currentVersion = $PVMConfig.version
             Show-Success -message "`nPVM is already up to date (version $currentVersion)."
             return 0
+        }
+
+        if ($commitDifference.local -gt 0) {
+            Show-Error -message "`nThe local branch and remote branch have diverged. Please resolve the divergence before updating."
+            return -1
         }
 
         $currentVersion = Get-PVMVersionFromGit

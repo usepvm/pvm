@@ -120,6 +120,51 @@ Describe "Get-LatestGitCommit" {
     }
 }
 
+Describe "Get-GitCommitDifference" {
+    It "returns local and remote commit counts" {
+        Mock git { return "2`t3`n" }
+
+        $difference = Get-GitCommitDifference -currentCommit 'local' -latestCommit 'remote'
+
+        $difference.local | Should -Be 2
+        $difference.remote | Should -Be 3
+    }
+
+    It "returns zero counts when commits are equal" {
+        Mock git { return '0 0' }
+
+        $difference = Get-GitCommitDifference -currentCommit 'same' -latestCommit 'same'
+
+        $difference.local | Should -Be 0
+        $difference.remote | Should -Be 0
+    }
+
+    It "returns null when git returns no output" {
+        Mock git { return $null }
+
+        $difference = Get-GitCommitDifference -currentCommit 'local' -latestCommit 'remote'
+
+        $difference | Should -BeNullOrEmpty
+    }
+
+    It "returns null when git output does not contain two counts" {
+        Mock git { return 'invalid' }
+
+        $difference = Get-GitCommitDifference -currentCommit 'local' -latestCommit 'remote'
+
+        $difference | Should -BeNullOrEmpty
+    }
+
+    It "returns null when git throws" {
+        Mock git { throw 'not a repository' }
+        Mock Add-LogEntry { }
+
+        $difference = Get-GitCommitDifference -currentCommit 'local' -latestCommit 'remote'
+
+        $difference | Should -BeNullOrEmpty
+    }
+}
+
 Describe "Get-PVMVersionFromGit" {
     It "returns the trimmed latest tag" {
         Mock git { return "v1.2.3`n" }
@@ -180,6 +225,7 @@ Describe "Update-PVM" {
         Mock Get-GitStatus { return $null }
         Mock Get-CurrentGitCommit { return 'abc123' }
         Mock Get-LatestGitCommit { return 'abc123' }
+        Mock Get-GitCommitDifference { return @{ local = 0; remote = 0 } }
         Mock Get-PVMVersionFromGit { return 'v1.0.0' }
         Mock git { return $null }
     }
@@ -275,6 +321,29 @@ Describe "Update-PVM" {
         }
     }
 
+    Context "Commit comparison failures" {
+        It "returns error when commit comparison fails" {
+            Mock Get-GitCommitDifference { return $null }
+
+            $result = Update-PVM -checkOnly $true
+
+            $result | Should -Be -1
+            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to compare current and latest git commits' }
+        }
+
+        It "returns error when local and remote branches have diverged" {
+            Mock Get-CurrentGitCommit { return 'local' }
+            Mock Get-LatestGitCommit { return 'remote' }
+            Mock Get-GitCommitDifference { return @{ local = 1; remote = 1 } }
+
+            $result = Update-PVM -checkOnly $false
+
+            $result | Should -Be -1
+            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'branch and remote branch have diverged' }
+            Should -Invoke -CommandName git -ParameterFilter { $args -contains 'pull' } -Times 0
+        }
+    }
+
     Context "Already up to date" {
         It "returns success with the current config version" {
             $PVMConfig.version = 'v1.0.0'
@@ -300,10 +369,36 @@ Describe "Update-PVM" {
         }
     }
 
+    Context "Commit ancestry" {
+        It "does not update when local commits are ahead of the remote" {
+            Mock Get-CurrentGitCommit { return 'local' }
+            Mock Get-LatestGitCommit { return 'remote' }
+            Mock Get-GitCommitDifference { return @{ local = 1; remote = 0 } }
+
+            $result = Update-PVM -checkOnly $false
+
+            $result | Should -Be 0
+            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'already up to date' }
+            Should -Invoke -CommandName git -ParameterFilter { $args -contains 'pull' } -Times 0
+        }
+
+        It "updates when the remote has commits that are not local" {
+            Mock Get-CurrentGitCommit { return 'local' }
+            Mock Get-LatestGitCommit { return 'remote' }
+            Mock Get-GitCommitDifference { return @{ local = 0; remote = 1 } }
+
+            $result = Update-PVM -checkOnly $true
+
+            $result | Should -Be 0
+            Should -Invoke Write-DarkYellow -Exactly 1 -ParameterFilter { $message -match 'Update available' }
+        }
+    }
+
     Context "CheckOnly mode with an update available" {
         BeforeEach {
             Mock Get-CurrentGitCommit { return 'abc123' }
             Mock Get-LatestGitCommit { return 'def456' }
+            Mock Get-GitCommitDifference { return @{ local = 0; remote = 1 } }
         }
 
         It "reports old -> new version when both resolve" {
@@ -341,6 +436,7 @@ Describe "Update-PVM" {
         BeforeEach {
             Mock Get-CurrentGitCommit { return 'abc123' }
             Mock Get-LatestGitCommit { return 'def456' }
+            Mock Get-GitCommitDifference { return @{ local = 0; remote = 1 } }
         }
 
         It "pulls and reports the new version on success" {

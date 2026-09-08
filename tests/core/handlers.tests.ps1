@@ -1485,6 +1485,17 @@ Describe "Invoke-Test" {
 }
 
 Describe "Invoke-Run" {
+    It "Should shows scripts when scriptName is list and return 0" {
+        Mock Invoke-RunScripts { return 0 }
+        Mock Show-Scripts { }
+
+        $result = Invoke-Run -arguments @('list')
+
+        $result | Should -Be 0
+        Should -Invoke Show-Scripts -Times 1 -Exactly
+        Should -Invoke Invoke-RunScripts -Times 0 -Exactly
+    }
+
     It "Should call Invoke-RunScripts and return 0" {
         Mock Invoke-RunScripts { return 0 }
 

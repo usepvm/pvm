@@ -537,6 +537,11 @@ function Invoke-Test {
 function Invoke-Run {
     param ($arguments)
 
+    if ($arguments -contains 'list') {
+        Show-Scripts
+        return 0
+    }
+    
     $scriptName = $arguments[0]
 
     $files = $arguments | Where-Object -FilterScript {

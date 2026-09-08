@@ -74,14 +74,6 @@ Describe "Invoke-RunScripts" {
         Should -Invoke Show-Scripts -Times 1 -Exactly
     }
 
-    It 'Returns 0 and shows scripts when scriptName is list' {
-        $result = Invoke-RunScripts -scriptName 'list'
-
-        $result | Should -Be 0
-        Should -Invoke Show-Scripts -Times 1 -Exactly
-        Should -Not -Invoke Get-Scripts
-    }
-
     It 'Returns -1 when script is not found' {
         Mock Get-Scripts { return @{'existing' = @()} }
 

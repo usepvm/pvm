@@ -32,11 +32,6 @@ function Invoke-RunScripts {
             return -1
         }
 
-        if ($scriptName -eq 'list') {
-            Show-Scripts
-            return 0
-        }
-
         $scripts = Get-Scripts
         if (-not $scripts.Contains($scriptName)) {
             Write-Yellow -message "`nScript '$scriptName' not found."

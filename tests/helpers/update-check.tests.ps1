@@ -184,7 +184,7 @@ Describe "Test-CheckForUpdatesQuietly" {
     Context "When an update check is due" {
         It "Calls Update-PVM with checkOnly and records the timestamp" {
             Mock Test-ShouldCheckForUpdates { return $true }
-            Mock Update-PVM { return @{ code = 0; message = 'No update available' } }
+            Mock Update-PVM { return 0 }
             Mock Set-LastUpdateCheckTimestamp { }
 
             $result = Test-CheckForUpdatesQuietly
@@ -198,20 +198,20 @@ Describe "Test-CheckForUpdatesQuietly" {
 
         It "Writes a message to the host when an update is available" {
             Mock Test-ShouldCheckForUpdates { return $true }
-            Mock Update-PVM { return @{ code = 0; message = 'Update available: v2.7.0' } }
+            Mock Update-PVM { return 1 }
             Mock Set-LastUpdateCheckTimestamp { }
 
             $result = Test-CheckForUpdatesQuietly
 
-            $result | Should -Be 0
+            $result | Should -Be 1
             Should -Invoke Show-Info -Times 1 -ParameterFilter {
-                $message -like "*Update available: v2.7.0*Run 'pvm update' to update.*"
+                $message -like "*Update available: Run 'pvm update' to update.*"
             }
         }
 
         It "Does not write to the host when the result code is not 0" {
             Mock Test-ShouldCheckForUpdates { return $true }
-            Mock Update-PVM { return @{ code = -1; message = 'Update available: v2.7.0' } }
+            Mock Update-PVM { return -1 }
             Mock Set-LastUpdateCheckTimestamp { }
 
             $result = Test-CheckForUpdatesQuietly
@@ -222,7 +222,7 @@ Describe "Test-CheckForUpdatesQuietly" {
 
         It "Does not write to the host when no update is available" {
             Mock Test-ShouldCheckForUpdates { return $true }
-            Mock Update-PVM { return @{ code = 0; message = 'PVM is already up to date' } }
+            Mock Update-PVM { return 0 }
             Mock Set-LastUpdateCheckTimestamp { }
 
             $result = Test-CheckForUpdatesQuietly

@@ -47,14 +47,14 @@ function Test-CheckForUpdatesQuietly {
     }
 
     try {
-        $result = Update-PVM -checkOnly $true -quiet $true
+        $code = Update-PVM -checkOnly -quiet
         $null = Set-LastUpdateCheckTimestamp
 
-        if ($result.code -eq 0 -and $result.message -like '*Update available*') {
-            Show-Info -message "`n$($result.message) Run 'pvm update' to update."
+        if ($code -eq 1) {
+            Show-Info -message "`nUpdate available: Run 'pvm update' to update."
         }
 
-        return $result.code
+        return $code
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check for updates"; exception = $_ }
         return -1

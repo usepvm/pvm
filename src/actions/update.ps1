@@ -96,22 +96,28 @@ function Format-Version {
 }
 
 function Update-PVM {
-    param ($checkOnly = $false, $quiet = $false)
+    param ([switch]$checkOnly, [switch]$quiet)
 
     try {
         if (-not (Test-GitAvailable)) {
-            Show-Error -message 'Git is not installed or not available in PATH. Please install Git to use the update feature.'
+            if (-not $quiet) {
+                Show-Error -message 'Git is not installed or not available in PATH. Please install Git to use the update feature.'
+            }
             return -1
         }
 
         if (Test-DirectoryNotExists -path "$PVMRoot\.git") {
-            Show-Error -message 'PVM is not installed from a git repository. Cannot update.'
+            if (-not $quiet) {
+                Show-Error -message 'PVM is not installed from a git repository. Cannot update.'
+            }
             return -1
         }
 
         $currentBranch = Get-CurrentGitBranch
         if (-not $currentBranch) {
-            Show-Error -message 'Failed to determine current git branch.'
+            if (-not $quiet) {
+                Show-Error -message 'Failed to determine current git branch.'
+            }
             return -1
         }
 
@@ -132,7 +138,9 @@ function Update-PVM {
 
         $currentCommit = Get-CurrentGitCommit
         if (-not $currentCommit) {
-            Show-Error -message "`nFailed to get current git commit."
+            if (-not $quiet) {
+                Show-Error -message "`nFailed to get current git commit."
+            }
             return -1
         }
 
@@ -142,24 +150,32 @@ function Update-PVM {
 
         $latestCommit = Get-LatestGitCommit -branch $currentBranch
         if (-not $latestCommit) {
-            Show-Error -message "`nFailed to fetch latest updates from remote repository."
+            if (-not $quiet) {
+                Show-Error -message "`nFailed to fetch latest updates from remote repository."
+            }
             return -1
         }
 
         $commitDifference = Get-GitCommitDifference -currentCommit $currentCommit -latestCommit $latestCommit
         if (-not $commitDifference) {
-            Show-Error -message "`nFailed to compare current and latest git commits."
+            if (-not $quiet) {
+                Show-Error -message "`nFailed to compare current and latest git commits."
+            }
             return -1
         }
 
         if ($commitDifference.remote -eq 0) {
-            $currentVersion = $PVMConfig.version
-            Show-Success -message "`nPVM is already up to date (version $currentVersion)."
+            if (-not $quiet) {
+                $currentVersion = $PVMConfig.version
+                Show-Success -message "`nPVM is already up to date (version $currentVersion)."
+            }
             return 0
         }
 
         if ($commitDifference.local -gt 0) {
-            Show-Error -message "`nThe local branch and remote branch have diverged. Please resolve the divergence before updating."
+            if (-not $quiet) {
+                Show-Error -message "`nThe local branch and remote branch have diverged. Please resolve the divergence before updating."
+            }
             return -1
         }
 
@@ -178,8 +194,10 @@ function Update-PVM {
                     $msg += ": $currentVersion -> $latestVersion"
                 }
             }
-            Write-DarkYellow -message $msg
-            return 0
+            if (-not $quiet) {
+                Write-DarkYellow -message $msg
+            }
+            return 1
         }
 
         Show-Warning -message "`nUpdate available. Pulling changes..."
@@ -205,7 +223,9 @@ function Update-PVM {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to pull updates"; exception = $_ }
-        Show-Error -message "`nFailed to pull updates: $_"
+        if (-not $quiet) {
+            Show-Error -message "`nFailed to pull updates: $_"
+        }
         return -1
     }
 }

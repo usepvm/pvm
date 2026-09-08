@@ -479,7 +479,7 @@ function Invoke-Update {
 
     $checkOnly = $arguments -contains '--check'
 
-    return (Update-PVM -checkOnly $checkOnly)
+    return (Update-PVM -checkOnly:$checkOnly)
 }
 
 function Invoke-Test {

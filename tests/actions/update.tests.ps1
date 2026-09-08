@@ -234,7 +234,7 @@ Describe "Update-PVM" {
         It "returns error when git is not available" {
             Mock Test-GitAvailable { return $false }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Git is not installed' }
@@ -245,7 +245,7 @@ Describe "Update-PVM" {
         It "returns error when .git directory doesn't exist" {
             Mock Test-DirectoryNotExists { return $true }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'not installed from a git repository' }
@@ -254,7 +254,7 @@ Describe "Update-PVM" {
         It "returns error when current branch cannot be determined" {
             Mock Get-CurrentGitBranch { return $null }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to determine current git branch' }
@@ -263,7 +263,7 @@ Describe "Update-PVM" {
         It "returns error when current branch is an empty string" {
             Mock Get-CurrentGitBranch { return '' }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to determine current git branch' }
@@ -274,7 +274,7 @@ Describe "Update-PVM" {
         It "returns error and lists each changed file" {
             Mock Get-GitStatus { return @('M  file1.txt', '?? file2.txt') }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'uncommitted changes' }
@@ -285,7 +285,7 @@ Describe "Update-PVM" {
         It "does not list changed files when quiet flag is set" {
             Mock Get-GitStatus { return @('M  file1.txt', '?? file2.txt') }
 
-            $result = Update-PVM -checkOnly $true -quiet $true
+            $result = Update-PVM -checkOnly -quiet
 
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 0
@@ -294,7 +294,7 @@ Describe "Update-PVM" {
         It "collapses double spaces and trims a single status line" {
             Mock Get-GitStatus { return 'M  file.txt' }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match '- M file.txt' }
@@ -305,7 +305,7 @@ Describe "Update-PVM" {
         It "returns error when current commit cannot be determined" {
             Mock Get-CurrentGitCommit { return $null }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to get current git commit' }
@@ -314,7 +314,7 @@ Describe "Update-PVM" {
         It "returns error when fetching the latest commit fails" {
             Mock Get-LatestGitCommit { return $null }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to fetch latest updates' }
@@ -325,7 +325,7 @@ Describe "Update-PVM" {
         It "returns error when commit comparison fails" {
             Mock Get-GitCommitDifference { return $null }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to compare current and latest git commits' }
@@ -336,7 +336,7 @@ Describe "Update-PVM" {
             Mock Get-LatestGitCommit { return 'remote' }
             Mock Get-GitCommitDifference { return @{ local = 1; remote = 1 } }
 
-            $result = Update-PVM -checkOnly $false
+            $result = Update-PVM
 
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'branch and remote branch have diverged' }
@@ -350,7 +350,7 @@ Describe "Update-PVM" {
             Mock Get-CurrentGitCommit { return 'same' }
             Mock Get-LatestGitCommit { return 'same' }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
             $result | Should -Be 0
             Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'already up to date' }
@@ -361,7 +361,7 @@ Describe "Update-PVM" {
             Mock Get-CurrentGitCommit { return 'same' }
             Mock Get-LatestGitCommit { return 'same' }
 
-            $result = Update-PVM -checkOnly $false
+            $result = Update-PVM
 
             $result | Should -Be 0
             Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'already up to date' }
@@ -375,7 +375,7 @@ Describe "Update-PVM" {
             Mock Get-LatestGitCommit { return 'remote' }
             Mock Get-GitCommitDifference { return @{ local = 1; remote = 0 } }
 
-            $result = Update-PVM -checkOnly $false
+            $result = Update-PVM
 
             $result | Should -Be 0
             Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'already up to date' }
@@ -387,9 +387,9 @@ Describe "Update-PVM" {
             Mock Get-LatestGitCommit { return 'remote' }
             Mock Get-GitCommitDifference { return @{ local = 0; remote = 1 } }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
-            $result | Should -Be 0
+            $result | Should -Be 1
             Should -Invoke Write-DarkYellow -Exactly 1 -ParameterFilter { $message -match 'Update available' }
         }
     }
@@ -405,9 +405,9 @@ Describe "Update-PVM" {
             Mock Get-PVMVersionFromGit { return 'v1.0.0' }
             Mock git { return 'v1.1.0' }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
-            $result | Should -Be 0
+            $result | Should -Be 1
             Should -Invoke Write-DarkYellow -Exactly 1 -ParameterFilter { $message -match 'Update available: v1.0.0 -> v1.1.0' }
         }
 
@@ -415,9 +415,9 @@ Describe "Update-PVM" {
             Mock Get-PVMVersionFromGit { return $null }
             Mock git { return $null }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
-            $result | Should -Be 0
+            $result | Should -Be 1
             Should -Invoke Write-DarkYellow -Exactly 1 -ParameterFilter { $message -match 'Update available!' }
         }
 
@@ -425,9 +425,9 @@ Describe "Update-PVM" {
             Mock Get-PVMVersionFromGit { return 'v1.0.0' }
             Mock git { return 'v1.1.0' }
 
-            $result = Update-PVM -checkOnly $true
+            $result = Update-PVM -checkOnly
 
-            $result | Should -Be 0
+            $result | Should -Be 1
             Should -Invoke -CommandName git -ParameterFilter { $args -contains 'pull' } -Times 0
         }
     }
@@ -443,7 +443,7 @@ Describe "Update-PVM" {
             $Global:PVMConfig = @{ version = 'v1.0.0' }
             Mock Get-PVMVersionFromGit { return 'v1.1.0' }
 
-            $result = Update-PVM -checkOnly $false
+            $result = Update-PVM
 
             $result | Should -Be 0
             Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'updated successfully to version v1.1.0' }
@@ -454,7 +454,7 @@ Describe "Update-PVM" {
             $Global:PVMConfig = @{ version = 'v1.0' }
             Mock Get-PVMVersionFromGit { return 'v1.0.0' }
 
-            $result = Update-PVM -checkOnly $false
+            $result = Update-PVM
 
             $result | Should -Be 0
             Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'No version change' }
@@ -464,7 +464,7 @@ Describe "Update-PVM" {
             $Global:PVMConfig = @{ version = 'v1.0.0' }
             Mock Get-PVMVersionFromGit { return $null }
 
-            $result = Update-PVM -checkOnly $false
+            $result = Update-PVM
 
             $result | Should -Be 0
             Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'No version change \(still v1.0.0\)' }
@@ -476,7 +476,7 @@ Describe "Update-PVM" {
                 return $null
             }
 
-            $result = Update-PVM -checkOnly $false
+            $result = Update-PVM
 
             $result | Should -Be -1
             Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to pull updates' }

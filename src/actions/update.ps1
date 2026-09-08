@@ -74,81 +74,81 @@ function Format-Version {
 function Update-PVM {
     param ($checkOnly = $false, $quiet = $false)
 
-    if (-not (Test-GitAvailable)) {
-        Show-Error -message 'Git is not installed or not available in PATH. Please install Git to use the update feature.'
-        return -1
-    }
-
-    if (Test-DirectoryNotExists -path "$PVMRoot\.git") {
-        Show-Error -message 'PVM is not installed from a git repository. Cannot update.'
-        return -1
-    }
-
-    $currentBranch = Get-CurrentGitBranch
-    if (-not $currentBranch) {
-        Show-Error -message 'Failed to determine current git branch.'
-        return -1
-    }
-
-    $gitStatus = Get-GitStatus
-    if ($gitStatus) {
-        $gitStatusText = $gitStatus | ForEach-Object -Process {
-            $_.Trim().Replace('  ', ' ')
+    try {
+        if (-not (Test-GitAvailable)) {
+            Show-Error -message 'Git is not installed or not available in PATH. Please install Git to use the update feature.'
+            return -1
         }
 
-        $gitStatusText = '- ' + ($gitStatusText -join "`n- ")
+        if (Test-DirectoryNotExists -path "$PVMRoot\.git") {
+            Show-Error -message 'PVM is not installed from a git repository. Cannot update.'
+            return -1
+        }
+
+        $currentBranch = Get-CurrentGitBranch
+        if (-not $currentBranch) {
+            Show-Error -message 'Failed to determine current git branch.'
+            return -1
+        }
+
+        $gitStatus = Get-GitStatus
+        if ($gitStatus) {
+            $gitStatusText = $gitStatus | ForEach-Object -Process {
+                $_.Trim().Replace('  ', ' ')
+            }
+
+            $gitStatusText = '- ' + ($gitStatusText -join "`n- ")
+
+            if (-not $quiet) {
+                Show-Error -message "`nYou have uncommitted changes. Please commit or stash your changes before updating.`n`nGit status:`n$gitStatusText"
+            }
+
+            return -1
+        }
+
+        $currentCommit = Get-CurrentGitCommit
+        if (-not $currentCommit) {
+            Show-Error -message "`nFailed to get current git commit."
+            return -1
+        }
 
         if (-not $quiet) {
-            Show-Error -message "`nYou have uncommitted changes. Please commit or stash your changes before updating.`n`nGit status:`n$gitStatusText"
+            Show-Info -message "`nChecking for updates..."
         }
 
-        return -1
-    }
+        $latestCommit = Get-LatestGitCommit -branch $currentBranch
+        if (-not $latestCommit) {
+            Show-Error -message "`nFailed to fetch latest updates from remote repository."
+            return -1
+        }
 
-    $currentCommit = Get-CurrentGitCommit
-    if (-not $currentCommit) {
-        Show-Error -message "`nFailed to get current git commit."
-        return -1
-    }
+        if ($currentCommit -eq $latestCommit) {
+            $currentVersion = $PVMConfig.version
+            Show-Success -message "`nPVM is already up to date (version $currentVersion)."
+            return 0
+        }
 
-    if (-not $quiet) {
-        Show-Info -message "`nChecking for updates..."
-    }
+        $currentVersion = Get-PVMVersionFromGit
+        $latestVersion = git -C $PVMRoot describe --tags --abbrev=0 origin/$currentBranch 2>$null
 
-    $latestCommit = Get-LatestGitCommit -branch $currentBranch
-    if (-not $latestCommit) {
-        Show-Error -message "`nFailed to fetch latest updates from remote repository."
-        return -1
-    }
+        if ($checkOnly) {
+            $msg = "`nUpdate available!"
+            if ($currentVersion -and $latestVersion) {
+                $msg = "`nUpdate available"
 
-    if ($currentCommit -eq $latestCommit) {
-        $currentVersion = $PVMConfig.version
-        Show-Success -message "`nPVM is already up to date (version $currentVersion)."
-        return 0
-    }
+                $currentVersionNormalized = Format-Version -version $currentVersion
+                $latestVersionNormalized = Format-Version -version $latestVersion
 
-    $currentVersion = Get-PVMVersionFromGit
-    $latestVersion = git -C $PVMRoot describe --tags --abbrev=0 origin/$currentBranch 2>$null
-
-    if ($checkOnly) {
-        $msg = "`nUpdate available!"
-        if ($currentVersion -and $latestVersion) {
-            $msg = "`nUpdate available"
-
-            $currentVersionNormalized = Format-Version -version $currentVersion
-            $latestVersionNormalized = Format-Version -version $latestVersion
-
-            if ($currentVersionNormalized -lt $latestVersionNormalized) {
-                $msg += ": $currentVersion -> $latestVersion"
+                if ($currentVersionNormalized -lt $latestVersionNormalized) {
+                    $msg += ": $currentVersion -> $latestVersion"
+                }
             }
+            Write-DarkYellow -message $msg
+            return 0
         }
-        Write-DarkYellow -message $msg
-        return 0
-    }
 
-    Show-Warning -message "`nUpdate available. Pulling changes..."
+        Show-Warning -message "`nUpdate available. Pulling changes..."
 
-    try {
         $oldVersion = $PVMConfig.version
         git -C $PVMRoot pull origin $currentBranch >$null 2>$null
 

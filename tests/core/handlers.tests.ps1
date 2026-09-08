@@ -192,6 +192,30 @@ Describe "Invoke-List" {
         Mock Show-InstalledPHPVersions { return 0 }
     }
 
+    It "Should call Update-InstalledPHPVersionsCache and show success message" {
+        Mock Update-InstalledPHPVersionsCache { return 0 }
+
+        $result = Invoke-List -arguments @('--update')
+
+        $result | Should -Be 0
+        Should -Invoke Show-Success -ParameterFilter { $message -like '*Installed PHP versions cache updated successfully*' }
+        Should -Invoke Update-InstalledPHPVersionsCache -Times 1
+        Should -Invoke Get-AvailablePHPVersions -Times 0
+        Should -Invoke Show-InstalledPHPVersions -Times 0
+    }
+
+    It "Should call Update-InstalledPHPVersionsCache and show error message" {
+        Mock Update-InstalledPHPVersionsCache { return -1 }
+
+        $result = Invoke-List -arguments @('--update')
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to update the installed PHP versions cache*' }
+        Should -Invoke Update-InstalledPHPVersionsCache -Times 1
+        Should -Invoke Get-AvailablePHPVersions -Times 0
+        Should -Invoke Show-InstalledPHPVersions -Times 0
+    }
+
     It "Should call Get-AvailablePHPVersions when 'available' argument is provided" {
         $arguments = @("available")
 

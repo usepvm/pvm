@@ -96,6 +96,18 @@ function Invoke-Current {
 function Invoke-List {
     param ($arguments)
 
+    if ($arguments -contains '--update') {
+        $code = Update-InstalledPHPVersionsCache
+
+        if ($code -eq 0) {
+            Show-Success -message "`nInstalled PHP versions cache updated successfully."
+        } else {
+            Show-Error -message "`nFailed to update the installed PHP versions cache."
+        }
+
+        return $code
+    }
+
     $arch = Resolve-Arch -arguments $arguments
     $buildType = Resolve-BuildType -arguments $arguments
 
@@ -541,7 +553,7 @@ function Invoke-Run {
         Show-Scripts
         return 0
     }
-    
+
     $scriptName = $arguments[0]
 
     $files = $arguments | Where-Object -FilterScript {

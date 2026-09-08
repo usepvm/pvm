@@ -99,7 +99,7 @@ function Update-PVM {
         $gitStatusText = '- ' + ($gitStatusText -join "`n- ")
 
         if (-not $quiet) {
-            Show-Error -message "You have uncommitted changes. Please commit or stash your changes before updating.`n`nGit status:`n$gitStatusText"
+            Show-Error -message "`nYou have uncommitted changes. Please commit or stash your changes before updating.`n`nGit status:`n$gitStatusText"
         }
 
         return -1
@@ -107,7 +107,7 @@ function Update-PVM {
 
     $currentCommit = Get-CurrentGitCommit
     if (-not $currentCommit) {
-        Show-Error -message 'Failed to get current git commit.'
+        Show-Error -message "`nFailed to get current git commit."
         return -1
     }
 
@@ -117,13 +117,13 @@ function Update-PVM {
 
     $latestCommit = Get-LatestGitCommit -branch $currentBranch
     if (-not $latestCommit) {
-        Show-Error -message 'Failed to fetch latest updates from remote repository.'
+        Show-Error -message "`nFailed to fetch latest updates from remote repository."
         return -1
     }
 
     if ($currentCommit -eq $latestCommit) {
         $currentVersion = $PVMConfig.version
-        Show-Success -message "PVM is already up to date (version $currentVersion)."
+        Show-Success -message "`nPVM is already up to date (version $currentVersion)."
         return 0
     }
 
@@ -170,7 +170,7 @@ function Update-PVM {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to pull updates"; exception = $_ }
-        Show-Error -message "Failed to pull updates: $_"
+        Show-Error -message "`nFailed to pull updates: $_"
         return -1
     }
 }

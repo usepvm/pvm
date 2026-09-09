@@ -69,7 +69,7 @@ function Invoke-WebRequestWrapper {
         UseBasicParsing = $useBasicParsing
     }
 
-    if ($outFile) {
+    if ($null -ne $outFile) {
         $params.OutFile = $outFile
     }
 
@@ -132,4 +132,16 @@ function New-ItemWrapper {
     }
 
     New-Item @params | Out-Null
+}
+
+function Test-PathWrapper {
+    param ($path, $pathType = $null)
+
+    $params = @{ Path = $path }
+
+    if ($null -ne $pathType) {
+        $params['PathType'] = $pathType
+    }
+
+    return (Test-Path @params)
 }

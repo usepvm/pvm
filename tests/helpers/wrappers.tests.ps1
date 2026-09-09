@@ -556,3 +556,53 @@ Describe "New-ItemWrapper" {
         { New-ItemWrapper -path $path } | Should -Throw
     }
 }
+
+Describe "Test-PathWrapper" {
+    It "Calls Test-Path with the path" {
+        Mock Test-Path { return $true }
+
+        $expectedPath = "$TEST_DRIVE\path"
+
+        $result = Test-PathWrapper -path $expectedPath
+
+        $result | Should -Be $true
+        Should -Invoke Test-Path -Times 1 -ParameterFilter {
+            $Path -eq $expectedPath -and
+            $PSBoundParameters.ContainsKey('PathType') -eq $false
+        }
+    }
+
+    It "Calls Test-Path with the path type when provided" {
+        Mock Test-Path { return $true }
+
+        $expectedPath = "$TEST_DRIVE\directory"
+
+        $result = Test-PathWrapper -path $expectedPath -pathType Container
+
+        $result | Should -Be $true
+        Should -Invoke Test-Path -Times 1 -ParameterFilter {
+            $Path -eq $expectedPath -and
+            $PathType -eq 'Container'
+        }
+    }
+
+    It "Supports leaf paths" {
+        Mock Test-Path { return $false }
+
+        $expectedPath = "$TEST_DRIVE\file.txt"
+
+        $result = Test-PathWrapper -path $expectedPath -pathType Leaf
+
+        $result | Should -Be $false
+        Should -Invoke Test-Path -Times 1 -ParameterFilter {
+            $Path -eq $expectedPath -and
+            $PathType -eq 'Leaf'
+        }
+    }
+
+    It "Throws when Test-Path throws" {
+        Mock Test-Path { throw 'Test error' }
+
+        { Test-PathWrapper -path "$TEST_DRIVE\path" } | Should -Throw 'Test error'
+    }
+}

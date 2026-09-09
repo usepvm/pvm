@@ -74,13 +74,16 @@ BeforeAll {
         throw "URL not mocked: $Uri"
     }
 
-    Mock Test-Path {
-        param ([string]$Path, $PathType = $null)
+    Mock Test-FileExists {
+        param ($path)
 
-        if ($PathType -eq 'Container') {
-            return $script:MockFileSystem.Directories -contains $Path
-        }
-        return $script:MockFileSystem.Files.ContainsKey($Path)
+        return $script:MockFileSystem.Files.ContainsKey($path)
+    }
+
+    Mock Test-DirectoryExists {
+        param ($path)
+
+        return $script:MockFileSystem.Directories -contains $path
     }
 
     Mock Read-HostWrapper {

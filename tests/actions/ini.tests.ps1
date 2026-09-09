@@ -84,7 +84,6 @@ AfterAll {
 
 Describe "Invoke-IniAction" {
     BeforeEach {
-        Mock Test-Path -ParameterFilter { $Path -eq $extDirectory } -MockWith { return $true }
         Reset-IniContent
         Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
     }

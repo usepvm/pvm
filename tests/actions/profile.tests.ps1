@@ -291,7 +291,7 @@ Describe "Save-PHPProfile" {
     }
 
     It "Returns -1 when php.ini file is missing" {
-        Mock Test-Path { return $false }
+        Mock Test-FileNotExists { return $true }
 
         $result = Save-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
@@ -403,7 +403,7 @@ Describe "Use-PHPProfile" {
     }
 
     It "Should return -1 when php.ini file is missing" {
-        Mock Test-Path { return $false }
+        Mock Test-FileNotExists { return $true }
 
         $result = Use-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
@@ -542,7 +542,7 @@ Describe "Show-PHPProfiles" {
     }
 
     It "Returns -1 when profiles directory does not exist" {
-        Mock Test-Path { return $false }
+        Mock Test-DirectoryNotExists { return $true }
 
         $result = Show-PHPProfiles
         $result | Should -Be -1

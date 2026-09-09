@@ -531,13 +531,11 @@ Describe "Start-PVM" {
         }
 
         It "Should execute complex action logic" {
-            Mock Test-Path { return $true }
+            Mock Write-HostWrapper { }
             Mock Get-Actions {
                 return [ordered]@{
                     'test' = @{
-                        data = @{
-                            action = { if (Test-Path 'C:\Test') { return 0 } else { return -1 } }
-                        }
+                        data = @{ action = { Write-HostWrapper -object 'Test'; return 0 } }
                     }
                 }
             }
@@ -545,7 +543,7 @@ Describe "Start-PVM" {
             $result = Start-PVM -command 'test' -arguments @()
 
             $result | Should -Be 0
-            Should -Invoke Test-Path -Times 1
+            Should -Invoke Write-HostWrapper -Times 1
         }
     }
 

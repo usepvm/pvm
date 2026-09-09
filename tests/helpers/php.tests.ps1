@@ -573,7 +573,7 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
                     @{FullName = "$TEST_DRIVE\storage\php\8.2"}
                 )
             }
-            Mock Test-Path { return $true }
+            Mock Test-FileExists { return $true }
             Mock Get-PHPInstallInfo {
                 param ($path)
                 if ($path -eq "$TEST_DRIVE\storage\php\8.1") {
@@ -595,7 +595,7 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
                     @{FullName = "$TEST_DRIVE\storage\php\8.2"}
                 )
             }
-            Mock Test-Path {
+            Mock Test-FileExists {
                 param ($path)
                 return $path -notmatch 'invalid'
             }
@@ -620,7 +620,7 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
                     @{FullName = "$TEST_DRIVE\storage\php\8.1"}
                 )
             }
-            Mock Test-Path { return $true }
+            Mock Test-FileExists { return $true }
             Mock Get-PHPInstallInfo {
                 param ($path)
                 if ($path -eq "$TEST_DRIVE\storage\php\8.2") {
@@ -655,7 +655,7 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
                     @{FullName = "$TEST_DRIVE\storage\php\invalid2"}
                 )
             }
-            Mock Test-Path { return $false }
+            Mock Test-FileExists { return $false }
 
             $result = Get-InstalledPHPVersionsFromDisk
             $result.Count | Should -Be 0

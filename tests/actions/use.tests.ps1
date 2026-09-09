@@ -53,7 +53,7 @@ AfterAll {
 
 Describe "Find-PHPVersionFromProject" {
     It "Should detect PHP version from .php-version" {
-        Mock Test-Path { return $true }
+        Mock Test-FileExists { return $true }
         Mock Get-ContentWrapper { return '7.4' }
         $result = Find-PHPVersionFromProject
         $result | Should -Be '7.4'
@@ -70,7 +70,7 @@ Describe "Find-PHPVersionFromProject" {
     }
 
     It "Should detect PHP version from composer.json" {
-        Mock Test-Path {
+        Mock Test-FileExists {
             param ($path)
             if ($path -eq 'composer.json') { return $true }
             return $false
@@ -81,7 +81,7 @@ Describe "Find-PHPVersionFromProject" {
     }
 
     It "Handles parser exceptions gracefully" {
-        Mock Test-Path {
+        Mock Test-FileExists {
             param ($path)
             if ($path -eq 'composer.json') { return $true }
             return $false

@@ -109,7 +109,7 @@ Describe "Get-PHPListToInstall" {
     }
 
     It "Should read from cache" {
-        Mock Test-Path { return $true }
+        Mock Test-FileExists { return $true }
         $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString('yyyy-MM-ddTHH:mm:ss.fffffffK')
         Mock Get-ItemWrapper { return @{ LastWriteTime = $timeWithinLastWeek } }
         Mock Get-DataFromCache {
@@ -256,7 +256,7 @@ Describe "Get-AvailablePHPVersions" {
                 'Releases' = @('php-8.2.0-Win32-x64.zip')
             }
         }
-        Mock Test-Path { return $true }
+        Mock Test-FileExists { return $true }
         $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString('yyyy-MM-ddTHH:mm:ss.fffffffK')
         Mock Get-ItemWrapper { return @{ LastWriteTime = $timeWithinLastWeek } }
 
@@ -321,7 +321,7 @@ Describe "Get-AvailablePHPVersions" {
     }
 
     It "Should force fetch from source when cache not exists" {
-        Mock Test-Path { return $false }
+        Mock Test-FileExists { return $false }
         Mock Get-DataFromCache { }
         Mock Save-CachedData { return 0 }
         Mock Get-FromSource {
@@ -355,7 +355,7 @@ Describe "Get-AvailablePHPVersions" {
                 })
             }
         }
-        Mock Test-Path { return $true }
+        Mock Test-FileExists { return $true }
         $timeWithinLastWeek = (Get-Date).AddHours(-160).ToString('yyyy-MM-ddTHH:mm:ss.fffffffK')
         Mock Get-ItemWrapper { return @{ LastWriteTime = $timeWithinLastWeek } }
 

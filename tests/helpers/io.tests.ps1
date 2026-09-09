@@ -76,7 +76,7 @@ Describe "Test-DirectoryExists" {
         }
 
         It "Handles exceptions gracefully" {
-            Mock Test-Path { throw 'Error' }
+            Mock Test-PathWrapper { throw 'Error' }
 
             $result = Test-DirectoryExists -path "$TEST_DRIVE\Nonexistent\Path"
             $result | Should -Be $false
@@ -128,7 +128,7 @@ Describe "Test-FileExists" {
         }
 
         It "Handles exceptions gracefully" {
-            Mock Test-Path { throw 'Error' }
+            Mock Test-PathWrapper { throw 'Error' }
 
             $result = Test-FileExists -path "$TEST_DRIVE\Nonexistent\file.txt"
             $result | Should -Be $false
@@ -438,7 +438,7 @@ Describe "New-SymbolicLink" {
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $parent } -MockWith { return $true }
             Mock Test-NotAdmin { return $false }
             Mock New-Directory { return 0 }
-            Mock Test-Path { return $false }
+            Mock Test-PathExists { return $false }
             Mock New-ItemWrapper {
                 param ($type, $path, $target)
 

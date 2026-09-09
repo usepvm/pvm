@@ -22,7 +22,7 @@ function Test-DirectoryExists {
             return $false
         }
         $path = $path.Trim()
-        return (Test-Path -Path $path -PathType Container)
+        return (Test-PathWrapper -path $path -pathType 'Container')
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check directory existence"; exception = $_ }
         return $false
@@ -43,7 +43,7 @@ function Test-FileExists {
             return $false
         }
         $path = $path.Trim()
-        return (Test-Path -Path $path -PathType Leaf)
+        return (Test-PathWrapper -path $path -pathType 'Leaf')
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check file existence"; exception = $_ }
         return $false

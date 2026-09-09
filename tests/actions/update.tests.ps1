@@ -236,8 +236,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Git is not installed' }
+            $result.code | Should -Be -1
+            $result.message | Should -Match 'Git is not installed'
         }
     }
 
@@ -247,8 +247,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'not installed from a git repository' }
+            $result.code | Should -Be -1
+            $result.message | Should -Match 'not installed from a git repository'
         }
 
         It "returns error when current branch cannot be determined" {
@@ -256,8 +256,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to determine current git branch' }
+            $result.code | Should -Be -1
+            $result.message | Should -Match 'Failed to determine current git branch'
         }
 
         It "returns error when current branch is an empty string" {
@@ -265,8 +265,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to determine current git branch' }
+            $result.code | Should -Be -1
+            $result.message | Should -Match 'Failed to determine current git branch'
         }
     }
 
@@ -276,19 +276,10 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'uncommitted changes' }
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'file1.txt' }
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'file2.txt' }
-        }
-
-        It "does not list changed files when quiet flag is set" {
-            Mock Get-GitStatus { return @('M  file1.txt', '?? file2.txt') }
-
-            $result = Update-PVM -checkOnly -quiet
-
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 0
+            $result.code | Should -Be -1
+            $result.message | Should -Match 'uncommitted changes'
+            $result.message | Should -Match 'file1.txt'
+            $result.message | Should -Match 'file2.txt'
         }
 
         It "collapses double spaces and trims a single status line" {
@@ -296,8 +287,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match '- M file.txt' }
+            $result.code | Should -Be -1
+            $result.message | Should -Match '- M file.txt'
         }
     }
 
@@ -307,8 +298,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to get current git commit' }
+            $result.code | Should -Be -1
+            $result.message | Should -Match 'Failed to get current git commit'
         }
 
         It "returns error when fetching the latest commit fails" {
@@ -316,8 +307,18 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to fetch latest updates' }
+            $result.code | Should -Be -1
+            $result.message | Should -Match 'Failed to fetch latest updates'
+        }
+
+        It "returns -1 and does not show info on quiet mode" {
+            Mock Get-LatestGitCommit { return 'abc123' }
+            Mock Get-LatestGitCommit { return $null }
+
+            $result = Update-PVM -checkOnly -quiet
+
+            $result.code | Should -Be -1
+            Should -Invoke Show-Info -Times 0 -ParameterFilter { $message -Match 'Checking for updates' }
         }
     }
 
@@ -327,8 +328,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to compare current and latest git commits' }
+            $result.code | Should -Be -1
+            $result.message | Should -Match 'Failed to compare current and latest git commits'
         }
 
         It "returns error when local and remote branches have diverged" {
@@ -338,8 +339,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM
 
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'branch and remote branch have diverged' }
+            $result.code | Should -Be -1
+            $result.message | Should -Match 'branch and remote branch have diverged'
             Should -Invoke -CommandName git -ParameterFilter { $args -contains 'pull' } -Times 0
         }
     }
@@ -352,9 +353,9 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be 0
-            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'already up to date' }
-            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'v1.0.0' }
+            $result.code | Should -Be 0
+            $result.message | Should -Match 'already up to date'
+            $result.message | Should -Match 'v1.0.0'
         }
 
         It "short-circuits regardless of checkOnly value" {
@@ -363,8 +364,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM
 
-            $result | Should -Be 0
-            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'already up to date' }
+            $result.code | Should -Be 0
+            $result.message | Should -Match 'already up to date'
             Should -Invoke -CommandName git -Times 0
         }
     }
@@ -377,8 +378,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM
 
-            $result | Should -Be 0
-            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'already up to date' }
+            $result.code | Should -Be 0
+            $result.message | Should -Match 'already up to date'
             Should -Invoke -CommandName git -ParameterFilter { $args -contains 'pull' } -Times 0
         }
 
@@ -389,8 +390,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be 1
-            Should -Invoke Write-DarkYellow -Exactly 1 -ParameterFilter { $message -match 'Update available' }
+            $result.code | Should -Be 1
+            $result.message | Should -Match 'Update available'
         }
     }
 
@@ -407,8 +408,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be 1
-            Should -Invoke Write-DarkYellow -Exactly 1 -ParameterFilter { $message -match 'Update available: v1.0.0 -> v1.1.0' }
+            $result.code | Should -Be 1
+            $result.message | Should -Match 'Update available: v1.0.0 -> v1.1.0'
         }
 
         It "falls back to a generic message when versions can't be resolved" {
@@ -417,8 +418,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be 1
-            Should -Invoke Write-DarkYellow -Exactly 1 -ParameterFilter { $message -match 'Update available!' }
+            $result.code | Should -Be 1
+            $result.message | Should -Match 'Update available!'
         }
 
         It "never pulls in checkOnly mode" {
@@ -427,7 +428,7 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result | Should -Be 1
+            $result.code | Should -Be 1
             Should -Invoke -CommandName git -ParameterFilter { $args -contains 'pull' } -Times 0
         }
     }
@@ -445,8 +446,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM
 
-            $result | Should -Be 0
-            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'updated successfully to version v1.1.0' }
+            $result.code | Should -Be 0
+            $result.message | Should -Match 'updated successfully to version v1.1.0'
             Should -Invoke -CommandName git -ParameterFilter { $args -contains 'pull' } -Times 1
         }
 
@@ -456,8 +457,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM
 
-            $result | Should -Be 0
-            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'No version change' }
+            $result.code | Should -Be 0
+            $result.message | Should -Match 'No version change'
         }
 
         It "falls back to the config version when the new version can't be resolved" {
@@ -466,8 +467,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM
 
-            $result | Should -Be 0
-            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -match 'No version change \(still v1.0.0\)' }
+            $result.code | Should -Be 0
+            $result.message | Should -Match 'No version change \(still v1.0.0\)'
         }
 
         It "returns an error when git pull throws" {
@@ -478,8 +479,8 @@ Describe "Update-PVM" {
 
             $result = Update-PVM
 
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -match 'Failed to pull updates' }
+            $result.code | Should -Be -1
+            $result.message | Should -Match 'Failed to pull updates'
         }
     }
 }

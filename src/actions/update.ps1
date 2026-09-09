@@ -100,25 +100,16 @@ function Update-PVM {
 
     try {
         if (-not (Test-GitAvailable)) {
-            if (-not $quiet) {
-                Show-Error -message 'Git is not installed or not available in PATH. Please install Git to use the update feature.'
-            }
-            return -1
+            return @{ code = -1; message = 'Git is not installed or not available in PATH. Please install Git to use the update feature.'; color = 'DarkYellow' }
         }
 
         if (Test-DirectoryNotExists -path "$PVMRoot\.git") {
-            if (-not $quiet) {
-                Show-Error -message 'PVM is not installed from a git repository. Cannot update.'
-            }
-            return -1
+            return @{ code = -1; message = 'PVM is not installed from a git repository. Cannot update.'; color = 'DarkYellow' }
         }
 
         $currentBranch = Get-CurrentGitBranch
         if (-not $currentBranch) {
-            if (-not $quiet) {
-                Show-Error -message 'Failed to determine current git branch.'
-            }
-            return -1
+            return @{ code = -1; message = 'Failed to determine current git branch.'; color = 'DarkYellow' }
         }
 
         $gitStatus = Get-GitStatus
@@ -129,19 +120,12 @@ function Update-PVM {
 
             $gitStatusText = '- ' + ($gitStatusText -join "`n- ")
 
-            if (-not $quiet) {
-                Show-Error -message "`nYou have uncommitted changes. Please commit or stash your changes before updating.`n`nGit status:`n$gitStatusText"
-            }
-
-            return -1
+            return @{ code = -1; message = "`nYou have uncommitted changes. Please commit or stash your changes before updating.`n`nGit status:`n$gitStatusText"; color = 'DarkYellow' }
         }
 
         $currentCommit = Get-CurrentGitCommit
         if (-not $currentCommit) {
-            if (-not $quiet) {
-                Show-Error -message "`nFailed to get current git commit."
-            }
-            return -1
+            return @{ code = -1; message = "`nFailed to get current git commit."; color = 'DarkYellow' }
         }
 
         if (-not $quiet) {
@@ -150,33 +134,21 @@ function Update-PVM {
 
         $latestCommit = Get-LatestGitCommit -branch $currentBranch
         if (-not $latestCommit) {
-            if (-not $quiet) {
-                Show-Error -message "`nFailed to fetch latest updates from remote repository."
-            }
-            return -1
+            return @{ code = -1; message = "`nFailed to fetch latest updates from remote repository."; color = 'DarkYellow' }
         }
 
         $commitDifference = Get-GitCommitDifference -currentCommit $currentCommit -latestCommit $latestCommit
         if (-not $commitDifference) {
-            if (-not $quiet) {
-                Show-Error -message "`nFailed to compare current and latest git commits."
-            }
-            return -1
+            return @{ code = -1; message = "`nFailed to compare current and latest git commits."; color = 'DarkYellow' }
         }
 
         if ($commitDifference.remote -eq 0) {
-            if (-not $quiet) {
-                $currentVersion = $PVMConfig.version
-                Show-Success -message "`nPVM is already up to date (version $currentVersion)."
-            }
-            return 0
+            $currentVersion = $PVMConfig.version
+            return @{ code = 0; message = "`nPVM is already up to date (version $currentVersion)."; color = 'DarkGreen' }
         }
 
         if ($commitDifference.local -gt 0) {
-            if (-not $quiet) {
-                Show-Error -message "`nThe local branch and remote branch have diverged. Please resolve the divergence before updating."
-            }
-            return -1
+            return @{ code = -1; message = "`nThe local branch and remote branch have diverged. Please resolve the divergence before updating."; color = 'DarkYellow' }
         }
 
         $currentVersion = Get-PVMVersionFromGit
@@ -194,10 +166,7 @@ function Update-PVM {
                     $msg += ": $currentVersion -> $latestVersion"
                 }
             }
-            if (-not $quiet) {
-                Write-DarkYellow -message $msg
-            }
-            return 1
+            return @{ code = 1; message = $msg; color = 'DarkYellow' }
         }
 
         Show-Warning -message "`nUpdate available. Pulling changes..."
@@ -215,17 +184,12 @@ function Update-PVM {
         $newVersionNormalized = Format-Version -version $newVersion
 
         if ($oldVersionNormalized -eq $newVersionNormalized) {
-            Show-Success -message "`nPVM has been updated successfully. No version change (still $newVersion)."
-            return 0
+            return @{ code = 0; message = "`nPVM has been updated successfully. No version change (still $newVersion)."; color = 'DarkGreen' }
         }
 
-        Show-Success -message "`nPVM has been updated successfully to version $newVersion."
-        return 0
+        return @{ code = 0; message = "`nPVM has been updated successfully to version $newVersion."; color = 'DarkGreen' }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to pull updates"; exception = $_ }
-        if (-not $quiet) {
-            Show-Error -message "`nFailed to pull updates: $_"
-        }
-        return -1
+        return @{ code = -1; message = "`nFailed to pull updates: $_"; color = 'DarkYellow' }
     }
 }

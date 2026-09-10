@@ -261,10 +261,23 @@ function Get-ExtensionCategoriesByPage {
     param ($extCategory, $link, $page = 1)
 
     $availableExtensions = [System.Collections.Generic.List[object]]::new()
+    $subCategories = [System.Collections.Generic.List[object]]::new()
     $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
     $html.Links | ForEach-Object -Process {
         if (-not $_.href) { return }
+
+        # sub category found
+        if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
+            $subCategoryName = [System.Net.WebUtility]::HtmlDecode($matches[1]) -replace '\+', ' '
+            if ($subCategoryName -ne $extCategory) {
+                $subCategories.Add(@{
+                    name = $subCategoryName
+                    link = $_.href
+                })
+            }
+        }
+
         if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+&pageID=(\d+)$') {
             $hasMore = ($page -eq ($matches[1] - 1))
             return
@@ -288,6 +301,7 @@ function Get-ExtensionCategoriesByPage {
     return @{
         hasMore             = $hasMore
         availableExtensions = $availableExtensions
+        subCategories       = $subCategories
     }
 }
 
@@ -309,17 +323,49 @@ function Get-PHPExtensionsFromSource {
                 param ($availableExtensions, $extCategory, $href)
 
                 $currentCategoryResult = [System.Collections.Generic.List[object]]::new()
+                $subCategories = [System.Collections.Generic.List[object]]::new()
                 $page = 1
                 do {
                     $hasMore = $false
                     $result = Get-ExtensionCategoriesByPage -extCategory $extCategory -link $href -page $page
                     $currentCategoryResult.AddRange($result.availableExtensions)
+                    if ($result.subCategories) {
+                        $result.subCategories | ForEach-Object -Process {
+                            $foundSubCategory = $_
+                            if (-not ($subCategories | Where-Object { $_.link -eq $foundSubCategory.link })) {
+                                $subCategories.Add($foundSubCategory)
+                            }
+                        }
+                    }
                     $hasMore = $result.hasMore
                     $page++
                 } while ($hasMore)
 
-                if ($currentCategoryResult.Count -gt 0) {
-                    $availableExtensions[$extCategory] = $currentCategoryResult
+                if ($currentCategoryResult.Count -gt 0 -or $subCategories.Count -gt 0) {
+                    if ($availableExtensions.ContainsKey($extCategory)) {
+                        $existingSubCategories = @($availableExtensions[$extCategory].subCategories)
+                        $newSubCategories = @($subCategories | Where-Object {
+                            $subCategory = $_
+                            -not ($existingSubCategories | Where-Object { $_.link -eq $subCategory.link })
+                        })
+                        $availableExtensions[$extCategory].subCategories += $newSubCategories
+
+                        $existingExtensions = @($availableExtensions[$extCategory].extensions)
+                        $newExtensions = @($currentCategoryResult | Where-Object {
+                            $extension = $_
+                            -not ($existingExtensions | Where-Object {
+                                ($_.href -and $_.href -eq $extension.href) -or
+                                (-not $_.href -and $_.extName -eq $extension.extName)
+                            })
+                        })
+                        $availableExtensions[$extCategory].extensions += $newExtensions
+                    } else {
+                        $availableExtensions[$extCategory] = [pscustomobject] @{
+                            parentCategory = $null
+                            extensions     = @($currentCategoryResult)
+                            subCategories  = @($subCategories)
+                        }
+                    }
                 }
 
                 return @{ pvmData = $availableExtensions }
@@ -327,15 +373,43 @@ function Get-PHPExtensionsFromSource {
 
             return $true
         }
-        $availableExtensions['XDebug'] = @(
-            @{
-                href        = $PVMConfig.links.xdebugHistorical
-                extName     = 'xdebug'
-                extCategory = 'XDebug'
-                description = 'Xdebug is a debugging and productivity extension for PHP'
-                source      = (Get-BaseUrl -url $PVMConfig.links.xdebugBase)
+
+        $availableExtensions.Keys | ForEach-Object -Process {
+            $parentCategory = $_
+            $parentData = $availableExtensions[$parentCategory]
+            if (-not ($parentData.PSObject.Properties.Name -contains 'subCategories')) {
+                return
             }
-        )
+
+            $parentData.subCategories | ForEach-Object -Process {
+                $subCategory = $_
+                if (-not $availableExtensions.ContainsKey($subCategory.name)) {
+                    return
+                }
+
+                $childData = $availableExtensions[$subCategory.name]
+                if ($null -eq $childData.parentCategory) {
+                    $childData.parentCategory = $parentCategory
+                }
+
+                $childNames = @($childData.extensions | ForEach-Object { $_.extName })
+                $parentData.extensions = @($parentData.extensions | Where-Object { $_.extName -notin $childNames })
+            }
+        }
+
+        $availableExtensions['XDebug'] = [pscustomobject] @{
+            parentCategory = $null
+            subCategories = @()
+            extensions  = @(
+                @{
+                    href        = $PVMConfig.links.xdebugHistorical
+                    extName     = 'xdebug'
+                    extCategory = 'XDebug'
+                    description = 'Xdebug is a debugging and productivity extension for PHP'
+                    source      = (Get-BaseUrl -url $PVMConfig.links.xdebugBase)
+                }
+            )
+        }
         $availableExtensionsOrdered = [ordered] @{}
         $availableExtensions.GetEnumerator() | Sort-Object -Property Key | ForEach-Object -Process { $availableExtensionsOrdered[$_.Key] = $_.Value }
 
@@ -357,13 +431,18 @@ function Get-FilteredPHPExtensionsByCategory {
 
     $result = @{}
     $availableExtensions.PSObject.Properties | ForEach-Object -Process {
+        $categoryExtensions = if ($_.Value.PSObject.Properties.Name -contains 'extensions') {
+            $_.Value.extensions
+        } else {
+            $_.Value
+        }
         $categoryMatches = $_.Name -like "*$term*"
         if ($term -and -not $categoryMatches) {
-            $searchResult = $_.Value | Where-Object -FilterScript {
+            $searchResult = $categoryExtensions | Where-Object -FilterScript {
                 return ($_.extName -like "*$term*" -or $_.description -like "*$term*")
             }
         } else {
-            $searchResult = $_.Value
+            $searchResult = $categoryExtensions
         }
         $searchResult = @($searchResult)
         if ($searchResult.Length -gt 0) {

@@ -632,6 +632,24 @@ Describe "Get-ExtensionCategoriesByPage" {
 
         $result.hasMore | Should -Be $true
     }
+
+    It "Finds decoded subcategories and ignores the current category" {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+            return @{
+                Content = 'Mocked PHP extension Caching content'
+                Links   = @(
+                    @{ href = '/packages.php?catpid=3&amp;catname=Caching' }
+                    @{ href = '/packages.php?catpid=4&amp;catname=Data+Caching' }
+                )
+            }
+        }
+
+        $result = Get-ExtensionCategoriesByPage -extCategory 'Caching' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
+
+        $result.subCategories.Count | Should -Be 1
+        $result.subCategories[0].name | Should -Be 'Data Caching'
+        $result.subCategories[0].link | Should -Be '/packages.php?catpid=4&amp;catname=Data+Caching'
+    }
 }
 
 Describe "Get-PHPExtensionsFromSource" {
@@ -692,6 +710,312 @@ Describe "Get-PHPExtensionsFromSource" {
     It "Returns list of available extensions" {
         $list = Get-PHPExtensionsFromSource
         $list.Count | Should -Be 3 # include xdebug category
+        $list.Authentication.parentCategory | Should -Be $null
+        $list.Authentication.extensions.Count | Should -Be 2
+        $list.XDebug.parentCategory | Should -Be $null
+    }
+
+    It "Keeps subcategory extensions unique when the child is also a source category" {
+        $script:audioCategoryCalls = 0
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+            return @{
+                Content = 'Mocked PHP extensions content'
+                Links   = @(
+                    @{ href = '/packages.php?catpid=10&amp;catname=Multimedia' }
+                    @{ href = '/packages.php?catpid=11&amp;catname=Audio' }
+                )
+            }
+        }
+        Mock Get-ExtensionCategoriesByPage {
+            param ($extCategory, $link)
+            if ($extCategory -eq 'Multimedia') {
+                return @{
+                    hasMore = $false
+                    availableExtensions = @(
+                        @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
+                    )
+                    subCategories = @(
+                        @{ name = 'Audio'; link = '/packages.php?catpid=11&amp;catname=Audio' }
+                    )
+                }
+            }
+            if ($extCategory -eq 'Audio') {
+                $audioExtensions = @(
+                    @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
+                )
+                $audioExtensions += @{ extName = 'KTaglib'; href = '/package/KTaglib' }
+                return @{
+                    hasMore = $false
+                    availableExtensions = $audioExtensions
+                    subCategories = @()
+                }
+            }
+        }
+
+        $list = Get-PHPExtensionsFromSource
+
+        $list.Audio.parentCategory | Should -Be 'Multimedia'
+        $list.Audio.extensions.Count | Should -Be 2
+        @($list.Audio.extensions | Where-Object extName -eq 'FliteTTS').Count | Should -Be 1
+        @($list.Audio.extensions | Where-Object extName -eq 'KTaglib').Count | Should -Be 1
+    }
+
+    It "Deduplicates subcategories discovered across parent pages" {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+            return @{
+                Content = 'Mocked PHP extensions content'
+                Links   = @(
+                    @{ href = '/packages.php?catpid=10&amp;catname=Multimedia' }
+                    @{ href = '/packages.php?catpid=11&amp;catname=Audio' }
+                )
+            }
+        }
+        Mock Get-ExtensionCategoriesByPage {
+            param ($page, $extCategory)
+            if ($extCategory -eq 'Audio') {
+                return @{
+                    hasMore = $false
+                    availableExtensions = @(
+                        @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
+                    )
+                    subCategories = @()
+                }
+            }
+            if ($page -eq 1) {
+                return @{
+                    hasMore = $true
+                    availableExtensions = @()
+                    subCategories = @(
+                        @{ name = 'Audio'; link = '/packages.php?catpid=11&amp;catname=Audio' }
+                    )
+                }
+            }
+            if ($extCategory -eq 'Multimedia') {
+                return @{
+                    hasMore = $false
+                    availableExtensions = @()
+                    subCategories = @(
+                        @{ name = 'Audio'; link = '/packages.php?catpid=11&amp;catname=Audio' }
+                    )
+                }
+            }
+            return @{
+                hasMore = $false
+                availableExtensions = @(
+                    @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
+                )
+                subCategories = @()
+            }
+        }
+
+        $list = Get-PHPExtensionsFromSource
+
+        $list.Audio.parentCategory | Should -Be 'Multimedia'
+        $list.Audio.extensions.Count | Should -Be 1
+    }
+
+    It "Removes child extensions from the parent category" {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+            return @{
+                Content = 'Mocked PHP extensions content'
+                Links   = @(
+                    @{ href = '/packages.php?catpid=10&amp;catname=Multimedia' }
+                    @{ href = '/packages.php?catpid=11&amp;catname=Audio' }
+                )
+            }
+        }
+        Mock Get-ExtensionCategoriesByPage {
+            param ($extCategory, $link)
+            if ($extCategory -eq 'Multimedia') {
+                if ($extCategory -eq 'Audio') {
+                    return @{
+                        hasMore = $false
+                        availableExtensions = @(
+                            @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
+                        )
+                        subCategories = @()
+                    }
+                }
+                return @{
+                    hasMore = $false
+                    availableExtensions = @(
+                        @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
+                        @{ extName = 'opengl'; href = '/package/opengl' }
+                    )
+                    subCategories = @(
+                        @{ name = 'Audio'; link = '/packages.php?catpid=11&amp;catname=Audio' }
+                    )
+                }
+            }
+            return @{
+                hasMore = $false
+                availableExtensions = @(
+                    @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
+                )
+                subCategories = @()
+            }
+        }
+
+        $list = Get-PHPExtensionsFromSource
+
+        $list.Multimedia.extensions.extName | Should -Be 'opengl'
+        $list.Audio.extensions.extName | Should -Be 'FliteTTS'
+    }
+
+    It "Merges extensions when different parents share a child category" {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+            return @{
+                Content = 'Mocked PHP extensions content'
+                Links   = @(
+                    @{ href = '/packages.php?catpid=10&amp;catname=Multimedia' }
+                    @{ href = '/packages.php?catpid=12&amp;catname=Podcasts' }
+                    @{ href = '/packages.php?catpid=11&amp;catname=Audio' }
+                )
+            }
+        }
+        Mock Get-ExtensionCategoriesByPage {
+            param ($extCategory, $link)
+            if ($extCategory -eq 'Multimedia') {
+                return @{
+                    hasMore = $false
+                    availableExtensions = @()
+                    subCategories = @(
+                        @{ name = 'Audio'; link = '/packages.php?catpid=11&amp;catname=Audio' }
+                    )
+                }
+            }
+            if ($extCategory -eq 'Podcasts') {
+                return @{
+                    hasMore = $false
+                    availableExtensions = @()
+                    subCategories = @(
+                        @{ name = 'Audio'; link = '/packages.php?catpid=13&amp;catname=Audio' }
+                    )
+                }
+            }
+            if ($extCategory -eq 'Audio') {
+                return @{
+                    hasMore = $false
+                    availableExtensions = @(
+                        @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
+                        @{ extName = 'KTaglib'; href = '/package/KTaglib' }
+                    )
+                    subCategories = @()
+                }
+            }
+            return @{
+                hasMore = $false
+                availableExtensions = @(
+                    @{ extName = 'KTaglib'; href = '/package/KTaglib' }
+                )
+                subCategories = @()
+            }
+        }
+
+        $list = Get-PHPExtensionsFromSource
+
+        $list.Audio.parentCategory | Should -BeIn @('Multimedia', 'Podcasts')
+        $list.Audio.extensions.Count | Should -Be 2
+        $list.Audio.extensions.extName | Should -Contain 'FliteTTS'
+        $list.Audio.extensions.extName | Should -Contain 'KTaglib'
+    }
+
+    It "Assigns a parent when an existing root category becomes a child" {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+            return @{
+                Content = 'Mocked PHP extensions content'
+                Links   = @(
+                    @{ href = '/packages.php?catpid=11&amp;catname=Audio' }
+                    @{ href = '/packages.php?catpid=10&amp;catname=Multimedia' }
+                )
+            }
+        }
+        Mock Get-ExtensionCategoriesByPage {
+            param ($extCategory, $link)
+            if ($extCategory -eq 'Audio' -and $link -like '*catpid=11*') {
+                return @{
+                    hasMore = $false
+                    availableExtensions = @(
+                        @{ extName = 'KTaglib'; href = '/package/KTaglib' }
+                    )
+                    subCategories = @()
+                }
+            }
+            if ($extCategory -eq 'Multimedia') {
+                return @{
+                    hasMore = $false
+                    availableExtensions = @()
+                    subCategories = @(
+                        @{ name = 'Audio'; link = '/packages.php?catpid=12&amp;catname=Audio' }
+                    )
+                }
+            }
+            return @{
+                hasMore = $false
+                availableExtensions = @(
+                    @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
+                )
+                subCategories = @()
+            }
+        }
+
+        $list = Get-PHPExtensionsFromSource
+
+        $list.Audio.parentCategory | Should -Be 'Multimedia'
+        $list.Audio.extensions.Count | Should -Be 1
+    }
+
+    It "Merges a repeated category and initializes subcategory metadata" {
+        $script:multimediaCategoryCalls = 0
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+            return @{
+                Content = 'Mocked PHP extensions content'
+                Links   = @(
+                    @{ href = '/packages.php?catpid=10&amp;catname=Multimedia' }
+                    @{ href = '/packages.php?catpid=10&amp;catname=Multimedia' }
+                    @{ href = '/packages.php?catpid=10&amp;catname=Multimedia' }
+                    @{ href = '/packages.php?catpid=11&amp;catname=Audio' }
+                )
+            }
+        }
+        Mock Get-ExtensionCategoriesByPage {
+            param ($extCategory)
+            if ($extCategory -eq 'Multimedia') {
+                $script:multimediaCategoryCalls++
+                if ($script:multimediaCategoryCalls -eq 1) {
+                    return @{
+                        hasMore = $false
+                        availableExtensions = @(
+                            @{ extName = 'opengl'; href = '/package/opengl' }
+                        )
+                        subCategories = @()
+                    }
+                }
+                return @{
+                    hasMore = $false
+                    availableExtensions = @(
+                        @{ extName = 'opengl'; href = '/package/opengl' }
+                        @{ extName = 'glfw'; href = '/package/glfw' }
+                    )
+                    subCategories = @(
+                        @{ name = 'Audio'; link = '/packages.php?catpid=11&amp;catname=Audio' }
+                    )
+                }
+            }
+            return @{
+                hasMore = $false
+                availableExtensions = @(
+                    @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
+                )
+                subCategories = @()
+            }
+        }
+
+        $list = Get-PHPExtensionsFromSource
+
+        $list.Multimedia.extensions.extName | Should -Contain 'glfw'
+        $list.Multimedia.extensions.extName | Should -Contain 'opengl'
+        $list.Audio.parentCategory | Should -Be 'Multimedia'
     }
 
     It "Handles thrown exception" {
@@ -762,15 +1086,13 @@ Describe "Get-AvailablePHPExtensions" {
         }
     }
 
-    It "Returns cached extensions when available" {
-        Mock Test-CanUseCache { return $true }
-        Mock Get-DataFromCache { return Get-ExtensionList }
+    It "Returns extensions supplied by the cache helper" {
+        Mock Get-OrUpdateCache { return Get-ExtensionList }
         Mock Get-PHPExtensionsFromSource { return Get-ExtensionList }
 
         $result = Get-AvailablePHPExtensions
 
-        Should -Invoke Test-CanUseCache -Exactly 1
-        Should -Invoke Get-DataFromCache -Exactly 1
+        Should -Invoke Get-OrUpdateCache -Exactly 1
         Should -Invoke Get-PHPExtensionsFromSource -Exactly 0
         $result.PSObject.Properties.Name.Count | Should -Be 2
         $result.Authentication.Count | Should -Be 2
@@ -779,15 +1101,16 @@ Describe "Get-AvailablePHPExtensions" {
         $result.Caching[0].extName | Should -Be 'APC'
     }
 
-    It "Fetches extensions from source when cache is not available" {
-        Mock Test-CanUseCache { return $false }
-        Mock Get-DataFromCache { return Get-ExtensionList }
+    It "Computes extensions through the cache helper when needed" {
+        Mock Get-OrUpdateCache {
+            param ($compute)
+            return & $compute
+        }
         Mock Get-PHPExtensionsFromSource { return Get-ExtensionList }
 
         $result = Get-AvailablePHPExtensions
 
-        Should -Invoke Test-CanUseCache -Exactly 1
-        Should -Invoke Get-DataFromCache -Exactly 0
+        Should -Invoke Get-OrUpdateCache -Exactly 1
         Should -Invoke Get-PHPExtensionsFromSource -Exactly 1
         $result.PSObject.Properties.Name.Count | Should -Be 2
         $result.Authentication.Count | Should -Be 2
@@ -915,6 +1238,22 @@ Describe "Get-FilteredPHPExtensionsByCategory" {
 
         $result.Count | Should -Be 1
         $result.Caching.Count | Should -Be 4
+    }
+
+    It "Filters extension containers with category metadata" {
+        $testExtensions = [pscustomobject] @{
+            Multimedia = [pscustomobject] @{
+                parentCategory = $null
+                extensions = @(
+                    @{ extName = 'opengl'; description = 'OpenGL' }
+                )
+            }
+        }
+
+        $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'OpenGL'
+
+        $result.Multimedia.Count | Should -Be 1
+        $result.Multimedia[0].extName | Should -Be 'opengl'
     }
 }
 

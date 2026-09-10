@@ -338,16 +338,16 @@ function Get-PHPExtensionsFromSource {
                 if ($currentCategoryResult.Count -gt 0 -or $subCategories.Count -gt 0) {
                     if ($availableExtensions.ContainsKey($extCategory)) {
                         $existingSubCategories = @($availableExtensions[$extCategory].subCategories)
-                        $newSubCategories = @($subCategories | Where-Object {
+                        $newSubCategories = @($subCategories | Where-Object -FilterScript {
                             $subCategory = $_
-                            -not ($existingSubCategories | Where-Object { $_ -eq $subCategory })
+                            -not ($existingSubCategories | Where-Object -FilterScript { $_ -eq $subCategory })
                         })
                         $availableExtensions[$extCategory].subCategories += $newSubCategories
 
                         $existingExtensions = @($availableExtensions[$extCategory].extensions)
-                        $newExtensions = @($currentCategoryResult | Where-Object {
+                        $newExtensions = @($currentCategoryResult | Where-Object -FilterScript {
                             $extension = $_
-                            -not ($existingExtensions | Where-Object {
+                            -not ($existingExtensions | Where-Object -FilterScript {
                                 ($_.href -and $_.href -eq $extension.href) -or
                                 (-not $_.href -and $_.extName -eq $extension.extName)
                             })
@@ -386,8 +386,8 @@ function Get-PHPExtensionsFromSource {
                     $childData.parentCategory = $parentCategory
                 }
 
-                $childNames = @($childData.extensions | ForEach-Object { $_.extName })
-                $parentData.extensions = @($parentData.extensions | Where-Object { $_.extName -notin $childNames })
+                $childNames = @($childData.extensions | ForEach-Object -Process { $_.extName })
+                $parentData.extensions = @($parentData.extensions | Where-Object -FilterScript { $_.extName -notin $childNames })
             }
         }
 

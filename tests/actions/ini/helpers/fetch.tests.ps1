@@ -647,8 +647,7 @@ Describe "Get-ExtensionCategoriesByPage" {
         $result = Get-ExtensionCategoriesByPage -extCategory 'Caching' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
 
         $result.subCategories.Count | Should -Be 1
-        $result.subCategories[0].name | Should -Be 'Data Caching'
-        $result.subCategories[0].link | Should -Be '/packages.php?catpid=4&amp;catname=Data+Caching'
+        $result.subCategories[0] | Should -Be 'Data Caching'
     }
 }
 
@@ -734,9 +733,7 @@ Describe "Get-PHPExtensionsFromSource" {
                     availableExtensions = @(
                         @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
                     )
-                    subCategories = @(
-                        @{ name = 'Audio'; link = '/packages.php?catpid=11&amp;catname=Audio' }
-                    )
+                    subCategories = @('Audio')
                 }
             }
             if ($extCategory -eq 'Audio') {
@@ -785,18 +782,14 @@ Describe "Get-PHPExtensionsFromSource" {
                 return @{
                     hasMore = $true
                     availableExtensions = @()
-                    subCategories = @(
-                        @{ name = 'Audio'; link = '/packages.php?catpid=11&amp;catname=Audio' }
-                    )
+                    subCategories = @('Audio')
                 }
             }
             if ($extCategory -eq 'Multimedia') {
                 return @{
                     hasMore = $false
                     availableExtensions = @()
-                    subCategories = @(
-                        @{ name = 'Audio'; link = '/packages.php?catpid=11&amp;catname=Audio' }
-                    )
+                    subCategories = @('Audio')
                 }
             }
             return @{
@@ -830,9 +823,7 @@ Describe "Get-PHPExtensionsFromSource" {
                 if ($extCategory -eq 'Audio') {
                     return @{
                         hasMore = $false
-                        availableExtensions = @(
-                            @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
-                        )
+                        availableExtensions = @('FliteTTS')
                         subCategories = @()
                     }
                 }
@@ -842,9 +833,7 @@ Describe "Get-PHPExtensionsFromSource" {
                         @{ extName = 'FliteTTS'; href = '/package/FliteTTS' }
                         @{ extName = 'opengl'; href = '/package/opengl' }
                     )
-                    subCategories = @(
-                        @{ name = 'Audio'; link = '/packages.php?catpid=11&amp;catname=Audio' }
-                    )
+                    subCategories = @('Audio')
                 }
             }
             return @{
@@ -879,18 +868,14 @@ Describe "Get-PHPExtensionsFromSource" {
                 return @{
                     hasMore = $false
                     availableExtensions = @()
-                    subCategories = @(
-                        @{ name = 'Audio'; link = '/packages.php?catpid=11&amp;catname=Audio' }
-                    )
+                    subCategories = @('Audio')
                 }
             }
             if ($extCategory -eq 'Podcasts') {
                 return @{
                     hasMore = $false
                     availableExtensions = @()
-                    subCategories = @(
-                        @{ name = 'Audio'; link = '/packages.php?catpid=13&amp;catname=Audio' }
-                    )
+                    subCategories = @('Audio')
                 }
             }
             if ($extCategory -eq 'Audio') {
@@ -945,9 +930,7 @@ Describe "Get-PHPExtensionsFromSource" {
                 return @{
                     hasMore = $false
                     availableExtensions = @()
-                    subCategories = @(
-                        @{ name = 'Audio'; link = '/packages.php?catpid=12&amp;catname=Audio' }
-                    )
+                    subCategories = @('Audio')
                 }
             }
             return @{
@@ -997,9 +980,7 @@ Describe "Get-PHPExtensionsFromSource" {
                         @{ extName = 'opengl'; href = '/package/opengl' }
                         @{ extName = 'glfw'; href = '/package/glfw' }
                     )
-                    subCategories = @(
-                        @{ name = 'Audio'; link = '/packages.php?catpid=11&amp;catname=Audio' }
-                    )
+                    subCategories = @('Audio')
                 }
             }
             return @{

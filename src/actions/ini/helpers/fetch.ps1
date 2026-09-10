@@ -271,10 +271,7 @@ function Get-ExtensionCategoriesByPage {
         if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
             $subCategoryName = [System.Net.WebUtility]::HtmlDecode($matches[1]) -replace '\+', ' '
             if ($subCategoryName -ne $extCategory) {
-                $subCategories.Add(@{
-                    name = $subCategoryName
-                    link = $_.href
-                })
+                $subCategories.Add($subCategoryName)
             }
         }
 
@@ -323,7 +320,7 @@ function Get-PHPExtensionsFromSource {
                 param ($availableExtensions, $extCategory, $href)
 
                 $currentCategoryResult = [System.Collections.Generic.List[object]]::new()
-                $subCategories = [System.Collections.Generic.List[object]]::new()
+                $subCategories = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
                 $page = 1
                 do {
                     $hasMore = $false
@@ -331,10 +328,7 @@ function Get-PHPExtensionsFromSource {
                     $currentCategoryResult.AddRange($result.availableExtensions)
                     if ($result.subCategories) {
                         $result.subCategories | ForEach-Object -Process {
-                            $foundSubCategory = $_
-                            if (-not ($subCategories | Where-Object { $_.link -eq $foundSubCategory.link })) {
-                                $subCategories.Add($foundSubCategory)
-                            }
+                            $null = $subCategories.Add($_)
                         }
                     }
                     $hasMore = $result.hasMore
@@ -346,7 +340,7 @@ function Get-PHPExtensionsFromSource {
                         $existingSubCategories = @($availableExtensions[$extCategory].subCategories)
                         $newSubCategories = @($subCategories | Where-Object {
                             $subCategory = $_
-                            -not ($existingSubCategories | Where-Object { $_.link -eq $subCategory.link })
+                            -not ($existingSubCategories | Where-Object { $_ -eq $subCategory })
                         })
                         $availableExtensions[$extCategory].subCategories += $newSubCategories
 
@@ -383,11 +377,11 @@ function Get-PHPExtensionsFromSource {
 
             $parentData.subCategories | ForEach-Object -Process {
                 $subCategory = $_
-                if (-not $availableExtensions.ContainsKey($subCategory.name)) {
+                if (-not $availableExtensions.ContainsKey($subCategory)) {
                     return
                 }
 
-                $childData = $availableExtensions[$subCategory.name]
+                $childData = $availableExtensions[$subCategory]
                 if ($null -eq $childData.parentCategory) {
                     $childData.parentCategory = $parentCategory
                 }

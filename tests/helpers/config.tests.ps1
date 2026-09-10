@@ -549,7 +549,7 @@ MIN_LINE_LENGTH=50
         }
 
         BeforeEach {
-            $PVMConfig = Get-Config -rootPath $testRoot
+            $Global:PVMConfig = Get-Config -rootPath $testRoot
         }
 
         AfterEach {

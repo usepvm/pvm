@@ -1347,7 +1347,7 @@ Describe "Invoke-Test" {
         It "Should pass pesterVersion to Initialize-Tests" {
             Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
 
-            $result = Invoke-Test -arguments @('--pester=5.6.0')
+            $null = Invoke-Test -arguments @('--pester=5.6.0')
 
             Should -Invoke Initialize-Tests -ParameterFilter {
                 $pesterVersion -eq '5.6.0'
@@ -1357,7 +1357,7 @@ Describe "Invoke-Test" {
         It "Should pass null pesterVersion when no --pester argument" {
             Mock Initialize-Tests { param ($testsNames, $options, $exclude, $pesterVersion) return $pesterVersion }
 
-            $result = Invoke-Test -arguments @()
+            $null = Invoke-Test -arguments @()
 
             Should -Invoke Initialize-Tests -ParameterFilter {
                 $pesterVersion -eq $null

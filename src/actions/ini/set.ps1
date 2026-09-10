@@ -25,7 +25,7 @@ function Set-IniSetting {
             $matchesList = Get-MatchingPHPSettings -iniPath $iniPath -searchKey $searchKey
 
             if ($matchesList.Count -eq 0) {
-                if ($notFound.Keys -notcontains $key) {
+                if (-not $notFound.Contains($key)) {
                     $notFound[$key] += @{ key = $searchKey; value = $null; status = 'Not Found'; color = 'Gray' }
                 }
 

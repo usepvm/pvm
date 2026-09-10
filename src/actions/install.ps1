@@ -91,7 +91,7 @@ function Get-PHPVersions {
         }
 
         $fetchedVersions = [ordered]@{}
-        $found = @()
+        $found = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 
         $fetchedVersionsGrouped.PSObject.Properties | ForEach-Object -Process {
             $searchResult = $_.Value | Where-Object -FilterScript {
@@ -103,7 +103,7 @@ function Get-PHPVersions {
             if ($searchResult -and $searchResult.Count -ne 0) {
                 $filteredVersions = @()
                 $searchResult | ForEach-Object -Process {
-                    if ($found -notcontains $_.Link) {
+                    if ($found.Add($_.Link)) {
                         $filteredVersions += @{
                             href      = $_.Link
                             version   = $_.Version
@@ -111,7 +111,6 @@ function Get-PHPVersions {
                             BuildType = $_.BuildType
                             arch      = $_.Arch
                         }
-                        $found += $_.Link
                     }
                 }
 

@@ -1513,7 +1513,7 @@ Describe "Invoke-Run" {
         Mock Invoke-RunScripts { return 0 }
         Mock Show-Scripts { }
 
-        $result = Invoke-Run -arguments @('list')
+        $result = Invoke-Run -arguments @('--list')
 
         $result | Should -Be 0
         Should -Invoke Show-Scripts -Times 1 -Exactly

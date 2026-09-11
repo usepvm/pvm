@@ -544,7 +544,7 @@ The test runner provides visual feedback with spinner animations during executio
 pvm run <script-name> [--mute] <files>
 
 # List all available predefined scripts
-pvm run list
+pvm run --list
 
 # Examples:
 pvm run test:quiet # ................ Runs tests with verbosity set to None

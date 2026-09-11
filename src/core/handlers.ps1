@@ -553,7 +553,7 @@ function Invoke-Test {
 function Invoke-Run {
     param ($arguments)
 
-    if ($arguments -contains 'list') {
+    if ($arguments -contains '--list') {
         Show-Scripts
         return 0
     }

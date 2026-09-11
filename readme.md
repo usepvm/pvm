@@ -58,7 +58,7 @@ PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that make
 Clone the repository, copy the environment file, run setup, and ensure the project directory is available in your PATH.
 
 ```sh
-git clone https://github.com/drissboumlik/pvm
+git clone https://github.com/usepvm/pvm
 cd pvm
 cp .env.example .env # edit .env to set your config values before running setup
 

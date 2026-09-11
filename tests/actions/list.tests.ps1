@@ -392,11 +392,7 @@ Describe "Get-AvailablePHPVersions" {
     }
 
     It "Should handle exceptions gracefully" {
-        Mock Get-PHPListToInstall { return @{
-            'Archives' = @('php-8.1.0-Win32-x64.zip')
-            'Releases' = @('php-8.2.0-Win32-x64.zip')
-        }}
-        Mock ForEach-Object { throw 'Cache error' }
+        Mock Get-PHPListToInstall { throw 'Error' }
         Mock Add-LogEntry { return 0 }
 
         $result = Get-AvailablePHPVersions

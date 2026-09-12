@@ -666,7 +666,7 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
         It "Should call Get-AllSubdirectories with php storage path" {
             Mock Get-AllSubdirectories { return @() }
 
-            Get-InstalledPHPVersionsFromDisk
+            $null = Get-InstalledPHPVersionsFromDisk
 
             Should -Invoke Get-AllSubdirectories -Exactly 1 -ParameterFilter {
                 $path -eq $PVMConfig.paths.directories.php

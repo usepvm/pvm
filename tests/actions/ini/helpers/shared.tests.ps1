@@ -1,14 +1,11 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\shared-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'shared'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:testIniPath = "$TEST_DRIVE\php.ini"
     $script:extDirectory = "$TEST_DRIVE\ext"
     $script:testBackupPath = "$testIniPath.bak"
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
     function Reset-IniContent {
         @"
@@ -26,8 +23,7 @@ max_execution_time = 30
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "ConvertTo-ExtensionId" {
@@ -104,7 +100,7 @@ Describe "ConvertTo-ExtensionId" {
 
 Describe "Backup-IniFile" {
     It "Creates a backup when none exists" {
-        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath
         $result = Backup-IniFile -iniPath $testIniPath
         $result | Should -Be 0
         Test-Path $testBackupPath | Should -Be $true

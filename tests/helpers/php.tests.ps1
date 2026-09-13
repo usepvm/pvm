@@ -1,8 +1,7 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\php-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'php'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:testPhpPath = "$TEST_DRIVE\PHP"
     $script:testExtPath = "$testPhpPath\ext"
@@ -10,7 +9,6 @@ BeforeAll {
     $script:TEMPLATES_PATH = $PVMConfig.paths.directories.templates
     $script:ZEND_EXTENSIONS_LIST_PATH = $PVMConfig.paths.files.zendExtensionsList
 
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $testPhpPath -Force | Out-Null
 
     Mock Show-Message { }
@@ -32,8 +30,7 @@ max_execution_time = 30
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-PHPInstallInfo" {

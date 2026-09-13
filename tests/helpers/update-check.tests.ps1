@@ -1,19 +1,13 @@
 ﻿
 BeforeAll {
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\update-check-drive"
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'update-check'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     Mock Show-Error { }
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMRoot = $PVMRootBackup
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-LastUpdateCheckTimestamp" {
@@ -25,7 +19,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
 
     AfterEach {
         if (Test-Path $TIMESTAMP_FILE) {
-            Remove-ItemWrapper -path $TIMESTAMP_FILE -Force
+            Remove-ItemWrapper -path $TIMESTAMP_FILE
         }
     }
 

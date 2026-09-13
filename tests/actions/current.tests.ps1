@@ -1,13 +1,11 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\current-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'current'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:PHP_CURRENT_DIR = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
     $script:PHP_DIR = $PVMConfig.paths.directories.php
 
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PHP_CURRENT_DIR -Force | Out-Null
 
     Mock Show-Error { }
@@ -16,8 +14,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-PHPStatus" {

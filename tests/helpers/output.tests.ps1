@@ -1,17 +1,11 @@
 ﻿
 BeforeAll {
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\output-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'output'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMRoot = $PVMRootBackup
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Add-LogEntry" {
@@ -163,9 +157,8 @@ Describe "Show-SpinnerWhileJob" {
         Mock Write-Yellow { }
         Mock Add-LogEntry { }
 
-        $PVMRoot = $PVMConfig.paths.directories.pvmRoot
-        New-Item -Path "$PVMRoot\src" -ItemType Directory -Force | Out-Null
-        Set-ContentWrapper -path "$PVMRoot\src\imports.ps1" -value '# no-op for tests'
+        New-Item -Path "$($PVMConfig.rootPath)\src" -ItemType Directory -Force | Out-Null
+        Set-ContentWrapper -path "$($PVMConfig.rootPath)\src\imports.ps1" -value '# no-op for tests'
 
         $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
         $script:keepRunning = $true

@@ -1,8 +1,7 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\profile-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'profile'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:PROFILES_PATH = $PVMConfig.paths.directories.profiles
     $script:TEMPLATES_PATH = $PVMConfig.paths.directories.templates
@@ -12,7 +11,6 @@ BeforeAll {
     $script:DEFAULT_SETTINGS = $PVMConfig.defaults.settings
     $script:DEFAULT_EXTENSIONS = $PVMConfig.defaults.extensions
 
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PROFILES_PATH -Force | Out-Null
 
     Mock Show-Success { }
@@ -52,8 +50,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Set-IniSettingDirect" {
@@ -201,7 +198,7 @@ Describe "Get-PopularPHPSettings" {
     }
 
     AfterAll {
-        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
     }
 
     It "Should return popular PHP settings" {
@@ -235,7 +232,7 @@ Describe "Get-PopularPHPExtensions" {
     }
 
     AfterAll {
-        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
     }
 
     It "Should return popular PHP extensions" {
@@ -557,7 +554,7 @@ Describe "Show-PHPProfiles" {
     }
 
     It "Should handle empty profiles directory" {
-        Remove-ItemWrapper -path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$PROFILES_PATH\*"
 
         $result = Show-PHPProfiles
         $result | Should -Be -1
@@ -1295,7 +1292,7 @@ Describe "Remove-PHPProfile" {
 
 Describe "Clear-PHPProfiles" {
     BeforeEach {
-        Remove-ItemWrapper -path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$PROFILES_PATH\*"
 
         Mock Add-LogEntry { return 0 }
     }

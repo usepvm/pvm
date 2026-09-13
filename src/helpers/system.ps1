@@ -245,7 +245,7 @@ function Invoke-PVMSubprocess {
         return @{ output = $null; code = -1 }
     }
 
-    $pvmScript = "$PVMRoot\src\pvm.ps1"
+    $pvmScript = "$($PVMConfig.rootPath)\src\pvm.ps1"
     $processArgs = @(
         '-NoProfile'
         '-ExecutionPolicy', 'Bypass'

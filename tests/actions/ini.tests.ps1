@@ -1,8 +1,7 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\ini-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'ini'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:phpVersionPath = "$TEST_DRIVE\php-8.2"
     $script:extDirectory = "$phpVersionPath\ext"
@@ -12,7 +11,6 @@ BeforeAll {
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
 
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
     New-Item -ItemType Directory -Path $phpVersionPath -Force | Out-Null
     New-Item -ItemType Directory -Path $extDirectory -Force | Out-Null
@@ -78,14 +76,13 @@ max_execution_time = 30
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Invoke-IniAction" {
     BeforeEach {
         Reset-IniContent
-        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath
     }
 
     Context "info action" {
@@ -496,7 +493,7 @@ extension=php_curl.dll
         }
 
         It "Handles missing php.ini file" {
-            Remove-ItemWrapper -path "$phpVersionPath\php.ini" -Force
+            Remove-ItemWrapper -path "$phpVersionPath\php.ini"
             $result = Invoke-IniAction -action 'info' -params @()
             $result | Should -Be -1
         }

@@ -15,8 +15,8 @@ function Initialize-PVM {
 
         $pvmEnvVarContent = Get-EnvVarByName -name 'PVM'
 
-        if (($null -eq $pvmEnvVarContent) -or ($pvmEnvVarContent -ne "$PVMRoot;$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)")) {
-            $null = Set-EnvVar -name $PVMConfig.env.PVM_ENV_VAR_NAME -value "$PVMRoot;$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)"
+        if (($null -eq $pvmEnvVarContent) -or ($pvmEnvVarContent -ne "$($PVMConfig.rootPath);$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)")) {
+            $null = Set-EnvVar -name $PVMConfig.env.PVM_ENV_VAR_NAME -value "$($PVMConfig.rootPath);$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)"
         }
 
         if ($pathEntries -notcontains "%$($PVMConfig.env.PVM_ENV_VAR_NAME)%") {
@@ -129,18 +129,18 @@ function New-EnvFile {
     param ($overwrite = $false)
 
     try {
-        if (Test-FileNotExists -path "$PVMRoot\.env.example") {
+        if (Test-FileNotExists -path "$($PVMConfig.rootPath)\.env.example") {
             Show-Error -message "`nFailed to find .env.example file."
             return -1
         }
 
-        if ((Test-FileExists -path "$PVMRoot\.env") -and ($overwrite -eq $false)) {
+        if ((Test-FileExists -path "$($PVMConfig.rootPath)\.env") -and ($overwrite -eq $false)) {
             $response = Read-HostWrapper -prompt "`n.env file already exists. Overwrite? (y/n)" -notifyUser
             if (Test-NoResponse -response $response) {
                 return -1
             }
         }
-        Copy-ItemWrapper -path "$PVMRoot\.env.example" -destination "$PVMRoot\.env"
+        Copy-ItemWrapper -path "$($PVMConfig.rootPath)\.env.example" -destination "$($PVMConfig.rootPath)\.env"
         Show-Success -message "`nCreated .env file."
 
         return 0
@@ -151,7 +151,7 @@ function New-EnvFile {
 }
 
 function Wait-ForEnvEdit {
-    Show-Info -message "`nEdit $PVMRoot\.env now if you want custom settings, then press Enter to continue..."
+    Show-Info -message "`nEdit $($PVMConfig.rootPath)\.env now if you want custom settings, then press Enter to continue..."
     Read-HostWrapper -notifyUser | Out-Null
-    $Global:PVMConfig = Get-Config -rootPath $PVMRoot
+    $Global:PVMConfig = Get-Config -rootPath $PVMConfig.rootPath
 }

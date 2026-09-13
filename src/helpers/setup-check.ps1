@@ -8,7 +8,7 @@ function Test-PVMSetup {
         }
 
         $pvmEnvEntries = $pvmEnvVarContent -split ';' | Where-Object -FilterScript { $_ -ne '' }
-        if ($pvmEnvEntries -notcontains $PVMRoot -or $pvmEnvEntries -notcontains $PVMConfig.env.PHP_CURRENT_VERSION_PATH) {
+        if ($pvmEnvEntries -notcontains $PVMConfig.rootPath -or $pvmEnvEntries -notcontains $PVMConfig.env.PHP_CURRENT_VERSION_PATH) {
             return $false
         }
 

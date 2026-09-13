@@ -1,21 +1,15 @@
 ﻿
 BeforeAll {
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\config-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'config'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:TEMPLATES_PATH = $PVMConfig.paths.directories.templates
     $script:ALIASES_LIST_PATH = $PVMConfig.paths.files.aliasesList
     $script:SCRIPTS_LIST_PATH = $PVMConfig.paths.files.scriptsList
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMRoot = $PVMRootBackup
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Set-AliasesList" {
@@ -564,7 +558,8 @@ MIN_LINE_LENGTH=50
             $fakeRoot = "$TEST_DRIVE\fake-root"
             $PVMConfig.test.setFakePaths.Invoke($fakeRoot)
 
-            $PVMConfig.paths.directories.pvmRoot | Should -Be $fakeRoot
+            $PVMConfig.rootPath | Should -Be $fakeRoot
+            $PVMConfig.paths.directories.root | Should -Be $fakeRoot
             $PVMConfig.paths.directories.storage | Should -Be "$fakeRoot\storage"
 
             $PVMConfig.paths.directories.fakeStorage | Should -Be "$fakeRoot\storage"
@@ -616,7 +611,8 @@ MIN_LINE_LENGTH=50
             $PVMConfig.test.setFakePaths.Invoke($firstRoot)
             $PVMConfig.test.setFakePaths.Invoke($secondRoot)
 
-            $PVMConfig.paths.directories.pvmRoot | Should -Be $secondRoot
+            $PVMConfig.rootPath | Should -Be $secondRoot
+            $PVMConfig.paths.directories.root | Should -Be $secondRoot
             $PVMConfig.paths.directories.storage | Should -Be "$secondRoot\storage"
             $PVMConfig.env.PHP_CURRENT_VERSION_PATH | Should -Be "$secondRoot\pvm\php"
         }

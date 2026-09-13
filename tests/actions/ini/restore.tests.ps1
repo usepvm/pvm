@@ -1,14 +1,11 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\restore-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'restore'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:testIniPath = "$TEST_DRIVE\php.ini"
     $script:extDirectory = "$TEST_DRIVE\ext"
     $script:testBackupPath = "$testIniPath.bak"
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
     Mock Show-Error { }
     Mock Show-Success { }
@@ -29,8 +26,7 @@ max_execution_time = 30
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Restore-IniBackup" {
@@ -47,7 +43,7 @@ Describe "Restore-IniBackup" {
     }
 
     It "Fails when backup doesn't exist" {
-        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath
         $code = Restore-IniBackup -iniPath $testIniPath
         $code | Should -Be -1
     }

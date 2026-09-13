@@ -65,7 +65,7 @@ function Show-SpinnerWhileJob {
 
     try {
         # Create initialization script to load all PVM functions into the job
-        $env:PVM_ROOT_FOR_JOB = $PVMRoot
+        $env:PVM_ROOT_FOR_JOB = $PVMConfig.rootPath
         $initScript = {
             . "$($env:PVM_ROOT_FOR_JOB)\src\imports.ps1"
         }

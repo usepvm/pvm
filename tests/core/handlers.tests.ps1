@@ -1,9 +1,7 @@
 ﻿
 BeforeAll {
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\handlers-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'handlers'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     Import-Module -Name PowerShellGet -ErrorAction SilentlyContinue
 
@@ -17,9 +15,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMRoot = $PVMRootBackup
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Invoke-Help" {
@@ -806,7 +802,6 @@ Describe "Invoke-Profile" {
 
 Describe "Invoke-Info" {
     BeforeEach {
-        $Global:PVMRoot = 'C:\pvm'
         $PVMConfig.version = '2.6'
         $PVMConfig.env = @{
             CACHE_MAX_HOURS      = 168

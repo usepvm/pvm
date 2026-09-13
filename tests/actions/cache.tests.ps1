@@ -1,11 +1,9 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\cache-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'cache'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:CACHE_PATH = $PVMConfig.paths.directories.cache
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
 
     Mock Show-Error { }
@@ -16,8 +14,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-CacheFiles" {
@@ -50,7 +47,7 @@ Describe "Get-CacheFiles" {
 
 Describe "Show-CacheFiles" {
     BeforeEach {
-        Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$CACHE_PATH\*"
 
         Mock Add-LogEntry { return 0 }
     }
@@ -124,7 +121,7 @@ Describe "Show-CacheFiles" {
 
 Describe "Show-CachedData" {
     BeforeEach {
-        Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$CACHE_PATH\*"
 
         Mock Add-LogEntry { return 0 }
     }
@@ -211,7 +208,7 @@ Describe "Show-CachedData" {
 
 Describe "Remove-CacheFile" {
     BeforeEach {
-        Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$CACHE_PATH\*"
 
         Mock Add-LogEntry { return 0 }
     }
@@ -365,7 +362,7 @@ Describe "Remove-CacheFile" {
 
 Describe "Clear-CacheFiles" {
     BeforeEach {
-        Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$CACHE_PATH\*"
 
         Mock Add-LogEntry { return 0 }
     }

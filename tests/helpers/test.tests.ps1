@@ -1,4 +1,20 @@
 
+BeforeAll {
+    $script:PVMRootBackup = $PVMRoot
+    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
+    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\test-drive"
+    $Global:PVMRoot = $TEST_DRIVE
+    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    
+    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+}
+
+AfterAll {
+    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
+    $Global:PVMRoot = $PVMRootBackup
+    $Global:PVMConfig = $PVMConfigBackup
+}
+
 Describe "Test-IsNotQuiet" {
     It "Returns false when verbosity is None" {
         $result = Test-IsNotQuiet -verbosity 'None'
@@ -295,18 +311,8 @@ Describe "Show-PowerShellInfoShort" {
     }
 }
 
-Describe "Get-PVMRootDirectory" {
-    It "Returns the root directory path" {
-        $result = Get-PVMRootDirectory
-
-        $result | Should -BeOfType [string]
-        $result | Should -Exist
-    }
-}
-
 Describe "Get-TestsFiles" {
     It "Returns all test files when no specific names provided" {
-        Mock Get-PVMRootDirectory { return 'TestDrive:\test' }
         Mock Get-ChildItemWrapper {
             return @(
                 [PSCustomObject]@{ Name = 'test1.tests.ps1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
@@ -320,7 +326,6 @@ Describe "Get-TestsFiles" {
     }
 
     It "Returns specific test files when names are provided" {
-        Mock Get-PVMRootDirectory { return 'TestDrive:\test' }
         Mock Get-ChildItemWrapper {
             return @(
                 [PSCustomObject]@{ Name = 'test1.tests.ps1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
@@ -328,14 +333,13 @@ Describe "Get-TestsFiles" {
             )
         }
 
-        $result = Get-TestsFiles -testsNames @('test1')
+        $result = @(Get-TestsFiles -testsNames @('test1'))
 
         $result.Count | Should -Be 1
         $result[0].Name | Should -Be 'test1.tests.ps1'
     }
 
     It "Includes placeholder for missing test files" {
-        Mock Get-PVMRootDirectory { return 'TestDrive:\test' }
         Mock Get-ChildItemWrapper {
             return @(
                 [PSCustomObject]@{ Name = 'test1.tests.ps1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
@@ -351,7 +355,6 @@ Describe "Get-TestsFiles" {
 
 Describe "Get-AllTestNames" {
     It "Returns all test names without exclusions" {
-        Mock Get-PVMRootDirectory { return 'TestDrive:\test' }
         Mock Get-ChildItemWrapper {
             return @(
                 [PSCustomObject]@{ BaseName = 'test1.tests'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
@@ -365,7 +368,6 @@ Describe "Get-AllTestNames" {
     }
 
     It "Excludes specified test names" {
-        Mock Get-PVMRootDirectory { return 'TestDrive:\test' }
         Mock Get-ChildItemWrapper {
             return @(
                 [PSCustomObject]@{ BaseName = 'test1.tests'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
@@ -396,12 +398,11 @@ Describe "Get-CoveredSourceFile" {
 
 Describe "Get-TestsMap" {
     It "Creates a mapping from test files to source files" {
-        $root = "TestDrive:\test"
-        New-Item -Path "$root\src\helpers" -ItemType Directory -Force | Out-Null
-        New-Item -Path "$root\src\helpers\test.ps1" -ItemType File -Force | Out-Null
-        New-Item -Path "$root\src\helpers\other.ps1" -ItemType File -Force | Out-Null
+        New-Item -Path "$PVMRoot\src\helpers" -ItemType Directory -Force | Out-Null
+        New-Item -Path "$PVMRoot\src\helpers\test.ps1" -ItemType File -Force | Out-Null
+        New-Item -Path "$PVMRoot\src\helpers\other.ps1" -ItemType File -Force | Out-Null
 
-        $result = Get-TestsMap -root $root
+        $result = Get-TestsMap
 
         $result.Count | Should -BeGreaterOrEqual 2
         # The function maps test file paths to source file objects
@@ -411,25 +412,24 @@ Describe "Get-TestsMap" {
 
 Describe "Set-CoverageConfig" {
     It "Sets coverage configuration with all parameters" {
-        $root = "TestDrive:\test"
-        New-Item -Path "$root\src\helpers" -ItemType Directory -Force | Out-Null
-        New-Item -Path "$root\src\helpers\test.ps1" -ItemType File -Force | Out-Null
-        New-Item -Path "$root\storage\coverage\helpers" -ItemType Directory -Force | Out-Null
+        New-Item -Path "$PVMRoot\src\helpers" -ItemType Directory -Force | Out-Null
+        New-Item -Path "$PVMRoot\src\helpers\test.ps1" -ItemType File -Force | Out-Null
+        New-Item -Path "$PVMRoot\storage\coverage\helpers" -ItemType Directory -Force | Out-Null
 
         $testsMap = @{
-            "$root\tests\helpers\test.tests.ps1" = [PSCustomObject]@{ Name = 'test.ps1'; FullName = "$root\src\helpers\test.ps1" }
+            "$PVMRoot\tests\helpers\test.tests.ps1" = [PSCustomObject]@{ Name = 'test.ps1'; FullName = "$PVMRoot\src\helpers\test.ps1" }
         }
 
-        $testFile = [PSCustomObject]@{ FullName = "$root\tests\helpers\test.tests.ps1" }
+        $testFile = [PSCustomObject]@{ FullName = "$PVMRoot\tests\helpers\test.tests.ps1" }
 
         $config = New-PesterConfiguration
         $options = @{
             target = 85
         }
 
-        $result = Set-CoverageConfig -config $config -testFile $testFile -options $options -root $root -testsMap $testsMap
+        $result = Set-CoverageConfig -config $config -testFile $testFile -options $options -testsMap $testsMap
 
-        $result.covered.FullName | Should -Be "$root\src\helpers\test.ps1"
+        $result.covered.FullName | Should -Be "$PVMRoot\src\helpers\test.ps1"
         $result.config.CodeCoverage.Enabled | Should -Be $true
         $result.config.CodeCoverage.CoveragePercentTarget | Should -Not -Be $null
     }
@@ -442,7 +442,7 @@ Describe "Get-SeparatorWidth" {
             [PSCustomObject]@{ Name = 'test2'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
         )
 
-        $result = Get-SeparatorWidth -tests $tests -root "TestDrive:\test"
+        $result = Get-SeparatorWidth -tests $tests
 
         $result | Should -BeGreaterThan 0
     }

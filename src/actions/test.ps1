@@ -29,8 +29,7 @@ function Invoke-TestFile {
     param ($config, $file = $null, $options = $null, $separatorWidth = 60, $testsMap = $null)
 
     $testResultData = @{ passedCount = 0; failedCount = 0; duration = 0; coverageRaw = $null }
-    $root = Get-PVMRootDirectory
-    $relativeFilePath = $file.FullName -replace [regex]::Escape("$root\tests\"), ''
+    $relativeFilePath = $file.FullName -replace [regex]::Escape("$PVMRoot\tests\"), ''
     $sortedName = if ($options -and $options.groupBy -and $options.groupBy -eq 'folder') { $file.Name } else { $relativeFilePath }
 
     if (Test-FileNotExists -path $file.FullName) {
@@ -44,7 +43,7 @@ function Invoke-TestFile {
 
     $coveredFile = $null
     if ($options.coverage) {
-        $coverageConfig = Set-CoverageConfig -config $config -testFile $file -options $options -root $root -testsMap $testsMap
+        $coverageConfig = Set-CoverageConfig -config $config -testFile $file -options $options -testsMap $testsMap
         $coveredFile = $coverageConfig.covered
         $config = $coverageConfig.config
     }
@@ -139,8 +138,7 @@ function Invoke-Tests {
 
         $config = Initialize-PesterConfig -options $options
         $separatorWidth = Get-SeparatorWidth -tests $tests
-        $root = Get-PVMRootDirectory
-        $testsMap = if ($options.coverage) { Get-TestsMap -root $root } else { $null }
+        $testsMap = if ($options.coverage) { Get-TestsMap } else { $null }
 
         Show-Info -message "`nRunning tests with verbosity: $($options.verbosity)"
 

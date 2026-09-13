@@ -1,4 +1,4 @@
-﻿
+
 function Test-IsNotQuiet {
     param ($verbosity)
 
@@ -117,15 +117,10 @@ function Show-PowerShellInfoShort {
     Show-Message -message "PowerShell Version: $($psInfo.Version)"
 }
 
-function Get-PVMRootDirectory {
-    return (Resolve-Path -Path "$PSScriptRoot\..\..").Path
-}
-
 function Get-TestsFiles {
     param ($testsNames = $null)
 
-    $root = Get-PVMRootDirectory
-    $allTests = Get-ChildItemWrapper -path "$root\tests\*.tests.ps1" -recurse -file
+    $allTests = Get-ChildItemWrapper -path "$PVMRoot\tests\*.tests.ps1" -recurse -file
 
     if (-not $testsNames) {
         return $allTests
@@ -143,7 +138,7 @@ function Get-TestsFiles {
     $missingFiles = $missingNames | ForEach-Object -Process {
         [PSCustomObject]@{
             Name     = "$_.tests.ps1"
-            FullName = "$root\tests\$_.tests.ps1"
+            FullName = "$PVMRoot\tests\$_.tests.ps1"
         }
     }
 
@@ -153,9 +148,7 @@ function Get-TestsFiles {
 function Get-AllTestNames {
     param ($exclude = $null)
 
-    $root = Get-PVMRootDirectory
-
-    return Get-ChildItemWrapper -path "$root\tests" -recurse -file -filter '*.tests.ps1' | ForEach-Object -Process {
+    return Get-ChildItemWrapper -path "$PVMRoot\tests" -recurse -file -filter '*.tests.ps1' | ForEach-Object -Process {
         $name = $_.BaseName -replace '\.tests$'
         if ($name -notin $exclude) {
             return $name
@@ -170,11 +163,9 @@ function Get-CoveredSourceFile {
 }
 
 function Get-TestsMap {
-    param ($root)
-
     $testsMap = @{}
-    Get-ChildItemWrapper -path "$root\src" -recurse -filter '*.ps1' | ForEach-Object -Process {
-        $testFile = $_.FullName -replace [regex]::Escape("$root\src"), "$root\tests"
+    Get-ChildItemWrapper -path "$PVMRoot\src" -recurse -filter '*.ps1' | ForEach-Object -Process {
+        $testFile = $_.FullName -replace [regex]::Escape("$PVMRoot\src"), "$PVMRoot\tests"
         $testFile = $testFile -replace '.ps1', '.tests.ps1'
         $testsMap[$testFile] = $_
     }
@@ -183,14 +174,14 @@ function Get-TestsMap {
 }
 
 function Set-CoverageConfig {
-    param ($config, $testFile, $options, $root, $testsMap)
+    param ($config, $testFile, $options, $testsMap)
 
     $covered = Get-CoveredSourceFile -testFile $testFile -testsMap $testsMap
 
     $config.CodeCoverage.Enabled = $true
     $config.CodeCoverage.Path = $covered.FullName
-    $outputPath = $covered.FullName -replace [regex]::Escape("$root\src"), ''
-    $config.CodeCoverage.OutputPath = "$root\storage\coverage\$outputPath.xml"
+    $outputPath = $covered.FullName -replace [regex]::Escape("$PVMRoot\src"), ''
+    $config.CodeCoverage.OutputPath = "$PVMRoot\storage\coverage\$outputPath.xml"
     $config.CodeCoverage.OutputFormat = 'JaCoCo'
     $config.CodeCoverage.OutputEncoding = 'UTF8'
     $config.CodeCoverage.CoveragePercentTarget = $options.target
@@ -199,7 +190,7 @@ function Set-CoverageConfig {
 }
 
 function Get-SeparatorWidth {
-    param ($tests, $root)
+    param ($tests)
 
     $maxLen = ($tests | ForEach-Object -Process { ("$($_.Name) | $($_.FullName)").Length } | Measure-Object -Maximum).Maximum
 

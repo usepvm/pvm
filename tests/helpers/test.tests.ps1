@@ -1,11 +1,11 @@
-
+﻿
 BeforeAll {
     $script:PVMRootBackup = $PVMRoot
     $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
     $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\test-drive"
     $Global:PVMRoot = $TEST_DRIVE
     $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
-    
+
     New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 }
 
@@ -72,8 +72,8 @@ Describe "Use-PesterVersion" {
     BeforeEach {
         Mock Show-Info { }
         Mock Show-Error { }
-        Mock Find-PesterVersion { return [PSCustomObject]@{ Version = [version]'5.0.0' } }
-        Mock Import-PesterVersion { return [PSCustomObject]@{ Version = [version]'5.0.0' } }
+        Mock Find-PesterVersion { return @{ Version = [version]'5.0.0' } }
+        Mock Import-PesterVersion { return @{ Version = [version]'5.0.0' } }
     }
 
     It "Returns false when no Pester module is found" {
@@ -86,7 +86,7 @@ Describe "Use-PesterVersion" {
     }
 
     It "Returns false when specified version is not found" {
-        Mock Get-Module { return @([PSCustomObject]@{ Version = [version]'5.0.0' }) }
+        Mock Get-Module { return @(@{ Version = [version]'5.0.0' }) }
         Mock Find-PesterVersion { return $null }
 
         $result = Use-PesterVersion -version '6.0.0'
@@ -96,7 +96,7 @@ Describe "Use-PesterVersion" {
     }
 
     It "Returns imported Pester version when found" {
-        Mock Get-Module { return @([PSCustomObject]@{ Version = [version]'5.0.0' }) }
+        Mock Get-Module { return @(@{ Version = [version]'5.0.0' }) }
 
         $result = Use-PesterVersion -version '5.0.0'
 
@@ -108,12 +108,12 @@ Describe "Use-PesterVersion" {
 Describe "Use-LatestPesterVersion" {
     BeforeEach {
         Mock Show-Info { }
-        Mock Find-PesterVersion { return [PSCustomObject]@{ Version = [version]'5.0.0' } }
-        Mock Import-PesterVersion { return [PSCustomObject]@{ Version = [version]'5.0.0' } }
+        Mock Find-PesterVersion { return @{ Version = [version]'5.0.0' } }
+        Mock Import-PesterVersion { return @{ Version = [version]'5.0.0' } }
     }
 
     It "Uses latest Pester version" {
-        Mock Get-Module { return @([PSCustomObject]@{ Version = [version]'5.0.0' }) }
+        Mock Get-Module { return @(@{ Version = [version]'5.0.0' }) }
 
         $result = Use-LatestPesterVersion
 
@@ -128,9 +128,9 @@ Describe "Use-LatestPesterVersion" {
 Describe "Find-PesterVersion" {
     It "Returns latest version when version is null" {
         $availableVersions = @(
-            [PSCustomObject]@{ Version = [version]'5.0.0' }
-            [PSCustomObject]@{ Version = [version]'5.1.0' }
-            [PSCustomObject]@{ Version = [version]'5.2.0' }
+            @{ Version = [version]'5.0.0' }
+            @{ Version = [version]'5.1.0' }
+            @{ Version = [version]'5.2.0' }
         )
 
         $result = Find-PesterVersion -version $null -availableVersions $availableVersions
@@ -140,9 +140,9 @@ Describe "Find-PesterVersion" {
 
     It "Returns latest version when version is 'latest'" {
         $availableVersions = @(
-            [PSCustomObject]@{ Version = [version]'5.0.0' }
-            [PSCustomObject]@{ Version = [version]'5.1.0' }
-            [PSCustomObject]@{ Version = [version]'5.2.0' }
+            @{ Version = [version]'5.0.0' }
+            @{ Version = [version]'5.1.0' }
+            @{ Version = [version]'5.2.0' }
         )
 
         $result = Find-PesterVersion -version 'latest' -availableVersions $availableVersions
@@ -152,9 +152,9 @@ Describe "Find-PesterVersion" {
 
     It "Returns exact version when version matches exactly" {
         $availableVersions = @(
-            [PSCustomObject]@{ Version = [version]'5.0.0' }
-            [PSCustomObject]@{ Version = [version]'5.1.0' }
-            [PSCustomObject]@{ Version = [version]'5.2.0' }
+            @{ Version = [version]'5.0.0' }
+            @{ Version = [version]'5.1.0' }
+            @{ Version = [version]'5.2.0' }
         )
 
         $result = Find-PesterVersion -version '5.1.0' -availableVersions $availableVersions
@@ -164,10 +164,10 @@ Describe "Find-PesterVersion" {
 
     It "Returns latest minor version when version is major.minor" {
         $availableVersions = @(
-            [PSCustomObject]@{ Version = [version]'5.0.0' }
-            [PSCustomObject]@{ Version = [version]'5.1.0' }
-            [PSCustomObject]@{ Version = [version]'5.1.5' }
-            [PSCustomObject]@{ Version = [version]'5.2.0' }
+            @{ Version = [version]'5.0.0' }
+            @{ Version = [version]'5.1.0' }
+            @{ Version = [version]'5.1.5' }
+            @{ Version = [version]'5.2.0' }
         )
 
         $result = Find-PesterVersion -version '5.1' -availableVersions $availableVersions
@@ -177,10 +177,10 @@ Describe "Find-PesterVersion" {
 
     It "Returns latest major version when version is major only" {
         $availableVersions = @(
-            [PSCustomObject]@{ Version = [version]'4.0.0' }
-            [PSCustomObject]@{ Version = [version]'5.0.0' }
-            [PSCustomObject]@{ Version = [version]'5.1.0' }
-            [PSCustomObject]@{ Version = [version]'6.0.0' }
+            @{ Version = [version]'4.0.0' }
+            @{ Version = [version]'5.0.0' }
+            @{ Version = [version]'5.1.0' }
+            @{ Version = [version]'6.0.0' }
         )
 
         $result = Find-PesterVersion -version '5' -availableVersions $availableVersions
@@ -190,8 +190,8 @@ Describe "Find-PesterVersion" {
 
     It "Returns null when exact version is not found" {
         $availableVersions = @(
-            [PSCustomObject]@{ Version = [version]'5.0.0' }
-            [PSCustomObject]@{ Version = [version]'5.1.0' }
+            @{ Version = [version]'5.0.0' }
+            @{ Version = [version]'5.1.0' }
         )
 
         $result = Find-PesterVersion -version '5.5.0' -availableVersions $availableVersions
@@ -201,9 +201,9 @@ Describe "Find-PesterVersion" {
 
     It "Uses default case for version string not matching patterns" {
         $availableVersions = @(
-            [PSCustomObject]@{ Version = [version]'5.0.0' }
-            [PSCustomObject]@{ Version = [version]'5.1.0' }
-            [PSCustomObject]@{ Version = [version]'5.2.0' }
+            @{ Version = [version]'5.0.0' }
+            @{ Version = [version]'5.1.0' }
+            @{ Version = [version]'5.2.0' }
         )
 
         # Use a version string with build number that doesn't match the patterns
@@ -219,11 +219,11 @@ Describe "Find-PesterVersion" {
 Describe "Import-PesterVersion" {
     It "Imports Pester module with specified version" {
         Mock Import-Module { }
-        Mock Get-Module { return [PSCustomObject]@{ Version = [version]'5.0.0'; Path = 'C:\Modules\Pester' } }
+        Mock Get-Module { return @{ Version = [version]'5.0.0'; Path = 'C:\Modules\Pester' } }
 
-        $targetVersion = [PSCustomObject]@{ Version = [version]'5.0.0' }
+        $targetVersion = @{ Version = [version]'5.0.0' }
 
-        $result = Import-PesterVersion -targetVersion $targetVersion
+        $null = Import-PesterVersion -targetVersion $targetVersion
 
         Should -Invoke Import-Module -Times 1 -Exactly -ParameterFilter {
             $Name -eq 'Pester' -and $RequiredVersion -eq [version]'5.0.0'
@@ -241,7 +241,7 @@ Describe "Show-PesterVersion" {
     }
 
     It "Shows Pester version information" {
-        $pesterVersion = [PSCustomObject]@{
+        $pesterVersion = @{
             Version = [version]'5.0.0'
             Path    = 'C:\Modules\Pester'
         }
@@ -259,7 +259,7 @@ Describe "Show-PesterVersionShort" {
     }
 
     It "Shows short Pester version information" {
-        $pesterVersion = [PSCustomObject]@{
+        $pesterVersion = @{
             Version = [version]'5.0.0'
         }
 
@@ -315,8 +315,8 @@ Describe "Get-TestsFiles" {
     It "Returns all test files when no specific names provided" {
         Mock Get-ChildItemWrapper {
             return @(
-                [PSCustomObject]@{ Name = 'test1.tests.ps1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
-                [PSCustomObject]@{ Name = 'test2.tests.ps1'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
+                @{ Name = 'test1.tests.ps1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
+                @{ Name = 'test2.tests.ps1'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
             )
         }
 
@@ -328,8 +328,8 @@ Describe "Get-TestsFiles" {
     It "Returns specific test files when names are provided" {
         Mock Get-ChildItemWrapper {
             return @(
-                [PSCustomObject]@{ Name = 'test1.tests.ps1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
-                [PSCustomObject]@{ Name = 'test2.tests.ps1'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
+                @{ Name = 'test1.tests.ps1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
+                @{ Name = 'test2.tests.ps1'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
             )
         }
 
@@ -342,7 +342,7 @@ Describe "Get-TestsFiles" {
     It "Includes placeholder for missing test files" {
         Mock Get-ChildItemWrapper {
             return @(
-                [PSCustomObject]@{ Name = 'test1.tests.ps1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
+                @{ Name = 'test1.tests.ps1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
             )
         }
 
@@ -357,8 +357,8 @@ Describe "Get-AllTestNames" {
     It "Returns all test names without exclusions" {
         Mock Get-ChildItemWrapper {
             return @(
-                [PSCustomObject]@{ BaseName = 'test1.tests'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
-                [PSCustomObject]@{ BaseName = 'test2.tests'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
+                @{ BaseName = 'test1.tests'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
+                @{ BaseName = 'test2.tests'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
             )
         }
 
@@ -370,8 +370,8 @@ Describe "Get-AllTestNames" {
     It "Excludes specified test names" {
         Mock Get-ChildItemWrapper {
             return @(
-                [PSCustomObject]@{ BaseName = 'test1.tests'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
-                [PSCustomObject]@{ BaseName = 'test2.tests'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
+                @{ BaseName = 'test1.tests'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
+                @{ BaseName = 'test2.tests'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
             )
         }
 
@@ -385,10 +385,10 @@ Describe "Get-AllTestNames" {
 Describe "Get-CoveredSourceFile" {
     It "Returns the source file for a given test file" {
         $testsMap = @{
-            'TestDrive:\tests\test.tests.ps1' = [PSCustomObject]@{ Name = 'test.ps1'; FullName = 'TestDrive:\src\test.ps1' }
+            'TestDrive:\tests\test.tests.ps1' = @{ Name = 'test.ps1'; FullName = 'TestDrive:\src\test.ps1' }
         }
 
-        $testFile = [PSCustomObject]@{ FullName = 'TestDrive:\tests\test.tests.ps1' }
+        $testFile = @{ FullName = 'TestDrive:\tests\test.tests.ps1' }
 
         $result = Get-CoveredSourceFile -testFile $testFile -testsMap $testsMap
 
@@ -417,10 +417,10 @@ Describe "Set-CoverageConfig" {
         New-Item -Path "$PVMRoot\storage\coverage\helpers" -ItemType Directory -Force | Out-Null
 
         $testsMap = @{
-            "$PVMRoot\tests\helpers\test.tests.ps1" = [PSCustomObject]@{ Name = 'test.ps1'; FullName = "$PVMRoot\src\helpers\test.ps1" }
+            "$PVMRoot\tests\helpers\test.tests.ps1" = @{ Name = 'test.ps1'; FullName = "$PVMRoot\src\helpers\test.ps1" }
         }
 
-        $testFile = [PSCustomObject]@{ FullName = "$PVMRoot\tests\helpers\test.tests.ps1" }
+        $testFile = @{ FullName = "$PVMRoot\tests\helpers\test.tests.ps1" }
 
         $config = New-PesterConfiguration
         $options = @{
@@ -438,8 +438,8 @@ Describe "Set-CoverageConfig" {
 Describe "Get-SeparatorWidth" {
     It "Calculates separator width based on test names" {
         $tests = @(
-            [PSCustomObject]@{ Name = 'test1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
-            [PSCustomObject]@{ Name = 'test2'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
+            @{ Name = 'test1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
+            @{ Name = 'test2'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
         )
 
         $result = Get-SeparatorWidth -tests $tests
@@ -454,8 +454,8 @@ Describe "Write-TestHeader" {
     }
 
     It "Writes test header with covered file" {
-        $file = [PSCustomObject]@{ Name = 'test.tests.ps1'; FullName = 'TestDrive:\tests\test.tests.ps1' }
-        $coveredFile = [PSCustomObject]@{ Name = 'test.ps1'; FullName = 'TestDrive:\src\test.ps1' }
+        $file = @{ Name = 'test.tests.ps1'; FullName = 'TestDrive:\tests\test.tests.ps1' }
+        $coveredFile = @{ Name = 'test.ps1'; FullName = 'TestDrive:\src\test.ps1' }
         $separatorWidth = 80
 
         Write-TestHeader -file $file -coveredFile $coveredFile -separatorWidth $separatorWidth
@@ -464,7 +464,7 @@ Describe "Write-TestHeader" {
     }
 
     It "Writes test header without covered file" {
-        $file = [PSCustomObject]@{ Name = 'test.tests.ps1'; FullName = 'TestDrive:\tests\test.tests.ps1' }
+        $file = @{ Name = 'test.tests.ps1'; FullName = 'TestDrive:\tests\test.tests.ps1' }
         $separatorWidth = 80
 
         Write-TestHeader -file $file -coveredFile $null -separatorWidth $separatorWidth
@@ -475,7 +475,7 @@ Describe "Write-TestHeader" {
 
 Describe "Format-TestResultMessage" {
     It "Formats message with coverage" {
-        $testResult = [PSCustomObject]@{ PassedCount = 10; FailedCount = 2 }
+        $testResult = @{ PassedCount = 10; FailedCount = 2 }
         $rawDuration = 5.5
         $coverageRaw = 85.5
 
@@ -488,7 +488,7 @@ Describe "Format-TestResultMessage" {
     }
 
     It "Formats message without coverage" {
-        $testResult = [PSCustomObject]@{ PassedCount = 10; FailedCount = 2 }
+        $testResult = @{ PassedCount = 10; FailedCount = 2 }
         $rawDuration = 5.5
         $coverageRaw = $null
 
@@ -501,7 +501,7 @@ Describe "Format-TestResultMessage" {
     }
 
     It "Shows 0s for invalid duration" {
-        $testResult = [PSCustomObject]@{ PassedCount = 10; FailedCount = 2 }
+        $testResult = @{ PassedCount = 10; FailedCount = 2 }
         $rawDuration = -1
         $coverageRaw = $null
 
@@ -563,7 +563,7 @@ Describe "Get-CoverageGroupName" {
 
 Describe "Get-FolderGroupName" {
     It "Returns 'n/a' for file not found message" {
-        $item = [PSCustomObject]@{ Message = 'File not found!' }
+        $item = @{ Message = 'File not found!' }
 
         $result = Get-FolderGroupName -item $item
 
@@ -571,7 +571,7 @@ Describe "Get-FolderGroupName" {
     }
 
     It "Returns '(root)' for root level file" {
-        $item = [PSCustomObject]@{ Message = 'Test'; relativeFilePath = 'test.ps1' }
+        $item = @{ Message = 'Test'; relativeFilePath = 'test.ps1' }
 
         $result = Get-FolderGroupName -item $item
 
@@ -579,7 +579,7 @@ Describe "Get-FolderGroupName" {
     }
 
     It "Returns folder name for nested file" {
-        $item = [PSCustomObject]@{ Message = 'Test'; relativeFilePath = 'helpers\test.ps1' }
+        $item = @{ Message = 'Test'; relativeFilePath = 'helpers\test.ps1' }
 
         $result = Get-FolderGroupName -item $item
 
@@ -587,7 +587,7 @@ Describe "Get-FolderGroupName" {
     }
 
     It "Normalizes backslashes to forward slashes" {
-        $item = [PSCustomObject]@{ Message = 'Test'; relativeFilePath = 'src\helpers\test.ps1' }
+        $item = @{ Message = 'Test'; relativeFilePath = 'src\helpers\test.ps1' }
 
         $result = Get-FolderGroupName -item $item
 
@@ -623,7 +623,7 @@ Describe "Write-TestsSummary" {
     It "Writes tests summary with default options" {
         $testData = @{
             testSummary = @(
-                [PSCustomObject]@{
+                @{
                     sortedName = 'test1'
                     message   = @{ content = 'PASS'; color = 'Green' }
                     testResultData = @{ duration = 1; coverageRaw = 80 }
@@ -644,7 +644,7 @@ Describe "Write-TestsSummary" {
     It "Writes tests summary grouped by coverage" {
         $testData = @{
             testSummary = @(
-                [PSCustomObject]@{
+                @{
                     sortedName = 'test1'
                     message   = @{ content = 'PASS'; color = 'Green' }
                     testResultData = @{ duration = 1; coverageRaw = 80 }
@@ -663,7 +663,7 @@ Describe "Write-TestsSummary" {
     }
 
     It "Writes tests summary grouped by folder" {
-        $testItem = [PSCustomObject]@{
+        $testItem = @{
             sortedName = 'test1'
             message   = @{ content = 'PASS'; color = 'Green' }
             testResultData = @{ duration = 1; coverageRaw = 80 }
@@ -689,8 +689,8 @@ Describe "Write-TestsSummary" {
 Describe "Get-SortedTests" {
     It "Returns unsorted data when by is null" {
         $data = @(
-            [PSCustomObject]@{ sortedName = 'test1'; testResultData = @{ duration = 1; coverageRaw = 50 } }
-            [PSCustomObject]@{ sortedName = 'test2'; testResultData = @{ duration = 2; coverageRaw = 60 } }
+            @{ sortedName = 'test1'; testResultData = @{ duration = 1; coverageRaw = 50 } }
+            @{ sortedName = 'test2'; testResultData = @{ duration = 2; coverageRaw = 60 } }
         )
 
         $result = Get-SortedTests -data $data -by $null
@@ -700,8 +700,8 @@ Describe "Get-SortedTests" {
 
     It "Sorts by duration ascending" {
         $data = @(
-            [PSCustomObject]@{ sortedName = 'test1'; testResultData = @{ duration = 2; coverageRaw = 50 } }
-            [PSCustomObject]@{ sortedName = 'test2'; testResultData = @{ duration = 1; coverageRaw = 60 } }
+            @{ sortedName = 'test1'; testResultData = @{ duration = 2; coverageRaw = 50 } }
+            @{ sortedName = 'test2'; testResultData = @{ duration = 1; coverageRaw = 60 } }
         )
 
         $result = Get-SortedTests -data $data -by 'duration'
@@ -712,8 +712,8 @@ Describe "Get-SortedTests" {
 
     It "Sorts by duration descending" {
         $data = @(
-            [PSCustomObject]@{ sortedName = 'test1'; testResultData = @{ duration = 1; coverageRaw = 50 } }
-            [PSCustomObject]@{ sortedName = 'test2'; testResultData = @{ duration = 2; coverageRaw = 60 } }
+            @{ sortedName = 'test1'; testResultData = @{ duration = 1; coverageRaw = 50 } }
+            @{ sortedName = 'test2'; testResultData = @{ duration = 2; coverageRaw = 60 } }
         )
 
         $result = Get-SortedTests -data $data -by '-duration'
@@ -724,8 +724,8 @@ Describe "Get-SortedTests" {
 
     It "Sorts by coverage ascending" {
         $data = @(
-            [PSCustomObject]@{ sortedName = 'test1'; testResultData = @{ duration = 1; coverageRaw = 60 } }
-            [PSCustomObject]@{ sortedName = 'test2'; testResultData = @{ duration = 2; coverageRaw = 50 } }
+            @{ sortedName = 'test1'; testResultData = @{ duration = 1; coverageRaw = 60 } }
+            @{ sortedName = 'test2'; testResultData = @{ duration = 2; coverageRaw = 50 } }
         )
 
         $result = Get-SortedTests -data $data -by 'coverage'
@@ -736,8 +736,8 @@ Describe "Get-SortedTests" {
 
     It "Sorts by coverage descending" {
         $data = @(
-            [PSCustomObject]@{ sortedName = 'test1'; testResultData = @{ duration = 1; coverageRaw = 50 } }
-            [PSCustomObject]@{ sortedName = 'test2'; testResultData = @{ duration = 2; coverageRaw = 60 } }
+            @{ sortedName = 'test1'; testResultData = @{ duration = 1; coverageRaw = 50 } }
+            @{ sortedName = 'test2'; testResultData = @{ duration = 2; coverageRaw = 60 } }
         )
 
         $result = Get-SortedTests -data $data -by '-coverage'
@@ -748,8 +748,8 @@ Describe "Get-SortedTests" {
 
     It "Sorts by file name ascending" {
         $data = @(
-            [PSCustomObject]@{ sortedName = 'test2'; testResultData = @{ duration = 1; coverageRaw = 50 } }
-            [PSCustomObject]@{ sortedName = 'test1'; testResultData = @{ duration = 2; coverageRaw = 60 } }
+            @{ sortedName = 'test2'; testResultData = @{ duration = 1; coverageRaw = 50 } }
+            @{ sortedName = 'test1'; testResultData = @{ duration = 2; coverageRaw = 60 } }
         )
 
         $result = Get-SortedTests -data $data -by 'file'
@@ -760,8 +760,8 @@ Describe "Get-SortedTests" {
 
     It "Handles null duration in sorting" {
         $data = @(
-            [PSCustomObject]@{ sortedName = 'test1'; testResultData = @{ duration = $null; coverageRaw = 50 } }
-            [PSCustomObject]@{ sortedName = 'test2'; testResultData = @{ duration = 1; coverageRaw = 60 } }
+            @{ sortedName = 'test1'; testResultData = @{ duration = $null; coverageRaw = 50 } }
+            @{ sortedName = 'test2'; testResultData = @{ duration = 1; coverageRaw = 60 } }
         )
 
         $result = Get-SortedTests -data $data -by 'duration'
@@ -772,8 +772,8 @@ Describe "Get-SortedTests" {
 
     It "Handles null coverage in sorting" {
         $data = @(
-            [PSCustomObject]@{ sortedName = 'test1'; testResultData = @{ duration = 1; coverageRaw = $null } }
-            [PSCustomObject]@{ sortedName = 'test2'; testResultData = @{ duration = 2; coverageRaw = 60 } }
+            @{ sortedName = 'test1'; testResultData = @{ duration = 1; coverageRaw = $null } }
+            @{ sortedName = 'test2'; testResultData = @{ duration = 2; coverageRaw = 60 } }
         )
 
         $result = Get-SortedTests -data $data -by 'coverage'

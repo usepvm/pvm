@@ -38,18 +38,19 @@ function Update-PHPVersion {
         $pathVersionObject = Get-UserSelectedPHPVersion -installedVersions $installedVersions
 
         if (-not $pathVersionObject) {
-            Show-Error -message "PHP version $version was not found!"
+            Show-Error -message "`nPHP version $version was not found!"
             return -1
         }
 
         if ($pathVersionObject.code -ne 0) {
-            return $pathVersionObject
+            Write-Gray -message $pathVersionObject.message
+            return -1
         }
 
         $currentVersion = Get-CurrentPHPVersion
         if ($currentVersion -and $currentVersion.version) {
             if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $pathVersionObject) {
-                Show-Info -message "Already using PHP $($pathVersionObject.version)"
+                Show-Info -message "`nAlready using PHP $($pathVersionObject.version)"
                 return 0
             }
         }
@@ -60,12 +61,12 @@ function Update-PHPVersion {
             return -1
         }
         $text = ("Now using PHP $($pathVersionObject.version) $($pathVersionObject.buildType) $($pathVersionObject.arch)").Trim()
+        Show-Success -message "`n$text"
 
-        Show-Success -message $text
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to update PHP version to '$version'"; exception = $_ }
-        Show-Error -message "No matching PHP versions found for '$version', Use 'pvm list' to see installed versions."
+        Show-Error -message "`nNo matching PHP versions found for '$version', Use 'pvm list' to see installed versions."
         return -1
     }
 }

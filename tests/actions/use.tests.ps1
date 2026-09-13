@@ -96,19 +96,19 @@ Describe "Update-PHPVersion" {
     It "Should successfully update to an exact version match" {
         $result = Update-PHPVersion -version '8.1'
         $result | Should -Be 0
-        Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -eq 'Now using PHP 8.1' }
+        Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -like '*Now using PHP 8.1*' }
     }
 
     It "Should handle version not found when exact path doesn't exist" {
         $result = Update-PHPVersion -version '7.4'
         $result | Should -Be -1
-        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq 'PHP version 7.4 was not found!' }
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like '*PHP version 7.4 was not found!*' }
     }
 
     It "Should handle when no matching versions are found" {
         $result = Update-PHPVersion -version '5.6'
         $result | Should -Be -1
-        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq 'PHP version 5.6 was not found!' }
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like '*PHP version 5.6 was not found!*' }
     }
 
     It "Should return when switching to same current version" {
@@ -124,7 +124,7 @@ Describe "Update-PHPVersion" {
         }}
         $result = Update-PHPVersion -version '8.2.0'
         $result | Should -Be 0
-        Should -Invoke Show-Info -Exactly 1 -ParameterFilter { $message -eq 'Already using PHP 8.2.0' }
+        Should -Invoke Show-Info -Exactly 1 -ParameterFilter { $message -like '*Already using PHP 8.2.0*' }
     }
 
     It "Should handle when New-SymbolicLink fails" {
@@ -151,7 +151,7 @@ Describe "Update-PHPVersion" {
     It "Should return error when pathVersionObject has non-zero code" {
         Mock Get-UserSelectedPHPVersion { return @{code=-1; message='Test error'} }
         $result = Update-PHPVersion -version '8.x'
-        $result.code | Should -Be -1
+        $result | Should -Be -1
     }
 }
 

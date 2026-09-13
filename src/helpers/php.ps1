@@ -179,7 +179,7 @@ function Get-UserSelectedPHPVersion {
         }
         $response = Read-HostWrapper -prompt "`nEnter the [number] of your selection (or press Enter to cancel)" -notifyUser
         if (-not $response) {
-            return @{ code = -1; message = 'Operation cancelled.'; color = 'Gray' }
+            return @{ code = -1; message = 'Operation cancelled.' }
         }
         $versionObj = $installedVersions | Where-Object -FilterScript { $_.index -eq $response }
     }

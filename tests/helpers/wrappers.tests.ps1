@@ -533,7 +533,7 @@ Describe "New-ItemWrapper" {
         $path = "$TEST_DRIVE\path"
         $target = "$TEST_DRIVE\target"
 
-        New-ItemWrapper -type SymbolicLink -path $path -target $target
+        New-ItemWrapper -type 'SymbolicLink' -path $path -target $target
 
         Should -Invoke New-Item -Times 1 -ParameterFilter {
             $path -eq $path -and

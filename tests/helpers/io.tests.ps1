@@ -280,7 +280,7 @@ Describe "New-File" {
 
     It "Returns 0 for existing file" {
         $existingFile = 'TestDrive:\existing_file.txt'
-        New-ItemWrapper -type File -path $existingFile
+        New-ItemWrapper -type 'File' -path $existingFile
         $result = New-File -path $existingFile
         $result | Should -Be 0
     }

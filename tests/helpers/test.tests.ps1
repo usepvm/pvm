@@ -61,6 +61,16 @@ Describe "Show-Scripts" {
     }
 }
 
+Describe "Clear-PVMTestStorage" {
+    It "Clears the fake storage path" {
+        Mock Remove-ItemWrapper { }
+
+        Clear-PVMTestStorage
+
+        Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -eq "$($PVMConfig.paths.directories.fakeStorage)\*" }
+    }
+}
+
 Describe "Use-PesterVersion" {
     BeforeEach {
         Mock Show-Info { }

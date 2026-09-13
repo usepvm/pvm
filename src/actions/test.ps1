@@ -7,6 +7,7 @@ function Initialize-PVMTestEnvironment {
         TestDrive       = "$($Global:PVMConfig.paths.directories.fakeStorage)\$driveName-drive"
     }
 
+    Clear-PVMTestStorage
     $Global:PVMConfig.test.setFakePaths.Invoke($environment.TestDrive)
 
     New-Item -ItemType Directory -Path $environment.TestDrive -Force | Out-Null

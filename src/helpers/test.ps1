@@ -20,6 +20,10 @@ function Show-Scripts {
     }
 }
 
+function Clear-PVMTestStorage {
+    Remove-ItemWrapper -path "$($PVMConfig.paths.directories.fakeStorage)\*"
+}
+
 function Use-PesterVersion {
     param ($version)
 

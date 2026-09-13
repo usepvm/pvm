@@ -1,6 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'io'
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'shared'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:testIniPath = "$TEST_DRIVE\php.ini"

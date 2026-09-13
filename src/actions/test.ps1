@@ -3,7 +3,6 @@ function Initialize-PVMTestEnvironment {
     param ($driveName)
 
     $environment = @{
-        PVMRootBackup   = $Global:PVMRoot
         PVMConfigBackup = Copy-ObjectDeep -object $Global:PVMConfig
         TestDrive       = "$($Global:PVMConfig.paths.directories.fakeStorage)\$driveName-drive"
     }
@@ -20,7 +19,6 @@ function Restore-PVMTestEnvironment {
     param ($environment)
 
     Remove-ItemWrapper -path $environment.TestDrive -Recurse -Force
-    $Global:PVMRoot     = $environment.PVMRootBackup
     $Global:PVMConfig   = $environment.PVMConfigBackup
     $Global:PVMTestDrive = $null
 }
@@ -55,7 +53,7 @@ function Invoke-TestFile {
     param ($config, $file = $null, $options = $null, $separatorWidth = 60, $testsMap = $null)
 
     $testResultData = @{ passedCount = 0; failedCount = 0; duration = 0; coverageRaw = $null }
-    $relativeFilePath = $file.FullName -replace [regex]::Escape("$PVMRoot\tests\"), ''
+    $relativeFilePath = $file.FullName -replace [regex]::Escape("$($PVMConfig.rootPath)\tests\"), ''
     $sortedName = if ($options -and $options.groupBy -and $options.groupBy -eq 'folder') { $file.Name } else { $relativeFilePath }
 
     if (Test-FileNotExists -path $file.FullName) {

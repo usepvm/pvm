@@ -802,7 +802,6 @@ Describe "Invoke-Profile" {
 
 Describe "Invoke-Info" {
     BeforeEach {
-        $Global:PVMRoot = 'C:\pvm'
         $PVMConfig.version = '2.6'
         $PVMConfig.env = @{
             CACHE_MAX_HOURS      = 168

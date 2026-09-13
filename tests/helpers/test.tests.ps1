@@ -2,7 +2,6 @@
 BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'test'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
-    $Global:PVMRoot = $TEST_DRIVE
 }
 
 AfterAll {
@@ -392,9 +391,9 @@ Describe "Get-CoveredSourceFile" {
 
 Describe "Get-TestsMap" {
     It "Creates a mapping from test files to source files" {
-        New-Item -Path "$PVMRoot\src\helpers" -ItemType Directory -Force | Out-Null
-        New-Item -Path "$PVMRoot\src\helpers\test.ps1" -ItemType File -Force | Out-Null
-        New-Item -Path "$PVMRoot\src\helpers\other.ps1" -ItemType File -Force | Out-Null
+        New-Item -Path "$($PVMConfig.rootPath)\src\helpers" -ItemType Directory -Force | Out-Null
+        New-Item -Path "$($PVMConfig.rootPath)\src\helpers\test.ps1" -ItemType File -Force | Out-Null
+        New-Item -Path "$($PVMConfig.rootPath)\src\helpers\other.ps1" -ItemType File -Force | Out-Null
 
         $result = Get-TestsMap
 
@@ -406,15 +405,15 @@ Describe "Get-TestsMap" {
 
 Describe "Set-CoverageConfig" {
     It "Sets coverage configuration with all parameters" {
-        New-Item -Path "$PVMRoot\src\helpers" -ItemType Directory -Force | Out-Null
-        New-Item -Path "$PVMRoot\src\helpers\test.ps1" -ItemType File -Force | Out-Null
-        New-Item -Path "$PVMRoot\storage\coverage\helpers" -ItemType Directory -Force | Out-Null
+        New-Item -Path "$($PVMConfig.rootPath)\src\helpers" -ItemType Directory -Force | Out-Null
+        New-Item -Path "$($PVMConfig.rootPath)\src\helpers\test.ps1" -ItemType File -Force | Out-Null
+        New-Item -Path "$($PVMConfig.rootPath)\storage\coverage\helpers" -ItemType Directory -Force | Out-Null
 
         $testsMap = @{
-            "$PVMRoot\tests\helpers\test.tests.ps1" = @{ Name = 'test.ps1'; FullName = "$PVMRoot\src\helpers\test.ps1" }
+            "$($PVMConfig.rootPath)\tests\helpers\test.tests.ps1" = @{ Name = 'test.ps1'; FullName = "$($PVMConfig.rootPath)\src\helpers\test.ps1" }
         }
 
-        $testFile = @{ FullName = "$PVMRoot\tests\helpers\test.tests.ps1" }
+        $testFile = @{ FullName = "$($PVMConfig.rootPath)\tests\helpers\test.tests.ps1" }
 
         $config = New-PesterConfiguration
         $options = @{
@@ -423,7 +422,7 @@ Describe "Set-CoverageConfig" {
 
         $result = Set-CoverageConfig -config $config -testFile $testFile -options $options -testsMap $testsMap
 
-        $result.covered.FullName | Should -Be "$PVMRoot\src\helpers\test.ps1"
+        $result.covered.FullName | Should -Be "$($PVMConfig.rootPath)\src\helpers\test.ps1"
         $result.config.CodeCoverage.Enabled | Should -Be $true
         $result.config.CodeCoverage.CoveragePercentTarget | Should -Not -Be $null
     }

@@ -317,7 +317,7 @@ function Invoke-Info {
 
     $config = [ordered]@{
         'PVM Version'      = $PVMConfig.version
-        'PVM Root'         = $PVMRoot
+        'PVM Root'         = $PVMConfig.rootPath
         'Storage Path'     = $PVMConfig.paths.directories.storage
         'Current PHP'      = $currentPhpVersion
         'Real PHP Path'    = $currentPhpPath
@@ -349,7 +349,7 @@ function Invoke-Info {
         Show-Info -message "`n`nPVM paths:`n"
         foreach ($entry in $PVM_PATHS.GetEnumerator()) {
             $key = "$($entry.Key) ".PadRight($maxNameLength, '.')
-            $value = if ($entry.Value -eq $PVMRoot) { $PVMRoot } else { $entry.Value.Replace("$PVMRoot\", '') }
+            $value = if ($entry.Value -eq $PVMConfig.rootPath) { $PVMConfig.rootPath } else { $entry.Value.Replace("$($PVMConfig.rootPath)\", '') }
             Show-Message -message "- $key $value"
         }
 

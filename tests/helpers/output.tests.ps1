@@ -157,9 +157,8 @@ Describe "Show-SpinnerWhileJob" {
         Mock Write-Yellow { }
         Mock Add-LogEntry { }
 
-        $PVMRoot = $PVMConfig.paths.directories.pvmRoot
-        New-Item -Path "$PVMRoot\src" -ItemType Directory -Force | Out-Null
-        Set-ContentWrapper -path "$PVMRoot\src\imports.ps1" -value '# no-op for tests'
+        New-Item -Path "$($PVMConfig.rootPath)\src" -ItemType Directory -Force | Out-Null
+        Set-ContentWrapper -path "$($PVMConfig.rootPath)\src\imports.ps1" -value '# no-op for tests'
 
         $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
         $script:keepRunning = $true

@@ -558,6 +558,7 @@ MIN_LINE_LENGTH=50
             $fakeRoot = "$TEST_DRIVE\fake-root"
             $PVMConfig.test.setFakePaths.Invoke($fakeRoot)
 
+            $PVMConfig.rootPath | Should -Be $fakeRoot
             $PVMConfig.paths.directories.pvmRoot | Should -Be $fakeRoot
             $PVMConfig.paths.directories.storage | Should -Be "$fakeRoot\storage"
 
@@ -610,6 +611,7 @@ MIN_LINE_LENGTH=50
             $PVMConfig.test.setFakePaths.Invoke($firstRoot)
             $PVMConfig.test.setFakePaths.Invoke($secondRoot)
 
+            $PVMConfig.rootPath | Should -Be $secondRoot
             $PVMConfig.paths.directories.pvmRoot | Should -Be $secondRoot
             $PVMConfig.paths.directories.storage | Should -Be "$secondRoot\storage"
             $PVMConfig.env.PHP_CURRENT_VERSION_PATH | Should -Be "$secondRoot\pvm\php"

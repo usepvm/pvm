@@ -120,7 +120,7 @@ function Show-PowerShellInfoShort {
 function Get-TestsFiles {
     param ($testsNames = $null)
 
-    $allTests = Get-ChildItemWrapper -path "$PVMRoot\tests\*.tests.ps1" -recurse -file
+    $allTests = Get-ChildItemWrapper -path "$($PVMConfig.rootPath)\tests\*.tests.ps1" -recurse -file
 
     if (-not $testsNames) {
         return $allTests
@@ -138,7 +138,7 @@ function Get-TestsFiles {
     $missingFiles = $missingNames | ForEach-Object -Process {
         [PSCustomObject]@{
             Name     = "$_.tests.ps1"
-            FullName = "$PVMRoot\tests\$_.tests.ps1"
+            FullName = "$($PVMConfig.rootPath)\tests\$_.tests.ps1"
         }
     }
 
@@ -148,7 +148,7 @@ function Get-TestsFiles {
 function Get-AllTestNames {
     param ($exclude = $null)
 
-    return Get-ChildItemWrapper -path "$PVMRoot\tests" -recurse -file -filter '*.tests.ps1' | ForEach-Object -Process {
+    return Get-ChildItemWrapper -path "$($PVMConfig.rootPath)\tests" -recurse -file -filter '*.tests.ps1' | ForEach-Object -Process {
         $name = $_.BaseName -replace '\.tests$'
         if ($name -notin $exclude) {
             return $name
@@ -164,8 +164,8 @@ function Get-CoveredSourceFile {
 
 function Get-TestsMap {
     $testsMap = @{}
-    Get-ChildItemWrapper -path "$PVMRoot\src" -recurse -filter '*.ps1' | ForEach-Object -Process {
-        $testFile = $_.FullName -replace [regex]::Escape("$PVMRoot\src"), "$PVMRoot\tests"
+    Get-ChildItemWrapper -path "$($PVMConfig.rootPath)\src" -recurse -filter '*.ps1' | ForEach-Object -Process {
+        $testFile = $_.FullName -replace [regex]::Escape("$($PVMConfig.rootPath)\src"), "$($PVMConfig.rootPath)\tests"
         $testFile = $testFile -replace '.ps1', '.tests.ps1'
         $testsMap[$testFile] = $_
     }
@@ -180,8 +180,8 @@ function Set-CoverageConfig {
 
     $config.CodeCoverage.Enabled = $true
     $config.CodeCoverage.Path = $covered.FullName
-    $outputPath = $covered.FullName -replace [regex]::Escape("$PVMRoot\src"), ''
-    $config.CodeCoverage.OutputPath = "$PVMRoot\storage\coverage\$outputPath.xml"
+    $outputPath = $covered.FullName -replace [regex]::Escape("$($PVMConfig.rootPath)\src"), ''
+    $config.CodeCoverage.OutputPath = "$($PVMConfig.rootPath)\storage\coverage\$outputPath.xml"
     $config.CodeCoverage.OutputFormat = 'JaCoCo'
     $config.CodeCoverage.OutputEncoding = 'UTF8'
     $config.CodeCoverage.CoveragePercentTarget = $options.target

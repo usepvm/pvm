@@ -1,4 +1,30 @@
 ﻿
+function Initialize-PVMTestEnvironment {
+    param ($driveName)
+
+    $environment = @{
+        PVMRootBackup   = $Global:PVMRoot
+        PVMConfigBackup = Copy-ObjectDeep -object $Global:PVMConfig
+        TestDrive       = "$($Global:PVMConfig.paths.directories.fakeStorage)\$driveName-drive"
+    }
+
+    $Global:PVMConfig.test.setFakePaths.Invoke($environment.TestDrive)
+    $Global:PVMTestDrive = $environment.TestDrive
+
+    New-Item -ItemType Directory -Path $environment.TestDrive -Force | Out-Null
+
+    return $environment
+}
+
+function Restore-PVMTestEnvironment {
+    param ($environment)
+
+    Remove-ItemWrapper -path $environment.TestDrive -Recurse -Force
+    $Global:PVMRoot     = $environment.PVMRootBackup
+    $Global:PVMConfig   = $environment.PVMConfigBackup
+    $Global:PVMTestDrive = $null
+}
+
 function Get-PowerShellInfo {
     $psInfo = @{
         Version = $PSVersionTable.PSVersion

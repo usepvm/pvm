@@ -425,7 +425,16 @@ Describe "Set-CoverageConfig" {
 
         $testFile = @{ FullName = "$($PVMConfig.rootPath)\tests\helpers\test.tests.ps1" }
 
-        $config = New-PesterConfiguration
+        $config = @{
+            CodeCoverage = @{
+                Enabled = $false
+                Path = ''
+                OutputPath = ''
+                OutputFormat = ''
+                OutputEncoding = ''
+                CoveragePercentTarget = 75
+            }
+        }
         $options = @{
             target = 85
         }

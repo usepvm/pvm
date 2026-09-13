@@ -1,17 +1,11 @@
 ﻿
 BeforeAll {
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\setup-check-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'setup-check'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMRoot = $PVMRootBackup
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Test-PVMSetup" {

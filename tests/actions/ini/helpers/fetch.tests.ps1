@@ -1,9 +1,8 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\fetch-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
-
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'fetch'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    
     $script:testPhpPath = "$TEST_DRIVE\php"
     $script:testIniPath = "$testIniPath\php.ini"
     $script:XDEBUG_HISTORICAL_URL = $PVMConfig.links.xdebugHistorical
@@ -11,8 +10,6 @@ BeforeAll {
     $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
     Mock Show-Message { }
     Mock Show-Error { }
@@ -51,8 +48,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-ExtensionHandlers" {

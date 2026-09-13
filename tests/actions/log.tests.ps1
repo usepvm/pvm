@@ -1,10 +1,7 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\log-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'log'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     Mock Show-Error { }
     Mock Show-Warning { }
@@ -18,8 +15,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Format-NiceTimestamp" {

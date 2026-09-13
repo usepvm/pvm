@@ -1,15 +1,13 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\add-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'add'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:phpVersionPath = "$TEST_DRIVE\php-8.2"
     $script:testIniPath = "$phpVersionPath\php.ini"
     $script:extDirectory = "$phpVersionPath\ext"
     $script:testBackupPath = "$testIniPath.bak"
 
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
     New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
     New-Item -ItemType Directory -Path $phpVersionPath -Force | Out-Null
     New-Item -ItemType Directory -Path $extDirectory -Force | Out-Null
@@ -82,8 +80,7 @@ max_execution_time = 30
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Select-ExtensionPackageLink" {

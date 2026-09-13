@@ -1,10 +1,7 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\list-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'list'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:PHP_WIN_ARCHIVES_URL = $PVMConfig.links.phpWinArchives
     $script:PHP_WIN_RELEASES_URL = $PVMConfig.links.phpWinReleases
@@ -27,8 +24,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-FromSource" {

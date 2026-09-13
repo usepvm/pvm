@@ -1,12 +1,10 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\bootstrap-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'bootstrap'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $PVMConfig.version = '1.0.0'
 
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
     Mock New-Line { }
     Mock Show-Info { }
@@ -15,8 +13,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Show-Usage" {

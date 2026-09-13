@@ -1,11 +1,7 @@
 ﻿
 BeforeAll {
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\setup-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'setup'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
     $script:PVMRoot = "$TEST_DRIVE\PVM"
@@ -18,9 +14,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMRoot = $PVMRootBackup
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Initialize-PVM" {

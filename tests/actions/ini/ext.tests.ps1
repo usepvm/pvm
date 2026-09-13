@@ -1,12 +1,9 @@
 ﻿
 BeforeAll {
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $script:TEST_DRIVE = "$($PVMConfig.paths.directories.fakeStorage)\ext-drive"
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'ext'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:testIniPath = "$TEST_DRIVE\php.ini"
-
-    New-Item -ItemType Directory -Path $TEST_DRIVE -Force | Out-Null
 
     Mock Show-Error { }
     Mock Show-Message { }
@@ -16,8 +13,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Remove-ItemWrapper -path $TEST_DRIVE -Recurse -Force
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Show-PHPExtensionInfo" {

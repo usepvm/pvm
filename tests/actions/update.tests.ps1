@@ -1,8 +1,7 @@
 ﻿
 BeforeAll {
-    $script:PVMRootBackup = $PVMRoot
-    $script:PVMConfigBackup = Copy-ObjectDeep -object $PVMConfig
-    $PVMConfig.test.setFakePaths.Invoke($TEST_DRIVE)
+    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'update'
+    $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     Mock Show-Success { }
     Mock Show-Error { }
@@ -12,8 +11,7 @@ BeforeAll {
 }
 
 AfterAll {
-    $Global:PVMRoot = $PVMRootBackup
-    $Global:PVMConfig = $PVMConfigBackup
+    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Test-GitAvailable" {

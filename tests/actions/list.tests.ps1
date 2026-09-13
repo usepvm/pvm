@@ -35,7 +35,7 @@ Describe "Get-FromSource" {
             return $result.pvmData
         }
         if (Test-Path "$TEST_DRIVE\data") {
-            Remove-ItemWrapper -path "$TEST_DRIVE\data" -Recurse -Force
+            Remove-ItemWrapper -path "$TEST_DRIVE\data"
         }
 
         Mock Test-OS64Bit { return $true }

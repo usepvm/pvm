@@ -40,7 +40,7 @@ Describe "Disable-IniExtension" {
     BeforeEach {
         Mock Test-DirectoryExists -ParameterFilter { $path -eq $extDirectory } -MockWith { return $true }
         Reset-IniContent
-        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath
     }
 
     It "Disables enabled extension" {

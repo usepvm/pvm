@@ -155,7 +155,7 @@ Describe "Uninstall-Extension" {
     }
 
     AfterEach {
-        Remove-ItemWrapper -path "$extDirectory\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$extDirectory\*"
     }
 
     It "Returns -1 immediately when extNames is empty" {

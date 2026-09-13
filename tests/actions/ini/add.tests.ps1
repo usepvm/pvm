@@ -240,7 +240,7 @@ Describe "Get-PrereleaseSortKey" {
 Describe "Add-MissingPHPExtensionToIni" {
     BeforeEach {
         Reset-IniContent
-        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath
         Mock Get-ZendExtensionsList { return @('xdebug', 'opcache') }
     }
 

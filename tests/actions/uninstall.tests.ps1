@@ -278,6 +278,6 @@ Describe "Uninstall-PHP" {
     }
 
     AfterAll {
-        Remove-ItemWrapper -path $testPhpPath -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testPhpPath
     }
 }

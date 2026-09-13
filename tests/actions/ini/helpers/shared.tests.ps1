@@ -100,7 +100,7 @@ Describe "ConvertTo-ExtensionId" {
 
 Describe "Backup-IniFile" {
     It "Creates a backup when none exists" {
-        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath
         $result = Backup-IniFile -iniPath $testIniPath
         $result | Should -Be 0
         Test-Path $testBackupPath | Should -Be $true

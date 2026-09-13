@@ -293,7 +293,7 @@ Describe "Move-ItemWrapper" {
         $source = "$TEST_DRIVE\source"
         $destination = "$TEST_DRIVE\destination"
 
-        $null = Move-ItemWrapper -path $source -destination $destination
+        Move-ItemWrapper -path $source -destination $destination
 
         Should -Invoke Move-Item -Times 1 -ParameterFilter {
             $Path -eq $source -and
@@ -318,7 +318,7 @@ Describe "Copy-ItemWrapper" {
         $source = "$TEST_DRIVE\source"
         $destination = "$TEST_DRIVE\destination"
 
-        $null = Copy-ItemWrapper -path $source -destination $destination
+        Copy-ItemWrapper -path $source -destination $destination
 
         Should -Invoke Copy-Item -Times 1 -ParameterFilter {
             $Path -eq $source -and
@@ -342,7 +342,7 @@ Describe "Remove-ItemWrapper" {
 
         $path = "$TEST_DRIVE\path"
 
-        $null = Remove-ItemWrapper -path $path
+        Remove-ItemWrapper -path $path
 
         Should -Invoke Remove-Item -Times 1 -ParameterFilter {
             $Path -eq $path
@@ -364,7 +364,7 @@ Describe "Clear-ContentWrapper" {
 
         $path = "$TEST_DRIVE\path"
 
-        $null = Clear-ContentWrapper -path $path
+        Clear-ContentWrapper -path $path
 
         Should -Invoke Clear-Content -Times 1 -ParameterFilter {
             $Path -eq $path
@@ -533,7 +533,7 @@ Describe "New-ItemWrapper" {
         $path = "$TEST_DRIVE\path"
         $target = "$TEST_DRIVE\target"
 
-        $null = New-ItemWrapper -type SymbolicLink -path $path -target $target
+        New-ItemWrapper -type SymbolicLink -path $path -target $target
 
         Should -Invoke New-Item -Times 1 -ParameterFilter {
             $path -eq $path -and

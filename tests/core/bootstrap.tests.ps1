@@ -5,7 +5,6 @@ BeforeAll {
 
     $PVMConfig.version = '1.0.0'
 
-
     Mock New-Line { }
     Mock Show-Info { }
     Mock Show-Message { }

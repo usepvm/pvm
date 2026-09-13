@@ -82,7 +82,7 @@ AfterAll {
 Describe "Invoke-IniAction" {
     BeforeEach {
         Reset-IniContent
-        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath
     }
 
     Context "info action" {
@@ -493,7 +493,7 @@ extension=php_curl.dll
         }
 
         It "Handles missing php.ini file" {
-            Remove-ItemWrapper -path "$phpVersionPath\php.ini" -Force
+            Remove-ItemWrapper -path "$phpVersionPath\php.ini"
             $result = Invoke-IniAction -action 'info' -params @()
             $result | Should -Be -1
         }

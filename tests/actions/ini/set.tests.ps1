@@ -41,7 +41,7 @@ AfterAll {
 Describe "Set-IniSetting" {
     BeforeEach {
         Reset-IniContent
-        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath
     }
 
     It "Accepts key parameter without value" {

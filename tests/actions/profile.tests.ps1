@@ -198,7 +198,7 @@ Describe "Get-PopularPHPSettings" {
     }
 
     AfterAll {
-        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
     }
 
     It "Should return popular PHP settings" {
@@ -232,7 +232,7 @@ Describe "Get-PopularPHPExtensions" {
     }
 
     AfterAll {
-        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
     }
 
     It "Should return popular PHP extensions" {
@@ -554,7 +554,7 @@ Describe "Show-PHPProfiles" {
     }
 
     It "Should handle empty profiles directory" {
-        Remove-ItemWrapper -path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$PROFILES_PATH\*"
 
         $result = Show-PHPProfiles
         $result | Should -Be -1
@@ -1292,7 +1292,7 @@ Describe "Remove-PHPProfile" {
 
 Describe "Clear-PHPProfiles" {
     BeforeEach {
-        Remove-ItemWrapper -path "$PROFILES_PATH\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$PROFILES_PATH\*"
 
         Mock Add-LogEntry { return 0 }
     }

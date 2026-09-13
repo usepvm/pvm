@@ -43,7 +43,7 @@ Describe "Restore-IniBackup" {
     }
 
     It "Fails when backup doesn't exist" {
-        Remove-ItemWrapper -path $testBackupPath -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path $testBackupPath
         $code = Restore-IniBackup -iniPath $testIniPath
         $code | Should -Be -1
     }

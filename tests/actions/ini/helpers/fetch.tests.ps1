@@ -2,7 +2,7 @@
 BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'fetch'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
-    
+
     $script:testPhpPath = "$TEST_DRIVE\php"
     $script:testIniPath = "$testIniPath\php.ini"
     $script:XDEBUG_HISTORICAL_URL = $PVMConfig.links.xdebugHistorical

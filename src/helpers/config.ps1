@@ -148,7 +148,7 @@ function Get-Config {
         version  = '2.7' # PVM version
 
         rootPath = $rootPath
-        
+
         paths    = [ordered]@{
             directories = @{
                 root               = $rootPath

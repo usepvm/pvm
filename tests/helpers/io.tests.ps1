@@ -104,7 +104,7 @@ Describe "Test-FileExists" {
             $result = Test-FileExists -path $filePath
             $result | Should -Be $true
 
-            Remove-ItemWrapper -path $filePath -Force
+            Remove-ItemWrapper -path $filePath
         }
 
         It "Returns false for non-existent file" {
@@ -373,7 +373,7 @@ Describe "New-SymbolicLink" {
             $result.color | Should -Be 'DarkYellow'
 
             # Cleanup
-            Remove-ItemWrapper -path $existingPath -Force
+            Remove-ItemWrapper -path $existingPath
         }
 
         It "Deletes existing symbolic link and creates new one" {
@@ -401,7 +401,7 @@ Describe "New-SymbolicLink" {
             } finally {
                 # Cleanup
                 if (Test-Path $testDir) {
-                    Remove-ItemWrapper -path $testDir -Recurse -Force
+                    Remove-ItemWrapper -path $testDir
                 }
             }
         }
@@ -485,7 +485,7 @@ Describe "Expand-ZipCore" {
         } finally {
             # Cleanup
             if (Test-Path $testDir) {
-                Remove-ItemWrapper -path $testDir -Recurse -Force
+                Remove-ItemWrapper -path $testDir
             }
         }
     }

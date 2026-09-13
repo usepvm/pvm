@@ -47,7 +47,7 @@ Describe "Get-CacheFiles" {
 
 Describe "Show-CacheFiles" {
     BeforeEach {
-        Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$CACHE_PATH\*"
 
         Mock Add-LogEntry { return 0 }
     }
@@ -121,7 +121,7 @@ Describe "Show-CacheFiles" {
 
 Describe "Show-CachedData" {
     BeforeEach {
-        Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$CACHE_PATH\*"
 
         Mock Add-LogEntry { return 0 }
     }
@@ -208,7 +208,7 @@ Describe "Show-CachedData" {
 
 Describe "Remove-CacheFile" {
     BeforeEach {
-        Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$CACHE_PATH\*"
 
         Mock Add-LogEntry { return 0 }
     }
@@ -362,7 +362,7 @@ Describe "Remove-CacheFile" {
 
 Describe "Clear-CacheFiles" {
     BeforeEach {
-        Remove-ItemWrapper -path "$CACHE_PATH\*" -Force -ErrorAction SilentlyContinue
+        Remove-ItemWrapper -path "$CACHE_PATH\*"
 
         Mock Add-LogEntry { return 0 }
     }

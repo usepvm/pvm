@@ -19,7 +19,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
 
     AfterEach {
         if (Test-Path $TIMESTAMP_FILE) {
-            Remove-ItemWrapper -path $TIMESTAMP_FILE -Force
+            Remove-ItemWrapper -path $TIMESTAMP_FILE
         }
     }
 

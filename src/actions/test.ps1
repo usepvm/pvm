@@ -10,7 +10,7 @@ function Initialize-PVMTestEnvironment {
     Clear-PVMTestStorage
     $Global:PVMConfig.test.setFakePaths.Invoke($environment.TestDrive)
 
-    New-Item -ItemType Directory -Path $environment.TestDrive -Force | Out-Null
+    New-Directory -path $environment.TestDrive
 
     return $environment
 }
@@ -18,7 +18,7 @@ function Initialize-PVMTestEnvironment {
 function Restore-PVMTestEnvironment {
     param ($environment)
 
-    Remove-ItemWrapper -path $environment.TestDrive -Recurse -Force
+    Remove-ItemWrapper -path $environment.TestDrive
     $Global:PVMConfig   = $environment.PVMConfigBackup
 }
 

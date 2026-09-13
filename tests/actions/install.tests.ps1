@@ -4,7 +4,6 @@ BeforeAll {
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:PHP_DIR = $PVMConfig.paths.directories.php
-
     $script:PHP_WIN_ARCHIVES_URL = $PVMConfig.links.phpWinArchives
     $script:PHP_WIN_RELEASES_URL = $PVMConfig.links.phpWinReleases
 

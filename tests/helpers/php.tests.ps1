@@ -9,7 +9,7 @@ BeforeAll {
     $script:TEMPLATES_PATH = $PVMConfig.paths.directories.templates
     $script:ZEND_EXTENSIONS_LIST_PATH = $PVMConfig.paths.files.zendExtensionsList
 
-    New-Item -ItemType Directory -Path $testPhpPath -Force | Out-Null
+    New-Directory -path $testPhpPath
 
     Mock Show-Message { }
 

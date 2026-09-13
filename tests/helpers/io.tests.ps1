@@ -5,8 +5,8 @@ BeforeAll {
 
     $script:STORAGE_PATH = $PVMConfig.paths.directories.storage
 
-    New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
+    New-Directory -path "$STORAGE_PATH\php\8.1"
+    New-Directory -path "$STORAGE_PATH\php\8.2"
 
     Mock Add-LogEntry { return 0 }
 }

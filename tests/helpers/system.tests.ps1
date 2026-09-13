@@ -7,8 +7,8 @@ BeforeAll {
     $script:STORAGE_PATH = $PVMConfig.paths.directories.storage
     $script:PATH_VAR_BACKUP_PATH = $PVMConfig.paths.files.pathVarBackup
 
-    New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.1" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$STORAGE_PATH\php\8.2" -Force | Out-Null
+    New-Directory -path "$STORAGE_PATH\php\8.1"
+    New-Directory -path "$STORAGE_PATH\php\8.2"
 
     Mock Show-Message { }
     Mock Show-Error { }

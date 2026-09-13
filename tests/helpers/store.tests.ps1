@@ -3,7 +3,8 @@ BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'store'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
     $script:CACHE_PATH = $PVMConfig.paths.directories.cache
-    New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
+
+    New-Directory -path $CACHE_PATH
 
     Mock Show-Error { }
 }

@@ -7,7 +7,7 @@ BeforeAll {
     $script:extDirectory = "$TEST_DRIVE\ext"
     $script:testBackupPath = "$testIniPath.bak"
 
-    New-Item -ItemType Directory -Path $extDirectory -Force | Out-Null
+    New-Directory -path $extDirectory
 
     Mock Show-Warning { }
     Mock Show-Error { }

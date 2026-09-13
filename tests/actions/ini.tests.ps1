@@ -11,9 +11,9 @@ BeforeAll {
     $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
 
-    New-Item -ItemType Directory -Path $PVMConfig.paths.directories.cache -Force | Out-Null
-    New-Item -ItemType Directory -Path $phpVersionPath -Force | Out-Null
-    New-Item -ItemType Directory -Path $extDirectory -Force | Out-Null
+    New-Directory -path $PVMConfig.paths.directories.cache
+    New-Directory -path $phpVersionPath
+    New-Directory -path $extDirectory
 
     Mock Show-Error { }
     Mock Show-Warning { }

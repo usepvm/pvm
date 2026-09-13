@@ -3,7 +3,7 @@ BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'use'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
-    New-Item -ItemType Directory -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force | Out-Null
+    New-Directory -path $PVMConfig.env.PHP_CURRENT_VERSION_PATH
 
     Mock Write-Color { }
     Mock Show-Info { }

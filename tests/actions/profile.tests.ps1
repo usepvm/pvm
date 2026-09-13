@@ -11,7 +11,7 @@ BeforeAll {
     $script:DEFAULT_SETTINGS = $PVMConfig.defaults.settings
     $script:DEFAULT_EXTENSIONS = $PVMConfig.defaults.extensions
 
-    New-Item -ItemType Directory -Path $PROFILES_PATH -Force | Out-Null
+    New-Directory -path $PROFILES_PATH
 
     Mock Show-Success { }
     Mock Show-Info { }

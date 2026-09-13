@@ -8,7 +8,6 @@ function Initialize-PVMTestEnvironment {
     }
 
     $Global:PVMConfig.test.setFakePaths.Invoke($environment.TestDrive)
-    $Global:PVMTestDrive = $environment.TestDrive
 
     New-Item -ItemType Directory -Path $environment.TestDrive -Force | Out-Null
 
@@ -20,7 +19,6 @@ function Restore-PVMTestEnvironment {
 
     Remove-ItemWrapper -path $environment.TestDrive -Recurse -Force
     $Global:PVMConfig   = $environment.PVMConfigBackup
-    $Global:PVMTestDrive = $null
 }
 
 function Get-PowerShellInfo {

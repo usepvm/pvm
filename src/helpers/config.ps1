@@ -151,7 +151,7 @@ function Get-Config {
         
         paths    = [ordered]@{
             directories = @{
-                pvmRoot            = $rootPath
+                root               = $rootPath
                 storage            = $storage
                 fakeStorage        = $fakeStorage
                 php                = "$storage\php"
@@ -275,7 +275,7 @@ function Get-Config {
                 $fakeLogs = "$fakeStorage\logs"
 
                 $PVMConfig.rootPath = $root
-                $PVMConfig.paths.directories.pvmRoot = $root
+                $PVMConfig.paths.directories.root = $root
                 $PVMConfig.paths.directories.storage = $fakeStorage
                 $PVMConfig.paths.directories.fakeStorage = $fakeStorage
                 $PVMConfig.paths.directories.php = "$fakeStorage\php"

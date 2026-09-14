@@ -265,37 +265,6 @@ function Get-Config {
                 default = 75
                 enabled = $false
             }
-            setFakePaths = {
-                param ($root)
-
-                $fakeStorage = "$root\storage"
-                $fakeData = "$fakeStorage\data"
-                $fakeProfiles = "$fakeData\profiles"
-                $fakeTemplates = "$fakeData\templates"
-                $fakeLogs = "$fakeStorage\logs"
-
-                $Global:PVMConfig.rootPath = $root
-                $Global:PVMConfig.paths.directories.root = $root
-                $Global:PVMConfig.paths.directories.storage = $fakeStorage
-                $Global:PVMConfig.paths.directories.fakeStorage = $fakeStorage
-                $Global:PVMConfig.paths.directories.php = "$fakeStorage\php"
-                $Global:PVMConfig.paths.directories.data = $fakeData
-                $Global:PVMConfig.paths.directories.templates = $fakeTemplates
-                $Global:PVMConfig.paths.directories.cache = "$fakeData\cache"
-                $Global:PVMConfig.paths.directories.profiles = $fakeProfiles
-                $Global:PVMConfig.paths.directories.log = $fakeLogs
-                $Global:PVMConfig.paths.directories.assets = "$root\assets"
-
-                $Global:PVMConfig.paths.files.profileExample = "$fakeProfiles\profile-example.json"
-                $Global:PVMConfig.paths.files.profileTemplate = "$fakeTemplates\profile-template.json"
-                $Global:PVMConfig.paths.files.zendExtensionsList = "$fakeTemplates\zend_extensions.json"
-                $Global:PVMConfig.paths.files.aliasesList = "$fakeTemplates\aliases.json"
-                $Global:PVMConfig.paths.files.scriptsList = "$fakeTemplates\scripts.json"
-                $Global:PVMConfig.paths.files.logError = "$fakeLogs\error.log"
-                $Global:PVMConfig.paths.files.pathVarBackup = "$fakeLogs\path.bak.log"
-
-                $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$root\pvm\php"
-            }
         }
 
         subprocess = @{ enabled = $false; structuredOutput = @() }

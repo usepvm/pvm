@@ -749,8 +749,8 @@ Describe "Get-PHPExtensionsFromSource" {
 
         $list.Audio.parentCategory | Should -Be 'Multimedia'
         $list.Audio.extensions.Count | Should -Be 2
-        @($list.Audio.extensions | Where-Object extName -eq 'FliteTTS').Count | Should -Be 1
-        @($list.Audio.extensions | Where-Object extName -eq 'KTaglib').Count | Should -Be 1
+        @($list.Audio.extensions | Where-Object -FilterScript { $_.extName -eq 'FliteTTS' }).Count | Should -Be 1
+        @($list.Audio.extensions | Where-Object -FilterScript { $_.extName -eq 'KTaglib' }).Count | Should -Be 1
     }
 
     It "Deduplicates subcategories discovered across parent pages" {

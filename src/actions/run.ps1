@@ -76,7 +76,7 @@ function Invoke-RunScripts {
                     Write-Yellow -message "`n========================================================================================`n"
                 }
             } catch {
-                Write-Yellow -message "`nFailed to run command: pvm $scriptCommand, check logs at '$($PVMConfig.paths.files.logError)'`n"
+                Write-Yellow -message "`nFailed to run command: pvm $scriptCommand, check logs at '$($Global:PVMConfig.paths.files.logError)'`n"
                 $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run script"; exception = $_ }
                 $results += @{ code = -1; output = $null }
             }

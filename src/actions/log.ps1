@@ -85,7 +85,7 @@ function Get-LogEntries {
     $logContent = Get-ContentWrapper -path $path -raw
 
     # Split by the separator and filter out empty entries
-    $logEntries = $logContent -split [regex]::Escape($PVMConfig.constants.LOG_SEPARATOR) | Where-Object -FilterScript { $_.Trim() -ne '' }
+    $logEntries = $logContent -split [regex]::Escape($Global:PVMConfig.constants.LOG_SEPARATOR) | Where-Object -FilterScript { $_.Trim() -ne '' }
 
     # Parse each entry into objects
     $parsedEntries = @()
@@ -223,7 +223,7 @@ function Get-LogNavigation {
 }
 
 function Show-Log {
-    param ($pageSize = $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE, $term = $null)
+    param ($pageSize = $Global:PVMConfig.env.DEFAULT_LOG_PAGE_SIZE, $term = $null)
 
     try {
         if (-not (Test-LogPageSize -pageSize $pageSize)) {
@@ -233,12 +233,12 @@ function Show-Log {
         $pageSize = [int]$pageSize
 
         # Check if log file exists
-        if (Test-FileNotExists -path $PVMConfig.paths.files.logError) {
-            Show-Error -message "`nLog file not found: $($PVMConfig.paths.files.logError)"
+        if (Test-FileNotExists -path $Global:PVMConfig.paths.files.logError) {
+            Show-Error -message "`nLog file not found: $($Global:PVMConfig.paths.files.logError)"
             return -1
         }
 
-        $entries = @(Get-LogEntries -path $PVMConfig.paths.files.logError -term $term)
+        $entries = @(Get-LogEntries -path $Global:PVMConfig.paths.files.logError -term $term)
 
         if ($entries.Length -eq 0) {
             Show-Warning -message "`nNo log entries found."
@@ -264,7 +264,7 @@ function Show-Log {
         Clear-Host
         return 0
     } catch {
-        Show-Error -message "`nFailed to show log: $($PVMConfig.paths.files.logError)"
+        Show-Error -message "`nFailed to show log: $($Global:PVMConfig.paths.files.logError)"
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show log"; exception = $_ }
         return -1
     }

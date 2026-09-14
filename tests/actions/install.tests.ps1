@@ -3,9 +3,9 @@ BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'install'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
-    $script:PHP_DIR = $PVMConfig.paths.directories.php
-    $script:PHP_WIN_ARCHIVES_URL = $PVMConfig.links.phpWinArchives
-    $script:PHP_WIN_RELEASES_URL = $PVMConfig.links.phpWinReleases
+    $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
+    $script:PHP_WIN_ARCHIVES_URL = $Global:PVMConfig.links.phpWinArchives
+    $script:PHP_WIN_RELEASES_URL = $Global:PVMConfig.links.phpWinReleases
 
     # Mock registry for testing environment variables
     $script:MockRegistry = @{

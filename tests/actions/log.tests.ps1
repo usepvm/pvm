@@ -135,7 +135,7 @@ Describe "Test-LogPageSize" {
 
 Describe "Get-LogEntries" {
     BeforeAll {
-        $script:LOG_ERROR_PATH = $PVMConfig.paths.files.logError
+        $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
         New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
     }
 
@@ -149,14 +149,14 @@ Describe "Get-LogEntries" {
 
     It "returns array of log entries" {
         @"
-$($PVMConfig.constants.LOG_SEPARATOR)
+$($Global:PVMConfig.constants.LOG_SEPARATOR)
 [2025-08-20 14:38:48] Test log entry 1 :
 Message: Issue 1
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 +         throw "Issue limit"
 +         ~~~~~~~~~~~~~~~~~~~~
 
-$($PVMConfig.constants.LOG_SEPARATOR)
+$($Global:PVMConfig.constants.LOG_SEPARATOR)
 [2025-08-23 14:38:48] Test log entry 0 :
 Message: Issue 0
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
@@ -175,14 +175,14 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 
     It "filters log entries based on search term" {
         @"
-$($PVMConfig.constants.LOG_SEPARATOR)
+$($Global:PVMConfig.constants.LOG_SEPARATOR)
 [2025-08-23 14:38:48] Test log entry 1 :
 Message: Issue 1
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 +         throw "Issue limit"
 +         ~~~~~~~~~~~~~~~~~~~~
 
-$($PVMConfig.constants.LOG_SEPARATOR)
+$($Global:PVMConfig.constants.LOG_SEPARATOR)
 [2025-08-23 14:38:48] Test log entry 0 :
 Message: Issue 0
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
@@ -317,7 +317,7 @@ Describe "Get-LogNavigation" {
 
 Describe "Show-Log" {
     BeforeAll {
-        $script:LOG_ERROR_PATH = $PVMConfig.paths.files.logError
+        $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
         New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
     }
 

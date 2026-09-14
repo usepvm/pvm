@@ -3,13 +3,13 @@ function Add-LogEntry {
     param ($data)
 
     try {
-        $logPath = if ($data.logPath) { $data.logPath } else { $PVMConfig.paths.files.logError }
+        $logPath = if ($data.logPath) { $data.logPath } else { $Global:PVMConfig.paths.files.logError }
         $created = New-Directory -path (Split-Path -Path $logPath -Parent)
         if ($created -ne 0) {
             Show-Error -message "Failed to create directory $(Split-Path -Path $logPath -Parent)"
             return -1
         }
-        $content = "`n$($PVMConfig.constants.LOG_SEPARATOR)"
+        $content = "`n$($Global:PVMConfig.constants.LOG_SEPARATOR)"
         $content += "`n[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $($data.header)"
         if ($data.exception) {
             $content += "`nMessage: $($data.exception.Exception.Message)"
@@ -65,7 +65,7 @@ function Show-SpinnerWhileJob {
 
     try {
         # Create initialization script to load all PVM functions into the job
-        $env:PVM_ROOT_FOR_JOB = $PVMConfig.rootPath
+        $env:PVM_ROOT_FOR_JOB = $Global:PVMConfig.rootPath
         $initScript = {
             . "$($env:PVM_ROOT_FOR_JOB)\src\imports.ps1"
         }
@@ -323,12 +323,12 @@ function Invoke-Sound {
     param ($filename, [switch]$wait)
 
     try {
-        if ($Global:PVMConfig.subprocess.enabled -or $PVMConfig.env.SOUNDS_DISABLED) {
+        if ($Global:PVMConfig.subprocess.enabled -or $Global:PVMConfig.env.SOUNDS_DISABLED) {
             return
         }
 
         $MediaPlayer = New-Player
-        $path = "$($PVMConfig.paths.directories.assets)\sounds\$filename"
+        $path = "$($Global:PVMConfig.paths.directories.assets)\sounds\$filename"
         $MediaPlayer.Open($path)
         $duration = Get-Sound-TotalSeconds -path $path
         $MediaPlayer.Play()

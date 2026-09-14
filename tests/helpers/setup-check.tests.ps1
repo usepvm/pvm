@@ -11,15 +11,15 @@ AfterAll {
 Describe "Test-PVMSetup" {
     BeforeAll {
         $global:PVMConfig.rootPath = "$TEST_DRIVE\pvm"
-        $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
-        $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME
+        $script:PHP_CURRENT_VERSION_PATH = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        $script:PVM_ENV_VAR_NAME = $Global:PVMConfig.env.PVM_ENV_VAR_NAME
         New-Item -ItemType Directory -Path $global:PVMConfig.rootPath -Force | Out-Null
     }
 
     Context "When PVM is properly set up" {
         It "Should return true when all environment variables are correctly configured" {
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return "$($PVMConfig.rootPath);$PHP_CURRENT_VERSION_PATH"
+                return "$($Global:PVMConfig.rootPath);$PHP_CURRENT_VERSION_PATH"
             }
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'Path' } -MockWith {
                 return "C:\other\paths;%$PVM_ENV_VAR_NAME%;C:\other2\paths"
@@ -32,7 +32,7 @@ Describe "Test-PVMSetup" {
 
         It "Should return true when pvm is in path with different casing" {
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return "$($PVMConfig.rootPath.ToLower());$($PHP_CURRENT_VERSION_PATH.ToLower())"
+                return "$($Global:PVMConfig.rootPath.ToLower());$($PHP_CURRENT_VERSION_PATH.ToLower())"
             }
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'Path' } -MockWith {
                 return "C:\other\paths;%$PVM_ENV_VAR_NAME%;C:\other2\paths"
@@ -52,7 +52,7 @@ Describe "Test-PVMSetup" {
 
         It "Should return false when the path var is null" {
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return "$($PVMConfig.rootPath);$PHP_CURRENT_VERSION_PATH"
+                return "$($Global:PVMConfig.rootPath);$PHP_CURRENT_VERSION_PATH"
             }
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'Path' } -MockWith { return $null }
             Mock Test-DirectoryNotExists { return $false }
@@ -74,7 +74,7 @@ Describe "Test-PVMSetup" {
 
         It "Should return false when PHP value is not in PATH" {
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return $PVMConfig.rootPath
+                return $Global:PVMConfig.rootPath
             }
 
             $result = Test-PVMSetup

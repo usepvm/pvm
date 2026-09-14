@@ -9,7 +9,7 @@ BeforeAll {
 
     Mock Add-LogEntry { return 0 }
 
-    New-Directory -path $PVMConfig.env.PHP_CURRENT_VERSION_PATH
+    New-Directory -path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
 
     Mock Show-Success { }
     Mock Show-Error { }

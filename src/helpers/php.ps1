@@ -63,8 +63,8 @@ function Test-TwoPHPVersionsEqual {
 
 function Set-ZendExtensionsList {
     try {
-        $jsonContent = $PVMConfig.defaults.zendExtensions | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $PVMConfig.paths.files.zendExtensionsList -value $jsonContent
+        $jsonContent = $Global:PVMConfig.defaults.zendExtensions | ConvertTo-Json -Depth 10
+        Set-ContentWrapper -path $Global:PVMConfig.paths.files.zendExtensionsList -value $jsonContent
 
         return 0
     } catch {
@@ -75,8 +75,8 @@ function Set-ZendExtensionsList {
 
 function Get-ZendExtensionsList {
     try {
-        if (Test-FileExists -path $PVMConfig.paths.files.zendExtensionsList) {
-            $data = (Get-ContentWrapper -path $PVMConfig.paths.files.zendExtensionsList -raw | ConvertFrom-Json)
+        if (Test-FileExists -path $Global:PVMConfig.paths.files.zendExtensionsList) {
+            $data = (Get-ContentWrapper -path $Global:PVMConfig.paths.files.zendExtensionsList -raw | ConvertFrom-Json)
             if ($null -ne $data -and $data.Count -gt 0) {
                 return $data
             }
@@ -85,7 +85,7 @@ function Get-ZendExtensionsList {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get zend extensions list"; exception = $_ }
     }
 
-    return $PVMConfig.defaults.zendExtensions
+    return $Global:PVMConfig.defaults.zendExtensions
 }
 
 function Update-InstalledPHPVersionsCache {
@@ -102,7 +102,7 @@ function Update-InstalledPHPVersionsCache {
 
 function Get-InstalledPHPVersionsFromDisk {
     return Show-SpinnerWhileJob -scriptBlock {
-        $directories = Get-AllSubdirectories -path $PVMConfig.paths.directories.php
+        $directories = Get-AllSubdirectories -path $Global:PVMConfig.paths.directories.php
         $installedVersions = $directories | ForEach-Object -Process {
             if (Test-FileExists -path "$($_.FullName)\php.exe") {
                 $phpInfo = Get-PHPInstallInfo -path $_.FullName
@@ -159,7 +159,7 @@ function Get-UserSelectedPHPVersion {
         $currentVersion = Get-CurrentPHPVersion
         $index = 0
         Show-Message -message "`nInstalled versions :"
-        $maxNameLength = ($installedVersions.version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+        $maxNameLength = ($installedVersions.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedVersions | ForEach-Object -Process {
             $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
             $isCurrent = ''
@@ -221,8 +221,8 @@ function Test-PHPVersionInstalled {
 
 function Get-SourceUrls {
     return [ordered]@{
-        'Archives' = $PVMConfig.links.phpWinArchives
-        'Releases' = $PVMConfig.links.phpWinReleases
+        'Archives' = $Global:PVMConfig.links.phpWinArchives
+        'Releases' = $Global:PVMConfig.links.phpWinReleases
     }
 }
 

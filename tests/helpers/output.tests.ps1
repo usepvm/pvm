@@ -15,7 +15,7 @@ Describe "Add-LogEntry" {
 
     Context "When logging data" {
         It "Logs data successfully" {
-            $script:LOG_ERROR_PATH = $PVMConfig.paths.files.logError
+            $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
             $result = Add-LogEntry -data @{
                 header = 'Test message'
                 exception = @{
@@ -157,8 +157,8 @@ Describe "Show-SpinnerWhileJob" {
         Mock Write-Yellow { }
         Mock Add-LogEntry { }
 
-        New-Item -Path "$($PVMConfig.rootPath)\src" -ItemType Directory -Force | Out-Null
-        Set-ContentWrapper -path "$($PVMConfig.rootPath)\src\imports.ps1" -value '# no-op for tests'
+        New-Item -Path "$($Global:PVMConfig.rootPath)\src" -ItemType Directory -Force | Out-Null
+        Set-ContentWrapper -path "$($Global:PVMConfig.rootPath)\src\imports.ps1" -value '# no-op for tests'
 
         $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
         $script:keepRunning = $true
@@ -838,29 +838,29 @@ Describe "Sound Functions" {
 
         It "opens the file, plays it, and sleeps for its duration when 'wait' is specified" {
             $Global:PVMConfig.subprocess.enabled = $false
-            $PVMConfig.env.SOUNDS_DISABLED = $false
+            $Global:PVMConfig.env.SOUNDS_DISABLED = $false
 
             Invoke-Sound -filename "song.mp3" -wait
 
-            $script:playerCalls.Open | Should -Be "$($PVMConfig.paths.directories.assets)\sounds\song.mp3"
+            $script:playerCalls.Open | Should -Be "$($Global:PVMConfig.paths.directories.assets)\sounds\song.mp3"
             $script:playerCalls.Play | Should -BeTrue
             Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 3 }
         }
 
         It "opens the file, plays it, and does not sleep when 'wait' is not specified" {
             $Global:PVMConfig.subprocess.enabled = $false
-            $PVMConfig.env.SOUNDS_DISABLED = $false
+            $Global:PVMConfig.env.SOUNDS_DISABLED = $false
 
             Invoke-Sound -filename "song.mp3"
 
-            $script:playerCalls.Open | Should -Be "$($PVMConfig.paths.directories.assets)\sounds\song.mp3"
+            $script:playerCalls.Open | Should -Be "$($Global:PVMConfig.paths.directories.assets)\sounds\song.mp3"
             $script:playerCalls.Play | Should -BeTrue
             Should -Invoke Start-Sleep -Times 0
         }
 
         It "logs and does not throw when playback fails" {
             $Global:PVMConfig.subprocess.enabled = $false
-            $PVMConfig.env.SOUNDS_DISABLED = $false
+            $Global:PVMConfig.env.SOUNDS_DISABLED = $false
 
             Mock New-Player { throw "boom" }
 
@@ -880,7 +880,7 @@ Describe "Sound Functions" {
         It "does not play sound when sounds are disabled" {
             Mock New-Player { }
             $Global:PVMConfig.subprocess.enabled = $false
-            $PVMConfig.env.SOUNDS_DISABLED = $true
+            $Global:PVMConfig.env.SOUNDS_DISABLED = $true
 
             Invoke-Sound -filename "song.mp3"
 

@@ -6,8 +6,8 @@ function Show-Usage {
     Show-Message -message "`nUsage:`n"
 
     $actions = Get-Actions
-    $maxLineLength = ($actions.GetEnumerator() | ForEach-Object -Process { $_.Value.data.command.Length } | Measure-Object -Maximum).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
-    $maxDescLength = (Get-ConsoleWidth) - ($maxLineLength + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2))
+    $maxLineLength = ($actions.GetEnumerator() | ForEach-Object -Process { $_.Value.data.command.Length } | Measure-Object -Maximum).Maximum + $Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH
+    $maxDescLength = (Get-ConsoleWidth) - ($maxLineLength + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2))
     if ($maxDescLength -lt 100) { $maxDescLength = 100 }
 
     $currentGroup = $null
@@ -50,7 +50,7 @@ function Show-Usage {
 }
 
 function Show-PVMVersion {
-    Show-Message -message "`nPVM version $($PVMConfig.version)"
+    Show-Message -message "`nPVM version $($Global:PVMConfig.version)"
 }
 
 function Get-NestedCommands {

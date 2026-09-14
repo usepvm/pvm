@@ -1,7 +1,7 @@
 ﻿
 function Get-LastUpdateCheckTimestamp {
     try {
-        $timestampFile = "$($PVMConfig.paths.directories.cache)\last_update_check.txt"
+        $timestampFile = "$($Global:PVMConfig.paths.directories.cache)\last_update_check.txt"
         if (Test-FileExists -path $timestampFile) {
             return [DateTime](Get-ContentWrapper -path $timestampFile)
         }
@@ -13,8 +13,8 @@ function Get-LastUpdateCheckTimestamp {
 
 function Set-LastUpdateCheckTimestamp {
     try {
-        $timestampFile = "$($PVMConfig.paths.directories.cache)\last_update_check.txt"
-        $created = New-Directory -path $PVMConfig.paths.directories.cache
+        $timestampFile = "$($Global:PVMConfig.paths.directories.cache)\last_update_check.txt"
+        $created = New-Directory -path $Global:PVMConfig.paths.directories.cache
         if ($created -ne 0) {
             Show-Error -message "`nFailed to create cache directory."
             return -1
@@ -28,7 +28,7 @@ function Set-LastUpdateCheckTimestamp {
 }
 
 function Test-ShouldCheckForUpdates {
-    if (-not $PVMConfig.env.ENABLE_UPDATE_CHECK) {
+    if (-not $Global:PVMConfig.env.ENABLE_UPDATE_CHECK) {
         return $false
     }
 
@@ -38,7 +38,7 @@ function Test-ShouldCheckForUpdates {
     }
 
     $hoursSinceCheck = ((Get-Date) - $lastCheck).TotalHours
-    return ($hoursSinceCheck -ge $PVMConfig.env.UPDATE_CHECK_INTERVAL_HOURS)
+    return ($hoursSinceCheck -ge $Global:PVMConfig.env.UPDATE_CHECK_INTERVAL_HOURS)
 }
 
 function Test-CheckForUpdatesQuietly {

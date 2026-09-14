@@ -67,7 +67,7 @@ function Get-ListAction {
             USAGE       = 'pvm list [available] [--search=<term>] [x86|x64] [ts|nts] (alias: ls for list)'
             DESCRIPTION = @(
                 'Shows installed PHP versions.'
-                "With the 'available' argument, shows PHP versions available for installation. The available-version list is cached for $($PVMConfig.env.CACHE_MAX_HOURS) hours."
+                "With the 'available' argument, shows PHP versions available for installation. The available-version list is cached for $($Global:PVMConfig.env.CACHE_MAX_HOURS) hours."
             )
             EXAMPLES    = @(
                 'pvm list ........................... Show installed versions'
@@ -299,13 +299,13 @@ function Get-LogAction {
         command     = 'pvm log <options>';
         description = 'Display recent PVM log entries.';
         usage       = [ordered]@{
-            USAGE       = "pvm log [--pageSize=<number>] [--search=<term>] [--clear] (default is $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE))"
+            USAGE       = "pvm log [--pageSize=<number>] [--search=<term>] [--clear] (default is $($Global:PVMConfig.env.DEFAULT_LOG_PAGE_SIZE))"
             DESCRIPTION = @(
                 'Displays the PVM log file contents, showing recent errors,'
                 'and system messages. Useful for troubleshooting issues.'
             )
             EXAMPLES    = @(
-                "pvm log ................... Shows the last $($PVMConfig.env.DEFAULT_LOG_PAGE_SIZE) entries of the log file"
+                "pvm log ................... Shows the last $($Global:PVMConfig.env.DEFAULT_LOG_PAGE_SIZE) entries of the log file"
                 'pvm log --pageSize=50 ..... Shows the last 50 entries of the log file'
                 "pvm log --search=error .... Shows entries matching 'error' term"
                 'pvm log --clear ........... Clears the log file'
@@ -405,11 +405,11 @@ function Get-TestAction {
                 'path resolution, and core functionality.'
             )
             EXAMPLES    = @(
-                "pvm test ......................... Runs all tests with $($PVMConfig.test.verbosity.default) (default) verbosity"
-                "pvm test use install ............. Runs only use.tests.ps1 and install.tests.ps1 with $($PVMConfig.test.verbosity.default) verbosity."
-                "pvm test --exclude=use,install ... Runs all tests except use.tests.ps1 and install.tests.ps1 with $($PVMConfig.test.verbosity.default) verbosity."
+                "pvm test ......................... Runs all tests with $($Global:PVMConfig.test.verbosity.default) (default) verbosity"
+                "pvm test use install ............. Runs only use.tests.ps1 and install.tests.ps1 with $($Global:PVMConfig.test.verbosity.default) verbosity."
+                "pvm test --exclude=use,install ... Runs all tests except use.tests.ps1 and install.tests.ps1 with $($Global:PVMConfig.test.verbosity.default) verbosity."
                 'pvm test --verbosity=Detailed .... Runs all tests with Detailed verbosity.'
-                "pvm test --coverage .............. Runs all tests and generates coverage report (target: $($PVMConfig.test.coverage.default)%)"
+                "pvm test --coverage .............. Runs all tests and generates coverage report (target: $($Global:PVMConfig.test.coverage.default)%)"
                 'pvm test --coverage=80 ........... Runs all tests and generates coverage report (target: 80%)'
                 "pvm test --tag=unit .............. Runs only tests with tag 'unit'"
                 'pvm test --sort=coverage ......... Runs all tests and sort results by coverage'
@@ -426,7 +426,7 @@ function Get-TestAction {
             OPTIONS     = @(
                 '--sort=[coverage|duration|file] .. Sort tests results by coverage, duration or file names, add - to reverse sort'
                 '--group=[folder|coverage] ........ Group test results by folder or coverage bands'
-                "--coverage[=<number>] ............ Generate coverage report with optional target percentage (default: $($PVMConfig.test.coverage.default)%)"
+                "--coverage[=<number>] ............ Generate coverage report with optional target percentage (default: $($Global:PVMConfig.test.coverage.default)%)"
                 '--verbosity=<verbosity> .......... Set verbosity level (None, Normal, Detailed, Diagnostic)'
                 '--tag=<tag> ...................... Run only tests with specific tag'
                 '--exclude=[files] ................ Run all tests except selected files'

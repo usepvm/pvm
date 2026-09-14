@@ -11,7 +11,7 @@ function Test-GitAvailable {
 
 function Get-GitStatus {
     try {
-        $status = git -C $PVMConfig.rootPath status --porcelain
+        $status = git -C $Global:PVMConfig.rootPath status --porcelain
         return $status
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve git status"; exception = $_ }
@@ -21,7 +21,7 @@ function Get-GitStatus {
 
 function Get-CurrentGitBranch {
     try {
-        $branch = git -C $PVMConfig.rootPath rev-parse --abbrev-ref HEAD
+        $branch = git -C $Global:PVMConfig.rootPath rev-parse --abbrev-ref HEAD
         return $branch.Trim()
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve current git branch"; exception = $_ }
@@ -31,7 +31,7 @@ function Get-CurrentGitBranch {
 
 function Get-CurrentGitCommit {
     try {
-        $commit = git -C $PVMConfig.rootPath rev-parse HEAD
+        $commit = git -C $Global:PVMConfig.rootPath rev-parse HEAD
         return $commit.Trim()
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve current git commit"; exception = $_ }
@@ -43,8 +43,8 @@ function Get-LatestGitCommit {
     param ($branch = 'main')
 
     try {
-        git -C $PVMConfig.rootPath fetch origin $branch >$null 2>$null
-        $commit = git -C $PVMConfig.rootPath rev-parse origin/$branch 2>$null
+        git -C $Global:PVMConfig.rootPath fetch origin $branch >$null 2>$null
+        $commit = git -C $Global:PVMConfig.rootPath rev-parse origin/$branch 2>$null
         return $commit.Trim()
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to retrieve latest git commit"; exception = $_ }
@@ -56,7 +56,7 @@ function Get-GitCommitDifference {
     param ($currentCommit, $latestCommit)
 
     try {
-        $difference = git -C $PVMConfig.rootPath rev-list --left-right --count "$currentCommit...$latestCommit" 2>$null
+        $difference = git -C $Global:PVMConfig.rootPath rev-list --left-right --count "$currentCommit...$latestCommit" 2>$null
         if (-not $difference) {
             return $null
         }
@@ -78,7 +78,7 @@ function Get-GitCommitDifference {
 
 function Get-PVMVersionFromGit {
     try {
-        $version = git -C $PVMConfig.rootPath describe --tags --abbrev=0 2>$null
+        $version = git -C $Global:PVMConfig.rootPath describe --tags --abbrev=0 2>$null
         if ($version) {
             return $version.Trim()
         }
@@ -103,7 +103,7 @@ function Update-PVM {
             return @{ code = -1; message = 'Git is not installed or not available in PATH. Please install Git to use the update feature.'; color = 'DarkYellow' }
         }
 
-        if (Test-DirectoryNotExists -path "$($PVMConfig.rootPath)\.git") {
+        if (Test-DirectoryNotExists -path "$($Global:PVMConfig.rootPath)\.git") {
             return @{ code = -1; message = 'PVM is not installed from a git repository. Cannot update.'; color = 'DarkYellow' }
         }
 
@@ -143,7 +143,7 @@ function Update-PVM {
         }
 
         if ($commitDifference.remote -eq 0) {
-            $currentVersion = $PVMConfig.version
+            $currentVersion = $Global:PVMConfig.version
             return @{ code = 0; message = "`nPVM is already up to date (version $currentVersion)."; color = 'DarkGreen' }
         }
 
@@ -152,7 +152,7 @@ function Update-PVM {
         }
 
         $currentVersion = Get-PVMVersionFromGit
-        $latestVersion = git -C $PVMConfig.rootPath describe --tags --abbrev=0 origin/$currentBranch 2>$null
+        $latestVersion = git -C $Global:PVMConfig.rootPath describe --tags --abbrev=0 origin/$currentBranch 2>$null
 
         if ($checkOnly) {
             $msg = "`nUpdate available!"
@@ -171,12 +171,12 @@ function Update-PVM {
 
         Show-Warning -message "`nUpdate available. Pulling changes..."
 
-        $oldVersion = $PVMConfig.version
-        git -C $PVMConfig.rootPath pull origin $currentBranch >$null 2>$null
+        $oldVersion = $Global:PVMConfig.version
+        git -C $Global:PVMConfig.rootPath pull origin $currentBranch >$null 2>$null
 
         $newVersion = Get-PVMVersionFromGit
         if (-not $newVersion) {
-            $newVersion = $PVMConfig.version
+            $newVersion = $Global:PVMConfig.version
         }
 
         # Normalize versions for comparison (remove 'v' prefix)

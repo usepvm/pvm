@@ -8,10 +8,10 @@ BeforeAll {
     $script:testIniPath = "$phpVersionPath\php.ini"
     $script:testBackupPath = "$testIniPath.bak"
 
-    $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
-    $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
+    $script:PECL_PACKAGE_ROOT_URL = $Global:PVMConfig.links.peclPackageRoot
+    $script:PECL_WIN_EXT_DOWNLOAD_URL = $Global:PVMConfig.links.peclWinExtDownload
 
-    New-Directory -path $PVMConfig.paths.directories.cache
+    New-Directory -path $Global:PVMConfig.paths.directories.cache
     New-Directory -path $phpVersionPath
     New-Directory -path $extDirectory
 

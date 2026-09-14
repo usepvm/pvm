@@ -138,11 +138,11 @@ function Optimize-SystemPath {
 
         # Saving Path to log
         $outputLog = Add-LogEntry -data @{
-            logPath = $PVMConfig.paths.files.pathVarBackup
+            logPath = $Global:PVMConfig.paths.files.pathVarBackup
             header  = "Original PATH`n$oldPath"
         }
         if ($outputLog -eq 0) {
-            Show-Message -message "`nOriginal Path saved to '$($PVMConfig.paths.files.pathVarBackup)'"
+            Show-Message -message "`nOriginal Path saved to '$($Global:PVMConfig.paths.files.pathVarBackup)'"
         }
 
         $output = 0
@@ -245,7 +245,7 @@ function Invoke-PVMSubprocess {
         return @{ output = $null; code = -1 }
     }
 
-    $pvmScript = "$($PVMConfig.rootPath)\src\pvm.ps1"
+    $pvmScript = "$($Global:PVMConfig.rootPath)\src\pvm.ps1"
     $processArgs = @(
         '-NoProfile'
         '-ExecutionPolicy', 'Bypass'

@@ -83,7 +83,7 @@ function Get-AvailablePHPVersions {
             }
 
             if ($searchResult -and $searchResult.Count -ne 0) {
-                $fetchedVersionsGroupedPartialList[$_.Name] = $searchResult | Select-Object -Last $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE
+                $fetchedVersionsGroupedPartialList[$_.Name] = $searchResult | Select-Object -Last $Global:PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE
             }
         }
 
@@ -104,7 +104,7 @@ function Get-AvailablePHPVersions {
                     return
                 }
                 Show-Message -message "`n$key`n"
-                $maxNameLength = ($fetchedVersionsGroupe.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+                $maxNameLength = ($fetchedVersionsGroupe.Version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $fetchedVersionsGroupe | ForEach-Object -Process {
                     $versionNumber = "$($_.Version) ".PadRight($maxNameLength, '.')
                     Show-Message -message "  $versionNumber $($_.Arch) $($_.BuildType)"
@@ -112,8 +112,8 @@ function Get-AvailablePHPVersions {
             }
 
         $msg = "`nThis is a partial list. For a complete list, visit:"
-        $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
-        $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
+        $msg += "`n Releases : $($Global:PVMConfig.links.phpWinReleases)"
+        $msg += "`n Archives : $($Global:PVMConfig.links.phpWinArchives)"
         Show-Info -message $msg
         return 0
     } catch {
@@ -145,7 +145,7 @@ function Show-InstalledPHPVersions {
         Show-Info -message "`nInstalled Versions"
         Write-Gray -message '------------------'
         $duplicates = @()
-        $maxNameLength = ($installedPhp.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+        $maxNameLength = ($installedPhp.Version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedPhp | ForEach-Object -Process {
             $versionNumber = $_.Version
             $versionID = "$($_.Version)_$($_.buildType)_$($_.Arch)"

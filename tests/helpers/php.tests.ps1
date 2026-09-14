@@ -6,8 +6,8 @@ BeforeAll {
     $script:testPhpPath = "$TEST_DRIVE\PHP"
     $script:testExtPath = "$testPhpPath\ext"
     $script:testIniPath = "$testPhpPath\php.ini"
-    $script:TEMPLATES_PATH = $PVMConfig.paths.directories.templates
-    $script:ZEND_EXTENSIONS_LIST_PATH = $PVMConfig.paths.files.zendExtensionsList
+    $script:TEMPLATES_PATH = $Global:PVMConfig.paths.directories.templates
+    $script:ZEND_EXTENSIONS_LIST_PATH = $Global:PVMConfig.paths.files.zendExtensionsList
 
     New-Directory -path $testPhpPath
 
@@ -396,7 +396,7 @@ Describe "Test-TwoPHPVersionsEqual" {
 Describe "Set-ZendExtensionsList" {
     BeforeAll {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions
+        $script:DEFAULT_ZEND_EXTENSIONS = $Global:PVMConfig.defaults.zendExtensions
     }
 
     It "Creates zend_extensions.json" {
@@ -419,7 +419,7 @@ Describe "Get-ZendExtensionsList" {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $testContent = @('opcache', 'xdebug', 'swoole')
         $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $ZEND_EXTENSIONS_LIST_PATH
-        $script:DEFAULT_ZEND_EXTENSIONS = $PVMConfig.defaults.zendExtensions
+        $script:DEFAULT_ZEND_EXTENSIONS = $Global:PVMConfig.defaults.zendExtensions
     }
 
     It "Returns the zend_extensions.json content as a hashtable" {
@@ -666,7 +666,7 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
             $null = Get-InstalledPHPVersionsFromDisk
 
             Should -Invoke Get-AllSubdirectories -Exactly 1 -ParameterFilter {
-                $path -eq $PVMConfig.paths.directories.php
+                $path -eq $Global:PVMConfig.paths.directories.php
             }
         }
     }
@@ -821,7 +821,7 @@ Describe "Get-UserSelectedPHPVersion" {
         )
         $null = Get-UserSelectedPHPVersion -installedVersions $list
 
-        $maxNameLength = ($list.version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+        $maxNameLength = ($list.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $version = '8.0 '.PadRight($maxNameLength, '.')
         Should -Invoke Show-Message -ParameterFilter { $message -eq " [1] $version x64 ts (Current)" }
     }

@@ -2,7 +2,7 @@
 BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'store'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
-    $script:CACHE_PATH = $PVMConfig.paths.directories.cache
+    $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
 
     New-Directory -path $CACHE_PATH
 
@@ -75,7 +75,7 @@ Describe "Get-DataFromCache" {
 
 Describe "Test-CanUseCache" {
     BeforeAll {
-        $script:CACHE_MAX_HOURS = $PVMConfig.env.CACHE_MAX_HOURS = 168
+        $script:CACHE_MAX_HOURS = $Global:PVMConfig.env.CACHE_MAX_HOURS = 168
 
         New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
     }
@@ -234,12 +234,12 @@ Describe "Save-CachedData" {
 Describe "Get-CacheFilePath" {
     It "Returns the correct cache file path for a given filename" {
         $path = Get-CacheFilePath -filename 'test'
-        $path | Should -Be "$($PVMConfig.paths.directories.cache)\test.json"
+        $path | Should -Be "$($CACHE_PATH)\test.json"
     }
 
     It "Handles filenames with .json extension" {
         $path = Get-CacheFilePath -filename 'test.json'
-        $path | Should -Be "$($PVMConfig.paths.directories.cache)\test.json"
+        $path | Should -Be "$($CACHE_PATH)\test.json"
     }
 }
 

@@ -156,8 +156,8 @@ function Disable-IniExtensionDirect {
 function Get-PopularPHPSettings {
     try {
         # Return list of popular/common PHP settings that should be included in profiles
-        if (Test-FileExists -path $PVMConfig.paths.files.profileTemplate) {
-            $data = (Get-ContentWrapper -path $PVMConfig.paths.files.profileTemplate -raw | ConvertFrom-Json)
+        if (Test-FileExists -path $Global:PVMConfig.paths.files.profileTemplate) {
+            $data = (Get-ContentWrapper -path $Global:PVMConfig.paths.files.profileTemplate -raw | ConvertFrom-Json)
             if ($null -ne $data.settings -and $data.settings.Count -gt 0) {
                 return $data.settings
             }
@@ -166,14 +166,14 @@ function Get-PopularPHPSettings {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP settings"; exception = $_ }
     }
 
-    return $PVMConfig.defaults.settings
+    return $Global:PVMConfig.defaults.settings
 }
 
 function Get-PopularPHPExtensions {
     try {
         # Return list of popular/common PHP extensions that should be included in profiles
-        if (Test-FileExists -path $PVMConfig.paths.files.profileTemplate) {
-            $data = (Get-ContentWrapper -path $PVMConfig.paths.files.profileTemplate -raw | ConvertFrom-Json)
+        if (Test-FileExists -path $Global:PVMConfig.paths.files.profileTemplate) {
+            $data = (Get-ContentWrapper -path $Global:PVMConfig.paths.files.profileTemplate -raw | ConvertFrom-Json)
             if ($null -ne $data.extensions -and $data.extensions.Count -gt 0) {
                 return $data.extensions
             }
@@ -182,7 +182,7 @@ function Get-PopularPHPExtensions {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get popular PHP extensions"; exception = $_ }
     }
 
-    return $PVMConfig.defaults.extensions
+    return $Global:PVMConfig.defaults.extensions
 }
 
 function Save-PHPProfile {
@@ -244,13 +244,13 @@ function Save-PHPProfile {
         }
 
         # Save to JSON file
-        $created = New-Directory -path $PVMConfig.paths.directories.profiles
+        $created = New-Directory -path $Global:PVMConfig.paths.directories.profiles
         if ($created -ne 0) {
             Show-Error -message "`nFailed to create profiles directory."
             return -1
         }
 
-        $profilePath = "$($PVMConfig.paths.directories.profiles)\$profileName.json"
+        $profilePath = "$($Global:PVMConfig.paths.directories.profiles)\$profileName.json"
         $jsonContent = $userProfile | ConvertTo-Json -Depth 10
         Set-ContentWrapper -path $profilePath -value $jsonContent
 
@@ -259,7 +259,7 @@ function Save-PHPProfile {
         Show-Message -message "  Extensions: $($userProfile.extensions.Count) (popular/common only)"
         Show-Message -message "  Location: $profilePath"
         Show-Info -message "`nNote: Only popular/common settings and extensions are saved."
-        Show-Info -message "      You can manually edit settings/extensions at '$($PVMConfig.paths.files.profileTemplate)'."
+        Show-Info -message "      You can manually edit settings/extensions at '$($Global:PVMConfig.paths.files.profileTemplate)'."
 
         return 0
     } catch {
@@ -287,7 +287,7 @@ function Use-PHPProfile {
         }
 
         # Load profile JSON
-        $profilePath = "$($PVMConfig.paths.directories.profiles)\$profileName.json"
+        $profilePath = "$($Global:PVMConfig.paths.directories.profiles)\$profileName.json"
         if (Test-FileNotExists -path $profilePath) {
             Show-Error -message "`nProfile '$profileName' not found."
             Show-Message -message "  Use 'pvm profile list' to see available profiles."
@@ -373,11 +373,11 @@ function Use-PHPProfile {
 
 function Get-ProfileFiles {
     try {
-        if (Test-DirectoryNotExists -path $PVMConfig.paths.directories.profiles) {
+        if (Test-DirectoryNotExists -path $Global:PVMConfig.paths.directories.profiles) {
             return $null
         }
 
-        $files = Get-ChildItemWrapper -path $PVMConfig.paths.directories.profiles -filter '*.json'
+        $files = Get-ChildItemWrapper -path $Global:PVMConfig.paths.directories.profiles -filter '*.json'
 
         return $files
     } catch {
@@ -388,7 +388,7 @@ function Get-ProfileFiles {
 
 function Show-PHPProfiles {
     try {
-        if (Test-DirectoryNotExists -path $PVMConfig.paths.directories.profiles) {
+        if (Test-DirectoryNotExists -path $Global:PVMConfig.paths.directories.profiles) {
             Show-Error -message "`nNo profiles directory found. Create a profile with 'pvm profile save <name>'."
             return -1
         }
@@ -424,7 +424,7 @@ function Show-PHPProfiles {
             }
         }
 
-        $maxNameLength = ($profiles.Name | Measure-Object -Maximum Length).Maximum + $PVMConfig.env.MIN_PAD_RIGHT_LENGTH
+        $maxNameLength = ($profiles.Name | Measure-Object -Maximum Length).Maximum + $Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH
 
         foreach ($userProfile in $profiles) {
             Show-Message -message (' Name '.PadRight($maxNameLength, '.') + " $($userProfile.Name)")
@@ -433,7 +433,7 @@ function Show-PHPProfiles {
             Show-Message -message ('   PHP '.PadRight($maxNameLength, '.') + " $($userProfile.PHPVersion)")
             Show-Message -message ('   Settings '.PadRight($maxNameLength, '.') + " $($userProfile.Settings)")
             Show-Message -message ('   Extensions '.PadRight($maxNameLength, '.') + " $($userProfile.Extensions)")
-            Show-Message -message ('   Path '.PadRight($maxNameLength, '.') + " $($PVMConfig.paths.directories.profiles)\$($userProfile.File)`n")
+            Show-Message -message ('   Path '.PadRight($maxNameLength, '.') + " $($Global:PVMConfig.paths.directories.profiles)\$($userProfile.File)`n")
         }
 
         return 0
@@ -448,7 +448,7 @@ function Show-PHPProfile {
     param ($profileName)
 
     try {
-        $profilePath = "$($PVMConfig.paths.directories.profiles)\$profileName.json"
+        $profilePath = "$($Global:PVMConfig.paths.directories.profiles)\$profileName.json"
         if (Test-FileNotExists -path $profilePath) {
             Show-Error -message "`nProfile '$profileName' not found."
             Show-Message -message "  Use 'pvm profile list' to see available profiles."
@@ -470,8 +470,8 @@ function Show-PHPProfile {
 
         $settingsCount = if ($userProfile.settings) { ($userProfile.settings.PSObject.Properties | Measure-Object).Count } else { 0 }
         $maxNameLength = [Math]::Max(
-            ($userProfile.settings.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2),
-            ($userProfile.extensions.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
+            ($userProfile.settings.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2),
+            ($userProfile.extensions.PSObject.Properties.Name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
         )
 
         Show-Info -message "`nSettings ($settingsCount):"
@@ -516,7 +516,7 @@ function Remove-PHPProfile {
     param ($profileName, $skipConfirmation = $false)
 
     try {
-        $profilePath = "$($PVMConfig.paths.directories.profiles)\$profileName.json"
+        $profilePath = "$($Global:PVMConfig.paths.directories.profiles)\$profileName.json"
 
         if (Test-FileNotExists -path $profilePath) {
             Show-Error -message "`nProfile '$profileName' not found."
@@ -561,7 +561,7 @@ function Clear-PHPProfiles {
             }
         }
 
-        Remove-ItemWrapper -path "$($PVMConfig.paths.directories.profiles)\*"
+        Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.profiles)\*"
 
         Show-Success -message "`nAll profiles deleted successfully."
 
@@ -577,7 +577,7 @@ function Export-PHPProfile {
     param ($profileName, $exportPath = $null)
 
     try {
-        $profilePath = "$($PVMConfig.paths.directories.profiles)\$profileName.json"
+        $profilePath = "$($Global:PVMConfig.paths.directories.profiles)\$profileName.json"
 
         if (Test-FileNotExists -path $profilePath) {
             Show-Error -message "`nProfile '$profileName' not found."
@@ -624,13 +624,13 @@ function Import-PHPProfile {
         # Use provided name or name from profile
         $finalName = if ($profileName) { $profileName } else { $userProfile.name }
 
-        $created = New-Directory -path $PVMConfig.paths.directories.profiles
+        $created = New-Directory -path $Global:PVMConfig.paths.directories.profiles
         if ($created -ne 0) {
             Show-Error -message "`nFailed to create profiles directory."
             return -1
         }
 
-        $targetPath = "$($PVMConfig.paths.directories.profiles)\$finalName.json"
+        $targetPath = "$($Global:PVMConfig.paths.directories.profiles)\$finalName.json"
 
         # Update profile name if different
         if ($finalName -ne $userProfile.name) {
@@ -697,7 +697,7 @@ function New-ProfileExample {
         }
 
         $jsonContent = $profileExample | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $PVMConfig.paths.files.profileExample -value $jsonContent
+        Set-ContentWrapper -path $Global:PVMConfig.paths.files.profileExample -value $jsonContent
 
         return 0
     } catch {
@@ -709,12 +709,12 @@ function New-ProfileExample {
 function New-ProfileTemplate {
     try {
         $profileTemplate = [ordered]@{
-            extensions = $PVMConfig.defaults.extensions
-            settings   = $PVMConfig.defaults.settings
+            extensions = $Global:PVMConfig.defaults.extensions
+            settings   = $Global:PVMConfig.defaults.settings
         }
 
         $jsonContent = $profileTemplate | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $PVMConfig.paths.files.profileTemplate -value $jsonContent
+        Set-ContentWrapper -path $Global:PVMConfig.paths.files.profileTemplate -value $jsonContent
 
         return 0
     } catch {

@@ -36,7 +36,7 @@ function Set-IniSetting {
             if ($matchesList.Length -gt 1) {
                 Show-Info -message "`nMultiple settings match '$searchKey':`n"
 
-                $maxLineLength = ($matchesList.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+                $maxLineLength = ($matchesList.name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0
                 $matchesList | ForEach-Object -Process {
                     $k = "$($_.name) ".PadRight($maxLineLength, '.')
@@ -88,7 +88,7 @@ function Set-IniSetting {
 
         $updatedSettings = $notFound + $updatedSettings
 
-        $maxLineLength = ($updatedSettings.Values | ForEach-Object -Process { $_.key } | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+        $maxLineLength = ($updatedSettings.Values | ForEach-Object -Process { $_.key } | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         New-Line
         foreach ($key in $updatedSettings.Keys) {
             $item = $updatedSettings[$key]

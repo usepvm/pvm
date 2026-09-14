@@ -55,7 +55,7 @@ function Update-PHPVersion {
             }
         }
 
-        $linkCreated = New-SymbolicLink -link $PVMConfig.env.PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
+        $linkCreated = New-SymbolicLink -link $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path
         if ($linkCreated.code -ne 0) {
             Write-Color -message $linkCreated.message -foreColor $linkCreated.color
             return -1

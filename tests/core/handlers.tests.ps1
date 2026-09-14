@@ -802,8 +802,8 @@ Describe "Invoke-Profile" {
 
 Describe "Invoke-Info" {
     BeforeEach {
-        $PVMConfig.version = '2.6'
-        $PVMConfig.env = @{
+        $Global:PVMConfig.version = '2.6'
+        $Global:PVMConfig.env = @{
             CACHE_MAX_HOURS      = 168
             MIN_PAD_RIGHT_LENGTH = 2
             PHP_CURRENT_VERSION_PATH = 'C:\pvm'
@@ -931,7 +931,7 @@ Describe "Invoke-Aliases" {
 
 Describe "Invoke-Log" {
     BeforeAll {
-        $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE = 5
+        $Global:PVMConfig.env.DEFAULT_LOG_PAGE_SIZE = 5
         Mock Show-Log { return 0 }
     }
 
@@ -1410,13 +1410,13 @@ Describe "Invoke-Test" {
             $result.target | Should -Be 85
         }
 
-        It "Should parse --coverage argument without target (default $($PVMConfig.test.coverage.default))" {
+        It "Should parse --coverage argument without target (default $($Global:PVMConfig.test.coverage.default))" {
             Mock Initialize-Tests { param ($testsNames, $options, $exclude) return $options }
 
             $result = Invoke-Test -arguments @('--coverage')
 
             $result.coverage | Should -Be $true
-            $result.target | Should -Be $PVMConfig.test.coverage.default
+            $result.target | Should -Be $Global:PVMConfig.test.coverage.default
         }
 
         It "Should parse --verbosity argument correctly" {
@@ -1485,20 +1485,20 @@ Describe "Invoke-Test" {
     Context "Muted validation" {
         It "Should set SOUNDS_DISABLED to true when --mute is specified" {
             Mock Initialize-Tests { return 0 }
-            $PVMConfig.env.SOUNDS_DISABLED = $false
+            $Global:PVMConfig.env.SOUNDS_DISABLED = $false
 
             $null = Invoke-Test -arguments @('--mute')
 
-            $PVMConfig.env.SOUNDS_DISABLED | Should -Be $true
+            $Global:PVMConfig.env.SOUNDS_DISABLED | Should -Be $true
         }
 
         It "Should not set SOUNDS_DISABLED when --mute is not specified" {
             Mock Initialize-Tests { return 0 }
-            $PVMConfig.env.SOUNDS_DISABLED = $false
+            $Global:PVMConfig.env.SOUNDS_DISABLED = $false
 
             $null = Invoke-Test -arguments @()
 
-            $PVMConfig.env.SOUNDS_DISABLED | Should -Be $false
+            $Global:PVMConfig.env.SOUNDS_DISABLED | Should -Be $false
         }
     }
 }
@@ -1547,20 +1547,20 @@ Describe "Invoke-Run" {
 
     It "Should set SOUNDS_DISABLED when --mute is specified" {
         Mock Invoke-RunScripts { return 0 }
-        $PVMConfig.env.SOUNDS_DISABLED = $false
+        $Global:PVMConfig.env.SOUNDS_DISABLED = $false
 
         $null = Invoke-Run -arguments @('script.ps1', '--mute')
 
-        $PVMConfig.env.SOUNDS_DISABLED | Should -Be $true
+        $Global:PVMConfig.env.SOUNDS_DISABLED | Should -Be $true
     }
 
     It "Should not set SOUNDS_DISABLED when --mute is not specified" {
         Mock Invoke-RunScripts { return 0 }
-        $PVMConfig.env.SOUNDS_DISABLED = $false
+        $Global:PVMConfig.env.SOUNDS_DISABLED = $false
 
         $null = Invoke-Run -arguments @('script.ps1')
 
-        $PVMConfig.env.SOUNDS_DISABLED | Should -Be $false
+        $Global:PVMConfig.env.SOUNDS_DISABLED | Should -Be $false
     }
 
     It "Filters out script name and unknown arguments from the list of files" {

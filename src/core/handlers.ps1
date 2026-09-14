@@ -73,7 +73,7 @@ function Invoke-Current {
     }
 
     # Display zend extensions
-    $maxNameLength = ($status.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+    $maxNameLength = ($status.name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     foreach ($ext in $status) {
         $statusText = if ($ext.text) { $ext.text } else { $ext.status }
 
@@ -316,19 +316,19 @@ function Invoke-Info {
     }
 
     $config = [ordered]@{
-        'PVM Version'      = $PVMConfig.version
-        'PVM Root'         = $PVMConfig.rootPath
-        'Storage Path'     = $PVMConfig.paths.directories.storage
+        'PVM Version'      = $Global:PVMConfig.version
+        'PVM Root'         = $Global:PVMConfig.rootPath
+        'Storage Path'     = $Global:PVMConfig.paths.directories.storage
         'Current PHP'      = $currentPhpVersion
         'Real PHP Path'    = $currentPhpPath
-        'Active PHP Path'  = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        'Active PHP Path'  = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
         'Installed PHPs'   = @($installedPHP).Count
-        'Cache TTL'        = "$($PVMConfig.env.CACHE_MAX_HOURS) hours"
+        'Cache TTL'        = "$($Global:PVMConfig.env.CACHE_MAX_HOURS) hours"
         'Profiles'         = @(Get-ProfileFiles).Count
         'Cached Files'     = @(Get-CacheFiles).Count
     }
-    $allKeys = $config.Keys + $PVMConfig.paths.directories.Keys + $PVMConfig.paths.files.Keys + $PVMConfig.env.Keys
-    $maxNameLength = ($allKeys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+    $allKeys = $config.Keys + $Global:PVMConfig.paths.directories.Keys + $Global:PVMConfig.paths.files.Keys + $Global:PVMConfig.env.Keys
+    $maxNameLength = ($allKeys | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
 
     Show-Info -message "`n`nPVM status:`n"
     foreach ($entry in $config.GetEnumerator()) {
@@ -338,23 +338,23 @@ function Invoke-Info {
 
     if ($arguments -contains '--verbose') {
         $PVM_PATHS = [ordered]@{}
-        $PVM_PATHS['Current PHP Path'] = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
-        foreach ($entry in $PVMConfig.paths.directories.GetEnumerator()) {
+        $PVM_PATHS['Current PHP Path'] = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        foreach ($entry in $Global:PVMConfig.paths.directories.GetEnumerator()) {
             $PVM_PATHS[$entry.Key] = $entry.Value
         }
-        foreach ($entry in $PVMConfig.paths.files.GetEnumerator()) {
+        foreach ($entry in $Global:PVMConfig.paths.files.GetEnumerator()) {
             $PVM_PATHS[$entry.Key] = $entry.Value
         }
 
         Show-Info -message "`n`nPVM paths:`n"
         foreach ($entry in $PVM_PATHS.GetEnumerator()) {
             $key = "$($entry.Key) ".PadRight($maxNameLength, '.')
-            $value = if ($entry.Value -eq $PVMConfig.rootPath) { $PVMConfig.rootPath } else { $entry.Value.Replace("$($PVMConfig.rootPath)\", '') }
+            $value = if ($entry.Value -eq $Global:PVMConfig.rootPath) { $Global:PVMConfig.rootPath } else { $entry.Value.Replace("$($Global:PVMConfig.rootPath)\", '') }
             Show-Message -message "- $key $value"
         }
 
         Show-Info -message "`n`nPVM environment variables:`n"
-        foreach ($entry in $PVMConfig.env.GetEnumerator()) {
+        foreach ($entry in $Global:PVMConfig.env.GetEnumerator()) {
             $key = "$($entry.Key) ".PadRight($maxNameLength, '.')
             Show-Message -message "- $key $($entry.Value)"
         }
@@ -372,7 +372,7 @@ function Invoke-Aliases {
     }
 
     Show-Message -message "`n`nAvailable Aliases:`n"
-    $maxAliasLength = ($aliases.Keys | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+    $maxAliasLength = ($aliases.Keys | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     $aliases.Keys | ForEach-Object -Process {
         $alias = "$_ ".PadRight($maxAliasLength, '.')
         $command = $aliases[$_]
@@ -398,7 +398,7 @@ function Invoke-Log {
             }
         }
 
-        Clear-ContentWrapper -path $PVMConfig.paths.files.logError
+        Clear-ContentWrapper -path $Global:PVMConfig.paths.files.logError
         Show-Success -message "`nLog Cleared Successfully"
         return 0
     }
@@ -407,7 +407,7 @@ function Invoke-Log {
     if ($pageSizeArg) {
         $pageSize = $pageSizeArg -replace '^--pageSize=', ''
     } else {
-        $pageSize = $PVMConfig.env.DEFAULT_LOG_PAGE_SIZE
+        $pageSize = $Global:PVMConfig.env.DEFAULT_LOG_PAGE_SIZE
     }
 
     $term = ($arguments | Where-Object -FilterScript { $_ -match '^--search=(.+)$' }) -replace '^--search=', ''
@@ -491,9 +491,9 @@ function Invoke-Test {
 
     $options = @{
         exclude   = $null
-        verbosity = $PVMConfig.test.verbosity.default
-        coverage  = $PVMConfig.test.coverage.enabled
-        target    = $PVMConfig.test.coverage.default
+        verbosity = $Global:PVMConfig.test.verbosity.default
+        coverage  = $Global:PVMConfig.test.coverage.enabled
+        target    = $Global:PVMConfig.test.coverage.default
         tag       = $null
         sortBy    = $null
         groupBy   = $null
@@ -533,7 +533,7 @@ function Invoke-Test {
             return $false
         }
         if ($_ -match '^--mute') {
-            $PVMConfig.env.SOUNDS_DISABLED = $true
+            $Global:PVMConfig.env.SOUNDS_DISABLED = $true
             return $false
         }
         if ($_ -match '^-{1,2}') {
@@ -565,7 +565,7 @@ function Invoke-Run {
             return $false
         }
         if ($_ -match '^--mute') {
-            $PVMConfig.env.SOUNDS_DISABLED = $true
+            $Global:PVMConfig.env.SOUNDS_DISABLED = $true
             return $false
         }
         if ($_ -match '^-{1,2}') {

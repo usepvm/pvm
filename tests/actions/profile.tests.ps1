@@ -3,13 +3,13 @@ BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'profile'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
-    $script:PROFILES_PATH = $PVMConfig.paths.directories.profiles
-    $script:TEMPLATES_PATH = $PVMConfig.paths.directories.templates
-    $script:PROFILE_TEMPLATE_PATH = $PVMConfig.paths.files.profileTemplate
-    $script:EXAMPLE_PROFILE_PATH = $PVMConfig.paths.files.profileExample
+    $script:PROFILES_PATH = $Global:PVMConfig.paths.directories.profiles
+    $script:TEMPLATES_PATH = $Global:PVMConfig.paths.directories.templates
+    $script:PROFILE_TEMPLATE_PATH = $Global:PVMConfig.paths.files.profileTemplate
+    $script:EXAMPLE_PROFILE_PATH = $Global:PVMConfig.paths.files.profileExample
 
-    $script:DEFAULT_SETTINGS = $PVMConfig.defaults.settings
-    $script:DEFAULT_EXTENSIONS = $PVMConfig.defaults.extensions
+    $script:DEFAULT_SETTINGS = $Global:PVMConfig.defaults.settings
+    $script:DEFAULT_EXTENSIONS = $Global:PVMConfig.defaults.extensions
 
     New-Directory -path $PROFILES_PATH
 
@@ -194,7 +194,7 @@ Describe "Get-PopularPHPSettings" {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $testContent = @{ 'settings' = @('memory_limit', 'display_errors') }
         $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $PROFILE_TEMPLATE_PATH
-        $PVMConfig.defaults.settings = $script:DEFAULT_SETTINGS
+        $Global:PVMConfig.defaults.settings = $script:DEFAULT_SETTINGS
     }
 
     AfterAll {
@@ -228,7 +228,7 @@ Describe "Get-PopularPHPExtensions" {
         New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
         $testContent = @{ 'extensions' = @('curl', 'mbstring', 'opcache') }
         $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $PROFILE_TEMPLATE_PATH
-        $PVMConfig.defaults.extensions = $script:DEFAULT_EXTENSIONS
+        $Global:PVMConfig.defaults.extensions = $script:DEFAULT_EXTENSIONS
     }
 
     AfterAll {

@@ -1,8 +1,8 @@
 ﻿
 function Set-AliasesList {
     try {
-        $jsonContent = $PVMConfig.defaults.aliases | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $PVMConfig.paths.files.aliasesList -value $jsonContent
+        $jsonContent = $Global:PVMConfig.defaults.aliases | ConvertTo-Json -Depth 10
+        Set-ContentWrapper -path $Global:PVMConfig.paths.files.aliasesList -value $jsonContent
 
         return 0
     } catch {
@@ -13,8 +13,8 @@ function Set-AliasesList {
 
 function Get-Aliases {
     try {
-        if (Test-FileExists -path $PVMConfig.paths.files.aliasesList) {
-            $data = (Get-ContentWrapper -path $PVMConfig.paths.files.aliasesList -raw | ConvertFrom-Json)
+        if (Test-FileExists -path $Global:PVMConfig.paths.files.aliasesList) {
+            $data = (Get-ContentWrapper -path $Global:PVMConfig.paths.files.aliasesList -raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}
                 $data.PSObject.Properties | ForEach-Object -Process { $ordered[$_.Name] = $_.Value }
@@ -25,17 +25,17 @@ function Get-Aliases {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get aliases list"; exception = $_ }
     }
 
-    return $PVMConfig.defaults.aliases
+    return $Global:PVMConfig.defaults.aliases
 }
 
 function Get-FlagMap {
-    return $PVMConfig.defaults.flags
+    return $Global:PVMConfig.defaults.flags
 }
 
 function Set-ScriptsList {
     try {
-        $jsonContent = $PVMConfig.defaults.scripts | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $PVMConfig.paths.files.scriptsList -value $jsonContent
+        $jsonContent = $Global:PVMConfig.defaults.scripts | ConvertTo-Json -Depth 10
+        Set-ContentWrapper -path $Global:PVMConfig.paths.files.scriptsList -value $jsonContent
 
         return 0
     } catch {
@@ -46,8 +46,8 @@ function Set-ScriptsList {
 
 function Get-Scripts {
     try {
-        if (Test-FileExists -path $PVMConfig.paths.files.scriptsList) {
-            $data = (Get-ContentWrapper -path $PVMConfig.paths.files.scriptsList -raw | ConvertFrom-Json)
+        if (Test-FileExists -path $Global:PVMConfig.paths.files.scriptsList) {
+            $data = (Get-ContentWrapper -path $Global:PVMConfig.paths.files.scriptsList -raw | ConvertFrom-Json)
             if ($null -ne $data) {
                 $ordered = [ordered]@{}
                 $data.PSObject.Properties | ForEach-Object -Process { $ordered[$_.Name] = $_.Value }
@@ -58,7 +58,7 @@ function Get-Scripts {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get scripts list"; exception = $_ }
     }
 
-    return $PVMConfig.defaults.scripts
+    return $Global:PVMConfig.defaults.scripts
 }
 
 function Get-EnvBool {
@@ -274,27 +274,27 @@ function Get-Config {
                 $fakeTemplates = "$fakeData\templates"
                 $fakeLogs = "$fakeStorage\logs"
 
-                $PVMConfig.rootPath = $root
-                $PVMConfig.paths.directories.root = $root
-                $PVMConfig.paths.directories.storage = $fakeStorage
-                $PVMConfig.paths.directories.fakeStorage = $fakeStorage
-                $PVMConfig.paths.directories.php = "$fakeStorage\php"
-                $PVMConfig.paths.directories.data = $fakeData
-                $PVMConfig.paths.directories.templates = $fakeTemplates
-                $PVMConfig.paths.directories.cache = "$fakeData\cache"
-                $PVMConfig.paths.directories.profiles = $fakeProfiles
-                $PVMConfig.paths.directories.log = $fakeLogs
-                $PVMConfig.paths.directories.assets = "$root\assets"
+                $Global:PVMConfig.rootPath = $root
+                $Global:PVMConfig.paths.directories.root = $root
+                $Global:PVMConfig.paths.directories.storage = $fakeStorage
+                $Global:PVMConfig.paths.directories.fakeStorage = $fakeStorage
+                $Global:PVMConfig.paths.directories.php = "$fakeStorage\php"
+                $Global:PVMConfig.paths.directories.data = $fakeData
+                $Global:PVMConfig.paths.directories.templates = $fakeTemplates
+                $Global:PVMConfig.paths.directories.cache = "$fakeData\cache"
+                $Global:PVMConfig.paths.directories.profiles = $fakeProfiles
+                $Global:PVMConfig.paths.directories.log = $fakeLogs
+                $Global:PVMConfig.paths.directories.assets = "$root\assets"
 
-                $PVMConfig.paths.files.profileExample = "$fakeProfiles\profile-example.json"
-                $PVMConfig.paths.files.profileTemplate = "$fakeTemplates\profile-template.json"
-                $PVMConfig.paths.files.zendExtensionsList = "$fakeTemplates\zend_extensions.json"
-                $PVMConfig.paths.files.aliasesList = "$fakeTemplates\aliases.json"
-                $PVMConfig.paths.files.scriptsList = "$fakeTemplates\scripts.json"
-                $PVMConfig.paths.files.logError = "$fakeLogs\error.log"
-                $PVMConfig.paths.files.pathVarBackup = "$fakeLogs\path.bak.log"
+                $Global:PVMConfig.paths.files.profileExample = "$fakeProfiles\profile-example.json"
+                $Global:PVMConfig.paths.files.profileTemplate = "$fakeTemplates\profile-template.json"
+                $Global:PVMConfig.paths.files.zendExtensionsList = "$fakeTemplates\zend_extensions.json"
+                $Global:PVMConfig.paths.files.aliasesList = "$fakeTemplates\aliases.json"
+                $Global:PVMConfig.paths.files.scriptsList = "$fakeTemplates\scripts.json"
+                $Global:PVMConfig.paths.files.logError = "$fakeLogs\error.log"
+                $Global:PVMConfig.paths.files.pathVarBackup = "$fakeLogs\path.bak.log"
 
-                $PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$root\pvm\php"
+                $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$root\pvm\php"
             }
         }
 

@@ -12,7 +12,7 @@ AfterAll {
 
 Describe "Get-LastUpdateCheckTimestamp" {
     BeforeAll {
-        $script:CACHE_PATH = $PVMConfig.paths.directories.cache
+        $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
         New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
         $script:TIMESTAMP_FILE = "$CACHE_PATH\last_update_check.txt"
     }
@@ -53,7 +53,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
 
 Describe "Set-LastUpdateCheckTimestamp" {
     BeforeAll {
-        $script:CACHE_PATH = $PVMConfig.paths.directories.cache
+        $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
         $script:TIMESTAMP_FILE = "$CACHE_PATH\last_update_check.txt"
     }
 
@@ -106,7 +106,7 @@ Describe "Set-LastUpdateCheckTimestamp" {
 Describe "Test-ShouldCheckForUpdates" {
     Context "When update checks are disabled" {
         It "Returns false without checking the last timestamp" {
-            $PVMConfig.env.ENABLE_UPDATE_CHECK = $false
+            $Global:PVMConfig.env.ENABLE_UPDATE_CHECK = $false
             Mock Get-LastUpdateCheckTimestamp { }
 
             $result = Test-ShouldCheckForUpdates
@@ -118,8 +118,8 @@ Describe "Test-ShouldCheckForUpdates" {
 
     Context "When update checks are enabled" {
         BeforeEach {
-            $PVMConfig.env.ENABLE_UPDATE_CHECK = $true
-            $PVMConfig.env.UPDATE_CHECK_INTERVAL_HOURS = 24
+            $Global:PVMConfig.env.ENABLE_UPDATE_CHECK = $true
+            $Global:PVMConfig.env.UPDATE_CHECK_INTERVAL_HOURS = 24
         }
 
         It "Returns true when there is no previous check timestamp" {

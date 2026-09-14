@@ -3,8 +3,8 @@ BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'current'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
-    $script:PHP_CURRENT_DIR = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
-    $script:PHP_DIR = $PVMConfig.paths.directories.php
+    $script:PHP_CURRENT_DIR = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
+    $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
 
     New-Directory -path $PHP_CURRENT_DIR
 

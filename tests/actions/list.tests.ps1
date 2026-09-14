@@ -3,8 +3,8 @@ BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'list'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
-    $script:PHP_WIN_ARCHIVES_URL = $PVMConfig.links.phpWinArchives
-    $script:PHP_WIN_RELEASES_URL = $PVMConfig.links.phpWinReleases
+    $script:PHP_WIN_ARCHIVES_URL = $Global:PVMConfig.links.phpWinArchives
+    $script:PHP_WIN_RELEASES_URL = $Global:PVMConfig.links.phpWinReleases
 
     Mock Show-Message { }
     Mock Show-Error { }

@@ -3,9 +3,9 @@ BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'system'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
-    $script:LOG_ERROR_PATH = $PVMConfig.paths.files.logError
-    $script:STORAGE_PATH = $PVMConfig.paths.directories.storage
-    $script:PATH_VAR_BACKUP_PATH = $PVMConfig.paths.files.pathVarBackup
+    $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
+    $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
+    $script:PATH_VAR_BACKUP_PATH = $Global:PVMConfig.paths.files.pathVarBackup
 
     New-Directory -path "$STORAGE_PATH\php\8.1"
     New-Directory -path "$STORAGE_PATH\php\8.2"

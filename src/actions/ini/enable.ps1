@@ -22,7 +22,7 @@ function Enable-IniExtension {
             if ($matchesListStatus.Length -gt 1) {
                 Show-Info -message "`nMultiple extensions match '$extName':`n"
 
-                $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+                $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0
                 $matchesListStatus | ForEach-Object -Process {
                     $name = "$($_.name) ".PadRight($maxLineLength, '.')
@@ -82,7 +82,7 @@ function Enable-IniExtension {
             $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
         }
 
-        $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+        $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         Show-Message -message "`nResults:"
         foreach ($item in $results) {
             Show-Message -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine

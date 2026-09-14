@@ -150,7 +150,7 @@ function Get-PHP {
         $buildType = $versionObject.BuildType
         $arch = $versionObject.arch
 
-        $destination = $PVMConfig.paths.directories.php
+        $destination = $Global:PVMConfig.paths.directories.php
         $created = New-Directory -path $destination
         if ($created -ne 0) {
             Show-Error -message "Failed to create directory $destination"
@@ -236,7 +236,7 @@ function Select-Version {
 
     $matchingVersionsPartialList = [ordered]@{}
     $matchingVersions.GetEnumerator() | ForEach-Object -Process {
-        $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE
+        $matchingVersionsPartialList[$_.Key] = $_.Value | Select-Object -Last $Global:PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE
     }
     $matchingKeys = $matchingVersions.Values | Where-Object -FilterScript { $_.Count -gt 0 }
 
@@ -268,8 +268,8 @@ function Select-Version {
         }
 
         $msg = "`nThis is a partial list (latest matches only). For the complete list, visit:"
-        $msg += "`n Releases : $($PVMConfig.links.phpWinReleases)"
-        $msg += "`n Archives : $($PVMConfig.links.phpWinArchives)"
+        $msg += "`n Releases : $($Global:PVMConfig.links.phpWinReleases)"
+        $msg += "`n Archives : $($Global:PVMConfig.links.phpWinArchives)"
         Show-Info -message $msg
         $selectedVersionInput = Read-HostWrapper -prompt "`nEnter the [number] of your selection (or press Enter to cancel)" -notifyUser
 
@@ -303,7 +303,7 @@ function Install-PHP {
                 $currentVersion = Get-CurrentPHPVersion
                 $familyVersion = $matches[0]
                 Show-Message -message "`nOther versions from the $familyVersion.x family are available:"
-                $maxNameLength = ($foundInstalledVersions.Version | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+                $maxNameLength = ($foundInstalledVersions.Version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $foundInstalledVersions | ForEach-Object -Process {
                     $versionNumber = $_.Version
                     $isCurrent = ''

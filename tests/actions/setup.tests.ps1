@@ -3,8 +3,8 @@ BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'setup'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
-    $script:PHP_CURRENT_VERSION_PATH = $PVMConfig.env.PHP_CURRENT_VERSION_PATH
-    $script:PVM_ENV_VAR_NAME = $PVMConfig.env.PVM_ENV_VAR_NAME
+    $script:PHP_CURRENT_VERSION_PATH = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
+    $script:PVM_ENV_VAR_NAME = $Global:PVMConfig.env.PVM_ENV_VAR_NAME
 
     Mock Show-Message { }
     Mock Show-Success { }
@@ -75,7 +75,7 @@ Describe "Initialize-PVM" {
         It "Should add both PVM and PHP paths when neither exists" {
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'Path' } -MockWith { return $null }
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return "$($PVMConfig.rootPath);$PHP_CURRENT_VERSION_PATH"
+                return "$($Global:PVMConfig.rootPath);$PHP_CURRENT_VERSION_PATH"
             }
 
             $result = Initialize-PVM
@@ -92,7 +92,7 @@ Describe "Initialize-PVM" {
                 return 'C:\Windows\System32;C:\Program Files\PowerShell'
             }
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return "$($PVMConfig.rootPath);$PHP_CURRENT_VERSION_PATH"
+                return "$($Global:PVMConfig.rootPath);$PHP_CURRENT_VERSION_PATH"
             }
 
             $result = Initialize-PVM
@@ -107,7 +107,7 @@ Describe "Initialize-PVM" {
                 return 'C:\Windows\System32;%PVM%'
             }
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return "$($PVMConfig.rootPath);$PHP_CURRENT_VERSION_PATH"
+                return "$($Global:PVMConfig.rootPath);$PHP_CURRENT_VERSION_PATH"
             }
 
             $result = Initialize-PVM
@@ -122,7 +122,7 @@ Describe "Initialize-PVM" {
                 return 'C:\Windows\System32;%pvm%'
             }
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return "$($PVMConfig.rootPath.ToLower());$($PHP_CURRENT_VERSION_PATH.ToLower())"
+                return "$($Global:PVMConfig.rootPath.ToLower());$($PHP_CURRENT_VERSION_PATH.ToLower())"
             }
 
             $result = Initialize-PVM
@@ -141,12 +141,12 @@ Describe "Initialize-PVM" {
 
             $result | Should -Be 0
             Should -Invoke Set-EnvVar -Times 1 -ParameterFilter {
-                $name -eq $PVMConfig.env.PVM_ENV_VAR_NAME -and
-                $value -eq "$($PVMConfig.rootPath);$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)"
+                $name -eq $Global:PVMConfig.env.PVM_ENV_VAR_NAME -and
+                $value -eq "$($Global:PVMConfig.rootPath);$($Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH)"
             }
             Should -Invoke Set-EnvVar -Times 1 -ParameterFilter {
                 $name -eq 'Path'
-                $value -eq ";%$($PVMConfig.env.PVM_ENV_VAR_NAME)%"
+                $value -eq ";%$($Global:PVMConfig.env.PVM_ENV_VAR_NAME)%"
             }
         }
     }
@@ -177,7 +177,7 @@ Describe "Initialize-PVM" {
                 return 'C:\Windows\System32;C:\Program Files\PowerShell'
             }
             Mock Get-EnvVarByName -ParameterFilter { $name -eq 'PVM' } -MockWith {
-                return "$($PVMConfig.rootPath);$PHP_CURRENT_VERSION_PATH"
+                return "$($Global:PVMConfig.rootPath);$PHP_CURRENT_VERSION_PATH"
             }
             Mock Set-EnvVar { return -1 }
 
@@ -294,7 +294,7 @@ Describe "New-EnvFile" {
 
     It "Returns 0 when the user does not want to overwrite the .env file" {
         Mock Test-FileNotExists { return $false }
-        New-Item -ItemType File -Path "$($PVMConfig.rootPath)\.env" -Force | Out-Null
+        New-Item -ItemType File -Path "$($Global:PVMConfig.rootPath)\.env" -Force | Out-Null
         Mock Read-HostWrapper { return 'n' }
 
         $result = New-EnvFile
@@ -305,7 +305,7 @@ Describe "New-EnvFile" {
 
     It "Returns 0 when the user wants to overwrite the .env file" {
         Mock Test-FileNotExists { return $false }
-        New-Item -ItemType File -Path "$($PVMConfig.rootPath)\.env" -Force | Out-Null
+        New-Item -ItemType File -Path "$($Global:PVMConfig.rootPath)\.env" -Force | Out-Null
         Mock Read-HostWrapper { return 'y' }
 
         $result = New-EnvFile
@@ -318,8 +318,8 @@ Describe "New-EnvFile" {
     }
 
     It "Returns 0 when the .env is created" {
-        Mock Test-FileNotExists -ParameterFilter { $path -eq "$($PVMConfig.rootPath)\.env.example"} { return $false }
-        Mock Test-FileExists -ParameterFilter { $path -eq "$($PVMConfig.rootPath)\.env"} { return $false }
+        Mock Test-FileNotExists -ParameterFilter { $path -eq "$($Global:PVMConfig.rootPath)\.env.example"} { return $false }
+        Mock Test-FileExists -ParameterFilter { $path -eq "$($Global:PVMConfig.rootPath)\.env"} { return $false }
         Mock Read-HostWrapper { }
 
         $result = New-EnvFile
@@ -333,8 +333,8 @@ Describe "New-EnvFile" {
     }
 
     It "Returns -1 when the .env is not created" {
-        Mock Test-FileNotExists -ParameterFilter { $path -eq "$($PVMConfig.rootPath)\.env.example"} { return $false }
-        Mock Test-FileExists -ParameterFilter { $path -eq "$($PVMConfig.rootPath)\.env"} { return $false }
+        Mock Test-FileNotExists -ParameterFilter { $path -eq "$($Global:PVMConfig.rootPath)\.env.example"} { return $false }
+        Mock Test-FileExists -ParameterFilter { $path -eq "$($Global:PVMConfig.rootPath)\.env"} { return $false }
         Mock Read-HostWrapper { }
         Mock Copy-ItemWrapper { throw 'Access denied' }
 
@@ -350,7 +350,7 @@ Describe "Wait-ForEnvEdit" {
     It "Should prompt the user to edit the .env file" {
         Mock Read-HostWrapper { return '' }
         Mock Get-Config { return @{} }
-        $script:PVMRoot = $PVMConfig.rootPath
+        $script:PVMRoot = $Global:PVMConfig.rootPath
 
         Wait-ForEnvEdit
 

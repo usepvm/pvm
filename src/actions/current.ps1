@@ -36,7 +36,7 @@ function Get-CurrentPHPVersion {
                 @{ Name = 'xdebug'; Version = $null; Copyright = $null; Enabled = $false }
             )
         }
-        $currentPhpVersionLink = Get-ItemWrapper -path $PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        $currentPhpVersionLink = Get-ItemWrapper -path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
         if (-not $currentPhpVersionLink) {
             return $emptyResult
         }

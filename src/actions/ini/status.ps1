@@ -22,7 +22,7 @@ function Get-IniExtensionStatus {
             $allMatchesListStatus += $matchesListStatus
         }
 
-        $maxLineLength = ($allMatchesListStatus.name | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+        $maxLineLength = ($allMatchesListStatus.name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $notFound | ForEach-Object -Process {
             $name = "$($_.name) ".PadRight($maxLineLength, '.')
             Write-Color -message "- $name $($_.status)" -foreColor $_.color

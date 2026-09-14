@@ -8,7 +8,7 @@ BeforeAll {
     $script:extDirectory = "$phpVersionPath\ext"
     $script:testBackupPath = "$testIniPath.bak"
 
-    New-Directory -path $PVMConfig.paths.directories.cache
+    New-Directory -path $Global:PVMConfig.paths.directories.cache
     New-Directory -path $phpVersionPath
     New-Directory -path $extDirectory
 

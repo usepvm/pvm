@@ -1,14 +1,14 @@
 ﻿
 function Test-PVMSetup {
     try {
-        $pvmEnvVarContent = Get-EnvVarByName -name $PVMConfig.env.PVM_ENV_VAR_NAME
+        $pvmEnvVarContent = Get-EnvVarByName -name $Global:PVMConfig.env.PVM_ENV_VAR_NAME
 
         if ($null -eq $pvmEnvVarContent) {
             return $false
         }
 
         $pvmEnvEntries = $pvmEnvVarContent -split ';' | Where-Object -FilterScript { $_ -ne '' }
-        if ($pvmEnvEntries -notcontains $PVMConfig.rootPath -or $pvmEnvEntries -notcontains $PVMConfig.env.PHP_CURRENT_VERSION_PATH) {
+        if ($pvmEnvEntries -notcontains $Global:PVMConfig.rootPath -or $pvmEnvEntries -notcontains $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH) {
             return $false
         }
 
@@ -17,12 +17,12 @@ function Test-PVMSetup {
             $path = ''
         }
 
-        $parent = Split-Path -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Parent
+        $parent = Split-Path -Path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -Parent
         $pathEntries = $path -split ';' | Where-Object -FilterScript { $_ -ne '' }
         if (
             (
                 ($path -notlike "*$pvmEnvVarContent*") -and
-                ($pathEntries -notcontains "%$($PVMConfig.env.PVM_ENV_VAR_NAME)%")
+                ($pathEntries -notcontains "%$($Global:PVMConfig.env.PVM_ENV_VAR_NAME)%")
             ) -or
             (Test-DirectoryNotExists -path $parent)
         ) {

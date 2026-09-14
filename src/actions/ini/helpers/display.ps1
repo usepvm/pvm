@@ -19,7 +19,7 @@ function Show-InstalledExtensions {
 
     # Calculate max length dynamically
     $maxNameLength = ($extensions | ForEach-Object -Process { $_.name } | Measure-Object -Maximum Length).Maximum
-    $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxNameLength + 40)
+    $maxLineLength = [Math]::Max($Global:PVMConfig.env.MIN_LINE_LENGTH, $maxNameLength + 40)
 
     $extensions |
         Sort-Object -Property @{Expression = { -not $_.enabled }; Ascending = $true }, @{Expression = { $_.name }; Ascending = $true } |
@@ -55,7 +55,7 @@ function Show-Settings {
     }
 
     $maxLineLength = ($settings | ForEach-Object -Process { $_.name.Length + $_.value.Length } | Measure-Object -Maximum).Maximum
-    $maxLineLength = [Math]::Max($PVMConfig.env.MIN_LINE_LENGTH, $maxLineLength + 40)
+    $maxLineLength = [Math]::Max($Global:PVMConfig.env.MIN_LINE_LENGTH, $maxLineLength + 40)
 
     $settings |
         Sort-Object -Property @{Expression = { -not $_.enabled }; Ascending = $true }, @{Expression = { $_.name }; Ascending = $true } |

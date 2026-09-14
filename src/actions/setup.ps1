@@ -6,7 +6,7 @@ function Initialize-PVM {
         $newPath = $path
         $pathEntries = $path -split ';' | Where-Object -FilterScript { $_ -ne '' }
 
-        $parent = Split-Path -Path $PVMConfig.env.PHP_CURRENT_VERSION_PATH -Parent
+        $parent = Split-Path -Path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -Parent
         $created = New-Directory -path $parent
         if ($created -ne 0) {
             Show-Error -message 'Failed to create directory for PHP version.'
@@ -15,12 +15,12 @@ function Initialize-PVM {
 
         $pvmEnvVarContent = Get-EnvVarByName -name 'PVM'
 
-        if (($null -eq $pvmEnvVarContent) -or ($pvmEnvVarContent -ne "$($PVMConfig.rootPath);$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)")) {
-            $null = Set-EnvVar -name $PVMConfig.env.PVM_ENV_VAR_NAME -value "$($PVMConfig.rootPath);$($PVMConfig.env.PHP_CURRENT_VERSION_PATH)"
+        if (($null -eq $pvmEnvVarContent) -or ($pvmEnvVarContent -ne "$($Global:PVMConfig.rootPath);$($Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH)")) {
+            $null = Set-EnvVar -name $Global:PVMConfig.env.PVM_ENV_VAR_NAME -value "$($Global:PVMConfig.rootPath);$($Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH)"
         }
 
-        if ($pathEntries -notcontains "%$($PVMConfig.env.PVM_ENV_VAR_NAME)%") {
-            $newPath += ";%$($PVMConfig.env.PVM_ENV_VAR_NAME)%"
+        if ($pathEntries -notcontains "%$($Global:PVMConfig.env.PVM_ENV_VAR_NAME)%") {
+            $newPath += ";%$($Global:PVMConfig.env.PVM_ENV_VAR_NAME)%"
         }
 
         if ($newPath -ne $path) {
@@ -41,19 +41,19 @@ function Initialize-PVM {
 
 function Initialize-PVMDirectories {
     $dirs = @(
-        $PVMConfig.paths.directories.storage,
-        $PVMConfig.paths.directories.fakeStorage,
-        $PVMConfig.paths.directories.php,
-        $PVMConfig.paths.directories.data,
-        $PVMConfig.paths.directories.templates,
-        $PVMConfig.paths.directories.cache,
-        $PVMConfig.paths.directories.profiles,
-        $PVMConfig.paths.directories.log
+        $Global:PVMConfig.paths.directories.storage,
+        $Global:PVMConfig.paths.directories.fakeStorage,
+        $Global:PVMConfig.paths.directories.php,
+        $Global:PVMConfig.paths.directories.data,
+        $Global:PVMConfig.paths.directories.templates,
+        $Global:PVMConfig.paths.directories.cache,
+        $Global:PVMConfig.paths.directories.profiles,
+        $Global:PVMConfig.paths.directories.log
     )
 
     Show-Message -message "`nPVM environment directories:"
     $codes = @()
-    $maxNameLength = ($dirs | ForEach-Object -Process { $_.Length } | Measure-Object -Maximum).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+    $maxNameLength = ($dirs | ForEach-Object -Process { $_.Length } | Measure-Object -Maximum).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     foreach ($dir in $dirs) {
         $codes += $code = New-Directory -path $dir
 
@@ -73,7 +73,7 @@ function Initialize-PVMFiles {
 
     $codes += $code = New-ProfileExample
     if ($code -eq 0) {
-        Show-Success -message "`nExample profile created successfully at '$($PVMConfig.paths.files.profileExample)'."
+        Show-Success -message "`nExample profile created successfully at '$($Global:PVMConfig.paths.files.profileExample)'."
         Show-Message -message "- Use 'pvm help profile' to learn more."
     } else {
         Show-Error -message "`nFailed to create example profile."
@@ -81,7 +81,7 @@ function Initialize-PVMFiles {
 
     $codes += $code = New-ProfileTemplate
     if ($code -eq 0) {
-        Show-Success -message "`nProfile template created successfully at '$($PVMConfig.paths.files.profileTemplate)'."
+        Show-Success -message "`nProfile template created successfully at '$($Global:PVMConfig.paths.files.profileTemplate)'."
         Show-Message -message '- Feel free to modify it.'
     } else {
         Show-Error -message "`nFailed to create profile template."
@@ -89,14 +89,14 @@ function Initialize-PVMFiles {
 
     $codes += $code = Set-ZendExtensionsList
     if ($code -eq 0) {
-        Show-Success -message "`nZend extensions list created successfully at '$($PVMConfig.paths.files.zendExtensionsList)'."
+        Show-Success -message "`nZend extensions list created successfully at '$($Global:PVMConfig.paths.files.zendExtensionsList)'."
     } else {
         Show-Error -message "`nFailed to create zend extensions list."
     }
 
     $codes += $code = Set-AliasesList
     if ($code -eq 0) {
-        Show-Success -message "`nAliases list created successfully at '$($PVMConfig.paths.files.aliasesList)'."
+        Show-Success -message "`nAliases list created successfully at '$($Global:PVMConfig.paths.files.aliasesList)'."
         Show-Message -message "- Use 'pvm aliases' to see available aliases."
         Show-Message -message "- Feel free to modify it."
     } else {
@@ -105,7 +105,7 @@ function Initialize-PVMFiles {
 
     $codes += $code = Set-ScriptsList
     if ($code -eq 0) {
-        Show-Success -message "`nScripts list created successfully at '$($PVMConfig.paths.files.scriptsList)'."
+        Show-Success -message "`nScripts list created successfully at '$($Global:PVMConfig.paths.files.scriptsList)'."
         Show-Message -message "- Use 'pvm run list' to see available scripts."
         Show-Message -message "- Feel free to modify it."
     } else {
@@ -129,18 +129,18 @@ function New-EnvFile {
     param ($overwrite = $false)
 
     try {
-        if (Test-FileNotExists -path "$($PVMConfig.rootPath)\.env.example") {
+        if (Test-FileNotExists -path "$($Global:PVMConfig.rootPath)\.env.example") {
             Show-Error -message "`nFailed to find .env.example file."
             return -1
         }
 
-        if ((Test-FileExists -path "$($PVMConfig.rootPath)\.env") -and ($overwrite -eq $false)) {
+        if ((Test-FileExists -path "$($Global:PVMConfig.rootPath)\.env") -and ($overwrite -eq $false)) {
             $response = Read-HostWrapper -prompt "`n.env file already exists. Overwrite? (y/n)" -notifyUser
             if (Test-NoResponse -response $response) {
                 return -1
             }
         }
-        Copy-ItemWrapper -path "$($PVMConfig.rootPath)\.env.example" -destination "$($PVMConfig.rootPath)\.env"
+        Copy-ItemWrapper -path "$($Global:PVMConfig.rootPath)\.env.example" -destination "$($Global:PVMConfig.rootPath)\.env"
         Show-Success -message "`nCreated .env file."
 
         return 0
@@ -151,7 +151,7 @@ function New-EnvFile {
 }
 
 function Wait-ForEnvEdit {
-    Show-Info -message "`nEdit $($PVMConfig.rootPath)\.env now if you want custom settings, then press Enter to continue..."
+    Show-Info -message "`nEdit $($Global:PVMConfig.rootPath)\.env now if you want custom settings, then press Enter to continue..."
     Read-HostWrapper -notifyUser | Out-Null
-    $Global:PVMConfig = Get-Config -rootPath $PVMConfig.rootPath
+    $Global:PVMConfig = Get-Config -rootPath $Global:PVMConfig.rootPath
 }

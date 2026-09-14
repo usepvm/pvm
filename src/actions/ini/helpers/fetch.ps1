@@ -31,7 +31,7 @@ function Get-ExtensionHandlers {
                     return Get-OrUpdateCache -cacheFileName "packages_links_for_xdebug_php_$($version)_xdebug" -compute {
                         return Show-SpinnerWhileJob -argumentList @($version) -scriptBlock {
                             param ($version)
-                            $data = Get-XDebugFromUrl -url $PVMConfig.links.xdebugHistorical -version $version
+                            $data = Get-XDebugFromUrl -url $Global:PVMConfig.links.xdebugHistorical -version $version
                             return @{ pvmData = $data }
                         } -rethrow $true
                     }
@@ -40,10 +40,10 @@ function Get-ExtensionHandlers {
                     param ($chosenItem, $phpPath, $skipConfirmation)
 
                     try {
-                        $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.directories.php
+                        $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $Global:PVMConfig.paths.directories.php
                         $extFile = @{
                             Name = $chosenItem.fileName
-                            FullName = "$($PVMConfig.paths.directories.php)\$($chosenItem.fileName)"
+                            FullName = "$($Global:PVMConfig.paths.directories.php)\$($chosenItem.fileName)"
                         }
 
                         if (-not $skipConfirmation) {
@@ -64,7 +64,7 @@ function Get-ExtensionHandlers {
                         return $null
                     }
                 }
-                MoreInfoUrl = $PVMConfig.links.xdebugHistorical
+                MoreInfoUrl = $Global:PVMConfig.links.xdebugHistorical
             }
             'pecl.php.net' = @{
                 SupportedExtensions = @('*')
@@ -93,9 +93,9 @@ function Get-ExtensionHandlers {
                     param ($chosenItem, $phpPath, $skipConfirmation, $extName)
 
                     try {
-                        $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $PVMConfig.paths.directories.php
+                        $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $Global:PVMConfig.paths.directories.php
                         $fileNamePath = $chosenItem.fileName -replace '.zip$', ''
-                        $extractPath = "$($PVMConfig.paths.directories.php)\$fileNamePath"
+                        $extractPath = "$($Global:PVMConfig.paths.directories.php)\$fileNamePath"
                         Expand-Zip -zipPath "$extractPath.zip" -extractPath $extractPath -deleteZipAfter $true
                         $files = Get-ChildItemWrapper -path $extractPath
                         $extFile = $files | Where-Object -FilterScript {
@@ -128,7 +128,7 @@ function Get-ExtensionHandlers {
                 }
                 MoreInfoUrl = {
                     param ($extName)
-                    return "$($PVMConfig.links.peclPackageRoot)/$extName"
+                    return "$($Global:PVMConfig.links.peclPackageRoot)/$extName"
                 }
             }
         }
@@ -216,7 +216,7 @@ function Get-XDebugFromUrl {
             }
 
             $formattedList += @{
-                href          = "$($PVMConfig.links.xdebugBase)$($_.href)"
+                href          = "$($Global:PVMConfig.links.xdebugBase)$($_.href)"
                 version       = $version
                 extVersion    = $xDebugVersion;
                 arch          = if ($fileName -match '(x86_64|x64)(?=\.dll$)') { 'x64' } else { 'x86' }
@@ -262,7 +262,7 @@ function Get-ExtensionCategoriesByPage {
 
     $availableExtensions = [System.Collections.Generic.List[object]]::new()
     $subCategories = [System.Collections.Generic.List[object]]::new()
-    $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
+    $html = Invoke-WebRequestWrapper -uri "$($Global:PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
     $html.Links | ForEach-Object -Process {
         if (-not $_.href) { return }
@@ -289,9 +289,9 @@ function Get-ExtensionCategoriesByPage {
         $availableExtensions.Add(@{
             extName     = ($_.href -replace '/package/', '').Trim()
             description = $description
-            href        = "$($PVMConfig.links.peclBase)$($_.href)"
+            href        = "$($Global:PVMConfig.links.peclBase)$($_.href)"
             extCategory = $extCategory
-            source      = (Get-BaseUrl -url $PVMConfig.links.peclBase)
+            source      = (Get-BaseUrl -url $Global:PVMConfig.links.peclBase)
         })
     }
 
@@ -305,7 +305,7 @@ function Get-ExtensionCategoriesByPage {
 function Get-PHPExtensionsFromSource {
     $availableExtensions = @{}
     try {
-        $html_cat = Invoke-WebRequestWrapper -uri $PVMConfig.links.peclPackages
+        $html_cat = Invoke-WebRequestWrapper -uri $Global:PVMConfig.links.peclPackages
         $null = $html_cat.Links | Where-Object -FilterScript {
             if (-not $_.href) { return $false }
 
@@ -396,11 +396,11 @@ function Get-PHPExtensionsFromSource {
             subCategories = @()
             extensions  = @(
                 @{
-                    href        = $PVMConfig.links.xdebugHistorical
+                    href        = $Global:PVMConfig.links.xdebugHistorical
                     extName     = 'xdebug'
                     extCategory = 'XDebug'
                     description = 'Xdebug is a debugging and productivity extension for PHP'
-                    source      = (Get-BaseUrl -url $PVMConfig.links.xdebugBase)
+                    source      = (Get-BaseUrl -url $Global:PVMConfig.links.xdebugBase)
                 }
             )
         }
@@ -449,11 +449,11 @@ function Get-FilteredPHPExtensionsByCategory {
 function Get-ExtensionAvailableReleasesLinks {
     param ($extName)
 
-    $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName"
+    $html = Invoke-WebRequestWrapper -uri "$($Global:PVMConfig.links.peclPackageRoot)/$extName"
     $links = [System.Collections.Generic.List[object]]::new()
     $null = $html.Links | Foreach-Object -Process {
         if ($_.href -match "/package/$extName/([^/]+)/windows$") {
-            $links.Add(@{ href = "$($PVMConfig.links.peclBase)$($_.href)" })
+            $links.Add(@{ href = "$($Global:PVMConfig.links.peclBase)$($_.href)" })
         }
     }
 
@@ -466,8 +466,8 @@ function Get-PackagesFromSourceLinks {
     $formattedList = [System.Collections.Generic.List[object]]::new()
     $links | ForEach-Object -Process {
         try {
-            $extVersion = $_.href -replace "$($PVMConfig.links.peclBase)/package/$extName/", '' -replace '/windows', ''
-            $html = Invoke-WebRequestWrapper -uri "$($PVMConfig.links.peclPackageRoot)/$extName/$extVersion/windows"
+            $extVersion = $_.href -replace "$($Global:PVMConfig.links.peclBase)/package/$extName/", '' -replace '/windows', ''
+            $html = Invoke-WebRequestWrapper -uri "$($Global:PVMConfig.links.peclPackageRoot)/$extName/$extVersion/windows"
             $html.Links | ForEach-Object -Process {
                 if (-not $_.href) { return }
 
@@ -531,7 +531,7 @@ function Select-ExtensionFromMatches {
 
     $sorted = $linksMatchingExtName | Sort-Object -Property @{ Expression = { $_.source } }, @{ Expression = { $_.extName } }, @{ Expression = { $_.extCategory } }
 
-    $maxNameLength = ($sorted.extName | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+    $maxNameLength = ($sorted.extName | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     $sorted | ForEach-Object -Process {
         $extItem = "$($_.extName) ".PadRight($maxNameLength, '.')
         $source = $_.source

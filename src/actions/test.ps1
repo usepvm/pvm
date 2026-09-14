@@ -52,7 +52,7 @@ function Invoke-TestFile {
     param ($config, $file = $null, $options = $null, $separatorWidth = 60, $testsMap = $null)
 
     $testResultData = @{ passedCount = 0; failedCount = 0; duration = 0; coverageRaw = $null }
-    $relativeFilePath = $file.FullName -replace [regex]::Escape("$($PVMConfig.rootPath)\tests\"), ''
+    $relativeFilePath = $file.FullName -replace [regex]::Escape("$($Global:PVMConfig.rootPath)\tests\"), ''
     $sortedName = if ($options -and $options.groupBy -and $options.groupBy -eq 'folder') { $file.Name } else { $relativeFilePath }
 
     if (Test-FileNotExists -path $file.FullName) {
@@ -61,7 +61,7 @@ function Invoke-TestFile {
     }
 
     if (-not $options) {
-        $options = @{ coverage = $PVMConfig.test.coverage.enabled; target = $PVMConfig.test.coverage.default }
+        $options = @{ coverage = $Global:PVMConfig.test.coverage.enabled; target = $Global:PVMConfig.test.coverage.default }
     }
 
     $coveredFile = $null
@@ -136,15 +136,15 @@ function Invoke-Tests {
 
         if (-not $options) {
             $options = @{
-                verbosity = $PVMConfig.test.verbosity.default;
-                coverage = $PVMConfig.test.coverage.enabled;
-                target = $PVMConfig.test.coverage.default;
+                verbosity = $Global:PVMConfig.test.verbosity.default;
+                coverage = $Global:PVMConfig.test.coverage.enabled;
+                target = $Global:PVMConfig.test.coverage.default;
                 tag = $null;
                 groupBy = $null
             }
         }
 
-        $verbosityOptions = $PVMConfig.test.verbosity.options
+        $verbosityOptions = $Global:PVMConfig.test.verbosity.options
         if ($verbosityOptions -notcontains $options.verbosity) {
             Show-Error -message "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')"
             return -1
@@ -169,7 +169,7 @@ function Invoke-Tests {
             Invoke-TestFile -config $config -file $_ -options $options -separatorWidth $separatorWidth -testsMap $testsMap
         }
 
-        $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
+        $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
 
         Show-Message -message "`n----------------------------------------------------------------"
         Show-Message -message "`n`nTests Settings:"
@@ -224,7 +224,7 @@ function Invoke-Tests {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
-        Show-Error -message "`nFailed to run tests, check log: $($PVMConfig.paths.files.logError)"
+        Show-Error -message "`nFailed to run tests, check log: $($Global:PVMConfig.paths.files.logError)"
         return -1
     }
 }

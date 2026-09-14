@@ -3,7 +3,7 @@ BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'io'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
-    $script:STORAGE_PATH = $PVMConfig.paths.directories.storage
+    $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
 
     New-Directory -path "$STORAGE_PATH\php\8.1"
     New-Directory -path "$STORAGE_PATH\php\8.2"

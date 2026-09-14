@@ -43,7 +43,7 @@ function Test-CanUseCache {
             }
 
             $fileAgeHours = (New-TimeSpan -Start $cacheFile.LastWriteTime -End (Get-Date)).TotalHours
-            $useCache = ($fileAgeHours -lt $PVMConfig.env.CACHE_MAX_HOURS)
+            $useCache = ($fileAgeHours -lt $Global:PVMConfig.env.CACHE_MAX_HOURS)
         }
 
         return $useCache
@@ -90,7 +90,7 @@ function Get-CacheFilePath {
         $filename = "$filename.json"
     }
 
-    return "$($PVMConfig.paths.directories.cache)\$filename"
+    return "$($Global:PVMConfig.paths.directories.cache)\$filename"
 }
 
 function Test-HasData {

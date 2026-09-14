@@ -5,11 +5,11 @@ BeforeAll {
 
     $script:testPhpPath = "$TEST_DRIVE\php"
     $script:testIniPath = "$testIniPath\php.ini"
-    $script:XDEBUG_HISTORICAL_URL = $PVMConfig.links.xdebugHistorical
-    $script:PECL_BASE_URL = $PVMConfig.links.peclBase
-    $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
-    $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
-    $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
+    $script:XDEBUG_HISTORICAL_URL = $Global:PVMConfig.links.xdebugHistorical
+    $script:PECL_BASE_URL = $Global:PVMConfig.links.peclBase
+    $script:PECL_PACKAGES_URL = $Global:PVMConfig.links.peclPackages
+    $script:PECL_PACKAGE_ROOT_URL = $Global:PVMConfig.links.peclPackageRoot
+    $script:PECL_WIN_EXT_DOWNLOAD_URL = $Global:PVMConfig.links.peclWinExtDownload
 
     Mock Show-Message { }
     Mock Show-Error { }
@@ -163,7 +163,7 @@ Describe "Get-ExtensionHandlers" {
 
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be $chosenItem.fileName
-            $result.FullName | Should -Be "$($PVMConfig.paths.directories.php)\$($chosenItem.fileName)"
+            $result.FullName | Should -Be "$($Global:PVMConfig.paths.directories.php)\$($chosenItem.fileName)"
             Should -Invoke Get-XDebugFromUrl -Times 1
             Should -Invoke Invoke-WebRequestWrapper -Times 1
             Should -Invoke Move-ItemWrapper -Times 1
@@ -1482,7 +1482,7 @@ Describe "Select-ExtensionFromMatches" {
 
 Describe "Resolve-ExtensionLinks" {
     BeforeEach {
-        $PVMConfig.paths.directories.cache = "$TEST_DRIVE\cache"
+        $Global:PVMConfig.paths.directories.cache = "$TEST_DRIVE\cache"
     }
 
     It "Returns filtered links" {

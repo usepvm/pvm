@@ -3,7 +3,7 @@ BeforeAll {
     $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'bootstrap'
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
-    $PVMConfig.version = '1.0.0'
+    $Global:PVMConfig.version = '1.0.0'
 
     Mock New-Line { }
     Mock Show-Info { }
@@ -41,7 +41,7 @@ Describe "Show-Usage" {
     }
 
     It "Should display current version when available" {
-        $PVMConfig.version = '2.0'
+        $Global:PVMConfig.version = '2.0'
         Show-Usage -arguments @()
 
         Should -Invoke Show-Message -ParameterFilter { $message -like '*PVM version 2.0*' }
@@ -115,7 +115,7 @@ Describe "Show-Usage" {
 
 Describe "Show-PVMVersion" {
     BeforeEach {
-        $PVMConfig.version = '1.2.3'
+        $Global:PVMConfig.version = '1.2.3'
     }
 
     It "Should display version with proper formatting" {
@@ -130,7 +130,7 @@ Describe "Show-PVMVersion" {
         $testVersions = @('1.0.0', '2.5.1-beta', '3.0.0-alpha.1', 'v1.0.0', '1.0.0.0')
 
         foreach ($version in $testVersions) {
-            $PVMConfig.version = $version
+            $Global:PVMConfig.version = $version
             Show-PVMVersion
 
             Should -Invoke Show-Message -ParameterFilter {
@@ -140,7 +140,7 @@ Describe "Show-PVMVersion" {
     }
 
     It "Should handle special characters in version" {
-        $PVMConfig.version = '1.0.0-RC1+build.123'
+        $Global:PVMConfig.version = '1.0.0-RC1+build.123'
         Show-PVMVersion
 
         Should -Invoke Show-Message -Times 1 -ParameterFilter {
@@ -297,7 +297,7 @@ Describe "Start-PVM" {
             }
         }
 
-        $PVMConfig.version = '1.2.3'
+        $Global:PVMConfig.version = '1.2.3'
     }
 
     Context "Version Display Path Tests" {

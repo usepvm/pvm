@@ -8,16 +8,16 @@ BeforeAll {
     $script:extDirectory = "$phpVersionPath\ext"
     $script:testBackupPath = "$testIniPath.bak"
 
-    New-Directory -path $PVMConfig.paths.directories.cache
+    New-Directory -path $Global:PVMConfig.paths.directories.cache
     New-Directory -path $phpVersionPath
     New-Directory -path $extDirectory
 
-    $script:XDEBUG_BASE_URL = $PVMConfig.links.xdebugBase
-    $script:PECL_PACKAGES_URL = $PVMConfig.links.peclPackages
-    $script:XDEBUG_DOWNLOAD_URL = $PVMConfig.links.xdebugDownload
-    $script:XDEBUG_HISTORICAL_URL = $PVMConfig.links.xdebugHistorical
-    $script:PECL_PACKAGE_ROOT_URL = $PVMConfig.links.peclPackageRoot
-    $script:PECL_WIN_EXT_DOWNLOAD_URL = $PVMConfig.links.peclWinExtDownload
+    $script:XDEBUG_BASE_URL = $Global:PVMConfig.links.xdebugBase
+    $script:PECL_PACKAGES_URL = $Global:PVMConfig.links.peclPackages
+    $script:XDEBUG_DOWNLOAD_URL = $Global:PVMConfig.links.xdebugDownload
+    $script:XDEBUG_HISTORICAL_URL = $Global:PVMConfig.links.xdebugHistorical
+    $script:PECL_PACKAGE_ROOT_URL = $Global:PVMConfig.links.peclPackageRoot
+    $script:PECL_WIN_EXT_DOWNLOAD_URL = $Global:PVMConfig.links.peclWinExtDownload
 
     Mock New-Line { }
     Mock Show-Warning { }

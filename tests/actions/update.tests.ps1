@@ -345,7 +345,7 @@ Describe "Update-PVM" {
 
     Context "Already up to date" {
         It "returns success with the current config version" {
-            $PVMConfig.version = 'v1.0.0'
+            $Global:PVMConfig.version = 'v1.0.0'
             Mock Get-CurrentGitCommit { return 'same' }
             Mock Get-LatestGitCommit { return 'same' }
 

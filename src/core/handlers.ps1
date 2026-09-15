@@ -126,15 +126,13 @@ function Invoke-Install {
     $version = $arguments[0]
     if ($version -eq 'auto') {
         $result = Select-PHPVersionAutomatically
-
-        if ($result.code -eq 0) {
-            $version = $result.version
-            Write-Gray -message "`nPHP $version is already installed!"
+        if (-not $result.version) {
+            Write-Color -message $result.message -foreColor $result.color
             return -1
         }
 
-        if (-not $result.version) {
-            Show-Warning -message "`nPlease provide a PHP version to install"
+        if ($result.code -eq 0) {
+            Write-Gray -message $result.message
             return -1
         }
 
@@ -186,10 +184,16 @@ function Invoke-Use {
 
     if ($version -eq 'auto') {
         $result = Select-PHPVersionAutomatically
-        if ($result.code -ne 0) {
+        if (-not $result.version) {
             Write-Color -message $result.message -foreColor $result.color
             return -1
         }
+
+        if ($result.code -ne 0) {
+            Write-Gray -message $result.message
+            return -1
+        }
+
         $version = $result.version
     }
 

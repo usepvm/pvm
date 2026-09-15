@@ -346,7 +346,7 @@ function Select-PHPVersionAutomatically {
         $version = Read-HostWrapper -prompt "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" -notifyUser
 
         if (-not (Test-PHPVersionFormat -version $version)) {
-            return @{ code = -1; message = "Invalid version format: '$version'. Expected e.g. 8, 8.3 or 8.3.1"; color = 'DarkYellow' }
+            return @{ code = -1; version = $null; message = "`nInvalid version format: '$version'. Expected e.g. 8, 8.3 or 8.3.1"; color = 'DarkYellow' }
         }
 
         $response = Read-HostWrapper -prompt "`nSave as project default in .php-version? (y/n)"
@@ -355,14 +355,12 @@ function Select-PHPVersionAutomatically {
         }
     }
 
-    Show-Message -message "`nUsing PHP version: $version"
+    Show-Message -message "`nDetected PHP version: $version"
 
     $installedVersions = Get-MatchingPHPVersions -version $version
     if (-not $installedVersions) {
-        $message = "PHP '$version' is not installed."
-        $message += "`nRun: pvm install $version"
-        return @{ code = -1; version = $version; message = $message; }
+        return @{ code = -1; version = $version; message = "`nPHP '$version' is not installed." }
     }
 
-    return @{ code = 0; version = $version }
+    return @{ code = 0; version = $version; message = "`nPHP '$version' is already installed" }
 }

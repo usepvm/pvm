@@ -271,6 +271,24 @@ Describe "Invoke-Install" {
         }
     }
 
+    It "Should return -1 when version is null" {
+        $arguments = @('auto')
+        Mock Select-PHPVersionAutomatically { return @{ code = 0; version = $null } }
+
+        $result = Invoke-Install -arguments $arguments
+
+        $result | Should -Be -1
+    }
+
+    It "Should return -1 when detected PHP version is already installed" {
+        $arguments = @('auto')
+        Mock Select-PHPVersionAutomatically { return @{ code = 0; version = '8.2' } }
+
+        $result = Invoke-Install -arguments $arguments
+
+        $result | Should -Be -1
+    }
+
     It "Should install latest PHP version when 'latest' argument is provided" {
         $arguments = @('latest')
         Mock Get-LatestPHPVersion { return @{version = '8.6.0' } }
@@ -286,15 +304,6 @@ Describe "Invoke-Install" {
     It "Should return -1 when no latest PHP version was found" {
         $arguments = @('latest')
         Mock Get-LatestPHPVersion { return $null }
-
-        $result = Invoke-Install -arguments $arguments
-
-        $result | Should -Be -1
-    }
-
-    It "Should return -1 when detected PHP version is already installed" {
-        $arguments = @('auto')
-        Mock Select-PHPVersionAutomatically { return @{ code = 0; version = '8.2' } }
 
         $result = Invoke-Install -arguments $arguments
 
@@ -339,7 +348,7 @@ Describe "Invoke-Use" {
     }
 
     It "Should return -1 when auto-selection fails" {
-        Mock Select-PHPVersionAutomatically { return @{ code = 1; message = 'Auto selection failed'; color = 'DarkYellow' } }
+        Mock Select-PHPVersionAutomatically { return @{ code = -1; message = 'Auto selection failed'; color = 'DarkYellow' } }
         $arguments = @('auto')
 
         $result = Invoke-Use -arguments $arguments
@@ -347,6 +356,15 @@ Describe "Invoke-Use" {
 
         Should -Invoke Select-PHPVersionAutomatically -Times 1
         Should -Invoke Update-PHPVersion -Times 0
+    }
+
+    It "Should return -1 when version is not installed" {
+        $arguments = @('auto')
+        Mock Select-PHPVersionAutomatically { return @{ code = -1; version = '8.1' } }
+
+        $result = Invoke-Use -arguments $arguments
+
+        $result | Should -Be -1
     }
 }
 

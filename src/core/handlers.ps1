@@ -126,10 +126,13 @@ function Invoke-Install {
 
     if ($version -eq 'auto') {
         $result = Select-PHPVersionAutomatically
+        if (-not $result.version) {
+            Write-Color -message $result.message -foreColor $result.color
+            return -1
+        }
 
         if ($result.code -eq 0) {
-            $version = $result.version
-            Write-Gray -message "`nPHP $version is already installed!"
+            Write-Gray -message $result.message
             return -1
         }
 
@@ -165,10 +168,16 @@ function Invoke-Use {
 
     if ($version -eq 'auto') {
         $result = Select-PHPVersionAutomatically
-        if ($result.code -ne 0) {
+        if (-not $result.version) {
             Write-Color -message $result.message -foreColor $result.color
             return -1
         }
+
+        if ($result.code -ne 0) {
+            Write-Gray -message $result.message
+            return -1
+        }
+
         $version = $result.version
     }
 

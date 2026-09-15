@@ -359,8 +359,12 @@ function Select-PHPVersionAutomatically {
 
     $installedVersions = Get-MatchingPHPVersions -version $version
     if (-not $installedVersions) {
-        return @{ code = -1; version = $version; message = "`nPHP '$version' is not installed." }
+        $message = "`nPHP '$version' is not installed."
+        $message += "`nRun: pvm install $version"
+        return @{ code = -1; version = $version; message = $message }
     }
 
-    return @{ code = 0; version = $version; message = "`nPHP '$version' is already installed" }
+    $message = "`nPHP '$version' is already installed."
+    $message += "`nRun: pvm use $version"
+    return @{ code = 0; version = $version; message = $message }
 }

@@ -237,3 +237,108 @@ Describe "Resolve-Arch" {
         }
     }
 }
+
+Describe "Resolve-VersionsFromArguments" {
+    Context "Basic version extraction" {
+        It "Returns single version when one version is provided" {
+            $arguments = @('8.2.0')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -Be @('8.2.0')
+        }
+
+        It "Returns multiple versions when multiple versions are provided" {
+            $arguments = @('8.2.0', '8.3.0', '8.1.0')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -Be @('8.2.0', '8.3.0', '8.1.0')
+        }
+
+        It "Returns empty array when no versions are provided" {
+            $arguments = @('some', 'other', 'args')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -BeNullOrEmpty
+        }
+
+        It "Returns empty array when arguments array is empty" {
+            $arguments = @()
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -BeNullOrEmpty
+        }
+
+        It "Returns null when arguments is null" {
+            $result = Resolve-VersionsFromArguments -arguments $null
+            $result | Should -BeNullOrEmpty
+        }
+    }
+
+    Context "Version format validation" {
+        It "Extracts version with two parts (major.minor)" {
+            $arguments = @('8.2')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -Be @('8.2')
+        }
+
+        It "Extracts version with one part (major)" {
+            $arguments = @('8')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -Be @('8')
+        }
+
+        It "Extracts version with three parts (major.minor.patch)" {
+            $arguments = @('8.2.15')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -Be @('8.2.15')
+        }
+
+        It "Filters out non-version arguments" {
+            $arguments = @('8.2.0', 'some-flag', '8.3.0', '--another-flag', '8.1.0')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -Be @('8.2.0', '8.3.0', '8.1.0')
+        }
+
+        It "Filters out arguments with special characters" {
+            $arguments = @('8.2.0', 'latest', 'auto', '--flag')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -Be @('8.2.0')
+        }
+
+        It "Filters out arguments with letters" {
+            $arguments = @('8.2.0', 'abc', '8.3.0', 'def')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -Be @('8.2.0', '8.3.0')
+        }
+
+        It "Filters out arguments with dots and letters" {
+            $arguments = @('8.2.0', '8.2.0rc1', '8.3.0beta')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -Be @('8.2.0')
+        }
+    }
+
+    Context "Mixed arguments" {
+        It "Extracts versions from mixed valid and invalid arguments" {
+            $arguments = @('--arch', 'x64', '8.2.0', '--build', 'ts', '8.3.0')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -Be @('8.2.0', '8.3.0')
+        }
+
+        It "Maintains order of versions as they appear in arguments" {
+            $arguments = @('8.1.0', '8.2.0', '8.3.0')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result[0] | Should -Be '8.1.0'
+            $result[1] | Should -Be '8.2.0'
+            $result[2] | Should -Be '8.3.0'
+        }
+
+        It "Handles single digit versions" {
+            $arguments = @('7', '8')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -Be @('7', '8')
+        }
+
+        It "Handles versions with leading zeros" {
+            $arguments = @('08.02.00', '08.03.00')
+            $result = Resolve-VersionsFromArguments -arguments $arguments
+            $result | Should -Be @('08.02.00', '08.03.00')
+        }
+    }
+}

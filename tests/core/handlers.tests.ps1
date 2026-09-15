@@ -259,10 +259,9 @@ Describe "Invoke-Install" {
     }
 
     It "Should install detected PHP version from the project" {
-        $arguments = @('auto')
+        Mock Select-PHPVersionAutomatically { return @{ code = -1; version = '8.1' } }
 
-        Mock Get-MatchingPHPVersions { return @() }
-        Mock Find-PHPVersionFromProject { return '8.1' }
+        $arguments = @('auto')
         $result = Invoke-Install -arguments $arguments
         $result | Should -Be 0
 
@@ -292,13 +291,84 @@ Describe "Invoke-Install" {
         $result | Should -Be -1
     }
 
-    It "Should return -1 when detected PHP version is already installed" {
-        $arguments = @('auto')
-        Mock Select-PHPVersionAutomatically { return @{ code = 0; version = '8.2' } }
+    It "Should resturn -1 when version property is null and displays a warning message" {
+        $arguments = @('latest')
+        Mock Get-LatestPHPVersion { return @{version = $null } }
 
         $result = Invoke-Install -arguments $arguments
 
         $result | Should -Be -1
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Please provide a PHP version to install*' }
+    }
+
+    It "Should return -1 when detected PHP version is already installed" {
+        Mock Select-PHPVersionAutomatically { return @{ code = 0; version = '8.2' } }
+
+        $arguments = @('auto')
+        $result = Invoke-Install -arguments $arguments
+
+        $result | Should -Be -1
+    }
+
+    It "Should install multiple PHP versions when multiple versions are provided" {
+        $arguments = @('8.2.0', '8.3.0', '8.1.0')
+        Mock Install-PHP { return 0 }
+
+        $result = Invoke-Install -arguments $arguments
+        $result | Should -Be 0
+
+        Should -Invoke Install-PHP -Times 3
+    }
+
+    It "Should install each version with correct parameters when multiple versions are provided" {
+        $arguments = @('8.2.0', '8.3.0')
+        Mock Install-PHP { return 0 }
+
+        $result = Invoke-Install -arguments $arguments
+        $result | Should -Be 0
+
+        Should -Invoke Install-PHP -Times 1 -ParameterFilter { $version -eq '8.2.0' }
+        Should -Invoke Install-PHP -Times 1 -ParameterFilter { $version -eq '8.3.0' }
+    }
+
+    It "Should return -1 when any version installation fails in multiple versions" {
+        $arguments = @('8.2.0', '8.3.0')
+        Mock Install-PHP { return 0 }
+        Mock Install-PHP { return -1 } -ParameterFilter { $version -eq '8.3.0' }
+
+        $result = Invoke-Install -arguments $arguments
+        $result | Should -Be -1
+    }
+
+    It "Should continue installing remaining versions even if one fails" {
+        $arguments = @('8.2.0', '8.3.0', '8.1.0')
+        Mock Install-PHP { return 0 }
+        Mock Install-PHP { return -1 } -ParameterFilter { $version -eq '8.3.0' }
+
+        $result = Invoke-Install -arguments $arguments
+        $result | Should -Be -1
+
+        Should -Invoke Install-PHP -Times 3
+    }
+
+    It "Should handle multiple versions with arch and buildType flags" {
+        $arguments = @('8.2.0', '8.3.0', 'x64', 'ts')
+        Mock Install-PHP { return 0 }
+
+        $result = Invoke-Install -arguments $arguments
+        $result | Should -Be 0
+
+        Should -Invoke Install-PHP -Times 2 -ParameterFilter { $arch -eq 'x64' -and $buildType -eq 'ts' }
+    }
+
+    It "Should filter out non-version arguments when installing multiple versions" {
+        $arguments = @('8.2.0', '--flag', '8.3.0', '--another-flag')
+        Mock Install-PHP { return 0 }
+
+        $result = Invoke-Install -arguments $arguments
+        $result | Should -Be 0
+
+        Should -Invoke Install-PHP -Times 2
     }
 }
 
@@ -405,6 +475,87 @@ Describe "Invoke-Uninstall" {
         Should -Invoke Uninstall-PHP -Exactly 1 -ParameterFilter {
             $version -eq '8.2.0' -and $skipConfirmation -eq $false
         }
+    }
+
+    It "Should uninstall multiple PHP versions when multiple versions are provided" {
+        $arguments = @('8.2.0', '8.3.0', '8.1.0')
+        Mock Uninstall-PHP { return 0 }
+
+        $result = Invoke-Uninstall -arguments $arguments
+        $result | Should -Be 0
+
+        Should -Invoke Uninstall-PHP -Times 3
+    }
+
+    It "Should uninstall each version with correct parameters when multiple versions are provided" {
+        $arguments = @('8.2.0', '8.3.0')
+        Mock Uninstall-PHP { return 0 }
+
+        $result = Invoke-Uninstall -arguments $arguments
+        $result | Should -Be 0
+
+        Should -Invoke Uninstall-PHP -Times 1 -ParameterFilter { $version -eq '8.2.0' }
+        Should -Invoke Uninstall-PHP -Times 1 -ParameterFilter { $version -eq '8.3.0' }
+    }
+
+    It "Should return -1 when any version uninstall fails in multiple versions" {
+        $arguments = @('8.2.0', '8.3.0')
+        Mock Uninstall-PHP { return 0 }
+        Mock Uninstall-PHP { return -1 } -ParameterFilter { $version -eq '8.3.0' }
+
+        $result = Invoke-Uninstall -arguments $arguments
+        $result | Should -Be -1
+    }
+
+    It "Should continue uninstalling remaining versions even if one fails" {
+        $arguments = @('8.2.0', '8.3.0', '8.1.0')
+        Mock Uninstall-PHP { return 0 }
+        Mock Uninstall-PHP { return -1 } -ParameterFilter { $version -eq '8.3.0' }
+
+        $result = Invoke-Uninstall -arguments $arguments
+        $result | Should -Be -1
+
+        Should -Invoke Uninstall-PHP -Times 3
+    }
+
+    It "Should pass skipConfirmation true to all versions when -y flag is provided with multiple versions" {
+        $arguments = @('8.2.0', '8.3.0', '-y')
+        Mock Uninstall-PHP { return 0 }
+
+        $result = Invoke-Uninstall -arguments $arguments
+        $result | Should -Be 0
+
+        Should -Invoke Uninstall-PHP -Times 2 -ParameterFilter { $skipConfirmation -eq $true }
+    }
+
+    It "Should pass skipConfirmation true to all versions when --yes flag is provided with multiple versions" {
+        $arguments = @('8.2.0', '8.3.0', '--yes')
+        Mock Uninstall-PHP { return 0 }
+
+        $result = Invoke-Uninstall -arguments $arguments
+        $result | Should -Be 0
+
+        Should -Invoke Uninstall-PHP -Times 2 -ParameterFilter { $skipConfirmation -eq $true }
+    }
+
+    It "Should filter out non-version arguments when uninstalling multiple versions" {
+        $arguments = @('8.2.0', '--flag', '8.3.0', '--another-flag')
+        Mock Uninstall-PHP { return 0 }
+
+        $result = Invoke-Uninstall -arguments $arguments
+        $result | Should -Be 0
+
+        Should -Invoke Uninstall-PHP -Times 2
+    }
+
+    It "Should handle mixed version and flag arguments correctly" {
+        $arguments = @('8.2.0', '-y', '8.3.0', '--force')
+        Mock Uninstall-PHP { return 0 }
+
+        $result = Invoke-Uninstall -arguments $arguments
+        $result | Should -Be 0
+
+        Should -Invoke Uninstall-PHP -Times 2 -ParameterFilter { $skipConfirmation -eq $true }
     }
 }
 

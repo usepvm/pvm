@@ -209,9 +209,7 @@ function Invoke-Ini {
         return -1
     }
 
-    $remainingArgs = if ($arguments.Count -gt 1) {
-        $arguments[1..($arguments.Count - 1)] | Where-Object -FilterScript { $_ -ne $arch }
-    } else { @() }
+    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
 
     return (Invoke-IniAction -action $action -params $remainingArgs)
 }

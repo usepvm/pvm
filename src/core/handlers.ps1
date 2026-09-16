@@ -120,10 +120,10 @@ function Invoke-List {
 function Invoke-Install {
     param ($arguments)
 
-    $version = $arguments[0]
     $arch = Resolve-Arch -arguments $arguments
     $buildType = Resolve-BuildType -arguments $arguments
 
+    $version = $arguments[0]
     if ($version -eq 'auto') {
         $result = Select-PHPVersionAutomatically
         if (-not $result.version) {
@@ -136,24 +136,40 @@ function Invoke-Install {
             return -1
         }
 
-        $version = $result.version
-    } elseif ($version -eq 'latest') {
+        return (Install-PHP -version $result.version -arch $arch -buildType $buildType)
+    }
+
+    if ($version -eq 'latest') {
         $latestVersion = Get-LatestPHPVersion -arch $arch -buildType $buildType
         if (-not $latestVersion) {
             Show-Error -message "`nFailed to find the latest PHP version"
             return -1
         }
 
-        $version = $latestVersion.version
-        Show-Message -message "`nLatest available PHP version is $version"
+        if (-not $latestVersion.version) {
+            Show-Warning -message "`nPlease provide a PHP version to install"
+            return -1
+        }
+
+        Show-Message -message "`nLatest available PHP version is $($latestVersion.version)"
+
+        return (Install-PHP -version $latestVersion.version -arch $arch -buildType $buildType)
     }
 
-    if (-not $version) {
+    $versions = Resolve-VersionsFromArguments -arguments $arguments
+
+    if ($versions.Count -eq 0) {
         Show-Warning -message "`nPlease provide a PHP version to install"
         return -1
     }
 
-    return (Install-PHP -version $version -arch $arch -buildType $buildType)
+    $codes = @()
+    foreach ($version in $versions) {
+        $codes += Install-PHP -version $version -arch $arch -buildType $buildType
+    }
+
+    if ($codes | Where-Object -FilterScript { $_ -ne 0 }) { return -1 }
+    return 0
 }
 
 function Invoke-Use {
@@ -187,17 +203,24 @@ function Invoke-Use {
 function Invoke-Uninstall {
     param ($arguments)
 
-    $version = $arguments[0]
+    $versions = Resolve-VersionsFromArguments -arguments $arguments
 
-    if (-not $version) {
+    if ($versions.Count -eq 0) {
         Show-Warning -message "`nPlease provide a PHP version to uninstall"
         return -1
     }
 
-    $remainingArgs = if ($arguments.Count -gt 1) { $arguments[1..($arguments.Count - 1)] } else { @() }
+    $remainingArgs = $arguments | Where-Object -FilterScript { $_ -notin $versions }
     $skipConfirmation = [bool]($remainingArgs | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
 
-    return (Uninstall-PHP -version $version -skipConfirmation $skipConfirmation)
+    $results = @()
+    foreach ($version in $versions) {
+        $result = Uninstall-PHP -version $version -skipConfirmation $skipConfirmation
+        $results += $result
+    }
+
+    if ($results | Where-Object -FilterScript { $_ -ne 0 }) { return -1 }
+    return 0
 }
 
 function Invoke-Ini {

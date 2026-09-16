@@ -1,4 +1,4 @@
-
+﻿
 function Resolve-Alias {
     param ($alias)
 
@@ -64,4 +64,12 @@ function Resolve-Arch {
     }
 
     return $arch
+}
+
+function Resolve-VersionsFromArguments {
+    param ($arguments)
+
+    $versions = $arguments | Where-Object -FilterScript { $_ -match '^\d+(\.\d+){0,2}$' }
+
+    return $versions
 }

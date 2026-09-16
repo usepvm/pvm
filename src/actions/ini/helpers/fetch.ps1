@@ -46,8 +46,11 @@ function Get-ExtensionHandlers {
                             FullName = "$($Global:PVMConfig.paths.directories.php)\$($chosenItem.fileName)"
                         }
 
+                        $existingFile = $null
                         if (-not $skipConfirmation) {
-                            if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
+                            $extIdName = ConvertTo-ExtensionId -name $extFile.Name
+                            $existingFile = Get-ChildItemWrapper -path "$phpPath\ext" -Filter "*$extIdName*"
+                            if ($existingFile) {
                                 $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
                                 if (Test-NoResponse -response $response) {
                                     Remove-ItemWrapper -path $extFile.FullName
@@ -57,6 +60,9 @@ function Get-ExtensionHandlers {
                             }
                         }
 
+                        if ($existingFile) {
+                            Remove-ItemWrapper -path $existingFile
+                        }
                         Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
                         return $extFile
                     } catch {
@@ -107,8 +113,11 @@ function Get-ExtensionHandlers {
                             return $null
                         }
 
+                        $existingFile = $null
                         if (-not $skipConfirmation) {
-                            if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
+                            $extIdName = ConvertTo-ExtensionId -name $extFile.Name
+                            $existingFile = Get-ChildItemWrapper -path "$phpPath\ext" -Filter "*$extIdName*"
+                            if ($existingFile) {
                                 $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
                                 if (Test-NoResponse -response $response) {
                                     Remove-ItemWrapper -path $extractPath
@@ -118,6 +127,9 @@ function Get-ExtensionHandlers {
                             }
                         }
 
+                        if ($existingFile) {
+                            Remove-ItemWrapper -path $existingFile
+                        }
                         Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
                         Remove-ItemWrapper -path $extractPath
                         return $extFile
@@ -137,16 +149,57 @@ function Get-ExtensionHandlers {
                 param ($iniPath, $fileName, $extVersion)
 
                 try {
+                    # Remove existing xdebug config using the config functions
+                    $xdebugV2Config = Get-XdebugConfigV2 -XDebugPath $fileName
+                    $xdebugV3Config = Get-XdebugConfigV3 -XDebugPath $fileName
+
+                    $lines = Get-ContentWrapper -path $iniPath
+                    $newLines = @()
+
+                    # Build patterns from the actual config functions
+                    $xdebugPatterns = @(
+                        '^\[xdebug\]',
+                        '^;?zend_extension=.*xdebug'
+                    )
+
+                    # Add patterns from v2 config
+                    foreach ($line in $xdebugV2Config) {
+                        if ($line -match '^xdebug\.\w+') {
+                            $key = $line -replace '^xdebug\.(\w+)=.*$', '$1'
+                            $xdebugPatterns += "^xdebug\.$key"
+                        }
+                    }
+
+                    # Add patterns from v3 config
+                    foreach ($line in $xdebugV3Config) {
+                        if ($line -match '^xdebug\.\w+') {
+                            $key = $line -replace '^xdebug\.(\w+)=.*$', '$1'
+                            $xdebugPatterns += "^xdebug\.$key"
+                        }
+                    }
+
+                    foreach ($line in $lines) {
+                        $isXdebugLine = $false
+                        foreach ($pattern in $xdebugPatterns) {
+                            if ($line -match $pattern) {
+                                $isXdebugLine = $true
+                                break
+                            }
+                        }
+                        if (-not $isXdebugLine) {
+                            $newLines += $line
+                        }
+                    }
+
+                    Set-ContentWrapper -path $iniPath -value $newLines
+
+                    # Add new xdebug config
                     $xDebugConfig = Get-XdebugConfigV2 -XDebugPath $fileName
                     if ($extVersion -like '3.*') {
                         $xDebugConfig = Get-XdebugConfigV3 -XDebugPath $fileName
                     }
-
-                    $iniContent = Get-ContentWrapper -path $iniPath
-                    if ($iniContent -notcontains '[xdebug]') {
-                        $xDebugConfig = "`n$($xDebugConfig -join "`n")"
-                        Add-ContentWrapper -path $iniPath -value $xDebugConfig
-                    }
+                    $xDebugConfig = "`n$($xDebugConfig -join "`n")"
+                    Add-ContentWrapper -path $iniPath -value $xDebugConfig
 
                     return 0
                 } catch {

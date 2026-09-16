@@ -134,6 +134,7 @@ function Get-Config {
     $profiles = "$data\profiles"
     $templates = "$data\templates"
     $logs = "$storage\logs"
+    $state = "$storage\state"
     $fakeStorage = $envConfig['TEST_DRIVE']
 
     $isValidPathFormat = -not [string]::IsNullOrWhiteSpace($fakeStorage) `
@@ -160,6 +161,7 @@ function Get-Config {
                 cache              = "$data\cache"
                 profiles           = $profiles
                 log                = $logs
+                state              = $state
                 assets             = "$rootPath\assets"
             }
             files       = @{
@@ -169,7 +171,8 @@ function Get-Config {
                 aliasesList        = "$templates\aliases.json"
                 scriptsList        = "$templates\scripts.json"
                 logError           = "$logs\error.log"
-                pathVarBackup      = "$logs\path.bak.log"
+                pathVarBackup      = "$state\path.bak.log"
+                lastUpdateCheck    = "$state\last_update_check.txt"
             }
         }
 

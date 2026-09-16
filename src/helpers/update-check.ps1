@@ -1,7 +1,7 @@
 ﻿
 function Get-LastUpdateCheckTimestamp {
     try {
-        $timestampFile = "$($Global:PVMConfig.paths.directories.cache)\last_update_check.txt"
+        $timestampFile = $Global:PVMConfig.paths.files.lastUpdateCheck
         if (Test-FileExists -path $timestampFile) {
             return [DateTime](Get-ContentWrapper -path $timestampFile)
         }
@@ -13,10 +13,10 @@ function Get-LastUpdateCheckTimestamp {
 
 function Set-LastUpdateCheckTimestamp {
     try {
-        $timestampFile = "$($Global:PVMConfig.paths.directories.cache)\last_update_check.txt"
-        $created = New-Directory -path $Global:PVMConfig.paths.directories.cache
+        $timestampFile = $Global:PVMConfig.paths.files.lastUpdateCheck
+        $created = New-Directory -path $Global:PVMConfig.paths.directories.state
         if ($created -ne 0) {
-            Show-Error -message "`nFailed to create cache directory."
+            Show-Error -message "`nFailed to create state directory."
             return -1
         }
         Set-ContentWrapper -path $timestampFile -value (Get-Date)

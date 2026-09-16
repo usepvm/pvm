@@ -12,9 +12,9 @@ AfterAll {
 
 Describe "Get-LastUpdateCheckTimestamp" {
     BeforeAll {
-        $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
-        New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
-        $script:TIMESTAMP_FILE = "$CACHE_PATH\last_update_check.txt"
+        $script:STATE_PATH = $Global:PVMConfig.paths.directories.state
+        New-Item -ItemType Directory -Path $STATE_PATH -Force | Out-Null
+        $script:TIMESTAMP_FILE = "$STATE_PATH\last_update_check.txt"
     }
 
     AfterEach {
@@ -53,8 +53,8 @@ Describe "Get-LastUpdateCheckTimestamp" {
 
 Describe "Set-LastUpdateCheckTimestamp" {
     BeforeAll {
-        $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
-        $script:TIMESTAMP_FILE = "$CACHE_PATH\last_update_check.txt"
+        $script:STATE_PATH = $Global:PVMConfig.paths.directories.state
+        $script:TIMESTAMP_FILE = "$STATE_PATH\last_update_check.txt"
     }
 
     Context "When writing succeeds" {
@@ -66,12 +66,12 @@ Describe "Set-LastUpdateCheckTimestamp" {
 
             $result | Should -Be 0
             Should -Invoke New-Directory -Times 1 -ParameterFilter {
-                $path -eq $CACHE_PATH
+                $path -eq $STATE_PATH
             }
         }
 
         It "Writes the current date to the timestamp file and returns 0" {
-            New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
+            New-Item -ItemType Directory -Path $STATE_PATH -Force | Out-Null
 
             $result = Set-LastUpdateCheckTimestamp
 
@@ -93,7 +93,7 @@ Describe "Set-LastUpdateCheckTimestamp" {
             Should -Invoke Set-ContentWrapper -Times 0
         }
         It "Returns -1 when Set-ContentWrapper throws" {
-            New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
+            New-Item -ItemType Directory -Path $STATE_PATH -Force | Out-Null
             Mock Set-ContentWrapper { throw 'Test exception' }
 
             $result = Set-LastUpdateCheckTimestamp

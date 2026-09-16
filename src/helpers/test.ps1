@@ -372,6 +372,7 @@ function Set-FakePaths {
     $fakeProfiles = "$fakeData\profiles"
     $fakeTemplates = "$fakeData\templates"
     $fakeLogs = "$fakeStorage\logs"
+    $fakeState = "$fakeStorage\state"
 
     $Global:PVMConfig.rootPath = $root
     $Global:PVMConfig.paths.directories.root = $root
@@ -383,6 +384,7 @@ function Set-FakePaths {
     $Global:PVMConfig.paths.directories.cache = "$fakeData\cache"
     $Global:PVMConfig.paths.directories.profiles = $fakeProfiles
     $Global:PVMConfig.paths.directories.log = $fakeLogs
+    $Global:PVMConfig.paths.directories.state = $fakeState
     $Global:PVMConfig.paths.directories.assets = "$root\assets"
 
     $Global:PVMConfig.paths.files.profileExample = "$fakeProfiles\profile-example.json"
@@ -391,7 +393,8 @@ function Set-FakePaths {
     $Global:PVMConfig.paths.files.aliasesList = "$fakeTemplates\aliases.json"
     $Global:PVMConfig.paths.files.scriptsList = "$fakeTemplates\scripts.json"
     $Global:PVMConfig.paths.files.logError = "$fakeLogs\error.log"
-    $Global:PVMConfig.paths.files.pathVarBackup = "$fakeLogs\path.bak.log"
+    $Global:PVMConfig.paths.files.pathVarBackup = "$fakeState\path.bak.log"
+    $Global:PVMConfig.paths.files.lastUpdateCheck = "$fakeState\last_update_check.txt"
 
     $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$root\pvm\php"
 }

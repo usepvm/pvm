@@ -134,7 +134,7 @@ function Get-Config {
     $profiles = "$data\profiles"
     $templates = "$data\templates"
     $logs = "$storage\logs"
-    $state = "$storage\state"
+    $state = "$data\state"
     $fakeStorage = $envConfig['TEST_DRIVE']
 
     $isValidPathFormat = -not [string]::IsNullOrWhiteSpace($fakeStorage) `

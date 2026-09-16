@@ -372,7 +372,7 @@ function Set-FakePaths {
     $fakeProfiles = "$fakeData\profiles"
     $fakeTemplates = "$fakeData\templates"
     $fakeLogs = "$fakeStorage\logs"
-    $fakeState = "$fakeStorage\state"
+    $fakeState = "$fakeData\state"
 
     $Global:PVMConfig.rootPath = $root
     $Global:PVMConfig.paths.directories.root = $root

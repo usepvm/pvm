@@ -843,8 +843,8 @@ MIN_LINE_LENGTH=50
         $Global:PVMConfig.paths.files.aliasesList | Should -Be "$fakeRoot\storage\data\templates\aliases.json"
         $Global:PVMConfig.paths.files.scriptsList | Should -Be "$fakeRoot\storage\data\templates\scripts.json"
         $Global:PVMConfig.paths.files.logError | Should -Be "$fakeRoot\storage\logs\error.log"
-        $Global:PVMConfig.paths.files.pathVarBackup | Should -Be "$fakeRoot\storage\state\path.bak.log"
-        $Global:PVMConfig.paths.files.lastUpdateCheck | Should -Be "$fakeRoot\storage\state\last_update_check.txt"
+        $Global:PVMConfig.paths.files.pathVarBackup | Should -Be "$fakeRoot\storage\data\state\path.bak.log"
+        $Global:PVMConfig.paths.files.lastUpdateCheck | Should -Be "$fakeRoot\storage\data\state\last_update_check.txt"
     }
 
     It "Rewrites env.PHP_CURRENT_VERSION_PATH under the given root" {

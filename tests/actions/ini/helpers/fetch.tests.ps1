@@ -4,7 +4,7 @@ BeforeAll {
     $script:TEST_DRIVE = $TestEnvironment.TestDrive
 
     $script:testPhpPath = "$TEST_DRIVE\php"
-    $script:testIniPath = "$testIniPath\php.ini"
+    $script:testIniPath = "$testPhpPath\php.ini"
     $script:XDEBUG_HISTORICAL_URL = $Global:PVMConfig.links.xdebugHistorical
     $script:PECL_BASE_URL = $Global:PVMConfig.links.peclBase
     $script:PECL_PACKAGES_URL = $Global:PVMConfig.links.peclPackages
@@ -122,7 +122,7 @@ Describe "Get-ExtensionHandlers" {
         It "Returns null when user cancels" {
             Mock Get-XDebugFromUrl { return $null }
             Mock Invoke-WebRequestWrapper { return $null }
-            Mock Test-FileExists { return $true }
+            Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$testPhpPath\ext" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
             Mock Remove-ItemWrapper { }
@@ -141,7 +141,37 @@ Describe "Get-ExtensionHandlers" {
             $result | Should -BeNullOrEmpty
             Should -Invoke Get-XDebugFromUrl -Times 1
             Should -Invoke Invoke-WebRequestWrapper -Times 1
+            Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -like "*$($chosenItem.fileName)*" } -Times 1
             Should -Invoke Write-Gray -ParameterFilter { $message -like '*Installation cancelled*' }
+        }
+
+        It "Removes the existing file when ext id name matches" {
+            Mock Get-XDebugFromUrl { return $null }
+            Mock Invoke-WebRequestWrapper { return $null }
+            Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$testPhpPath\ext" }
+            $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
+            Mock Remove-ItemWrapper { }
+            Mock Move-ItemWrapper { }
+
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['xdebug.org']
+
+            $handler | Should -Not -BeNullOrEmpty
+            $handler.GetPackages | Should -Not -BeNullOrEmpty
+            $handler.Download | Should -Not -BeNullOrEmpty
+            $handler.MoreInfoUrl | Should -Be $XDEBUG_HISTORICAL_URL
+
+            $null = & $handler.GetPackages -version '8.5'
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $testPhpPath -skipConfirmation $false
+
+            $result | Should -Not -BeNullOrEmpty
+            $result.Name | Should -Be $chosenItem.fileName
+            $result.FullName | Should -Be "$($Global:PVMConfig.paths.directories.php)\$($chosenItem.fileName)"
+            Should -Invoke Get-XDebugFromUrl -Times 1
+            Should -Invoke Invoke-WebRequestWrapper -Times 1
+            Should -Invoke Remove-ItemWrapper -ParameterFilter { $path.Name -eq 'php_xdebug.dll' } -Times 1
+            Should -Invoke Move-ItemWrapper -Times 1
         }
 
         It "Returns downloaded file" {
@@ -282,8 +312,9 @@ Describe "Get-ExtensionHandlers" {
             Mock Invoke-WebRequestWrapper { return $null }
             Mock Expand-Zip { }
             $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$TEST_DRIVE\extracted\php_xdebug.dll" }
-            Mock Get-ChildItemWrapper { return @( $mockFile ) }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
+            Mock Get-ChildItemWrapper { return @( $mockFile ) } -ParameterFilter { $path -like "*$($chosenItem.fileName)*" }
+            Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$testPhpPath\ext" }
             Mock Test-FileExists { return $true }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($mockFile.Name) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
             Mock Remove-ItemWrapper { }
@@ -313,6 +344,45 @@ Describe "Get-ExtensionHandlers" {
             $link | Should -Be "$PECL_PACKAGE_ROOT_URL/xdebug"
             Should -Invoke Write-Gray -ParameterFilter { $message -like '*Installation cancelled*' }
             Should -Invoke Get-PackagesFromSourceLinks -Times 1
+            Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -like "*$($chosenItem.fileName)*" } -Times 1
+        }
+
+        It "Removes the existing file when ext id name matches" {
+            Mock Get-PackagesFromSourceLinks { return $null }
+            Mock Invoke-WebRequestWrapper { return $null }
+            Mock Expand-Zip { }
+            $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($mockFile.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
+            Mock Move-ItemWrapper { }
+            Mock Remove-ItemWrapper { }
+            $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$TEST_DRIVE\extracted\php_xdebug.dll" }
+            Mock Get-ChildItemWrapper { return @( $mockFile ) } -ParameterFilter { $path -like "*$($chosenItem.fileName)*" }
+            Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$testPhpPath\ext" }
+
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['pecl.php.net']
+
+            $handler | Should -Not -BeNullOrEmpty
+            $handler.GetPackages | Should -Not -BeNullOrEmpty
+            $handler.Download | Should -Not -BeNullOrEmpty
+            $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
+
+            $links = @{
+                extName = 'xdebug'
+                source = 'pecl.php.net'
+                links = @(
+                    @{ href = "$PECL_BASE_URL/package/xdebug/3.4.0/windows" },
+                    @{ href = "$PECL_BASE_URL/package/xdebug/3.3.0/windows" },
+                    @{ href = "$PECL_BASE_URL/package/xdebug/3.2.0/windows" }
+                )
+            }
+            $null = & $handler.GetPackages -version '8.5' -linksObj $links
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $testPhpPath -skipConfirmation $false -extName 'xdebug'
+
+            $result.FullName | Should -Be $mockFile.FullName
+            $result.Name | Should -Be $mockFile.Name
+            Should -Invoke Get-PackagesFromSourceLinks -Times 1
+            Should -Invoke Remove-ItemWrapper -ParameterFilter { $path.Name -eq 'php_xdebug.dll' } -Times 1
         }
 
         It "Returns downloaded file" {
@@ -383,7 +453,15 @@ Describe "Get-ExtensionHandlers" {
     }
     Context "When running config actions from selected config handler" {
         It "Configures xdebug in ini file" {
-            Mock Get-ContentWrapper { return '' }
+            $iniContent = @(
+                ';extension=php_sqlsrv.dll',
+                '',
+                '[xdebug]',
+                'zend_extension=php_xdebug.dll',
+                'xdebug.mode=debug'
+            )
+            Mock Get-ContentWrapper { return $iniContent }
+            Mock Set-ContentWrapper { }
             Mock Add-ContentWrapper { }
 
             $configHandlers = (Get-ExtensionHandlers).ExtensionConfigHandlers
@@ -393,6 +471,7 @@ Describe "Get-ExtensionHandlers" {
 
             $configHandler | Should -Not -BeNullOrEmpty
             $result | Should -Be 0
+            Should -Invoke Set-ContentWrapper -Times 1
             Should -Invoke Add-ContentWrapper -Times 1
         }
 

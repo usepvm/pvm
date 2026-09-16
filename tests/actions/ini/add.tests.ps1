@@ -452,6 +452,9 @@ Describe "Install-Extension" {
             "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0alpha2/php_curl-1.5.0alpha2-8.2-ts-vs16-x64.zip"   = @{
                 Content = 'Mocked PHP curl 1.5.0alpha2 zip content'
             }
+            "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip"               = @{
+                Content = 'Mocked PHP curl 1.5.0alpha2 zip content'
+            }
             "$PECL_PACKAGE_ROOT_URL/curl/2.1.0/windows"                                              = @{
                 Content = 'Mocked PHP curl 2.1.0 content'
                 Links   = @()
@@ -595,10 +598,9 @@ Describe "Install-Extension" {
                 )
             }
         }
-        Mock Test-FileExists { return $false }
         Mock Add-MissingPHPExtensionToIni { return 0 }
 
-        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl' -skipConfirmation $true
         $code | Should -Be 0
     }
 
@@ -694,13 +696,12 @@ Describe "Install-Extension" {
                     )
                 }
             }
-            Mock Test-FileExists { return $false }
             Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
                 return 'y'
             }
             Mock Add-MissingPHPExtensionToIni { return 0 }
 
-            $code = Install-Extension -iniPath $testIniPath -extName 'cour'
+            $code = Install-Extension -iniPath $testIniPath -extName 'cour' -skipConfirmation $true
             $code | Should -Be 0
         }
 
@@ -733,9 +734,17 @@ Describe "Install-Extension" {
         }
     }
 
-    It "Handles thrown exception" {
+    It "Handles thrown exception from download" {
         $script:MockFileSystem.DownloadFails = $true
         $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+        $code | Should -Be -1
+    }
+
+    It "Handles thrown exception from config" {
+        $script:MockFileSystem.DownloadFails = $false
+        Mock Add-MissingPHPExtensionToIni { return -1 }
+
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl' -skipConfirmation $true
         $code | Should -Be -1
     }
 
@@ -755,10 +764,9 @@ Describe "Install-Extension" {
             }
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
-        Mock Test-FileExists { return $false }
         Mock Add-MissingPHPExtensionToIni { return 0 }
 
-        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl' -skipConfirmation $true
         $code | Should -Be 0
     }
 
@@ -775,10 +783,9 @@ Describe "Install-Extension" {
             }
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
-        Mock Test-FileExists { return $false }
         Mock Add-MissingPHPExtensionToIni { return 0 }
 
-        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl' -skipConfirmation $true
         $code | Should -Be 0
     }
 
@@ -795,10 +802,9 @@ Describe "Install-Extension" {
             }
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
-        Mock Test-FileExists { return $false }
         Mock Add-MissingPHPExtensionToIni { return 0 }
 
-        $code = Install-Extension -iniPath $testIniPath -extName 'curl'
+        $code = Install-Extension -iniPath $testIniPath -extName 'curl' -skipConfirmation $true
         $code | Should -Be 0
     }
 

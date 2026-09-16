@@ -46,8 +46,11 @@ function Get-ExtensionHandlers {
                             FullName = "$($Global:PVMConfig.paths.directories.php)\$($chosenItem.fileName)"
                         }
 
+                        $existingFile = $null
                         if (-not $skipConfirmation) {
-                            if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
+                            $extIdName = ConvertTo-ExtensionId -name $extFile.Name
+                            $existingFile = Get-ChildItemWrapper -path "$phpPath\ext" -Filter "*$extIdName*"
+                            if ($existingFile) {
                                 $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
                                 if (Test-NoResponse -response $response) {
                                     Remove-ItemWrapper -path $extFile.FullName
@@ -57,6 +60,9 @@ function Get-ExtensionHandlers {
                             }
                         }
 
+                        if ($existingFile) {
+                            Remove-ItemWrapper -path $existingFile
+                        }
                         Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
                         return $extFile
                     } catch {
@@ -107,8 +113,11 @@ function Get-ExtensionHandlers {
                             return $null
                         }
 
+                        $existingFile = $null
                         if (-not $skipConfirmation) {
-                            if (Test-FileExists -path "$phpPath\ext\$($extFile.Name)") {
+                            $extIdName = ConvertTo-ExtensionId -name $extFile.Name
+                            $existingFile = Get-ChildItemWrapper -path "$phpPath\ext" -Filter "*$extIdName*"
+                            if ($existingFile) {
                                 $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
                                 if (Test-NoResponse -response $response) {
                                     Remove-ItemWrapper -path $extractPath
@@ -118,6 +127,9 @@ function Get-ExtensionHandlers {
                             }
                         }
 
+                        if ($existingFile) {
+                            Remove-ItemWrapper -path $existingFile
+                        }
                         Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
                         Remove-ItemWrapper -path $extractPath
                         return $extFile

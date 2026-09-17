@@ -201,10 +201,10 @@ Describe "Select-ExtensionPackageLink" {
 
 Describe "Get-PrereleaseSortKey" {
     It "Scores stable higher than rc/beta/alpha for the same version" {
-        $stable = Get-PrereleaseSortKey -Name '3.1.0'
-        $rc     = Get-PrereleaseSortKey -Name '3.1.0rc1'
-        $beta   = Get-PrereleaseSortKey -Name '3.1.0beta1'
-        $alpha  = Get-PrereleaseSortKey -Name '3.1.0alpha1'
+        $stable = Get-PrereleaseSortKey -name '3.1.0'
+        $rc     = Get-PrereleaseSortKey -name '3.1.0rc1'
+        $beta   = Get-PrereleaseSortKey -name '3.1.0beta1'
+        $alpha  = Get-PrereleaseSortKey -name '3.1.0alpha1'
 
         $stable | Should -BeGreaterThan $rc
         $rc     | Should -BeGreaterThan $beta
@@ -212,21 +212,21 @@ Describe "Get-PrereleaseSortKey" {
     }
 
     It "Scores higher prerelease numbers higher within the same tier" {
-        (Get-PrereleaseSortKey -Name '3.1.0rc2')    | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0rc1')
-        (Get-PrereleaseSortKey -Name '3.1.0beta2')  | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0beta1')
-        (Get-PrereleaseSortKey -Name '3.1.0alpha2') | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0alpha1')
+        (Get-PrereleaseSortKey -name '3.1.0rc2')    | Should -BeGreaterThan (Get-PrereleaseSortKey -name '3.1.0rc1')
+        (Get-PrereleaseSortKey -name '3.1.0beta2')  | Should -BeGreaterThan (Get-PrereleaseSortKey -name '3.1.0beta1')
+        (Get-PrereleaseSortKey -name '3.1.0alpha2') | Should -BeGreaterThan (Get-PrereleaseSortKey -name '3.1.0alpha1')
     }
 
     It "Scores higher base versions higher regardless of prerelease tier" {
-        (Get-PrereleaseSortKey -Name '3.2.0alpha1') | Should -BeGreaterThan (Get-PrereleaseSortKey -Name '3.1.0')
+        (Get-PrereleaseSortKey -name '3.2.0alpha1') | Should -BeGreaterThan (Get-PrereleaseSortKey -name '3.1.0')
     }
 
     It "Treats missing version segments as zero" {
-        Get-PrereleaseSortKey -Name '3.1' | Should -Be (Get-PrereleaseSortKey -Name '3.1.0')
+        Get-PrereleaseSortKey -name '3.1' | Should -Be (Get-PrereleaseSortKey -name '3.1.0')
     }
 
     It "Does not overflow Int32 for realistic version numbers" {
-        $score = Get-PrereleaseSortKey -Name '1.5.0'
+        $score = Get-PrereleaseSortKey -name '1.5.0'
         $score | Should -BeOfType [long]
         $score | Should -BeGreaterThan ([int32]::MaxValue)
     }

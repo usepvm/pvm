@@ -1044,7 +1044,7 @@ Describe "Get-PHPData" {
     }
 
     It "Returns extensions with correct status" {
-        $extensions = (Get-PHPData -PhpIniPath $testIniPath).extensions
+        $extensions = (Get-PHPData -phpIniPath $script:testIniPath).extensions
         $extensions | Should -Not -Be $null
         $extensions.Count | Should -BeGreaterThan 0
 
@@ -1056,8 +1056,8 @@ Describe "Get-PHPData" {
     }
 
     It "Handles empty ini file" {
-        '' | Set-ContentWrapper -path $testIniPath
-        $extensions = (Get-PHPData -PhpIniPath $testIniPath).extensions
+        '' | Set-ContentWrapper -path $script:testIniPath
+        $extensions = (Get-PHPData -phpIniPath $script:testIniPath).extensions
         $extensions.Count | Should -Be 0
     }
 }

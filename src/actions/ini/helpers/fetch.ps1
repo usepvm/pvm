@@ -150,8 +150,8 @@ function Get-ExtensionHandlers {
 
                 try {
                     # Remove existing xdebug config using the config functions
-                    $xdebugV2Config = Get-XdebugConfigV2 -XDebugPath $fileName
-                    $xdebugV3Config = Get-XdebugConfigV3 -XDebugPath $fileName
+                    $xdebugV2Config = Get-XdebugConfigV2 -dllPath $fileName
+                    $xdebugV3Config = Get-XdebugConfigV3 -dllPath $fileName
 
                     $lines = Get-ContentWrapper -path $iniPath
                     $newLines = @()
@@ -194,9 +194,9 @@ function Get-ExtensionHandlers {
                     Set-ContentWrapper -path $iniPath -value $newLines
 
                     # Add new xdebug config
-                    $xDebugConfig = Get-XdebugConfigV2 -XDebugPath $fileName
+                    $xDebugConfig = Get-XdebugConfigV2 -dllPath $fileName
                     if ($extVersion -like '3.*') {
-                        $xDebugConfig = Get-XdebugConfigV3 -XDebugPath $fileName
+                        $xDebugConfig = Get-XdebugConfigV3 -dllPath $fileName
                     }
                     $xDebugConfig = "`n$($xDebugConfig -join "`n")"
                     Add-ContentWrapper -path $iniPath -value $xDebugConfig
@@ -287,11 +287,11 @@ function Get-XDebugFromUrl {
 }
 
 function Get-XdebugConfigV2 {
-    param ($XDebugPath)
+    param ($dllPath)
 
     return @(
         '[xdebug]'
-        ";zend_extension='$XDebugPath'"
+        ";zend_extension='$dllPath'"
         'xdebug.remote_enable=1'
         'xdebug.remote_host=127.0.0.1'
         'xdebug.remote_port=9000'
@@ -299,11 +299,11 @@ function Get-XdebugConfigV2 {
 }
 
 function Get-XdebugConfigV3 {
-    param ($XDebugPath)
+    param ($dllPath)
 
     return @(
         '[xdebug]'
-        ";zend_extension='$XDebugPath'"
+        ";zend_extension='$dllPath'"
         'xdebug.mode=debug'
         'xdebug.client_host=127.0.0.1'
         'xdebug.client_port=9003'

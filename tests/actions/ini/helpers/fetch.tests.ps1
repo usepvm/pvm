@@ -636,7 +636,7 @@ Describe "Get-XDebugFromUrl" {
 
 Describe "Get-XdebugConfigV2" {
     It "Fetchs xdebug v2 config" {
-        $res = Get-XdebugConfigV2 -XDebugPath 'php_xdebug.dll'
+        $res = Get-XdebugConfigV2 -dllPath 'php_xdebug.dll'
 
         $res[0] | Should -Be '[xdebug]'
         $res[1] | Should -Be ";zend_extension='php_xdebug.dll'"
@@ -648,7 +648,7 @@ Describe "Get-XdebugConfigV2" {
 
 Describe "Get-XdebugConfigV3" {
     It "Fetchs xdebug v3 config" {
-        $res = Get-XdebugConfigV3 -XDebugPath 'php_xdebug.dll'
+        $res = Get-XdebugConfigV3 -dllPath 'php_xdebug.dll'
 
         $res[0] | Should -Be '[xdebug]'
         $res[1] | Should -Be ";zend_extension='php_xdebug.dll'"

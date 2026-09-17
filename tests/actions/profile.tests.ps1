@@ -28,7 +28,7 @@ BeforeAll {
     }
 
     Mock Get-PHPData {
-        param ($PhpIniPath)
+        param ($phpIniPath)
         return @{
             settings = @(
                 @{ Name = 'memory_limit'; Value = '128M'; Enabled = $true },

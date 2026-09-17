@@ -203,7 +203,7 @@ function Save-PHPProfile {
         }
 
         # Get current PHP configuration
-        $phpIniData = Get-PHPData -PhpIniPath $iniPath
+        $phpIniData = Get-PHPData -phpIniPath $iniPath
 
         # Build profile structure
         $userProfile = [ordered]@{

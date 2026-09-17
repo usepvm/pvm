@@ -268,9 +268,9 @@ function Get-ZendExtensionsInfo {
 }
 
 function Get-PHPData {
-    param ($PhpIniPath)
+    param ($phpIniPath)
 
-    $iniContent = Get-ContentWrapper -path $PhpIniPath
+    $iniContent = Get-ContentWrapper -path $phpIniPath
 
     $phpIniData = @{
         extensions = @()

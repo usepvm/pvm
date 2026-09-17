@@ -90,6 +90,8 @@ function Get-EnvInt {
 function Get-EnvPath {
     param ($value, $default)
 
+    if ($null -ne $value) { $value = $value.Trim() }
+
     $isValidPathFormat = -not [string]::IsNullOrWhiteSpace($value) `
         -and $value -match '^[A-Za-z]+:' `
         -and $value.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -eq -1

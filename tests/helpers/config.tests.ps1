@@ -299,9 +299,9 @@ Describe "Get-EnvPath" {
         $code | Should -Be 'C:\default'
     }
 
-    It 'returns the default when value has leading whitespace before the drive letter' {
-        $code = Get-EnvPath -value '  C:\storage\tests' -default 'C:\default'
-        $code | Should -Be 'C:\default'
+    It 'trims surrounding whitespace around a valid value' {
+        $code = Get-EnvPath -value '  C:\storage\tests  '
+        $code | Should -Be 'C:\storage\tests'
     }
 
     It 'returns the default when value contains invalid path characters' {

@@ -7,8 +7,6 @@ function Initialize-PVMTestEnvironment {
         TestDrive       = "$($Global:PVMConfig.paths.directories.testDrive)\$driveName-drive"
     }
 
-    Clear-PVMTestStorage
-
     Set-TestDrive -path $environment.TestDrive
 
     $created = New-Directory -path $environment.TestDrive
@@ -180,9 +178,11 @@ function Invoke-Tests {
 
         Show-Info -message "`nRunning tests with verbosity: $($options.verbosity)"
 
+        Clear-PVMTestStorage
         $testSummary = $tests | ForEach-Object -Process {
             Invoke-TestFile -config $config -file $_ -options $options -separatorWidth $separatorWidth -testsMap $testsMap
         }
+        Clear-PVMTestStorage
 
         $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
 

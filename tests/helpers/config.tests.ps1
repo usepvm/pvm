@@ -252,6 +252,75 @@ Describe "Get-EnvInt" {
     }
 }
 
+Describe "Get-EnvPath" {
+    It 'returns the value for a valid drive-rooted path' {
+        $code = Get-EnvPath -value 'C:\storage\tests'
+        $code | Should -Be 'C:\storage\tests'
+    }
+
+    It 'accepts any drive letter' {
+        $code = Get-EnvPath -value 'D:\foo\bar'
+        $code | Should -Be 'D:\foo\bar'
+
+        $code = Get-EnvPath -value 'z:\foo\bar'
+        $code | Should -Be 'z:\foo\bar'
+    }
+
+    It 'accepts a bare drive root' {
+        $code = Get-EnvPath -value 'C:'
+        $code | Should -Be 'C:'
+    }
+
+    It 'returns the default when value is $null' {
+        $code = Get-EnvPath -value $null -default 'C:\default'
+        $code | Should -Be 'C:\default'
+    }
+
+    It 'returns the default when value is empty string' {
+        $code = Get-EnvPath -value '' -default 'C:\default'
+        $code | Should -Be 'C:\default'
+    }
+
+    It 'returns the default when value is whitespace only' {
+        $code = Get-EnvPath -value '   ' -default 'C:\default'
+        $code | Should -Be 'C:\default'
+    }
+
+    It 'returns the default when value has no drive prefix' {
+        $code = Get-EnvPath -value 'storage\tests' -default 'C:\default'
+        $code | Should -Be 'C:\default'
+
+        $code = Get-EnvPath -value '\storage\tests' -default 'C:\default'
+        $code | Should -Be 'C:\default'
+    }
+
+    It 'returns the default for a UNC path' {
+        $code = Get-EnvPath -value '\\server\share' -default 'C:\default'
+        $code | Should -Be 'C:\default'
+    }
+
+    It 'returns the default when value has leading whitespace before the drive letter' {
+        $code = Get-EnvPath -value '  C:\storage\tests' -default 'C:\default'
+        $code | Should -Be 'C:\default'
+    }
+
+    It 'returns the default when value contains invalid path characters' {
+        $code = Get-EnvPath -value "C:\storage\test`0dir" -default 'C:\default'
+        $code | Should -Be 'C:\default'
+    }
+
+    It 'defaults to $null when no default is supplied and value is invalid' {
+        $code = Get-EnvPath -value 'garbage'
+        $code | Should -BeNullOrEmpty
+    }
+
+    It 'does not throw on any input' {
+        { Get-EnvPath -value $null } | Should -Not -Throw
+        { Get-EnvPath -value '' } | Should -Not -Throw
+        { Get-EnvPath -value 'nonsense' } | Should -Not -Throw
+    }
+}
+
 Describe "Get-EnvConfig" {
     BeforeEach {
         $script:envRoot = "$TEST_DRIVE\envconfig"

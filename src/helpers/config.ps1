@@ -87,6 +87,20 @@ function Get-EnvInt {
     return $default
 }
 
+function Get-EnvPath {
+    param ($value, $default)
+
+    $isValidPathFormat = -not [string]::IsNullOrWhiteSpace($value) `
+        -and $value -match '^[A-Za-z]+:' `
+        -and $value.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -eq -1
+
+    if (-not $isValidPathFormat) {
+        return $default
+    }
+
+    return $value
+}
+
 function Get-EnvConfig {
     param ($rootPath)
 
@@ -135,15 +149,7 @@ function Get-Config {
     $templates = "$data\templates"
     $logs = "$storage\logs"
     $state = "$data\state"
-    $testDrive = $envConfig['TEST_DRIVE']
-
-    $isValidPathFormat = -not [string]::IsNullOrWhiteSpace($testDrive) `
-        -and $testDrive -match '^[A-Za-z]+:' `
-        -and $testDrive.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -eq -1
-
-    if (-not $isValidPathFormat) {
-        $testDrive = "$storage\tests"
-    }
+    $testDrive = Get-EnvPath -value $envConfig['TEST_DRIVE'] -default "$storage\tests"
 
     return @{
         version  = '2.7' # PVM version

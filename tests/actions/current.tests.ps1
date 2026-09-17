@@ -5,7 +5,7 @@ BeforeAll {
     $script:PHP_CURRENT_DIR = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
     $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
 
-    New-Directory -path $PHP_CURRENT_DIR
+    New-Directory -path $script:PHP_CURRENT_DIR
 
     Mock Show-Error { }
 
@@ -25,7 +25,7 @@ Describe "Get-PHPStatus" {
             }
 
             # Act
-            $result = Get-PHPStatus -phpPath $PHP_DIR
+            $result = Get-PHPStatus -phpPath $script:PHP_DIR
 
             # Assert
             ($result | Where-Object -FilterScript { $_.Name -like '*opcache*' }).Enabled | Should -Be $true
@@ -43,7 +43,7 @@ Describe "Get-PHPStatus" {
             }
 
             # Act
-            $result = Get-PHPStatus -phpPath $PHP_DIR
+            $result = Get-PHPStatus -phpPath $script:PHP_DIR
 
             # Assert
             ($result | Where-Object -FilterScript { $_.Name -like '*opcache*' }).Enabled | Should -Be $false
@@ -103,7 +103,7 @@ Describe "Get-PHPStatus" {
     Context "When php.ini file does not exist" {
         It "Should return -1 when php.ini is missing" {
             # Arrange
-            $testPath = "$TEST_DRIVE\nonexistent"
+            $testPath = "$($script:TEST_DRIVE)\nonexistent"
 
             # Act
             $result = Get-PHPStatus -phpPath $testPath
@@ -131,7 +131,7 @@ Describe "Get-PHPStatus" {
             Mock Add-LogEntry { return 0 }
 
             # Act
-            $result = Get-PHPStatus -phpPath $PHP_DIR
+            $result = Get-PHPStatus -phpPath $script:PHP_DIR
 
             # Assert
             Should -Invoke Add-LogEntry -Times 1
@@ -146,7 +146,7 @@ Describe "Get-PHPStatus" {
                 return @( @{ name = 'xdebug'; status = 'Enabled'; enabled = $true; color = 'DarkGreen' } )
             }
 
-            $result = Get-PHPStatus -phpPath $PHP_DIR -version '8.5.9'
+            $result = Get-PHPStatus -phpPath $script:PHP_DIR -version '8.5.9'
 
             ($result | Where-Object -FilterScript { $_.Name -like '*opcache*' }).Enabled | Should -Be $true
         }
@@ -161,7 +161,7 @@ Describe "Get-CurrentPHPVersion" {
                     FullName = 'C:\php\current'
                     Target = 'C:\php\8.2.0'
                 }
-            } -ParameterFilter { $path -eq $PHP_CURRENT_DIR }
+            } -ParameterFilter { $path -eq $script:PHP_CURRENT_DIR }
         }
 
         It "Should return correct version information when symlink is valid" {
@@ -227,7 +227,7 @@ Describe "Get-CurrentPHPVersion" {
 
     Context "When Get-ItemWrapper returns null" {
         BeforeEach {
-            Mock Get-ItemWrapper { return $null } -ParameterFilter { $path -eq $PHP_CURRENT_DIR }
+            Mock Get-ItemWrapper { return $null } -ParameterFilter { $path -eq $script:PHP_CURRENT_DIR }
         }
 
         It "Should handle null Get-ItemWrapper result" {

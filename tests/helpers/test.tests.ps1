@@ -1,6 +1,9 @@
 ﻿
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
+
+    $script:ROOT_PATH = $Global:PVMConfig.rootPath
+    $script:TEST_DRIVE_PATH = $Global:PVMConfig.paths.directories.testDrive
 }
 
 Describe "Test-IsNotQuiet" {
@@ -62,7 +65,7 @@ Describe "Clear-TestDrive" {
 
         Clear-TestDrive
 
-        Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -eq "$($Global:PVMConfig.paths.directories.testDrive)\*" }
+        Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -eq "$script:TEST_DRIVE_PATH\*" }
     }
 }
 
@@ -396,9 +399,9 @@ Describe "Get-CoveredSourceFile" {
 
 Describe "Get-TestsMap" {
     It "Creates a mapping from test files to source files" {
-        New-Item -Path "$($Global:PVMConfig.rootPath)\src\helpers" -ItemType Directory -Force | Out-Null
-        New-Item -Path "$($Global:PVMConfig.rootPath)\src\helpers\test.ps1" -ItemType File -Force | Out-Null
-        New-Item -Path "$($Global:PVMConfig.rootPath)\src\helpers\other.ps1" -ItemType File -Force | Out-Null
+        New-Item -Path "$script:ROOT_PATH\src\helpers" -ItemType Directory -Force | Out-Null
+        New-Item -Path "$script:ROOT_PATH\src\helpers\test.ps1" -ItemType File -Force | Out-Null
+        New-Item -Path "$script:ROOT_PATH\src\helpers\other.ps1" -ItemType File -Force | Out-Null
 
         $result = Get-TestsMap
 
@@ -410,15 +413,15 @@ Describe "Get-TestsMap" {
 
 Describe "Set-CoverageConfig" {
     It "Sets coverage configuration with all parameters" {
-        New-Item -Path "$($Global:PVMConfig.rootPath)\src\helpers" -ItemType Directory -Force | Out-Null
-        New-Item -Path "$($Global:PVMConfig.rootPath)\src\helpers\test.ps1" -ItemType File -Force | Out-Null
-        New-Item -Path "$($Global:PVMConfig.rootPath)\storage\coverage\helpers" -ItemType Directory -Force | Out-Null
+        New-Item -Path "$script:ROOT_PATH\src\helpers" -ItemType Directory -Force | Out-Null
+        New-Item -Path "$script:ROOT_PATH\src\helpers\test.ps1" -ItemType File -Force | Out-Null
+        New-Item -Path "$script:ROOT_PATH\storage\coverage\helpers" -ItemType Directory -Force | Out-Null
 
         $testsMap = @{
-            "$($Global:PVMConfig.rootPath)\tests\helpers\test.tests.ps1" = @{ Name = 'test.ps1'; FullName = "$($Global:PVMConfig.rootPath)\src\helpers\test.ps1" }
+            "$script:ROOT_PATH\tests\helpers\test.tests.ps1" = @{ Name = 'test.ps1'; FullName = "$script:ROOT_PATH\src\helpers\test.ps1" }
         }
 
-        $testFile = @{ FullName = "$($Global:PVMConfig.rootPath)\tests\helpers\test.tests.ps1" }
+        $testFile = @{ FullName = "$script:ROOT_PATH\tests\helpers\test.tests.ps1" }
 
         $config = @{
             CodeCoverage = @{
@@ -436,7 +439,7 @@ Describe "Set-CoverageConfig" {
 
         $result = Set-CoverageConfig -config $config -testFile $testFile -options $options -testsMap $testsMap
 
-        $result.covered.FullName | Should -Be "$($Global:PVMConfig.rootPath)\src\helpers\test.ps1"
+        $result.covered.FullName | Should -Be "$script:ROOT_PATH\src\helpers\test.ps1"
         $result.config.CodeCoverage.Enabled | Should -Be $true
         $result.config.CodeCoverage.CoveragePercentTarget | Should -Not -Be $null
     }
@@ -792,7 +795,7 @@ Describe "Get-SortedTests" {
 
 Describe "Set-TestDrive" {
     BeforeAll {
-        $script:testRoot = "$TEST_DRIVE\pvm"
+        $script:testRoot = "$script:TEST_DRIVE\pvm"
         New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
         @'
 PHP_CURRENT_VERSION_PATH=C:\pvm\php
@@ -814,7 +817,7 @@ MIN_LINE_LENGTH=50
     }
 
     It "Rewrites PVMConfig.paths. under the given root" {
-        $fakeRoot = "$TEST_DRIVE\fake-root"
+        $fakeRoot = "$script:TEST_DRIVE\fake-root"
 
         Set-TestDrive -path $fakeRoot
 
@@ -843,7 +846,7 @@ MIN_LINE_LENGTH=50
     }
 
     It "Rewrites env.PHP_CURRENT_VERSION_PATH under the given root" {
-        $fakeRoot = "$TEST_DRIVE\fake-root"
+        $fakeRoot = "$script:TEST_DRIVE\fake-root"
 
         Set-TestDrive -path $fakeRoot
 
@@ -851,7 +854,7 @@ MIN_LINE_LENGTH=50
     }
 
     It "Does not touch unrelated config sections" {
-        $fakeRoot = "$TEST_DRIVE\fake-root"
+        $fakeRoot = "$script:TEST_DRIVE\fake-root"
         $originalVersion = $Global:PVMConfig.version
         $originalLinks = [ordered]@{}
         $Global:PVMConfig.links.GetEnumerator() | ForEach-Object -Process {
@@ -867,8 +870,8 @@ MIN_LINE_LENGTH=50
     }
 
     It "Overwrites previously-set fake paths when called again with a new root" {
-        $firstRoot = "$TEST_DRIVE\fake-root-1"
-        $secondRoot = "$TEST_DRIVE\fake-root-2"
+        $firstRoot = "$script:TEST_DRIVE\fake-root-1"
+        $secondRoot = "$script:TEST_DRIVE\fake-root-2"
 
         Set-TestDrive -path $firstRoot
         Set-TestDrive -path $secondRoot

@@ -2,14 +2,14 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:phpVersionPath = "$TEST_DRIVE\php-8.2"
-    $script:testIniPath = "$phpVersionPath\php.ini"
-    $script:extDirectory = "$phpVersionPath\ext"
-    $script:testBackupPath = "$testIniPath.bak"
+    $script:phpVersionPath = "$script:TEST_DRIVE\php-8.2"
+    $script:testIniPath = "$script:phpVersionPath\php.ini"
+    $script:extDirectory = "$script:phpVersionPath\ext"
+    $script:testBackupPath = "$script:testIniPath.bak"
 
     New-Directory -path $Global:PVMConfig.paths.directories.cache
-    New-Directory -path $phpVersionPath
-    New-Directory -path $extDirectory
+    New-Directory -path $script:phpVersionPath
+    New-Directory -path $script:extDirectory
 
     Mock Show-Error { }
     Mock Show-Message { }
@@ -26,7 +26,7 @@ mysqli.default_port=3306
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $testIniPath
+"@ | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
@@ -34,7 +34,7 @@ max_execution_time = 30
     Mock Get-CurrentPHPVersion {
         return @{
             version = '8.2.0'
-            path    = $phpVersionPath
+            path    = $script:phpVersionPath
         }
     }
 }

@@ -128,7 +128,7 @@ Describe "Add-ContentWrapper" {
     It "Calls Add-Content with the correct parameters and UTF8 encoding" {
         Mock Add-Content { }
 
-        $path = "$TEST_DRIVE\test.txt"
+        $path = "$script:TEST_DRIVE\test.txt"
         $content = "Test content"
 
         Add-ContentWrapper -path $path -value $content
@@ -143,7 +143,7 @@ Describe "Add-ContentWrapper" {
     It "Throws when Add-Content throws" {
         Mock Add-Content { throw 'Test error' }
 
-        $path = "$TEST_DRIVE\test.txt"
+        $path = "$script:TEST_DRIVE\test.txt"
         $content = "Test content"
 
         { Add-ContentWrapper -path $path -value $content } | Should -Throw 'Test error'
@@ -154,7 +154,7 @@ Describe "Set-ContentWrapper" {
     It "Calls Set-Content with the correct parameters and UTF8 encoding" {
         Mock Set-Content { }
 
-        $path = "$TEST_DRIVE\test.txt"
+        $path = "$script:TEST_DRIVE\test.txt"
         $content = "Test content"
 
         Set-ContentWrapper -path $path -value $content
@@ -169,7 +169,7 @@ Describe "Set-ContentWrapper" {
     It "Throws when Set-Content throws" {
         Mock Set-Content { throw 'Test error' }
 
-        $path = "$TEST_DRIVE\test.txt"
+        $path = "$script:TEST_DRIVE\test.txt"
         $content = "Test content"
 
         { Set-ContentWrapper -path $path -value $content } | Should -Throw 'Test error'
@@ -191,7 +191,7 @@ Describe "Invoke-WebRequestWrapper" {
 
         It "Calls Invoke-WebRequest with OutFile parameter when provided" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
-            $outFile = "$TEST_DRIVE\output.txt"
+            $outFile = "$script:TEST_DRIVE\output.txt"
 
             $null = Invoke-WebRequestWrapper -uri 'https://example.com' -outFile $outFile
 
@@ -285,8 +285,8 @@ Describe "Move-ItemWrapper" {
     It "Calls Move-Item with the correct parameters" {
         Mock Move-Item { }
 
-        $source = "$TEST_DRIVE\source"
-        $destination = "$TEST_DRIVE\destination"
+        $source = "$script:TEST_DRIVE\source"
+        $destination = "$script:TEST_DRIVE\destination"
 
         Move-ItemWrapper -path $source -destination $destination
 
@@ -299,8 +299,8 @@ Describe "Move-ItemWrapper" {
     It "Throws when Move-Item throws" {
         Mock Move-Item { throw 'Test error' }
 
-        $source = "$TEST_DRIVE\source"
-        $destination = "$TEST_DRIVE\destination"
+        $source = "$script:TEST_DRIVE\source"
+        $destination = "$script:TEST_DRIVE\destination"
 
         { Move-ItemWrapper -path $source -destination $destination } | Should -Throw
     }
@@ -310,8 +310,8 @@ Describe "Copy-ItemWrapper" {
     It "Calls Copy-Item with the correct parameters" {
         Mock Copy-Item { }
 
-        $source = "$TEST_DRIVE\source"
-        $destination = "$TEST_DRIVE\destination"
+        $source = "$script:TEST_DRIVE\source"
+        $destination = "$script:TEST_DRIVE\destination"
 
         Copy-ItemWrapper -path $source -destination $destination
 
@@ -324,8 +324,8 @@ Describe "Copy-ItemWrapper" {
     It "Throws when Copy-Item throws" {
         Mock Copy-Item { throw 'Test error' }
 
-        $source = "$TEST_DRIVE\source"
-        $destination = "$TEST_DRIVE\destination"
+        $source = "$script:TEST_DRIVE\source"
+        $destination = "$script:TEST_DRIVE\destination"
 
         { Copy-ItemWrapper -path $source -destination $destination } | Should -Throw
     }
@@ -335,7 +335,7 @@ Describe "Remove-ItemWrapper" {
     It "Calls Remove-Item with the correct parameters" {
         Mock Remove-Item { }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         Remove-ItemWrapper -path $path
 
@@ -347,7 +347,7 @@ Describe "Remove-ItemWrapper" {
     It "Throws when Remove-Item throws" {
         Mock Remove-Item { throw 'Test error' }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         { Remove-ItemWrapper -path $path } | Should -Throw
     }
@@ -357,7 +357,7 @@ Describe "Clear-ContentWrapper" {
     It "Calls Clear-Content with the correct parameters" {
         Mock Clear-Content { }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         Clear-ContentWrapper -path $path
 
@@ -369,7 +369,7 @@ Describe "Clear-ContentWrapper" {
     It "Throws when Clear-Content throws" {
         Mock Clear-Content { throw 'Test error' }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         { Clear-ContentWrapper -path $path } | Should -Throw
     }
@@ -379,7 +379,7 @@ Describe "Get-ItemWrapper" {
     It "Calls Get-Item with the correct parameters" {
         Mock Get-Item { }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         $null = Get-ItemWrapper -path $path
 
@@ -391,7 +391,7 @@ Describe "Get-ItemWrapper" {
     It "Throws when Get-Item throws" {
         Mock Get-Item { throw 'Test error' }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         { Get-ItemWrapper -path $path } | Should -Throw
     }
@@ -401,7 +401,7 @@ Describe "Get-ChildItemWrapper" {
     It "Calls Get-ChildItem with the correct parameters" {
         Mock Get-ChildItem { }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         $null = Get-ChildItemWrapper -path $path
 
@@ -413,7 +413,7 @@ Describe "Get-ChildItemWrapper" {
     It "Calls Get-ChildItem with the correct parameters with recurse" {
         Mock Get-ChildItem { }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         $null = Get-ChildItemWrapper -path $path -recurse -force
 
@@ -427,7 +427,7 @@ Describe "Get-ChildItemWrapper" {
     It "Calls Get-ChildItem with the correct parameters with filter" {
         Mock Get-ChildItem { }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         $null = Get-ChildItemWrapper -path $path -filter '*.txt'
 
@@ -440,7 +440,7 @@ Describe "Get-ChildItemWrapper" {
     It "Calls Get-ChildItem with the correct parameters with file" {
         Mock Get-ChildItem { }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         $null = Get-ChildItemWrapper -path $path -file
 
@@ -453,7 +453,7 @@ Describe "Get-ChildItemWrapper" {
     It "Calls Get-ChildItem with the correct parameters with directory" {
         Mock Get-ChildItem { }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         $null = Get-ChildItemWrapper -path $path -directory
 
@@ -466,7 +466,7 @@ Describe "Get-ChildItemWrapper" {
     It "Throws when Get-ChildItem throws" {
         Mock Get-ChildItem { throw 'Test error' }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         { Get-ChildItemWrapper -path $path } | Should -Throw
     }
@@ -476,7 +476,7 @@ Describe "Get-ContentWrapper" {
     It "Calls Get-Content with the correct parameters" {
         Mock Get-Content { }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         $null = Get-ContentWrapper -path $path -raw
 
@@ -489,7 +489,7 @@ Describe "Get-ContentWrapper" {
     It "Throws when Get-Content throws" {
         Mock Get-Content { throw 'Test error' }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         { Get-ContentWrapper -path $path } | Should -Throw
     }
@@ -499,7 +499,7 @@ Describe "New-ItemWrapper" {
     It "Calls New-Item with the correct parameters - type File" {
         Mock New-Item { }
 
-        $path = "$TEST_DRIVE\path\file.txt"
+        $path = "$script:TEST_DRIVE\path\file.txt"
 
         $null = New-File -path $path
 
@@ -512,7 +512,7 @@ Describe "New-ItemWrapper" {
     It "Calls New-Item with the correct parameters - type Directory" {
         Mock New-Item { }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         $null = New-Directory -path $path
 
@@ -525,8 +525,8 @@ Describe "New-ItemWrapper" {
     It "Calls New-Item with the correct parameters - type SymbolicLink" {
         Mock New-Item { }
 
-        $path = "$TEST_DRIVE\path"
-        $target = "$TEST_DRIVE\target"
+        $path = "$script:TEST_DRIVE\path"
+        $target = "$script:TEST_DRIVE\target"
 
         New-ItemWrapper -type 'SymbolicLink' -path $path -target $target
 
@@ -540,7 +540,7 @@ Describe "New-ItemWrapper" {
     It "Throws when New-Item throws" {
         Mock New-Item { throw 'Test error' }
 
-        $path = "$TEST_DRIVE\path"
+        $path = "$script:TEST_DRIVE\path"
 
         { New-ItemWrapper -path $path } | Should -Throw
     }
@@ -550,7 +550,7 @@ Describe "Test-PathWrapper" {
     It "Calls Test-Path with the path" {
         Mock Test-Path { return $true }
 
-        $expectedPath = "$TEST_DRIVE\path"
+        $expectedPath = "$script:TEST_DRIVE\path"
 
         $result = Test-PathWrapper -path $expectedPath
 
@@ -564,7 +564,7 @@ Describe "Test-PathWrapper" {
     It "Calls Test-Path with the path type when provided" {
         Mock Test-Path { return $true }
 
-        $expectedPath = "$TEST_DRIVE\directory"
+        $expectedPath = "$script:TEST_DRIVE\directory"
 
         $result = Test-PathWrapper -path $expectedPath -pathType Container
 
@@ -578,7 +578,7 @@ Describe "Test-PathWrapper" {
     It "Supports leaf paths" {
         Mock Test-Path { return $false }
 
-        $expectedPath = "$TEST_DRIVE\file.txt"
+        $expectedPath = "$script:TEST_DRIVE\file.txt"
 
         $result = Test-PathWrapper -path $expectedPath -pathType Leaf
 
@@ -592,6 +592,6 @@ Describe "Test-PathWrapper" {
     It "Throws when Test-Path throws" {
         Mock Test-Path { throw 'Test error' }
 
-        { Test-PathWrapper -path "$TEST_DRIVE\path" } | Should -Throw 'Test error'
+        { Test-PathWrapper -path "$script:TEST_DRIVE\path" } | Should -Throw 'Test error'
     }
 }

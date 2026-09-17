@@ -2,13 +2,16 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:testPhpPath = "$TEST_DRIVE\PHP"
-    $script:testExtPath = "$testPhpPath\ext"
-    $script:testIniPath = "$testPhpPath\php.ini"
+    $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
+    $script:testPhpPath = "$script:TEST_DRIVE\PHP"
+    $script:testExtPath = "$script:testPhpPath\ext"
+    $script:testIniPath = "$script:testPhpPath\php.ini"
     $script:TEMPLATES_PATH = $Global:PVMConfig.paths.directories.templates
     $script:ZEND_EXTENSIONS_LIST_PATH = $Global:PVMConfig.paths.files.zendExtensionsList
+    $script:DEFAULT_ZEND_EXTENSIONS = $Global:PVMConfig.defaults.zendExtensions
+    $script:MIN_PAD_RIGHT_LENGTH = $Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH
 
-    New-Directory -path $testPhpPath
+    New-Directory -path $script:testPhpPath
 
     Mock Show-Message { }
     Mock Show-Error { }
@@ -24,7 +27,7 @@ zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $testIniPath
+"@ | Set-ContentWrapper -path $script:testIniPath
     }
 
     # Create initial ini content first
@@ -34,7 +37,7 @@ max_execution_time = 30
 Describe "Get-PHPInstallInfo" {
     Context "When PHP DLL exists" {
         It "Returns PHP install info with NTS build type" {
-            $testPath = "$TEST_DRIVE\php\8.3"
+            $testPath = "$script:TEST_DRIVE\php\8.3"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
 
             New-Item -Path "$testPath\php8nts.dll" -ItemType File -Force | Out-Null
@@ -60,7 +63,7 @@ Describe "Get-PHPInstallInfo" {
         }
 
         It "Returns PHP install info with TS build type" {
-            $testPath = "$TEST_DRIVE\php\8.2"
+            $testPath = "$script:TEST_DRIVE\php\8.2"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
 
             Mock Get-ChildItemWrapper {
@@ -81,7 +84,7 @@ Describe "Get-PHPInstallInfo" {
         }
 
         It "Returns first DLL when multiple match" {
-            $testPath = "$TEST_DRIVE\php\8.1"
+            $testPath = "$script:TEST_DRIVE\php\8.1"
 
             Mock Get-ChildItemWrapper {
                 return @(
@@ -107,7 +110,7 @@ Describe "Get-PHPInstallInfo" {
 
     Context "When PHP DLL does not exist" {
         It "Returns null when no DLL found" {
-            $testPath = "$TEST_DRIVE\php\empty"
+            $testPath = "$script:TEST_DRIVE\php\empty"
             New-Item -Path $testPath -ItemType Directory -Force | Out-Null
 
             Mock Get-ChildItemWrapper { return $null }
@@ -121,7 +124,7 @@ Describe "Get-PHPInstallInfo" {
 Describe "Get-BinaryArchitectureFromDLL" {
     Context "Reading PE format from binary files" {
         It "Returns x64 architecture when machine type is 0x8664" {
-            $dllPath = "$TEST_DRIVE\php\php8_x64.dll"
+            $dllPath = "$script:TEST_DRIVE\php\php8_x64.dll"
             New-Item -Path $dllPath -ItemType File -Force | Out-Null
 
             # Convert TestDrive path to actual filesystem path
@@ -153,7 +156,7 @@ Describe "Get-BinaryArchitectureFromDLL" {
         }
 
         It "Returns x86 architecture when machine type is 0x014c" {
-            $dllPath = "$TEST_DRIVE\php\php8_x86.dll"
+            $dllPath = "$script:TEST_DRIVE\php\php8_x86.dll"
             New-Item -Path $dllPath -ItemType File -Force | Out-Null
 
             # Convert TestDrive path to actual filesystem path
@@ -184,7 +187,7 @@ Describe "Get-BinaryArchitectureFromDLL" {
         }
 
         It "Returns Unknown for unknown machine type" {
-            $dllPath = "$TEST_DRIVE\php\php8_unknown.dll"
+            $dllPath = "$script:TEST_DRIVE\php\php8_unknown.dll"
             New-Item -Path $dllPath -ItemType File -Force | Out-Null
 
             # Convert TestDrive path to actual filesystem path
@@ -218,7 +221,7 @@ Describe "Get-BinaryArchitectureFromDLL" {
     It "Returns Unknown when file does not exist" {
         Mock Test-FileNotExists { return $true }
 
-        $result = Get-BinaryArchitectureFromDLL -path "$TEST_DRIVE\php\php8.dll"
+        $result = Get-BinaryArchitectureFromDLL -path "$script:TEST_DRIVE\php\php8.dll"
 
         $result | Should -Be 'Unknown'
     }
@@ -393,8 +396,7 @@ Describe "Test-TwoPHPVersionsEqual" {
 
 Describe "Set-ZendExtensionsList" {
     BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $script:DEFAULT_ZEND_EXTENSIONS = $Global:PVMConfig.defaults.zendExtensions
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
     }
 
     It "Creates zend_extensions.json" {
@@ -402,7 +404,7 @@ Describe "Set-ZendExtensionsList" {
         $result | Should -Be 0
 
         $result = Get-ZendExtensionsList
-        $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
+        $result.Count | Should -Be $script:DEFAULT_ZEND_EXTENSIONS.Count
     }
 
     It "Returns -1 when exception is thrown" {
@@ -414,10 +416,9 @@ Describe "Set-ZendExtensionsList" {
 
 Describe "Get-ZendExtensionsList" {
     BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $testContent = @('opcache', 'xdebug', 'swoole')
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $ZEND_EXTENSIONS_LIST_PATH
-        $script:DEFAULT_ZEND_EXTENSIONS = $Global:PVMConfig.defaults.zendExtensions
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $script:ZEND_EXTENSIONS_LIST_PATH
     }
 
     It "Returns the zend_extensions.json content as a hashtable" {
@@ -429,16 +430,16 @@ Describe "Get-ZendExtensionsList" {
     }
 
     It "Falls back to DEFAULT_ZEND_EXTENSIONS value" {
-        Remove-ItemWrapper -path "$TEMPLATES_PATH\zend_extensions.json"
+        Remove-ItemWrapper -path "$script:TEMPLATES_PATH\zend_extensions.json"
         $result = Get-ZendExtensionsList
-        $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
+        $result.Count | Should -Be $script:DEFAULT_ZEND_EXTENSIONS.Count
     }
 
     It "Returns default value when exception is thrown" {
         Mock Test-FileExists { return $true }
         Mock Get-ContentWrapper { throw 'Test exception' }
         $result = Get-ZendExtensionsList
-        $result.Count | Should -Be $DEFAULT_ZEND_EXTENSIONS.Count
+        $result.Count | Should -Be $script:DEFAULT_ZEND_EXTENSIONS.Count
     }
 }
 
@@ -549,7 +550,7 @@ Describe "Update-InstalledPHPVersionsCache" {
 
 Describe "Get-InstalledPHPVersionsFromDisk" {
     BeforeAll {
-        $script:STORAGE_PATH = "$TEST_DRIVE\storage"
+        $script:STORAGE_PATH = "$script:TEST_DRIVE\storage"
     }
 
     BeforeEach {
@@ -564,17 +565,17 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
         It "Should return installed PHP versions with php.exe present" {
             Mock Get-AllSubdirectories {
                 return @(
-                    @{FullName = "$TEST_DRIVE\storage\php\8.1"}
-                    @{FullName = "$TEST_DRIVE\storage\php\8.2"}
+                    @{FullName = "$script:TEST_DRIVE\storage\php\8.1"}
+                    @{FullName = "$script:TEST_DRIVE\storage\php\8.2"}
                 )
             }
             Mock Test-FileExists { return $true }
             Mock Get-PHPInstallInfo {
                 param ($path)
-                if ($path -eq "$TEST_DRIVE\storage\php\8.1") {
-                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = "$TEST_DRIVE\storage\php\8.1"}
+                if ($path -eq "$script:TEST_DRIVE\storage\php\8.1") {
+                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = "$script:TEST_DRIVE\storage\php\8.1"}
                 } else {
-                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = "$TEST_DRIVE\storage\php\8.2"}
+                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = "$script:TEST_DRIVE\storage\php\8.2"}
                 }
             }
 
@@ -585,9 +586,9 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
         It "Should skip directories without php.exe" {
             Mock Get-AllSubdirectories {
                 return @(
-                    @{FullName = "$TEST_DRIVE\storage\php\8.1"}
-                    @{FullName = "$TEST_DRIVE\storage\php\invalid"}
-                    @{FullName = "$TEST_DRIVE\storage\php\8.2"}
+                    @{FullName = "$script:TEST_DRIVE\storage\php\8.1"}
+                    @{FullName = "$script:TEST_DRIVE\storage\php\invalid"}
+                    @{FullName = "$script:TEST_DRIVE\storage\php\8.2"}
                 )
             }
             Mock Test-FileExists {
@@ -596,9 +597,9 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
             }
             Mock Get-PHPInstallInfo {
                 param ($path)
-                if ($path -eq "$TEST_DRIVE\storage\php\8.1") {
+                if ($path -eq "$script:TEST_DRIVE\storage\php\8.1") {
                     return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                } elseif ($path -eq "$TEST_DRIVE\storage\php\8.2") {
+                } elseif ($path -eq "$script:TEST_DRIVE\storage\php\8.2") {
                     return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
                 }
             }
@@ -610,17 +611,17 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
         It "Should return versions sorted by version number" {
             Mock Get-AllSubdirectories {
                 return @(
-                    @{FullName = "$TEST_DRIVE\storage\php\8.2"}
-                    @{FullName = "$TEST_DRIVE\storage\php\7.4"}
-                    @{FullName = "$TEST_DRIVE\storage\php\8.1"}
+                    @{FullName = "$script:TEST_DRIVE\storage\php\8.2"}
+                    @{FullName = "$script:TEST_DRIVE\storage\php\7.4"}
+                    @{FullName = "$script:TEST_DRIVE\storage\php\8.1"}
                 )
             }
             Mock Test-FileExists { return $true }
             Mock Get-PHPInstallInfo {
                 param ($path)
-                if ($path -eq "$TEST_DRIVE\storage\php\8.2") {
+                if ($path -eq "$script:TEST_DRIVE\storage\php\8.2") {
                     return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
-                } elseif ($path -eq "$TEST_DRIVE\storage\php\7.4") {
+                } elseif ($path -eq "$script:TEST_DRIVE\storage\php\7.4") {
                     return @{Version = '7.4'; Arch = 'x86'; BuildType = 'TS'}
                 } else {
                     return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
@@ -646,8 +647,8 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
         It "Should return empty array when no php.exe files are present" {
             Mock Get-AllSubdirectories {
                 return @(
-                    @{FullName = "$TEST_DRIVE\storage\php\invalid1"}
-                    @{FullName = "$TEST_DRIVE\storage\php\invalid2"}
+                    @{FullName = "$script:TEST_DRIVE\storage\php\invalid1"}
+                    @{FullName = "$script:TEST_DRIVE\storage\php\invalid2"}
                 )
             }
             Mock Test-FileExists { return $false }
@@ -664,7 +665,7 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
             $null = Get-InstalledPHPVersionsFromDisk
 
             Should -Invoke Get-AllSubdirectories -Exactly 1 -ParameterFilter {
-                $path -eq $Global:PVMConfig.paths.directories.php
+                $path -eq $script:PHP_DIR
             }
         }
     }
@@ -819,7 +820,7 @@ Describe "Get-UserSelectedPHPVersion" {
         )
         $null = Get-UserSelectedPHPVersion -installedVersions $list
 
-        $maxNameLength = ($list.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+        $maxNameLength = ($list.version | Measure-Object -Maximum Length).Maximum + ($script:MIN_PAD_RIGHT_LENGTH * 2)
         $version = '8.0 '.PadRight($maxNameLength, '.')
         Should -Invoke Show-Message -ParameterFilter { $message -eq " [1] $version x64 ts (Current)" }
     }
@@ -981,7 +982,7 @@ Describe "Get-ZendExtensionsInfo" {
     It "Returns empty list when ext directory does not exist" {
         Mock Test-DirectoryNotExists { return $true }
 
-        $result = Get-ZendExtensionsInfo -phpPath $testPhpPath
+        $result = Get-ZendExtensionsInfo -phpPath $script:testPhpPath
         $result.Count | Should -Be 0
     }
 
@@ -990,12 +991,12 @@ Describe "Get-ZendExtensionsInfo" {
 extension=php_curl.dll
 zend_extension=php_opcache.dll
 ;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $testIniPath
-        New-Item -ItemType Directory -Force -Path $testExtPath | Out-Null
-        New-Item -Path "$testExtPath\opcache.dll" -ItemType File -Force | Out-Null
-        New-Item -Path "$testExtPath\php_xdebug.dll" -ItemType File -Force | Out-Null
+"@ | Set-ContentWrapper -path $script:testIniPath
+        New-Item -ItemType Directory -Force -Path $script:testExtPath | Out-Null
+        New-Item -Path "$script:testExtPath\opcache.dll" -ItemType File -Force | Out-Null
+        New-Item -Path "$script:testExtPath\php_xdebug.dll" -ItemType File -Force | Out-Null
 
-        $result = Get-ZendExtensionsInfo -phpPath $testPhpPath
+        $result = Get-ZendExtensionsInfo -phpPath $script:testPhpPath
         $result.Count | Should -Be 2
 
         ($result | Where-Object -FilterScript { $_.Name -eq 'opcache' }).Enabled | Should -Be $true
@@ -1003,8 +1004,8 @@ zend_extension=php_opcache.dll
     }
 
     It "Returns Copyright from DLL VersionInfo" {
-        New-Item -ItemType Directory -Force -Path $testExtPath | Out-Null
-        New-Item -Path "$testExtPath\opcache.dll" -ItemType File -Force | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:testExtPath | Out-Null
+        New-Item -Path "$script:testExtPath\opcache.dll" -ItemType File -Force | Out-Null
         Mock Get-ChildItemWrapper {
             return @{
                 VersionInfo = @{
@@ -1014,14 +1015,14 @@ zend_extension=php_opcache.dll
             }
         }
 
-        $result = Get-ZendExtensionsInfo -phpPath $testPhpPath
+        $result = Get-ZendExtensionsInfo -phpPath $script:testPhpPath
         $result.Count | Should -Be 2
         $result[0].Copyright | Should -Be 'Copyright (c) PHP Group'
     }
 
     It "Returns empty string when LegalCopyright is null" {
-        New-Item -ItemType Directory -Force -Path $testExtPath | Out-Null
-        New-Item -Path "$testExtPath\opcache.dll" -ItemType File -Force | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:testExtPath | Out-Null
+        New-Item -Path "$script:testExtPath\opcache.dll" -ItemType File -Force | Out-Null
 
         Mock Get-ChildItemWrapper {
             return @{
@@ -1032,7 +1033,7 @@ zend_extension=php_opcache.dll
             }
         }
 
-        $result = Get-ZendExtensionsInfo -phpPath $testPhpPath
+        $result = Get-ZendExtensionsInfo -phpPath $script:testPhpPath
         $result.Count | Should -Be 2
         $result[0].Copyright | Should -Be ''
     }

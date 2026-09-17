@@ -2,17 +2,17 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:phpVersionPath = "$TEST_DRIVE\php-8.2"
-    $script:extDirectory = "$phpVersionPath\ext"
-    $script:testIniPath = "$phpVersionPath\php.ini"
-    $script:testBackupPath = "$testIniPath.bak"
+    $script:phpVersionPath = "$script:TEST_DRIVE\php-8.2"
+    $script:extDirectory = "$script:phpVersionPath\ext"
+    $script:testIniPath = "$script:phpVersionPath\php.ini"
+    $script:testBackupPath = "$script:testIniPath.bak"
 
     $script:PECL_PACKAGE_ROOT_URL = $Global:PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $Global:PVMConfig.links.peclWinExtDownload
 
     New-Directory -path $Global:PVMConfig.paths.directories.cache
-    New-Directory -path $phpVersionPath
-    New-Directory -path $extDirectory
+    New-Directory -path $script:phpVersionPath
+    New-Directory -path $script:extDirectory
 
     Mock Show-Error { }
     Mock Show-Warning { }
@@ -30,7 +30,7 @@ zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $testIniPath
+"@ | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
@@ -40,7 +40,7 @@ max_execution_time = 30
     Mock Get-CurrentPHPVersion {
         return @{
             version = '8.2.0'
-            path    = $phpVersionPath
+            path    = $script:phpVersionPath
         }
     }
 
@@ -52,16 +52,16 @@ max_execution_time = 30
     }
 
     Mock Invoke-WebRequestWrapper {
-        param ($Uri, $OutFile = $null)
+        param ($uri, $outFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
             throw 'Network error'
         }
 
-        if ($script:MockFileSystem.WebResponses.ContainsKey($Uri)) {
-            $response = $script:MockFileSystem.WebResponses[$Uri]
-            if ($OutFile) {
-                $script:MockFileSystem.Files[$OutFile] = 'Downloaded content'
+        if ($script:MockFileSystem.WebResponses.ContainsKey($uri)) {
+            $response = $script:MockFileSystem.WebResponses[$uri]
+            if ($outFile) {
+                $script:MockFileSystem.Files[$outFile] = 'Downloaded content'
                 return
             }
             return @{
@@ -70,14 +70,14 @@ max_execution_time = 30
             }
         }
 
-        throw "URL not mocked: $Uri"
+        throw "URL not mocked: $uri"
     }
 }
 
 Describe "Invoke-IniAction" {
     BeforeEach {
         Reset-IniContent
-        Remove-ItemWrapper -path $testBackupPath
+        Remove-ItemWrapper -path $script:testBackupPath
     }
 
     Context "info action" {
@@ -157,7 +157,7 @@ Describe "Invoke-IniAction" {
         It "Enables single extension" {
             Mock Test-FileNotExists { return $false }
             Mock Get-ChildItemWrapper {
-                return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" } )
+                return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$script:extDirectory\php_xdebug.dll" } )
             }
             $result = Invoke-IniAction -action 'enable' -params @('xdebug')
             $result | Should -Be 0
@@ -169,13 +169,13 @@ Describe "Invoke-IniAction" {
 ;extension=php_xdebug.dll
 ;extension=php_gd.dll
 extension=php_curl.dll
-"@ | Set-ContentWrapper -path "$phpVersionPath\php.ini"
+"@ | Set-ContentWrapper -path "$script:phpVersionPath\php.ini"
 
             $script:callCount = 0
             Mock Get-ChildItemWrapper {
                 $script:callCount++
-                if ($script:callCount -eq 1) { return @(@{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$extDirectory\php_xdebug.dll" }) }
-                if ($script:callCount -eq 2) { return @(@{ BaseName = 'php_gd'; Name = 'php_gd.dll'; FullName = "$extDirectory\php_gd.dll" }) }
+                if ($script:callCount -eq 1) { return @(@{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$script:extDirectory\php_xdebug.dll" }) }
+                if ($script:callCount -eq 2) { return @(@{ BaseName = 'php_gd'; Name = 'php_gd.dll'; FullName = "$script:extDirectory\php_gd.dll" }) }
             }
 
             $result = Invoke-IniAction -action 'enable' -params @('xdebug', 'gd')
@@ -193,7 +193,7 @@ extension=php_curl.dll
         It "Disables single extension" {
             Mock Test-FileNotExists { return $false }
             Mock Get-ChildItemWrapper {
-                return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
+                return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$script:extDirectory\php_curl.dll" } )
             }
             $result = Invoke-IniAction -action 'disable' -params @('curl')
             $result | Should -Be 0
@@ -210,7 +210,7 @@ extension=php_curl.dll
         It "Checks single extension status" {
             Mock Test-FileNotExists { return $false }
             Mock Get-ChildItemWrapper {
-                return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
+                return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$script:extDirectory\php_curl.dll" } )
             }
             $result = Invoke-IniAction -action 'status' -params @('curl')
             $result | Should -Be 0
@@ -225,15 +225,15 @@ extension=php_curl.dll
 
     Context "restore action" {
         It "Restores from backup" {
-            Mock Test-FileNotExists { return $false } -ParameterFilter { $Path -eq "$phpVersionPath\php.ini" }
+            Mock Test-FileNotExists { return $false } -ParameterFilter { $path -eq "$script:phpVersionPath\php.ini" }
             $script:callCount = 0
             Mock Test-FileNotExists {
                 $script:callCount++
                 if ($script:callCount -eq 1) { return $true }
                 else { return $false }
-            } -ParameterFilter { $Path -eq "$phpVersionPath\php.ini.bak" }
+            } -ParameterFilter { $path -eq "$script:phpVersionPath\php.ini.bak" }
 
-            $null = Backup-IniFile -iniPath "$phpVersionPath\php.ini"
+            $null = Backup-IniFile -iniPath "$script:phpVersionPath\php.ini"
 
             $result = Invoke-IniAction -action 'restore' -params @()
             $result | Should -Be 0
@@ -242,41 +242,40 @@ extension=php_curl.dll
 
     Context "add action" {
         BeforeAll {
-            $script:getRandomFile = $false
             $script:MockFileSystem = @{
                 Directories   = @()
                 Files         = @{}
                 WebResponses  = @{
-                    "$PECL_PACKAGE_ROOT_URL/nonexistent_ext"                                   = @{
+                    "$script:PECL_PACKAGE_ROOT_URL/nonexistent_ext"                                   = @{
                         Content = 'Mocked PHP nonexistent_ext content'
                         Links   = @()
                     }
-                    "$PECL_PACKAGE_ROOT_URL/pdo_mysql"                                         = @{
+                    "$script:PECL_PACKAGE_ROOT_URL/pdo_mysql"                                         = @{
                         Content = 'Mocked pdo_mysql content'
                         Links   = @(
                             @{ href = '/package/pdo_mysql/1.4.0/windows' },
                             @{ href = '/package/pdo_mysql/2.1.0/windows' }
                         )
                     }
-                    "$PECL_PACKAGE_ROOT_URL/curl"                                              = @{
+                    "$script:PECL_PACKAGE_ROOT_URL/curl"                                              = @{
                         Content = 'Mocked curl content'
                         Links   = @(
                             @{ href = '/package/curl/1.4.0/windows' },
                             @{ href = '/package/curl/2.1.0/windows' }
                         )
                     }
-                    "$PECL_PACKAGE_ROOT_URL/curl/1.4.0/windows"                                = @{
+                    "$script:PECL_PACKAGE_ROOT_URL/curl/1.4.0/windows"                                = @{
                         Content = 'Mocked PHP curl 1.4.0 content'
                         Links   = @(
                             @{ href = 'other_link' },
-                            @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" },
-                            @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip" }
+                            @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" },
+                            @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip" }
                         )
                     }
-                    "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" = @{
+                    "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" = @{
                         Content = 'Mocked PHP curl 1.4.0 zip content'
                     }
-                    "$PECL_PACKAGE_ROOT_URL/curl/2.1.0/windows"                                = @{
+                    "$script:PECL_PACKAGE_ROOT_URL/curl/2.1.0/windows"                                = @{
                         Content = 'Mocked PHP curl 2.1.0 content'
                         Links   = @()
                     }
@@ -339,7 +338,7 @@ extension=php_curl.dll
             $result | Should -Be 0
 
             Should -Invoke Uninstall-Extension -Times 1 -ParameterFilter {
-                $iniPath -eq "$phpVersionPath\php.ini" -and
+                $iniPath -eq "$script:phpVersionPath\php.ini" -and
                 $extNames.Count -eq 2 -and
                 $extNames[0] -eq 'curl' -and
                 $extNames[1] -eq 'xdebug'
@@ -376,7 +375,7 @@ extension=php_curl.dll
             Mock Test-FileNotExists { return $false }
             Mock Get-MatchingPHPExtensionsStatus {
                 return @(@{
-                        fullPath   = "$extDirectory\pdo_mysql.dll"
+                        fullPath   = "$script:extDirectory\pdo_mysql.dll"
                         fileName   = 'pdo_mysql.dll'
                         name       = 'pdo_mysql'
                         source     = 'ext,ini'
@@ -488,7 +487,7 @@ extension=php_curl.dll
         }
 
         It "Handles missing php.ini file" {
-            Remove-ItemWrapper -path "$phpVersionPath\php.ini"
+            Remove-ItemWrapper -path "$script:phpVersionPath\php.ini"
             $result = Invoke-IniAction -action 'info' -params @()
             $result | Should -Be -1
         }

@@ -2,11 +2,11 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:testIniPath = "$TEST_DRIVE\php.ini"
-    $script:extDirectory = "$TEST_DRIVE\ext"
-    $script:testBackupPath = "$testIniPath.bak"
+    $script:testIniPath = "$script:TEST_DRIVE\php.ini"
+    $script:extDirectory = "$script:TEST_DRIVE\ext"
+    $script:testBackupPath = "$script:testIniPath.bak"
 
-    New-Directory -path $extDirectory
+    New-Directory -path $script:extDirectory
 
     Mock Show-Warning { }
     Mock Show-Error { }
@@ -23,7 +23,7 @@ extension=php_curl.dll
 extension=php_xdebug.dll
 zend_extension=php_opcache.dll
 display_errors = On
-"@ | Set-ContentWrapper -path $testIniPath
+"@ | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
@@ -35,10 +35,10 @@ Describe "Remove-ExtensionFromIniFile" {
     It "Removes the matching line and returns 0" {
         $extension = @{ line = 'extension=php_curl.dll'; lineNumber = 2 }
 
-        $result = Remove-ExtensionFromIniFile -iniPath $testIniPath -extensionObject $extension
+        $result = Remove-ExtensionFromIniFile -iniPath $script:testIniPath -extensionObject $extension
 
         $result            | Should -Be 0
-        $content = Get-ContentWrapper -path $testIniPath
+        $content = Get-ContentWrapper -path $script:testIniPath
         $content           | Should -Not -Contain 'extension=php_curl.dll'
         $content.Count     | Should -Be 4
     }
@@ -46,20 +46,20 @@ Describe "Remove-ExtensionFromIniFile" {
     It "Returns -1 when line content matches but line number does not" {
         $extension = @{ line = 'extension=php_curl.dll'; lineNumber = 99 }
 
-        $result = Remove-ExtensionFromIniFile -iniPath $testIniPath -extensionObject $extension
+        $result = Remove-ExtensionFromIniFile -iniPath $script:testIniPath -extensionObject $extension
 
         $result        | Should -Be -1
-        $content = Get-ContentWrapper -path $testIniPath
+        $content = Get-ContentWrapper -path $script:testIniPath
         $content.Count | Should -Be 5
     }
 
     It "Returns -1 when line number matches but content does not" {
         $extension = @{ line = 'extension=php_nonexistent.dll'; lineNumber = 2 }
 
-        $result = Remove-ExtensionFromIniFile -iniPath $testIniPath -extensionObject $extension
+        $result = Remove-ExtensionFromIniFile -iniPath $script:testIniPath -extensionObject $extension
 
         $result        | Should -Be -1
-        $content = Get-ContentWrapper -path $testIniPath
+        $content = Get-ContentWrapper -path $script:testIniPath
         $content.Count | Should -Be 5
     }
 
@@ -68,7 +68,7 @@ Describe "Remove-ExtensionFromIniFile" {
 
         Mock Get-ContentWrapper { throw 'Read error' }
 
-        $result = Remove-ExtensionFromIniFile -iniPath $testIniPath -extensionObject $extension
+        $result = Remove-ExtensionFromIniFile -iniPath $script:testIniPath -extensionObject $extension
 
         $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
@@ -81,14 +81,14 @@ Describe "Remove-ExtensionFromExtDirectory" {
         Mock Remove-ItemWrapper { }
         $extensionObject = @{
             fileName = 'php_curl.dll'
-            fullPath = "$extDirectory\php_curl.dll"
+            fullPath = "$script:extDirectory\php_curl.dll"
             name     = 'curl'
         }
 
-        $result = Remove-ExtensionFromExtDirectory -extensionDirectory $extDirectory -extensionObject $extensionObject
+        $result = Remove-ExtensionFromExtDirectory -extensionDirectory $script:extDirectory -extensionObject $extensionObject
 
         $result | Should -Be 0
-        Test-Path "$extDirectory\php_curl.dll" | Should -Be $false
+        Test-Path "$script:extDirectory\php_curl.dll" | Should -Be $false
     }
 
     It "Returns -1 when file does not exist on disk" {
@@ -96,11 +96,11 @@ Describe "Remove-ExtensionFromExtDirectory" {
 
         $extensionObject = @{
             fileName = 'php_curl.dll'
-            fullPath = "$extDirectory\php_curl.dll"
+            fullPath = "$script:extDirectory\php_curl.dll"
             name     = 'curl'
         }
 
-        $result = Remove-ExtensionFromExtDirectory -extensionDirectory $extDirectory -extensionObject $extensionObject
+        $result = Remove-ExtensionFromExtDirectory -extensionDirectory $script:extDirectory -extensionObject $extensionObject
 
         $result | Should -Be -1
     }
@@ -114,7 +114,7 @@ Describe "Remove-ExtensionFromExtDirectory" {
             name     = 'curl'
         }
 
-        $result = Remove-ExtensionFromExtDirectory -extensionDirectory $extDirectory -extensionObject $extensionObject
+        $result = Remove-ExtensionFromExtDirectory -extensionDirectory $script:extDirectory -extensionObject $extensionObject
 
         $result | Should -Be -1
     }
@@ -125,11 +125,11 @@ Describe "Remove-ExtensionFromExtDirectory" {
 
         $extensionObject = @{
             fileName = 'php_curl.dll'
-            fullPath = "$extDirectory\php_curl.dll"
+            fullPath = "$script:extDirectory\php_curl.dll"
             name     = 'curl'
         }
 
-        $result = Remove-ExtensionFromExtDirectory -extensionDirectory $extDirectory -extensionObject $extensionObject
+        $result = Remove-ExtensionFromExtDirectory -extensionDirectory $script:extDirectory -extensionObject $extensionObject
 
         $result | Should -Be -1
         Should -Invoke Remove-ItemWrapper -Times 1
@@ -140,9 +140,9 @@ Describe "Remove-ExtensionFromExtDirectory" {
 Describe "Uninstall-Extension" {
     BeforeEach {
         Reset-IniContent
-        New-Item -ItemType File -Path "$extDirectory\php_curl.dll"    -Force | Out-Null
-        New-Item -ItemType File -Path "$extDirectory\php_xdebug.dll"  -Force | Out-Null
-        New-Item -ItemType File -Path "$extDirectory\php_opcache.dll" -Force | Out-Null
+        New-Item -ItemType File -Path "$script:extDirectory\php_curl.dll"    -Force | Out-Null
+        New-Item -ItemType File -Path "$script:extDirectory\php_xdebug.dll"  -Force | Out-Null
+        New-Item -ItemType File -Path "$script:extDirectory\php_opcache.dll" -Force | Out-Null
 
         Mock Test-DirectoryNotExists { return $false }
         Mock Test-FileNotExists { return $false }
@@ -150,11 +150,11 @@ Describe "Uninstall-Extension" {
     }
 
     AfterEach {
-        Remove-ItemWrapper -path "$extDirectory\*"
+        Remove-ItemWrapper -path "$script:extDirectory\*"
     }
 
     It "Returns -1 immediately when extNames is empty" {
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @()
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @()
 
         $result | Should -Be -1
         Should -Invoke Show-Warning -Times 1 -ParameterFilter {
@@ -165,7 +165,7 @@ Describe "Uninstall-Extension" {
     It "Returns -1 when ext directory does not exist" {
         Mock Test-DirectoryNotExists { return $true }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl')
 
         $result | Should -Be -1
         Should -Invoke Show-Error -Times 1 -ParameterFilter {
@@ -176,7 +176,7 @@ Describe "Uninstall-Extension" {
     It "Adds Not Found result and returns -1 when extension is not in ini" {
         Mock Get-MatchingPHPExtensionsStatus { return @() }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('nonexistent')
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('nonexistent')
 
         $result | Should -Be -1
         Should -Invoke Show-Message -Times 1 -ParameterFilter {
@@ -188,7 +188,7 @@ Describe "Uninstall-Extension" {
         Mock Test-FileNotExists { return $true }
         Mock Get-MatchingPHPExtensionsStatus {
             return @(@{
-                    fullPath   = "$extDirectory\php_curl.dll"
+                    fullPath   = "$script:extDirectory\php_curl.dll"
                     fileName   = 'php_curl.dll'
                     name       = 'curl'
                     source     = 'ext,ini'
@@ -197,7 +197,7 @@ Describe "Uninstall-Extension" {
                 })
         }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl')
 
         $result | Should -Be -1
     }
@@ -205,7 +205,7 @@ Describe "Uninstall-Extension" {
     It "Adds failure result and returns -1 when Remove-ExtensionFromExtDirectory fails" {
         Mock Get-MatchingPHPExtensionsStatus {
             return @(@{
-                    fullPath   = "$extDirectory\php_curl.dll"
+                    fullPath   = "$script:extDirectory\php_curl.dll"
                     fileName   = 'php_curl.dll'
                     name       = 'curl'
                     source     = 'ext,ini'
@@ -217,7 +217,7 @@ Describe "Uninstall-Extension" {
         Mock Test-FileNotExists { return $false }
         Mock Remove-ExtensionFromExtDirectory { return -1 }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl')
 
         $result | Should -Be -1
         Should -Invoke Write-Color -Times 1 -ParameterFilter {
@@ -228,7 +228,7 @@ Describe "Uninstall-Extension" {
     It "Adds failure result and returns -1 when Remove-ExtensionFromIniFile fails" {
         Mock Get-MatchingPHPExtensionsStatus {
             return @(@{
-                    fullPath   = "$extDirectory\php_curl.dll"
+                    fullPath   = "$script:extDirectory\php_curl.dll"
                     fileName   = 'php_curl.dll'
                     name       = 'curl'
                     source     = 'ext,ini'
@@ -241,7 +241,7 @@ Describe "Uninstall-Extension" {
         Mock Remove-ExtensionFromExtDirectory { return 0 }
         Mock Remove-ExtensionFromIniFile { return -1 }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl')
 
         $result | Should -Be -1
         Should -Invoke Write-Color -Times 1 -ParameterFilter {
@@ -252,7 +252,7 @@ Describe "Uninstall-Extension" {
     It "Returns 0 and shows Uninstalled for ext,ini source extension" {
         Mock Get-MatchingPHPExtensionsStatus {
             return @(@{
-                    fullPath   = "$extDirectory\php_curl.dll"
+                    fullPath   = "$script:extDirectory\php_curl.dll"
                     fileName   = 'php_curl.dll'
                     name       = 'curl'
                     source     = 'ext,ini'
@@ -265,7 +265,7 @@ Describe "Uninstall-Extension" {
         Mock Remove-ExtensionFromExtDirectory { return 0 }
         Mock Remove-ExtensionFromIniFile { return 0 }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl')
 
         $result | Should -Be 0
         Should -Invoke Write-Color -Times 1 -ParameterFilter {
@@ -278,7 +278,7 @@ Describe "Uninstall-Extension" {
         Mock Test-FileNotExists { return $false }
         Mock Get-MatchingPHPExtensionsStatus {
             return @(@{
-                    fullPath   = "$extDirectory\php_curl.dll"
+                    fullPath   = "$script:extDirectory\php_curl.dll"
                     fileName   = 'php_curl.dll'
                     name       = 'curl'
                     source     = 'ext'
@@ -290,7 +290,7 @@ Describe "Uninstall-Extension" {
         Mock Remove-ExtensionFromExtDirectory { return 0 }
         Mock Remove-ExtensionFromIniFile { return 0 }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl')
 
         $result | Should -Be 0
         Should -Invoke Remove-ExtensionFromIniFile -Times 0
@@ -302,7 +302,7 @@ Describe "Uninstall-Extension" {
     It "Processes multiple extensions and returns -1 when any fails" {
         Mock Get-MatchingPHPExtensionsStatus -ParameterFilter { $extName -eq 'curl' } {
             return @(@{
-                    fullPath = "$extDirectory\php_curl.dll"
+                    fullPath = "$script:extDirectory\php_curl.dll"
                     fileName = 'php_curl.dll'
                     name     = 'curl'
                     source   = 'ext'
@@ -313,7 +313,7 @@ Describe "Uninstall-Extension" {
         }
         Mock Remove-ExtensionFromExtDirectory { return 0 }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl', 'nonexistent')
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl', 'nonexistent')
 
         $result | Should -Be -1
     }
@@ -321,7 +321,7 @@ Describe "Uninstall-Extension" {
     It "Returns -1 and logs when an unexpected exception is thrown" {
         Mock Get-MatchingPHPExtensionsStatus { throw 'Unexpected error' }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl')
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl')
 
         $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
@@ -331,7 +331,7 @@ Describe "Uninstall-Extension" {
         Mock Test-DirectoryNotExists { return $false }
         Mock Get-MatchingPHPExtensionsStatus {
             return @(@{
-                    fullPath   = "$extDirectory\pdo_pgsql.dll"
+                    fullPath   = "$script:extDirectory\pdo_pgsql.dll"
                     fileName   = 'pdo_pgsql.dll'
                     name       = 'pdo_pgsql'
                     source     = 'ext,ini'
@@ -344,7 +344,7 @@ Describe "Uninstall-Extension" {
         Mock Read-HostWrapper { return 'y' }
         Mock Test-FileNotExists { return $true }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('sql')
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('sql')
 
         $result | Should -Be -1
     }
@@ -353,7 +353,7 @@ Describe "Uninstall-Extension" {
         Mock Test-DirectoryNotExists { return $false }
         Mock Test-FileNotExists { return $false }
         $matchingExtensions = @(@{
-            fullPath   = "$extDirectory\pdo_pgsql.dll"
+            fullPath   = "$script:extDirectory\pdo_pgsql.dll"
             fileName   = 'pdo_pgsql.dll'
             name       = 'pdo_pgsql'
             source     = 'ext,ini'
@@ -363,7 +363,7 @@ Describe "Uninstall-Extension" {
             color      = 'DarkGreen'
         },
         @{
-            fullPath   = "$extDirectory\pdo_mysql.dll"
+            fullPath   = "$script:extDirectory\pdo_mysql.dll"
             fileName   = 'pdo_mysql.dll'
             name       = 'pdo_mysql'
             source     = 'ext,ini'
@@ -389,7 +389,7 @@ Describe "Uninstall-Extension" {
         Mock Remove-ExtensionFromExtDirectory { return 0 }
         Mock Remove-ExtensionFromIniFile { return 0 }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('sql')
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('sql')
 
         $result | Should -Be 0
         Should -Invoke Write-Color -Times 1 -ParameterFilter {
@@ -402,7 +402,7 @@ Describe "Uninstall-Extension" {
     It "Skips confirmation prompt and uninstalls when skipConfirmation is true" {
         Mock Get-MatchingPHPExtensionsStatus {
             return @(@{
-                    fullPath   = "$extDirectory\php_curl.dll"
+                    fullPath   = "$script:extDirectory\php_curl.dll"
                     fileName   = 'php_curl.dll'
                     name       = 'curl'
                     source     = 'ext,ini'
@@ -414,18 +414,18 @@ Describe "Uninstall-Extension" {
         Mock Remove-ExtensionFromExtDirectory { return 0 }
         Mock Remove-ExtensionFromIniFile { return 0 }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl') -skipConfirmation $true
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl') -skipConfirmation $true
 
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 0 -ParameterFilter {
-            $Prompt -like "*Are you sure*"
+            $prompt -like "*Are you sure*"
         }
     }
 
     It "Prompts confirmation when skipConfirmation is false and cancels on 'n'" {
         Mock Get-MatchingPHPExtensionsStatus {
             return @(@{
-                    fullPath   = "$extDirectory\php_curl.dll"
+                    fullPath   = "$script:extDirectory\php_curl.dll"
                     fileName   = 'php_curl.dll'
                     name       = 'curl'
                     source     = 'ext,ini'
@@ -437,11 +437,11 @@ Describe "Uninstall-Extension" {
         Mock Read-HostWrapper -ParameterFilter { $prompt -like "*Are you sure*" } -MockWith { return 'n' }
         Mock Remove-ExtensionFromExtDirectory { return 0 }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl') -skipConfirmation $false
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl') -skipConfirmation $false
 
         $result | Should -Be -1
         Should -Invoke Read-HostWrapper -Exactly 1 -ParameterFilter {
-            $Prompt -like "*Are you sure*"
+            $prompt -like "*Are you sure*"
         }
         Should -Invoke Remove-ExtensionFromExtDirectory -Exactly 0
     }
@@ -449,7 +449,7 @@ Describe "Uninstall-Extension" {
     It "Prompts confirmation when skipConfirmation is false and proceeds on 'y'" {
         Mock Get-MatchingPHPExtensionsStatus {
             return @(@{
-                    fullPath   = "$extDirectory\php_curl.dll"
+                    fullPath   = "$script:extDirectory\php_curl.dll"
                     fileName   = 'php_curl.dll'
                     name       = 'curl'
                     source     = 'ext,ini'
@@ -462,18 +462,18 @@ Describe "Uninstall-Extension" {
         Mock Remove-ExtensionFromExtDirectory { return 0 }
         Mock Remove-ExtensionFromIniFile { return 0 }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl') -skipConfirmation $false
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl') -skipConfirmation $false
 
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 1 -ParameterFilter {
-            $Prompt -like "*Are you sure*"
+            $prompt -like "*Are you sure*"
         }
     }
 
     It "Skips confirmation for all extensions when skipConfirmation is true with multiple extNames" {
         Mock Get-MatchingPHPExtensionsStatus -ParameterFilter { $extName -eq 'curl' } {
             return @(@{
-                    fullPath   = "$extDirectory\php_curl.dll"
+                    fullPath   = "$script:extDirectory\php_curl.dll"
                     fileName   = 'php_curl.dll'
                     name       = 'curl'
                     source     = 'ext,ini'
@@ -483,7 +483,7 @@ Describe "Uninstall-Extension" {
         }
         Mock Get-MatchingPHPExtensionsStatus -ParameterFilter { $extName -eq 'xdebug' } {
             return @(@{
-                    fullPath   = "$extDirectory\php_xdebug.dll"
+                    fullPath   = "$script:extDirectory\php_xdebug.dll"
                     fileName   = 'php_xdebug.dll'
                     name       = 'xdebug'
                     source     = 'ext,ini'
@@ -495,11 +495,11 @@ Describe "Uninstall-Extension" {
         Mock Remove-ExtensionFromExtDirectory { return 0 }
         Mock Remove-ExtensionFromIniFile { return 0 }
 
-        $result = Uninstall-Extension -iniPath $testIniPath -extNames @('curl', 'xdebug') -skipConfirmation $true
+        $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl', 'xdebug') -skipConfirmation $true
 
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 0 -ParameterFilter {
-            $Prompt -like "*Are you sure*"
+            $prompt -like "*Are you sure*"
         }
     }
 }

@@ -2,6 +2,9 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
+    $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
+    $script:LOG_SEPARATOR = $Global:PVMConfig.constants.LOG_SEPARATOR
+
     Mock Show-Error { }
     Mock Show-Warning { }
     Mock Show-Message { }
@@ -130,36 +133,35 @@ Describe "Test-LogPageSize" {
 
 Describe "Get-LogEntries" {
     BeforeAll {
-        $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
-        New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
+        New-Item -ItemType Directory -Path (Split-Path -Path $script:LOG_ERROR_PATH) -Force | Out-Null
     }
 
     It "returns empty array if no entries found" {
-        '' | Set-ContentWrapper -path $LOG_ERROR_PATH
+        '' | Set-ContentWrapper -path $script:LOG_ERROR_PATH
 
-        $result = Get-LogEntries -path $LOG_ERROR_PATH
+        $result = Get-LogEntries -path $script:LOG_ERROR_PATH
 
         $result.Count | Should -Be 0
     }
 
     It "returns array of log entries" {
         @"
-$($Global:PVMConfig.constants.LOG_SEPARATOR)
+$script:LOG_SEPARATOR
 [2025-08-20 14:38:48] Test log entry 1 :
 Message: Issue 1
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 +         throw "Issue limit"
 +         ~~~~~~~~~~~~~~~~~~~~
 
-$($Global:PVMConfig.constants.LOG_SEPARATOR)
+$script:LOG_SEPARATOR
 [2025-08-23 14:38:48] Test log entry 0 :
 Message: Issue 0
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 +         throw "Issue limit"
 +         ~~~~~~~~~~~~~~~~~~~~
-"@ | Set-ContentWrapper -path $LOG_ERROR_PATH
+"@ | Set-ContentWrapper -path $script:LOG_ERROR_PATH
 
-        $result = Get-LogEntries -path $LOG_ERROR_PATH
+        $result = Get-LogEntries -path $script:LOG_ERROR_PATH
 
         $result.Length | Should -Be 2
         $result[0].Timestamp | Should -Be '2025-08-23 14:38:48'
@@ -170,22 +172,22 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 
     It "filters log entries based on search term" {
         @"
-$($Global:PVMConfig.constants.LOG_SEPARATOR)
+$script:LOG_SEPARATOR
 [2025-08-23 14:38:48] Test log entry 1 :
 Message: Issue 1
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 +         throw "Issue limit"
 +         ~~~~~~~~~~~~~~~~~~~~
 
-$($Global:PVMConfig.constants.LOG_SEPARATOR)
+$script:LOG_SEPARATOR
 [2025-08-23 14:38:48] Test log entry 0 :
 Message: Issue 0
 Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
 +         throw "Issue limit"
 +         ~~~~~~~~~~~~~~~~~~~~
-"@ | Set-ContentWrapper -path $LOG_ERROR_PATH
+"@ | Set-ContentWrapper -path $script:LOG_ERROR_PATH
 
-        $result = @(Get-LogEntries -path $LOG_ERROR_PATH -term 'entry 1')
+        $result = @(Get-LogEntries -path $script:LOG_ERROR_PATH -term 'entry 1')
 
         $result.Length | Should -Be 1
         $result[0].Timestamp | Should -Be '2025-08-23 14:38:48'
@@ -312,8 +314,7 @@ Describe "Get-LogNavigation" {
 
 Describe "Show-Log" {
     BeforeAll {
-        $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
-        New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
+        New-Item -ItemType Directory -Path (Split-Path -Path $script:LOG_ERROR_PATH) -Force | Out-Null
     }
 
     It "returns -1 for invalid page size" {

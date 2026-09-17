@@ -5,12 +5,14 @@ BeforeAll {
     $script:TEMPLATES_PATH = $Global:PVMConfig.paths.directories.templates
     $script:ALIASES_LIST_PATH = $Global:PVMConfig.paths.files.aliasesList
     $script:SCRIPTS_LIST_PATH = $Global:PVMConfig.paths.files.scriptsList
+    $script:DEFAULT_ALIASES = $Global:PVMConfig.defaults.aliases
+    $script:DEFAULT_SCRIPTS = $Global:PVMConfig.defaults.scripts
+    $script:DEFAULT_FLAGS = $Global:PVMConfig.defaults.flags
 }
 
 Describe "Set-AliasesList" {
     BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $script:DEFAULT_ALIASES = $Global:PVMConfig.defaults.aliases
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
     }
 
     It "Creates aliases.json" {
@@ -18,7 +20,7 @@ Describe "Set-AliasesList" {
         $result | Should -Be 0
 
         $result = Get-Aliases
-        $result.Count | Should -Be $DEFAULT_ALIASES.Count
+        $result.Count | Should -Be $script:DEFAULT_ALIASES.Count
     }
 
     It "Returns -1 when exception is thrown" {
@@ -30,10 +32,9 @@ Describe "Set-AliasesList" {
 
 Describe "Get-Aliases" {
     BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $testContent = [ordered]@{'?' = 'help'; 'i' = 'install'; 'init' = 'setup'}
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $ALIASES_LIST_PATH
-        $script:DEFAULT_ALIASES = $Global:PVMConfig.defaults.aliases
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $script:ALIASES_LIST_PATH
     }
 
     It "Returns aliases from aliases.json or PVMConfig.defaults.aliases" {
@@ -45,30 +46,29 @@ Describe "Get-Aliases" {
     }
 
     It "Falls back to DEFAULT_ALIASES value" {
-        Remove-ItemWrapper -path "$TEMPLATES_PATH\aliases.json"
+        Remove-ItemWrapper -path "$script:TEMPLATES_PATH\aliases.json"
         $result = Get-Aliases
-        $result.Count | Should -Be $DEFAULT_ALIASES.Count
+        $result.Count | Should -Be $script:DEFAULT_ALIASES.Count
     }
 
     It "Returns default value when exception is thrown" {
         Mock Test-FileExists { return $true }
         Mock Get-ContentWrapper { throw 'Test exception' }
         $result = Get-Aliases
-        $result.Count | Should -Be $DEFAULT_ALIASES.Count
+        $result.Count | Should -Be $script:DEFAULT_ALIASES.Count
     }
 }
 
 Describe "Get-FlagMap" {
     It "Returns PVMConfig.defaults.flags" {
         $result = Get-FlagMap
-        $result.Count | Should -Be $Global:PVMConfig.defaults.flags.Count
+        $result.Count | Should -Be $script:DEFAULT_FLAGS.Count
     }
 }
 
 Describe "Set-Scripts-List" {
     BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $script:DEFAULT_SCRIPTS = $Global:PVMConfig.defaults.scripts
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
     }
 
     It "Creates scripts.json" {
@@ -76,7 +76,7 @@ Describe "Set-Scripts-List" {
         $result | Should -Be 0
 
         $result = Get-Scripts
-        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
+        $result.Count | Should -Be $script:DEFAULT_SCRIPTS.Count
     }
 
     It "Returns -1 when exception is thrown" {
@@ -88,10 +88,9 @@ Describe "Set-Scripts-List" {
 
 Describe "Get-Scripts" {
     BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $testContent = [ordered]@{'test:quiet' = 'test --verbosity=None'; 'test:cov' = 'test --coverage=75'}
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $SCRIPTS_LIST_PATH
-        $script:DEFAULT_SCRIPTS = $Global:PVMConfig.defaults.scripts
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $script:SCRIPTS_LIST_PATH
     }
 
     It "Returns scripts from scripts.json or PVMConfig.defaults.scripts" {
@@ -104,14 +103,14 @@ Describe "Get-Scripts" {
     It "Falls back to DEFAULT_SCRIPTS value" {
         Remove-ItemWrapper -path "$script:TEMPLATES_PATH\scripts.json"
         $result = Get-Scripts
-        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
+        $result.Count | Should -Be $script:DEFAULT_SCRIPTS.Count
     }
 
     It "Returns default value when exception is thrown" {
         Mock Test-FileExists { return $true }
         Mock Get-ContentWrapper { throw 'Test exception' }
         $result = Get-Scripts
-        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
+        $result.Count | Should -Be $script:DEFAULT_SCRIPTS.Count
     }
 }
 
@@ -318,7 +317,7 @@ Describe "Get-EnvPath" {
 
 Describe "Get-EnvConfig" {
     BeforeEach {
-        $script:envRoot = "$TEST_DRIVE\envconfig"
+        $script:envRoot = "$script:TEST_DRIVE\envconfig"
         New-Item -ItemType Directory -Path $script:envRoot -Force | Out-Null
     }
 
@@ -340,7 +339,7 @@ Describe "Get-EnvConfig" {
             Get-EnvConfig -rootPath $envRoot -Verbose
 
             Should -Invoke Write-Verbose -ParameterFilter {
-                $Message -eq "Using .env from: $envRoot\.env"
+                $message -eq "Using .env from: $envRoot\.env"
             } -Times 1 -Exactly
         }
 
@@ -506,7 +505,7 @@ Describe "Get-EnvDefaults" {
 Describe "Get-Config" {
     Context "When .env file exists" {
         BeforeAll {
-            $script:testRoot = "$TEST_DRIVE\pvm"
+            $script:testRoot = "$script:TEST_DRIVE\pvm"
             New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
             @'
 PHP_CURRENT_VERSION_PATH=C:\pvm\php
@@ -548,7 +547,7 @@ MIN_LINE_LENGTH=50
         }
 
         It "Uses TEST_DRIVE from .env for fake storage when provided" {
-            $customRoot = "$TEST_DRIVE\custom-env"
+            $customRoot = "$script:TEST_DRIVE\custom-env"
             New-Item -ItemType Directory -Path $customRoot -Force | Out-Null
             @'
 PHP_CURRENT_VERSION_PATH=C:\pvm\php
@@ -567,7 +566,7 @@ TEST_DRIVE=C:\fake-storage
         }
 
         It "Falls back to storage/tests when TEST_DRIVE is not set" {
-            $fallbackRoot = "$TEST_DRIVE\fallback-env"
+            $fallbackRoot = "$script:TEST_DRIVE\fallback-env"
             New-Item -ItemType Directory -Path $fallbackRoot -Force | Out-Null
             @'
 PHP_CURRENT_VERSION_PATH=C:\pvm\php
@@ -585,7 +584,7 @@ MIN_LINE_LENGTH=50
         }
 
         It "Falls back to storage/tests when TEST_DRIVE is not a valid path" {
-            $invalidRoot = "$TEST_DRIVE\invalid-env"
+            $invalidRoot = "$script:TEST_DRIVE\invalid-env"
             New-Item -ItemType Directory -Path $invalidRoot -Force | Out-Null
             @'
 PHP_CURRENT_VERSION_PATH=C:\pvm\php

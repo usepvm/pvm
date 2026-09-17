@@ -2,14 +2,14 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:phpVersionPath = "$TEST_DRIVE\php-8.2"
-    $script:testIniPath = "$phpVersionPath\php.ini"
-    $script:extDirectory = "$phpVersionPath\ext"
-    $script:testBackupPath = "$testIniPath.bak"
+    $script:phpVersionPath = "$script:TEST_DRIVE\php-8.2"
+    $script:testIniPath = "$script:phpVersionPath\php.ini"
+    $script:extDirectory = "$script:phpVersionPath\ext"
+    $script:testBackupPath = "$script:testIniPath.bak"
 
     New-Directory -path $Global:PVMConfig.paths.directories.cache
-    New-Directory -path $phpVersionPath
-    New-Directory -path $extDirectory
+    New-Directory -path $script:phpVersionPath
+    New-Directory -path $script:extDirectory
 
     Mock Show-Warning { }
     Mock Show-Info { }
@@ -25,7 +25,7 @@ zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $testIniPath
+"@ | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
@@ -33,53 +33,53 @@ max_execution_time = 30
 
 Describe "Get-IniSetting" {
     It "Gets existing setting" {
-        $code = Get-IniSetting -iniPath $testIniPath -keys @('upload_max_filesize')
+        $code = Get-IniSetting -iniPath $script:testIniPath -keys @('upload_max_filesize')
 
         $code | Should -Be 0
     }
 
     It "Gets setting with spaces in value" {
-        $code = Get-IniSetting -iniPath $testIniPath -keys @('display_errors')
+        $code = Get-IniSetting -iniPath $script:testIniPath -keys @('display_errors')
 
         $code | Should -Be 0
     }
 
     It "Returns -1 for commented settings" {
-        $code = Get-IniSetting -iniPath $testIniPath -keys @('xdebug')
+        $code = Get-IniSetting -iniPath $script:testIniPath -keys @('xdebug')
 
         $code | Should -Be -1
     }
 
     It "Returns -1 for non-existent setting" {
-        $code = Get-IniSetting -iniPath $testIniPath -keys @('nonexistent_setting')
+        $code = Get-IniSetting -iniPath $script:testIniPath -keys @('nonexistent_setting')
 
         $code | Should -Be -1
     }
 
     It "Requires key parameter" {
-        $code = Get-IniSetting -iniPath $testIniPath -keys ''
+        $code = Get-IniSetting -iniPath $script:testIniPath -keys ''
         $code | Should -Be -1
 
-        $code = Get-IniSetting -iniPath $testIniPath -keys $null
+        $code = Get-IniSetting -iniPath $script:testIniPath -keys $null
         $code | Should -Be -1
     }
 
     It "Handles regex special characters in key names" {
-        $code = Get-IniSetting -iniPath $testIniPath -keys @('memory_limit')
+        $code = Get-IniSetting -iniPath $script:testIniPath -keys @('memory_limit')
         $code | Should -Be 0
     }
 
     It "Displays '(not set)' for empty value entries" {
         @"
 memory_limit =
-"@ | Set-ContentWrapper -path $testIniPath
-        $code = Get-IniSetting -iniPath $testIniPath -keys @('memory_limit')
+"@ | Set-ContentWrapper -path $script:testIniPath
+        $code = Get-IniSetting -iniPath $script:testIniPath -keys @('memory_limit')
         $code | Should -Be 0
     }
 
     It "Returns -1 on error" {
         Mock Get-ContentWrapper { throw 'Access denied' }
-        $code = Get-IniSetting -iniPath $testIniPath -keys @('memory_limit')
+        $code = Get-IniSetting -iniPath $script:testIniPath -keys @('memory_limit')
         $code | Should -Be -1
     }
 }

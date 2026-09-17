@@ -2,9 +2,9 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:testPhpPath = "$TEST_DRIVE\PHP"
-    New-Directory -path "$testPhpPath\7.4"
-    New-Directory -path "$testPhpPath\8.0"
+    $script:testPhpPath = "$script:TEST_DRIVE\PHP"
+    New-Directory -path "$script:testPhpPath\7.4"
+    New-Directory -path "$script:testPhpPath\8.0"
 
     Mock Add-LogEntry { return 0 }
 
@@ -36,7 +36,7 @@ Describe "Uninstall-PHP" {
 
         It "Should successfully uninstall when version is found directly (skipConfirmation)" {
             Mock Get-UserSelectedPHPVersion {
-                return @{ code = 0; version = '7.4'; arch = 'x86'; buildType = 'nts'; path = "$testPhpPath\7.4" }
+                return @{ code = 0; version = '7.4'; arch = 'x86'; buildType = 'nts'; path = "$script:testPhpPath\7.4" }
             }
             Mock Update-InstalledPHPVersionsCache { 0}
 
@@ -46,13 +46,13 @@ Describe "Uninstall-PHP" {
             Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -like '*PHP version 7.4 has been uninstalled successfully*' }
 
             Should -Invoke Remove-ItemWrapper -Exactly 1 -ParameterFilter {
-                $path -eq "$testPhpPath\7.4"
+                $path -eq "$script:testPhpPath\7.4"
             }
         }
 
         It "Should ask general confirmation when skipConfirmation is false and cancel on 'n'" {
             Mock Get-UserSelectedPHPVersion {
-                return @{ code = 0; version = '7.4'; arch = 'x86'; buildType = 'nts'; path = "$testPhpPath\7.4" }
+                return @{ code = 0; version = '7.4'; arch = 'x86'; buildType = 'nts'; path = "$script:testPhpPath\7.4" }
             }
             Mock Read-HostWrapper { return 'n' }
 
@@ -62,14 +62,14 @@ Describe "Uninstall-PHP" {
             Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -like '*Uninstallation cancelled*' }
 
             Should -Invoke Read-HostWrapper -Exactly 1 -ParameterFilter {
-                $Prompt -like "*Are you sure you want to delete PHP version*"
+                $prompt -like "*Are you sure you want to delete PHP version*"
             }
             Should -Invoke Remove-ItemWrapper -Exactly 0
         }
 
         It "Should proceed after general confirmation 'y' when not current version" {
             Mock Get-UserSelectedPHPVersion {
-                return @{ code = 0; version = '7.4'; arch = 'x86'; buildType = 'nts'; path = "$testPhpPath\7.4" }
+                return @{ code = 0; version = '7.4'; arch = 'x86'; buildType = 'nts'; path = "$script:testPhpPath\7.4" }
             }
             Mock Read-HostWrapper { return 'y' }
             Mock Update-InstalledPHPVersionsCache { return 0 }
@@ -85,7 +85,7 @@ Describe "Uninstall-PHP" {
 
         It "Should prompt current-version warning after general confirm when uninstalling active version" {
             Mock Get-UserSelectedPHPVersion {
-                return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\7.4" }
+                return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$script:testPhpPath\7.4" }
             }
             Mock Get-CurrentPHPVersion { return @{ version = '7.4'; arch = 'x64'; buildType = 'nts' } }
             Mock Test-TwoPHPVersionsEqual { return $true }
@@ -105,7 +105,7 @@ Describe "Uninstall-PHP" {
 
         It "Should prompt current-version warning and cancel on 'n'" {
             Mock Get-UserSelectedPHPVersion {
-                return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\7.4" }
+                return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$script:testPhpPath\7.4" }
             }
             Mock Get-CurrentPHPVersion { return @{ version = '7.4'; arch = 'x64'; buildType = 'nts' } }
             Mock Test-TwoPHPVersionsEqual { return $true }
@@ -127,7 +127,7 @@ Describe "Uninstall-PHP" {
 
         It "Should uninstall current version after both confirmations answered 'y'" {
             Mock Get-UserSelectedPHPVersion {
-                return @{ code = 0; version = '8.0'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\8.0" }
+                return @{ code = 0; version = '8.0'; arch = 'x64'; buildType = 'nts'; path = "$script:testPhpPath\8.0" }
             }
             Mock Get-CurrentPHPVersion { return @{ version = '8.0'; arch = 'x64'; buildType = 'nts' } }
             Mock Test-TwoPHPVersionsEqual { return $true }
@@ -143,7 +143,7 @@ Describe "Uninstall-PHP" {
 
         It "Should skip all prompts and uninstall current version when skipConfirmation is true" {
             Mock Get-UserSelectedPHPVersion {
-                return @{ code = 0; version = '8.0'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\8.0" }
+                return @{ code = 0; version = '8.0'; arch = 'x64'; buildType = 'nts'; path = "$script:testPhpPath\8.0" }
             }
             Mock Get-CurrentPHPVersion { return @{ version = '8.0'; arch = 'x64'; buildType = 'nts' } }
             Mock Read-HostWrapper { }
@@ -163,7 +163,7 @@ Describe "Uninstall-PHP" {
                 return @('8.0', '8.1')
             }
             Mock Get-UserSelectedPHPVersion {
-                return @{ code = 0; version = '8.0'; path = "$testPhpPath\8.0" }
+                return @{ code = 0; version = '8.0'; path = "$script:testPhpPath\8.0" }
             }
             Mock Remove-ItemWrapper { }
             Mock Add-LogEntry { return 0 }
@@ -181,7 +181,7 @@ Describe "Uninstall-PHP" {
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
             Should -Invoke Get-UserSelectedPHPVersion -Exactly 1
             Should -Invoke Remove-ItemWrapper -Exactly 1 -ParameterFilter {
-                $path -eq "$testPhpPath\8.0"
+                $path -eq "$script:testPhpPath\8.0"
             }
         }
     }
@@ -259,7 +259,7 @@ Describe "Uninstall-PHP" {
 
         It "Should catch the exception and return error message" {
             Mock Get-UserSelectedPHPVersion {
-                return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$testPhpPath\7.4" }
+                return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$script:testPhpPath\7.4" }
             }
             Mock Update-InstalledPHPVersionsCache { throw 'Error' }
 
@@ -273,6 +273,6 @@ Describe "Uninstall-PHP" {
     }
 
     AfterAll {
-        Remove-ItemWrapper -path $testPhpPath
+        Remove-ItemWrapper -path $script:testPhpPath
     }
 }

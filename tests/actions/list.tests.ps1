@@ -14,8 +14,8 @@ BeforeAll {
     Mock Add-LogEntry { param ($logPath, $message, $data) return 0 }
     Mock Get-SourceUrls {
         return @{
-            'releases' = $PHP_WIN_RELEASES_URL
-            'archives' = $PHP_WIN_ARCHIVES_URL
+            'releases' = $script:PHP_WIN_RELEASES_URL
+            'archives' = $script:PHP_WIN_ARCHIVES_URL
         }
     }
     Mock Get-CurrentPHPVersion { return @{ version = '8.2.0' } }
@@ -29,8 +29,8 @@ Describe "Get-FromSource" {
             $result = & $scriptBlock @argumentList
             return $result.pvmData
         }
-        if (Test-Path "$TEST_DRIVE\data") {
-            Remove-ItemWrapper -path "$TEST_DRIVE\data"
+        if (Test-Path "$script:TEST_DRIVE\data") {
+            Remove-ItemWrapper -path "$script:TEST_DRIVE\data"
         }
 
         Mock Test-OS64Bit { return $true }

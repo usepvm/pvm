@@ -6,8 +6,8 @@ BeforeAll {
     $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
     $script:PATH_VAR_BACKUP_PATH = $Global:PVMConfig.paths.files.pathVarBackup
 
-    New-Directory -path "$STORAGE_PATH\php\8.1"
-    New-Directory -path "$STORAGE_PATH\php\8.2"
+    New-Directory -path "$script:STORAGE_PATH\php\8.1"
+    New-Directory -path "$script:STORAGE_PATH\php\8.2"
 
     Mock Show-Message { }
     Mock Show-Error { }
@@ -28,10 +28,10 @@ BeforeAll {
 
     # Mock file system for logging tests
     $script:MockFileSystem = @{
-        Directories = @("$($STORAGE_PATH)\php\8.1", "$($STORAGE_PATH)\php\8.2")
+        Directories = @("$($script:STORAGE_PATH)\php\8.1", "$($script:STORAGE_PATH)\php\8.2")
         Files = @{
-            "$($LOG_ERROR_PATH)" = @()
-            "$($PATH_VAR_BACKUP_PATH)" = @()
+            "$($script:LOG_ERROR_PATH)" = @()
+            "$($script:PATH_VAR_BACKUP_PATH)" = @()
         }
     }
 
@@ -389,8 +389,8 @@ Describe "Optimize-SystemPath" {
             $result = Optimize-SystemPath
             $result | Should -Be 0
 
-            Test-Path $PATH_VAR_BACKUP_PATH | Should -Be $true
-            Get-ContentWrapper -path $PATH_VAR_BACKUP_PATH -Raw | Should -Match 'Original PATH'
+            Test-Path $script:PATH_VAR_BACKUP_PATH | Should -Be $true
+            Get-ContentWrapper -path $script:PATH_VAR_BACKUP_PATH -Raw | Should -Match 'Original PATH'
         }
 
         It "Handles exceptions gracefully" {
@@ -398,8 +398,8 @@ Describe "Optimize-SystemPath" {
             $result = Optimize-SystemPath
             $result | Should -Be -1
 
-            Test-Path $LOG_ERROR_PATH | Should -Be $true
-            Get-ContentWrapper -path $LOG_ERROR_PATH -Raw | Should -Match 'Optimize-SystemPath - Failed to optimize system PATH variable'
+            Test-Path $script:LOG_ERROR_PATH | Should -Be $true
+            Get-ContentWrapper -path $script:LOG_ERROR_PATH -Raw | Should -Match 'Optimize-SystemPath - Failed to optimize system PATH variable'
         }
 
         It "Sets Path variable successfully after optimization" {

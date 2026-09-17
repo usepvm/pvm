@@ -1,6 +1,10 @@
 ﻿
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
+
+    $script:ROOT_PATH = $Global:PVMConfig.rootPath
+    $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
+    $script:ASSETS_PATH = $Global:PVMConfig.paths.directories.assets
 }
 
 Describe "Add-LogEntry" {
@@ -10,7 +14,6 @@ Describe "Add-LogEntry" {
 
     Context "When logging data" {
         It "Logs data successfully" {
-            $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
             $result = Add-LogEntry -data @{
                 header = 'Test message'
                 exception = @{
@@ -23,8 +26,8 @@ Describe "Add-LogEntry" {
                 }
             }
             $result | Should -Be 0
-            Test-Path $LOG_ERROR_PATH | Should -Be $true
-            $content = Get-ContentWrapper -path $LOG_ERROR_PATH -Raw
+            Test-Path $script:LOG_ERROR_PATH | Should -Be $true
+            $content = Get-ContentWrapper -path $script:LOG_ERROR_PATH -Raw
 
             $content | Should -Match '\[.*\] Test message(.|\s)*Message: Test data'
 
@@ -40,7 +43,7 @@ Describe "Add-LogEntry" {
         }
 
         It "Accepts custom log path" {
-            $customLogPath = "$TEST_DRIVE\logs\custom.log"
+            $customLogPath = "$script:TEST_DRIVE\logs\custom.log"
             $result = Add-LogEntry -data @{
                 header = 'Test message'
                 logPath = $customLogPath
@@ -152,8 +155,8 @@ Describe "Show-SpinnerWhileJob" {
         Mock Write-Yellow { }
         Mock Add-LogEntry { }
 
-        New-Item -Path "$($Global:PVMConfig.rootPath)\src" -ItemType Directory -Force | Out-Null
-        Set-ContentWrapper -path "$($Global:PVMConfig.rootPath)\src\imports.ps1" -value '# no-op for tests'
+        New-Item -Path "$script:ROOT_PATH\src" -ItemType Directory -Force | Out-Null
+        Set-ContentWrapper -path "$script:ROOT_PATH\src\imports.ps1" -value '# no-op for tests'
 
         $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
         $script:keepRunning = $true
@@ -763,10 +766,6 @@ Describe "Write-Host helpers" {
 }
 
 Describe "Sound Functions" {
-    BeforeAll {
-        $Global:PVMConfig.paths.directories.assets = "C:\pvm\assets"
-    }
-
     BeforeEach {
         $script:currentPVMSubprocess = @{ enabled = $Global:PVMConfig.subprocess.enabled; structuredOutput = $Global:PVMConfig.subprocess.structuredOutput }
     }
@@ -837,7 +836,7 @@ Describe "Sound Functions" {
 
             Invoke-Sound -filename "song.mp3" -wait
 
-            $script:playerCalls.Open | Should -Be "$($Global:PVMConfig.paths.directories.assets)\sounds\song.mp3"
+            $script:playerCalls.Open | Should -Be "$script:ASSETS_PATH\sounds\song.mp3"
             $script:playerCalls.Play | Should -BeTrue
             Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 3 }
         }
@@ -848,7 +847,7 @@ Describe "Sound Functions" {
 
             Invoke-Sound -filename "song.mp3"
 
-            $script:playerCalls.Open | Should -Be "$($Global:PVMConfig.paths.directories.assets)\sounds\song.mp3"
+            $script:playerCalls.Open | Should -Be "$script:ASSETS_PATH\sounds\song.mp3"
             $script:playerCalls.Play | Should -BeTrue
             Should -Invoke Start-Sleep -Times 0
         }

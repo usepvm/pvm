@@ -2,7 +2,7 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:testIniPath = "$TEST_DRIVE\php.ini"
+    $script:testIniPath = "$script:TEST_DRIVE\php.ini"
 
     Mock Show-Error { }
     Mock Show-Message { }
@@ -29,7 +29,7 @@ Describe "Show-PHPExtensionInfo" {
     }
 
     It "Displays cached metadata and local installation details" {
-        $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName 'xdebug'
+        $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName 'xdebug'
 
         $code | Should -Be 0
         Should -Invoke Get-ExtensionMatchingCategories -Exactly 1 -ParameterFilter { $extName -eq 'xdebug' }
@@ -50,7 +50,7 @@ Describe "Show-PHPExtensionInfo" {
         }
         Mock Read-HostWrapper { return '1' }
 
-        $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName 'xdebug'
+        $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName 'xdebug'
 
         $code | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 1
@@ -76,7 +76,7 @@ Describe "Show-PHPExtensionInfo" {
         }
         $script:selectionAttempts = 0
 
-        $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName 'xdebug'
+        $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName 'xdebug'
 
         $code | Should -Be 0
         Should -Invoke Show-Warning -Times 2
@@ -91,7 +91,7 @@ Describe "Show-PHPExtensionInfo" {
             return @(@{ name = 'xdebug'; id = 'xdebug'; status = 'Disabled'; color = 'DarkYellow'; lineNumber = 0; line = $null; fileName = $null; fullPath = $null; comment = 'DLL file not found' })
         }
 
-        $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName 'xdebug'
+        $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName 'xdebug'
 
         $code | Should -Be 0
         Should -Invoke Show-Message -ParameterFilter { $message -eq ' (not available)' }
@@ -106,7 +106,7 @@ Describe "Show-PHPExtensionInfo" {
             return @(@{ name = 'xdebug'; id = 'xdebug'; status = 'Enabled'; color = 'DarkGreen' })
         }
 
-        $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName 'xdebug'
+        $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName 'xdebug'
 
         $code | Should -Be 0
         Should -Invoke Show-Message -ParameterFilter { $message -eq ' Not found in available extensions cache' }
@@ -115,7 +115,7 @@ Describe "Show-PHPExtensionInfo" {
     It "Displays not installed status when only metadata is available" {
         Mock Get-MatchingPHPExtensionsStatus { return @() }
 
-        $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName 'xdebug'
+        $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName 'xdebug'
 
         $code | Should -Be 0
         Should -Invoke Show-Message -ParameterFilter { $message -eq ' Not installed or configured locally' }
@@ -124,7 +124,7 @@ Describe "Show-PHPExtensionInfo" {
     It "Returns -1 when extension lookup fails" {
         Mock Get-ExtensionMatchingCategories { throw 'Cache unavailable' }
 
-        $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName 'xdebug'
+        $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName 'xdebug'
         $code | Should -Be -1
         Should -Invoke Show-Error -ParameterFilter { $message -like "`nFailed to get information for extension 'xdebug'" }
         Should -Invoke Add-LogEntry -Exactly 1
@@ -134,7 +134,7 @@ Describe "Show-PHPExtensionInfo" {
         Mock Get-ExtensionMatchingCategories { return @() }
         Mock Get-MatchingPHPExtensionsStatus { return @() }
 
-        $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName 'missing'
+        $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName 'missing'
         $code | Should -Be -1
         Should -Invoke Show-Error -ParameterFilter { $message -eq "`nExtension 'missing' not found" }
     }
@@ -143,7 +143,7 @@ Describe "Show-PHPExtensionInfo" {
         Mock Get-ExtensionMatchingCategories { return @() }
         Mock Get-MatchingPHPExtensionsStatus { return @() }
 
-        $code = Show-PHPExtensionInfo -iniPath $testIniPath -extName ''
+        $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName ''
         $code | Should -Be -1
     }
 }
@@ -211,7 +211,7 @@ Describe "Show-PHPExtensions" {
     It "Returns 0 when no extensions are installed" {
         Mock Get-AllPHPExtensionsStatus { return @() }
 
-        $code = Show-PHPExtensions -iniPath $testIniPath
+        $code = Show-PHPExtensions -iniPath $script:testIniPath
 
         $code | Should -Be 0
         Should -Invoke Show-ExtensionsStates -Exactly 1
@@ -219,7 +219,7 @@ Describe "Show-PHPExtensions" {
     }
 
     It "Displays installed extensions" {
-        $code = Show-PHPExtensions -iniPath $testIniPath
+        $code = Show-PHPExtensions -iniPath $script:testIniPath
         $code | Should -Be 0
         Should -Invoke Get-AllPHPExtensionsStatus -Exactly 1
         Should -Invoke Get-MatchingPHPExtensionsStatus -Exactly 0
@@ -228,7 +228,7 @@ Describe "Show-PHPExtensions" {
     }
 
     It "Displays local extensions matching the filter" {
-        $code = Show-PHPExtensions -iniPath $testIniPath -term 'pc'
+        $code = Show-PHPExtensions -iniPath $script:testIniPath -term 'pc'
         $code | Should -Be 0
         Should -Invoke Get-AllPHPExtensionsStatus -Exactly 1
         Should -Invoke Get-MatchingPHPExtensionsStatus -Exactly 1
@@ -239,7 +239,7 @@ Describe "Show-PHPExtensions" {
     It "Returns 0 when no local extensions matchs the filter" {
         Mock Get-MatchingPHPExtensionsStatus { return @() }
 
-        $code = Show-PHPExtensions -iniPath $testIniPath -term 'nonexistent'
+        $code = Show-PHPExtensions -iniPath $script:testIniPath -term 'nonexistent'
 
         $code | Should -Be 0
         Should -Invoke Get-MatchingPHPExtensionsStatus -Exactly 1
@@ -249,34 +249,34 @@ Describe "Show-PHPExtensions" {
 
     It "Returns -1 when no extensions are found" {
         Mock Get-AvailablePHPExtensions { return @{} }
-        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
+        $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true
         $code | Should -Be -1
         Should -Invoke Get-AvailablePHPExtensions -Exactly 1
     }
 
     It "Displays available extensions matching the filter" {
         Mock Get-AvailablePHPExtensions { return Get-ExtensionList }
-        $code = Show-PHPExtensions -iniPath $testIniPath -available $true -term 'pc'
+        $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true -term 'pc'
         $code | Should -Be 0
         Should -Invoke Show-Info -Exactly 2
         Should -Invoke Write-Gray -Exactly 1
     }
 
     It "Returns -1 when no available extensions matchs the filter" {
-        $code = Show-PHPExtensions -iniPath $testIniPath -available $true -term 'nonexistent'
+        $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true -term 'nonexistent'
         $code | Should -Be -1
     }
 
     It "Handles thrown exception" {
         Mock Get-AvailablePHPExtensions { throw 'Error' }
-        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
+        $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true
         $code | Should -Be -1
     }
 
     It "Returns -1 when available extensions count is 0" {
         Mock Get-AvailablePHPExtensions { return @{} }
 
-        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
+        $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true
 
         $code | Should -Be -1
         Should -Invoke Show-Error -Times 1 -ParameterFilter {
@@ -297,7 +297,7 @@ Describe "Show-PHPExtensions" {
             }
         }
         Mock Get-ConsoleWidth { return 80 }
-        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
+        $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true
         $code | Should -Be 0
     }
 
@@ -309,7 +309,7 @@ Describe "Show-PHPExtensions" {
                 )
             }
         }
-        $code = Show-PHPExtensions -iniPath $testIniPath -available $true
+        $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true
         $code | Should -Be 0
     }
 }

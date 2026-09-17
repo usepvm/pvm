@@ -1,41 +1,41 @@
 ﻿
 Describe "Resolve-Alias" {
     $testCases = @(
-        @{ Command = '?'; Expected = 'help' }
-        @{ Command = 'h'; Expected = 'help' }
-        @{ Command = 'H'; Expected = 'help' }
-        @{ Command = 'INIT'; Expected = 'setup' }
-        @{ Command = 'CUR'; Expected = 'current' }
-        @{ Command = 'ACTive'; Expected = 'current' }
-        @{ Command = 'ls'; Expected = 'list' }
-        @{ Command = 'list'; Expected = 'list' }
-        @{ Command = 'u'; Expected = 'uninstall' }
-        @{ Command = 'U'; Expected = 'uninstall' }
-        @{ Command = 'uninstall'; Expected = 'uninstall' }
-        @{ Command = 'I'; Expected = 'install' }
-        @{ Command = 'install'; Expected = 'install' }
-        @{ Command = 'SWITCH'; Expected = 'use' }
-        @{ Command = 'ON'; Expected = 'enable' }
-        @{ Command = 'OFF'; Expected = 'disable' }
-        @{ Command = 'A'; Expected = 'add' }
-        @{ Command = '+'; Expected = 'add' }
-        @{ Command = 'rm'; Expected = 'remove' }
-        @{ Command = '-'; Expected = 'remove' }
-        @{ Command = 'i'; Expected = 'install' }
-        @{ Command = 'LS'; Expected = 'list' }
-        @{ Command = 'RM'; Expected = 'remove' }
-        @{ Command = 'DEL'; Expected = 'delete' }
-        @{ Command = 'CLS'; Expected = 'clear' }
-        @{ Command = 'unknown'; Expected = 'unknown' }
-        @{ Command = ''; Expected = $null }
-        @{ Command = '    '; Expected = $null }
-        @{ Command = $null; Expected = $null }
+        @{ command = '?'; expected = 'help' }
+        @{ command = 'h'; expected = 'help' }
+        @{ command = 'H'; expected = 'help' }
+        @{ command = 'INIT'; expected = 'setup' }
+        @{ command = 'CUR'; expected = 'current' }
+        @{ command = 'ACTive'; expected = 'current' }
+        @{ command = 'ls'; expected = 'list' }
+        @{ command = 'list'; expected = 'list' }
+        @{ command = 'u'; expected = 'uninstall' }
+        @{ command = 'U'; expected = 'uninstall' }
+        @{ command = 'uninstall'; expected = 'uninstall' }
+        @{ command = 'I'; expected = 'install' }
+        @{ command = 'install'; expected = 'install' }
+        @{ command = 'SWITCH'; expected = 'use' }
+        @{ command = 'ON'; expected = 'enable' }
+        @{ command = 'OFF'; expected = 'disable' }
+        @{ command = 'A'; expected = 'add' }
+        @{ command = '+'; expected = 'add' }
+        @{ command = 'rm'; expected = 'remove' }
+        @{ command = '-'; expected = 'remove' }
+        @{ command = 'i'; expected = 'install' }
+        @{ command = 'LS'; expected = 'list' }
+        @{ command = 'RM'; expected = 'remove' }
+        @{ command = 'DEL'; expected = 'delete' }
+        @{ command = 'CLS'; expected = 'clear' }
+        @{ command = 'unknown'; expected = 'unknown' }
+        @{ command = ''; expected = $null }
+        @{ command = '    '; expected = $null }
+        @{ command = $null; expected = $null }
     )
 
     It "Returns '<Expected>' when '<Command>' is passed" -TestCases $testCases {
-        param ($Command, $Expected)
-        $result = Resolve-Alias -alias $Command
-        $result | Should -Be $Expected
+        param ($command, $expected)
+        $result = Resolve-Alias -alias $command
+        $result | Should -Be $expected
     }
 
     It "Returns the alias itself when Get-Aliases returns null" {
@@ -55,19 +55,19 @@ Describe "Resolve-Alias" {
 
 Describe "Resolve-FlagCommand" {
     $testCases = @(
-        @{ Command = '--version'; Expected = 'version' }
-        @{ Command = '-v'; Expected = 'version' }
-        @{ Command = '--help'; Expected = 'help' }
-        @{ Command = '-h'; Expected = 'help' }
-        @{ Command = 'unknown'; Expected = $null }
-        @{ Command = ''; Expected = $null }
-        @{ Command = '    '; Expected = $null }
+        @{ command = '--version'; expected = 'version' }
+        @{ command = '-v'; expected = 'version' }
+        @{ command = '--help'; expected = 'help' }
+        @{ command = '-h'; expected = 'help' }
+        @{ command = 'unknown'; expected = $null }
+        @{ command = ''; expected = $null }
+        @{ command = '    '; expected = $null }
     )
 
     It "Returns '<Expected>' when '<Command>' is passed" -TestCases $testCases {
-        param ($Command, $Expected)
-        $result = Resolve-FlagCommand -arguments @($Command)
-        $result | Should -Be $Expected
+        param ($command, $expected)
+        $result = Resolve-FlagCommand -arguments @($command)
+        $result | Should -Be $expected
     }
 }
 

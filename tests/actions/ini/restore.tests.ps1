@@ -2,9 +2,9 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:testIniPath = "$TEST_DRIVE\php.ini"
-    $script:extDirectory = "$TEST_DRIVE\ext"
-    $script:testBackupPath = "$testIniPath.bak"
+    $script:testIniPath = "$script:TEST_DRIVE\php.ini"
+    $script:extDirectory = "$script:TEST_DRIVE\ext"
+    $script:testBackupPath = "$script:testIniPath.bak"
 
     Mock Show-Error { }
     Mock Show-Success { }
@@ -18,7 +18,7 @@ zend_extension=php_opcache.dll
 display_errors = On
 max_execution_time = 30
 ;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $testIniPath
+"@ | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
@@ -28,18 +28,18 @@ Describe "Restore-IniBackup" {
     It "Creates backup and restores successfully" {
         Reset-IniContent
         # Create backup first
-        $null = Backup-IniFile -iniPath $testIniPath
+        $null = Backup-IniFile -iniPath $script:testIniPath
 
         # Modify original
-        'modified content' | Set-ContentWrapper -path $testIniPath
-        $code = Restore-IniBackup -iniPath $testIniPath
+        'modified content' | Set-ContentWrapper -path $script:testIniPath
+        $code = Restore-IniBackup -iniPath $script:testIniPath
         $code | Should -Be 0
-        (Get-ContentWrapper -path $testIniPath) | Should -Not -Be 'modified content'
+        (Get-ContentWrapper -path $script:testIniPath) | Should -Not -Be 'modified content'
     }
 
     It "Fails when backup doesn't exist" {
-        Remove-ItemWrapper -path $testBackupPath
-        $code = Restore-IniBackup -iniPath $testIniPath
+        Remove-ItemWrapper -path $script:testBackupPath
+        $code = Restore-IniBackup -iniPath $script:testIniPath
         $code | Should -Be -1
     }
 
@@ -47,8 +47,8 @@ Describe "Restore-IniBackup" {
         Mock Add-LogEntry { return 0 }
         Mock Test-FileNotExists { return $false }
         Mock Copy-ItemWrapper { throw 'Access denied' }
-        $null = Backup-IniFile -iniPath $testIniPath
-        $code = Restore-IniBackup -iniPath $testIniPath
+        $null = Backup-IniFile -iniPath $script:testIniPath
+        $code = Restore-IniBackup -iniPath $script:testIniPath
         $code | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
     }

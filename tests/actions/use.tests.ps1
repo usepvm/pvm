@@ -69,11 +69,11 @@ Describe "Update-PHPVersion" {
     It "Should return when switching to same current version" {
         Mock Get-UserSelectedPHPVersion { return @{
             code=0; version='8.2.0'; arch = 'x64';
-            buildType = 'TS'; path= "$TEST_DRIVE\php\8.2.0"
+            buildType = 'TS'; path= "$script:TEST_DRIVE\php\8.2.0"
         }}
         Mock Get-CurrentPHPVersion { return @{
             version = '8.2.0';
-            path = "$TEST_DRIVE\php\8.2.0"
+            path = "$script:TEST_DRIVE\php\8.2.0"
             arch = 'x64'
             buildType = 'TS'
         }}

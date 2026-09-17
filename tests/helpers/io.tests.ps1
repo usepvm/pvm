@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'io'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
 
@@ -9,10 +8,6 @@ BeforeAll {
     New-Directory -path "$STORAGE_PATH\php\8.2"
 
     Mock Add-LogEntry { return 0 }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-AllSubdirectories" {

@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'php'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:testPhpPath = "$TEST_DRIVE\PHP"
     $script:testExtPath = "$testPhpPath\ext"
@@ -30,10 +29,6 @@ max_execution_time = 30
 
     # Create initial ini content first
     Reset-IniContent
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-PHPInstallInfo" {

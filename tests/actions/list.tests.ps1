@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'list'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:PHP_WIN_ARCHIVES_URL = $Global:PVMConfig.links.phpWinArchives
     $script:PHP_WIN_RELEASES_URL = $Global:PVMConfig.links.phpWinReleases
@@ -21,10 +20,6 @@ BeforeAll {
     }
     Mock Get-CurrentPHPVersion { return @{ version = '8.2.0' } }
     Mock Get-InstalledPHPVersions { return @('php8.2.0', 'php8.1.5', 'php7.4.33') }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-FromSource" {

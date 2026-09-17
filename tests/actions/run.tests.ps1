@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'run'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     Mock Write-Color { }
     Mock Show-Message { }
@@ -9,10 +8,6 @@ BeforeAll {
     Mock Write-Cyan { }
     Mock Write-Gray { }
     Mock New-Lines { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Show-SubProcessOutput" {

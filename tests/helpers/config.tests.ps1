@@ -1,15 +1,10 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'config'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:TEMPLATES_PATH = $Global:PVMConfig.paths.directories.templates
     $script:ALIASES_LIST_PATH = $Global:PVMConfig.paths.files.aliasesList
     $script:SCRIPTS_LIST_PATH = $Global:PVMConfig.paths.files.scriptsList
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Set-AliasesList" {

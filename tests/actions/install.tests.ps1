@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'install'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
     $script:PHP_WIN_ARCHIVES_URL = $Global:PVMConfig.links.phpWinArchives
@@ -127,10 +126,6 @@ BeforeAll {
     Mock Show-Success { }
     Mock Show-Message { }
     Mock Write-Gray { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-LatestPHPVersion" {

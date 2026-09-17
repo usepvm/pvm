@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'current'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:PHP_CURRENT_DIR = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
     $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
@@ -11,10 +10,6 @@ BeforeAll {
     Mock Show-Error { }
 
     Mock Add-LogEntry { return 0 }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-PHPStatus" {

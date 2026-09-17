@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'fetch'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:testPhpPath = "$TEST_DRIVE\php"
     $script:testIniPath = "$testPhpPath\php.ini"
@@ -45,10 +44,6 @@ BeforeAll {
 
         throw "URL not mocked: $Uri"
     }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-ExtensionHandlers" {

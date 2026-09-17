@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'system'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
     $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
@@ -49,10 +48,6 @@ BeforeAll {
             $script:MockRegistry.Machine[$name] = $value
         }
     }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Test-OS64Bit" {

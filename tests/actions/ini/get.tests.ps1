@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'get'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:phpVersionPath = "$TEST_DRIVE\php-8.2"
     $script:testIniPath = "$phpVersionPath\php.ini"
@@ -30,10 +29,6 @@ max_execution_time = 30
     }
 
     Reset-IniContent
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-IniSetting" {

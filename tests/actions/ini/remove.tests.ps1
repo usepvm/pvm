@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'remove'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:testIniPath = "$TEST_DRIVE\php.ini"
     $script:extDirectory = "$TEST_DRIVE\ext"
@@ -28,10 +27,6 @@ display_errors = On
     }
 
     Reset-IniContent
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Remove-ExtensionFromIniFile" {

@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'handlers'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     Import-Module -Name PowerShellGet -ErrorAction SilentlyContinue
 
@@ -12,10 +11,6 @@ BeforeAll {
     Mock Write-Color { }
     Mock Show-Info { }
     Mock New-Line { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Invoke-Help" {

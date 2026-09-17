@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'cache'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
     New-Directory -path $CACHE_PATH
@@ -11,10 +10,6 @@ BeforeAll {
     Mock Write-Gray { }
     Mock Show-Message { }
     Mock Show-Success { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-CacheFiles" {

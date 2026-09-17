@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'log'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     Mock Show-Error { }
     Mock Show-Warning { }
@@ -12,10 +11,6 @@ BeforeAll {
     Mock Show-Header { }
     Mock Clear-Host { }
     Mock Write-DarkGray { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Format-NiceTimestamp" {

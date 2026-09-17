@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'restore'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:testIniPath = "$TEST_DRIVE\php.ini"
     $script:extDirectory = "$TEST_DRIVE\ext"
@@ -23,10 +22,6 @@ max_execution_time = 30
     }
 
     Reset-IniContent
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Restore-IniBackup" {

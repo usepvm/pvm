@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'use'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     New-Directory -path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
 
@@ -42,10 +41,6 @@ BeforeAll {
     Mock New-SymbolicLink { return @{ code = 0 } }
 
     Mock Add-LogEntry { return 0 }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Update-PHPVersion" {

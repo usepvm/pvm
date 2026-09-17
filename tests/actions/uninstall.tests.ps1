@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'uninstall'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:testPhpPath = "$TEST_DRIVE\PHP"
     New-Directory -path "$testPhpPath\7.4"
@@ -15,10 +14,6 @@ BeforeAll {
     Mock Show-Error { }
     Mock Write-Gray { }
     Mock Write-Color { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Uninstall-PHP" {

@@ -8,9 +8,16 @@ function Initialize-PVMTestEnvironment {
     }
 
     Clear-PVMTestStorage
+
     Set-TestDrive -path $environment.TestDrive
 
-    New-Directory -path $environment.TestDrive
+    $created = New-Directory -path $environment.TestDrive
+    if ($created -ne 0) {
+        $Global:PVMConfig = $environment.PVMConfigBackup
+        return $null
+    }
+
+    $Global:CurrentTestDrive = $environment.TestDrive
 
     return $environment
 }
@@ -20,6 +27,7 @@ function Restore-PVMTestEnvironment {
 
     Remove-ItemWrapper -path $environment.TestDrive
     $Global:PVMConfig   = $environment.PVMConfigBackup
+    $Global:CurrentTestDrive = $null
 }
 
 function Get-PowerShellInfo {
@@ -76,6 +84,11 @@ function Invoke-TestFile {
     }
 
     try {
+        $testEnvironment = Initialize-PVMTestEnvironment -driveName ($file.BaseName -replace '\.tests$', '')
+        if (-not $testEnvironment) {
+            throw 'Failed to create test drive!'
+        }
+
         $config.Run.Path = $file.FullName
         $config.Run.PassThru = $true
         $testResult = Invoke-Pester -Configuration $config
@@ -108,6 +121,8 @@ function Invoke-TestFile {
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"; exception = $_ }
         return @{ code = -1; name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; message = @{ content = 'Failed to run test, check log.'; color = 'DarkYellow' }; testResultData = $testResultData }
+    } finally {
+        if ($testEnvironment) { Restore-PVMTestEnvironment -environment $testEnvironment }
     }
 }
 

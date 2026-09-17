@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'profile'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:PROFILES_PATH = $Global:PVMConfig.paths.directories.profiles
     $script:TEMPLATES_PATH = $Global:PVMConfig.paths.directories.templates
@@ -47,10 +46,6 @@ BeforeAll {
     Mock New-Directory { param ($path) return 0 }
 
     Mock Add-LogEntry { param ($data) return $true }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Set-IniSettingDirect" {

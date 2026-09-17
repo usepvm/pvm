@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'setup'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:PHP_CURRENT_VERSION_PATH = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
     $script:PVM_ENV_VAR_NAME = $Global:PVMConfig.env.PVM_ENV_VAR_NAME
@@ -10,10 +9,6 @@ BeforeAll {
     Mock Show-Success { }
     Mock Show-Error { }
     Mock Show-Info { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Initialize-PVM" {

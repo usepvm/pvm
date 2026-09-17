@@ -1,11 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'output'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 }
 
 Describe "Add-LogEntry" {

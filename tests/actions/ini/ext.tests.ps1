@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'ext'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:testIniPath = "$TEST_DRIVE\php.ini"
 
@@ -10,10 +9,6 @@ BeforeAll {
     Mock Show-Info { }
     Mock Write-Gray { }
     Mock New-Line { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Show-PHPExtensionInfo" {

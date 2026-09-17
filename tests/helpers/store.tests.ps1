@@ -1,16 +1,11 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'store'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
     $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
 
     New-Directory -path $CACHE_PATH
 
     Mock Show-Error { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-DataFromCache" {

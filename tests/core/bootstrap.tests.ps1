@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'bootstrap'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $Global:PVMConfig.version = '1.0.0'
 
@@ -9,10 +8,6 @@ BeforeAll {
     Mock Show-Info { }
     Mock Show-Message { }
     Mock Show-Error { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Show-Usage" {

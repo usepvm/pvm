@@ -463,6 +463,46 @@ VALID=yes
     }
 }
 
+Describe "Get-EnvDefaults" {
+    It "returns a hashtable" {
+        (Get-EnvDefaults) | Should -BeOfType [hashtable]
+    }
+
+    It "has the expected keys" {
+        $keys = (Get-EnvDefaults).Keys
+        $keys | Should -Contain 'PHP_CURRENT_VERSION_PATH'
+        $keys | Should -Contain 'PVM_ENV_VAR_NAME'
+        $keys | Should -Contain 'CACHE_MAX_HOURS'
+        $keys | Should -Contain 'DEFAULT_LOG_PAGE_SIZE'
+        $keys | Should -Contain 'DEFAULT_PARTIAL_LIST_SIZE'
+        $keys | Should -Contain 'MIN_PAD_RIGHT_LENGTH'
+        $keys | Should -Contain 'MIN_LINE_LENGTH'
+        $keys | Should -Contain 'ENABLE_UPDATE_CHECK'
+        $keys | Should -Contain 'UPDATE_CHECK_INTERVAL_HOURS'
+        $keys | Should -Contain 'SOUNDS_DISABLED'
+    }
+
+    It "has correct default values" {
+        $defaults = Get-EnvDefaults
+        $defaults.PHP_CURRENT_VERSION_PATH    | Should -Be 'C:\pvm\php'
+        $defaults.CACHE_MAX_HOURS             | Should -Be 168
+        $defaults.DEFAULT_LOG_PAGE_SIZE       | Should -Be 5
+        $defaults.DEFAULT_PARTIAL_LIST_SIZE   | Should -Be 10
+        $defaults.MIN_PAD_RIGHT_LENGTH        | Should -Be 10
+        $defaults.MIN_LINE_LENGTH             | Should -Be 50
+        $defaults.ENABLE_UPDATE_CHECK         | Should -Be $true
+        $defaults.UPDATE_CHECK_INTERVAL_HOURS | Should -Be 24
+        $defaults.SOUNDS_DISABLED             | Should -Be $false
+    }
+
+    It "returns a fresh hashtable on each call (no shared mutable state)" {
+        $d1 = Get-EnvDefaults
+        $d1.CACHE_MAX_HOURS = 999
+        $d2 = Get-EnvDefaults
+        $d2.CACHE_MAX_HOURS | Should -Be 168
+    }
+}
+
 Describe "Get-Config" {
     Context "When .env file exists" {
         BeforeAll {

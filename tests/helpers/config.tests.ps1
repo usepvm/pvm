@@ -459,7 +459,7 @@ TEST_DRIVE=C:\fake-storage
 
             $result = Get-Config -rootPath $customRoot
 
-            $result.paths.directories.fakeStorage | Should -Be 'C:\fake-storage'
+            $result.paths.directories.testDrive | Should -Be 'C:\fake-storage'
         }
 
         It "Falls back to storage/tests when TEST_DRIVE is not set" {
@@ -477,7 +477,7 @@ MIN_LINE_LENGTH=50
 
             $result = Get-Config -rootPath $fallbackRoot
 
-            $result.paths.directories.fakeStorage | Should -Be "$fallbackRoot\storage\tests"
+            $result.paths.directories.testDrive | Should -Be "$fallbackRoot\storage\tests"
         }
 
         It "Falls back to storage/tests when TEST_DRIVE is not a valid path" {
@@ -496,7 +496,7 @@ TEST_DRIVE=bad<path
 
             $result = Get-Config -rootPath $invalidRoot
 
-            $result.paths.directories.fakeStorage | Should -Be "$invalidRoot\storage\tests"
+            $result.paths.directories.testDrive | Should -Be "$invalidRoot\storage\tests"
         }
 
         It "Sets env variables from .env file" {

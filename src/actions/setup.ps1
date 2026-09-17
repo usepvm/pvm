@@ -42,7 +42,7 @@ function Initialize-PVM {
 function Initialize-PVMDirectories {
     $dirs = @(
         $Global:PVMConfig.paths.directories.storage,
-        $Global:PVMConfig.paths.directories.fakeStorage,
+        $Global:PVMConfig.paths.directories.testDrive,
         $Global:PVMConfig.paths.directories.php,
         $Global:PVMConfig.paths.directories.data,
         $Global:PVMConfig.paths.directories.templates,

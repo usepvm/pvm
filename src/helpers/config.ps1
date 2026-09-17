@@ -135,14 +135,14 @@ function Get-Config {
     $templates = "$data\templates"
     $logs = "$storage\logs"
     $state = "$data\state"
-    $fakeStorage = $envConfig['TEST_DRIVE']
+    $testDrive = $envConfig['TEST_DRIVE']
 
-    $isValidPathFormat = -not [string]::IsNullOrWhiteSpace($fakeStorage) `
-        -and $fakeStorage -match '^[A-Za-z]+:' `
-        -and $fakeStorage.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -eq -1
+    $isValidPathFormat = -not [string]::IsNullOrWhiteSpace($testDrive) `
+        -and $testDrive -match '^[A-Za-z]+:' `
+        -and $testDrive.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -eq -1
 
     if (-not $isValidPathFormat) {
-        $fakeStorage = "$storage\tests"
+        $testDrive = "$storage\tests"
     }
 
     return @{
@@ -154,7 +154,7 @@ function Get-Config {
             directories = @{
                 root               = $rootPath
                 storage            = $storage
-                fakeStorage        = $fakeStorage
+                testDrive          = $testDrive
                 php                = "$storage\php"
                 data               = $data
                 templates          = $templates

@@ -21,7 +21,7 @@ function Show-Scripts {
 }
 
 function Clear-PVMTestStorage {
-    Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.fakeStorage)\*"
+    Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.testDrive)\*"
 }
 
 function Use-PesterVersion {
@@ -364,20 +364,20 @@ function Get-SortedTests {
     return $data
 }
 
-function Set-FakePaths {
-    param ($root)
+function Set-TestDrive {
+    param ($path)
 
-    $fakeStorage = "$root\storage"
+    $fakeStorage = "$path\storage"
     $fakeData = "$fakeStorage\data"
     $fakeProfiles = "$fakeData\profiles"
     $fakeTemplates = "$fakeData\templates"
     $fakeLogs = "$fakeStorage\logs"
     $fakeState = "$fakeData\state"
 
-    $Global:PVMConfig.rootPath = $root
-    $Global:PVMConfig.paths.directories.root = $root
+    $Global:PVMConfig.rootPath = $path
+    $Global:PVMConfig.paths.directories.root = $path
     $Global:PVMConfig.paths.directories.storage = $fakeStorage
-    $Global:PVMConfig.paths.directories.fakeStorage = $fakeStorage
+    $Global:PVMConfig.paths.directories.testDrive = $path
     $Global:PVMConfig.paths.directories.php = "$fakeStorage\php"
     $Global:PVMConfig.paths.directories.data = $fakeData
     $Global:PVMConfig.paths.directories.templates = $fakeTemplates
@@ -385,7 +385,7 @@ function Set-FakePaths {
     $Global:PVMConfig.paths.directories.profiles = $fakeProfiles
     $Global:PVMConfig.paths.directories.log = $fakeLogs
     $Global:PVMConfig.paths.directories.state = $fakeState
-    $Global:PVMConfig.paths.directories.assets = "$root\assets"
+    $Global:PVMConfig.paths.directories.assets = "$path\assets"
 
     $Global:PVMConfig.paths.files.profileExample = "$fakeProfiles\profile-example.json"
     $Global:PVMConfig.paths.files.profileTemplate = "$fakeTemplates\profile-template.json"
@@ -396,5 +396,5 @@ function Set-FakePaths {
     $Global:PVMConfig.paths.files.pathVarBackup = "$fakeState\path.bak.log"
     $Global:PVMConfig.paths.files.lastUpdateCheck = "$fakeState\last_update_check.txt"
 
-    $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$root\pvm\php"
+    $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$path\pvm\php"
 }

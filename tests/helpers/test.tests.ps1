@@ -67,7 +67,7 @@ Describe "Clear-PVMTestStorage" {
 
         Clear-PVMTestStorage
 
-        Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -eq "$($Global:PVMConfig.paths.directories.fakeStorage)\*" }
+        Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -eq "$($Global:PVMConfig.paths.directories.testDrive)\*" }
     }
 }
 
@@ -795,7 +795,7 @@ Describe "Get-SortedTests" {
     }
 }
 
-Describe "Set-FakePaths" {
+Describe "Set-TestDrive" {
     BeforeAll {
         $script:testRoot = "$TEST_DRIVE\pvm"
         New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
@@ -821,13 +821,13 @@ MIN_LINE_LENGTH=50
     It "Rewrites PVMConfig.paths. under the given root" {
         $fakeRoot = "$TEST_DRIVE\fake-root"
 
-        Set-FakePaths -root $fakeRoot
+        Set-TestDrive -path $fakeRoot
 
         $Global:PVMConfig.rootPath | Should -Be $fakeRoot
         $Global:PVMConfig.paths.directories.root | Should -Be $fakeRoot
         $Global:PVMConfig.paths.directories.storage | Should -Be "$fakeRoot\storage"
 
-        $Global:PVMConfig.paths.directories.fakeStorage | Should -Be "$fakeRoot\storage"
+        $Global:PVMConfig.paths.directories.testDrive | Should -Be $fakeRoot
 
         $Global:PVMConfig.paths.directories.php | Should -Be "$fakeRoot\storage\php"
         $Global:PVMConfig.paths.directories.data | Should -Be "$fakeRoot\storage\data"
@@ -850,7 +850,7 @@ MIN_LINE_LENGTH=50
     It "Rewrites env.PHP_CURRENT_VERSION_PATH under the given root" {
         $fakeRoot = "$TEST_DRIVE\fake-root"
 
-        Set-FakePaths -root $fakeRoot
+        Set-TestDrive -path $fakeRoot
 
         $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH | Should -Be "$fakeRoot\pvm\php"
     }
@@ -863,7 +863,7 @@ MIN_LINE_LENGTH=50
             $originalLinks[$_.Key] = $_.Value
         }
 
-        Set-FakePaths -root $fakeRoot
+        Set-TestDrive -path $fakeRoot
 
         $Global:PVMConfig.version | Should -Be $originalVersion
         $Global:PVMConfig.links.GetEnumerator() | ForEach-Object -Process {
@@ -875,8 +875,8 @@ MIN_LINE_LENGTH=50
         $firstRoot = "$TEST_DRIVE\fake-root-1"
         $secondRoot = "$TEST_DRIVE\fake-root-2"
 
-        Set-FakePaths -root $firstRoot
-        Set-FakePaths -root $secondRoot
+        Set-TestDrive -path $firstRoot
+        Set-TestDrive -path $secondRoot
 
         $Global:PVMConfig.rootPath | Should -Be $secondRoot
         $Global:PVMConfig.paths.directories.root | Should -Be $secondRoot

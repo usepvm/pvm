@@ -4,11 +4,11 @@ function Initialize-PVMTestEnvironment {
 
     $environment = @{
         PVMConfigBackup = Copy-ObjectDeep -object $Global:PVMConfig
-        TestDrive       = "$($Global:PVMConfig.paths.directories.fakeStorage)\$driveName-drive"
+        TestDrive       = "$($Global:PVMConfig.paths.directories.testDrive)\$driveName-drive"
     }
 
     Clear-PVMTestStorage
-    Set-FakePaths -root $environment.TestDrive
+    Set-TestDrive -path $environment.TestDrive
 
     New-Directory -path $environment.TestDrive
 

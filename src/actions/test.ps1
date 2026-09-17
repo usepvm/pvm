@@ -1,5 +1,5 @@
 ﻿
-function Initialize-PVMTestEnvironment {
+function Initialize-TestEnvironment {
     param ($driveName)
 
     $environment = @{
@@ -20,7 +20,7 @@ function Initialize-PVMTestEnvironment {
     return $environment
 }
 
-function Restore-PVMTestEnvironment {
+function Restore-TestEnvironment {
     param ($environment)
 
     Remove-ItemWrapper -path $environment.TestDrive
@@ -82,7 +82,7 @@ function Invoke-TestFile {
     }
 
     try {
-        $testEnvironment = Initialize-PVMTestEnvironment -driveName ($file.BaseName -replace '\.tests$', '')
+        $testEnvironment = Initialize-TestEnvironment -driveName ($file.BaseName -replace '\.tests$', '')
         if (-not $testEnvironment) {
             throw 'Failed to create test drive!'
         }
@@ -120,7 +120,7 @@ function Invoke-TestFile {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"; exception = $_ }
         return @{ code = -1; name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; message = @{ content = 'Failed to run test, check log.'; color = 'DarkYellow' }; testResultData = $testResultData }
     } finally {
-        if ($testEnvironment) { Restore-PVMTestEnvironment -environment $testEnvironment }
+        if ($testEnvironment) { Restore-TestEnvironment -environment $testEnvironment }
     }
 }
 
@@ -178,11 +178,11 @@ function Invoke-Tests {
 
         Show-Info -message "`nRunning tests with verbosity: $($options.verbosity)"
 
-        Clear-PVMTestStorage
+        Clear-TestDrive
         $testSummary = $tests | ForEach-Object -Process {
             Invoke-TestFile -config $config -file $_ -options $options -separatorWidth $separatorWidth -testsMap $testsMap
         }
-        Clear-PVMTestStorage
+        Clear-TestDrive
 
         $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
 

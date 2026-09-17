@@ -56,11 +56,11 @@ Describe "Show-Scripts" {
     }
 }
 
-Describe "Clear-PVMTestStorage" {
+Describe "Clear-TestDrive" {
     It "Clears the fake storage path" {
         Mock Remove-ItemWrapper { }
 
-        Clear-PVMTestStorage
+        Clear-TestDrive
 
         Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -eq "$($Global:PVMConfig.paths.directories.testDrive)\*" }
     }

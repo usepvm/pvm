@@ -17,13 +17,13 @@ BeforeAll {
     Mock Add-LogEntry { return 0 }
 
     function Reset-IniContent {
-        @"
-memory_limit = 128M
-extension=php_curl.dll
-extension=php_xdebug.dll
-zend_extension=php_opcache.dll
-display_errors = On
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'memory_limit = 128M'
+            'extension=php_curl.dll'
+            'extension=php_xdebug.dll'
+            'zend_extension=php_opcache.dll'
+            'display_errors = On'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent

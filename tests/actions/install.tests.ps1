@@ -549,12 +549,12 @@ Describe "Set-Opcache" {
     }
     BeforeEach {
         Reset-MockState
-        $script:MockFileSystem.Files["$script:TEST_DRIVE\php\php.ini"] = @"
-;extension_dir = "ext"
-;zend_extension = opcache
-;opcache.enable = 1
-;opcache.enable_cli = 1
-"@
+        $script:MockFileSystem.Files["$script:TEST_DRIVE\php\php.ini"] = @(
+            ';extension_dir = "ext"'
+            ';zend_extension = opcache'
+            ';opcache.enable = 1'
+            ';opcache.enable_cli = 1'
+        ) -join "`n"
     }
 
     It "Should enable Opcache successfully" {

@@ -22,15 +22,15 @@ BeforeAll {
     Mock New-Line { }
 
     function Reset-IniContent {
-        @"
-memory_limit = 128M
-;extension=php_xdebug.dll
-extension=php_curl.dll
-zend_extension=php_opcache.dll
-display_errors = On
-max_execution_time = 30
-;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'memory_limit = 128M'
+            ';extension=php_xdebug.dll'
+            'extension=php_curl.dll'
+            'zend_extension=php_opcache.dll'
+            'display_errors = On'
+            'max_execution_time = 30'
+            ';upload_max_filesize = 2M'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
@@ -165,11 +165,11 @@ Describe "Invoke-IniAction" {
 
         It "Enables multiple extensions" {
             Mock Test-FileNotExists { return $false }
-            @"
-;extension=php_xdebug.dll
-;extension=php_gd.dll
-extension=php_curl.dll
-"@ | Set-ContentWrapper -path "$script:phpVersionPath\php.ini"
+            @(
+                ';extension=php_xdebug.dll'
+                ';extension=php_gd.dll'
+                'extension=php_curl.dll'
+            ) -join "`n" | Set-ContentWrapper -path "$script:phpVersionPath\php.ini"
 
             $script:callCount = 0
             Mock Get-ChildItemWrapper {

@@ -13,19 +13,19 @@ BeforeAll {
 Describe "Get-DataFromCache" {
     It "Returns data from cache file" {
         Mock Test-FileNotExists { return $false }
-        Mock Get-ContentWrapper { return @'
-            {
-                'Releases': [
-                    '/downloads/releases/php-7.4.33-Win32-vc15-x64.zip',
-                    '/downloads/releases/php-8.0.30-Win32-vs16-x64.zip',
-                    '/downloads/releases/php-8.4.12-Win32-vs17-x64.zip'
-                ],
-                'Archives': [
-                    '/downloads/releases/archives/php-5.5.0-Win32-VC11-x64.zip',
-                    '/downloads/releases/archives/php-5.5.1-Win32-VC11-x64.zip'
-                ]
-            }
-'@
+        Mock Get-ContentWrapper { return @(
+                '{'
+                    "'Releases': ["
+                        "'/downloads/releases/php-7.4.33-Win32-vc15-x64.zip',"
+                        "'/downloads/releases/php-8.0.30-Win32-vs16-x64.zip',"
+                        "'/downloads/releases/php-8.4.12-Win32-vs17-x64.zip'"
+                    '],'
+                    "'Archives': ["
+                        "'/downloads/releases/archives/php-5.5.0-Win32-VC11-x64.zip',"
+                        "'/downloads/releases/archives/php-5.5.1-Win32-VC11-x64.zip'"
+                    ']'
+                '}'
+            ) -join "`n"
         }
         $list = Get-DataFromCache -cacheFileName 'test.json'
         $list.Releases[0] | Should -Be '/downloads/releases/php-7.4.33-Win32-vc15-x64.zip'

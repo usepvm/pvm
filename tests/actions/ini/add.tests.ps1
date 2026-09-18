@@ -27,15 +27,15 @@ BeforeAll {
     Mock Write-Gray { }
 
     function Reset-IniContent {
-        @"
-memory_limit = 128M
-;extension=php_xdebug.dll
-extension=php_curl.dll
-zend_extension=php_opcache.dll
-display_errors = On
-max_execution_time = 30
-;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'memory_limit = 128M'
+            ';extension=php_xdebug.dll'
+            'extension=php_curl.dll'
+            'zend_extension=php_opcache.dll'
+            'display_errors = On'
+            'max_execution_time = 30'
+            ';upload_max_filesize = 2M'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
@@ -267,10 +267,10 @@ Describe "Add-MissingPHPExtensionToIni" {
     }
 
     It "Adds any extension to ini file" {
-        @"
-zend_extension=php_opcache.dll
-extension=php_mbstring.dll
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'zend_extension=php_opcache.dll'
+            'extension=php_mbstring.dll'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
 
         Mock Test-FileNotExists { return $false }
         Mock Test-DirectoryNotExists { return $false }
@@ -283,10 +283,10 @@ extension=php_mbstring.dll
     }
 
     It "Adds any extension in disabled state to ini file" {
-        @"
-zend_extension=php_opcache.dll
-;extension=php_mbstring.dll
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'zend_extension=php_opcache.dll'
+            ';extension=php_mbstring.dll'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
 
         Mock Test-FileNotExists { return $false }
         Mock Test-DirectoryNotExists { return $false }
@@ -296,10 +296,10 @@ zend_extension=php_opcache.dll
     }
 
     It "Adds extensions correctly for older PHP versions" {
-        @"
-zend_extension=php_opcache.dll
-extension=php_mbstring.dll
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'zend_extension=php_opcache.dll'
+            'extension=php_mbstring.dll'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
 
         Mock Test-FileNotExists { return $false }
         Mock Test-DirectoryNotExists { return $false }
@@ -310,9 +310,7 @@ extension=php_mbstring.dll
     }
 
     It "Adds zend_extensions correctly" {
-        @"
-extension=php_mbstring.dll
-"@ | Set-ContentWrapper -path $script:testIniPath
+        'extension=php_mbstring.dll' | Set-ContentWrapper -path $script:testIniPath
 
         Mock Test-FileNotExists { return $false }
         Mock Test-DirectoryNotExists { return $false }

@@ -17,15 +17,15 @@ BeforeAll {
     Mock Write-Color { }
 
     function Reset-IniContent {
-    @"
-memory_limit = 128M
-;extension=php_xdebug.dll
-extension=php_curl.dll
-zend_extension=php_opcache.dll
-display_errors = On
-max_execution_time = 30
-;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'memory_limit = 128M'
+            ';extension=php_xdebug.dll'
+            'extension=php_curl.dll'
+            'zend_extension=php_opcache.dll'
+            'display_errors = On'
+            'max_execution_time = 30'
+            ';upload_max_filesize = 2M'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
@@ -73,10 +73,10 @@ Describe "Enable-IniExtension" {
 
     It "Returns 0 when line does not match for modification (file already has correct state)" {
         # Test the branch where $modified remains false because line pattern doesn't match
-        @"
-extension=php_xdebug.dll
-extension=php_curl.dll
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'extension=php_xdebug.dll'
+            'extension=php_curl.dll'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
 
         Mock Get-ChildItemWrapper {
             param ($path)
@@ -108,10 +108,10 @@ extension=php_curl.dll
     }
 
     It "Handles zend_extension" {
-        @"
-;zend_extension=php_opcache.dll
-extension=php_curl.dll
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            ';zend_extension=php_opcache.dll'
+            'extension=php_curl.dll'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
         Mock Get-ChildItemWrapper {
             param ($path)
             return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$script:extDirectory\php_opcache.dll" } )
@@ -122,13 +122,13 @@ extension=php_curl.dll
     }
 
     It "Prompts user to select extension if multiple matches found" {
-        @"
-;extension=pdo_mysql
-extension=pdo_pgsql
-;extension=pdo_sqlite
-;extension=pgsql
-extension=sqlite3
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            ';extension=pdo_mysql'
+            'extension=pdo_pgsql'
+            ';extension=pdo_sqlite'
+            ';extension=pgsql'
+            'extension=sqlite3'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
         Mock Get-ChildItemWrapper {
             param ($path)
             return @(
@@ -148,13 +148,13 @@ extension=sqlite3
     }
 
     It "Prints error message for non-valid number" {
-        @"
-;extension=pdo_mysql
-extension=pdo_pgsql
-;extension=pdo_sqlite
-;extension=pgsql
-extension=sqlite3
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            ';extension=pdo_mysql'
+            'extension=pdo_pgsql'
+            ';extension=pdo_sqlite'
+            ';extension=pgsql'
+            'extension=sqlite3'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
 
         $script:callCount = 0
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {

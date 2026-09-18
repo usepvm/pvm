@@ -17,15 +17,15 @@ BeforeAll {
     Mock Show-Message { }
 
     function Reset-IniContent {
-    @"
-memory_limit = 128M
-;extension=php_xdebug.dll
-extension=php_curl.dll
-zend_extension=php_opcache.dll
-display_errors = On
-max_execution_time = 30
-;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'memory_limit = 128M'
+            ';extension=php_xdebug.dll'
+            'extension=php_curl.dll'
+            'zend_extension=php_opcache.dll'
+            'display_errors = On'
+            'max_execution_time = 30'
+            ';upload_max_filesize = 2M'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent

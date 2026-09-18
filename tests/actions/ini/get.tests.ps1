@@ -17,15 +17,15 @@ BeforeAll {
     Mock Write-Color { }
 
     function Reset-IniContent {
-    @"
-memory_limit = 128M
-;extension=php_xdebug.dll
-extension=php_curl.dll
-zend_extension=php_opcache.dll
-display_errors = On
-max_execution_time = 30
-;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'memory_limit = 128M'
+            ';extension=php_xdebug.dll'
+            'extension=php_curl.dll'
+            'zend_extension=php_opcache.dll'
+            'display_errors = On'
+            'max_execution_time = 30'
+            ';upload_max_filesize = 2M'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
@@ -70,9 +70,7 @@ Describe "Get-IniSetting" {
     }
 
     It "Displays '(not set)' for empty value entries" {
-        @"
-memory_limit =
-"@ | Set-ContentWrapper -path $script:testIniPath
+        'memory_limit =' | Set-ContentWrapper -path $script:testIniPath
         $code = Get-IniSetting -iniPath $script:testIniPath -keys @('memory_limit')
         $code | Should -Be 0
     }

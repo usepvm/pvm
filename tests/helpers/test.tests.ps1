@@ -797,15 +797,15 @@ Describe "Set-TestDrive" {
     BeforeAll {
         $script:testRoot = "$script:TEST_DRIVE\pvm"
         New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
-        @'
-PHP_CURRENT_VERSION_PATH=C:\pvm\php
-PVM_ENV_VAR_NAME=PVM
-CACHE_MAX_HOURS=168
-DEFAULT_LOG_PAGE_SIZE=5
-DEFAULT_PARTIAL_LIST_SIZE=10
-MIN_PAD_RIGHT_LENGTH=20
-MIN_LINE_LENGTH=50
-'@ | Set-ContentWrapper -path "$testRoot\.env"
+        @(
+            'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
+            'PVM_ENV_VAR_NAME=PVM'
+            'CACHE_MAX_HOURS=168'
+            'DEFAULT_LOG_PAGE_SIZE=5'
+            'DEFAULT_PARTIAL_LIST_SIZE=10'
+            'MIN_PAD_RIGHT_LENGTH=20'
+            'MIN_LINE_LENGTH=50'
+        ) -join "`n" | Set-ContentWrapper -path "$testRoot\.env"
     }
 
     BeforeEach {

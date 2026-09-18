@@ -145,21 +145,21 @@ Describe "Get-LogEntries" {
     }
 
     It "returns array of log entries" {
-        @"
-$script:LOG_SEPARATOR
-[2025-08-20 14:38:48] Test log entry 1 :
-Message: Issue 1
-Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
-+         throw "Issue limit"
-+         ~~~~~~~~~~~~~~~~~~~~
-
-$script:LOG_SEPARATOR
-[2025-08-23 14:38:48] Test log entry 0 :
-Message: Issue 0
-Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
-+         throw "Issue limit"
-+         ~~~~~~~~~~~~~~~~~~~~
-"@ | Set-ContentWrapper -path $script:LOG_ERROR_PATH
+        @(
+            $script:LOG_SEPARATOR
+            '[2025-08-20 14:38:48] Test log entry 1 :'
+            'Message: Issue 1'
+            'Position: At D:\Code\Tools\pvm\file.ps1:10 char:9'
+            '+         throw "Issue limit"'
+            '+         ~~~~~~~~~~~~~~~~~~~~'
+            ''
+            $script:LOG_SEPARATOR
+            '[2025-08-23 14:38:48] Test log entry 0 :'
+            'Message: Issue 0'
+            'Position: At D:\Code\Tools\pvm\file.ps1:10 char:9'
+            '+         throw "Issue limit"'
+            '+         ~~~~~~~~~~~~~~~~~~~~'
+        ) -join "`n" | Set-ContentWrapper -path $script:LOG_ERROR_PATH
 
         $result = Get-LogEntries -path $script:LOG_ERROR_PATH
 
@@ -171,21 +171,21 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
     }
 
     It "filters log entries based on search term" {
-        @"
-$script:LOG_SEPARATOR
-[2025-08-23 14:38:48] Test log entry 1 :
-Message: Issue 1
-Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
-+         throw "Issue limit"
-+         ~~~~~~~~~~~~~~~~~~~~
-
-$script:LOG_SEPARATOR
-[2025-08-23 14:38:48] Test log entry 0 :
-Message: Issue 0
-Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
-+         throw "Issue limit"
-+         ~~~~~~~~~~~~~~~~~~~~
-"@ | Set-ContentWrapper -path $script:LOG_ERROR_PATH
+        @(
+            $script:LOG_SEPARATOR
+            '[2025-08-23 14:38:48] Test log entry 1 :'
+            'Message: Issue 1'
+            'Position: At D:\Code\Tools\pvm\file.ps1:10 char:9'
+            '+         throw "Issue limit"'
+            '+         ~~~~~~~~~~~~~~~~~~~~'
+            ''
+            $script:LOG_SEPARATOR
+            '[2025-08-23 14:38:48] Test log entry 0 :'
+            'Message: Issue 0'
+            'Position: At D:\Code\Tools\pvm\file.ps1:10 char:9'
+            '+         throw "Issue limit"'
+            '+         ~~~~~~~~~~~~~~~~~~~~'
+        ) -join "`n" | Set-ContentWrapper -path $script:LOG_ERROR_PATH
 
         $result = @(Get-LogEntries -path $script:LOG_ERROR_PATH -term 'entry 1')
 

@@ -19,15 +19,15 @@ BeforeAll {
     Mock New-Line { }
 
     function Reset-IniContent {
-    @"
-memory_limit = 128M
-;extension=php_xdebug.dll
-extension=php_curl.dll
-zend_extension=php_opcache.dll
-display_errors = On
-max_execution_time = 30
-;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'memory_limit = 128M'
+            ';extension=php_xdebug.dll'
+            'extension=php_curl.dll'
+            'zend_extension=php_opcache.dll'
+            'display_errors = On'
+            'max_execution_time = 30'
+            ';upload_max_filesize = 2M'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
@@ -77,10 +77,10 @@ Describe "Set-IniSetting" {
     }
 
     It "Prompts user when multiple matches found and requires input" {
-        @"
-;memory_limit=2G
-opcache.protect_memory=1
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            ';memory_limit=2G'
+            'opcache.protect_memory=1'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '4G' }
@@ -91,10 +91,10 @@ opcache.protect_memory=1
     }
 
     It "Prompts user when multiple matches found and does not require input" {
-        @"
-;memory_limit=2G
-opcache.protect_memory=1
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            ';memory_limit=2G'
+            'opcache.protect_memory=1'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
 
@@ -115,10 +115,10 @@ opcache.protect_memory=1
     }
 
     It "Prints error message for non-valid number" {
-        @"
-;memory_limit=2G
-opcache.protect_memory=1
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            ';memory_limit=2G'
+            'opcache.protect_memory=1'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
 
         $script:callCount = 0
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
@@ -133,10 +133,10 @@ opcache.protect_memory=1
     }
 
     It "Displays '(not set)' when multiple matching settings include blank values" {
-        @"
-memory_limit=
-memory_limit=2G
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'memory_limit='
+            'memory_limit=2G'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '3G' }
@@ -171,9 +171,7 @@ memory_limit=2G
     }
 
     It "Returns -1 if no match is found for any setting" {
-        @"
-memory_limit=2G
-"@ | Set-ContentWrapper -path $script:testIniPath
+        'memory_limit=2G' | Set-ContentWrapper -path $script:testIniPath
 
         $code = Set-IniSetting -iniPath $script:testIniPath -keys @('memory_limit=256M', 'unknown')
         $code | Should -Be -1

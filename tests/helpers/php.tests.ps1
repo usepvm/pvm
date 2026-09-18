@@ -19,15 +19,15 @@ BeforeAll {
     Mock Add-LogEntry { return 0 }
 
     function Reset-IniContent {
-    @"
-memory_limit = 128M
-;extension=php_xdebug.dll
-extension=php_curl.dll
-zend_extension=php_opcache.dll
-display_errors = On
-max_execution_time = 30
-;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'memory_limit = 128M'
+            ';extension=php_xdebug.dll'
+            'extension=php_curl.dll'
+            'zend_extension=php_opcache.dll'
+            'display_errors = On'
+            'max_execution_time = 30'
+            ';upload_max_filesize = 2M'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
     }
 
     # Create initial ini content first
@@ -987,11 +987,11 @@ Describe "Get-ZendExtensionsInfo" {
     }
 
     It "Returns list of zend extensions status" {
-        @"
-extension=php_curl.dll
-zend_extension=php_opcache.dll
-;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'extension=php_curl.dll'
+            'zend_extension=php_opcache.dll'
+            ';upload_max_filesize = 2M'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
         New-Item -ItemType Directory -Force -Path $script:testExtPath | Out-Null
         New-Item -Path "$script:testExtPath\opcache.dll" -ItemType File -Force | Out-Null
         New-Item -Path "$script:testExtPath\php_xdebug.dll" -ItemType File -Force | Out-Null

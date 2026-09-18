@@ -344,11 +344,11 @@ Describe "Get-EnvConfig" {
         }
 
         It "Returns a hashtable of parsed key=value pairs" {
-            @'
-PHP_CURRENT_VERSION_PATH=C:\pvm\php
-CACHE_MAX_HOURS=168
-DEFAULT_LOG_PAGE_SIZE=5
-'@ | Set-ContentWrapper -path "$envRoot\.env"
+            @(
+                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
+                'CACHE_MAX_HOURS=168'
+                'DEFAULT_LOG_PAGE_SIZE=5'
+            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -360,14 +360,14 @@ DEFAULT_LOG_PAGE_SIZE=5
         }
 
         It "Skips empty lines and comment lines" {
-            @'
-
-# Top-level comment
-   # Indented comment
-
-KEY=value
-
-'@ | Set-ContentWrapper -path "$envRoot\.env"
+            @(
+                ''
+                '# Top-level comment'
+                '   # Indented comment'
+                ''
+                'KEY=value'
+                ''
+            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -408,10 +408,10 @@ KEY=value
         }
 
         It "Keeps values with mismatched or unclosed quotes unchanged" {
-            @'
-MISMATCHED="value'
-UNCLOSED="value
-'@ | Set-ContentWrapper -path "$envRoot\.env"
+            @(
+                "MISMATCHED=`"value'"
+                'UNCLOSED="value'
+            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -420,11 +420,11 @@ UNCLOSED="value
         }
 
         It "Ignores lines that are not key=value pairs" {
-            @'
-NOT_A_PAIR
-ALSO NOT VALID
-VALID=yes
-'@ | Set-ContentWrapper -path "$envRoot\.env"
+            @(
+                'NOT_A_PAIR'
+                'ALSO NOT VALID'
+                'VALID=yes'
+            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -449,10 +449,10 @@ VALID=yes
         }
 
         It "Returns an empty hashtable when the file has only comments and blank lines" {
-            @'
-# comment only
-
-'@ | Set-ContentWrapper -path "$envRoot\.env"
+            @(
+                '# comment only'
+                ''
+            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -507,15 +507,15 @@ Describe "Get-Config" {
         BeforeAll {
             $script:testRoot = "$script:TEST_DRIVE\pvm"
             New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
-            @'
-PHP_CURRENT_VERSION_PATH=C:\pvm\php
-PVM_ENV_VAR_NAME=PVM
-CACHE_MAX_HOURS=168
-DEFAULT_LOG_PAGE_SIZE=5
-DEFAULT_PARTIAL_LIST_SIZE=10
-MIN_PAD_RIGHT_LENGTH=20
-MIN_LINE_LENGTH=50
-'@ | Set-ContentWrapper -path "$testRoot\.env"
+            @(
+                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
+                'PVM_ENV_VAR_NAME=PVM'
+                'CACHE_MAX_HOURS=168'
+                'DEFAULT_LOG_PAGE_SIZE=5'
+                'DEFAULT_PARTIAL_LIST_SIZE=10'
+                'MIN_PAD_RIGHT_LENGTH=20'
+                'MIN_LINE_LENGTH=50'
+            ) -join "`n" | Set-ContentWrapper -path "$testRoot\.env"
         }
 
         It "Returns a hashtable with all expected sections" {
@@ -549,16 +549,16 @@ MIN_LINE_LENGTH=50
         It "Uses TEST_DRIVE from .env for fake storage when provided" {
             $customRoot = "$script:TEST_DRIVE\custom-env"
             New-Item -ItemType Directory -Path $customRoot -Force | Out-Null
-            @'
-PHP_CURRENT_VERSION_PATH=C:\pvm\php
-PVM_ENV_VAR_NAME=PVM
-CACHE_MAX_HOURS=168
-DEFAULT_LOG_PAGE_SIZE=5
-DEFAULT_PARTIAL_LIST_SIZE=10
-MIN_PAD_RIGHT_LENGTH=20
-MIN_LINE_LENGTH=50
-TEST_DRIVE=C:\fake-storage
-'@ | Set-ContentWrapper -path "$customRoot\.env"
+            @(
+                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
+                'PVM_ENV_VAR_NAME=PVM'
+                'CACHE_MAX_HOURS=168'
+                'DEFAULT_LOG_PAGE_SIZE=5'
+                'DEFAULT_PARTIAL_LIST_SIZE=10'
+                'MIN_PAD_RIGHT_LENGTH=20'
+                'MIN_LINE_LENGTH=50'
+                'TEST_DRIVE=C:\fake-storage'
+            ) -join "`n" | Set-ContentWrapper -path "$customRoot\.env"
 
             $result = Get-Config -rootPath $customRoot
 
@@ -568,15 +568,15 @@ TEST_DRIVE=C:\fake-storage
         It "Falls back to storage/tests when TEST_DRIVE is not set" {
             $fallbackRoot = "$script:TEST_DRIVE\fallback-env"
             New-Item -ItemType Directory -Path $fallbackRoot -Force | Out-Null
-            @'
-PHP_CURRENT_VERSION_PATH=C:\pvm\php
-PVM_ENV_VAR_NAME=PVM
-CACHE_MAX_HOURS=168
-DEFAULT_LOG_PAGE_SIZE=5
-DEFAULT_PARTIAL_LIST_SIZE=10
-MIN_PAD_RIGHT_LENGTH=20
-MIN_LINE_LENGTH=50
-'@ | Set-ContentWrapper -path "$fallbackRoot\.env"
+            @(
+                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
+                'PVM_ENV_VAR_NAME=PVM'
+                'CACHE_MAX_HOURS=168'
+                'DEFAULT_LOG_PAGE_SIZE=5'
+                'DEFAULT_PARTIAL_LIST_SIZE=10'
+                'MIN_PAD_RIGHT_LENGTH=20'
+                'MIN_LINE_LENGTH=50'
+            ) -join "`n" | Set-ContentWrapper -path "$fallbackRoot\.env"
 
             $result = Get-Config -rootPath $fallbackRoot
 
@@ -586,16 +586,16 @@ MIN_LINE_LENGTH=50
         It "Falls back to storage/tests when TEST_DRIVE is not a valid path" {
             $invalidRoot = "$script:TEST_DRIVE\invalid-env"
             New-Item -ItemType Directory -Path $invalidRoot -Force | Out-Null
-            @'
-PHP_CURRENT_VERSION_PATH=C:\pvm\php
-PVM_ENV_VAR_NAME=PVM
-CACHE_MAX_HOURS=168
-DEFAULT_LOG_PAGE_SIZE=5
-DEFAULT_PARTIAL_LIST_SIZE=10
-MIN_PAD_RIGHT_LENGTH=20
-MIN_LINE_LENGTH=50
-TEST_DRIVE=bad<path
-'@ | Set-ContentWrapper -path "$invalidRoot\.env"
+            @(
+                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
+                'PVM_ENV_VAR_NAME=PVM'
+                'CACHE_MAX_HOURS=168'
+                'DEFAULT_LOG_PAGE_SIZE=5'
+                'DEFAULT_PARTIAL_LIST_SIZE=10'
+                'MIN_PAD_RIGHT_LENGTH=20'
+                'MIN_LINE_LENGTH=50'
+                'TEST_DRIVE=bad<path'
+            ) -join "`n" | Set-ContentWrapper -path "$invalidRoot\.env"
 
             $result = Get-Config -rootPath $invalidRoot
 

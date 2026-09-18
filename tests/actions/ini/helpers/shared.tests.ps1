@@ -7,15 +7,15 @@ BeforeAll {
     $script:testBackupPath = "$script:testIniPath.bak"
 
     function Reset-IniContent {
-        @"
-memory_limit = 128M
-;zend_extension=php_xdebug.dll
-extension=php_curl.dll
-zend_extension=php_opcache.dll
-display_errors = On
-max_execution_time = 30
-;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'memory_limit = 128M'
+            ';zend_extension=php_xdebug.dll'
+            'extension=php_curl.dll'
+            'zend_extension=php_opcache.dll'
+            'display_errors = On'
+            'max_execution_time = 30'
+            ';upload_max_filesize = 2M'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
@@ -228,10 +228,10 @@ Describe "Get-AllPHPExtensionsStatus" {
     }
 
     It "Returns both ext+ini and ini-only entries together" {
-        @'
-extension=pdo_mysql
-;extension=oci8_12c
-'@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'extension=pdo_mysql'
+            ';extension=oci8_12c'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
         Mock Get-ChildItemWrapper -ParameterFilter { $path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$script:extDirectory\pdo_mysql.dll" }
@@ -257,10 +257,10 @@ extension=pdo_mysql
     }
 
     It "Skips ini lines whose extension name normalizes to empty" {
-        @'
-extension=php_
-extension=pdo_mysql
-'@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            'extension=php_'
+            'extension=pdo_mysql'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
         Mock Get-ChildItemWrapper -ParameterFilter { $path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$script:extDirectory\pdo_mysql.dll" }
@@ -272,10 +272,10 @@ extension=pdo_mysql
     }
 
     It "Skips disabled ini lines whose extension name normalizes to empty" {
-        @'
-;extension=php_
-;extension=pdo_mysql
-'@ | Set-ContentWrapper -path $script:testIniPath
+        @(
+            ';extension=php_'
+            ';extension=pdo_mysql'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
         Mock Get-ChildItemWrapper -ParameterFilter { $path -like '*ext*' } {
             return @(
                 [PSCustomObject]@{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$script:extDirectory\pdo_mysql.dll" }

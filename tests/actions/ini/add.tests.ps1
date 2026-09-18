@@ -1164,7 +1164,7 @@ Describe "Install-IniExtension" {
 
     It "Returns -1 if one extension fails to install" {
         Mock Install-Extension {
-            param ($extName)
+            param ($iniPath, $extName)
 
             if ($extName -eq 'unknown') { return -1 }
             return 0

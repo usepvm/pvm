@@ -336,7 +336,7 @@ Describe "Get-EnvConfig" {
             Set-ContentWrapper -path "$envRoot\.env" -value 'KEY=value'
             Mock Write-Verbose { }
 
-            Get-EnvConfig -rootPath $envRoot -Verbose
+            Get-EnvConfig -rootPath $envRoot
 
             Should -Invoke Write-Verbose -ParameterFilter {
                 $message -eq "Using .env from: $envRoot\.env"

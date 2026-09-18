@@ -59,7 +59,7 @@ function Test-FileNotExists {
 function Test-PathExists {
     param ($path)
 
-    return (Test-DirectoryExists $path) -or (Test-FileExists $path)
+    return (Test-DirectoryExists -path $path) -or (Test-FileExists -path $path)
 }
 
 function Test-PathNotExists {

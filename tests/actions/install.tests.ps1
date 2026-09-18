@@ -594,7 +594,7 @@ Describe "Select-Version" {
             'Archives' = @(@{ version = '8.1.0'; fileName = 'php-8.1.0.zip' })
         }
 
-        $result = Select-Version -matchingVersions $versions
+        $result = Select-Version -matchingVersions $versions -version '8.1'
 
         $result.version | Should -Be '8.1.0'
     }
@@ -608,7 +608,7 @@ Describe "Select-Version" {
         }
         $script:MockUserInput = ''
 
-        $result = Select-Version -matchingVersions $versions
+        $result = Select-Version -matchingVersions $versions -version '8.1'
 
         $result | Should -Be $null
     }
@@ -622,7 +622,7 @@ Describe "Select-Version" {
         }
         $script:MockUserInput = 'invalid'
 
-        $result = Select-Version -matchingVersions $versions
+        $result = Select-Version -matchingVersions $versions -version '8.1'
 
         $result | Should -Be $null
     }

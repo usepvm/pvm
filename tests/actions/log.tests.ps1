@@ -19,76 +19,76 @@ BeforeAll {
 Describe "Format-NiceTimestamp" {
     It "returns 'just now' for current timestamp" {
         $now = Get-Date
-        $result = Format-NiceTimestamp $now.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $now.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be 'just now'
     }
 
     It "returns '1 minute ago' for 1 minute old timestamp" {
         $ts = (Get-Date).AddMinutes(-1)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '1 minute ago'
     }
 
     It "returns 'X minutes ago for more than 1 minute old timestamp" {
         $ts = (Get-Date).AddMinutes(-30)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '30 minutes ago'
     }
 
     It "returns '1 hour ago for 1 hour old timestamp" {
         $ts = (Get-Date).AddHours(-1)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '1 hour ago'
     }
 
     It "returns 'X hours ago for more than 1 hour old timestamp" {
         $ts = (Get-Date).AddHours(-5)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '5 hours ago'
     }
 
     It "returns 'yesterday' for 1 day old timestamp" {
         $ts = (Get-Date).AddDays(-1)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be 'yesterday'
     }
 
     It "returns 'X days ago for more than 1 day old timestamp" {
         $ts = (Get-Date).AddDays(-5)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '5 days ago'
     }
 
     It "returns '1 week ago' for 7 days old timestamp" {
         $ts = (Get-Date).AddDays(-7)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '1 week ago'
     }
 
     It "returns '2 weeks ago' for 15 days old timestamp" {
         $ts = (Get-Date).AddDays(-15)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '2 weeks ago'
     }
 
     It "returns '1 month ago' for ~35 days old timestamp" {
         $ts = (Get-Date).AddDays(-35)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '1 month ago'
     }
 
     It "handles invalid timestamp input gracefully" {
-        $result = Format-NiceTimestamp 'not-a-date'
+        $result = Format-NiceTimestamp -timestamp 'not-a-date'
 
         $result.Date | Should -Be 'not-a-date'
         $result.Time | Should -Be ''

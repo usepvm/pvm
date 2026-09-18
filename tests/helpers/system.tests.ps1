@@ -6,8 +6,8 @@ BeforeAll {
     $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
     $script:PATH_VAR_BACKUP_PATH = $Global:PVMConfig.paths.files.pathVarBackup
 
-    New-Directory -path "$script:STORAGE_PATH\php\8.1"
-    New-Directory -path "$script:STORAGE_PATH\php\8.2"
+    $null = New-Directory -path "$script:STORAGE_PATH\php\8.1"
+    $null = New-Directory -path "$script:STORAGE_PATH\php\8.2"
 
     Mock Show-Message { }
     Mock Show-Error { }
@@ -133,12 +133,12 @@ Describe "Get-EnvVarByName" {
 
     Context "When variable exists" {
         It "Returns the variable value" {
-            Set-EnvVar -name 'TEST_VAR' -value 'TEST_VALUE'
+            $null = Set-EnvVar -name 'TEST_VAR' -value 'TEST_VALUE'
 
             $result = Get-EnvVarByName -name 'TEST_VAR'
             $result | Should -Be 'TEST_VALUE'
 
-            Set-EnvVar -name 'TEST_VAR' -value $null
+            $null = Set-EnvVar -name 'TEST_VAR' -value $null
         }
     }
 
@@ -195,7 +195,7 @@ Describe "Set-EnvVar" {
             $value = Get-EnvVarByName -name 'TEST_VAR_SET'
             $value | Should -Be 'TEST_VALUE'
 
-            Set-EnvVar -name 'TEST_VAR_SET' -value $null
+            $null = Set-EnvVar -name 'TEST_VAR_SET' -value $null
         }
 
         It "Set-EnvVar should handle null/empty names" {
@@ -363,14 +363,14 @@ Describe "Optimize-SystemPath" {
     Context "When optimizing system PATH" {
         BeforeEach {
             $testPath = 'C:\Test1;C:\Test2;C:\Windows\System32'
-            Set-EnvVar -name 'TEST_PATH1' -value 'C:\Test1'
-            Set-EnvVar -name 'TEST_PATH2' -value 'C:\Test2'
-            Set-EnvVar -name 'Path' -value $testPath
+            $null = Set-EnvVar -name 'TEST_PATH1' -value 'C:\Test1'
+            $null = Set-EnvVar -name 'TEST_PATH2' -value 'C:\Test2'
+            $null = Set-EnvVar -name 'Path' -value $testPath
         }
 
         AfterEach {
-            Set-EnvVar -name 'TEST_PATH1' -value $null
-            Set-EnvVar -name 'TEST_PATH2' -value $null
+            $null = Set-EnvVar -name 'TEST_PATH1' -value $null
+            $null = Set-EnvVar -name 'TEST_PATH2' -value $null
         }
 
         It "Optimizes PATH by replacing paths with variables" {

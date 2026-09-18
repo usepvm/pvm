@@ -441,7 +441,7 @@ Describe "Show-InstalledPHPVersions" {
         Mock Get-CurrentPHPVersion { return @{ version = '' } }
         Mock Get-InstalledPHPVersions { return @() }
 
-        Show-InstalledPHPVersions
+        $null = Show-InstalledPHPVersions
 
         Should -Invoke Show-Error -ParameterFilter { $message -like '*No PHP versions found*' }
     }
@@ -458,7 +458,7 @@ Describe "Show-InstalledPHPVersions" {
             @{Version = '8.1.5'; Arch = 'x64'; BuildType = 'NTS'}
         )}
 
-        Show-InstalledPHPVersions
+        $null = Show-InstalledPHPVersions
 
         # Should only display unique versions
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.2.0*' } -Exactly 1
@@ -471,7 +471,7 @@ Describe "Show-InstalledPHPVersions" {
             @{Version = '8.1.5'; Arch = 'x64'; BuildType = 'NTS'}
         )}
 
-        Show-InstalledPHPVersions
+        $null = Show-InstalledPHPVersions
 
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.2.0*' -and $message -notlike '*(Current)*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.1.5*' -and $message -notlike '*(Current)*' }

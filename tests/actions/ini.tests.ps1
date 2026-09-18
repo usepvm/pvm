@@ -10,9 +10,9 @@ BeforeAll {
     $script:PECL_PACKAGE_ROOT_URL = $Global:PVMConfig.links.peclPackageRoot
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $Global:PVMConfig.links.peclWinExtDownload
 
-    New-Directory -path $Global:PVMConfig.paths.directories.cache
-    New-Directory -path $script:phpVersionPath
-    New-Directory -path $script:extDirectory
+    $null = New-Directory -path $Global:PVMConfig.paths.directories.cache
+    $null = New-Directory -path $script:phpVersionPath
+    $null = New-Directory -path $script:extDirectory
 
     Mock Show-Error { }
     Mock Show-Warning { }

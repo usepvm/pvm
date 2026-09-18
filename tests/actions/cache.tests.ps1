@@ -3,7 +3,7 @@ BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
-    New-Directory -path $script:CACHE_PATH
+    $null = New-Directory -path $script:CACHE_PATH
 
     Mock Show-Error { }
     Mock Show-Info { }

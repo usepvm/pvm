@@ -1014,7 +1014,7 @@ Describe "Invoke-Info" {
         }
 
         It "Displays status section" {
-            Invoke-Info -arguments @()
+            $null = Invoke-Info -arguments @()
 
             Should -Invoke Show-Info -ParameterFilter {
                 $message -like '*PVM status*'
@@ -1022,7 +1022,7 @@ Describe "Invoke-Info" {
         }
 
         It "Does not display verbose sections" {
-            Invoke-Info -arguments @()
+            $null = Invoke-Info -arguments @()
 
             Should -Not -Invoke Show-Info -ParameterFilter {
                 $message -like '*PVM paths*'
@@ -1059,7 +1059,7 @@ Describe "Invoke-Info" {
         }
 
         It "Displays environment paths section" {
-            Invoke-Info -arguments @('--verbose')
+            $null = Invoke-Info -arguments @('--verbose')
 
             Should -Invoke Show-Info -ParameterFilter {
                 $message -like '*PVM paths*'
@@ -1067,7 +1067,7 @@ Describe "Invoke-Info" {
         }
 
         It "Displays environment paths section" {
-            Invoke-Info -arguments @('--verbose')
+            $null = Invoke-Info -arguments @('--verbose')
 
             Should -Invoke Show-Info -ParameterFilter {
                 $message -like '*PVM environment variables*'

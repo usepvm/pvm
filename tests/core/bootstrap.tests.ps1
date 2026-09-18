@@ -740,7 +740,7 @@ Describe "Start-PVM" {
         It "Should preserve argument order and content" {
             $testArgs = @('arg1', '--flag', 'value with spaces', '123')
 
-            Start-PVM -command 'setup' -arguments $testArgs
+            $null = Start-PVM -command 'setup' -arguments $testArgs
             $script:capturedArgs.Count | Should -Be 4
             $script:capturedArgs[0] | Should -BeExactly 'arg1'
             $script:capturedArgs[1] | Should -BeExactly '--flag'

@@ -10,7 +10,7 @@ BeforeAll {
     $script:DEFAULT_SETTINGS = $Global:PVMConfig.defaults.settings
     $script:DEFAULT_EXTENSIONS = $Global:PVMConfig.defaults.extensions
 
-    New-Directory -path $script:PROFILES_PATH
+    $null = New-Directory -path $script:PROFILES_PATH
 
     Mock Show-Success { }
     Mock Show-Info { }

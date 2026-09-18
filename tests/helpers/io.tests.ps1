@@ -4,8 +4,8 @@ BeforeAll {
 
     $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
 
-    New-Directory -path "$script:STORAGE_PATH\php\8.1"
-    New-Directory -path "$script:STORAGE_PATH\php\8.2"
+    $null = New-Directory -path "$script:STORAGE_PATH\php\8.1"
+    $null = New-Directory -path "$script:STORAGE_PATH\php\8.2"
 
     Mock Add-LogEntry { return 0 }
 }

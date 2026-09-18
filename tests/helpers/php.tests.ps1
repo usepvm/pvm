@@ -11,7 +11,7 @@ BeforeAll {
     $script:DEFAULT_ZEND_EXTENSIONS = $Global:PVMConfig.defaults.zendExtensions
     $script:MIN_PAD_RIGHT_LENGTH = $Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH
 
-    New-Directory -path $script:testPhpPath
+    $null = New-Directory -path $script:testPhpPath
 
     Mock Show-Message { }
     Mock Show-Error { }

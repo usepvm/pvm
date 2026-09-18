@@ -8,7 +8,7 @@ function Show-PHPExtensionInfo {
         $linksMatchingExtName = Get-ExtensionMatchingCategories -extName $searchId
         $availableMatch = Select-ExtensionFromMatches -linksMatchingExtName $linksMatchingExtName
 
-        $matchesListStatus = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $searchId -includeIniOnly $true # | Select-Object -First 1
+        $matchesListStatus = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $searchId -includeIniOnly $true
 
         if ($matchesListStatus.Length -gt 1) {
             Show-Info -message "`nMultiple extensions match '$extName':`n"

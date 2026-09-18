@@ -794,7 +794,7 @@ Describe "Install-PHP" {
             }
         }
 
-        Set-EnvVar -name 'php8.1' -value $null
+        $null = Set-EnvVar -name 'php8.1' -value $null
         $script:MockUserInput = 'y'
 
         $result = Install-PHP -version '8.1'

@@ -5,7 +5,7 @@ BeforeAll {
     $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
     $script:CACHE_MAX_HOURS = $Global:PVMConfig.env.CACHE_MAX_HOURS
 
-    New-Directory -path $script:CACHE_PATH
+    $null = New-Directory -path $script:CACHE_PATH
 
     Mock Show-Error { }
 }

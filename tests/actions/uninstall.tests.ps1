@@ -3,12 +3,11 @@ BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:testPhpPath = "$script:TEST_DRIVE\PHP"
-    New-Directory -path "$script:testPhpPath\7.4"
-    New-Directory -path "$script:testPhpPath\8.0"
+    $null = New-Directory -path "$script:testPhpPath\7.4"
+    $null = New-Directory -path "$script:testPhpPath\8.0"
+    $null = New-Directory -path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
 
     Mock Add-LogEntry { return 0 }
-
-    New-Directory -path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
 
     Mock Show-Success { }
     Mock Show-Error { }

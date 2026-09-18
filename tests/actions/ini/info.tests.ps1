@@ -49,6 +49,42 @@ Describe "Get-PHPInfo" {
         $result | Should -Be 0
     }
 
+    It "Displays only extensions" {
+        Mock Get-AllPHPExtensionsStatus { return @() }
+        Mock Show-ExtensionsStates { }
+        Mock Show-InstalledExtensions { }
+        Mock Get-AllPHPSettings { return @() }
+        Mock Show-SettingsStates { }
+        Mock Show-Settings { }
+
+        $null = Get-PHPInfo -extensions $true
+
+        Should -Invoke Get-AllPHPExtensionsStatus -Times 1
+        Should -Invoke Show-ExtensionsStates -Times 1
+        Should -Invoke Show-InstalledExtensions -Times 1
+        Should -Invoke Get-AllPHPSettings -Times 0
+        Should -Invoke Show-SettingsStates -Times 0
+        Should -Invoke Show-Settings -Times 0
+    }
+
+    It "Displays only settings" {
+        Mock Get-AllPHPExtensionsStatus { return @() }
+        Mock Show-ExtensionsStates { }
+        Mock Show-InstalledExtensions { }
+        Mock Get-AllPHPSettings { return @() }
+        Mock Show-SettingsStates { }
+        Mock Show-Settings { }
+
+        $null = Get-PHPInfo -settings $true
+
+        Should -Invoke Get-AllPHPExtensionsStatus -Times 0
+        Should -Invoke Show-ExtensionsStates -Times 0
+        Should -Invoke Show-InstalledExtensions -Times 0
+        Should -Invoke Get-AllPHPSettings -Times 1
+        Should -Invoke Show-SettingsStates -Times 1
+        Should -Invoke Show-Settings -Times 1
+    }
+
     It "Handles missing PHP version gracefully" {
         Mock Get-CurrentPHPVersion { return @{ version = $null; path = $null } }
         $result = Get-PHPInfo

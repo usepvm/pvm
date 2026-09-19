@@ -1,14 +1,13 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'system'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
     $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
     $script:PATH_VAR_BACKUP_PATH = $Global:PVMConfig.paths.files.pathVarBackup
 
-    New-Directory -path "$STORAGE_PATH\php\8.1"
-    New-Directory -path "$STORAGE_PATH\php\8.2"
+    $null = New-Directory -path "$script:STORAGE_PATH\php\8.1"
+    $null = New-Directory -path "$script:STORAGE_PATH\php\8.2"
 
     Mock Show-Message { }
     Mock Show-Error { }
@@ -29,10 +28,10 @@ BeforeAll {
 
     # Mock file system for logging tests
     $script:MockFileSystem = @{
-        Directories = @("$($STORAGE_PATH)\php\8.1", "$($STORAGE_PATH)\php\8.2")
+        Directories = @("$($script:STORAGE_PATH)\php\8.1", "$($script:STORAGE_PATH)\php\8.2")
         Files = @{
-            "$($LOG_ERROR_PATH)" = @()
-            "$($PATH_VAR_BACKUP_PATH)" = @()
+            "$($script:LOG_ERROR_PATH)" = @()
+            "$($script:PATH_VAR_BACKUP_PATH)" = @()
         }
     }
 
@@ -49,10 +48,6 @@ BeforeAll {
             $script:MockRegistry.Machine[$name] = $value
         }
     }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Test-OS64Bit" {
@@ -138,12 +133,12 @@ Describe "Get-EnvVarByName" {
 
     Context "When variable exists" {
         It "Returns the variable value" {
-            Set-EnvVar -name 'TEST_VAR' -value 'TEST_VALUE'
+            $null = Set-EnvVar -name 'TEST_VAR' -value 'TEST_VALUE'
 
             $result = Get-EnvVarByName -name 'TEST_VAR'
             $result | Should -Be 'TEST_VALUE'
 
-            Set-EnvVar -name 'TEST_VAR' -value $null
+            $null = Set-EnvVar -name 'TEST_VAR' -value $null
         }
     }
 
@@ -200,7 +195,7 @@ Describe "Set-EnvVar" {
             $value = Get-EnvVarByName -name 'TEST_VAR_SET'
             $value | Should -Be 'TEST_VALUE'
 
-            Set-EnvVar -name 'TEST_VAR_SET' -value $null
+            $null = Set-EnvVar -name 'TEST_VAR_SET' -value $null
         }
 
         It "Set-EnvVar should handle null/empty names" {
@@ -368,14 +363,14 @@ Describe "Optimize-SystemPath" {
     Context "When optimizing system PATH" {
         BeforeEach {
             $testPath = 'C:\Test1;C:\Test2;C:\Windows\System32'
-            Set-EnvVar -name 'TEST_PATH1' -value 'C:\Test1'
-            Set-EnvVar -name 'TEST_PATH2' -value 'C:\Test2'
-            Set-EnvVar -name 'Path' -value $testPath
+            $null = Set-EnvVar -name 'TEST_PATH1' -value 'C:\Test1'
+            $null = Set-EnvVar -name 'TEST_PATH2' -value 'C:\Test2'
+            $null = Set-EnvVar -name 'Path' -value $testPath
         }
 
         AfterEach {
-            Set-EnvVar -name 'TEST_PATH1' -value $null
-            Set-EnvVar -name 'TEST_PATH2' -value $null
+            $null = Set-EnvVar -name 'TEST_PATH1' -value $null
+            $null = Set-EnvVar -name 'TEST_PATH2' -value $null
         }
 
         It "Optimizes PATH by replacing paths with variables" {
@@ -394,8 +389,8 @@ Describe "Optimize-SystemPath" {
             $result = Optimize-SystemPath
             $result | Should -Be 0
 
-            Test-Path $PATH_VAR_BACKUP_PATH | Should -Be $true
-            Get-ContentWrapper -path $PATH_VAR_BACKUP_PATH -Raw | Should -Match 'Original PATH'
+            Test-Path $script:PATH_VAR_BACKUP_PATH | Should -Be $true
+            Get-ContentWrapper -path $script:PATH_VAR_BACKUP_PATH -Raw | Should -Match 'Original PATH'
         }
 
         It "Handles exceptions gracefully" {
@@ -403,8 +398,8 @@ Describe "Optimize-SystemPath" {
             $result = Optimize-SystemPath
             $result | Should -Be -1
 
-            Test-Path $LOG_ERROR_PATH | Should -Be $true
-            Get-ContentWrapper -path $LOG_ERROR_PATH -Raw | Should -Match 'Optimize-SystemPath - Failed to optimize system PATH variable'
+            Test-Path $script:LOG_ERROR_PATH | Should -Be $true
+            Get-ContentWrapper -path $script:LOG_ERROR_PATH -Raw | Should -Match 'Optimize-SystemPath - Failed to optimize system PATH variable'
         }
 
         It "Sets Path variable successfully after optimization" {

@@ -1,25 +1,21 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'update-check'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
+
+    $script:STATE_PATH = $Global:PVMConfig.paths.directories.state
 
     Mock Show-Error { }
 }
 
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
-}
-
 Describe "Get-LastUpdateCheckTimestamp" {
     BeforeAll {
-        $script:STATE_PATH = $Global:PVMConfig.paths.directories.state
-        New-Item -ItemType Directory -Path $STATE_PATH -Force | Out-Null
-        $script:TIMESTAMP_FILE = "$STATE_PATH\last_update_check.txt"
+        New-Item -ItemType Directory -Path $script:STATE_PATH -Force | Out-Null
+        $script:TIMESTAMP_FILE = "$script:STATE_PATH\last_update_check.txt"
     }
 
     AfterEach {
-        if (Test-Path $TIMESTAMP_FILE) {
-            Remove-ItemWrapper -path $TIMESTAMP_FILE
+        if (Test-Path $script:TIMESTAMP_FILE) {
+            Remove-ItemWrapper -path $script:TIMESTAMP_FILE
         }
     }
 
@@ -33,7 +29,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
     Context "When the timestamp file exists" {
         It "Returns a DateTime parsed from the file content" {
             $date = Get-Date '2026-01-01 10:00:00'
-            $date | Set-ContentWrapper -path $TIMESTAMP_FILE
+            $date | Set-ContentWrapper -path $script:TIMESTAMP_FILE
 
             $result = Get-LastUpdateCheckTimestamp
 
@@ -42,7 +38,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
         }
 
         It "Returns null when the file content cannot be parsed as a DateTime" {
-            'not-a-date' | Set-ContentWrapper -path $TIMESTAMP_FILE
+            'not-a-date' | Set-ContentWrapper -path $script:TIMESTAMP_FILE
 
             $result = Get-LastUpdateCheckTimestamp
 
@@ -53,8 +49,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
 
 Describe "Set-LastUpdateCheckTimestamp" {
     BeforeAll {
-        $script:STATE_PATH = $Global:PVMConfig.paths.directories.state
-        $script:TIMESTAMP_FILE = "$STATE_PATH\last_update_check.txt"
+        $script:TIMESTAMP_FILE = "$script:STATE_PATH\last_update_check.txt"
     }
 
     Context "When writing succeeds" {
@@ -66,17 +61,17 @@ Describe "Set-LastUpdateCheckTimestamp" {
 
             $result | Should -Be 0
             Should -Invoke New-Directory -Times 1 -ParameterFilter {
-                $path -eq $STATE_PATH
+                $path -eq $script:STATE_PATH
             }
         }
 
         It "Writes the current date to the timestamp file and returns 0" {
-            New-Item -ItemType Directory -Path $STATE_PATH -Force | Out-Null
+            New-Item -ItemType Directory -Path $script:STATE_PATH -Force | Out-Null
 
             $result = Set-LastUpdateCheckTimestamp
 
             $result | Should -Be 0
-            Test-Path $TIMESTAMP_FILE | Should -Be $true
+            Test-Path $script:TIMESTAMP_FILE | Should -Be $true
         }
     }
 
@@ -93,7 +88,7 @@ Describe "Set-LastUpdateCheckTimestamp" {
             Should -Invoke Set-ContentWrapper -Times 0
         }
         It "Returns -1 when Set-ContentWrapper throws" {
-            New-Item -ItemType Directory -Path $STATE_PATH -Force | Out-Null
+            New-Item -ItemType Directory -Path $script:STATE_PATH -Force | Out-Null
             Mock Set-ContentWrapper { throw 'Test exception' }
 
             $result = Set-LastUpdateCheckTimestamp

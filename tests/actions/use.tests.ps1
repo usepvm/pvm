@@ -1,9 +1,8 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'use'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    New-Directory -path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
+    $null = New-Directory -path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
 
     Mock Write-Color { }
     Mock Show-Info { }
@@ -44,10 +43,6 @@ BeforeAll {
     Mock Add-LogEntry { return 0 }
 }
 
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
-}
-
 Describe "Update-PHPVersion" {
     BeforeEach {
         $script:TestScenario = $null
@@ -74,11 +69,11 @@ Describe "Update-PHPVersion" {
     It "Should return when switching to same current version" {
         Mock Get-UserSelectedPHPVersion { return @{
             code=0; version='8.2.0'; arch = 'x64';
-            buildType = 'TS'; path= "$TEST_DRIVE\php\8.2.0"
+            buildType = 'TS'; path= "$script:TEST_DRIVE\php\8.2.0"
         }}
         Mock Get-CurrentPHPVersion { return @{
             version = '8.2.0';
-            path = "$TEST_DRIVE\php\8.2.0"
+            path = "$script:TEST_DRIVE\php\8.2.0"
             arch = 'x64'
             buildType = 'TS'
         }}

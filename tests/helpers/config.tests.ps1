@@ -1,21 +1,18 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'config'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:TEMPLATES_PATH = $Global:PVMConfig.paths.directories.templates
     $script:ALIASES_LIST_PATH = $Global:PVMConfig.paths.files.aliasesList
     $script:SCRIPTS_LIST_PATH = $Global:PVMConfig.paths.files.scriptsList
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
+    $script:DEFAULT_ALIASES = $Global:PVMConfig.defaults.aliases
+    $script:DEFAULT_SCRIPTS = $Global:PVMConfig.defaults.scripts
+    $script:DEFAULT_FLAGS = $Global:PVMConfig.defaults.flags
 }
 
 Describe "Set-AliasesList" {
     BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $script:DEFAULT_ALIASES = $Global:PVMConfig.defaults.aliases
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
     }
 
     It "Creates aliases.json" {
@@ -23,7 +20,7 @@ Describe "Set-AliasesList" {
         $result | Should -Be 0
 
         $result = Get-Aliases
-        $result.Count | Should -Be $DEFAULT_ALIASES.Count
+        $result.Count | Should -Be $script:DEFAULT_ALIASES.Count
     }
 
     It "Returns -1 when exception is thrown" {
@@ -35,10 +32,9 @@ Describe "Set-AliasesList" {
 
 Describe "Get-Aliases" {
     BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $testContent = [ordered]@{'?' = 'help'; 'i' = 'install'; 'init' = 'setup'}
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $ALIASES_LIST_PATH
-        $script:DEFAULT_ALIASES = $Global:PVMConfig.defaults.aliases
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $script:ALIASES_LIST_PATH
     }
 
     It "Returns aliases from aliases.json or PVMConfig.defaults.aliases" {
@@ -50,30 +46,29 @@ Describe "Get-Aliases" {
     }
 
     It "Falls back to DEFAULT_ALIASES value" {
-        Remove-ItemWrapper -path "$TEMPLATES_PATH\aliases.json"
+        Remove-ItemWrapper -path "$script:TEMPLATES_PATH\aliases.json"
         $result = Get-Aliases
-        $result.Count | Should -Be $DEFAULT_ALIASES.Count
+        $result.Count | Should -Be $script:DEFAULT_ALIASES.Count
     }
 
     It "Returns default value when exception is thrown" {
         Mock Test-FileExists { return $true }
         Mock Get-ContentWrapper { throw 'Test exception' }
         $result = Get-Aliases
-        $result.Count | Should -Be $DEFAULT_ALIASES.Count
+        $result.Count | Should -Be $script:DEFAULT_ALIASES.Count
     }
 }
 
 Describe "Get-FlagMap" {
     It "Returns PVMConfig.defaults.flags" {
         $result = Get-FlagMap
-        $result.Count | Should -Be $Global:PVMConfig.defaults.flags.Count
+        $result.Count | Should -Be $script:DEFAULT_FLAGS.Count
     }
 }
 
 Describe "Set-Scripts-List" {
     BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
-        $script:DEFAULT_SCRIPTS = $Global:PVMConfig.defaults.scripts
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
     }
 
     It "Creates scripts.json" {
@@ -81,7 +76,7 @@ Describe "Set-Scripts-List" {
         $result | Should -Be 0
 
         $result = Get-Scripts
-        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
+        $result.Count | Should -Be $script:DEFAULT_SCRIPTS.Count
     }
 
     It "Returns -1 when exception is thrown" {
@@ -93,10 +88,9 @@ Describe "Set-Scripts-List" {
 
 Describe "Get-Scripts" {
     BeforeAll {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $testContent = [ordered]@{'test:quiet' = 'test --verbosity=None'; 'test:cov' = 'test --coverage=75'}
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $SCRIPTS_LIST_PATH
-        $script:DEFAULT_SCRIPTS = $Global:PVMConfig.defaults.scripts
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $script:SCRIPTS_LIST_PATH
     }
 
     It "Returns scripts from scripts.json or PVMConfig.defaults.scripts" {
@@ -109,14 +103,14 @@ Describe "Get-Scripts" {
     It "Falls back to DEFAULT_SCRIPTS value" {
         Remove-ItemWrapper -path "$script:TEMPLATES_PATH\scripts.json"
         $result = Get-Scripts
-        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
+        $result.Count | Should -Be $script:DEFAULT_SCRIPTS.Count
     }
 
     It "Returns default value when exception is thrown" {
         Mock Test-FileExists { return $true }
         Mock Get-ContentWrapper { throw 'Test exception' }
         $result = Get-Scripts
-        $result.Count | Should -Be $DEFAULT_SCRIPTS.Count
+        $result.Count | Should -Be $script:DEFAULT_SCRIPTS.Count
     }
 }
 
@@ -323,7 +317,7 @@ Describe "Get-EnvPath" {
 
 Describe "Get-EnvConfig" {
     BeforeEach {
-        $script:envRoot = "$TEST_DRIVE\envconfig"
+        $script:envRoot = "$script:TEST_DRIVE\envconfig"
         New-Item -ItemType Directory -Path $script:envRoot -Force | Out-Null
     }
 
@@ -342,19 +336,19 @@ Describe "Get-EnvConfig" {
             Set-ContentWrapper -path "$envRoot\.env" -value 'KEY=value'
             Mock Write-Verbose { }
 
-            Get-EnvConfig -rootPath $envRoot -Verbose
+            Get-EnvConfig -rootPath $envRoot
 
             Should -Invoke Write-Verbose -ParameterFilter {
-                $Message -eq "Using .env from: $envRoot\.env"
+                $message -eq "Using .env from: $envRoot\.env"
             } -Times 1 -Exactly
         }
 
         It "Returns a hashtable of parsed key=value pairs" {
-            @'
-PHP_CURRENT_VERSION_PATH=C:\pvm\php
-CACHE_MAX_HOURS=168
-DEFAULT_LOG_PAGE_SIZE=5
-'@ | Set-ContentWrapper -path "$envRoot\.env"
+            @(
+                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
+                'CACHE_MAX_HOURS=168'
+                'DEFAULT_LOG_PAGE_SIZE=5'
+            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -366,14 +360,14 @@ DEFAULT_LOG_PAGE_SIZE=5
         }
 
         It "Skips empty lines and comment lines" {
-            @'
-
-# Top-level comment
-   # Indented comment
-
-KEY=value
-
-'@ | Set-ContentWrapper -path "$envRoot\.env"
+            @(
+                ''
+                '# Top-level comment'
+                '   # Indented comment'
+                ''
+                'KEY=value'
+                ''
+            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -414,10 +408,10 @@ KEY=value
         }
 
         It "Keeps values with mismatched or unclosed quotes unchanged" {
-            @'
-MISMATCHED="value'
-UNCLOSED="value
-'@ | Set-ContentWrapper -path "$envRoot\.env"
+            @(
+                "MISMATCHED=`"value'"
+                'UNCLOSED="value'
+            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -426,11 +420,11 @@ UNCLOSED="value
         }
 
         It "Ignores lines that are not key=value pairs" {
-            @'
-NOT_A_PAIR
-ALSO NOT VALID
-VALID=yes
-'@ | Set-ContentWrapper -path "$envRoot\.env"
+            @(
+                'NOT_A_PAIR'
+                'ALSO NOT VALID'
+                'VALID=yes'
+            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -455,10 +449,10 @@ VALID=yes
         }
 
         It "Returns an empty hashtable when the file has only comments and blank lines" {
-            @'
-# comment only
-
-'@ | Set-ContentWrapper -path "$envRoot\.env"
+            @(
+                '# comment only'
+                ''
+            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -468,20 +462,60 @@ VALID=yes
     }
 }
 
+Describe "Get-EnvDefaults" {
+    It "returns a hashtable" {
+        (Get-EnvDefaults) | Should -BeOfType [hashtable]
+    }
+
+    It "has the expected keys" {
+        $keys = (Get-EnvDefaults).Keys
+        $keys | Should -Contain 'PHP_CURRENT_VERSION_PATH'
+        $keys | Should -Contain 'PVM_ENV_VAR_NAME'
+        $keys | Should -Contain 'CACHE_MAX_HOURS'
+        $keys | Should -Contain 'DEFAULT_LOG_PAGE_SIZE'
+        $keys | Should -Contain 'DEFAULT_PARTIAL_LIST_SIZE'
+        $keys | Should -Contain 'MIN_PAD_RIGHT_LENGTH'
+        $keys | Should -Contain 'MIN_LINE_LENGTH'
+        $keys | Should -Contain 'ENABLE_UPDATE_CHECK'
+        $keys | Should -Contain 'UPDATE_CHECK_INTERVAL_HOURS'
+        $keys | Should -Contain 'SOUNDS_DISABLED'
+    }
+
+    It "has correct default values" {
+        $defaults = Get-EnvDefaults
+        $defaults.PHP_CURRENT_VERSION_PATH    | Should -Be 'C:\pvm\php'
+        $defaults.CACHE_MAX_HOURS             | Should -Be 168
+        $defaults.DEFAULT_LOG_PAGE_SIZE       | Should -Be 5
+        $defaults.DEFAULT_PARTIAL_LIST_SIZE   | Should -Be 10
+        $defaults.MIN_PAD_RIGHT_LENGTH        | Should -Be 10
+        $defaults.MIN_LINE_LENGTH             | Should -Be 50
+        $defaults.ENABLE_UPDATE_CHECK         | Should -Be $true
+        $defaults.UPDATE_CHECK_INTERVAL_HOURS | Should -Be 24
+        $defaults.SOUNDS_DISABLED             | Should -Be $false
+    }
+
+    It "returns a fresh hashtable on each call (no shared mutable state)" {
+        $d1 = Get-EnvDefaults
+        $d1.CACHE_MAX_HOURS = 999
+        $d2 = Get-EnvDefaults
+        $d2.CACHE_MAX_HOURS | Should -Be 168
+    }
+}
+
 Describe "Get-Config" {
     Context "When .env file exists" {
         BeforeAll {
-            $script:testRoot = "$TEST_DRIVE\pvm"
+            $script:testRoot = "$script:TEST_DRIVE\pvm"
             New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
-            @'
-PHP_CURRENT_VERSION_PATH=C:\pvm\php
-PVM_ENV_VAR_NAME=PVM
-CACHE_MAX_HOURS=168
-DEFAULT_LOG_PAGE_SIZE=5
-DEFAULT_PARTIAL_LIST_SIZE=10
-MIN_PAD_RIGHT_LENGTH=20
-MIN_LINE_LENGTH=50
-'@ | Set-ContentWrapper -path "$testRoot\.env"
+            @(
+                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
+                'PVM_ENV_VAR_NAME=PVM'
+                'CACHE_MAX_HOURS=168'
+                'DEFAULT_LOG_PAGE_SIZE=5'
+                'DEFAULT_PARTIAL_LIST_SIZE=10'
+                'MIN_PAD_RIGHT_LENGTH=20'
+                'MIN_LINE_LENGTH=50'
+            ) -join "`n" | Set-ContentWrapper -path "$testRoot\.env"
         }
 
         It "Returns a hashtable with all expected sections" {
@@ -513,18 +547,18 @@ MIN_LINE_LENGTH=50
         }
 
         It "Uses TEST_DRIVE from .env for fake storage when provided" {
-            $customRoot = "$TEST_DRIVE\custom-env"
+            $customRoot = "$script:TEST_DRIVE\custom-env"
             New-Item -ItemType Directory -Path $customRoot -Force | Out-Null
-            @'
-PHP_CURRENT_VERSION_PATH=C:\pvm\php
-PVM_ENV_VAR_NAME=PVM
-CACHE_MAX_HOURS=168
-DEFAULT_LOG_PAGE_SIZE=5
-DEFAULT_PARTIAL_LIST_SIZE=10
-MIN_PAD_RIGHT_LENGTH=20
-MIN_LINE_LENGTH=50
-TEST_DRIVE=C:\fake-storage
-'@ | Set-ContentWrapper -path "$customRoot\.env"
+            @(
+                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
+                'PVM_ENV_VAR_NAME=PVM'
+                'CACHE_MAX_HOURS=168'
+                'DEFAULT_LOG_PAGE_SIZE=5'
+                'DEFAULT_PARTIAL_LIST_SIZE=10'
+                'MIN_PAD_RIGHT_LENGTH=20'
+                'MIN_LINE_LENGTH=50'
+                'TEST_DRIVE=C:\fake-storage'
+            ) -join "`n" | Set-ContentWrapper -path "$customRoot\.env"
 
             $result = Get-Config -rootPath $customRoot
 
@@ -532,17 +566,17 @@ TEST_DRIVE=C:\fake-storage
         }
 
         It "Falls back to storage/tests when TEST_DRIVE is not set" {
-            $fallbackRoot = "$TEST_DRIVE\fallback-env"
+            $fallbackRoot = "$script:TEST_DRIVE\fallback-env"
             New-Item -ItemType Directory -Path $fallbackRoot -Force | Out-Null
-            @'
-PHP_CURRENT_VERSION_PATH=C:\pvm\php
-PVM_ENV_VAR_NAME=PVM
-CACHE_MAX_HOURS=168
-DEFAULT_LOG_PAGE_SIZE=5
-DEFAULT_PARTIAL_LIST_SIZE=10
-MIN_PAD_RIGHT_LENGTH=20
-MIN_LINE_LENGTH=50
-'@ | Set-ContentWrapper -path "$fallbackRoot\.env"
+            @(
+                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
+                'PVM_ENV_VAR_NAME=PVM'
+                'CACHE_MAX_HOURS=168'
+                'DEFAULT_LOG_PAGE_SIZE=5'
+                'DEFAULT_PARTIAL_LIST_SIZE=10'
+                'MIN_PAD_RIGHT_LENGTH=20'
+                'MIN_LINE_LENGTH=50'
+            ) -join "`n" | Set-ContentWrapper -path "$fallbackRoot\.env"
 
             $result = Get-Config -rootPath $fallbackRoot
 
@@ -550,18 +584,18 @@ MIN_LINE_LENGTH=50
         }
 
         It "Falls back to storage/tests when TEST_DRIVE is not a valid path" {
-            $invalidRoot = "$TEST_DRIVE\invalid-env"
+            $invalidRoot = "$script:TEST_DRIVE\invalid-env"
             New-Item -ItemType Directory -Path $invalidRoot -Force | Out-Null
-            @'
-PHP_CURRENT_VERSION_PATH=C:\pvm\php
-PVM_ENV_VAR_NAME=PVM
-CACHE_MAX_HOURS=168
-DEFAULT_LOG_PAGE_SIZE=5
-DEFAULT_PARTIAL_LIST_SIZE=10
-MIN_PAD_RIGHT_LENGTH=20
-MIN_LINE_LENGTH=50
-TEST_DRIVE=bad<path
-'@ | Set-ContentWrapper -path "$invalidRoot\.env"
+            @(
+                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
+                'PVM_ENV_VAR_NAME=PVM'
+                'CACHE_MAX_HOURS=168'
+                'DEFAULT_LOG_PAGE_SIZE=5'
+                'DEFAULT_PARTIAL_LIST_SIZE=10'
+                'MIN_PAD_RIGHT_LENGTH=20'
+                'MIN_LINE_LENGTH=50'
+                'TEST_DRIVE=bad<path'
+            ) -join "`n" | Set-ContentWrapper -path "$invalidRoot\.env"
 
             $result = Get-Config -rootPath $invalidRoot
 

@@ -1,17 +1,12 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'update'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     Mock Show-Success { }
     Mock Show-Error { }
     Mock Show-Info { }
     Mock Show-Warning { }
     Mock Write-DarkYellow { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Test-GitAvailable" {

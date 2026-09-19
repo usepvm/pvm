@@ -1,16 +1,15 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'disable'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:phpVersionPath = "$TEST_DRIVE\php-8.2"
-    $script:testIniPath = "$phpVersionPath\php.ini"
-    $script:extDirectory = "$phpVersionPath\ext"
-    $script:testBackupPath = "$testIniPath.bak"
+    $script:phpVersionPath = "$script:TEST_DRIVE\php-8.2"
+    $script:testIniPath = "$script:phpVersionPath\php.ini"
+    $script:extDirectory = "$script:phpVersionPath\ext"
+    $script:testBackupPath = "$script:testIniPath.bak"
 
-    New-Directory -path $Global:PVMConfig.paths.directories.cache
-    New-Directory -path $phpVersionPath
-    New-Directory -path $extDirectory
+    $null = New-Directory -path $Global:PVMConfig.paths.directories.cache
+    $null = New-Directory -path $script:phpVersionPath
+    $null = New-Directory -path $script:extDirectory
 
     Mock Show-Warning { }
     Mock Show-Info { }
@@ -18,43 +17,39 @@ BeforeAll {
     Mock Write-Color { }
 
     function Reset-IniContent {
-    @"
-memory_limit = 128M
-;extension=php_xdebug.dll
-extension=php_curl.dll
-zend_extension=php_opcache.dll
-display_errors = On
-max_execution_time = 30
-;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $testIniPath
+        @(
+        'memory_limit = 128M'
+        ';extension=php_xdebug.dll'
+        'extension=php_curl.dll'
+        'zend_extension=php_opcache.dll'
+        'display_errors = On'
+        'max_execution_time = 30'
+        ';upload_max_filesize = 2M'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
 }
 
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
-}
-
 Describe "Disable-IniExtension" {
     BeforeEach {
-        Mock Test-DirectoryExists -ParameterFilter { $path -eq $extDirectory } -MockWith { return $true }
+        Mock Test-DirectoryExists -ParameterFilter { $path -eq $script:extDirectory } -MockWith { return $true }
         Reset-IniContent
-        Remove-ItemWrapper -path $testBackupPath
+        Remove-ItemWrapper -path $script:testBackupPath
     }
 
     It "Disables enabled extension" {
         Mock Get-ChildItemWrapper {
             param ($path)
-            return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$extDirectory\php_curl.dll" } )
+            return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$script:extDirectory\php_curl.dll" } )
         }
-        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('curl')
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
         $code | Should -Be 0
-        (Get-ContentWrapper -path $testIniPath) -match '^;extension=php_curl.dll' | Should -Be $true
+        (Get-ContentWrapper -path $script:testIniPath) -match '^;extension=php_curl.dll' | Should -Be $true
     }
 
     It "Returns -1 for already disabled extension" {
-        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('xdebug')
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('xdebug')
         $code | Should -Be -1
     }
 
@@ -66,31 +61,31 @@ Describe "Disable-IniExtension" {
         }
         Mock Set-ContentWrapper { }
 
-        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('xdebug')
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('xdebug')
         $code | Should -Be 0
         Should -Invoke Set-ContentWrapper -Times 0
     }
 
     It "Returns -1 for non-existent extension" {
-        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('nonexistent_ext')
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('nonexistent_ext')
         $code | Should -Be -1
     }
 
     It "Requires extension name" {
-        $code = Disable-IniExtension -iniPath $testIniPath -extNames ''
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames ''
         $code | Should -Be -1
-        $code = Disable-IniExtension -iniPath $testIniPath -extNames $null
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames $null
         $code | Should -Be -1
     }
 
     It "Handles zend_extension" {
         Mock Get-ChildItemWrapper {
             param ($path)
-            return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$extDirectory\php_opcache.dll" } )
+            return @( @{ BaseName = 'php_opcache'; Name = 'php_opcache.dll'; FullName = "$script:extDirectory\php_opcache.dll" } )
         }
-        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('opcache')
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('opcache')
         $code | Should -Be 0
-        (Get-ContentWrapper -path $testIniPath) -match '^;zend_extension=php_opcache.dll' | Should -Be $true
+        (Get-ContentWrapper -path $script:testIniPath) -match '^;zend_extension=php_opcache.dll' | Should -Be $true
     }
 
     It "Returns 0 when no line modification occurs while disabling extension" {
@@ -102,45 +97,45 @@ Describe "Disable-IniExtension" {
         Mock Get-ContentWrapper { return @('extension=php_curl.dll') }
         Mock Set-ContentWrapper { }
 
-        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('curl')
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
         $code | Should -Be 0
         Should -Invoke Set-ContentWrapper -Times 0
     }
 
     It "Prompts user to select extension if multiple matches found" {
-        @"
-extension=pdo_mysql
-;extension=pdo_pgsql
-extension=pdo_sqlite
-extension=pgsql
-;extension=sqlite3
-"@ | Set-ContentWrapper -path $testIniPath
+        @(
+            'extension=pdo_mysql'
+            ';extension=pdo_pgsql'
+            'extension=pdo_sqlite'
+            'extension=pgsql'
+            ';extension=sqlite3'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
         Mock Get-ChildItemWrapper {
             param ($path)
             return @(
-                @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
-                @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$extDirectory\pdo_pgsql.dll" }
-                @{ BaseName = 'pdo_sqlite'; Name = 'pdo_sqlite.dll'; FullName = "$extDirectory\pdo_sqlite.dll" }
-                @{ BaseName = 'pgsql'; Name = 'pgsql.dll'; FullName = "$extDirectory\pgsql.dll" }
-                @{ BaseName = 'sqlite3'; Name = 'sqlite3.dll'; FullName = "$extDirectory\sqlite3.dll" }
+                @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$script:extDirectory\pdo_mysql.dll" }
+                @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$script:extDirectory\pdo_pgsql.dll" }
+                @{ BaseName = 'pdo_sqlite'; Name = 'pdo_sqlite.dll'; FullName = "$script:extDirectory\pdo_sqlite.dll" }
+                @{ BaseName = 'pgsql'; Name = 'pgsql.dll'; FullName = "$script:extDirectory\pgsql.dll" }
+                @{ BaseName = 'sqlite3'; Name = 'sqlite3.dll'; FullName = "$script:extDirectory\sqlite3.dll" }
             )
         }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
 
-        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('sql')
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('sql')
         $code | Should -Be 0
 
-        (Get-ContentWrapper -path $testIniPath) -match '^;extension\s*=\s*pdo_mysql' | Should -Be $true
+        (Get-ContentWrapper -path $script:testIniPath) -match '^;extension\s*=\s*pdo_mysql' | Should -Be $true
     }
 
     It "Prints error message for non-valid number" {
-        @"
-extension=pdo_mysql
-;extension=pdo_pgsql
-extension=pdo_sqlite
-extension=pgsql
-;extension=sqlite3
-"@ | Set-ContentWrapper -path $testIniPath
+        @(
+            'extension=pdo_mysql'
+            ';extension=pdo_pgsql'
+            'extension=pdo_sqlite'
+            'extension=pgsql'
+            ';extension=sqlite3'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
 
         $script:callCount = 0
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
@@ -151,33 +146,33 @@ extension=pgsql
         }
 
         $dllFiles = @(
-            @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$extDirectory\pdo_mysql.dll" }
-            @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$extDirectory\pdo_pgsql.dll" }
-            @{ BaseName = 'pdo_sqlite'; Name = 'pdo_sqlite.dll'; FullName = "$extDirectory\pdo_sqlite.dll" }
-            @{ BaseName = 'pgsql'; Name = 'pgsql.dll'; FullName = "$extDirectory\pgsql.dll" }
-            @{ BaseName = 'sqlite3'; Name = 'sqlite3.dll'; FullName = "$extDirectory\sqlite3.dll" }
+            @{ BaseName = 'pdo_mysql'; Name = 'pdo_mysql.dll'; FullName = "$script:extDirectory\pdo_mysql.dll" }
+            @{ BaseName = 'pdo_pgsql'; Name = 'pdo_pgsql.dll'; FullName = "$script:extDirectory\pdo_pgsql.dll" }
+            @{ BaseName = 'pdo_sqlite'; Name = 'pdo_sqlite.dll'; FullName = "$script:extDirectory\pdo_sqlite.dll" }
+            @{ BaseName = 'pgsql'; Name = 'pgsql.dll'; FullName = "$script:extDirectory\pgsql.dll" }
+            @{ BaseName = 'sqlite3'; Name = 'sqlite3.dll'; FullName = "$script:extDirectory\sqlite3.dll" }
         )
         Mock Get-ChildItemWrapper {
             param ($path)
             return $dllFiles
         }
-        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('sql')
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('sql')
         $code | Should -Be 0
 
-        (Get-ContentWrapper -path $testIniPath) -match '^;extension\s*=\s*pgsql' | Should -Be $true
+        (Get-ContentWrapper -path $script:testIniPath) -match '^;extension\s*=\s*pgsql' | Should -Be $true
         Should -Invoke Show-Warning -ParameterFilter { $message -eq 'Please enter a valid positive number.'}
         Should -Invoke Show-Warning -ParameterFilter { $message -eq "Number must be between 0 and $($dllFiles.Length - 1)." }
     }
 
     It "Creates backup before modifying" {
-        Disable-IniExtension -iniPath $testIniPath -extNames @('curl')
-        Test-Path $testBackupPath | Should -Be $true
+        Disable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
+        Test-Path $script:testBackupPath | Should -Be $true
     }
 
     It "Returns -1 on error" {
         Mock Add-LogEntry { return 0 }
         Mock Get-MatchingPHPExtensionsStatus { throw 'Access denied' }
-        $code = Disable-IniExtension -iniPath $testIniPath -extNames @('curl')
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
         $code | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
     }

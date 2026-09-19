@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'profile'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:PROFILES_PATH = $Global:PVMConfig.paths.directories.profiles
     $script:TEMPLATES_PATH = $Global:PVMConfig.paths.directories.templates
@@ -11,7 +10,7 @@ BeforeAll {
     $script:DEFAULT_SETTINGS = $Global:PVMConfig.defaults.settings
     $script:DEFAULT_EXTENSIONS = $Global:PVMConfig.defaults.extensions
 
-    New-Directory -path $PROFILES_PATH
+    $null = New-Directory -path $script:PROFILES_PATH
 
     Mock Show-Success { }
     Mock Show-Info { }
@@ -29,7 +28,7 @@ BeforeAll {
     }
 
     Mock Get-PHPData {
-        param ($PhpIniPath)
+        param ($phpIniPath)
         return @{
             settings = @(
                 @{ Name = 'memory_limit'; Value = '128M'; Enabled = $true },
@@ -49,40 +48,36 @@ BeforeAll {
     Mock Add-LogEntry { param ($data) return $true }
 }
 
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
-}
-
 Describe "Set-IniSettingDirect" {
     BeforeEach {
-        $testIniPath = "$TEST_DRIVE\test.ini"
-        'setting1 = value1' | Set-ContentWrapper -path $testIniPath
+        $script:testIniPath = "$script:TEST_DRIVE\test.ini"
+        'setting1 = value1' | Set-ContentWrapper -path $script:testIniPath
     }
 
     It "Should update existing setting" {
-        $result = Set-IniSettingDirect -iniPath "$TEST_DRIVE\test.ini" -settingName 'setting1' -value 'newvalue'
+        $result = Set-IniSettingDirect -iniPath "$script:TEST_DRIVE\test.ini" -settingName 'setting1' -value 'newvalue'
         $result | Should -Be 0
-        (Get-ContentWrapper -path "$TEST_DRIVE\test.ini") | Should -Be 'setting1 = newvalue'
+        (Get-ContentWrapper -path "$script:TEST_DRIVE\test.ini") | Should -Be 'setting1 = newvalue'
     }
 
     It "Should add new setting if not exists" {
-        $result = Set-IniSettingDirect -iniPath "$TEST_DRIVE\test.ini" -settingName 'setting2' -value 'value2'
+        $result = Set-IniSettingDirect -iniPath "$script:TEST_DRIVE\test.ini" -settingName 'setting2' -value 'value2'
         $result | Should -Be 0
-        $content = (Get-ContentWrapper -path "$TEST_DRIVE\test.ini")
+        $content = (Get-ContentWrapper -path "$script:TEST_DRIVE\test.ini")
         $content | Should -Contain 'setting1 = value1'
         $content | Should -Contain 'setting2 = value2'
     }
 
     It "Should handle disabled settings" {
-        $result = Set-IniSettingDirect -iniPath "$TEST_DRIVE\test.ini" -settingName 'setting1' -value 'newvalue' -enabled $false
+        $result = Set-IniSettingDirect -iniPath "$script:TEST_DRIVE\test.ini" -settingName 'setting1' -value 'newvalue' -enabled $false
         $result | Should -Be 0
-        (Get-ContentWrapper -path "$TEST_DRIVE\test.ini") | Should -Be ';setting1 = newvalue'
+        (Get-ContentWrapper -path "$script:TEST_DRIVE\test.ini") | Should -Be ';setting1 = newvalue'
     }
 
     It "Should add new disabled setting at end when not exists" {
-        $result = Set-IniSettingDirect -iniPath "$TEST_DRIVE\test.ini" -settingName 'newsetting' -value 'newvalue' -enabled $false
+        $result = Set-IniSettingDirect -iniPath "$script:TEST_DRIVE\test.ini" -settingName 'newsetting' -value 'newvalue' -enabled $false
         $result | Should -Be 0
-        $content = (Get-ContentWrapper -path "$TEST_DRIVE\test.ini")
+        $content = (Get-ContentWrapper -path "$script:TEST_DRIVE\test.ini")
         $content | Should -Contain 'setting1 = value1'
         $content | Should -Contain ';newsetting = newvalue'
     }
@@ -90,115 +85,114 @@ Describe "Set-IniSettingDirect" {
     It "Should return -1 on exception in Set-IniSettingDirect" {
         Mock Get-ContentWrapper { throw 'File read error' }
 
-        $result = Set-IniSettingDirect -iniPath "$TEST_DRIVE\test.ini" -settingName 'setting1' -value 'value'
+        $result = Set-IniSettingDirect -iniPath "$script:TEST_DRIVE\test.ini" -settingName 'setting1' -value 'value'
         $result | Should -Be -1
     }
 }
 
 Describe "Enable-IniExtensionDirect" {
     BeforeEach {
-        $testIniPath = "$TEST_DRIVE\extensions.ini"
+        $script:testIniPath = "$script:TEST_DRIVE\extensions.ini"
         @(
             ';extension=php_curl.dll',
             'zend_extension=php_opcache.dll'
-        ) | Set-ContentWrapper -path $testIniPath
+        ) | Set-ContentWrapper -path $script:testIniPath
     }
 
     It "Should enable an extension" {
-        $result = Enable-IniExtensionDirect -iniPath "$TEST_DRIVE\extensions.ini" -extName 'curl'
+        $result = Enable-IniExtensionDirect -iniPath "$script:TEST_DRIVE\extensions.ini" -extName 'curl'
         $result | Should -Be 0
-        (Get-ContentWrapper -path "$TEST_DRIVE\extensions.ini") | Should -Contain 'extension=php_curl.dll'
+        (Get-ContentWrapper -path "$script:TEST_DRIVE\extensions.ini") | Should -Contain 'extension=php_curl.dll'
     }
 
     It "Should enable a commented zend_extension" {
-        $testIniPath = "$TEST_DRIVE\extensions2.ini"
+        $script:testIniPath = "$script:TEST_DRIVE\extensions2.ini"
         @(
             ';zend_extension=php_opcache.dll',
             'extension=php_curl.dll'
-        ) | Set-ContentWrapper -path $testIniPath
+        ) | Set-ContentWrapper -path $script:testIniPath
 
-        $result = Enable-IniExtensionDirect -iniPath $testIniPath -extName 'opcache' -extType 'zend_extension'
+        $result = Enable-IniExtensionDirect -iniPath $script:testIniPath -extName 'opcache' -extType 'zend_extension'
         $result | Should -Be 0
-        (Get-ContentWrapper -path $testIniPath) | Should -Contain 'zend_extension=php_opcache.dll'
-        (Get-ContentWrapper -path $testIniPath) | Should -Not -Contain ';zend_extension=php_opcache.dll'
+        (Get-ContentWrapper -path $script:testIniPath) | Should -Contain 'zend_extension=php_opcache.dll'
+        (Get-ContentWrapper -path $script:testIniPath) | Should -Not -Contain ';zend_extension=php_opcache.dll'
     }
 
     It "Should add new zend_extension when it doesn't exist" {
-        $testIniPath = "$TEST_DRIVE\extensions3.ini"
+        $script:testIniPath = "$script:TEST_DRIVE\extensions3.ini"
         @(
             'extension=php_curl.dll'
-        ) | Set-ContentWrapper -path $testIniPath
+        ) | Set-ContentWrapper -path $script:testIniPath
 
-        $result = Enable-IniExtensionDirect -iniPath $testIniPath -extName 'xdebug' -extType 'zend_extension'
+        $result = Enable-IniExtensionDirect -iniPath $script:testIniPath -extName 'xdebug' -extType 'zend_extension'
         $result | Should -Be 0
-        (Get-ContentWrapper -path $testIniPath) | Should -Contain 'zend_extension=php_xdebug.dll'
+        (Get-ContentWrapper -path $script:testIniPath) | Should -Contain 'zend_extension=php_xdebug.dll'
     }
 
     It "Should add new regular extension when it doesn't exist" {
-        $testIniPath = "$TEST_DRIVE\extensions4.ini"
+        $script:testIniPath = "$script:TEST_DRIVE\extensions4.ini"
         @(
             'extension=php_curl.dll'
-        ) | Set-ContentWrapper -path $testIniPath
+        ) | Set-ContentWrapper -path $script:testIniPath
 
-        $result = Enable-IniExtensionDirect -iniPath $testIniPath -extName 'gd'
+        $result = Enable-IniExtensionDirect -iniPath $script:testIniPath -extName 'gd'
         $result | Should -Be 0
-        (Get-ContentWrapper -path $testIniPath) | Should -Contain 'extension=php_gd.dll'
+        (Get-ContentWrapper -path $script:testIniPath) | Should -Contain 'extension=php_gd.dll'
     }
 
     It "Should handle exception and return -1" {
         Mock Get-ContentWrapper { throw 'File read error' }
 
-        $result = Enable-IniExtensionDirect -iniPath "$TEST_DRIVE\extensions.ini" -extName 'curl'
+        $result = Enable-IniExtensionDirect -iniPath "$script:TEST_DRIVE\extensions.ini" -extName 'curl'
         $result | Should -Be -1
     }
 }
 
 Describe "Disable-IniExtensionDirect" {
     BeforeEach {
-        $testIniPath = "$TEST_DRIVE\extensions.ini"
+        $script:testIniPath = "$script:TEST_DRIVE\extensions.ini"
         @(
             ';extension=php_curl.dll',
             'zend_extension=php_opcache.dll'
-        ) | Set-ContentWrapper -path $testIniPath
+        ) | Set-ContentWrapper -path $script:testIniPath
     }
 
     It "Should disable an extension" {
-        $result = Disable-IniExtensionDirect -iniPath "$TEST_DRIVE\extensions.ini" -extName 'opcache' -extType 'zend_extension'
+        $result = Disable-IniExtensionDirect -iniPath "$script:TEST_DRIVE\extensions.ini" -extName 'opcache' -extType 'zend_extension'
         $result | Should -Be 0
-        (Get-ContentWrapper -path "$TEST_DRIVE\extensions.ini") | Should -Contain ';zend_extension=php_opcache.dll'
+        (Get-ContentWrapper -path "$script:TEST_DRIVE\extensions.ini") | Should -Contain ';zend_extension=php_opcache.dll'
     }
 
     It "Should disable an enabled regular extension" {
-        $testIniPath = "$TEST_DRIVE\extensions5.ini"
+        $script:testIniPath = "$script:TEST_DRIVE\extensions5.ini"
         @(
             'extension=php_curl.dll',
             'extension=php_gd.dll'
-        ) | Set-ContentWrapper -path $testIniPath
+        ) | Set-ContentWrapper -path $script:testIniPath
 
-        $result = Disable-IniExtensionDirect -iniPath $testIniPath -extName 'curl'
+        $result = Disable-IniExtensionDirect -iniPath $script:testIniPath -extName 'curl'
         $result | Should -Be 0
-        (Get-ContentWrapper -path $testIniPath) | Should -Contain ';extension=php_curl.dll'
-        (Get-ContentWrapper -path $testIniPath) | Should -Contain 'extension=php_gd.dll'
+        (Get-ContentWrapper -path $script:testIniPath) | Should -Contain ';extension=php_curl.dll'
+        (Get-ContentWrapper -path $script:testIniPath) | Should -Contain 'extension=php_gd.dll'
     }
 
     It "Should return -1 on exception in Disable-IniExtensionDirect" {
         Mock Get-ContentWrapper { throw 'File read error' }
 
-        $result = Disable-IniExtensionDirect -iniPath "$TEST_DRIVE\extensions.ini" -extName 'curl'
+        $result = Disable-IniExtensionDirect -iniPath "$script:TEST_DRIVE\extensions.ini" -extName 'curl'
         $result | Should -Be -1
     }
 }
 
 Describe "Get-PopularPHPSettings" {
     BeforeEach {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $testContent = @{ 'settings' = @('memory_limit', 'display_errors') }
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $PROFILE_TEMPLATE_PATH
-        $Global:PVMConfig.defaults.settings = $script:DEFAULT_SETTINGS
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $script:PROFILE_TEMPLATE_PATH
     }
 
     AfterAll {
-        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
+        Remove-ItemWrapper -path $script:PROFILE_TEMPLATE_PATH
     }
 
     It "Should return popular PHP settings" {
@@ -210,29 +204,28 @@ Describe "Get-PopularPHPSettings" {
     }
 
     It "Should fallback to default popular PHP settings" {
-        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
+        Remove-ItemWrapper -path $script:PROFILE_TEMPLATE_PATH
         $settings = Get-PopularPHPSettings
-        $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
+        $settings.Count | Should -Be $script:DEFAULT_SETTINGS.Count
     }
 
     It "Returns default value when exception is thrown" {
         Mock Test-FileExists { return $true }
         Mock Get-ContentWrapper { throw 'Test exception' }
         $settings = Get-PopularPHPSettings
-        $settings.Count | Should -Be $DEFAULT_SETTINGS.Count
+        $settings.Count | Should -Be $script:DEFAULT_SETTINGS.Count
     }
 }
 
 Describe "Get-PopularPHPExtensions" {
     BeforeEach {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $testContent = @{ 'extensions' = @('curl', 'mbstring', 'opcache') }
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $PROFILE_TEMPLATE_PATH
-        $Global:PVMConfig.defaults.extensions = $script:DEFAULT_EXTENSIONS
+        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $script:PROFILE_TEMPLATE_PATH
     }
 
     AfterAll {
-        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
+        Remove-ItemWrapper -path $script:PROFILE_TEMPLATE_PATH
     }
 
     It "Should return popular PHP extensions" {
@@ -245,22 +238,22 @@ Describe "Get-PopularPHPExtensions" {
     }
 
     It "Should fallback to default popular PHP extensions" {
-        Remove-ItemWrapper -path $PROFILE_TEMPLATE_PATH
+        Remove-ItemWrapper -path $script:PROFILE_TEMPLATE_PATH
         $extensions = Get-PopularPHPExtensions
-        $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
+        $extensions.Count | Should -Be $script:DEFAULT_EXTENSIONS.Count
     }
 
     It "Returns default value when exception is thrown" {
         Mock Test-FileExists { return $true }
         Mock Get-ContentWrapper { throw 'Test exception' }
         $extensions = Get-PopularPHPExtensions
-        $extensions.Count | Should -Be $DEFAULT_EXTENSIONS.Count
+        $extensions.Count | Should -Be $script:DEFAULT_EXTENSIONS.Count
     }
 }
 
 Describe "Save-PHPProfile" {
     BeforeAll {
-        $phpDir = "$TEST_DRIVE\php\8.2.0"
+        $phpDir = "$script:TEST_DRIVE\php\8.2.0"
         New-Item -ItemType Directory -Force -Path $phpDir | Out-Null
         '' | Set-ContentWrapper -path "$phpDir\php.ini"
 
@@ -303,7 +296,7 @@ Describe "Save-PHPProfile" {
         $result = Save-PHPProfile -profileName 'testprofile'
         $result | Should -Be 0
 
-        $profilePath = "$PROFILES_PATH\testprofile.json"
+        $profilePath = "$script:PROFILES_PATH\testprofile.json"
         Test-Path $profilePath | Should -Be $true
 
         $profileContent = Get-ContentWrapper -path $profilePath -Raw | ConvertFrom-Json
@@ -318,12 +311,12 @@ Describe "Save-PHPProfile" {
     }
 
     It "Should create a profile file with correct structure" {
-        New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
 
         $result = Save-PHPProfile -profileName 'testprofile' -description 'Test profile'
         $result | Should -Be 0
 
-        $profilePath = "$PROFILES_PATH\testprofile.json"
+        $profilePath = "$script:PROFILES_PATH\testprofile.json"
         Test-Path $profilePath | Should -Be $true
 
         $profileContent = Get-ContentWrapper -path $profilePath -Raw | ConvertFrom-Json
@@ -373,10 +366,10 @@ Describe "Use-PHPProfile" {
             }
         }
 
-        New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
 
-        $phpDir = "$TEST_DRIVE\php\8.2.0"
+        $phpDir = "$script:TEST_DRIVE\php\8.2.0"
         New-Item -ItemType Directory -Force -Path $phpDir | Out-Null
         '' | Set-ContentWrapper -path "$phpDir\php.ini"
 
@@ -474,8 +467,8 @@ Describe "Use-PHPProfile" {
             }
         }
 
-        New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
-        $testProfileNoType | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\notypefile.json"
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
+        $testProfileNoType | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\notypefile.json"
 
         $result = Use-PHPProfile -profileName 'notypefile'
         $result | Should -Be 0
@@ -490,8 +483,8 @@ Describe "Get-ProfileFiles" {
     It "Should return a list of profile files" {
         Mock Get-ChildItemWrapper {
             return @(
-                @{ Name = 'profile1.json'; FullName = "$PROFILES_PATH\profile1.json" }
-                @{ Name = 'profile2.json'; FullName = "$PROFILES_PATH\profile2.json" }
+                @{ Name = 'profile1.json'; FullName = "$script:PROFILES_PATH\profile1.json" }
+                @{ Name = 'profile2.json'; FullName = "$script:PROFILES_PATH\profile2.json" }
             )
         }
 
@@ -523,7 +516,7 @@ Describe "Show-PHPProfiles" {
             phpVersion = '8.1.0'
             settings = @{}
             extensions = @{}
-        } | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\profile1.json"
+        } | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\profile1.json"
         @{
             name = 'profile2'
             description = 'Second profile'
@@ -535,7 +528,7 @@ Describe "Show-PHPProfiles" {
             extensions = @{
                 curl = @{ enabled = $true; type = 'extension' }
             }
-        } | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\profile2.json"
+        } | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\profile2.json"
     }
 
     It "Returns -1 when profiles directory does not exist" {
@@ -554,7 +547,7 @@ Describe "Show-PHPProfiles" {
     }
 
     It "Should handle empty profiles directory" {
-        Remove-ItemWrapper -path "$PROFILES_PATH\*"
+        Remove-ItemWrapper -path "$script:PROFILES_PATH\*"
 
         $result = Show-PHPProfiles
         $result | Should -Be -1
@@ -563,8 +556,8 @@ Describe "Show-PHPProfiles" {
     It "Should handle exceptions gracefully when profile content cannot be read" {
         Mock Get-ProfileFiles {
             return @(
-                @{ Name = 'profile1.json'; FullName = "$PROFILES_PATH\profile1.json" }
-                @{ Name = 'profile2.json'; FullName = "$PROFILES_PATH\profile2.json" }
+                @{ Name = 'profile1.json'; FullName = "$script:PROFILES_PATH\profile1.json" }
+                @{ Name = 'profile2.json'; FullName = "$script:PROFILES_PATH\profile2.json" }
             )
         }
         Mock Get-ContentWrapper { throw 'Error' }
@@ -576,14 +569,14 @@ Describe "Show-PHPProfiles" {
     It "Should fallback to count 0 when settings or extensions cannot be parsed" {
         Mock Get-ProfileFiles {
             return @(
-                @{ Name = 'profile1.json'; FullName = "$PROFILES_PATH\profile1.json" }
-                @{ Name = 'profile2.json'; FullName = "$PROFILES_PATH\profile2.json" }
+                @{ Name = 'profile1.json'; FullName = "$script:PROFILES_PATH\profile1.json" }
+                @{ Name = 'profile2.json'; FullName = "$script:PROFILES_PATH\profile2.json" }
             )
         }
-        Mock Get-ContentWrapper -ParameterFilter {$Path -eq "$PROFILES_PATH\profile1.json"} -MockWith {
+        Mock Get-ContentWrapper -ParameterFilter {$path -eq "$script:PROFILES_PATH\profile1.json"} -MockWith {
             return '{}'
         }
-        Mock Get-ContentWrapper -ParameterFilter {$Path -eq "$PROFILES_PATH\profile2.json"} -MockWith {
+        Mock Get-ContentWrapper -ParameterFilter {$path -eq "$script:PROFILES_PATH\profile2.json"} -MockWith {
             throw 'Error'
         }
 
@@ -602,7 +595,7 @@ Describe "Show-PHPProfiles" {
 Describe "Show-PHPProfile" {
     BeforeEach {
         Mock Add-LogEntry { return 0 }
-        New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
     }
 
     It "Should return -1 when profile file does not exist" {
@@ -619,7 +612,7 @@ Describe "Show-PHPProfile" {
     }
 
     It "Should return -1 when JSON parsing fails" {
-        'invalid json content {{{{ }' | Set-ContentWrapper -path "$PROFILES_PATH\invalid.json"
+        'invalid json content {{{{ }' | Set-ContentWrapper -path "$script:PROFILES_PATH\invalid.json"
 
         $result = Show-PHPProfile -profileName 'invalid'
         $result | Should -Be -1
@@ -640,7 +633,7 @@ Describe "Show-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\emptyprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\emptyprofile.json"
 
         $result = Show-PHPProfile -profileName 'emptyprofile'
         $result | Should -Be 0
@@ -674,7 +667,7 @@ Describe "Show-PHPProfile" {
             }
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\settingsonly.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\settingsonly.json"
 
         $result = Show-PHPProfile -profileName 'settingsonly'
         $result | Should -Be 0
@@ -712,7 +705,7 @@ Describe "Show-PHPProfile" {
                 opcache = @{ enabled = $false; type = 'zend_extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\extensionsonly.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\extensionsonly.json"
 
         $result = Show-PHPProfile -profileName 'extensionsonly'
         $result | Should -Be 0
@@ -753,7 +746,7 @@ Describe "Show-PHPProfile" {
                 opcache = @{ enabled = $false; type = 'zend_extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\fullprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\fullprofile.json"
 
         $result = Show-PHPProfile -profileName 'fullprofile'
         $result | Should -Be 0
@@ -779,7 +772,7 @@ Describe "Show-PHPProfile" {
             }
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\mixedsettings.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\mixedsettings.json"
 
         $result = Show-PHPProfile -profileName 'mixedsettings'
         $result | Should -Be 0
@@ -805,7 +798,7 @@ Describe "Show-PHPProfile" {
                 disabled_ext = @{ enabled = $false; type = 'extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\mixedextensions.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\mixedextensions.json"
 
         $result = Show-PHPProfile -profileName 'mixedextensions'
         $result | Should -Be 0
@@ -831,7 +824,7 @@ Describe "Show-PHPProfile" {
                 zend_ext = @{ enabled = $true; type = 'zend_extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\extensiontypes.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\extensiontypes.json"
 
         $result = Show-PHPProfile -profileName 'extensiontypes'
         $result | Should -Be 0
@@ -855,7 +848,7 @@ Describe "Show-PHPProfile" {
                 curl = @{ enabled = $true; type = 'extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\nullsettings.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\nullsettings.json"
 
         $result = Show-PHPProfile -profileName 'nullsettings'
         $result | Should -Be 0
@@ -875,7 +868,7 @@ Describe "Show-PHPProfile" {
                 memory_limit = @{ value = '256M'; enabled = $true }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\nullextensions.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\nullextensions.json"
 
         $result = Show-PHPProfile -profileName 'nullextensions'
         $result | Should -Be 0
@@ -894,7 +887,7 @@ Describe "Show-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\completeprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\completeprofile.json"
 
         $result = Show-PHPProfile -profileName 'completeprofile'
         $result | Should -Be 0
@@ -933,7 +926,7 @@ Describe "Show-PHPProfile" {
             }
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\sortedsettings.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\sortedsettings.json"
 
         $output = @()
         Mock Show-Message -ParameterFilter { $message -match 'alpha|beta|zebra' } {
@@ -970,7 +963,7 @@ Describe "Show-PHPProfile" {
                 beta_ext = @{ enabled = $true; type = 'extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\sortedextensions.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\sortedextensions.json"
 
         $result = Show-PHPProfile -profileName 'sortedextensions'
         $result | Should -Be 0
@@ -1001,7 +994,7 @@ Describe "Show-PHPProfile" {
             }
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\settingvalues.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\settingvalues.json"
 
         $result = Show-PHPProfile -profileName 'settingvalues'
         $result | Should -Be 0
@@ -1035,7 +1028,7 @@ Describe "Show-PHPProfile" {
             settings = $settings
             extensions = $extensions
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\largeprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\largeprofile.json"
 
         $result = Show-PHPProfile -profileName 'largeprofile'
         $result | Should -Be 0
@@ -1054,7 +1047,7 @@ Describe "Remove-PHPProfile" {
     BeforeEach {
         Mock Add-LogEntry { return 0 }
 
-        New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
     }
 
     It "Should return -1 when profile file does not exist" {
@@ -1075,14 +1068,14 @@ Describe "Remove-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-HostWrapper { return 'n' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
 
-        Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
 
         Should -Invoke Write-Gray -ParameterFilter {
             $message -match 'Deletion cancelled'
@@ -1100,14 +1093,14 @@ Describe "Remove-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-HostWrapper { return '' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
 
-        Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
 
         Should -Invoke Write-Gray -ParameterFilter {
             $message -match 'Deletion cancelled'
@@ -1123,14 +1116,14 @@ Describe "Remove-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-HostWrapper { return 'no' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
 
-        Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
 
         Should -Invoke Write-Gray -ParameterFilter {
             $message -match 'Deletion cancelled'
@@ -1146,14 +1139,14 @@ Describe "Remove-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-HostWrapper { return 'y' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be 0
 
-        Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $false
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $false
 
         Should -Invoke Show-Success -ParameterFilter {
             $message -match "Profile 'testprofile' deleted successfully"
@@ -1173,14 +1166,14 @@ Describe "Remove-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-HostWrapper { return 'Y' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be 0
 
-        Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $false
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $false
 
         Should -Invoke Show-Success -ParameterFilter {
             $message -match "Profile 'testprofile' deleted successfully"
@@ -1188,13 +1181,13 @@ Describe "Remove-PHPProfile" {
     }
 
     It "Should not display the confirmation prompt when skipConfirmation is true" {
-        '{}' | Set-ContentWrapper -path "$PROFILES_PATH\example.json"
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\example.json"
         Mock Read-HostWrapper { }
 
         $result = Remove-PHPProfile -profileName 'example' -skipConfirmation $true
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 0
-        Test-Path "$PROFILES_PATH\example.json" | Should -Be $false
+        Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $false
     }
 
     It "Should return -1 and log error when Remove-ItemWrapper fails" {
@@ -1206,7 +1199,7 @@ Describe "Remove-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-HostWrapper { return 'y' }
         Mock Remove-ItemWrapper { throw 'Access denied' }
@@ -1230,7 +1223,7 @@ Describe "Remove-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\myprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\myprofile.json"
 
         Mock Read-HostWrapper { return 'y' }
 
@@ -1252,14 +1245,14 @@ Describe "Remove-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\test-profile_123.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\test-profile_123.json"
 
         Mock Read-HostWrapper { return 'y' }
 
         $result = Remove-PHPProfile -profileName 'test-profile_123'
         $result | Should -Be 0
 
-        Test-Path "$PROFILES_PATH\test-profile_123.json" | Should -Be $false
+        Test-Path "$script:PROFILES_PATH\test-profile_123.json" | Should -Be $false
 
         Should -Invoke Show-Success -ParameterFilter {
             $message -match "Profile 'test-profile_123' deleted successfully"
@@ -1275,14 +1268,14 @@ Describe "Remove-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Read-HostWrapper { return 'yes' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
 
-        Test-Path "$PROFILES_PATH\testprofile.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
 
         Should -Invoke Write-Gray -ParameterFilter {
             $message -match 'Deletion cancelled'
@@ -1292,7 +1285,7 @@ Describe "Remove-PHPProfile" {
 
 Describe "Clear-PHPProfiles" {
     BeforeEach {
-        Remove-ItemWrapper -path "$PROFILES_PATH\*"
+        Remove-ItemWrapper -path "$script:PROFILES_PATH\*"
 
         Mock Add-LogEntry { return 0 }
     }
@@ -1307,16 +1300,16 @@ Describe "Clear-PHPProfiles" {
     }
 
     It "Should return -1 when user cancels with 'n'" {
-        '{}' | Set-ContentWrapper -path "$PROFILES_PATH\example1.json"
-        '{}' | Set-ContentWrapper -path "$PROFILES_PATH\example2.json"
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\example1.json"
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\example2.json"
 
         Mock Read-HostWrapper { return 'n' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be -1
 
-        Test-Path "$PROFILES_PATH\example1.json" | Should -Be $true
-        Test-Path "$PROFILES_PATH\example2.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\example1.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\example2.json" | Should -Be $true
 
         Should -Invoke Write-Gray -ParameterFilter {
             $message -match 'Deletion cancelled'
@@ -1324,66 +1317,66 @@ Describe "Clear-PHPProfiles" {
     }
 
     It "Should return -1 when user cancels with empty response" {
-        '{}' | Set-ContentWrapper -path "$PROFILES_PATH\example.json"
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\example.json"
 
         Mock Read-HostWrapper { return '' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be -1
 
-        Test-Path "$PROFILES_PATH\example.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $true
     }
 
     It "Should return -1 when user cancels with 'no'" {
-        '{}' | Set-ContentWrapper -path "$PROFILES_PATH\example.json"
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\example.json"
 
         Mock Read-HostWrapper { return 'no' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be -1
 
-        Test-Path "$PROFILES_PATH\example.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $true
     }
 
     It "Should return -1 when user cancels with 'yes' (not just 'y')" {
-        '{}' | Set-ContentWrapper -path "$PROFILES_PATH\example.json"
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\example.json"
 
         Mock Read-HostWrapper { return 'yes' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be -1
 
-        Test-Path "$PROFILES_PATH\example.json" | Should -Be $true
+        Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $true
     }
 
     It "Should delete all profiles when user confirms with 'Y'" {
-        '{}' | Set-ContentWrapper -path "$PROFILES_PATH\example1.json"
-        '{}' | Set-ContentWrapper -path "$PROFILES_PATH\example2.json"
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\example1.json"
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\example2.json"
 
         Mock Read-HostWrapper { return 'Y' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be 0
 
-        Test-Path "$PROFILES_PATH\example1.json" | Should -Be $false
-        Test-Path "$PROFILES_PATH\example2.json" | Should -Be $false
+        Test-Path "$script:PROFILES_PATH\example1.json" | Should -Be $false
+        Test-Path "$script:PROFILES_PATH\example2.json" | Should -Be $false
         Should -Invoke Show-Success -ParameterFilter {
             $message -match 'All profiles deleted successfully'
         } -Exactly 1
     }
 
     It "Should not display the confirmation prompt when skipConfirmation is true" {
-        '{}' | Set-ContentWrapper -path "$PROFILES_PATH\example.json"
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\example.json"
         Mock Read-HostWrapper { }
 
         $result = Clear-PHPProfiles -skipConfirmation $true
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 0
-        Test-Path "$PROFILES_PATH\example.json" | Should -Be $false
+        Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $false
     }
 
     It "Should display correct confirmation prompt" {
-        '{}' | Set-ContentWrapper -path "$PROFILES_PATH\example.json"
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\example.json"
 
         Mock Read-HostWrapper { return 'y' }
 
@@ -1397,18 +1390,18 @@ Describe "Clear-PHPProfiles" {
     }
 
     It "Should work correctly with a single profile" {
-        '{}' | Set-ContentWrapper -path "$PROFILES_PATH\single.json"
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\single.json"
 
         Mock Read-HostWrapper { return 'y' }
 
         $result = Clear-PHPProfiles
         $result | Should -Be 0
 
-        Test-Path "$PROFILES_PATH\single.json" | Should -Be $false
+        Test-Path "$script:PROFILES_PATH\single.json" | Should -Be $false
     }
 
     It "Should return -1 and log error when an exception occurs during deletion" {
-        '{}' | Set-ContentWrapper -path "$PROFILES_PATH\example.json"
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\example.json"
 
         Mock Read-HostWrapper { return 'y' }
         Mock Remove-ItemWrapper { throw 'Access denied' }
@@ -1441,9 +1434,9 @@ Describe "Export-PHPProfile" {
     BeforeEach {
         Mock Add-LogEntry { return 0 }
 
-        New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
 
-        $exportDir = "$TEST_DRIVE\export"
+        $exportDir = "$script:TEST_DRIVE\export"
         New-Item -ItemType Directory -Force -Path $exportDir | Out-Null
 
         # PowerShell converts it to string, so returning a string works
@@ -1472,12 +1465,12 @@ Describe "Export-PHPProfile" {
                 curl = @{ enabled = $true; type = 'extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
 
         $result = Export-PHPProfile -profileName 'testprofile'
         $result | Should -Be 0
 
-        $exportPath = "$TEST_DRIVE\export\testprofile.json"
+        $exportPath = "$script:TEST_DRIVE\export\testprofile.json"
         $exportedContent = Get-ContentWrapper -path $exportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
         $exportedContent.settings.memory_limit.value | Should -Be '256M'
@@ -1498,10 +1491,10 @@ Describe "Export-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
 
-        $customExportPath = "$TEST_DRIVE\custom\myprofile.json"
-        New-Item -ItemType Directory -Force -Path "$TEST_DRIVE\custom" | Out-Null
+        $customExportPath = "$script:TEST_DRIVE\custom\myprofile.json"
+        New-Item -ItemType Directory -Force -Path "$script:TEST_DRIVE\custom" | Out-Null
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath $customExportPath
         $result | Should -Be 0
@@ -1527,9 +1520,9 @@ Describe "Export-PHPProfile" {
             }
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
 
-        $exportPath = "$TEST_DRIVE\existing.json"
+        $exportPath = "$script:TEST_DRIVE\existing.json"
         'old content' | Set-ContentWrapper -path $exportPath
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath $exportPath
@@ -1549,11 +1542,11 @@ Describe "Export-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
 
         Mock Copy-ItemWrapper { throw 'Access denied' }
 
-        $result = Export-PHPProfile -profileName 'testprofile' -exportPath "$TEST_DRIVE\export.json"
+        $result = Export-PHPProfile -profileName 'testprofile' -exportPath "$script:TEST_DRIVE\export.json"
         $result | Should -Be -1
 
         Should -Invoke Show-Error -ParameterFilter {
@@ -1572,12 +1565,12 @@ Describe "Export-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\test-profile_123.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\test-profile_123.json"
 
         $result = Export-PHPProfile -profileName 'test-profile_123'
         $result | Should -Be 0
 
-        $expectedPath = "$TEST_DRIVE\export\test-profile_123.json"
+        $expectedPath = "$script:TEST_DRIVE\export\test-profile_123.json"
         Test-Path $expectedPath | Should -Be $true
 
         Should -Invoke Show-Success -ParameterFilter {
@@ -1600,9 +1593,9 @@ Describe "Export-PHPProfile" {
                 opcache = @{ enabled = $false; type = 'zend_extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$PROFILES_PATH\fullprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:PROFILES_PATH\fullprofile.json"
 
-        $exportPath = "$TEST_DRIVE\fullprofile.json"
+        $exportPath = "$script:TEST_DRIVE\fullprofile.json"
         $result = Export-PHPProfile -profileName 'fullprofile' -exportPath $exportPath
         $result | Should -Be 0
 
@@ -1636,11 +1629,11 @@ Describe "Import-PHPProfile" {
         Mock Add-LogEntry { return 0 }
         Mock New-Directory { return 0 }
 
-        New-Item -ItemType Directory -Force -Path $PROFILES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
     }
 
     It "Should return -1 when import file does not exist" {
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\nonexistent.json"
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\nonexistent.json"
         $result | Should -Be -1
 
         Should -Invoke Show-Error -ParameterFilter {
@@ -1649,9 +1642,9 @@ Describe "Import-PHPProfile" {
     }
 
     It "Should return -1 when JSON file is invalid" {
-        'invalid json content {{{{ }' | Set-ContentWrapper -path "$TEST_DRIVE\invalid.json"
+        'invalid json content {{{{ }' | Set-ContentWrapper -path "$script:TEST_DRIVE\invalid.json"
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\invalid.json"
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\invalid.json"
         $result | Should -Be -1
 
         Should -Invoke Show-Error -ParameterFilter {
@@ -1665,9 +1658,9 @@ Describe "Import-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $invalidProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\missingname.json"
+        $invalidProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\missingname.json"
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\missingname.json"
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\missingname.json"
         $result | Should -Be -1
 
         Should -Invoke Show-Error -ParameterFilter {
@@ -1680,9 +1673,9 @@ Describe "Import-PHPProfile" {
             name = 'missing_settings'
             extensions = @{}
         }
-        $invalidProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\missingsettings.json"
+        $invalidProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\missingsettings.json"
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\missingsettings.json"
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\missingsettings.json"
         $result | Should -Be -1
 
         Should -Invoke Show-Error -ParameterFilter {
@@ -1695,9 +1688,9 @@ Describe "Import-PHPProfile" {
             name = 'missing_extensions'
             settings = @{}
         }
-        $invalidProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\missingextensions.json"
+        $invalidProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\missingextensions.json"
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\missingextensions.json"
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\missingextensions.json"
         $result | Should -Be -1
 
         Should -Invoke Show-Error -ParameterFilter {
@@ -1718,12 +1711,12 @@ Describe "Import-PHPProfile" {
                 curl = @{ enabled = $true; type = 'extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\originalname.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\originalname.json"
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\originalname.json"
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\originalname.json"
         $result | Should -Be 0
 
-        $importedPath = "$PROFILES_PATH\originalname.json"
+        $importedPath = "$script:PROFILES_PATH\originalname.json"
         Test-Path $importedPath | Should -Be $true
 
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
@@ -1743,12 +1736,12 @@ Describe "Import-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\originalname.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\originalname.json"
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\originalname.json" -profileName 'customname'
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\originalname.json" -profileName 'customname'
         $result | Should -Be 0
 
-        $importedPath = "$PROFILES_PATH\customname.json"
+        $importedPath = "$script:PROFILES_PATH\customname.json"
         Test-Path $importedPath | Should -Be $true
 
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
@@ -1770,12 +1763,12 @@ Describe "Import-PHPProfile" {
             }
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\originalname.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\originalname.json"
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\originalname.json" -profileName 'newname'
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\originalname.json" -profileName 'newname'
         $result | Should -Be 0
 
-        $importedPath = "$PROFILES_PATH\newname.json"
+        $importedPath = "$script:PROFILES_PATH\newname.json"
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'newname'
         $importedContent.settings.memory_limit.value | Should -Be '256M'
@@ -1790,12 +1783,12 @@ Describe "Import-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\samename.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\samename.json"
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\samename.json" -profileName 'samename'
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\samename.json" -profileName 'samename'
         $result | Should -Be 0
 
-        $importedPath = "$PROFILES_PATH\samename.json"
+        $importedPath = "$script:PROFILES_PATH\samename.json"
         Test-Path $importedPath | Should -Be $true
     }
 
@@ -1808,11 +1801,11 @@ Describe "Import-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\testprofile.json"
 
         Mock New-Directory { return -1 }
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\testprofile.json"
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\testprofile.json"
         $result | Should -Be -1
 
         Should -Invoke Show-Error -ParameterFilter {
@@ -1835,12 +1828,12 @@ Describe "Import-PHPProfile" {
                 opcache = @{ enabled = $false; type = 'zend_extension' }
             }
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\fullprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\fullprofile.json"
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\fullprofile.json"
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\fullprofile.json"
         $result | Should -Be 0
 
-        $importedPath = "$PROFILES_PATH\fullprofile.json"
+        $importedPath = "$script:PROFILES_PATH\fullprofile.json"
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'fullprofile'
         $importedContent.description | Should -Be 'Full profile description'
@@ -1872,9 +1865,9 @@ Describe "Import-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\testprofile.json"
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\testprofile.json"
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\testprofile.json"
         $result | Should -Be 0
 
         Should -Invoke Show-Message -ParameterFilter {
@@ -1891,11 +1884,11 @@ Describe "Import-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\testprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\testprofile.json"
 
         Mock Copy-ItemWrapper { throw 'Disk full' }
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\testprofile.json"
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\testprofile.json"
         $result | Should -Be -1
 
         Should -Invoke Show-Error -ParameterFilter {
@@ -1914,12 +1907,12 @@ Describe "Import-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\emptyprofile.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\emptyprofile.json"
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\emptyprofile.json"
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\emptyprofile.json"
         $result | Should -Be 0
 
-        $importedPath = "$PROFILES_PATH\emptyprofile.json"
+        $importedPath = "$script:PROFILES_PATH\emptyprofile.json"
         Test-Path $importedPath | Should -Be $true
 
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
@@ -1936,12 +1929,12 @@ Describe "Import-PHPProfile" {
             settings = @{}
             extensions = @{}
         }
-        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$TEST_DRIVE\complex.json"
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\complex.json"
 
-        $result = Import-PHPProfile -importPath "$TEST_DRIVE\complex.json" -profileName 'new-complex_456'
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\complex.json" -profileName 'new-complex_456'
         $result | Should -Be 0
 
-        $importedPath = "$PROFILES_PATH\new-complex_456.json"
+        $importedPath = "$script:PROFILES_PATH\new-complex_456.json"
         Test-Path $importedPath | Should -Be $true
 
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
@@ -1954,7 +1947,7 @@ Describe "New-ProfileExample" {
         $result = New-ProfileExample
         $result | Should -Be 0
 
-        Test-Path $EXAMPLE_PROFILE_PATH | Should -Be $true
+        Test-Path $script:EXAMPLE_PROFILE_PATH | Should -Be $true
     }
 
     It "Returns -1 when exception is thrown" {
@@ -1966,11 +1959,11 @@ Describe "New-ProfileExample" {
 
 Describe "New-ProfileTemplate" {
     It "Should create a profile template" {
-        New-Item -ItemType Directory -Force -Path $TEMPLATES_PATH | Out-Null
+        New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $result = New-ProfileTemplate
         $result | Should -Be 0
 
-        Test-Path $PROFILE_TEMPLATE_PATH | Should -Be $true
+        Test-Path $script:PROFILE_TEMPLATE_PATH | Should -Be $true
     }
 
     It "Returns -1 when exception is thrown" {

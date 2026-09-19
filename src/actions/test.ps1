@@ -1,5 +1,5 @@
 ﻿
-function Initialize-PVMTestEnvironment {
+function Initialize-TestEnvironment {
     param ($driveName)
 
     $environment = @{
@@ -7,19 +7,25 @@ function Initialize-PVMTestEnvironment {
         TestDrive       = "$($Global:PVMConfig.paths.directories.testDrive)\$driveName-drive"
     }
 
-    Clear-PVMTestStorage
     Set-TestDrive -path $environment.TestDrive
 
-    New-Directory -path $environment.TestDrive
+    $created = New-Directory -path $environment.TestDrive
+    if ($created -ne 0) {
+        $Global:PVMConfig = $environment.PVMConfigBackup
+        return $null
+    }
+
+    $Global:CurrentTestDrive = $environment.TestDrive
 
     return $environment
 }
 
-function Restore-PVMTestEnvironment {
+function Restore-TestEnvironment {
     param ($environment)
 
     Remove-ItemWrapper -path $environment.TestDrive
     $Global:PVMConfig   = $environment.PVMConfigBackup
+    $Global:CurrentTestDrive = $null
 }
 
 function Get-PowerShellInfo {
@@ -76,6 +82,11 @@ function Invoke-TestFile {
     }
 
     try {
+        $testEnvironment = Initialize-TestEnvironment -driveName ($file.BaseName -replace '\.tests$', '')
+        if (-not $testEnvironment) {
+            throw 'Failed to create test drive!'
+        }
+
         $config.Run.Path = $file.FullName
         $config.Run.PassThru = $true
         $testResult = Invoke-Pester -Configuration $config
@@ -108,6 +119,8 @@ function Invoke-TestFile {
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run test: $($file.FullName)"; exception = $_ }
         return @{ code = -1; name = $file.Name; relativeFilePath = $relativeFilePath; sortedName = $sortedName; message = @{ content = 'Failed to run test, check log.'; color = 'DarkYellow' }; testResultData = $testResultData }
+    } finally {
+        if ($testEnvironment) { Restore-TestEnvironment -environment $testEnvironment }
     }
 }
 
@@ -165,9 +178,11 @@ function Invoke-Tests {
 
         Show-Info -message "`nRunning tests with verbosity: $($options.verbosity)"
 
+        Clear-TestDrive
         $testSummary = $tests | ForEach-Object -Process {
             Invoke-TestFile -config $config -file $_ -options $options -separatorWidth $separatorWidth -testsMap $testsMap
         }
+        Clear-TestDrive
 
         $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
 

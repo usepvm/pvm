@@ -140,10 +140,26 @@ function Get-EnvConfig {
     return $config
 }
 
+function Get-EnvDefaults {
+    return @{
+        PHP_CURRENT_VERSION_PATH    = 'C:\pvm\php'
+        PVM_ENV_VAR_NAME            = 'PVM'
+        CACHE_MAX_HOURS             = 168
+        DEFAULT_LOG_PAGE_SIZE       = 5
+        DEFAULT_PARTIAL_LIST_SIZE   = 10
+        MIN_PAD_RIGHT_LENGTH        = 10
+        MIN_LINE_LENGTH             = 50
+        ENABLE_UPDATE_CHECK         = $true
+        UPDATE_CHECK_INTERVAL_HOURS = 24
+        SOUNDS_DISABLED             = $false
+    }
+}
+
 function Get-Config {
     param ($rootPath)
 
     $envConfig = Get-EnvConfig -rootPath $rootPath
+    $envDefaults = Get-EnvDefaults
 
     $storage = "$rootPath\storage"
     $data = "$storage\data"
@@ -151,7 +167,6 @@ function Get-Config {
     $templates = "$data\templates"
     $logs = "$storage\logs"
     $state = "$data\state"
-    $testDrive = Get-EnvPath -value $envConfig['TEST_DRIVE'] -default "$storage\tests"
 
     return @{
         version  = '2.7' # PVM version
@@ -162,7 +177,7 @@ function Get-Config {
             directories = @{
                 root               = $rootPath
                 storage            = $storage
-                testDrive          = $testDrive
+                testDrive          = Get-EnvPath -value $envConfig['TEST_DRIVE'] -default "$storage\tests"
                 php                = "$storage\php"
                 data               = $data
                 templates          = $templates
@@ -198,16 +213,16 @@ function Get-Config {
         }
 
         env      = [ordered]@{
-            PHP_CURRENT_VERSION_PATH    = $envConfig['PHP_CURRENT_VERSION_PATH']
+            PHP_CURRENT_VERSION_PATH    = Get-EnvPath -value $envConfig['PHP_CURRENT_VERSION_PATH'] -default $envDefaults.PHP_CURRENT_VERSION_PATH
             PVM_ENV_VAR_NAME            = $envConfig['PVM_ENV_VAR_NAME']
-            CACHE_MAX_HOURS             = Get-EnvInt -value $envConfig['CACHE_MAX_HOURS'] -default 168
-            DEFAULT_LOG_PAGE_SIZE       = Get-EnvInt -value $envConfig['DEFAULT_LOG_PAGE_SIZE'] -default 5
-            DEFAULT_PARTIAL_LIST_SIZE   = Get-EnvInt -value $envConfig['DEFAULT_PARTIAL_LIST_SIZE'] -default 10
-            MIN_PAD_RIGHT_LENGTH        = Get-EnvInt -value $envConfig['MIN_PAD_RIGHT_LENGTH'] -default 10
-            MIN_LINE_LENGTH             = Get-EnvInt -value $envConfig['MIN_LINE_LENGTH'] -default 50
-            ENABLE_UPDATE_CHECK         = Get-EnvBool -value $envConfig['ENABLE_UPDATE_CHECK'] -default $true
-            UPDATE_CHECK_INTERVAL_HOURS = Get-EnvInt -value $envConfig['UPDATE_CHECK_INTERVAL_HOURS'] -default 24
-            SOUNDS_DISABLED             = Get-EnvBool -value $envConfig['SOUNDS_DISABLED'] -default $false
+            CACHE_MAX_HOURS             = Get-EnvInt -value $envConfig['CACHE_MAX_HOURS'] -default $envDefaults.CACHE_MAX_HOURS
+            DEFAULT_LOG_PAGE_SIZE       = Get-EnvInt -value $envConfig['DEFAULT_LOG_PAGE_SIZE'] -default $envDefaults.DEFAULT_LOG_PAGE_SIZE
+            DEFAULT_PARTIAL_LIST_SIZE   = Get-EnvInt -value $envConfig['DEFAULT_PARTIAL_LIST_SIZE'] -default $envDefaults.DEFAULT_PARTIAL_LIST_SIZE
+            MIN_PAD_RIGHT_LENGTH        = Get-EnvInt -value $envConfig['MIN_PAD_RIGHT_LENGTH'] -default $envDefaults.MIN_PAD_RIGHT_LENGTH
+            MIN_LINE_LENGTH             = Get-EnvInt -value $envConfig['MIN_LINE_LENGTH'] -default $envDefaults.MIN_LINE_LENGTH
+            ENABLE_UPDATE_CHECK         = Get-EnvBool -value $envConfig['ENABLE_UPDATE_CHECK'] -default $envDefaults.ENABLE_UPDATE_CHECK
+            UPDATE_CHECK_INTERVAL_HOURS = Get-EnvInt -value $envConfig['UPDATE_CHECK_INTERVAL_HOURS'] -default $envDefaults.UPDATE_CHECK_INTERVAL_HOURS
+            SOUNDS_DISABLED             = Get-EnvBool -value $envConfig['SOUNDS_DISABLED'] -default $envDefaults.SOUNDS_DISABLED
         }
 
         constants = [ordered]@{

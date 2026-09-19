@@ -1,10 +1,12 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'fetch'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:testPhpPath = "$TEST_DRIVE\php"
-    $script:testIniPath = "$testPhpPath\php.ini"
+    $script:testPhpPath = "$script:TEST_DRIVE\php"
+    $script:testIniPath = "$script:testPhpPath\php.ini"
+    $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
+
+    $script:XDEBUG_BASE_URL = $Global:PVMConfig.links.xdebugBase
     $script:XDEBUG_HISTORICAL_URL = $Global:PVMConfig.links.xdebugHistorical
     $script:PECL_BASE_URL = $Global:PVMConfig.links.peclBase
     $script:PECL_PACKAGES_URL = $Global:PVMConfig.links.peclPackages
@@ -25,16 +27,16 @@ BeforeAll {
     }
 
     Mock Invoke-WebRequestWrapper {
-        param ($Uri, $OutFile = $null)
+        param ($uri, $outFile = $null)
 
         if ($script:MockFileSystem.DownloadFails) {
             throw 'Network error'
         }
 
-        if ($script:MockFileSystem.WebResponses.ContainsKey($Uri)) {
-            $response = $script:MockFileSystem.WebResponses[$Uri]
-            if ($OutFile) {
-                $script:MockFileSystem.Files[$OutFile] = 'Downloaded content'
+        if ($script:MockFileSystem.WebResponses.ContainsKey($uri)) {
+            $response = $script:MockFileSystem.WebResponses[$uri]
+            if ($outFile) {
+                $script:MockFileSystem.Files[$outFile] = 'Downloaded content'
                 return
             }
             return @{
@@ -43,12 +45,8 @@ BeforeAll {
             }
         }
 
-        throw "URL not mocked: $Uri"
+        throw "URL not mocked: $uri"
     }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-ExtensionHandlers" {
@@ -72,7 +70,7 @@ Describe "Get-ExtensionHandlers" {
         }
 
         It "Returns data null when no handler found for xdebug" {
-            Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.2.0" } }
+            Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$script:TEST_DRIVE\php\8.2.0" } }
             Mock Get-OrUpdateCache { return $null }
             Mock Get-SourceHandler { return $null }
 
@@ -85,7 +83,7 @@ Describe "Get-ExtensionHandlers" {
         }
 
         It "Returns data null when no packages found" {
-            Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.2.0" } }
+            Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$script:TEST_DRIVE\php\8.2.0" } }
             Mock Get-OrUpdateCache { return $null }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
@@ -97,14 +95,14 @@ Describe "Get-ExtensionHandlers" {
         }
 
         It "Resolves and returns xdebug links" {
-            Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.2.0" } }
+            Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$script:TEST_DRIVE\php\8.2.0" } }
             Mock Get-OrUpdateCache {
                 return @{
                     extName = 'curl'
                     data    = @(
-                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
-                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
+                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
+                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
                     )
                 }
             }
@@ -122,7 +120,7 @@ Describe "Get-ExtensionHandlers" {
         It "Returns null when user cancels" {
             Mock Get-XDebugFromUrl { return $null }
             Mock Invoke-WebRequestWrapper { return $null }
-            Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$testPhpPath\ext" }
+            Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
             Mock Remove-ItemWrapper { }
@@ -133,10 +131,10 @@ Describe "Get-ExtensionHandlers" {
             $handler | Should -Not -BeNullOrEmpty
             $handler.GetPackages | Should -Not -BeNullOrEmpty
             $handler.Download | Should -Not -BeNullOrEmpty
-            $handler.MoreInfoUrl | Should -Be $XDEBUG_HISTORICAL_URL
+            $handler.MoreInfoUrl | Should -Be $script:XDEBUG_HISTORICAL_URL
 
             $null = & $handler.GetPackages -version '8.5'
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $testPhpPath -skipConfirmation $false
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $false
 
             $result | Should -BeNullOrEmpty
             Should -Invoke Get-XDebugFromUrl -Times 1
@@ -148,7 +146,7 @@ Describe "Get-ExtensionHandlers" {
         It "Removes the existing file when ext id name matches" {
             Mock Get-XDebugFromUrl { return $null }
             Mock Invoke-WebRequestWrapper { return $null }
-            Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$testPhpPath\ext" }
+            Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
             Mock Remove-ItemWrapper { }
@@ -160,14 +158,14 @@ Describe "Get-ExtensionHandlers" {
             $handler | Should -Not -BeNullOrEmpty
             $handler.GetPackages | Should -Not -BeNullOrEmpty
             $handler.Download | Should -Not -BeNullOrEmpty
-            $handler.MoreInfoUrl | Should -Be $XDEBUG_HISTORICAL_URL
+            $handler.MoreInfoUrl | Should -Be $script:XDEBUG_HISTORICAL_URL
 
             $null = & $handler.GetPackages -version '8.5'
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $testPhpPath -skipConfirmation $false
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $false
 
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be $chosenItem.fileName
-            $result.FullName | Should -Be "$($Global:PVMConfig.paths.directories.php)\$($chosenItem.fileName)"
+            $result.FullName | Should -Be "$script:PHP_DIR\$($chosenItem.fileName)"
             Should -Invoke Get-XDebugFromUrl -Times 1
             Should -Invoke Invoke-WebRequestWrapper -Times 1
             Should -Invoke Remove-ItemWrapper -ParameterFilter { $path.Name -eq 'php_xdebug.dll' } -Times 1
@@ -186,14 +184,14 @@ Describe "Get-ExtensionHandlers" {
             $handler | Should -Not -BeNullOrEmpty
             $handler.GetPackages | Should -Not -BeNullOrEmpty
             $handler.Download | Should -Not -BeNullOrEmpty
-            $handler.MoreInfoUrl | Should -Be $XDEBUG_HISTORICAL_URL
+            $handler.MoreInfoUrl | Should -Be $script:XDEBUG_HISTORICAL_URL
 
             $null = & $handler.GetPackages -version '8.5'
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $testPhpPath -skipConfirmation $true
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true
 
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be $chosenItem.fileName
-            $result.FullName | Should -Be "$($Global:PVMConfig.paths.directories.php)\$($chosenItem.fileName)"
+            $result.FullName | Should -Be "$script:PHP_DIR\$($chosenItem.fileName)"
             Should -Invoke Get-XDebugFromUrl -Times 1
             Should -Invoke Invoke-WebRequestWrapper -Times 1
             Should -Invoke Move-ItemWrapper -Times 1
@@ -210,10 +208,10 @@ Describe "Get-ExtensionHandlers" {
             $handler | Should -Not -BeNullOrEmpty
             $handler.GetPackages | Should -Not -BeNullOrEmpty
             $handler.Download | Should -Not -BeNullOrEmpty
-            $handler.MoreInfoUrl | Should -Be $XDEBUG_HISTORICAL_URL
+            $handler.MoreInfoUrl | Should -Be $script:XDEBUG_HISTORICAL_URL
 
             $null = & $handler.GetPackages -version '8.5'
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $testPhpPath -skipConfirmation $true
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true
 
             $result | Should -BeNullOrEmpty
             Should -Invoke Get-XDebugFromUrl -Times 1
@@ -232,15 +230,15 @@ Describe "Get-ExtensionHandlers" {
         }
 
         It "Resolves and returns extension links" {
-            Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$TEST_DRIVE\php\8.2.0" } }
+            Mock Get-CurrentPHPVersion { return @{ version = '8.2'; arch = 'x64'; buildType = 'ts'; path = "$script:TEST_DRIVE\php\8.2.0" } }
             Mock Get-ExtensionPackages {
                 return @{
                     extName = 'curl'
                     source  = 'pecl.php.net'
                     data    = @(
-                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
-                        @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
+                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
+                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
                     )
                 }
             }
@@ -275,14 +273,14 @@ Describe "Get-ExtensionHandlers" {
                 extName = 'xdebug'
                 source = 'pecl.php.net'
                 links = @(
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.4.0/windows" },
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.3.0/windows" },
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.2.0/windows" }
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.4.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.3.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.2.0/windows" }
                 )
             }
 
             $null = & $handler.GetPackages -version '8.5' -linksObj $links
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $testPhpPath -skipConfirmation $true -extName 'xdebug'
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true -extName 'xdebug'
 
             $result | Should -BeNullOrEmpty
             Should -Invoke Get-PackagesFromSourceLinks -Times 1
@@ -311,10 +309,10 @@ Describe "Get-ExtensionHandlers" {
             Mock Get-PackagesFromSourceLinks { return $null }
             Mock Invoke-WebRequestWrapper { return $null }
             Mock Expand-Zip { }
-            $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$TEST_DRIVE\extracted\php_xdebug.dll" }
+            $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Get-ChildItemWrapper { return @( $mockFile ) } -ParameterFilter { $path -like "*$($chosenItem.fileName)*" }
-            Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$testPhpPath\ext" }
+            Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             Mock Test-FileExists { return $true }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($mockFile.Name) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
             Mock Remove-ItemWrapper { }
@@ -331,17 +329,17 @@ Describe "Get-ExtensionHandlers" {
                 extName = 'xdebug'
                 source = 'pecl.php.net'
                 links = @(
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.4.0/windows" },
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.3.0/windows" },
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.2.0/windows" }
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.4.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.3.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.2.0/windows" }
                 )
             }
             $null = & $handler.GetPackages -version '8.5' -linksObj $links
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $testPhpPath -skipConfirmation $false -extName 'xdebug'
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $false -extName 'xdebug'
             $link = & $handler.MoreInfoUrl -extName 'xdebug'
 
             $result | Should -BeNullOrEmpty
-            $link | Should -Be "$PECL_PACKAGE_ROOT_URL/xdebug"
+            $link | Should -Be "$script:PECL_PACKAGE_ROOT_URL/xdebug"
             Should -Invoke Write-Gray -ParameterFilter { $message -like '*Installation cancelled*' }
             Should -Invoke Get-PackagesFromSourceLinks -Times 1
             Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -like "*$($chosenItem.fileName)*" } -Times 1
@@ -355,9 +353,9 @@ Describe "Get-ExtensionHandlers" {
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($mockFile.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
             Mock Move-ItemWrapper { }
             Mock Remove-ItemWrapper { }
-            $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$TEST_DRIVE\extracted\php_xdebug.dll" }
+            $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
             Mock Get-ChildItemWrapper { return @( $mockFile ) } -ParameterFilter { $path -like "*$($chosenItem.fileName)*" }
-            Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$testPhpPath\ext" }
+            Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
             $handler = $sourceHandlers['pecl.php.net']
@@ -371,13 +369,13 @@ Describe "Get-ExtensionHandlers" {
                 extName = 'xdebug'
                 source = 'pecl.php.net'
                 links = @(
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.4.0/windows" },
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.3.0/windows" },
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.2.0/windows" }
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.4.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.3.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.2.0/windows" }
                 )
             }
             $null = & $handler.GetPackages -version '8.5' -linksObj $links
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $testPhpPath -skipConfirmation $false -extName 'xdebug'
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $false -extName 'xdebug'
 
             $result.FullName | Should -Be $mockFile.FullName
             $result.Name | Should -Be $mockFile.Name
@@ -391,7 +389,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Expand-Zip { }
             Mock Move-ItemWrapper { }
             Mock Remove-ItemWrapper { }
-            $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$TEST_DRIVE\extracted\php_xdebug.dll" }
+            $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
             Mock Get-ChildItemWrapper { return @( $mockFile ) }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
 
@@ -407,13 +405,13 @@ Describe "Get-ExtensionHandlers" {
                 extName = 'xdebug'
                 source = 'pecl.php.net'
                 links = @(
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.4.0/windows" },
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.3.0/windows" },
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.2.0/windows" }
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.4.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.3.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.2.0/windows" }
                 )
             }
             $null = & $handler.GetPackages -version '8.5' -linksObj $links
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $testPhpPath -skipConfirmation $true -extName 'xdebug'
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true -extName 'xdebug'
 
             $result.FullName | Should -Be $mockFile.FullName
             $result.Name | Should -Be $mockFile.Name
@@ -437,13 +435,13 @@ Describe "Get-ExtensionHandlers" {
                 extName = 'xdebug'
                 source = 'pecl.php.net'
                 links = @(
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.4.0/windows" },
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.3.0/windows" },
-                    @{ href = "$PECL_BASE_URL/package/xdebug/3.2.0/windows" }
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.4.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.3.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.2.0/windows" }
                 )
             }
             $null = & $handler.GetPackages -version '8.5' -linksObj $links
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $testPhpPath -skipConfirmation $true -extName 'xdebug'
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true -extName 'xdebug'
 
             $result | Should -BeNullOrEmpty
             Should -Invoke Get-PackagesFromSourceLinks -Times 1
@@ -467,7 +465,7 @@ Describe "Get-ExtensionHandlers" {
             $configHandlers = (Get-ExtensionHandlers).ExtensionConfigHandlers
             $configHandler = $configHandlers['xdebug']
 
-            $result = & $configHandler -iniPath $testIniPath -fileName 'php_xdebug.dll' -extVersion '3.5'
+            $result = & $configHandler -iniPath $script:testIniPath -fileName 'php_xdebug.dll' -extVersion '3.5'
 
             $configHandler | Should -Not -BeNullOrEmpty
             $result | Should -Be 0
@@ -482,7 +480,7 @@ Describe "Get-ExtensionHandlers" {
             $configHandlers = (Get-ExtensionHandlers).ExtensionConfigHandlers
             $configHandler = $configHandlers['xdebug']
 
-            $result = & $configHandler -iniPath $testIniPath -fileName 'php_xdebug.dll' -extVersion '3.5'
+            $result = & $configHandler -iniPath $script:testIniPath -fileName 'php_xdebug.dll' -extVersion '3.5'
 
             $configHandler | Should -Not -BeNullOrEmpty
             $result | Should -Be -1
@@ -495,7 +493,7 @@ Describe "Get-ExtensionHandlers" {
             $configHandlers = (Get-ExtensionHandlers).ExtensionConfigHandlers
             $configHandler = $configHandlers['default']
 
-            $result = & $configHandler -iniPath $testIniPath -fileName 'php_curl.dll' -extVersion '1.5'
+            $result = & $configHandler -iniPath $script:testIniPath -fileName 'php_curl.dll' -extVersion '1.5'
 
             $configHandler | Should -Not -BeNullOrEmpty
             $result | Should -Be 0
@@ -599,11 +597,11 @@ Describe "Get-XDebugFromUrl" {
 
     It "Should parse XDebug versions correctly" {
         $mockLinks = @(
-            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x86_64.dll" },
-            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll" },
-            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll" },
-            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll" },
-            @{ href = "$XDEBUG_BASE_URL/download/php_random.dll" }
+            @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-vs16-x86_64.dll" },
+            @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-vs16-x86_64.dll" },
+            @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-nts-vs16-x86_64.dll" },
+            @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-nts-vc16-x86_64.dll" },
+            @{ href = "$script:XDEBUG_BASE_URL/download/php_random.dll" }
         )
         Set-MockWebResponse -url 'https://test.com' -links $mockLinks
 
@@ -624,8 +622,8 @@ Describe "Get-XDebugFromUrl" {
 
     It "Should parse xdebug with x86 architecture and unknown compiler" {
         $mockLinks = @(
-            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-x86.dll" },
-            @{ href = "$XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-nts-x86.dll" }
+            @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-3.1.0-8.1-x86.dll" },
+            @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-2.9.0-8.1-nts-x86.dll" }
         )
         Set-MockWebResponse -url 'https://test.com' -links $mockLinks
 
@@ -641,7 +639,7 @@ Describe "Get-XDebugFromUrl" {
 
 Describe "Get-XdebugConfigV2" {
     It "Fetchs xdebug v2 config" {
-        $res = Get-XdebugConfigV2 -XDebugPath 'php_xdebug.dll'
+        $res = Get-XdebugConfigV2 -dllPath 'php_xdebug.dll'
 
         $res[0] | Should -Be '[xdebug]'
         $res[1] | Should -Be ";zend_extension='php_xdebug.dll'"
@@ -653,7 +651,7 @@ Describe "Get-XdebugConfigV2" {
 
 Describe "Get-XdebugConfigV3" {
     It "Fetchs xdebug v3 config" {
-        $res = Get-XdebugConfigV3 -XDebugPath 'php_xdebug.dll'
+        $res = Get-XdebugConfigV3 -dllPath 'php_xdebug.dll'
 
         $res[0] | Should -Be '[xdebug]'
         $res[1] | Should -Be ";zend_extension='php_xdebug.dll'"
@@ -665,7 +663,7 @@ Describe "Get-XdebugConfigV3" {
 
 Describe "Get-ExtensionCategoriesByPage" {
     It "Returns extensions links by page" {
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$($script:PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links   = @(
@@ -680,15 +678,15 @@ Describe "Get-ExtensionCategoriesByPage" {
         $result = Get-ExtensionCategoriesByPage -extCategory 'Caching' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
 
         $result.availableExtensions.Count | Should -Be 4
-        $result.availableExtensions[0].href | Should -Be "$PECL_BASE_URL/package/APC"
-        $result.availableExtensions[1].href | Should -Be "$PECL_BASE_URL/package/APCu"
-        $result.availableExtensions[2].href | Should -Be "$PECL_BASE_URL/package/memcache"
-        $result.availableExtensions[3].href | Should -Be "$PECL_BASE_URL/package/memcached"
+        $result.availableExtensions[0].href | Should -Be "$script:PECL_BASE_URL/package/APC"
+        $result.availableExtensions[1].href | Should -Be "$script:PECL_BASE_URL/package/APCu"
+        $result.availableExtensions[2].href | Should -Be "$script:PECL_BASE_URL/package/memcache"
+        $result.availableExtensions[3].href | Should -Be "$script:PECL_BASE_URL/package/memcached"
         $result.hasMore | Should -Be $false
     }
 
     It "Sets hasMore to true when more pages are available" {
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$($script:PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links   = @(
@@ -709,7 +707,7 @@ Describe "Get-ExtensionCategoriesByPage" {
     }
 
     It "Finds decoded subcategories and ignores the current category" {
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$($PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$($script:PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching&pageID=1" } -MockWith {
             return @{
                 Content = 'Mocked PHP extension Caching content'
                 Links   = @(
@@ -729,7 +727,7 @@ Describe "Get-ExtensionCategoriesByPage" {
 Describe "Get-PHPExtensionsFromSource" {
     BeforeAll {
         Mock Save-CachedData { return 0 }
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq $script:PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
                 Links   = @(
@@ -791,7 +789,7 @@ Describe "Get-PHPExtensionsFromSource" {
 
     It "Keeps subcategory extensions unique when the child is also a source category" {
         $script:audioCategoryCalls = 0
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq $script:PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
                 Links   = @(
@@ -833,7 +831,7 @@ Describe "Get-PHPExtensionsFromSource" {
     }
 
     It "Deduplicates subcategories discovered across parent pages" {
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq $script:PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
                 Links   = @(
@@ -883,7 +881,7 @@ Describe "Get-PHPExtensionsFromSource" {
     }
 
     It "Removes child extensions from the parent category" {
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq $script:PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
                 Links   = @(
@@ -927,7 +925,7 @@ Describe "Get-PHPExtensionsFromSource" {
     }
 
     It "Merges extensions when different parents share a child category" {
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq $script:PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
                 Links   = @(
@@ -981,7 +979,7 @@ Describe "Get-PHPExtensionsFromSource" {
     }
 
     It "Assigns a parent when an existing root category becomes a child" {
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq $script:PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
                 Links   = @(
@@ -1025,7 +1023,7 @@ Describe "Get-PHPExtensionsFromSource" {
 
     It "Merges a repeated category and initializes subcategory metadata" {
         $script:multimediaCategoryCalls = 0
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq $PECL_PACKAGES_URL } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq $script:PECL_PACKAGES_URL } -MockWith {
             return @{
                 Content = 'Mocked PHP extensions content'
                 Links   = @(
@@ -1315,7 +1313,7 @@ Describe "Get-FilteredPHPExtensionsByCategory" {
 
 Describe "Get-ExtensionAvailableReleasesLinks" {
     It "Returns filtered links for given extension" {
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$script:PECL_PACKAGE_ROOT_URL/memcache" } -MockWith {
             return @{
                 Content = 'Mocked memcache content'
                 Links = @(
@@ -1331,50 +1329,50 @@ Describe "Get-ExtensionAvailableReleasesLinks" {
         $result = Get-ExtensionAvailableReleasesLinks -extName 'memcache'
 
         $result.Count | Should -Be 3
-        $result[0].href | Should -Be "$PECL_BASE_URL/package/memcache/3.4.0/windows"
-        $result[1].href | Should -Be "$PECL_BASE_URL/package/memcache/3.3.0/windows"
-        $result[2].href | Should -Be "$PECL_BASE_URL/package/memcache/3.2.0/windows"
+        $result[0].href | Should -Be "$script:PECL_BASE_URL/package/memcache/3.4.0/windows"
+        $result[1].href | Should -Be "$script:PECL_BASE_URL/package/memcache/3.3.0/windows"
+        $result[2].href | Should -Be "$script:PECL_BASE_URL/package/memcache/3.2.0/windows"
     }
 }
 
 Describe "Get-PackagesFromSourceLinks" {
     It "Returns formatted list for matching packages" {
         Mock Add-LogEntry { return 0 }
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$script:PECL_PACKAGE_ROOT_URL/memcache/3.4.0/windows" } -MockWith {
             return @{
                 Content = 'Mocked PHP memcache 3.4.0 content'
                 Links = @(
                     @{ href = 'other_link' },
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x86.zip" },
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x64.zip" }
+                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x86.zip" },
+                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.4.0/php_memcache-3.4.0-8.2-ts-vs16-x64.zip" }
                 )
             }
         }
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.3.0/windows" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$script:PECL_PACKAGE_ROOT_URL/memcache/3.3.0/windows" } -MockWith {
             return @{
                 Content = 'Mocked PHP memcache 3.4.0 content'
                 Links = @(
                     @{ href = 'other_link' },
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.3.0/php_memcache-3.3.0-8.2-ts-vs16-x86.zip" },
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.3.0/php_memcache-3.3.0-8.2-ts-vs16-x64.zip" }
+                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.3.0/php_memcache-3.3.0-8.2-ts-vs16-x86.zip" },
+                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.3.0/php_memcache-3.3.0-8.2-ts-vs16-x64.zip" }
                 )
             }
         }
-        Mock Invoke-WebRequestWrapper -ParameterFilter { $Uri -eq "$PECL_PACKAGE_ROOT_URL/memcache/3.2.0/windows" } -MockWith {
+        Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$script:PECL_PACKAGE_ROOT_URL/memcache/3.2.0/windows" } -MockWith {
             return @{
                 Content = 'Mocked PHP memcache 3.4.0 content'
                 Links = @(
                     @{ href = 'other_link' },
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.2.0/php_memcache-3.2.0-8.2-nts-vs16-x86.zip" },
-                    @{ href = "$PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.2.0/php_memcache-3.2.0-8.2-ts-x64.zip" }
+                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.2.0/php_memcache-3.2.0-8.2-nts-vs16-x86.zip" },
+                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/memcache/3.2.0/php_memcache-3.2.0-8.2-ts-x64.zip" }
                 )
             }
         }
 
         $result = Get-PackagesFromSourceLinks -extName 'memcache' -version '8.2' -links @(
-            @{ href = "$PECL_BASE_URL/package/memcache/3.4.0/windows" },
-            @{ href = "$PECL_BASE_URL/package/memcache/3.3.0/windows" },
-            @{ href = "$PECL_BASE_URL/package/memcache/3.2.0/windows" }
+            @{ href = "$script:PECL_BASE_URL/package/memcache/3.4.0/windows" },
+            @{ href = "$script:PECL_BASE_URL/package/memcache/3.3.0/windows" },
+            @{ href = "$script:PECL_BASE_URL/package/memcache/3.2.0/windows" }
         )
 
         $result.Count | Should -Be 6
@@ -1560,10 +1558,6 @@ Describe "Select-ExtensionFromMatches" {
 }
 
 Describe "Resolve-ExtensionLinks" {
-    BeforeEach {
-        $Global:PVMConfig.paths.directories.cache = "$TEST_DRIVE\cache"
-    }
-
     It "Returns filtered links" {
         Mock Test-CanUseCache { return $false }
         Mock Get-ExtensionAvailableReleasesLinks {
@@ -1612,7 +1606,7 @@ Describe "Resolve-ExtensionLinks" {
 
         It "Should return empty links for sources other than pecl" {
             Mock Get-ExtensionMatchingCategories { return @(
-                    @{ href = "$XDEBUG_HISTORICAL_URL"; extName = 'xdebug'; source = 'xdebug.org' }
+                    @{ href = "$script:XDEBUG_HISTORICAL_URL"; extName = 'xdebug'; source = 'xdebug.org' }
                 )
             }
 

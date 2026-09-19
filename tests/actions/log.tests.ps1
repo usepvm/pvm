@@ -1,7 +1,9 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'log'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
+
+    $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
+    $script:LOG_SEPARATOR = $Global:PVMConfig.constants.LOG_SEPARATOR
 
     Mock Show-Error { }
     Mock Show-Warning { }
@@ -14,83 +16,79 @@ BeforeAll {
     Mock Write-DarkGray { }
 }
 
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
-}
-
 Describe "Format-NiceTimestamp" {
     It "returns 'just now' for current timestamp" {
         $now = Get-Date
-        $result = Format-NiceTimestamp $now.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $now.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be 'just now'
     }
 
     It "returns '1 minute ago' for 1 minute old timestamp" {
         $ts = (Get-Date).AddMinutes(-1)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '1 minute ago'
     }
 
     It "returns 'X minutes ago for more than 1 minute old timestamp" {
         $ts = (Get-Date).AddMinutes(-30)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '30 minutes ago'
     }
 
     It "returns '1 hour ago for 1 hour old timestamp" {
         $ts = (Get-Date).AddHours(-1)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '1 hour ago'
     }
 
     It "returns 'X hours ago for more than 1 hour old timestamp" {
         $ts = (Get-Date).AddHours(-5)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '5 hours ago'
     }
 
     It "returns 'yesterday' for 1 day old timestamp" {
         $ts = (Get-Date).AddDays(-1)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be 'yesterday'
     }
 
     It "returns 'X days ago for more than 1 day old timestamp" {
         $ts = (Get-Date).AddDays(-5)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '5 days ago'
     }
 
     It "returns '1 week ago' for 7 days old timestamp" {
         $ts = (Get-Date).AddDays(-7)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '1 week ago'
     }
 
     It "returns '2 weeks ago' for 15 days old timestamp" {
         $ts = (Get-Date).AddDays(-15)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '2 weeks ago'
     }
 
     It "returns '1 month ago' for ~35 days old timestamp" {
         $ts = (Get-Date).AddDays(-35)
-        $result = Format-NiceTimestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
+        $result = Format-NiceTimestamp -timestamp $ts.ToString('yyyy-MM-dd HH:mm:ss')
 
         $result.Relative | Should -Be '1 month ago'
     }
 
     It "handles invalid timestamp input gracefully" {
-        $result = Format-NiceTimestamp 'not-a-date'
+        $result = Format-NiceTimestamp -timestamp 'not-a-date'
 
         $result.Date | Should -Be 'not-a-date'
         $result.Time | Should -Be ''
@@ -135,36 +133,35 @@ Describe "Test-LogPageSize" {
 
 Describe "Get-LogEntries" {
     BeforeAll {
-        $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
-        New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
+        New-Item -ItemType Directory -Path (Split-Path -Path $script:LOG_ERROR_PATH) -Force | Out-Null
     }
 
     It "returns empty array if no entries found" {
-        '' | Set-ContentWrapper -path $LOG_ERROR_PATH
+        '' | Set-ContentWrapper -path $script:LOG_ERROR_PATH
 
-        $result = Get-LogEntries -path $LOG_ERROR_PATH
+        $result = Get-LogEntries -path $script:LOG_ERROR_PATH
 
         $result.Count | Should -Be 0
     }
 
     It "returns array of log entries" {
-        @"
-$($Global:PVMConfig.constants.LOG_SEPARATOR)
-[2025-08-20 14:38:48] Test log entry 1 :
-Message: Issue 1
-Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
-+         throw "Issue limit"
-+         ~~~~~~~~~~~~~~~~~~~~
+        @(
+            $script:LOG_SEPARATOR
+            '[2025-08-20 14:38:48] Test log entry 1 :'
+            'Message: Issue 1'
+            'Position: At D:\Code\Tools\pvm\file.ps1:10 char:9'
+            '+         throw "Issue limit"'
+            '+         ~~~~~~~~~~~~~~~~~~~~'
+            ''
+            $script:LOG_SEPARATOR
+            '[2025-08-23 14:38:48] Test log entry 0 :'
+            'Message: Issue 0'
+            'Position: At D:\Code\Tools\pvm\file.ps1:10 char:9'
+            '+         throw "Issue limit"'
+            '+         ~~~~~~~~~~~~~~~~~~~~'
+        ) -join "`n" | Set-ContentWrapper -path $script:LOG_ERROR_PATH
 
-$($Global:PVMConfig.constants.LOG_SEPARATOR)
-[2025-08-23 14:38:48] Test log entry 0 :
-Message: Issue 0
-Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
-+         throw "Issue limit"
-+         ~~~~~~~~~~~~~~~~~~~~
-"@ | Set-ContentWrapper -path $LOG_ERROR_PATH
-
-        $result = Get-LogEntries -path $LOG_ERROR_PATH
+        $result = Get-LogEntries -path $script:LOG_ERROR_PATH
 
         $result.Length | Should -Be 2
         $result[0].Timestamp | Should -Be '2025-08-23 14:38:48'
@@ -174,23 +171,23 @@ Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
     }
 
     It "filters log entries based on search term" {
-        @"
-$($Global:PVMConfig.constants.LOG_SEPARATOR)
-[2025-08-23 14:38:48] Test log entry 1 :
-Message: Issue 1
-Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
-+         throw "Issue limit"
-+         ~~~~~~~~~~~~~~~~~~~~
+        @(
+            $script:LOG_SEPARATOR
+            '[2025-08-23 14:38:48] Test log entry 1 :'
+            'Message: Issue 1'
+            'Position: At D:\Code\Tools\pvm\file.ps1:10 char:9'
+            '+         throw "Issue limit"'
+            '+         ~~~~~~~~~~~~~~~~~~~~'
+            ''
+            $script:LOG_SEPARATOR
+            '[2025-08-23 14:38:48] Test log entry 0 :'
+            'Message: Issue 0'
+            'Position: At D:\Code\Tools\pvm\file.ps1:10 char:9'
+            '+         throw "Issue limit"'
+            '+         ~~~~~~~~~~~~~~~~~~~~'
+        ) -join "`n" | Set-ContentWrapper -path $script:LOG_ERROR_PATH
 
-$($Global:PVMConfig.constants.LOG_SEPARATOR)
-[2025-08-23 14:38:48] Test log entry 0 :
-Message: Issue 0
-Position: At D:\Code\Tools\pvm\file.ps1:10 char:9
-+         throw "Issue limit"
-+         ~~~~~~~~~~~~~~~~~~~~
-"@ | Set-ContentWrapper -path $LOG_ERROR_PATH
-
-        $result = @(Get-LogEntries -path $LOG_ERROR_PATH -term 'entry 1')
+        $result = @(Get-LogEntries -path $script:LOG_ERROR_PATH -term 'entry 1')
 
         $result.Length | Should -Be 1
         $result[0].Timestamp | Should -Be '2025-08-23 14:38:48'
@@ -317,8 +314,7 @@ Describe "Get-LogNavigation" {
 
 Describe "Show-Log" {
     BeforeAll {
-        $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
-        New-Item -ItemType Directory -Path (Split-Path -Path $LOG_ERROR_PATH) -Force | Out-Null
+        New-Item -ItemType Directory -Path (Split-Path -Path $script:LOG_ERROR_PATH) -Force | Out-Null
     }
 
     It "returns -1 for invalid page size" {

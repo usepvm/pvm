@@ -1,24 +1,19 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'io'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
 
-    New-Directory -path "$STORAGE_PATH\php\8.1"
-    New-Directory -path "$STORAGE_PATH\php\8.2"
+    $null = New-Directory -path "$script:STORAGE_PATH\php\8.1"
+    $null = New-Directory -path "$script:STORAGE_PATH\php\8.2"
 
     Mock Add-LogEntry { return 0 }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-AllSubdirectories" {
     Context "When path is valid" {
         It "Returns subdirectories for an existing path" {
-            $result = Get-AllSubdirectories -path $STORAGE_PATH
+            $result = Get-AllSubdirectories -path $script:STORAGE_PATH
             $result | Should -Not -BeNullOrEmpty
             $result.Count | Should -BeGreaterThan 0
         }
@@ -36,13 +31,13 @@ Describe "Get-AllSubdirectories" {
         }
 
         It "Returns null for non-existent path" {
-            $result = Get-AllSubdirectories -path "$TEST_DRIVE\Nonexistent\Path"
+            $result = Get-AllSubdirectories -path "$script:TEST_DRIVE\Nonexistent\Path"
             $result | Should -Be $null
         }
 
         It "Returns null when an exception occurs" {
             Mock Get-ChildItemWrapper { throw 'Simulated exception' }
-            $result = Get-AllSubdirectories -path $STORAGE_PATH
+            $result = Get-AllSubdirectories -path $script:STORAGE_PATH
             $result | Should -Be $null
         }
     }
@@ -51,12 +46,12 @@ Describe "Get-AllSubdirectories" {
 Describe "Test-DirectoryExists" {
     Context "When checking directory existence" {
         It "Returns true for existing directory" {
-            $result = Test-DirectoryExists -path $STORAGE_PATH
+            $result = Test-DirectoryExists -path $script:STORAGE_PATH
             $result | Should -Be $true
         }
 
         It "Returns false for non-existent directory" {
-            $result = Test-DirectoryExists -path "$TEST_DRIVE\Nonexistent\Path"
+            $result = Test-DirectoryExists -path "$script:TEST_DRIVE\Nonexistent\Path"
             $result | Should -Be $false
         }
 
@@ -73,7 +68,7 @@ Describe "Test-DirectoryExists" {
         It "Handles exceptions gracefully" {
             Mock Test-PathWrapper { throw 'Error' }
 
-            $result = Test-DirectoryExists -path "$TEST_DRIVE\Nonexistent\Path"
+            $result = Test-DirectoryExists -path "$script:TEST_DRIVE\Nonexistent\Path"
             $result | Should -Be $false
         }
     }
@@ -83,7 +78,7 @@ Describe "Test-DirectoryNotExists" {
     It "Returns true for non-existent directory" {
         Mock Test-DirectoryExists { return $false }
 
-        $result = Test-DirectoryNotExists -path "$TEST_DRIVE\Nonexistent\Path"
+        $result = Test-DirectoryNotExists -path "$script:TEST_DRIVE\Nonexistent\Path"
         $result | Should -Be $true
     }
 
@@ -98,7 +93,7 @@ Describe "Test-DirectoryNotExists" {
 Describe "Test-FileExists" {
     Context "When checking file existence" {
         It "Returns true for an existing file" {
-            $filePath = "$TEST_DRIVE\existing_file_exists.txt"
+            $filePath = "$script:TEST_DRIVE\existing_file_exists.txt"
             New-Item -Path $filePath -ItemType File -Force | Out-Null
 
             $result = Test-FileExists -path $filePath
@@ -108,7 +103,7 @@ Describe "Test-FileExists" {
         }
 
         It "Returns false for non-existent file" {
-            $result = Test-FileExists -path "$TEST_DRIVE\Nonexistent\file.txt"
+            $result = Test-FileExists -path "$script:TEST_DRIVE\Nonexistent\file.txt"
             $result | Should -Be $false
         }
 
@@ -125,7 +120,7 @@ Describe "Test-FileExists" {
         It "Handles exceptions gracefully" {
             Mock Test-PathWrapper { throw 'Error' }
 
-            $result = Test-FileExists -path "$TEST_DRIVE\Nonexistent\file.txt"
+            $result = Test-FileExists -path "$script:TEST_DRIVE\Nonexistent\file.txt"
             $result | Should -Be $false
         }
     }
@@ -135,7 +130,7 @@ Describe "Test-FileNotExists" {
     It "Returns true for non-existent file" {
         Mock Test-FileExists { return $false }
 
-        $result = Test-FileNotExists -path "$TEST_DRIVE\Nonexistent\file.txt"
+        $result = Test-FileNotExists -path "$script:TEST_DRIVE\Nonexistent\file.txt"
         $result | Should -Be $true
     }
 
@@ -152,7 +147,7 @@ Describe "Test-PathExists" {
         Mock Test-DirectoryExists { return $false }
         Mock Test-FileExists { return $false }
 
-        $result = Test-PathExists -path "$TEST_DRIVE\Nonexistent\Path"
+        $result = Test-PathExists -path "$script:TEST_DRIVE\Nonexistent\Path"
         $result | Should -Be $false
     }
 
@@ -177,7 +172,7 @@ Describe "Test-PathNotExists" {
     It "Returns true for non-existent path" {
         Mock Test-PathExists { return $false }
 
-        $result = Test-PathNotExists -path "$TEST_DRIVE\Nonexistent\Path"
+        $result = Test-PathNotExists -path "$script:TEST_DRIVE\Nonexistent\Path"
         $result | Should -Be $true
     }
 
@@ -211,14 +206,14 @@ Describe "Test-SymlinkExists" {
     It "Handles exceptions gracefully" {
         Mock Get-ItemWrapper { throw 'Error' }
 
-        $result = Test-SymlinkExists -path "$TEST_DRIVE\Nonexistent\Path"
+        $result = Test-SymlinkExists -path "$script:TEST_DRIVE\Nonexistent\Path"
         $result | Should -Be $false
     }
 
     It "Returns true for existing symlink" {
         Mock Get-ItemWrapper { return @{ Attributes = 'ReparsePoint' } }
 
-        $result = Test-SymlinkExists -path "$TEST_DRIVE\pvm\php"
+        $result = Test-SymlinkExists -path "$script:TEST_DRIVE\pvm\php"
 
         $result | Should -Be $true
     }
@@ -228,7 +223,7 @@ Describe "Test-SymlinkNotExists" {
     It "Returns false for existing symlink" {
         Mock Test-SymlinkExists { return $true }
 
-        $result = Test-SymlinkNotExists -path "$TEST_DRIVE\pvm\php"
+        $result = Test-SymlinkNotExists -path "$script:TEST_DRIVE\pvm\php"
 
         $result | Should -Be $false
     }
@@ -236,7 +231,7 @@ Describe "Test-SymlinkNotExists" {
     It "Returns true for non-existent symlink" {
         Mock Test-SymlinkExists { return $false }
 
-        $result = Test-SymlinkNotExists -path "$TEST_DRIVE\Nonexistent\Path"
+        $result = Test-SymlinkNotExists -path "$script:TEST_DRIVE\Nonexistent\Path"
 
         $result | Should -Be $true
     }
@@ -245,14 +240,14 @@ Describe "Test-SymlinkNotExists" {
 Describe "New-Directory" {
     Context "When creating directories" {
         It "Creates a new directory successfully" {
-            $newDir = "$TEST_DRIVE\new_dir"
+            $newDir = "$script:TEST_DRIVE\new_dir"
             $result = New-Directory -path $newDir
             $result | Should -Be 0
             Test-Path $newDir | Should -Be $true
         }
 
         It "Returns 0 for existing directory" {
-            $result = New-Directory -path $STORAGE_PATH
+            $result = New-Directory -path $script:STORAGE_PATH
             $result | Should -Be 0
         }
 
@@ -264,7 +259,7 @@ Describe "New-Directory" {
         It "Returns -1 when exception is thrown" {
             Mock Test-DirectoryNotExists { return $true }
             Mock New-ItemWrapper { throw 'Error' }
-            $result = New-Directory -path "$TEST_DRIVE\new_dir"
+            $result = New-Directory -path "$script:TEST_DRIVE\new_dir"
             $result | Should -Be -1
         }
     }
@@ -309,8 +304,8 @@ Describe "New-SymbolicLink" {
                 return @{ FullName = $path }
             }
 
-            $linkPath = "$TEST_DRIVE\test_link"
-            $targetPath = "$STORAGE_PATH\php\8.1"
+            $linkPath = "$script:TEST_DRIVE\test_link"
+            $targetPath = "$script:STORAGE_PATH\php\8.1"
 
             $result = New-SymbolicLink -link $linkPath -target $targetPath
             $result.code | Should -Be 0
@@ -327,8 +322,8 @@ Describe "New-SymbolicLink" {
         It "Returns -1 if fails to create symbolic link" {
             Mock Test-NotAdmin { return $true }
             Mock Invoke-PSCommand { return -1 }
-            $linkPath = "$TEST_DRIVE\test_link_fail"
-            $targetPath = "$STORAGE_PATH\php\8.1"
+            $linkPath = "$script:TEST_DRIVE\test_link_fail"
+            $targetPath = "$script:STORAGE_PATH\php\8.1"
             $result = New-SymbolicLink -link $linkPath -target $targetPath
             $result.code | Should -Be -1
             $result.message | Should -Be "Failed to create symbolic link '$linkPath' -> '$targetPath'"
@@ -339,8 +334,8 @@ Describe "New-SymbolicLink" {
             Mock Test-NotAdmin { return $true }
             Mock Invoke-PSCommand { return 0 }
 
-            $linkPath = "$TEST_DRIVE\test_link_2"
-            $targetPath = "$STORAGE_PATH\php\8.1"
+            $linkPath = "$script:TEST_DRIVE\test_link_2"
+            $targetPath = "$script:STORAGE_PATH\php\8.1"
 
             $result = New-SymbolicLink -link $linkPath -target $targetPath
 
@@ -356,18 +351,18 @@ Describe "New-SymbolicLink" {
         }
 
         It "Returns -1 if target directory does not exist" {
-            $result = New-SymbolicLink -link "$TEST_DRIVE\link" -target "$TEST_DRIVE\Nonexistent\Target"
+            $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target "$script:TEST_DRIVE\Nonexistent\Target"
             $result.code | Should -Be -1
-            $result.message | Should -Match "Target directory "$TEST_DRIVE\\Nonexistent\\Target" does not exist!"
+            $result.message | Should -Match "Target directory "$script:TEST_DRIVE\\Nonexistent\\Target" does not exist!"
             $result.color | Should -Be 'DarkYellow'
         }
 
         It "Returns -1 if link already exists and is not a symbolic link" {
             # Create a regular file to simulate existing non-link
-            $existingPath = "$TEST_DRIVE\existing_file"
+            $existingPath = "$script:TEST_DRIVE\existing_file"
             New-Item -Path $existingPath -ItemType File -Force | Out-Null
 
-            $result = New-SymbolicLink -link $existingPath -target "$STORAGE_PATH\php\8.1"
+            $result = New-SymbolicLink -link $existingPath -target "$script:STORAGE_PATH\php\8.1"
             $result.code | Should -Be -1
             $result.message | Should -Be "Link '$existingPath' is not a symbolic link!"
             $result.color | Should -Be 'DarkYellow'
@@ -377,8 +372,8 @@ Describe "New-SymbolicLink" {
         }
 
         It "Deletes existing symbolic link and creates new one" {
-            $STORAGE_PATH_TEMP = (Resolve-Path -Path $STORAGE_PATH).ProviderPath
-            $testDir = "$STORAGE_PATH_TEMP\tests\symlink_test"
+            $script:STORAGE_PATH_TEMP = (Resolve-Path -Path $script:STORAGE_PATH).ProviderPath
+            $testDir = "$script:STORAGE_PATH_TEMP\tests\symlink_test"
             $linkPath = "$testDir\test_link"
             $targetPath = "$testDir\php\8.1"
 
@@ -408,25 +403,25 @@ Describe "New-SymbolicLink" {
 
         It "Handles exceptions gracefully" {
             Mock Test-DirectoryExists { throw 'Simulated exception' }
-            $result = New-SymbolicLink -link "$TEST_DRIVE\link" -target "$TEST_DRIVE\target"
+            $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target "$script:TEST_DRIVE\target"
             $result.code | Should -Be -1
         }
 
         It "Returns -1 for empty link path" {
-            $result = New-SymbolicLink -link '' -target "$TEST_DRIVE\target"
+            $result = New-SymbolicLink -link '' -target "$script:TEST_DRIVE\target"
             $result.code | Should -Be -1
         }
 
         It "Returns -1 for empty target path" {
-            $result = New-SymbolicLink -link "$TEST_DRIVE\link" -target ''
+            $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target ''
             $result.code | Should -Be -1
         }
     }
 
     Context "When link directory does not exist" {
         It "Creates a symbolic link successfully" {
-            $linkPath = "$TEST_DRIVE\test_parent\test_link"
-            $targetPath = "$STORAGE_PATH\php\8.1"
+            $linkPath = "$script:TEST_DRIVE\test_parent\test_link"
+            $targetPath = "$script:STORAGE_PATH\php\8.1"
             $parent = Split-Path -Path $linkPath
 
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
@@ -445,9 +440,9 @@ Describe "New-SymbolicLink" {
         }
 
         It "Returns -1 when symbolic link parent directory fails to create" {
-            $linkPath = "$TEST_DRIVE\test_parent\test_link"
-            $targetPath = "$STORAGE_PATH\php\8.1"
-            Mock Test-DirectoryNotExists -ParameterFilter { $path -eq "$TEST_DRIVE\test_parent" } -MockWith { return $true }
+            $linkPath = "$script:TEST_DRIVE\test_parent\test_link"
+            $targetPath = "$script:STORAGE_PATH\php\8.1"
+            Mock Test-DirectoryNotExists -ParameterFilter { $path -eq "$script:TEST_DRIVE\test_parent" } -MockWith { return $true }
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
             Mock New-Directory { return -1 }
             $result = New-SymbolicLink -link $linkPath -target $targetPath
@@ -458,8 +453,8 @@ Describe "New-SymbolicLink" {
 
 Describe "Expand-ZipCore" {
     It "Loads System.IO.Compression.FileSystem assembly and extracts zip" {
-        $STORAGE_PATH_TEMP = (Resolve-Path -Path $STORAGE_PATH).ProviderPath
-        $testDir = "$STORAGE_PATH_TEMP\tests\zip_test"
+        $script:STORAGE_PATH_TEMP = (Resolve-Path -Path $script:STORAGE_PATH).ProviderPath
+        $testDir = "$script:STORAGE_PATH_TEMP\tests\zip_test"
         $zipPath = "$testDir\test.zip"
         $extractPath = "$testDir\extract"
         $testFile = "$testDir\source\test.txt"

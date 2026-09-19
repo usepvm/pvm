@@ -166,7 +166,7 @@ function Get-PHP {
             foreach ($key in $urls.Keys) {
                 $_url = $urls[$key]
                 $downloadUrl = "$_url/$fileName"
-                $downloadedFilePath = Get-PHPFromUrl -destination $destination -url $downloadUrl -version $versionObject
+                $downloadedFilePath = Get-PHPFromUrl -destination $destination -url $downloadUrl -versionObject $versionObject
                 if ($downloadedFilePath) {
                     return @{ pvmData = $downloadedFilePath }
                 }

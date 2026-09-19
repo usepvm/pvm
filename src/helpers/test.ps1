@@ -20,7 +20,7 @@ function Show-Scripts {
     }
 }
 
-function Clear-PVMTestStorage {
+function Clear-TestDrive {
     Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.testDrive)\*"
 }
 

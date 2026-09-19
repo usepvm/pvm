@@ -7,7 +7,7 @@ function Select-ExtensionPackageLink {
     $extensionLinks |
         Select-Object -First $Global:PVMConfig.env.DEFAULT_PARTIAL_LIST_SIZE |
         Group-Object { $_.extVersion } |
-        Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -Name $_.Name } } |
+        Sort-Object -Descending -Property @{ Expression = { Get-PrereleaseSortKey -name $_.Name } } |
         ForEach-Object -Process {
             $sortedGroup = $_.Group | Sort-Object -Property `
                 @{ Expression = { $_.buildType -eq 'NTS' }; Descending = $true },
@@ -46,21 +46,21 @@ function Select-ExtensionPackageLink {
 }
 
 function Get-PrereleaseSortKey {
-    param ($Name)
+    param ($name)
 
-    $baseVersionParts = ($Name -replace '(alpha|beta|rc).*', '') -split '\.'
+    $baseVersionParts = ($name -replace '(alpha|beta|rc).*', '') -split '\.'
     [int64]$versionScore = 0
     for ($i = 0; $i -lt 3; $i++) {
         $part = if ($i -lt $baseVersionParts.Count) { [int64]$baseVersionParts[$i] } else { 0 }
         $versionScore = ($versionScore * 1000) + $part
     }
 
-    $weight = if ($Name -match 'alpha') { 1 }
-    elseif ($Name -match 'beta') { 2 }
-    elseif ($Name -match 'rc') { 3 }
+    $weight = if ($name -match 'alpha') { 1 }
+    elseif ($name -match 'beta') { 2 }
+    elseif ($name -match 'rc') { 3 }
     else { 4 } # stable
 
-    $number = if ($Name -match '(alpha|beta|rc)(\d+)') { [int64]$matches[2] } else { 9999 }
+    $number = if ($name -match '(alpha|beta|rc)(\d+)') { [int64]$matches[2] } else { 9999 }
 
     return ($versionScore * 100000) + ($weight * 10000) + $number
 }

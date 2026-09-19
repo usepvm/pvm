@@ -1,16 +1,15 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'status'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:phpVersionPath = "$TEST_DRIVE\php-8.2"
-    $script:testIniPath = "$phpVersionPath\php.ini"
-    $script:extDirectory = "$phpVersionPath\ext"
-    $script:testBackupPath = "$testIniPath.bak"
+    $script:phpVersionPath = "$script:TEST_DRIVE\php-8.2"
+    $script:testIniPath = "$script:phpVersionPath\php.ini"
+    $script:extDirectory = "$script:phpVersionPath\ext"
+    $script:testBackupPath = "$script:testIniPath.bak"
 
-    New-Directory -path $Global:PVMConfig.paths.directories.cache
-    New-Directory -path $phpVersionPath
-    New-Directory -path $extDirectory
+    $null = New-Directory -path $Global:PVMConfig.paths.directories.cache
+    $null = New-Directory -path $script:phpVersionPath
+    $null = New-Directory -path $script:extDirectory
 
     Mock Show-Warning { }
     Mock Write-Color { }
@@ -18,22 +17,18 @@ BeforeAll {
     Mock Show-Message { }
 
     function Reset-IniContent {
-    @"
-memory_limit = 128M
-;extension=php_xdebug.dll
-extension=php_curl.dll
-zend_extension=php_opcache.dll
-display_errors = On
-max_execution_time = 30
-;upload_max_filesize = 2M
-"@ | Set-ContentWrapper -path $testIniPath
+        @(
+            'memory_limit = 128M'
+            ';extension=php_xdebug.dll'
+            'extension=php_curl.dll'
+            'zend_extension=php_opcache.dll'
+            'display_errors = On'
+            'max_execution_time = 30'
+            ';upload_max_filesize = 2M'
+        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
     }
 
     Reset-IniContent
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-IniExtensionStatus" {
@@ -47,7 +42,7 @@ Describe "Get-IniExtensionStatus" {
                 @{ name = 'curl'; id='curl'; status='Enabled'; color='DarkGreen'; line=0; lineNamber=0; source='ext,ini' }
             )
         }
-        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('curl')
+        $code = Get-IniExtensionStatus -iniPath $script:testIniPath -extNames @('curl')
         $code | Should -Be 0
     }
 
@@ -57,7 +52,7 @@ Describe "Get-IniExtensionStatus" {
                 @{ name = 'xdebug'; id='xdebug'; status='Disabled'; color='DarkYellow'; line=0; lineNamber=0; source='ext,ini' }
             )
         }
-        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('xdebug')
+        $code = Get-IniExtensionStatus -iniPath $script:testIniPath -extNames @('xdebug')
         $code | Should -Be 0
     }
 
@@ -67,27 +62,27 @@ Describe "Get-IniExtensionStatus" {
                 @{ name = 'opcache'; id='opcache'; status='Enabled'; color='DarkGreen'; line=0; lineNamber=0; source='ext,ini' }
             )
         }
-        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('opcache')
+        $code = Get-IniExtensionStatus -iniPath $script:testIniPath -extNames @('opcache')
         $code | Should -Be 0
     }
 
     It "Returns -1 for non-existent extension" {
         Mock Read-HostWrapper { return 'n' }
-        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('nonexistent_ext')
+        $code = Get-IniExtensionStatus -iniPath $script:testIniPath -extNames @('nonexistent_ext')
         $code | Should -Be -1
     }
 
     It "Requires extension name" {
-        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames ''
+        $code = Get-IniExtensionStatus -iniPath $script:testIniPath -extNames ''
         $code | Should -Be -1
 
-        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames $null
+        $code = Get-IniExtensionStatus -iniPath $script:testIniPath -extNames $null
         $code | Should -Be -1
     }
 
     It "Returns -1 on error" {
         Mock Get-ContentWrapper { throw 'Access denied' }
-        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('curl')
+        $code = Get-IniExtensionStatus -iniPath $script:testIniPath -extNames @('curl')
         $code | Should -Be -1
     }
 
@@ -99,7 +94,7 @@ Describe "Get-IniExtensionStatus" {
             return @( @{ name = 'curl'; id='curl'; status='Enabled'; color='DarkGreen'; line=0; lineNamber=0; source='ext,ini' } )
         }
 
-        $code = Get-IniExtensionStatus -iniPath $testIniPath -extNames @('curl', 'unknown')
+        $code = Get-IniExtensionStatus -iniPath $script:testIniPath -extNames @('curl', 'unknown')
 
         $code | Should -Be -1
     }

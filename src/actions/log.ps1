@@ -124,7 +124,7 @@ function Get-LogEntries {
                 }
 
                 # Format the timestamp nicely
-                $niceTime = Format-NiceTimestamp $timestamp
+                $niceTime = Format-NiceTimestamp -timestamp $timestamp
 
                 $parsedEntries += @{
                     Timestamp      = $timestamp

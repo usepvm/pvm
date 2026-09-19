@@ -1,34 +1,31 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'store'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
-    $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    New-Directory -path $CACHE_PATH
+    $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
+    $script:CACHE_MAX_HOURS = $Global:PVMConfig.env.CACHE_MAX_HOURS
+
+    $null = New-Directory -path $script:CACHE_PATH
 
     Mock Show-Error { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Get-DataFromCache" {
     It "Returns data from cache file" {
         Mock Test-FileNotExists { return $false }
-        Mock Get-ContentWrapper { return @'
-            {
-                'Releases': [
-                    '/downloads/releases/php-7.4.33-Win32-vc15-x64.zip',
-                    '/downloads/releases/php-8.0.30-Win32-vs16-x64.zip',
-                    '/downloads/releases/php-8.4.12-Win32-vs17-x64.zip'
-                ],
-                'Archives': [
-                    '/downloads/releases/archives/php-5.5.0-Win32-VC11-x64.zip',
-                    '/downloads/releases/archives/php-5.5.1-Win32-VC11-x64.zip'
-                ]
-            }
-'@
+        Mock Get-ContentWrapper { return @(
+                '{'
+                    "'Releases': ["
+                        "'/downloads/releases/php-7.4.33-Win32-vc15-x64.zip',"
+                        "'/downloads/releases/php-8.0.30-Win32-vs16-x64.zip',"
+                        "'/downloads/releases/php-8.4.12-Win32-vs17-x64.zip'"
+                    '],'
+                    "'Archives': ["
+                        "'/downloads/releases/archives/php-5.5.0-Win32-VC11-x64.zip',"
+                        "'/downloads/releases/archives/php-5.5.1-Win32-VC11-x64.zip'"
+                    ']'
+                '}'
+            ) -join "`n"
         }
         $list = Get-DataFromCache -cacheFileName 'test.json'
         $list.Releases[0] | Should -Be '/downloads/releases/php-7.4.33-Win32-vc15-x64.zip'
@@ -75,9 +72,7 @@ Describe "Get-DataFromCache" {
 
 Describe "Test-CanUseCache" {
     BeforeAll {
-        $script:CACHE_MAX_HOURS = $Global:PVMConfig.env.CACHE_MAX_HOURS = 168
-
-        New-Item -ItemType Directory -Path $CACHE_PATH -Force | Out-Null
+        New-Item -ItemType Directory -Path $script:CACHE_PATH -Force | Out-Null
     }
 
     Context "When cache file exists" {
@@ -86,8 +81,8 @@ Describe "Test-CanUseCache" {
             $cacheFile = "$cacheFileName.json"
 
             # Create a cache file with recent timestamp
-            New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
+            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
 
             $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $true
@@ -98,12 +93,12 @@ Describe "Test-CanUseCache" {
             $cacheFile = "$cacheFileName.json"
 
             # Create a cache file with old timestamp (older than CACHE_MAX_HOURS)
-            New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
+            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
 
             # Set file modification time to be older than CACHE_MAX_HOURS (168 hours)
             $oldTime = (Get-Date).AddHours(-200)
-            (Get-ItemWrapper -path "$CACHE_PATH\$cacheFile").LastWriteTime = $oldTime
+            (Get-ItemWrapper -path "$script:CACHE_PATH\$cacheFile").LastWriteTime = $oldTime
 
             $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $false
@@ -114,12 +109,12 @@ Describe "Test-CanUseCache" {
             $cacheFile = "$cacheFileName.json"
 
             # Create a cache file
-            New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
+            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
 
             # Set file modification time to be exactly at CACHE_MAX_HOURS
-            $boundaryTime = (Get-Date).AddHours(-$CACHE_MAX_HOURS)
-            (Get-ItemWrapper -path "$CACHE_PATH\$cacheFile").LastWriteTime = $boundaryTime
+            $boundaryTime = (Get-Date).AddHours(-$script:CACHE_MAX_HOURS)
+            (Get-ItemWrapper -path "$script:CACHE_PATH\$cacheFile").LastWriteTime = $boundaryTime
 
             $result = Test-CanUseCache -cacheFileName $cacheFileName
             # Since the function uses -lt (less than), equality should return false
@@ -161,8 +156,8 @@ Describe "Test-CanUseCache" {
             $cacheFileName = 'cache-with_special.chars'
             $cacheFile = "$cacheFileName.json"
 
-            New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
+            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
 
             $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $true
@@ -172,8 +167,8 @@ Describe "Test-CanUseCache" {
             $cacheFileName = 'cache123available_versions456'
             $cacheFile = "$cacheFileName.json"
 
-            New-Item -Path "$CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
+            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
 
             $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $true
@@ -234,12 +229,12 @@ Describe "Save-CachedData" {
 Describe "Get-CacheFilePath" {
     It "Returns the correct cache file path for a given filename" {
         $path = Get-CacheFilePath -filename 'test'
-        $path | Should -Be "$($CACHE_PATH)\test.json"
+        $path | Should -Be "$($script:CACHE_PATH)\test.json"
     }
 
     It "Handles filenames with .json extension" {
         $path = Get-CacheFilePath -filename 'test.json'
-        $path | Should -Be "$($CACHE_PATH)\test.json"
+        $path | Should -Be "$($script:CACHE_PATH)\test.json"
     }
 }
 

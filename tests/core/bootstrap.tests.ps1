@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'bootstrap'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $Global:PVMConfig.version = '1.0.0'
 
@@ -9,10 +8,6 @@ BeforeAll {
     Mock Show-Info { }
     Mock Show-Message { }
     Mock Show-Error { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Show-Usage" {
@@ -745,7 +740,7 @@ Describe "Start-PVM" {
         It "Should preserve argument order and content" {
             $testArgs = @('arg1', '--flag', 'value with spaces', '123')
 
-            Start-PVM -command 'setup' -arguments $testArgs
+            $null = Start-PVM -command 'setup' -arguments $testArgs
             $script:capturedArgs.Count | Should -Be 4
             $script:capturedArgs[0] | Should -BeExactly 'arg1'
             $script:capturedArgs[1] | Should -BeExactly '--flag'

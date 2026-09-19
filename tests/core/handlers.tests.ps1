@@ -1,7 +1,6 @@
 ﻿
 BeforeAll {
-    $script:testEnvironment = Initialize-PVMTestEnvironment -driveName 'handlers'
-    $script:TEST_DRIVE = $TestEnvironment.TestDrive
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     Import-Module -Name PowerShellGet -ErrorAction SilentlyContinue
 
@@ -12,10 +11,6 @@ BeforeAll {
     Mock Write-Color { }
     Mock Show-Info { }
     Mock New-Line { }
-}
-
-AfterAll {
-    Restore-PVMTestEnvironment -environment $testEnvironment
 }
 
 Describe "Invoke-Help" {
@@ -1019,7 +1014,7 @@ Describe "Invoke-Info" {
         }
 
         It "Displays status section" {
-            Invoke-Info -arguments @()
+            $null = Invoke-Info -arguments @()
 
             Should -Invoke Show-Info -ParameterFilter {
                 $message -like '*PVM status*'
@@ -1027,7 +1022,7 @@ Describe "Invoke-Info" {
         }
 
         It "Does not display verbose sections" {
-            Invoke-Info -arguments @()
+            $null = Invoke-Info -arguments @()
 
             Should -Not -Invoke Show-Info -ParameterFilter {
                 $message -like '*PVM paths*'
@@ -1064,7 +1059,7 @@ Describe "Invoke-Info" {
         }
 
         It "Displays environment paths section" {
-            Invoke-Info -arguments @('--verbose')
+            $null = Invoke-Info -arguments @('--verbose')
 
             Should -Invoke Show-Info -ParameterFilter {
                 $message -like '*PVM paths*'
@@ -1072,7 +1067,7 @@ Describe "Invoke-Info" {
         }
 
         It "Displays environment paths section" {
-            Invoke-Info -arguments @('--verbose')
+            $null = Invoke-Info -arguments @('--verbose')
 
             Should -Invoke Show-Info -ParameterFilter {
                 $message -like '*PVM environment variables*'

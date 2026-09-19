@@ -240,26 +240,46 @@ Describe "Test-SymlinkNotExists" {
 Describe "New-Directory" {
     Context "When creating directories" {
         It "Creates a new directory successfully" {
+            Mock New-ItemWrapper { return @{ Name = 'test_link' } }
             $newDir = "$script:TEST_DRIVE\new_dir"
+
             $result = New-Directory -path $newDir
+
             $result | Should -Be 0
-            Test-Path $newDir | Should -Be $true
+            Should -Invoke New-ItemWrapper -ParameterFilter {
+                $type -eq 'Directory' -and $path -eq $newDir
+            }
         }
 
         It "Returns 0 for existing directory" {
+            Mock New-ItemWrapper { return @{ FullName = $script:STORAGE_PATH } }
+
             $result = New-Directory -path $script:STORAGE_PATH
+
             $result | Should -Be 0
         }
 
         It "Returns -1 for empty path" {
             $result = New-Directory -path ''
+
+            $result | Should -Be -1
+        }
+
+        It "Returns -1 when creating directory fails" {
+            Mock New-ItemWrapper { return $null }
+            $newDir = "$script:TEST_DRIVE\new_dir"
+
+            $result = New-Directory -path $newDir
+
             $result | Should -Be -1
         }
 
         It "Returns -1 when exception is thrown" {
             Mock Test-DirectoryNotExists { return $true }
             Mock New-ItemWrapper { throw 'Error' }
+
             $result = New-Directory -path "$script:TEST_DRIVE\new_dir"
+
             $result | Should -Be -1
         }
     }
@@ -267,28 +287,47 @@ Describe "New-Directory" {
 
 Describe "New-File" {
     It "Creates a new file successfully" {
+        Mock New-ItemWrapper { return @{ Name = 'new_file.txt' } }
         $newFile = 'TestDrive:\new_file.txt'
+
         $result = New-File -path $newFile
+
         $result | Should -Be 0
-        Test-Path $newFile | Should -Be $true
+        Should -Invoke New-ItemWrapper -ParameterFilter {
+            $type -eq 'File' -and $path -eq $newFile
+        }
     }
 
     It "Returns 0 for existing file" {
         $existingFile = 'TestDrive:\existing_file.txt'
-        New-ItemWrapper -type 'File' -path $existingFile
+        Mock New-ItemWrapper { return @{ FullName = $existingFile } }
+
         $result = New-File -path $existingFile
+
         $result | Should -Be 0
     }
 
     It "Returns -1 for empty path" {
         $result = New-File -path ''
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when creating file fails" {
+        Mock New-ItemWrapper { return $null }
+        $newFile = 'TestDrive:\new_file.txt'
+
+        $result = New-File -path $newFile
+
         $result | Should -Be -1
     }
 
     It "Returns -1 when exception is thrown" {
         Mock Test-FileNotExists { return $true }
         Mock New-ItemWrapper { throw 'Error' }
+
         $result = New-File -path 'TestDrive:\new_file.txt'
+
         $result | Should -Be -1
     }
 }
@@ -297,21 +336,19 @@ Describe "New-SymbolicLink" {
     Context "When creating symbolic links" {
         It "Creates a symbolic link successfully when running as admin" {
             Mock Test-Admin { return $true }
-
             Mock New-ItemWrapper {
                 param ($type, $path, $target)
 
                 return @{ FullName = $path }
             }
-
             $linkPath = "$script:TEST_DRIVE\test_link"
             $targetPath = "$script:STORAGE_PATH\php\8.1"
 
             $result = New-SymbolicLink -link $linkPath -target $targetPath
+
             $result.code | Should -Be 0
             $result.message | Should -Match 'Created symbolic link'
             $result.color | Should -Be 'DarkGreen'
-
             Should -Invoke New-ItemWrapper -ParameterFilter {
                 $type -eq 'SymbolicLink' -and
                 $path -eq $linkPath -and
@@ -324,7 +361,9 @@ Describe "New-SymbolicLink" {
             Mock Invoke-PSCommand { return -1 }
             $linkPath = "$script:TEST_DRIVE\test_link_fail"
             $targetPath = "$script:STORAGE_PATH\php\8.1"
+
             $result = New-SymbolicLink -link $linkPath -target $targetPath
+
             $result.code | Should -Be -1
             $result.message | Should -Be "Failed to create symbolic link '$linkPath' -> '$targetPath'"
             $result.color | Should -Be 'DarkYellow'
@@ -333,7 +372,6 @@ Describe "New-SymbolicLink" {
         It "Creates a symbolic link successfully using elevated command" {
             Mock Test-NotAdmin { return $true }
             Mock Invoke-PSCommand { return 0 }
-
             $linkPath = "$script:TEST_DRIVE\test_link_2"
             $targetPath = "$script:STORAGE_PATH\php\8.1"
 
@@ -342,7 +380,6 @@ Describe "New-SymbolicLink" {
             $result.code | Should -Be 0
             $result.message | Should -Match 'Created symbolic link'
             $result.color | Should -Be 'DarkGreen'
-
             Should -Invoke Invoke-PSCommand -ParameterFilter {
                 $command -like '*New-Item -ItemType SymbolicLink*' -and
                 $command -like "*$linkPath*" -and
@@ -352,6 +389,7 @@ Describe "New-SymbolicLink" {
 
         It "Returns -1 if target directory does not exist" {
             $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target "$script:TEST_DRIVE\Nonexistent\Target"
+
             $result.code | Should -Be -1
             $result.message | Should -Match "Target directory "$script:TEST_DRIVE\\Nonexistent\\Target" does not exist!"
             $result.color | Should -Be 'DarkYellow'
@@ -363,6 +401,7 @@ Describe "New-SymbolicLink" {
             New-Item -Path $existingPath -ItemType File -Force | Out-Null
 
             $result = New-SymbolicLink -link $existingPath -target "$script:STORAGE_PATH\php\8.1"
+
             $result.code | Should -Be -1
             $result.message | Should -Be "Link '$existingPath' is not a symbolic link!"
             $result.color | Should -Be 'DarkYellow'
@@ -379,13 +418,12 @@ Describe "New-SymbolicLink" {
 
             try {
                 Mock Test-NotAdmin { return $false }
-                Mock New-ItemWrapper { }
+                Mock New-ItemWrapper { return @{ Name = 'test_link'; FullName = $linkPath } }
                 Mock New-Directory { return 0 }
                 Mock Get-ItemWrapper { return @{ Attributes = 'ReparsePoint' } }
 
                 New-Item -ItemType Directory -Path $testDir -Force | Out-Null
                 New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
-
                 # Create a directory at the link path to simulate an existing item
                 New-Item -ItemType Directory -Path $linkPath -Force | Out-Null
 
@@ -401,19 +439,37 @@ Describe "New-SymbolicLink" {
             }
         }
 
+        It "Returns -1 when creating symlink fails" {
+            Mock Test-DirectoryNotExists { return $false }
+            Mock Test-SymlinkExists { return $false }
+            Mock Test-PathExists { return $false }
+            Mock Test-NotAdmin { return $false }
+            Mock New-ItemWrapper { return $null }
+            $linkPath = "$script:STORAGE_PATH\test_link"
+            $targetPath = "$script:STORAGE_PATH\php\8.1"
+
+            $result = New-SymbolicLink -link $linkPath -target $targetPath
+
+            $result.code | Should -Be -1
+        }
+
         It "Handles exceptions gracefully" {
             Mock Test-DirectoryExists { throw 'Simulated exception' }
+
             $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target "$script:TEST_DRIVE\target"
+
             $result.code | Should -Be -1
         }
 
         It "Returns -1 for empty link path" {
             $result = New-SymbolicLink -link '' -target "$script:TEST_DRIVE\target"
+
             $result.code | Should -Be -1
         }
 
         It "Returns -1 for empty target path" {
             $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target ''
+
             $result.code | Should -Be -1
         }
     }

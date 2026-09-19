@@ -103,7 +103,10 @@ function New-Directory {
 
         $path = $path.Trim()
         if (Test-DirectoryNotExists -path $path) {
-            New-ItemWrapper -type 'Directory' -path $path
+            $created = New-ItemWrapper -type 'Directory' -path $path
+            if (-not $created) {
+                return -1
+            }
         }
 
         return 0
@@ -123,7 +126,10 @@ function New-File {
 
         $path = $path.Trim()
         if (Test-FileNotExists -path $path) {
-            New-ItemWrapper -type 'File' -path $path
+            $created = New-ItemWrapper -type 'File' -path $path
+            if (-not $created) {
+                return -1
+            }
         }
 
         return 0
@@ -172,7 +178,11 @@ function New-SymbolicLink {
             return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = 'DarkGreen' }
         }
 
-        New-ItemWrapper -type 'SymbolicLink' -path $link -target $target
+        $created = New-ItemWrapper -type 'SymbolicLink' -path $link -target $target
+        if (-not $created) {
+            return @{ code = -1; message = "Failed to create symbolic link '$link' -> '$target'"; color = 'DarkYellow' }
+        }
+
         return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = 'DarkGreen' }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create symbolic link"; exception = $_ }

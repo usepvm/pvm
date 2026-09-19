@@ -131,7 +131,7 @@ function New-ItemWrapper {
         $params['Target'] = $target
     }
 
-    New-Item @params | Out-Null
+    return New-Item @params
 }
 
 function Test-PathWrapper {

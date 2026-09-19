@@ -497,12 +497,12 @@ Describe "Get-ContentWrapper" {
 
 Describe "New-ItemWrapper" {
     It "Calls New-Item with the correct parameters - type File" {
-        Mock New-Item { }
-
+        Mock New-Item { return @{ Name = 'file.txt' } }
         $path = "$script:TEST_DRIVE\path\file.txt"
 
-        $null = New-File -path $path
+        $result = New-ItemWrapper -type 'File' -path $path
 
+        $result.Name | Should -Be 'file.txt'
         Should -Invoke New-Item -Times 1 -ParameterFilter {
             $Path -eq $path -and
             $ItemType -eq 'File'
@@ -510,12 +510,12 @@ Describe "New-ItemWrapper" {
     }
 
     It "Calls New-Item with the correct parameters - type Directory" {
-        Mock New-Item { }
-
+        Mock New-Item { return @{ Name = 'path' } }
         $path = "$script:TEST_DRIVE\path"
 
-        $null = New-Directory -path $path
+        $result = New-ItemWrapper -type 'Directory' -path $path
 
+        $result.Name | Should -Be 'path'
         Should -Invoke New-Item -Times 1 -ParameterFilter {
             $Path -eq $path -and
             $ItemType -eq 'Directory'
@@ -523,13 +523,14 @@ Describe "New-ItemWrapper" {
     }
 
     It "Calls New-Item with the correct parameters - type SymbolicLink" {
-        Mock New-Item { }
+        Mock New-Item { return @{ Name = 'path' } }
 
         $path = "$script:TEST_DRIVE\path"
         $target = "$script:TEST_DRIVE\target"
 
-        New-ItemWrapper -type 'SymbolicLink' -path $path -target $target
+        $result = New-ItemWrapper -type 'SymbolicLink' -path $path -target $target
 
+        $result.Name | Should -Be 'path'
         Should -Invoke New-Item -Times 1 -ParameterFilter {
             $path -eq $path -and
             $ItemType -eq 'SymbolicLink' -and

@@ -722,6 +722,16 @@ Describe "Get-ExtensionCategoriesByPage" {
         $result.subCategories.Count | Should -Be 1
         $result.subCategories[0] | Should -Be 'Data Caching'
     }
+
+    It "Should handle web request failure" {
+        Mock Invoke-WebRequestWrapper { throw 'Network error' }
+
+        $result = Get-ExtensionCategoriesByPage -extCategory 'Caching' -link '/packages.php?catpid=3&amp;catname=Caching' -page 1
+
+        $result.availableExtensions.Count | Should -Be 0
+        $result.subCategories.Count | Should -Be 0
+        $result.hasMore | Should -Be $false
+    }
 }
 
 Describe "Get-PHPExtensionsFromSource" {
@@ -1332,6 +1342,14 @@ Describe "Get-ExtensionAvailableReleasesLinks" {
         $result[0].href | Should -Be "$script:PECL_BASE_URL/package/memcache/3.4.0/windows"
         $result[1].href | Should -Be "$script:PECL_BASE_URL/package/memcache/3.3.0/windows"
         $result[2].href | Should -Be "$script:PECL_BASE_URL/package/memcache/3.2.0/windows"
+    }
+
+    It "Should handle web request failure" {
+        Mock Invoke-WebRequestWrapper { throw 'Network error' }
+
+        $result = Get-ExtensionAvailableReleasesLinks -extName 'memcache'
+
+        $result.Count | Should -Be 0
     }
 }
 

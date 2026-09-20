@@ -5,31 +5,36 @@ function Get-FromSource {
             $urls = Get-SourceUrls
             $fetchedVersionsGrouped = @{}
             foreach ($key in $urls.Keys) {
-                $html = Invoke-WebRequestWrapper -uri $urls[$key]
-                $links = $html.Links
+                try {
+                    $url = $urls[$key]
+                    $html = Invoke-WebRequestWrapper -uri $url
+                    $links = $html.Links
 
-                # Filter the links to find versions that match the given version
-                $filteredLinks = [System.Collections.Generic.List[object]]::new()
-                $null = $links | Where-Object -FilterScript {
-                    if (-not $_.href) { return $false }
-                    if ($_.href -match 'php-debug') { return $false }
-                    if ($_.href -match 'php-devel') { return $false }
-                    if ($_.href -notmatch "php-\d+\.\d+\.\d+(?:-\d+)?-(?:nts-)?Win32.*\.zip$") { return $false }
+                    # Filter the links to find versions that match the given version
+                    $filteredLinks = [System.Collections.Generic.List[object]]::new()
+                    $null = $links | Where-Object -FilterScript {
+                        if (-not $_.href) { return $false }
+                        if ($_.href -match 'php-debug') { return $false }
+                        if ($_.href -match 'php-devel') { return $false }
+                        if ($_.href -notmatch "php-\d+\.\d+\.\d+(?:-\d+)?-(?:nts-)?Win32.*\.zip$") { return $false }
 
-                    $fileName = $_.href -split '/'
-                    $fileName = $fileName[$fileName.Count - 1]
+                        $fileName = $_.href -split '/'
+                        $fileName = $fileName[$fileName.Count - 1]
 
-                    $filteredLinks.Add(@{
-                        fileName = $fileName
-                        Version   = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
-                        Arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
-                        BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
-                        Link      = $_.href
-                    })
-                }
-                # Return the filtered links (PHP version names)
-                if ($filteredLinks.Count -gt 0) {
-                    $fetchedVersionsGrouped[$key] = $filteredLinks
+                        $filteredLinks.Add(@{
+                            fileName = $fileName
+                            Version   = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
+                            Arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                            BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
+                            Link      = $_.href
+                        })
+                    }
+                    # Return the filtered links (PHP version names)
+                    if ($filteredLinks.Count -gt 0) {
+                        $fetchedVersionsGrouped[$key] = $filteredLinks
+                    }
+                } catch {
+                    $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch PHP versions from source: '$url'"; exception = $_ }
                 }
             }
 

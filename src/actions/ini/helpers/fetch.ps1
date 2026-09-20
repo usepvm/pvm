@@ -315,37 +315,41 @@ function Get-ExtensionCategoriesByPage {
 
     $availableExtensions = [System.Collections.Generic.List[object]]::new()
     $subCategories = [System.Collections.Generic.List[object]]::new()
-    $html = Invoke-WebRequestWrapper -uri "$($Global:PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
     $hasMore = $false
-    $html.Links | ForEach-Object -Process {
-        if (-not $_.href) { return }
+    try {
+        $html = Invoke-WebRequestWrapper -uri "$($Global:PVMConfig.links.peclBase)/$($link.TrimStart('/'))&pageID=$page"
+        $html.Links | ForEach-Object -Process {
+            if (-not $_.href) { return }
 
-        # sub category found
-        if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
-            $subCategoryName = [System.Net.WebUtility]::HtmlDecode($matches[1]) -replace '\+', ' '
-            if ($subCategoryName -ne $extCategory) {
-                $subCategories.Add($subCategoryName)
+            # sub category found
+            if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=([A-Za-z+]+)$') {
+                $subCategoryName = [System.Net.WebUtility]::HtmlDecode($matches[1]) -replace '\+', ' '
+                if ($subCategoryName -ne $extCategory) {
+                    $subCategories.Add($subCategoryName)
+                }
             }
-        }
 
-        if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+&pageID=(\d+)$') {
-            $hasMore = ($page -eq ($matches[1] - 1))
-            return
-        }
-        if ($_.href -notmatch '^/package/[A-Za-z0-9_]+$') {
-            return
-        }
+            if ($_.href -match '^/packages\.php\?catpid=\d+&amp;catname=[A-Za-z+]+&pageID=(\d+)$') {
+                $hasMore = ($page -eq ($matches[1] - 1))
+                return
+            }
+            if ($_.href -notmatch '^/package/[A-Za-z0-9_]+$') {
+                return
+            }
 
-        $null = $_.outerHTML -match '(?s)<strong>(?<package>.*?)</strong>.*?<td[^>]*>(?<description>.*?)</td>'
-        $description = $matches['description']
+            $null = $_.outerHTML -match '(?s)<strong>(?<package>.*?)</strong>.*?<td[^>]*>(?<description>.*?)</td>'
+            $description = $matches['description']
 
-        $availableExtensions.Add(@{
-            extName     = ($_.href -replace '/package/', '').Trim()
-            description = $description
-            href        = "$($Global:PVMConfig.links.peclBase)$($_.href)"
-            extCategory = $extCategory
-            source      = (Get-BaseUrl -url $Global:PVMConfig.links.peclBase)
-        })
+            $availableExtensions.Add(@{
+                extName     = ($_.href -replace '/package/', '').Trim()
+                description = $description
+                href        = "$($Global:PVMConfig.links.peclBase)$($_.href)"
+                extCategory = $extCategory
+                source      = (Get-BaseUrl -url $Global:PVMConfig.links.peclBase)
+            })
+        }
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch extensions for category: '$extCategory' / page: $page'"; exception = $_ }
     }
 
     return @{
@@ -502,12 +506,17 @@ function Get-FilteredPHPExtensionsByCategory {
 function Get-ExtensionAvailableReleasesLinks {
     param ($extName)
 
-    $html = Invoke-WebRequestWrapper -uri "$($Global:PVMConfig.links.peclPackageRoot)/$extName"
     $links = [System.Collections.Generic.List[object]]::new()
-    $null = $html.Links | Foreach-Object -Process {
-        if ($_.href -match "/package/$extName/([^/]+)/windows$") {
-            $links.Add(@{ href = "$($Global:PVMConfig.links.peclBase)$($_.href)" })
+
+    try {
+        $html = Invoke-WebRequestWrapper -uri "$($Global:PVMConfig.links.peclPackageRoot)/$extName"
+        $null = $html.Links | Foreach-Object -Process {
+            if ($_.href -match "/package/$extName/([^/]+)/windows$") {
+                $links.Add(@{ href = "$($Global:PVMConfig.links.peclBase)$($_.href)" })
+            }
         }
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to fetch links for extension: '$extName'"; exception = $_ }
     }
 
     return $links

@@ -79,6 +79,16 @@ Describe "Get-FromSource" {
         $result.Count | Should -Be 0
     }
 
+    It "Should handles job failure" {
+        Mock Show-SpinnerWhileJob { throw 'Job error' }
+        Mock Add-LogEntry { return 0 }
+
+        $result = Get-FromSource
+
+        $result | Should -BeOfType [hashtable]
+        $result.Keys.Count | Should -Be 0
+    }
+
     It "Should handle web request failure" {
         Mock Invoke-WebRequestWrapper { throw 'Network error' }
         Mock Add-LogEntry { return 0 }

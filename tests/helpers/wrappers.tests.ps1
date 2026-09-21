@@ -202,6 +202,30 @@ Describe "Invoke-WebRequestWrapper" {
             }
         }
 
+        It "Calls Invoke-WebRequest with Default method parameter when not provided" {
+            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
+
+            $null = Invoke-WebRequestWrapper -uri 'https://example.com'
+
+            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
+                $Uri -eq 'https://example.com' -and
+                $UseBasicParsing -eq $true -and
+                $Method -eq 'Default'
+            }
+        }
+
+        It "Calls Invoke-WebRequest with custom method parameter when provided" {
+            Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
+
+            $null = Invoke-WebRequestWrapper -uri 'https://example.com' -method 'Head'
+
+            Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
+                $Uri -eq 'https://example.com' -and
+                $UseBasicParsing -eq $true -and
+                $Method -eq 'Head'
+            }
+        }
+
         It "Returns the result from Invoke-WebRequest" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200; Content = 'test content' } }
 

@@ -244,7 +244,7 @@ function Test-FreeDiskSpaceSufficient {
     param ($path, $minimumMegabytes)
 
     try {
-        $minimumFreeSpace = [int64]$minimumMegabytes * 1MB
+        $minimumFreeSpace = Convert-MegabytesToBytes -megabytes $minimumMegabytes
         $availableFreeSpace = Get-FreeDiskSpaceBytes -path $path
 
         return ($minimumFreeSpace -le $availableFreeSpace)
@@ -317,3 +317,22 @@ function Test-RemoteFileDiskSpaceInsufficient {
     return -not (Test-RemoteFileDiskSpaceSufficient -uri $uri -downloadPath $downloadPath)
 }
 
+function Convert-BytesToMegabytes {
+    param ($bytes)
+
+    if ($bytes -le 0) {
+        return 0
+    }
+
+    return [math]::Round($bytes / 1MB, 2)
+}
+
+function Convert-MegabytesToBytes {
+    param ($megabytes)
+
+    if ($megabytes -le 0) {
+        return 0
+    }
+
+    return [int64]($megabytes * 1MB)
+}

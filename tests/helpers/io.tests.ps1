@@ -839,3 +839,54 @@ Describe "Test-RemoteFileDiskSpaceInsufficient" {
     }
 }
 
+Describe "Convert-BytesToMegabytes" {
+    It "Converts bytes to megabytes correctly" {
+        $result = Convert-BytesToMegabytes -bytes ([int64]1048576)
+
+        $result | Should -Be 1
+    }
+
+    It "Returns 0 for zero bytes" {
+        $result = Convert-BytesToMegabytes -bytes 0
+
+        $result | Should -Be 0
+    }
+
+    It "Returns 0 for negative bytes" {
+        $result = Convert-BytesToMegabytes -bytes -100
+
+        $result | Should -Be 0
+    }
+
+    It "Rounds to 2 decimal places" {
+        $result = Convert-BytesToMegabytes -bytes ([int64]1572864)
+
+        $result | Should -Be 1.5
+    }
+}
+
+Describe "Convert-MegabytesToBytes" {
+    It "Converts megabytes to bytes correctly" {
+        $result = Convert-MegabytesToBytes -megabytes 1
+
+        $result | Should -Be ([int64]1048576)
+    }
+
+    It "Returns 0 for zero megabytes" {
+        $result = Convert-MegabytesToBytes -megabytes 0
+
+        $result | Should -Be 0
+    }
+
+    It "Returns 0 for negative megabytes" {
+        $result = Convert-MegabytesToBytes -megabytes -100
+
+        $result | Should -Be 0
+    }
+
+    It "Handles large values correctly" {
+        $result = Convert-MegabytesToBytes -megabytes 1024
+
+        $result | Should -Be ([int64]1073741824)
+    }
+}

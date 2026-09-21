@@ -767,3 +767,75 @@ Describe "Get-RemoteFileSize" {
     }
 }
 
+Describe "Test-RemoteFileDiskSpaceSufficient" {
+    It "Returns true when remote file fits in available space" {
+        Mock Get-RemoteFileSize { return ([int64]100MB) }
+        Mock Get-FreeDiskSpaceBytes { return ([int64]200MB) }
+
+        $result = Test-RemoteFileDiskSpaceSufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns true when remote file size equals available space" {
+        Mock Get-RemoteFileSize { return ([int64]100MB) }
+        Mock Get-FreeDiskSpaceBytes { return ([int64]100MB) }
+
+        $result = Test-RemoteFileDiskSpaceSufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when remote file size exceeds available space" {
+        Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Get-FreeDiskSpaceBytes { return ([int64]100MB) }
+
+        $result = Test-RemoteFileDiskSpaceSufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeFalse
+    }
+
+    It "Returns false when remote file size is invalid" {
+        Mock Get-RemoteFileSize { return -1 }
+
+        $result = Test-RemoteFileDiskSpaceSufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeFalse
+    }
+
+    It "Returns false when available space is invalid" {
+        Mock Get-RemoteFileSize { return ([int64]100MB) }
+        Mock Get-FreeDiskSpaceBytes { return -1 }
+
+        $result = Test-RemoteFileDiskSpaceSufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeFalse
+    }
+
+    It "Handles exceptions gracefully" {
+        Mock Get-RemoteFileSize { throw 'Error' }
+
+        $result = Test-RemoteFileDiskSpaceSufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeFalse
+    }
+}
+
+Describe "Test-RemoteFileDiskSpaceInsufficient" {
+    It "Returns true when remote file exceeds available space" {
+        Mock Test-RemoteFileDiskSpaceSufficient { return $false }
+
+        $result = Test-RemoteFileDiskSpaceInsufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when remote file fits in available space" {
+        Mock Test-RemoteFileDiskSpaceSufficient { return $true }
+
+        $result = Test-RemoteFileDiskSpaceInsufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeFalse
+    }
+}
+

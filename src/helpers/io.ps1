@@ -288,3 +288,32 @@ function Get-RemoteFileSize {
     }
 }
 
+function Test-RemoteFileDiskSpaceSufficient {
+    param ($uri, $downloadPath)
+
+    try {
+        $remoteFileSize = Get-RemoteFileSize -uri $uri
+
+        if ($remoteFileSize -le 0) {
+            return $false
+        }
+
+        $availableFreeSpace = Get-FreeDiskSpaceBytes -path $downloadPath
+
+        if ($availableFreeSpace -le 0) {
+            return $false
+        }
+
+        return ($remoteFileSize -le $availableFreeSpace)
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check disk space for remote file '$uri'"; exception = $_ }
+        return $false
+    }
+}
+
+function Test-RemoteFileDiskSpaceInsufficient {
+    param ($uri, $downloadPath)
+
+    return -not (Test-RemoteFileDiskSpaceSufficient -uri $uri -downloadPath $downloadPath)
+}
+

@@ -20,13 +20,14 @@ function Get-FromSource {
 
                         $fileName = $_.href -split '/'
                         $fileName = $fileName[$fileName.Count - 1]
+                        $link = "$url/$($_.href)"
 
                         $filteredLinks.Add(@{
                             fileName = $fileName
                             Version   = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
                             Arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
                             BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
-                            Link      = $_.href
+                            Link      = $link
                         })
                     }
                     # Return the filtered links (PHP version names)

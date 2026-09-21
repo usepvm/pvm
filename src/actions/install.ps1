@@ -128,12 +128,10 @@ function Get-PHPVersions {
 }
 
 function Get-PHPFromUrl {
-    param ($destination, $url, $versionObject)
+    param ($url, $destination)
 
     try {
-        # Download the selected PHP version
-        $fileName = $versionObject.fileName
-        $null = Invoke-WebRequestWrapper -uri $url -outFile "$destination\$fileName"
+        $null = Invoke-WebRequestWrapper -uri $url -outFile $destination
         return $destination
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP from $url"; exception = $_ }
@@ -162,14 +160,9 @@ function Get-PHP {
         return Show-SpinnerWhileJob -argumentList @($fileName, $destination, $versionObject) -scriptBlock {
             param ($fileName, $destination, $versionObject)
 
-            $urls = Get-SourceUrls
-            foreach ($key in $urls.Keys) {
-                $_url = $urls[$key]
-                $downloadUrl = "$_url/$fileName"
-                $downloadedFilePath = Get-PHPFromUrl -destination $destination -url $downloadUrl -versionObject $versionObject
-                if ($downloadedFilePath) {
-                    return @{ pvmData = $downloadedFilePath }
-                }
+            $downloadedFilePath = Get-PHPFromUrl -url $versionObject.href -destination "$destination\$fileName"
+            if ($downloadedFilePath) {
+                return @{ pvmData = $downloadedFilePath }
             }
             return @{ pvmData = $null }
         } -rethrow $true
@@ -365,16 +358,17 @@ function Install-PHP {
 
         Show-Message -message "`nExtracting the downloaded zip ..."
         $phpDirectoryName = "$($selectedVersionObject.version)_$($selectedVersionObject.BuildType)_$($selectedVersionObject.arch)"
+        $destination = Split-Path -Path $destination -Parent
         Expand-AndConfigurePHP -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$phpDirectoryName"
 
         $null = Set-Opcache -version $version -phpPath "$destination\$phpDirectoryName"
 
-        $message = "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$phpDirectoryName'"
-        $message += "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"
-
         $null = Update-InstalledPHPVersionsCache
 
+        $message = "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$phpDirectoryName'"
+        $message += "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"
         Show-Success -message $message
+
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install PHP version $version"; exception = $_ }

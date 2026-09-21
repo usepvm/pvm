@@ -696,3 +696,74 @@ Describe "Test-FreeDiskSpaceInsufficient" {
         $result | Should -BeFalse
     }
 }
+
+Describe "Get-RemoteFileSize" {
+    It "Returns file size for valid URI" {
+        Mock Invoke-WebRequestWrapper {
+            return @{
+                Headers = @{ 'Content-Length' = @('1024') }
+            }
+        }
+
+        $result = Get-RemoteFileSize -uri 'https://example.com/file.zip'
+
+        $result | Should -Be 1024
+    }
+
+    It "Returns -1 for empty URI" {
+        $result = Get-RemoteFileSize -uri ''
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 for whitespace URI" {
+        $result = Get-RemoteFileSize -uri '   '
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when response is null" {
+        Mock Invoke-WebRequestWrapper { return $null }
+
+        $result = Get-RemoteFileSize -uri 'https://example.com/file.zip'
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when headers are null" {
+        Mock Invoke-WebRequestWrapper { return @{ Headers = $null } }
+
+        $result = Get-RemoteFileSize -uri 'https://example.com/file.zip'
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when Content-Length is missing" {
+        Mock Invoke-WebRequestWrapper {
+            return @{ Headers = @{} }
+        }
+
+        $result = Get-RemoteFileSize -uri 'https://example.com/file.zip'
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when Content-Length is null or whitespaced" {
+        Mock Invoke-WebRequestWrapper {
+            return @{ Headers = @{ 'Content-Length' = @('') } }
+        }
+
+        $result = Get-RemoteFileSize -uri 'https://example.com/file.zip'
+
+        $result | Should -Be -1
+    }
+
+    It "Handles exceptions gracefully" {
+        Mock Invoke-WebRequestWrapper { throw 'Network error' }
+
+        $result = Get-RemoteFileSize -uri 'https://example.com/file.zip'
+
+        $result | Should -Be -1
+    }
+}
+

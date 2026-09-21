@@ -260,3 +260,31 @@ function Test-FreeDiskSpaceInsufficient {
     return -not (Test-FreeDiskSpaceSufficient -path $path -minimumMegabytes $minimumMegabytes)
 }
 
+function Get-RemoteFileSize {
+    param ($uri)
+
+    try {
+        if ([string]::IsNullOrWhiteSpace($uri)) {
+            return -1
+        }
+
+        $uri = $uri.Trim()
+        $response = Invoke-WebRequestWrapper -uri $uri -method 'Head'
+
+        if ($null -eq $response -or $null -eq $response.Headers) {
+            return -1
+        }
+
+        $contentLength = $response.Headers['Content-Length'][0]
+
+        if ([string]::IsNullOrWhiteSpace($contentLength)) {
+            return -1
+        }
+
+        return [long]$contentLength
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get remote file size for '$uri'"; exception = $_ }
+        return -1
+    }
+}
+

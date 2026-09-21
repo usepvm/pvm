@@ -616,3 +616,83 @@ Describe "Get-BaseUrl" {
         $result | Should -Be $null
     }
 }
+
+Describe "Get-FreeDiskSpaceBytes" {
+    It "Returns available free space for an existing path" {
+        $result = Get-FreeDiskSpaceBytes -path $script:STORAGE_PATH
+
+        $result | Should -BeGreaterThan 0
+    }
+
+    It "Returns -1 for an empty path" {
+        $result = Get-FreeDiskSpaceBytes -path ''
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when the path has no drive root" {
+        $result = Get-FreeDiskSpaceBytes -path 'relative\path'
+
+        $result | Should -Be -1
+    }
+}
+
+Describe "Test-FreeDiskSpaceSufficient" {
+    It "Returns true when available space is greater than the minimum" {
+        Mock Get-FreeDiskSpaceBytes { return ([int64]200MB) }
+
+        $result = Test-FreeDiskSpaceSufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns true when available space equals the minimum" {
+        Mock Get-FreeDiskSpaceBytes { return ([int64]100MB) }
+
+        $result = Test-FreeDiskSpaceSufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when available space is below the minimum" {
+        Mock Get-FreeDiskSpaceBytes { return ([int64]99MB) }
+
+        $result = Test-FreeDiskSpaceSufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeFalse
+    }
+
+    It "Returns false when free space cannot be determined" {
+        Mock Get-FreeDiskSpaceBytes { return -1 }
+
+        $result = Test-FreeDiskSpaceSufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeFalse
+    }
+
+    It "Handles exception gracefully" {
+        Mock Get-FreeDiskSpaceBytes { throw 'Error' }
+
+        $result = Test-FreeDiskSpaceSufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeFalse
+    }
+}
+
+Describe "Test-FreeDiskSpaceInsufficient" {
+    It "Returns true when available space is below the minimum" {
+        Mock Test-FreeDiskSpaceSufficient { return $false }
+
+        $result = Test-FreeDiskSpaceInsufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when available space is sufficient" {
+        Mock Test-FreeDiskSpaceSufficient { return $true }
+
+        $result = Test-FreeDiskSpaceInsufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeFalse
+    }
+}

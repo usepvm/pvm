@@ -228,3 +228,35 @@ function Get-BaseUrl {
 
     return ([System.Uri]$url).Host
 }
+
+function Get-FreeDiskSpaceBytes {
+    param ($path)
+
+    $root = [System.IO.Path]::GetPathRoot($path)
+    if ([string]::IsNullOrWhiteSpace($root)) {
+        return -1
+    }
+
+    return ([System.IO.DriveInfo]::new($root)).AvailableFreeSpace
+}
+
+function Test-FreeDiskSpaceSufficient {
+    param ($path, $minimumMegabytes)
+
+    try {
+        $minimumFreeSpace = [int64]$minimumMegabytes * 1MB
+        $availableFreeSpace = Get-FreeDiskSpaceBytes -path $path
+
+        return ($minimumFreeSpace -le $availableFreeSpace)
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check for free disk space for '$path'"; exception = $_ }
+        return $false
+    }
+}
+
+function Test-FreeDiskSpaceInsufficient {
+    param ($path, $minimumMegabytes)
+
+    return -not (Test-FreeDiskSpaceSufficient -path $path -minimumMegabytes $minimumMegabytes)
+}
+

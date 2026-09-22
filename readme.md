@@ -160,10 +160,10 @@ pvm install latest # pvm i latest
 
 # Uninstall a specific version (or multiple versions)
 pvm uninstall <version> [version...] [--yes|-y] # pvm u <version> [version...] [--yes|-y]
-# Example: pvm uninstall 8.4 # pvm rm 8.4
-# Example: pvm uninstall 8.4 -y # pvm rm 8.4 -y # Skip confirmation
-# Example: pvm uninstall 8.2 8.3 8.4 # pvm rm 8.2 8.3 8.4 # Uninstall multiple versions
-# Example: pvm uninstall 8.2 8.3 -y # pvm rm 8.2 8.3 -y # Skip confirmation for all versions
+# Example: pvm uninstall 8.4 # pvm u 8.4
+# Example: pvm uninstall 8.4 -y # pvm u 8.4 -y # Skip confirmation
+# Example: pvm uninstall 8.2 8.3 8.4 # pvm u 8.2 8.3 8.4 # Uninstall multiple versions
+# Example: pvm uninstall 8.2 8.3 -y # pvm u 8.2 8.3 -y # Skip confirmation for all versions
 
 # Switch to use the specified version
 pvm use <version>
@@ -419,7 +419,7 @@ pvm i 8.4              # Same as: pvm install 8.4
 pvm ls                  # Same as: pvm list
 pvm use 8.4             # Same as: pvm use 8.4
 pvm cur                 # Same as: pvm current
-pvm rm 8.4              # Same as: pvm uninstall 8.4
+pvm u 8.4              # Same as: pvm uninstall 8.4
 pvm ? setup             # Same as: pvm help setup
 pvm fix                 # Same as: pvm repair
 pvm upgrade             # Same as: pvm update

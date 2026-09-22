@@ -1736,26 +1736,23 @@ Describe "Select-ExtensionFromMatches" {
 }
 
 Describe "Resolve-ExtensionLinks" {
-    It "Returns filtered links" {
-        Mock Test-CanUseCache { return $false }
-        Mock Get-ExtensionAvailableReleasesLinks {
-            return @(
-                @{ href = '/package/memcache/3.4.0/windows' },
-                @{ href = '/package/memcache/3.3.0/windows' },
-                @{ href = '/package/memcache/3.2.0/windows' }
-            )
-        }
+    It "Returns direct pecl result without fallback when links are found immediately" {
+        Mock Get-OrUpdateCache { return @( @{ href = '/package/memcache/3.4.0/windows' } ) }
 
         $result = Resolve-ExtensionLinks -extName 'memcache' -version '8.2'
 
         $result.extName | Should -Be 'memcache'
-        $result.links.Count | Should -Be 3
+        $result.source | Should -Be 'pecl.php.net'
+        $result.links.Count | Should -Be 1
+        Should -Invoke Show-Message -Exactly 0
     }
 
     Context "When extension has no direct link" {
         BeforeEach {
             Mock Test-CanUseCache { return $false }
-            Mock Get-ExtensionAvailableReleasesLinks -ParameterFilter { $extName -eq 'mem' } { throw 'Error' }
+            Mock Get-ExtensionAvailableReleasesLinks -ParameterFilter { $extName -eq 'mem' } {
+                throw 'Error'
+            }
             Mock Get-ExtensionAvailableReleasesLinks -ParameterFilter { $extName -eq 'memcache' } {
                 return @(
                     @{ href = '/package/memcache/3.4.0/windows' },
@@ -1766,25 +1763,33 @@ Describe "Resolve-ExtensionLinks" {
         }
 
         It "Returns null when no matching categories links found" {
+            Mock Get-OrUpdateCache { return @() }
             Mock Get-ExtensionMatchingCategories { return @() }
 
-            $result = Resolve-ExtensionLinks -extName 'mem' -version '8.2'
+            $result = Resolve-ExtensionLinks -extName 'unknownext' -version '8.2'
 
             $result | Should -Be $null
+            Should -Invoke Show-Error -ParameterFilter {
+                $message -match "Extension 'unknownext' not found"
+            } -Exactly 1
         }
 
         It "Takes the only link found" {
-            Mock Get-ExtensionMatchingCategories { return @( @{ href = '/package/memcache'; extName = 'memcache'; source = 'pecl.php.net' } ) }
+            Mock Get-ExtensionAvailableReleasesLinks { return $null }
+            Mock Get-ExtensionMatchingCategories {
+                return @( @{ href = '/package/memcache'; extName = 'memcache'; source = 'pecl.php.net' } )
+            }
 
-            $result = Resolve-ExtensionLinks -extName 'mem' -version '8.2'
+            $result = Resolve-ExtensionLinks -extName 'memca' -version '8.2'
 
             $result.extName | Should -Be 'memcache'
             $result.links.Count | Should -Be 3
         }
 
         It "Should return empty links for sources other than pecl" {
+            Mock Get-ExtensionAvailableReleasesLinks { return $null }
             Mock Get-ExtensionMatchingCategories { return @(
-                    @{ href = "$script:XDEBUG_HISTORICAL_URL"; extName = 'xdebug'; source = 'xdebug.org' }
+                    @{ href = $script:XDEBUG_HISTORICAL_URL; extName = 'xdebug'; source = 'xdebug.org' }
                 )
             }
 
@@ -1796,20 +1801,29 @@ Describe "Resolve-ExtensionLinks" {
     }
 
     It "Handles defensive check when chosen item is null" {
+        Mock Get-OrUpdateCache { return @() }
         Mock Get-ExtensionMatchingCategories {
             return @(
                 @{ href = '/package/memcache'; extName = 'memcache' },
+                $null,
                 @{ href = '/package/memcached'; extName = 'memcached' }
             )
         }
-        # Test the defensive check by having a null element in the array
-        Mock Get-OrUpdateCache { throw 'Test exception' }
-        Mock Get-ExtensionMatchingCategories { return @( @{ href = '/package/memcache'; extName = 'memcache' }, $null, @{ href = '/package/memcached'; extName = 'memcached' } ) }
         Mock Select-ExtensionFromMatches { return $null }
 
         $result = Resolve-ExtensionLinks -extName 'mem' -version '8.2'
 
         $result | Should -Be $null
+    }
+
+    It "Handles exception gracefully" {
+        Mock Get-OrUpdateCache { throw 'Test exception' }
+        Mock Add-LogEntry { return 0 }
+
+        $result = Resolve-ExtensionLinks -extName 'mem' -version '8.2'
+
+        $result | Should -Be $null
+        Should -Invoke Add-LogEntry -Times 1
     }
 }
 

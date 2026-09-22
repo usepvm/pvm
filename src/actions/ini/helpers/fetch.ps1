@@ -672,8 +672,15 @@ function Resolve-ExtensionLinks {
         $links = Get-OrUpdateCache -cacheFileName "available_$($extName)_versions_$($version)_pecl" -compute {
             return Get-ExtensionAvailableReleasesLinks -extName $extName
         }
-        $source = 'pecl.php.net'
-    } catch {
+
+        if ($links -and $links.Count -gt 0) {
+            return @{
+                extName = $extName
+                links   = $links
+                source  = 'pecl.php.net'
+            }
+        }
+
         Show-Message -message "`nDirect link for extension '$extName' not found, Loading matching extensions..."
 
         $linksMatchingExtName = Get-ExtensionMatchingCategories -extName $extName
@@ -699,12 +706,15 @@ function Resolve-ExtensionLinks {
         } else {
             $links = @()
         }
-    }
 
-    return @{
-        extName = $extName
-        links   = $links
-        source  = $source
+        return @{
+            extName = $extName
+            links   = $links
+            source  = $source
+        }
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to resolve links for extension: '$extName'"; exception = $_ }
+        return $null
     }
 }
 

@@ -504,12 +504,14 @@ Describe "Install-Extension" {
     It "Returns -1 when gets empty list from extension" {
         $code = Install-Extension -iniPath $script:testIniPath -extName 'nonexistent_ext'
         $code | Should -Be -1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*No packages found for nonexistent_ext*' }
     }
 
     It "Returns -1 when No package is found" {
-        Mock Add-Member { throw 'error' }
+        Mock Get-ExtensionPackages { return $null }
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
         $code | Should -Be -1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*No packages found for curl*' }
     }
 
     It "Returns -1 when user does not choose a zip extension version to install" {
@@ -530,6 +532,7 @@ Describe "Install-Extension" {
         $script:getRandomFile = $true
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
         $code | Should -Be -1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*Failed to download curl*' }
     }
 
     It "Returns -1 when user answers no to replace existing extension" {
@@ -567,14 +570,9 @@ Describe "Install-Extension" {
 
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
         $code | Should -Be -1
-    }
-
-    It "Returns -1 when no matching extension is found" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = 'x64'; buildType = 'ts' } }
-        Mock Get-ExtensionPackages { return $null }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -like "*No packages found for 'curl' matching current PHP architecture/build type*"
+        }
     }
 
     It "Installs extension successfully" {
@@ -591,6 +589,10 @@ Describe "Install-Extension" {
                 )
             }
         }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Add-MissingPHPExtensionToIni { return 0 }
 
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $true
@@ -689,6 +691,10 @@ Describe "Install-Extension" {
                     )
                 }
             }
+            Mock Test-FreeDiskSpaceInsufficient { return $false }
+            Mock Get-RemoteFileSize { return ([int64]10MB) }
+            Mock Convert-BytesToMegabytes { return 10 }
+            Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
             Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
                 return 'y'
             }
@@ -729,12 +735,20 @@ Describe "Install-Extension" {
 
     It "Handles thrown exception from download" {
         $script:MockFileSystem.DownloadFails = $true
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
         $code | Should -Be -1
     }
 
     It "Handles thrown exception from config" {
         $script:MockFileSystem.DownloadFails = $false
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Add-MissingPHPExtensionToIni { return -1 }
 
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $true
@@ -756,6 +770,10 @@ Describe "Install-Extension" {
                 )
             }
         }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Add-MissingPHPExtensionToIni { return 0 }
 
@@ -775,6 +793,10 @@ Describe "Install-Extension" {
                 )
             }
         }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Add-MissingPHPExtensionToIni { return 0 }
 
@@ -794,6 +816,10 @@ Describe "Install-Extension" {
                 )
             }
         }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
         Mock Add-MissingPHPExtensionToIni { return 0 }
 
@@ -812,6 +838,10 @@ Describe "Install-Extension" {
                 )
             }
         }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Get-ChildItemWrapper {
             # Return a file that doesn't match the expected pattern
             return @( @{ Name = 'random_file.dll'; FullName = "$script:TEST_DRIVE\extracted\random_file.dll" } )
@@ -833,6 +863,10 @@ Describe "Install-Extension" {
                 )
             }
         }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Get-ChildItemWrapper {
             return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" } )
         }
@@ -855,6 +889,10 @@ Describe "Install-Extension" {
                 )
             }
         }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Get-ChildItemWrapper {
             return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" } )
         }
@@ -879,6 +917,10 @@ Describe "Install-Extension" {
                 )
             }
         }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Get-ChildItemWrapper {
             return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" } )
         }
@@ -902,6 +944,10 @@ Describe "Install-Extension" {
                 )
             }
         }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Get-ChildItemWrapper {
             return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" } )
         }
@@ -929,6 +975,10 @@ Describe "Install-Extension" {
                 )
             }
         }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Get-ChildItemWrapper {
             return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" } )
         }
@@ -955,6 +1005,10 @@ Describe "Install-Extension" {
                 )
             }
         }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Get-ChildItemWrapper {
             return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" } )
         }
@@ -990,32 +1044,6 @@ Describe "Install-Extension" {
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
         $code | Should -Be -1
         Should -Invoke Write-Gray -ParameterFilter { $message -like '*Installation cancelled*' }
-    }
-
-    It "Returns -1 when no matching extension is found" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0" } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                )
-            }
-        }
-
-        $script:callCount = 0
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith {
-            $script:callCount++
-            if ($script:callCount -eq 1) { return '0' }
-            return '-1'
-        }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*You chose the wrong index*" }
     }
 
     It "Handles exception gracefully" {

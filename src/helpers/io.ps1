@@ -232,6 +232,10 @@ function Get-BaseUrl {
 function Get-FreeDiskSpaceBytes {
     param ($path)
 
+    if ([string]::IsNullOrWhiteSpace($path)) {
+        return -1
+    }
+
     $root = [System.IO.Path]::GetPathRoot($path)
     if ([string]::IsNullOrWhiteSpace($root)) {
         return -1

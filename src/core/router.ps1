@@ -70,6 +70,9 @@ function Get-ListAction {
                 "With the 'available' argument, shows PHP versions available for installation. The available-version list is cached for $($Global:PVMConfig.env.CACHE_MAX_HOURS) hours."
                 'With the --update flag, updates the installed PHP versions cache.'
             )
+            OPTIONS     = @(
+                '--update ........................... Update the installed PHP versions cache'
+            )
             EXAMPLES    = @(
                 'pvm list ........................... Show installed versions'
                 'pvm list x64 ts .................... Show installed versions matching x64 TS'
@@ -78,9 +81,6 @@ function Get-ListAction {
                 'pvm list --search=8.2 .............. Show installed versions with 8.2 in the name'
                 'pvm list available --search=8.2 .... Show available versions with 8.2 in the name'
                 'pvm list --update .................. Update the installed PHP versions cache'
-            )
-            OPTIONS     = @(
-                '--update .................... Update the installed PHP versions cache'
             )
         };
         action      = {
@@ -103,10 +103,10 @@ function Get-InstallAction {
                 'Multiple versions can be specified to install them in sequence.'
             )
             ARGUMENTS   = @(
-                '<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)'
-                '[version] ... Additional versions to install (optional)'
-                'auto ......... Auto-detect version from project files'
-                'latest ....... Install the latest available PHP version'
+                '<version> .................... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)'
+                '[version] .................... Additional versions to install (optional)'
+                'auto ......................... Auto-detect version from project files'
+                'latest ....................... Install the latest available PHP version'
             )
             EXAMPLES    = @(
                 'pvm install 8.2 .............. Install specific version'
@@ -133,13 +133,13 @@ function Get-UseAction {
                 "Switches the active PHP version. You can specify a version number or use 'auto'"
                 'to automatically select the version based on project configuration files.'
             )
-            EXAMPLES    = @(
-                'pvm use 8.2.0 .... Switches to PHP version 8.2.0'
-                'pvm use auto ..... Automatically uses version from composer.json or .php-version file'
-            )
             ARGUMENTS   = @(
-                '<version> ........ Specific PHP version to use'
-                'auto ............. Auto-detect version from project files'
+                '<version> ............ Specific PHP version to use'
+                'auto ................. Auto-detect version from project files'
+            )
+            EXAMPLES    = @(
+                'pvm use 8.2.0 ........ Switches to PHP version 8.2.0'
+                'pvm use auto ......... Automatically uses version from composer.json or .php-version file'
             )
         }
         action      = {
@@ -161,11 +161,11 @@ function Get-UninstallAction {
                 'Multiple versions can be specified to uninstall them in sequence.'
             )
             ARGUMENTS   = @(
-                '<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)'
-                '[version] ... Additional versions to uninstall (optional)'
+                '<version> ..................... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)'
+                '[version] ..................... Additional versions to uninstall (optional)'
             )
             OPTIONS     = @(
-                '--yes|-y .................... Skip confirmation prompt for all versions'
+                '--yes|-y ...................... Skip confirmation prompt for all versions'
             )
             EXAMPLES    = @(
                 'pvm uninstall 8.2.0 ........... Uninstall single version'
@@ -197,8 +197,8 @@ function Get-IniAction {
                 'status <extension> .......................................... Check if extension is enabled'
                 'info [extensions] [settings] [--search=<term>] .............. Displays information about the environment and php.ini information summary'
                 'restore ..................................................... Restore original php.ini from backup'
-                'add <extension> [--yes|-y] ................................ Install a PHP extension (handles duplicate extension names)'
-                'remove <extension> [--yes|-y] .............................. Remove a PHP extension'
+                'add <extension> [--yes|-y] .................................. Install a PHP extension (handles duplicate extension names)'
+                'remove <extension> [--yes|-y] ............................... Remove a PHP extension'
                 "ext [available] [--search=<term>]|[info <extension>] ........ Lists the PHP extensions. Type 'available' at the end to see what can be installed."
             )
             EXAMPLES    = @(
@@ -252,8 +252,8 @@ function Get-ProfileAction {
                 'load <name> .................................. Load and apply a saved profile'
                 'list ......................................... List all available profiles'
                 'show <name> .................................. Show detailed profile contents'
-                'delete <name> [--yes|-y] ........................ Delete a profile'
-                'clear [--yes|-y] ................................ Delete all profiles files'
+                'delete <name> [--yes|-y] ..................... Delete a profile'
+                'clear [--yes|-y] ............................. Delete all profiles files'
                 'export <name> <path> ......................... Export profile to a JSON file'
                 'import <path> <name> ......................... Import profile from a JSON file'
             )
@@ -320,14 +320,14 @@ function Get-LogAction {
                 'Displays the PVM log file contents, showing recent errors,'
                 'and system messages. Useful for troubleshooting issues.'
             )
-            EXAMPLES    = @(
-                "pvm log ................... Shows the last $($Global:PVMConfig.env.DEFAULT_LOG_PAGE_SIZE) entries of the log file"
-                'pvm log --pageSize=50 ..... Shows the last 50 entries of the log file'
-                "pvm log --search=error .... Shows entries matching 'error' term"
-                'pvm log --clear ........... Clears the log file'
-            )
             OPTIONS     = @(
-                '--clear .................... Clear the log file (prompts for confirmation)'
+                '--clear ....................... Clear the log file (prompts for confirmation)'
+            )
+            EXAMPLES    = @(
+                "pvm log ....................... Shows the last $($Global:PVMConfig.env.DEFAULT_LOG_PAGE_SIZE) entries of the log file"
+                'pvm log --pageSize=50 ......... Shows the last 50 entries of the log file'
+                "pvm log --search=error ........ Shows entries matching 'error' term"
+                'pvm log --clear ............... Clears the log file'
             )
         }
         action      = {
@@ -366,8 +366,8 @@ function Get-CacheAction {
             ARGUMENTS   = @(
                 'list ......................................... List all available cache files'
                 'show <name> .................................. Show detailed cache file contents'
-                'delete <name> [--yes|-y] ........................ Delete a cache file'
-                'clear [--yes|-y] ................................ Delete all cache files'
+                'delete <name> [--yes|-y] ..................... Delete a cache file'
+                'clear [--yes|-y] ............................. Delete all cache files'
             )
             EXAMPLES    = @(
                 'pvm cache list ............................... Lists all available cache files'
@@ -394,12 +394,12 @@ function Get-UpdateAction {
                 'Requires Git to be installed and PVM to be installed from a git clone.',
                 'Checks for uncommitted changes before updating.'
             )
+            OPTIONS     = @(
+                '--check .................... Only check for updates without applying them'
+            )
             EXAMPLES    = @(
                 'pvm update ................. Updates PVM to the latest version'
                 'pvm update --check ......... Checks for updates without applying them'
-            )
-            OPTIONS     = @(
-                '--check .................... Only check for updates without applying them'
             )
         }
         action      = {
@@ -420,35 +420,35 @@ function Get-TestAction {
                 'are working correctly. This includes testing PHP version switching,'
                 'path resolution, and core functionality.'
             )
-            EXAMPLES    = @(
-                "pvm test ......................... Runs all tests with $($Global:PVMConfig.test.verbosity.default) (default) verbosity"
-                "pvm test use install ............. Runs only use.tests.ps1 and install.tests.ps1 with $($Global:PVMConfig.test.verbosity.default) verbosity."
-                "pvm test --exclude=use,install ... Runs all tests except use.tests.ps1 and install.tests.ps1 with $($Global:PVMConfig.test.verbosity.default) verbosity."
-                'pvm test --verbosity=Detailed .... Runs all tests with Detailed verbosity.'
-                "pvm test --coverage .............. Runs all tests and generates coverage report (target: $($Global:PVMConfig.test.coverage.default)%)"
-                'pvm test --coverage=80 ........... Runs all tests and generates coverage report (target: 80%)'
-                "pvm test --tag=unit .............. Runs only tests with tag 'unit'"
-                'pvm test --sort=coverage ......... Runs all tests and sort results by coverage'
-                'pvm test --sort=-coverage ........ Runs all tests and sort results by coverage (descending)'
-                'pvm test --group=coverage ........ Runs all tests and group results by coverage bands'
-                'pvm test --group=folder .......... Runs all tests and group results by folder'
-                'pvm test --shell=powershell ...... Runs all tests with Windows PowerShell (powershell.exe)'
-                'pvm test --pester=5.7.0 .......... Runs all tests with Pester 5.7.0'
-                'pvm test --mute .................. Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
-            )
             ARGUMENTS   = @(
-                'files ............................ Run only specific test files (e.g. use, install)'
+                'files ................................. Run only specific test files (e.g. use, install)'
             )
             OPTIONS     = @(
-                '--sort=[coverage|duration|file] .. Sort tests results by coverage, duration or file names, add - to reverse sort'
-                '--group=[folder|coverage] ........ Group test results by folder or coverage bands'
-                "--coverage[=<number>] ............ Generate coverage report with optional target percentage (default: $($Global:PVMConfig.test.coverage.default)%)"
-                '--verbosity=<verbosity> .......... Set verbosity level (None, Normal, Detailed, Diagnostic)'
-                '--tag=<tag> ...................... Run only tests with specific tag'
-                '--exclude=[files] ................ Run all tests except selected files'
-                '--shell=<shell> .................. Run tests with a specific shell (powershell, pwsh)'
-                '--pester=<version> ............... Run tests with a specific Pester version'
-                '--mute ........................... Force mute mode (SOUNDS_DISABLED = false)'
+                '--sort=[coverage|duration|file] ....... Sort tests results by coverage, duration or file names, add - to reverse sort'
+                '--group=[folder|coverage] ............. Group test results by folder or coverage bands'
+                "--coverage[=<number>] ................. Generate coverage report with optional target percentage (default: $($Global:PVMConfig.test.coverage.default)%)"
+                '--verbosity=<verbosity> ............... Set verbosity level (None, Normal, Detailed, Diagnostic)'
+                '--tag=<tag> ........................... Run only tests with specific tag'
+                '--exclude=[files] ..................... Run all tests except selected files'
+                '--shell=<shell> ....................... Run tests with a specific shell (powershell, pwsh)'
+                '--pester=<version> .................... Run tests with a specific Pester version'
+                '--mute ................................ Force mute mode (SOUNDS_DISABLED = false)'
+            )
+            EXAMPLES    = @(
+                "pvm test .............................. Runs all tests with $($Global:PVMConfig.test.verbosity.default) (default) verbosity"
+                "pvm test use install .................. Runs only use.tests.ps1 and install.tests.ps1 with $($Global:PVMConfig.test.verbosity.default) verbosity."
+                "pvm test --exclude=use,install ........ Runs all tests except use.tests.ps1 and install.tests.ps1 with $($Global:PVMConfig.test.verbosity.default) verbosity."
+                'pvm test --verbosity=Detailed ......... Runs all tests with Detailed verbosity.'
+                "pvm test --coverage ................... Runs all tests and generates coverage report (target: $($Global:PVMConfig.test.coverage.default)%)"
+                'pvm test --coverage=80 ................ Runs all tests and generates coverage report (target: 80%)'
+                "pvm test --tag=unit ................... Runs only tests with tag 'unit'"
+                'pvm test --sort=coverage .............. Runs all tests and sort results by coverage'
+                'pvm test --sort=-coverage ............. Runs all tests and sort results by coverage (descending)'
+                'pvm test --group=coverage ............. Runs all tests and group results by coverage bands'
+                'pvm test --group=folder ............... Runs all tests and group results by folder'
+                'pvm test --shell=powershell ........... Runs all tests with Windows PowerShell (powershell.exe)'
+                'pvm test --pester=5.7.0 ............... Runs all tests with Pester 5.7.0'
+                'pvm test --mute ....................... Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
             )
         }
         action      = {

@@ -81,9 +81,7 @@ Describe "Get-ExtensionHandlers" {
             $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true
 
             $result | Should -BeNullOrEmpty
-            Should -Invoke Show-Error -ParameterFilter {
-                $message -match 'Insufficient disk space for extension installation'
-            } -Exactly 1
+            Should -Invoke Show-Error -ParameterFilter { $message -match 'Insufficient disk space for extension installation' } -Exactly 1
         }
 
         It "Returns null when remote file size cannot be determined" {

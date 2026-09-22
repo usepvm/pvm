@@ -1727,8 +1727,8 @@ Describe "Select-ExtensionFromMatches" {
             $result = Select-ExtensionFromMatches -linksMatchingExtName $extList
 
             $result.extName | Should -Be 'memcache'
-            Should -Invoke Show-Warning -ParameterFilter { $message -eq 'Please enter a valid positive number.'}
-            Should -Invoke Show-Warning -ParameterFilter { $message -eq "Number must be between 0 and $($extList.Length - 1)." }
+            Should -Invoke Show-Warning -ParameterFilter { $message -eq "`nPlease enter a valid positive number." }
+            Should -Invoke Show-Warning -ParameterFilter { $message -eq "`nNumber must be between 0 and $($extList.Length - 1)." }
         }
     }
 }

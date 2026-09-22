@@ -72,12 +72,12 @@ function Save-CachedData {
         $path = Get-CacheFilePath -filename $cacheFileName
         $created = New-Directory -path (Split-Path -Path $path -Parent)
         if ($created -ne 0) {
-            Show-Error -message "Failed to create directory $(Split-Path -Path $path -Parent)"
+            Show-Error -message "`nFailed to create directory $(Split-Path -Path $path -Parent)"
             return -1
         }
 
         if (Test-FreeDiskSpaceInsufficient -path $path -minimumMegabytes $Global:PVMConfig.env.MIN_CACHE_FREE_SPACE_MB) {
-            Show-Error -message "Insufficient disk space for cache data. At least $($Global:PVMConfig.env.MIN_CACHE_FREE_SPACE_MB) MB is required."
+            Show-Error -message "`nInsufficient disk space for cache data. At least $($Global:PVMConfig.env.MIN_CACHE_FREE_SPACE_MB) MB is required."
             return -1
         }
         Set-ContentWrapper -path $path -value $jsonString

@@ -42,21 +42,21 @@ function Get-ExtensionHandlers {
                     try {
                         # Keep minimum space check as fallback for extraction space
                         if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.php -minimumMegabytes $Global:PVMConfig.env.MIN_EXTENSION_INSTALL_FREE_SPACE_MB) {
-                            Show-Error -message "Insufficient disk space for extension installation. At least $($Global:PVMConfig.env.MIN_EXTENSION_INSTALL_FREE_SPACE_MB) MB is required."
+                            Show-Error -message "`nInsufficient disk space for extension installation. At least $($Global:PVMConfig.env.MIN_EXTENSION_INSTALL_FREE_SPACE_MB) MB is required."
                             return $null
                         }
 
                         # Get remote file size and check disk space
                         $remoteFileSize = Get-RemoteFileSize -uri $chosenItem.href
                         if ($remoteFileSize -le 0) {
-                            Show-Error -message "Failed to get remote file size or invalid size. Cannot proceed with download."
+                            Show-Error -message "`nFailed to get remote file size or invalid size. Cannot proceed with download."
                             return $null
                         }
 
                         $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
 
                         if (Test-RemoteFileDiskSpaceInsufficient -uri $chosenItem.href -downloadPath $Global:PVMConfig.paths.directories.php) {
-                            Show-Error -message "Insufficient disk space for extension download. Required: $sizeMB MB"
+                            Show-Error -message "`nInsufficient disk space for extension download. Required: $sizeMB MB"
                             return $null
                         }
 
@@ -122,21 +122,21 @@ function Get-ExtensionHandlers {
                     try {
                         # Keep minimum space check as fallback for extraction space
                         if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.php -minimumMegabytes $Global:PVMConfig.env.MIN_EXTENSION_INSTALL_FREE_SPACE_MB) {
-                            Show-Error -message "Insufficient disk space for extension installation. At least $($Global:PVMConfig.env.MIN_EXTENSION_INSTALL_FREE_SPACE_MB) MB is required."
+                            Show-Error -message "`nInsufficient disk space for extension installation. At least $($Global:PVMConfig.env.MIN_EXTENSION_INSTALL_FREE_SPACE_MB) MB is required."
                             return $null
                         }
 
                         # Get remote file size and check disk space
                         $remoteFileSize = Get-RemoteFileSize -uri $chosenItem.href
                         if ($remoteFileSize -le 0) {
-                            Show-Error -message "Failed to get remote file size or invalid size. Cannot proceed with download."
+                            Show-Error -message "`nFailed to get remote file size or invalid size. Cannot proceed with download."
                             return $null
                         }
 
                         $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
 
                         if (Test-RemoteFileDiskSpaceInsufficient -uri $chosenItem.href -downloadPath $Global:PVMConfig.paths.directories.php) {
-                            Show-Error -message "Insufficient disk space for extension download. Required: $sizeMB MB"
+                            Show-Error -message "`nInsufficient disk space for extension download. Required: $sizeMB MB"
                             return $null
                         }
 
@@ -652,12 +652,12 @@ function Select-ExtensionFromMatches {
 
         $choice = $null
         if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-            Show-Warning -message 'Please enter a valid positive number.'
+            Show-Warning -message "`nPlease enter a valid positive number."
             continue
         }
 
         if ($choice -lt 0 -or $choice -gt $linksMatchingExtName.Length - 1) {
-            Show-Warning -message "Number must be between 0 and $($linksMatchingExtName.Length - 1)."
+            Show-Warning -message "`nNumber must be between 0 and $($linksMatchingExtName.Length - 1)."
             continue
         }
 

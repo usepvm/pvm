@@ -741,7 +741,7 @@ Describe "Install-PHP" {
         $result = Install-PHP -version '8'
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq 'Failed to download PHP version 8' }
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq "`nFailed to download PHP version 8" }
     }
 
     It "Handles exception gracefully" {

@@ -251,7 +251,7 @@ function Save-PHPProfile {
         }
 
         if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.profiles -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
-            Show-Error -message "Insufficient disk space for profile save. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
+            Show-Error -message "`nInsufficient disk space for profile save. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
             return -1
         }
 
@@ -599,7 +599,7 @@ function Export-PHPProfile {
         }
 
         if (Test-FreeDiskSpaceInsufficient -path $exportDirectory -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
-            Show-Error -message "Insufficient disk space for profile export. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
+            Show-Error -message "`nInsufficient disk space for profile export. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
             return -1
         }
 
@@ -646,7 +646,7 @@ function Import-PHPProfile {
         }
 
         if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.profiles -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
-            Show-Error -message "Insufficient disk space for profile import. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
+            Show-Error -message "`nInsufficient disk space for profile import. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
             return -1
         }
 

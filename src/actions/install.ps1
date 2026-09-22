@@ -151,27 +151,27 @@ function Get-PHP {
         $destination = $Global:PVMConfig.paths.directories.php
         $created = New-Directory -path $destination
         if ($created -ne 0) {
-            Show-Error -message "Failed to create directory $destination"
+            Show-Error -message "`nFailed to create directory $destination"
             return $null
         }
 
         # Keep minimum space check as fallback for extraction space
         if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.php -minimumMegabytes $Global:PVMConfig.env.MIN_PHP_INSTALL_FREE_SPACE_MB) {
-            Show-Error -message "Insufficient disk space for PHP installation. At least $($Global:PVMConfig.env.MIN_PHP_INSTALL_FREE_SPACE_MB) MB is required."
+            Show-Error -message "`nInsufficient disk space for PHP installation. At least $($Global:PVMConfig.env.MIN_PHP_INSTALL_FREE_SPACE_MB) MB is required."
             return $null
         }
 
         # Get remote file size and check disk space
         $remoteFileSize = Get-RemoteFileSize -uri $versionObject.href
         if ($remoteFileSize -le 0) {
-            Show-Error -message "Failed to get remote file size or invalid size. Cannot proceed with download."
+            Show-Error -message "`nFailed to get remote file size or invalid size. Cannot proceed with download."
             return $null
         }
 
         $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
 
         if (Test-RemoteFileDiskSpaceInsufficient -uri $versionObject.href -downloadPath $destination) {
-            Show-Error -message "Insufficient disk space for PHP download. Required: $sizeMB MB"
+            Show-Error -message "`nInsufficient disk space for PHP download. Required: $sizeMB MB"
             return $null
         }
 
@@ -223,7 +223,7 @@ function Set-Opcache {
 
         $phpIniPath = "$phpPath\php.ini"
         if (Test-FileNotExists -path $phpIniPath) {
-            Show-Error -message "php.ini not found at: $phpIniPath"
+            Show-Error -message "`nphp.ini not found at: $phpIniPath"
             return -1
         }
 
@@ -372,7 +372,7 @@ function Install-PHP {
         $destination = Get-PHP -versionObject $selectedVersionObject
 
         if (-not $destination) {
-            Show-Error -message "Failed to download PHP version $version"
+            Show-Error -message "`nFailed to download PHP version $version"
             return -1
         }
 
@@ -392,7 +392,7 @@ function Install-PHP {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install PHP version $version"; exception = $_ }
-        Show-Error -message "Failed to install PHP version $version"
+        Show-Error -message "`nFailed to install PHP version $version"
         return -1
     }
 }

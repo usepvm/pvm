@@ -334,6 +334,8 @@ function Convert-BytesToMegabytes {
 function Convert-MegabytesToBytes {
     param ($megabytes)
 
+    $megabytes = [int]$megabytes
+
     if ($megabytes -le 0) {
         return 0
     }

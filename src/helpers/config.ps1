@@ -142,20 +142,20 @@ function Get-EnvConfig {
 
 function Get-EnvDefaults {
     return @{
-        PHP_CURRENT_VERSION_PATH    = 'C:\pvm\php'
-        PVM_ENV_VAR_NAME            = 'PVM'
-        CACHE_MAX_HOURS             = 168
-        DEFAULT_LOG_PAGE_SIZE       = 5
-        DEFAULT_PARTIAL_LIST_SIZE   = 10
-        MIN_PAD_RIGHT_LENGTH        = 10
-        MIN_LINE_LENGTH             = 50
-        MIN_PHP_INSTALL_FREE_SPACE_MB = 100
+        PHP_CURRENT_VERSION_PATH            = 'C:\pvm\php'
+        PVM_ENV_VAR_NAME                    = 'PVM'
+        CACHE_MAX_HOURS                     = 168
+        DEFAULT_LOG_PAGE_SIZE               = 5
+        DEFAULT_PARTIAL_LIST_SIZE           = 10
+        MIN_PAD_RIGHT_LENGTH                = 10
+        MIN_LINE_LENGTH                     = 50
+        MIN_PHP_INSTALL_FREE_SPACE_MB       = 100
         MIN_EXTENSION_INSTALL_FREE_SPACE_MB = 20
-        MIN_PROFILE_FREE_SPACE_MB = 10
-        MIN_CACHE_FREE_SPACE_MB = 10
-        ENABLE_UPDATE_CHECK         = $true
-        UPDATE_CHECK_INTERVAL_HOURS = 24
-        SOUNDS_DISABLED             = $false
+        MIN_PROFILE_FREE_SPACE_MB           = 10
+        MIN_CACHE_FREE_SPACE_MB             = 10
+        ENABLE_UPDATE_CHECK                 = $true
+        UPDATE_CHECK_INTERVAL_HOURS         = 24
+        SOUNDS_DISABLED                     = $false
     }
 }
 

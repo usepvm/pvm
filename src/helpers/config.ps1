@@ -149,6 +149,7 @@ function Get-EnvDefaults {
         DEFAULT_PARTIAL_LIST_SIZE   = 10
         MIN_PAD_RIGHT_LENGTH        = 10
         MIN_LINE_LENGTH             = 50
+        MIN_PHP_INSTALL_FREE_SPACE_MB = 100
         MIN_EXTENSION_INSTALL_FREE_SPACE_MB = 20
         MIN_PROFILE_FREE_SPACE_MB = 10
         MIN_CACHE_FREE_SPACE_MB = 10
@@ -223,6 +224,7 @@ function Get-Config {
             DEFAULT_PARTIAL_LIST_SIZE   = Get-EnvInt -value $envConfig['DEFAULT_PARTIAL_LIST_SIZE'] -default $envDefaults.DEFAULT_PARTIAL_LIST_SIZE
             MIN_PAD_RIGHT_LENGTH        = Get-EnvInt -value $envConfig['MIN_PAD_RIGHT_LENGTH'] -default $envDefaults.MIN_PAD_RIGHT_LENGTH
             MIN_LINE_LENGTH             = Get-EnvInt -value $envConfig['MIN_LINE_LENGTH'] -default $envDefaults.MIN_LINE_LENGTH
+            MIN_PHP_INSTALL_FREE_SPACE_MB = Get-EnvInt -value $envConfig['MIN_PHP_INSTALL_FREE_SPACE_MB'] -default $envDefaults.MIN_PHP_INSTALL_FREE_SPACE_MB
             MIN_EXTENSION_INSTALL_FREE_SPACE_MB = Get-EnvInt -value $envConfig['MIN_EXTENSION_INSTALL_FREE_SPACE_MB'] -default $envDefaults.MIN_EXTENSION_INSTALL_FREE_SPACE_MB
             MIN_PROFILE_FREE_SPACE_MB = Get-EnvInt -value $envConfig['MIN_PROFILE_FREE_SPACE_MB'] -default $envDefaults.MIN_PROFILE_FREE_SPACE_MB
             MIN_CACHE_FREE_SPACE_MB = Get-EnvInt -value $envConfig['MIN_CACHE_FREE_SPACE_MB'] -default $envDefaults.MIN_CACHE_FREE_SPACE_MB

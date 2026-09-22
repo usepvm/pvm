@@ -437,6 +437,10 @@ Describe "Get-PHP" {
     }
 
     It "Should download PHP successfully" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
         $result | Should -Be "$script:TEST_DRIVE\php"
     }
@@ -447,13 +451,46 @@ Describe "Get-PHP" {
         $result | Should -BeNullOrEmpty
     }
 
+    It "Returns null when disk space is insufficient for PHP installation" {
+        Mock Test-FreeDiskSpaceInsufficient { return $true }
+        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
+        $result | Should -BeNullOrEmpty
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Insufficient disk space for PHP installation*' }
+    }
+
+    It "Returns null when remote file size cannot be determined" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]0) }
+        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
+        $result | Should -BeNullOrEmpty
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to get remote file size or invalid size*' }
+    }
+
+    It "Returns null when disk space is insufficient for extension download" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $true }
+        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
+        $result | Should -BeNullOrEmpty
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Insufficient disk space for PHP download*' }
+    }
+
     It "Handles exception gracefully" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Show-SpinnerWhileJob { throw 'Test exception' }
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
         $result | Should -BeNullOrEmpty
     }
 
     It "Returns null if download fails" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]10MB) }
+        Mock Convert-BytesToMegabytes { return 10 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
         Mock Get-PHPFromUrl { return $null }
 
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
@@ -627,7 +664,7 @@ Describe "Install-PHP" {
         Mock Get-MatchingPHPVersions { return $null }
         $script:MockUserInput = '0'
 
-        Mock Get-PHPFromUrl { return "$script:TEST_DRIVE\php" }
+        Mock Get-PHP { return "$script:TEST_DRIVE\php" }
 
         $result = Install-PHP -version '8.1'
 
@@ -657,7 +694,7 @@ Describe "Install-PHP" {
     }
 
     It "Installs PHP when user accepts family version install" {
-        Mock Get-PHPFromUrl { return "$script:TEST_DRIVE\php" }
+        Mock Get-PHP { return "$script:TEST_DRIVE\php" }
         Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
         Mock Read-HostWrapper {
             if ($prompt -match 'Would you like to install another version from') { return 'y' }

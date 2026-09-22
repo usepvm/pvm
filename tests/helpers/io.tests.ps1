@@ -616,3 +616,277 @@ Describe "Get-BaseUrl" {
         $result | Should -Be $null
     }
 }
+
+Describe "Get-FreeDiskSpaceBytes" {
+    It "Returns available free space for an existing path" {
+        $result = Get-FreeDiskSpaceBytes -path $script:STORAGE_PATH
+
+        $result | Should -BeGreaterThan 0
+    }
+
+    It "Returns -1 for an empty path" {
+        $result = Get-FreeDiskSpaceBytes -path ''
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when the path has no drive root" {
+        $result = Get-FreeDiskSpaceBytes -path 'relative\path'
+
+        $result | Should -Be -1
+    }
+}
+
+Describe "Test-FreeDiskSpaceSufficient" {
+    It "Returns true when available space is greater than the minimum" {
+        Mock Get-FreeDiskSpaceBytes { return ([int64]200MB) }
+
+        $result = Test-FreeDiskSpaceSufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns true when available space equals the minimum" {
+        Mock Get-FreeDiskSpaceBytes { return ([int64]100MB) }
+
+        $result = Test-FreeDiskSpaceSufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when available space is below the minimum" {
+        Mock Get-FreeDiskSpaceBytes { return ([int64]99MB) }
+
+        $result = Test-FreeDiskSpaceSufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeFalse
+    }
+
+    It "Returns false when free space cannot be determined" {
+        Mock Get-FreeDiskSpaceBytes { return -1 }
+
+        $result = Test-FreeDiskSpaceSufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeFalse
+    }
+
+    It "Handles exception gracefully" {
+        Mock Get-FreeDiskSpaceBytes { throw 'Error' }
+
+        $result = Test-FreeDiskSpaceSufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeFalse
+    }
+}
+
+Describe "Test-FreeDiskSpaceInsufficient" {
+    It "Returns true when available space is below the minimum" {
+        Mock Test-FreeDiskSpaceSufficient { return $false }
+
+        $result = Test-FreeDiskSpaceInsufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when available space is sufficient" {
+        Mock Test-FreeDiskSpaceSufficient { return $true }
+
+        $result = Test-FreeDiskSpaceInsufficient -path 'C:\path' -minimumMegabytes 100
+
+        $result | Should -BeFalse
+    }
+}
+
+Describe "Get-RemoteFileSize" {
+    It "Returns file size for valid URI" {
+        Mock Invoke-WebRequestWrapper {
+            return @{
+                Headers = @{ 'Content-Length' = @('1024') }
+            }
+        }
+
+        $result = Get-RemoteFileSize -uri 'https://example.com/file.zip'
+
+        $result | Should -Be 1024
+    }
+
+    It "Returns -1 for empty URI" {
+        $result = Get-RemoteFileSize -uri ''
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 for whitespace URI" {
+        $result = Get-RemoteFileSize -uri '   '
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when response is null" {
+        Mock Invoke-WebRequestWrapper { return $null }
+
+        $result = Get-RemoteFileSize -uri 'https://example.com/file.zip'
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when headers are null" {
+        Mock Invoke-WebRequestWrapper { return @{ Headers = $null } }
+
+        $result = Get-RemoteFileSize -uri 'https://example.com/file.zip'
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when Content-Length is missing" {
+        Mock Invoke-WebRequestWrapper {
+            return @{ Headers = @{} }
+        }
+
+        $result = Get-RemoteFileSize -uri 'https://example.com/file.zip'
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when Content-Length is null or whitespaced" {
+        Mock Invoke-WebRequestWrapper {
+            return @{ Headers = @{ 'Content-Length' = @('') } }
+        }
+
+        $result = Get-RemoteFileSize -uri 'https://example.com/file.zip'
+
+        $result | Should -Be -1
+    }
+
+    It "Handles exceptions gracefully" {
+        Mock Invoke-WebRequestWrapper { throw 'Network error' }
+
+        $result = Get-RemoteFileSize -uri 'https://example.com/file.zip'
+
+        $result | Should -Be -1
+    }
+}
+
+Describe "Test-RemoteFileDiskSpaceSufficient" {
+    It "Returns true when remote file fits in available space" {
+        Mock Get-RemoteFileSize { return ([int64]100MB) }
+        Mock Get-FreeDiskSpaceBytes { return ([int64]200MB) }
+
+        $result = Test-RemoteFileDiskSpaceSufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns true when remote file size equals available space" {
+        Mock Get-RemoteFileSize { return ([int64]100MB) }
+        Mock Get-FreeDiskSpaceBytes { return ([int64]100MB) }
+
+        $result = Test-RemoteFileDiskSpaceSufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when remote file size exceeds available space" {
+        Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Get-FreeDiskSpaceBytes { return ([int64]100MB) }
+
+        $result = Test-RemoteFileDiskSpaceSufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeFalse
+    }
+
+    It "Returns false when remote file size is invalid" {
+        Mock Get-RemoteFileSize { return -1 }
+
+        $result = Test-RemoteFileDiskSpaceSufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeFalse
+    }
+
+    It "Returns false when available space is invalid" {
+        Mock Get-RemoteFileSize { return ([int64]100MB) }
+        Mock Get-FreeDiskSpaceBytes { return -1 }
+
+        $result = Test-RemoteFileDiskSpaceSufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeFalse
+    }
+
+    It "Handles exceptions gracefully" {
+        Mock Get-RemoteFileSize { throw 'Error' }
+
+        $result = Test-RemoteFileDiskSpaceSufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeFalse
+    }
+}
+
+Describe "Test-RemoteFileDiskSpaceInsufficient" {
+    It "Returns true when remote file exceeds available space" {
+        Mock Test-RemoteFileDiskSpaceSufficient { return $false }
+
+        $result = Test-RemoteFileDiskSpaceInsufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when remote file fits in available space" {
+        Mock Test-RemoteFileDiskSpaceSufficient { return $true }
+
+        $result = Test-RemoteFileDiskSpaceInsufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
+
+        $result | Should -BeFalse
+    }
+}
+
+Describe "Convert-BytesToMegabytes" {
+    It "Converts bytes to megabytes correctly" {
+        $result = Convert-BytesToMegabytes -bytes ([int64]1048576)
+
+        $result | Should -Be 1
+    }
+
+    It "Returns 0 for zero bytes" {
+        $result = Convert-BytesToMegabytes -bytes 0
+
+        $result | Should -Be 0
+    }
+
+    It "Returns 0 for negative bytes" {
+        $result = Convert-BytesToMegabytes -bytes -100
+
+        $result | Should -Be 0
+    }
+
+    It "Rounds to 2 decimal places" {
+        $result = Convert-BytesToMegabytes -bytes ([int64]1572864)
+
+        $result | Should -Be 1.5
+    }
+}
+
+Describe "Convert-MegabytesToBytes" {
+    It "Converts megabytes to bytes correctly" {
+        $result = Convert-MegabytesToBytes -megabytes 1
+
+        $result | Should -Be ([int64]1048576)
+    }
+
+    It "Returns 0 for zero megabytes" {
+        $result = Convert-MegabytesToBytes -megabytes 0
+
+        $result | Should -Be 0
+    }
+
+    It "Returns 0 for negative megabytes" {
+        $result = Convert-MegabytesToBytes -megabytes -100
+
+        $result | Should -Be 0
+    }
+
+    It "Handles large values correctly" {
+        $result = Convert-MegabytesToBytes -megabytes 1024
+
+        $result | Should -Be ([int64]1073741824)
+    }
+}

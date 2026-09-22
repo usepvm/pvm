@@ -250,6 +250,11 @@ function Save-PHPProfile {
             return -1
         }
 
+        if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.profiles -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
+            Show-Error -message "Insufficient disk space for profile save. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
+            return -1
+        }
+
         $profilePath = "$($Global:PVMConfig.paths.directories.profiles)\$profileName.json"
         $jsonContent = $userProfile | ConvertTo-Json -Depth 10
         Set-ContentWrapper -path $profilePath -value $jsonContent
@@ -588,6 +593,16 @@ function Export-PHPProfile {
             $exportPath = "$(Get-Location)\$profileName.json"
         }
 
+        $exportDirectory = Split-Path -Path $exportPath -Parent
+        if ([string]::IsNullOrWhiteSpace($exportDirectory)) {
+            $exportDirectory = (Get-Location)
+        }
+
+        if (Test-FreeDiskSpaceInsufficient -path $exportDirectory -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
+            Show-Error -message "Insufficient disk space for profile export. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
+            return -1
+        }
+
         Copy-ItemWrapper -path $profilePath -destination $exportPath
         Show-Success -message "`nProfile '$profileName' exported to: $exportPath"
 
@@ -627,6 +642,11 @@ function Import-PHPProfile {
         $created = New-Directory -path $Global:PVMConfig.paths.directories.profiles
         if ($created -ne 0) {
             Show-Error -message "`nFailed to create profiles directory."
+            return -1
+        }
+
+        if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.profiles -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
+            Show-Error -message "Insufficient disk space for profile import. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
             return -1
         }
 

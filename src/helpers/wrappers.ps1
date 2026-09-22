@@ -60,13 +60,14 @@ function Set-ContentWrapper {
 }
 
 function Invoke-WebRequestWrapper {
-    param ($uri, $outFile = $null, $useBasicParsing = $true)
+    param ($uri, $outFile = $null, $useBasicParsing = $true, $method = 'Default')
 
     $uri = $uri.Trim()
 
     $params = @{
         Uri = $uri
         UseBasicParsing = $useBasicParsing
+        Method = $method
     }
 
     if ($null -ne $outFile) {

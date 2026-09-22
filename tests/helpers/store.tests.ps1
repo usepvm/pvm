@@ -191,6 +191,17 @@ Describe "Save-CachedData" {
         $code | Should -Be 0
     }
 
+    It "Returns -1 when no disk space is available for caching" {
+        Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
+        Mock New-Directory { return 0 }
+        Mock Test-FreeDiskSpaceInsufficient { return $true }
+
+        $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Insufficient disk space for cache data.*' }
+    }
+
     It "Fails to creade cache directory" {
         Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
         Mock New-Directory { return -1 }

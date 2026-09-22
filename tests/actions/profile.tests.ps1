@@ -342,6 +342,28 @@ Describe "Save-PHPProfile" {
         $result = Save-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
     }
+
+    It "Should return -1 when disk space is insufficient for profile save" {
+        Mock Test-FreeDiskSpaceInsufficient { return $true }
+
+        $result = Save-PHPProfile -profileName 'testprofile'
+        $result | Should -Be -1
+
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Insufficient disk space for profile save'
+        } -Exactly 1
+    }
+
+    It "Should succeed when disk space is sufficient for profile save" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
+
+        $result = Save-PHPProfile -profileName 'testprofile'
+        $result | Should -Be 0
+
+        $profilePath = "$script:PROFILES_PATH\testprofile.json"
+        Test-Path $profilePath | Should -Be $true
+    }
 }
 
 Describe "Use-PHPProfile" {
@@ -1622,6 +1644,36 @@ Describe "Export-PHPProfile" {
         $exportedContent.extensions.opcache.enabled | Should -Be $false
         $exportedContent.extensions.opcache.type | Should -Be 'zend_extension'
     }
+
+    It "Should fall back to current location for disk check when exportPath has no directory" {
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
+
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Copy-ItemWrapper { }
+
+        $result = Export-PHPProfile -profileName 'testprofile' -exportPath 'out.json'
+        $result | Should -Be 0
+
+        Should -Invoke Get-Location -Exactly 1
+        Should -Invoke Test-FreeDiskSpaceInsufficient -ParameterFilter {
+            $path -eq "$script:TEST_DRIVE\export"
+        } -Exactly 1
+    }
+
+    It "Should return -1 when disk space is insufficient for profile export" {
+        '{}' | Set-ContentWrapper -path "$script:PROFILES_PATH\testprofile.json"
+
+        Mock Test-FreeDiskSpaceInsufficient { return $true }
+        Mock Copy-ItemWrapper { }
+
+        $result = Export-PHPProfile -profileName 'testprofile' -exportPath "$script:TEST_DRIVE\export\out.json"
+        $result | Should -Be -1
+
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Insufficient disk space for profile export'
+        } -Exactly 1
+        Should -Invoke Copy-ItemWrapper -Exactly 0
+    }
 }
 
 Describe "Import-PHPProfile" {
@@ -1939,6 +1991,47 @@ Describe "Import-PHPProfile" {
 
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'new-complex_456'
+    }
+
+    It "Should return -1 when disk space is insufficient for profile import" {
+        Mock Test-FreeDiskSpaceInsufficient { return $true }
+
+        $testProfile = @{
+            name = 'testprofile'
+            description = 'Test profile'
+            created = '2023-01-01T00:00:00Z'
+            phpVersion = '8.2.0'
+            settings = @{}
+            extensions = @{}
+        }
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\testprofile.json"
+
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\testprofile.json"
+        $result | Should -Be -1
+
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -match 'Insufficient disk space for profile import'
+        } -Exactly 1
+    }
+
+    It "Should succeed when disk space is sufficient for profile import" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+
+        $testProfile = @{
+            name = 'testprofile'
+            description = 'Test profile'
+            created = '2023-01-01T00:00:00Z'
+            phpVersion = '8.2.0'
+            settings = @{}
+            extensions = @{}
+        }
+        $testProfile | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path "$script:TEST_DRIVE\testprofile.json"
+
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\testprofile.json"
+        $result | Should -Be 0
+
+        $importedPath = "$script:PROFILES_PATH\testprofile.json"
+        Test-Path $importedPath | Should -Be $true
     }
 }
 

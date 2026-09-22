@@ -155,7 +155,27 @@ function Get-PHP {
             return $null
         }
 
-        Show-Info -message "`nDownloading PHP $version ($buildType $arch)..."
+        # Keep minimum space check as fallback for extraction space
+        if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.php -minimumMegabytes $Global:PVMConfig.env.MIN_PHP_INSTALL_FREE_SPACE_MB) {
+            Show-Error -message "Insufficient disk space for PHP installation. At least $($Global:PVMConfig.env.MIN_PHP_INSTALL_FREE_SPACE_MB) MB is required."
+            return $null
+        }
+
+        # Get remote file size and check disk space
+        $remoteFileSize = Get-RemoteFileSize -uri $versionObject.href
+        if ($remoteFileSize -le 0) {
+            Show-Error -message "Failed to get remote file size or invalid size. Cannot proceed with download."
+            return $null
+        }
+
+        $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
+
+        if (Test-RemoteFileDiskSpaceInsufficient -uri $versionObject.href -downloadPath $destination) {
+            Show-Error -message "Insufficient disk space for PHP download. Required: $sizeMB MB"
+            return $null
+        }
+
+        Show-Info -message "`nDownloading PHP $version ($buildType $arch)... ($sizeMB MB)"
 
         return Show-SpinnerWhileJob -argumentList @($fileName, $destination, $versionObject) -scriptBlock {
             param ($fileName, $destination, $versionObject)

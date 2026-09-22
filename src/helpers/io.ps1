@@ -228,3 +228,117 @@ function Get-BaseUrl {
 
     return ([System.Uri]$url).Host
 }
+
+function Get-FreeDiskSpaceBytes {
+    param ($path)
+
+    if ([string]::IsNullOrWhiteSpace($path)) {
+        return -1
+    }
+
+    $root = [System.IO.Path]::GetPathRoot($path)
+    if ([string]::IsNullOrWhiteSpace($root)) {
+        return -1
+    }
+
+    return ([System.IO.DriveInfo]::new($root)).AvailableFreeSpace
+}
+
+function Test-FreeDiskSpaceSufficient {
+    param ($path, $minimumMegabytes)
+
+    try {
+        $minimumFreeSpace = Convert-MegabytesToBytes -megabytes $minimumMegabytes
+        $availableFreeSpace = Get-FreeDiskSpaceBytes -path $path
+
+        return ($minimumFreeSpace -le $availableFreeSpace)
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check for free disk space for '$path'"; exception = $_ }
+        return $false
+    }
+}
+
+function Test-FreeDiskSpaceInsufficient {
+    param ($path, $minimumMegabytes)
+
+    return -not (Test-FreeDiskSpaceSufficient -path $path -minimumMegabytes $minimumMegabytes)
+}
+
+function Get-RemoteFileSize {
+    param ($uri)
+
+    try {
+        if ([string]::IsNullOrWhiteSpace($uri)) {
+            return -1
+        }
+
+        $uri = $uri.Trim()
+        $response = Invoke-WebRequestWrapper -uri $uri -method 'Head'
+
+        if ($null -eq $response -or $null -eq $response.Headers) {
+            return -1
+        }
+
+        $contentLength = $response.Headers['Content-Length'][0]
+
+        if ([string]::IsNullOrWhiteSpace($contentLength)) {
+            return -1
+        }
+
+        return [long]$contentLength
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get remote file size for '$uri'"; exception = $_ }
+        return -1
+    }
+}
+
+function Test-RemoteFileDiskSpaceSufficient {
+    param ($uri, $downloadPath)
+
+    try {
+        $remoteFileSize = Get-RemoteFileSize -uri $uri
+
+        if ($remoteFileSize -le 0) {
+            return $false
+        }
+
+        $availableFreeSpace = Get-FreeDiskSpaceBytes -path $downloadPath
+
+        if ($availableFreeSpace -le 0) {
+            return $false
+        }
+
+        return ($remoteFileSize -le $availableFreeSpace)
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check disk space for remote file '$uri'"; exception = $_ }
+        return $false
+    }
+}
+
+function Test-RemoteFileDiskSpaceInsufficient {
+    param ($uri, $downloadPath)
+
+    return -not (Test-RemoteFileDiskSpaceSufficient -uri $uri -downloadPath $downloadPath)
+}
+
+function Convert-BytesToMegabytes {
+    param ($bytes)
+
+    if ($bytes -le 0) {
+        return 0
+    }
+
+    return [math]::Round($bytes / 1MB, 2)
+}
+
+function Convert-MegabytesToBytes {
+    param ($megabytes)
+
+    $megabytes = [int]$megabytes
+
+    if ($megabytes -le 0) {
+        return 0
+    }
+
+    return [int64]($megabytes * 1MB)
+}

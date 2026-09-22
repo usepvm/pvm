@@ -1623,6 +1623,7 @@ Describe "Resolve-ExtensionLinks" {
         }
 
         It "Should return empty links for sources other than pecl" {
+            Mock Get-ExtensionAvailableReleasesLinks { throw 'error' }
             Mock Get-ExtensionMatchingCategories { return @(
                     @{ href = "$script:XDEBUG_HISTORICAL_URL"; extName = 'xdebug'; source = 'xdebug.org' }
                 )

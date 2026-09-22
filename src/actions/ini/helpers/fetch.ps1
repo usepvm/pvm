@@ -40,6 +40,27 @@ function Get-ExtensionHandlers {
                     param ($chosenItem, $phpPath, $skipConfirmation)
 
                     try {
+                        # Keep minimum space check as fallback for extraction space
+                        if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.php -minimumMegabytes $Global:PVMConfig.env.MIN_EXTENSION_INSTALL_FREE_SPACE_MB) {
+                            Show-Error -message "Insufficient disk space for extension installation. At least $($Global:PVMConfig.env.MIN_EXTENSION_INSTALL_FREE_SPACE_MB) MB is required."
+                            return $null
+                        }
+
+                        # Get remote file size and check disk space
+                        $remoteFileSize = Get-RemoteFileSize -uri $chosenItem.href
+                        if ($remoteFileSize -le 0) {
+                            Show-Error -message "Failed to get remote file size or invalid size. Cannot proceed with download."
+                            return $null
+                        }
+
+                        $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
+
+                        if (Test-RemoteFileDiskSpaceInsufficient -uri $chosenItem.href -downloadPath $Global:PVMConfig.paths.directories.php) {
+                            Show-Error -message "Insufficient disk space for extension download. Required: $sizeMB MB"
+                            return $null
+                        }
+
+                        Show-Info -message "`nDownloading extension XDebug ($sizeMB MB)..."
                         $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $Global:PVMConfig.paths.directories.php
                         $extFile = @{
                             Name = $chosenItem.fileName
@@ -99,6 +120,27 @@ function Get-ExtensionHandlers {
                     param ($chosenItem, $phpPath, $skipConfirmation, $extName)
 
                     try {
+                        # Keep minimum space check as fallback for extraction space
+                        if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.php -minimumMegabytes $Global:PVMConfig.env.MIN_EXTENSION_INSTALL_FREE_SPACE_MB) {
+                            Show-Error -message "Insufficient disk space for extension installation. At least $($Global:PVMConfig.env.MIN_EXTENSION_INSTALL_FREE_SPACE_MB) MB is required."
+                            return $null
+                        }
+
+                        # Get remote file size and check disk space
+                        $remoteFileSize = Get-RemoteFileSize -uri $chosenItem.href
+                        if ($remoteFileSize -le 0) {
+                            Show-Error -message "Failed to get remote file size or invalid size. Cannot proceed with download."
+                            return $null
+                        }
+
+                        $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
+
+                        if (Test-RemoteFileDiskSpaceInsufficient -uri $chosenItem.href -downloadPath $Global:PVMConfig.paths.directories.php) {
+                            Show-Error -message "Insufficient disk space for extension download. Required: $sizeMB MB"
+                            return $null
+                        }
+
+                        Show-Info -message "`nDownloading extension $extName ($sizeMB MB)..."
                         $null = Invoke-WebRequestWrapper -uri $chosenItem.href -outFile $Global:PVMConfig.paths.directories.php
                         $fileNamePath = $chosenItem.fileName -replace '.zip$', ''
                         $extractPath = "$($Global:PVMConfig.paths.directories.php)\$fileNamePath"

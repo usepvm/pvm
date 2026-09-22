@@ -132,6 +132,9 @@ pvm list --search=<version>
 pvm list [x86|x64] [ts|nts]
 # Example: pvm list x86 nts
 
+# Update the installed PHP versions cache
+pvm list --update
+
 # List installable PHP versions from remote source
 pvm list available # pvm ls available
 
@@ -147,17 +150,20 @@ pvm list available --search=<version>
 pvm install <version> # pvm i <version>
 # Example: pvm install 8.4 # pvm i 8.4
 
-# Install a specific version for a specific arch & build type
-pvm install <version> [x86|x64] [ts|nts]
+# Install a specific version (or multiple versions) for a specific arch & build type
+pvm install <version> [version...] [x86|x64] [ts|nts] # pvm i  <version> [version...] [x86|x64] [ts|nts]
 # Example: pvm install 8.4 x64 nts # pvm i 8.4 x64 nts
+# Example: pvm install 8.3 8.4 x64 nts # pvm i 8.3 8.4 x64 nts
 
 # Install the latest available PHP version.
 pvm install latest # pvm i latest
 
-# Uninstall a specific version
-pvm uninstall <version> [--yes|-y] # pvm rm <version> [--yes|-y]
+# Uninstall a specific version (or multiple versions)
+pvm uninstall <version> [version...] [--yes|-y] # pvm u <version> [version...] [--yes|-y]
 # Example: pvm uninstall 8.4 # pvm rm 8.4
 # Example: pvm uninstall 8.4 -y # pvm rm 8.4 -y # Skip confirmation
+# Example: pvm uninstall 8.2 8.3 8.4 # pvm rm 8.2 8.3 8.4 # Uninstall multiple versions
+# Example: pvm uninstall 8.2 8.3 -y # pvm rm 8.2 8.3 -y # Skip confirmation for all versions
 
 # Switch to use the specified version
 pvm use <version>
@@ -228,7 +234,7 @@ pvm ini get <setting> # It shows all matching settings
 # Example: pvm ini get memory
 
 # Install extensions from remote source
-pvm ini add <extension> [--yes|-y] # It shows all matching extensions then adds the selected one
+pvm ini add <extension> [--yes|-y] # It shows all matching extensions then adds the selected one (handles duplicate extension names)
 # Example: pvm ini add opcache
 # Example: pvm ini add opcache -y # Skip confirmation
 
@@ -293,8 +299,9 @@ pvm log --pageSize=<number>
 pvm log  --search=<term>
 # Example: pvm log --search=error
 
-pvm log --clear
-# Clears the log file
+pvm log --clear [--yes|-y]
+# Clears the log file (prompts for confirmation unless -y or --yes is used)
+# Example: pvm log --clear -y # Skip confirmation
 ```
 
 ### Manage PHP Configuration Profiles
@@ -391,6 +398,7 @@ SOUNDS_DISABLED=true
 - Success sounds play after successful command completion
 - Error sounds play when commands fail
 - Test completion sounds play after running tests
+- User prompt sounds play during confirmation prompts
 - Sounds are automatically disabled in subprocess mode
 
 ### Command Aliases
@@ -480,10 +488,11 @@ pvm cache:<subcommand>
 | Templates    | storage/data/templates               |
 | Profiles     | storage/data/profiles/               |
 | Cache        | storage/data/cache/                  |
+| State        | storage/data/state/                  |
 | Logs         | storage/logs/                        |
 | Assets       | storage/assets/                      |
 
-**Note:** The `storage/data/templates/` directory contains `aliases.json` and `scripts.json` for customizing command aliases and test scripts.
+**Note:** The `storage/data/templates/` directory contains `aliases.json` and `scripts.json` for customizing command aliases and test scripts. The `storage/data/state/` directory stores runtime state information.
 
 ## Running Tests
 

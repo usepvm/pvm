@@ -64,10 +64,11 @@ function Get-ListAction {
         command     = 'pvm list [available] [x86|x64] [ts|nts]';
         description = "List installed PHP versions, or use 'available' to show versions that can be installed.";
         usage       = [ordered]@{
-            USAGE       = 'pvm list [available] [--search=<term>] [x86|x64] [ts|nts] (alias: ls for list)'
+            USAGE       = 'pvm list [available] [--search=<term>] [--update] [x86|x64] [ts|nts] (alias: ls for list)'
             DESCRIPTION = @(
                 'Shows installed PHP versions.'
                 "With the 'available' argument, shows PHP versions available for installation. The available-version list is cached for $($Global:PVMConfig.env.CACHE_MAX_HOURS) hours."
+                'With the --update flag, updates the installed PHP versions cache.'
             )
             EXAMPLES    = @(
                 'pvm list ........................... Show installed versions'
@@ -76,6 +77,10 @@ function Get-ListAction {
                 'pvm list available x64 ts .......... Show versions available matching x64 TS'
                 'pvm list --search=8.2 .............. Show installed versions with 8.2 in the name'
                 'pvm list available --search=8.2 .... Show available versions with 8.2 in the name'
+                'pvm list --update .................. Update the installed PHP versions cache'
+            )
+            OPTIONS     = @(
+                '--update .................... Update the installed PHP versions cache'
             )
         };
         action      = {
@@ -88,20 +93,24 @@ function Get-ListAction {
 function Get-InstallAction {
     return @{
         command     = 'pvm install <version>|[auto]|[latest] [x86|x64] [ts|nts]';
-        description = "Install a specific PHP version, 'latest', or use 'auto' to install the version from composer.json or .php-version.";
+        description = "Install a specific PHP version (or multiple versions), 'latest', or use 'auto' to install the version from composer.json or .php-version.";
         usage       = [ordered]@{
-            USAGE       = 'pvm install <version> (alias: pvm i <version>) | pvm install auto | pvm install latest'
+            USAGE       = 'pvm install <version> [version...] (alias: pvm i <version>) | pvm install auto | pvm install latest'
             DESCRIPTION = @(
-                'Downloads and installs the PHP version.'
+                'Downloads and installs the PHP version(s).'
                 "Use 'auto' to automatically select the version based on project configuration files."
+                "Use 'latest' to install latest PHP version."
+                'Multiple versions can be specified to install them in sequence.'
             )
             ARGUMENTS   = @(
                 '<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)'
+                '[version] ... Additional versions to install (optional)'
                 'auto ......... Auto-detect version from project files'
                 'latest ....... Install the latest available PHP version'
             )
             EXAMPLES    = @(
                 'pvm install 8.2 .............. Install specific version'
+                'pvm install 8.2 8.3........... Install multiple versions'
                 'pvm install auto ............. Install detected version from project files (.php-version or composer.json)'
                 'pvm install 8.2 x64 ts ....... Install specific version matching x64 TS'
                 'pvm install latest ........... Install the latest available PHP version'
@@ -143,18 +152,25 @@ function Get-UseAction {
 function Get-UninstallAction {
     return @{
         command     = 'pvm uninstall <version>';
-        description = 'Remove an installed PHP version.';
+        description = 'Remove an installed PHP version (or multiple versions).';
         usage       = [ordered]@{
-            USAGE       = 'pvm uninstall <version> (alias: pvm rm <version>)'
+            USAGE       = 'pvm uninstall <version> [version...] (alias: pvm rm <version>)'
             DESCRIPTION = @(
-                'Removes the specified PHP version from your system.'
+                'Removes the specified PHP version(s) from your system.'
                 'The version must be a version number that is currently installed.'
+                'Multiple versions can be specified to uninstall them in sequence.'
             )
             ARGUMENTS   = @(
                 '<version> .... The version must be a number e.g. 8, 8.2 or 8.2.0 (required)'
+                '[version] ... Additional versions to uninstall (optional)'
             )
             OPTIONS     = @(
-                '--yes|-y .................... Skip confirmation prompt'
+                '--yes|-y .................... Skip confirmation prompt for all versions'
+            )
+            EXAMPLES    = @(
+                'pvm uninstall 8.2.0 ........... Uninstall single version'
+                'pvm uninstall 8.2.0 8.3.0 ..... Uninstall multiple versions'
+                'pvm uninstall 8.2.0 -y ........ Uninstall without confirmation'
             )
         }
         action      = {
@@ -181,7 +197,7 @@ function Get-IniAction {
                 'status <extension> .......................................... Check if extension is enabled'
                 'info [extensions] [settings] [--search=<term>] .............. Displays information about the environment and php.ini information summary'
                 'restore ..................................................... Restore original php.ini from backup'
-                'add <extension> [--yes|-y] ................................ Install a PHP extension'
+                'add <extension> [--yes|-y] ................................ Install a PHP extension (handles duplicate extension names)'
                 'remove <extension> [--yes|-y] .............................. Remove a PHP extension'
                 "ext [available] [--search=<term>]|[info <extension>] ........ Lists the PHP extensions. Type 'available' at the end to see what can be installed."
             )
@@ -311,7 +327,7 @@ function Get-LogAction {
                 'pvm log --clear ........... Clears the log file'
             )
             OPTIONS     = @(
-                '--clear .................... Clear the log file'
+                '--clear .................... Clear the log file (prompts for confirmation)'
             )
         }
         action      = {

@@ -2,18 +2,23 @@
 function Initialize-TestEnvironment {
     param ($driveName)
 
+    $currentTestDrive = "$($Global:PVMConfig.paths.directories.testDrive)\$driveName-drive"
+
+    if (Test-InvalidDrivePath -path $currentTestDrive) {
+        return $null
+    }
+
+    $created = New-Directory -path $currentTestDrive
+    if ($created -ne 0) {
+        return $null
+    }
+
     $environment = @{
         PVMConfigBackup = Copy-ObjectDeep -object $Global:PVMConfig
-        TestDrive       = "$($Global:PVMConfig.paths.directories.testDrive)\$driveName-drive"
+        TestDrive       = $currentTestDrive
     }
 
     Set-TestDrive -path $environment.TestDrive
-
-    $created = New-Directory -path $environment.TestDrive
-    if ($created -ne 0) {
-        $Global:PVMConfig = $environment.PVMConfigBackup
-        return $null
-    }
 
     $Global:CurrentTestDrive = $environment.TestDrive
 
@@ -23,7 +28,9 @@ function Initialize-TestEnvironment {
 function Restore-TestEnvironment {
     param ($environment)
 
-    Remove-ItemWrapper -path $environment.TestDrive
+    if (Test-ValidDrivePath -path $currentTestDrive) {
+        Remove-ItemWrapper -path $environment.TestDrive
+    }
     $Global:PVMConfig   = $environment.PVMConfigBackup
     $Global:CurrentTestDrive = $null
 }

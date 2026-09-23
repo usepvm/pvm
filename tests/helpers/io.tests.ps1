@@ -890,3 +890,75 @@ Describe "Convert-MegabytesToBytes" {
         $result | Should -Be ([int64]1073741824)
     }
 }
+
+Describe "Test-ValidDrivePath" {
+    Context "When validating drive paths" {
+        It "Returns true for valid drive path with backslash" {
+            $result = Test-ValidDrivePath -path 'C:\Test'
+            $result | Should -Be $true
+        }
+
+        It "Returns true for valid drive path with double backslash" {
+            $result = Test-ValidDrivePath -path 'D:\\Test'
+            $result | Should -Be $true
+        }
+
+        It "Returns false for null path" {
+            $result = Test-ValidDrivePath -path $null
+            $result | Should -Be $false
+        }
+
+        It "Returns false for empty path" {
+            $result = Test-ValidDrivePath -path ''
+            $result | Should -Be $false
+        }
+
+        It "Returns false for whitespace path" {
+            $result = Test-ValidDrivePath -path '   '
+            $result | Should -Be $false
+        }
+
+        It "Returns false for path without drive letter" {
+            $result = Test-ValidDrivePath -path '\Test\Path'
+            $result | Should -Be $false
+        }
+
+        It "Returns false for path with invalid characters" {
+            $result = Test-ValidDrivePath -path 'C:\Test|Invalid'
+            $result | Should -Be $false
+        }
+
+        It "Returns false for relative path" {
+            $result = Test-ValidDrivePath -path 'relative\path'
+            $result | Should -Be $false
+        }
+
+        It "Returns false for UNC path" {
+            $result = Test-ValidDrivePath -path '\\server\share'
+            $result | Should -Be $false
+        }
+
+        It "Returns false for non-existent drive when drive check is enabled" {
+            $result = Test-ValidDrivePath -path 'Z:\Test'
+            $result | Should -Be $false
+        }
+    }
+}
+
+Describe "Test-InvalidDrivePath" {
+    It "Return true for invalid path" {
+        Mock Test-ValidDrivePath { return $false }
+
+        $result = Test-InvalidDrivePath -path 'some-path'
+
+        $result | Should -BeTrue
+    }
+
+    It "Return false for valid path" {
+        Mock Test-ValidDrivePath { return $true }
+
+        $result = Test-InvalidDrivePath -path 'C:\some-path'
+
+        $result | Should -BeFalse
+    }
+}

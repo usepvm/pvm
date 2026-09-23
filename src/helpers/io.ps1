@@ -342,3 +342,30 @@ function Convert-MegabytesToBytes {
 
     return [int64]($megabytes * 1MB)
 }
+
+function Test-ValidDrivePath {
+    param ($path)
+
+    if ([string]::IsNullOrWhiteSpace($path)) {
+        return $false
+    }
+
+    $path = $path.Trim()
+
+    $isValidFormat = ($path -match '^[A-Za-z]:\\') -and ($path.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -eq -1)
+
+    if (-not $isValidFormat) {
+        return $false
+    }
+
+    $driveLetter = $path.Substring(0, 2)
+
+    $driveInfo = [System.IO.DriveInfo]::new($driveLetter)
+    return $driveInfo.IsReady
+}
+
+function Test-InvalidDrivePath {
+    param ($path)
+
+    return -not (Test-ValidDrivePath -path $path)
+}

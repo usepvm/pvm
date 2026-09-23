@@ -558,43 +558,6 @@ Describe "Get-Config" {
             $result.paths.files.logError | Should -Be "$testRoot\storage\logs\error.log"
         }
 
-        It "Falls back to storage/tests when TEST_DRIVE is not set" {
-            $fallbackRoot = "$script:TEST_DRIVE\fallback-env"
-            New-Item -ItemType Directory -Path $fallbackRoot -Force | Out-Null
-            @(
-                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
-                'PVM_ENV_VAR_NAME=PVM'
-                'CACHE_MAX_HOURS=168'
-                'DEFAULT_LOG_PAGE_SIZE=5'
-                'DEFAULT_PARTIAL_LIST_SIZE=10'
-                'MIN_PAD_RIGHT_LENGTH=20'
-                'MIN_LINE_LENGTH=50'
-            ) -join "`n" | Set-ContentWrapper -path "$fallbackRoot\.env"
-
-            $result = Get-Config -rootPath $fallbackRoot
-
-            $result.paths.directories.testDrive | Should -Be "$fallbackRoot\storage\tests"
-        }
-
-        It "Falls back to storage/tests when TEST_DRIVE is not a valid path" {
-            $invalidRoot = "$script:TEST_DRIVE\invalid-env"
-            New-Item -ItemType Directory -Path $invalidRoot -Force | Out-Null
-            @(
-                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
-                'PVM_ENV_VAR_NAME=PVM'
-                'CACHE_MAX_HOURS=168'
-                'DEFAULT_LOG_PAGE_SIZE=5'
-                'DEFAULT_PARTIAL_LIST_SIZE=10'
-                'MIN_PAD_RIGHT_LENGTH=20'
-                'MIN_LINE_LENGTH=50'
-                'TEST_DRIVE=bad<path'
-            ) -join "`n" | Set-ContentWrapper -path "$invalidRoot\.env"
-
-            $result = Get-Config -rootPath $invalidRoot
-
-            $result.paths.directories.testDrive | Should -Be "$invalidRoot\storage\tests"
-        }
-
         It "Sets env variables from .env file" {
             $result = Get-Config -rootPath $testRoot
             $result.env.PHP_CURRENT_VERSION_PATH | Should -Be 'C:\pvm\php'

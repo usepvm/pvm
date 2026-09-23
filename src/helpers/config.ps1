@@ -92,11 +92,7 @@ function Get-EnvPath {
 
     if ($null -ne $value) { $value = $value.Trim() }
 
-    $isValidPathFormat = -not [string]::IsNullOrWhiteSpace($value) `
-        -and $value -match '^[A-Za-z]+:' `
-        -and $value.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -eq -1
-
-    if (-not $isValidPathFormat) {
+    if (Test-InvalidDrivePath -path $value) {
         return $default
     }
 
@@ -181,7 +177,7 @@ function Get-Config {
             directories = @{
                 root               = $rootPath
                 storage            = $storage
-                testDrive          = Get-EnvPath -value $envConfig['TEST_DRIVE'] -default "$storage\tests"
+                testDrive          = "$storage\tests"
                 php                = "$storage\php"
                 data               = $data
                 templates          = $templates

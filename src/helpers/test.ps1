@@ -21,7 +21,10 @@ function Show-Scripts {
 }
 
 function Clear-TestDrive {
-    Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.testDrive)\*"
+    $testDrivePath = $Global:PVMConfig.paths.directories.testDrive
+    if ($testDrivePath -and (Test-ValidDrivePath -path $testDrivePath)) {
+        Remove-ItemWrapper -path "$testDrivePath\*"
+    }
 }
 
 function Use-PesterVersion {

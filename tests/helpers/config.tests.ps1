@@ -247,60 +247,72 @@ Describe "Get-EnvInt" {
 }
 
 Describe "Get-EnvPath" {
-    It 'returns the value for a valid drive-rooted path' {
-        $code = Get-EnvPath -value 'C:\storage\tests'
-        $code | Should -Be 'C:\storage\tests'
+    Context "When value is valid" {
+        BeforeEach {
+            Mock Test-InvalidDrivePath { return $false }
+        }
+
+        It 'returns the value for a valid drive-rooted path' {
+            $code = Get-EnvPath -value 'C:\storage\tests'
+            $code | Should -Be 'C:\storage\tests'
+        }
+
+        It 'accepts any drive letter' {
+            $code = Get-EnvPath -value 'D:\foo\bar'
+            $code | Should -Be 'D:\foo\bar'
+
+            $code = Get-EnvPath -value 'z:\foo\bar'
+            $code | Should -Be 'z:\foo\bar'
+        }
+
+        It 'accepts a bare drive root' {
+            $code = Get-EnvPath -value 'C:'
+            $code | Should -Be 'C:'
+        }
+
+        It 'trims surrounding whitespace around a valid value' {
+            $code = Get-EnvPath -value '  C:\storage\tests  '
+            $code | Should -Be 'C:\storage\tests'
+        }
     }
 
-    It 'accepts any drive letter' {
-        $code = Get-EnvPath -value 'D:\foo\bar'
-        $code | Should -Be 'D:\foo\bar'
+    Context "When value is invalid" {
+        BeforeEach {
+            Mock Test-InvalidDrivePath { return $true }
+        }
 
-        $code = Get-EnvPath -value 'z:\foo\bar'
-        $code | Should -Be 'z:\foo\bar'
-    }
+        It 'returns the default when value is empty string' {
+            $code = Get-EnvPath -value '' -default 'C:\default'
+            $code | Should -Be 'C:\default'
+        }
 
-    It 'accepts a bare drive root' {
-        $code = Get-EnvPath -value 'C:'
-        $code | Should -Be 'C:'
-    }
+        It 'returns the default when value is whitespace only' {
+            $code = Get-EnvPath -value '   ' -default 'C:\default'
+            $code | Should -Be 'C:\default'
+        }
 
-    It 'returns the default when value is $null' {
-        $code = Get-EnvPath -value $null -default 'C:\default'
-        $code | Should -Be 'C:\default'
-    }
+        It 'returns the default when value has no drive prefix' {
+            $code = Get-EnvPath -value 'storage\tests' -default 'C:\default'
+            $code | Should -Be 'C:\default'
 
-    It 'returns the default when value is empty string' {
-        $code = Get-EnvPath -value '' -default 'C:\default'
-        $code | Should -Be 'C:\default'
-    }
+            $code = Get-EnvPath -value '\storage\tests' -default 'C:\default'
+            $code | Should -Be 'C:\default'
+        }
 
-    It 'returns the default when value is whitespace only' {
-        $code = Get-EnvPath -value '   ' -default 'C:\default'
-        $code | Should -Be 'C:\default'
-    }
+        It 'returns the default for a UNC path' {
+            $code = Get-EnvPath -value '\\server\share' -default 'C:\default'
+            $code | Should -Be 'C:\default'
+        }
 
-    It 'returns the default when value has no drive prefix' {
-        $code = Get-EnvPath -value 'storage\tests' -default 'C:\default'
-        $code | Should -Be 'C:\default'
+        It 'returns the default when value contains invalid path characters' {
+            $code = Get-EnvPath -value "C:\storage\test`0dir" -default 'C:\default'
+            $code | Should -Be 'C:\default'
+        }
 
-        $code = Get-EnvPath -value '\storage\tests' -default 'C:\default'
-        $code | Should -Be 'C:\default'
-    }
-
-    It 'returns the default for a UNC path' {
-        $code = Get-EnvPath -value '\\server\share' -default 'C:\default'
-        $code | Should -Be 'C:\default'
-    }
-
-    It 'trims surrounding whitespace around a valid value' {
-        $code = Get-EnvPath -value '  C:\storage\tests  '
-        $code | Should -Be 'C:\storage\tests'
-    }
-
-    It 'returns the default when value contains invalid path characters' {
-        $code = Get-EnvPath -value "C:\storage\test`0dir" -default 'C:\default'
-        $code | Should -Be 'C:\default'
+        It 'returns the default when value is $null' {
+            $code = Get-EnvPath -value $null -default 'C:\default'
+            $code | Should -Be 'C:\default'
+        }
     }
 
     It 'defaults to $null when no default is supplied and value is invalid' {
@@ -544,25 +556,6 @@ Describe "Get-Config" {
             $result.paths.directories.profiles | Should -Be "$testRoot\storage\data\profiles"
             $result.paths.directories.log | Should -Be "$testRoot\storage\logs"
             $result.paths.files.logError | Should -Be "$testRoot\storage\logs\error.log"
-        }
-
-        It "Uses TEST_DRIVE from .env for fake storage when provided" {
-            $customRoot = "$script:TEST_DRIVE\custom-env"
-            New-Item -ItemType Directory -Path $customRoot -Force | Out-Null
-            @(
-                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
-                'PVM_ENV_VAR_NAME=PVM'
-                'CACHE_MAX_HOURS=168'
-                'DEFAULT_LOG_PAGE_SIZE=5'
-                'DEFAULT_PARTIAL_LIST_SIZE=10'
-                'MIN_PAD_RIGHT_LENGTH=20'
-                'MIN_LINE_LENGTH=50'
-                'TEST_DRIVE=C:\fake-storage'
-            ) -join "`n" | Set-ContentWrapper -path "$customRoot\.env"
-
-            $result = Get-Config -rootPath $customRoot
-
-            $result.paths.directories.testDrive | Should -Be 'C:\fake-storage'
         }
 
         It "Falls back to storage/tests when TEST_DRIVE is not set" {

@@ -60,12 +60,42 @@ Describe "Show-Scripts" {
 }
 
 Describe "Clear-TestDrive" {
-    It "Clears the fake storage path" {
+    It "Clears the fake storage path if valid" {
+        Mock Test-ValidDrivePath { return $true }
         Mock Remove-ItemWrapper { }
 
         Clear-TestDrive
 
         Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -eq "$script:TEST_DRIVE_PATH\*" }
+    }
+
+    It "Does not attempt to clear when test drive path is null" {
+        Mock Remove-ItemWrapper { }
+        $Global:PVMConfig.paths.directories.testDrive = $null
+
+        Clear-TestDrive
+
+        Should -Not -Invoke Remove-ItemWrapper
+    }
+
+    It "Does not attempt to clear when test drive path is invalid" {
+        Mock Test-ValidDrivePath { return $false }
+        Mock Remove-ItemWrapper { }
+        $Global:PVMConfig.paths.directories.testDrive = "invalid\path\without\drive"
+
+        Clear-TestDrive
+
+        Should -Not -Invoke Remove-ItemWrapper
+    }
+
+    It "Does not attempt to clear when test drive path is empty" {
+        Mock Test-ValidDrivePath { return $false }
+        Mock Remove-ItemWrapper { }
+        $Global:PVMConfig.paths.directories.testDrive = ""
+
+        Clear-TestDrive
+
+        Should -Not -Invoke Remove-ItemWrapper
     }
 }
 

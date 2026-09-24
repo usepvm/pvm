@@ -183,7 +183,8 @@ function Invoke-Tests {
         $separatorWidth = Get-SeparatorWidth -tests $tests
         $testsMap = if ($options.coverage) { Get-TestsMap } else { $null }
 
-        Show-Info -message "`nRunning tests with verbosity: $($options.verbosity)"
+        Show-Message -message "`nRunning tests with verbosity: $($options.verbosity)"
+        Show-Message -message "Test Drive: $($Global:PVMConfig.paths.directories.testDrive)"
 
         Clear-TestDrive
         $testSummary = $tests | ForEach-Object -Process {
@@ -199,7 +200,8 @@ function Invoke-Tests {
         Show-Message -message " PowerShell ............ $($psInfo.Version)"
         Show-Message -message " Pester ................ $($pesterInfo.Version)"
         Show-Message -message " Coverage .............. $($options.target)%"
-        Show-Message -message " Verbosity ............. $($options.verbosity)`n"
+        Show-Message -message " Verbosity ............. $($options.verbosity)"
+        Show-Message -message " Test Drive............. $($Global:PVMConfig.paths.directories.testDrive)`n"
 
         if ($testSummary.Length -eq 0) {
             Show-Error -message 'No tests found.'

@@ -4,15 +4,19 @@ BeforeAll {
 
     $script:ROOT_PATH = $Global:PVMConfig.rootPath
     $script:TEST_DRIVE_PATH = $Global:PVMConfig.paths.directories.testDrive
+
+    Mock New-Line { }
+    Mock Show-Info { }
+    Mock Write-Color { }
+    Mock Write-Cyan { }
+    Mock Write-White { }
+    Mock Write-DarkGray { }
+    Mock Show-Error { }
+    Mock Show-Message { }
+    Mock Write-Gray { }
 }
 
 Describe "Show-Scripts" {
-    BeforeEach {
-        Mock Write-Cyan { }
-        Mock Write-White { }
-        Mock Write-DarkGray { }
-    }
-
     It "Displays the available scripts and commands" {
         Mock Get-Scripts {
             return [ordered]@{
@@ -87,8 +91,6 @@ Describe "Clear-TestDrive" {
 
 Describe "Use-PesterVersion" {
     BeforeEach {
-        Mock Show-Info { }
-        Mock Show-Error { }
         Mock Find-PesterVersion { return @{ Version = [version]'5.0.0' } }
         Mock Import-PesterVersion { return @{ Version = [version]'5.0.0' } }
     }
@@ -124,7 +126,6 @@ Describe "Use-PesterVersion" {
 
 Describe "Use-LatestPesterVersion" {
     BeforeEach {
-        Mock Show-Info { }
         Mock Find-PesterVersion { return @{ Version = [version]'5.0.0' } }
         Mock Import-PesterVersion { return @{ Version = [version]'5.0.0' } }
     }
@@ -252,11 +253,6 @@ Describe "Import-PesterVersion" {
 }
 
 Describe "Show-PesterVersion" {
-    BeforeEach {
-        Mock Show-Info { }
-        Mock Show-Message { }
-    }
-
     It "Shows Pester version information" {
         $pesterVersion = @{
             Version = [version]'5.0.0'
@@ -265,16 +261,11 @@ Describe "Show-PesterVersion" {
 
         Show-PesterVersion -pesterVersion $pesterVersion
 
-        Should -Invoke Show-Info -Times 2 -Exactly
-        Should -Invoke Show-Message -Times 2 -Exactly
+        Should -Invoke Show-Message -Times 3 -Exactly
     }
 }
 
 Describe "Show-PesterVersionShort" {
-    BeforeEach {
-        Mock Show-Message { }
-    }
-
     It "Shows short Pester version information" {
         $pesterVersion = @{
             Version = [version]'5.0.0'
@@ -289,11 +280,6 @@ Describe "Show-PesterVersionShort" {
 }
 
 Describe "Show-PowerShellInfo" {
-    BeforeEach {
-        Mock Show-Info { }
-        Mock Show-Message { }
-    }
-
     It "Shows PowerShell information" {
         $psInfo = @{
             Name     = 'PowerShell Core (pwsh)'
@@ -305,16 +291,11 @@ Describe "Show-PowerShellInfo" {
 
         Show-PowerShellInfo -psInfo $psInfo
 
-        Should -Invoke Show-Info -Times 1 -Exactly
-        Should -Invoke Show-Message -Times 5 -Exactly
+        Should -Invoke Show-Message -Times 6 -Exactly
     }
 }
 
 Describe "Show-PowerShellInfoShort" {
-    BeforeEach {
-        Mock Show-Message { }
-    }
-
     It "Shows short PowerShell information" {
         $psInfo = @{
             Version = [version]'7.0.0'
@@ -475,10 +456,6 @@ Describe "Get-SeparatorWidth" {
 }
 
 Describe "Write-TestHeader" {
-    BeforeEach {
-        Mock Show-Info { }
-    }
-
     It "Writes test header with covered file" {
         $file = @{ Name = 'test.tests.ps1'; FullName = 'TestDrive:\tests\test.tests.ps1' }
         $coveredFile = @{ Name = 'test.ps1'; FullName = 'TestDrive:\src\test.ps1' }
@@ -640,12 +617,6 @@ Describe "Get-CoverageGroupRank" {
 }
 
 Describe "Write-TestsSummary" {
-    BeforeEach {
-        Mock New-Line { }
-        Mock Show-Info { }
-        Mock Write-Color { }
-    }
-
     It "Writes tests summary with default options" {
         $testData = @{
             testSummary = @(

@@ -24,12 +24,12 @@ function Clear-TestDrive {
 function Use-PesterVersion {
     param ($version)
 
-    Show-Info -message "`nChecking for Pester version: $version"
+    Write-Gray -message "`nChecking for Pester version: $version"
 
     $availableVersions = Get-Module -Name Pester -ListAvailable
 
     if (-not $availableVersions) {
-        Show-Error -message "No Pester module found. Please install Pester first."
+        Show-Error -message "`nNo Pester module found. Please install Pester first."
         return $false
     }
 
@@ -37,7 +37,7 @@ function Use-PesterVersion {
 
     if (-not $targetVersion) {
         $availableList = $availableVersions.Version -join ', '
-        Show-Error -message "Pester version '$version' not found. Available versions: $availableList"
+        Show-Error -message "`nPester version '$version' not found. Available versions: $availableList"
         return $false
     }
 
@@ -45,7 +45,7 @@ function Use-PesterVersion {
 }
 
 function Use-LatestPesterVersion {
-    Show-Info -message "`nChecking for latest Pester version"
+    Write-Gray -message "`nChecking for latest Pester version"
 
     $availableVersions = Get-Module -Name Pester -ListAvailable
     $targetVersion = Find-PesterVersion -version 'latest' -availableVersions $availableVersions
@@ -88,9 +88,7 @@ function Import-PesterVersion {
 function Show-PesterVersion {
     param ($pesterVersion)
 
-    Show-Info -message "Using Pester version: $($pesterVersion.Version)"
-
-    Show-Info -message "`nPester Info:"
+    Show-Message -message "`nPester Info:"
     Show-Message -message "  Version: $($pesterVersion.Version)"
     Show-Message -message "  Path: $($pesterVersion.Path)"
 }
@@ -104,7 +102,7 @@ function Show-PesterVersionShort {
 function Show-PowerShellInfo {
     param ($psInfo)
 
-    Show-Info -message "`nPowerShell Info:"
+    Show-Message -message "`nPowerShell Info:"
     Show-Message -message "  Engine: $($psInfo.Name)"
     Show-Message -message "  Version: $($psInfo.Version)"
     Show-Message -message "  Edition: $($psInfo.Edition)"

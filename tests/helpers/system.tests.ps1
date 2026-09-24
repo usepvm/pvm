@@ -50,13 +50,6 @@ BeforeAll {
     }
 }
 
-Describe "Test-OS64Bit" {
-    It "Returns a boolean value indicating OS architecture" {
-        $result = Test-OS64Bit
-        $result | Should -BeOfType [bool]
-    }
-}
-
 Describe "Get-AllEnvVarsCore" {
     It "Returns machine-level environment variables" {
         $result = Get-AllEnvVarsCore
@@ -277,66 +270,6 @@ Describe "Get-OptimizedEnv" {
     }
 }
 
-Describe "ConvertTo-EnvEntries" {
-    It "Trims entries and removes empty path segments" {
-        $result = ConvertTo-EnvEntries -value ' C:\One ; ;C:\Two;  ; C:\Three '
-
-        $result | Should -Be 'C:\One;C:\Two;C:\Three'
-    }
-
-    It "Removes duplicate paths while preserving the first occurrence" {
-        $result = ConvertTo-EnvEntries -value 'C:\One;C:\Two;C:\One;C:\Three;C:\Two' -RemoveDuplicates
-
-        $result | Should -Be 'C:\One;C:\Two;C:\Three'
-    }
-
-    It "Treats paths with different casing as duplicates and trims entries" {
-        $result = ConvertTo-EnvEntries -value ' C:\One ; c:\one; C:\Two ; ' -RemoveDuplicates
-
-        $result | Should -Be 'C:\One;C:\Two'
-    }
-
-    It "Removes empty path segments" {
-        $result = ConvertTo-EnvEntries -value ';C:\One;; '
-
-        $result | Should -Be 'C:\One'
-    }
-}
-
-Describe "Format-EnvContent" {
-    It "Trims entries and removes empty path segments" {
-        $result = Format-EnvContent -value ' C:\One ; ;C:\Two;  ; C:\Three '
-
-        $result | Should -Be 'C:\One;C:\Two;C:\Three'
-    }
-
-    It "Returns an empty value for empty content" {
-        $result = Format-EnvContent -value ' ;  ; '
-
-        $result | Should -Be ''
-    }
-}
-
-Describe "Remove-PathDuplicates" {
-    It "Removes duplicate paths while preserving the first occurrence" {
-        $result = Remove-PathDuplicates -path 'C:\One;C:\Two;C:\One;C:\Three;C:\Two'
-
-        $result | Should -Be 'C:\One;C:\Two;C:\Three'
-    }
-
-    It "Treats paths with different casing as duplicates and trims entries" {
-        $result = Remove-PathDuplicates -path ' C:\One ; c:\one; C:\Two ; '
-
-        $result | Should -Be 'C:\One;C:\Two'
-    }
-
-    It "Removes empty path segments" {
-        $result = Remove-PathDuplicates -path ';C:\One;; '
-
-        $result | Should -Be 'C:\One'
-    }
-}
-
 Describe "Optimize-SystemPath" {
     BeforeAll {
         Mock Test-NotAdmin { return $false }
@@ -449,34 +382,6 @@ Describe "Invoke-PSCommand" {
 
             $result | Should -Be 42
         }
-    }
-}
-
-Describe "Test-Admin" {
-    Context "When checking admin status" {
-        It "Returns a boolean value" {
-            $result = Test-Admin
-            $result | Should -BeOfType [bool]
-        }
-    }
-}
-
-Describe "Test-NotAdmin" {
-    It "Returns a boolean value" {
-        $result = Test-NotAdmin
-        $result | Should -BeOfType [bool]
-    }
-
-    It "Returns true when not running as admin" {
-        Mock Test-Admin { return $false }
-        $result = Test-NotAdmin
-        $result | Should -Be $true
-    }
-
-    It "Returns false when running as admin" {
-        Mock Test-Admin { return $true }
-        $result = Test-NotAdmin
-        $result | Should -Be $false
     }
 }
 

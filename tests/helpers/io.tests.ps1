@@ -571,52 +571,6 @@ Describe "Expand-Zip" {
     }
 }
 
-Describe "Test-YesResponse" {
-    It "Should return true for 'y' and 'Y' responses" {
-        Test-YesResponse -response 'y' | Should -Be $true
-        Test-YesResponse -response 'Y' | Should -Be $true
-    }
-
-    It "Should return false for other responses" {
-        Test-YesResponse -response 'n' | Should -Be $false
-        Test-YesResponse -response 'N' | Should -Be $false
-    }
-}
-
-Describe "Test-NoResponse" {
-    It "Should return true for 'n' and 'N' responses" {
-        Test-NoResponse -response 'n' | Should -Be $true
-        Test-NoResponse -response 'N' | Should -Be $true
-    }
-
-    It "Should return false for other responses" {
-        Test-NoResponse -response 'y' | Should -Be $false
-        Test-NoResponse -response 'Y' | Should -Be $false
-    }
-}
-
-Describe "Get-BaseUrl" {
-    It "Should return the expected base URL" {
-        $result = Get-BaseUrl -url 'https://example.com/test'
-        $result | Should -Be 'example.com'
-    }
-
-    It "Should return an empty string for an invalid URL" {
-        $result = Get-BaseUrl -url 'invalid-url'
-        $result | Should -Be $null
-    }
-
-    It "Should return an empty string for an empty URL" {
-        $result = Get-BaseUrl -url ''
-        $result | Should -Be $null
-    }
-
-    It "Should return an empty string for a null URL" {
-        $result = Get-BaseUrl -url $null
-        $result | Should -Be $null
-    }
-}
-
 Describe "Get-FreeDiskSpaceBytes" {
     It "Returns available free space for an existing path" {
         $result = Get-FreeDiskSpaceBytes -path $script:STORAGE_PATH
@@ -836,58 +790,6 @@ Describe "Test-RemoteFileDiskSpaceInsufficient" {
         $result = Test-RemoteFileDiskSpaceInsufficient -uri 'https://example.com/file.zip' -downloadPath 'C:\Downloads'
 
         $result | Should -BeFalse
-    }
-}
-
-Describe "Convert-BytesToMegabytes" {
-    It "Converts bytes to megabytes correctly" {
-        $result = Convert-BytesToMegabytes -bytes ([int64]1048576)
-
-        $result | Should -Be 1
-    }
-
-    It "Returns 0 for zero bytes" {
-        $result = Convert-BytesToMegabytes -bytes 0
-
-        $result | Should -Be 0
-    }
-
-    It "Returns 0 for negative bytes" {
-        $result = Convert-BytesToMegabytes -bytes -100
-
-        $result | Should -Be 0
-    }
-
-    It "Rounds to 2 decimal places" {
-        $result = Convert-BytesToMegabytes -bytes ([int64]1572864)
-
-        $result | Should -Be 1.5
-    }
-}
-
-Describe "Convert-MegabytesToBytes" {
-    It "Converts megabytes to bytes correctly" {
-        $result = Convert-MegabytesToBytes -megabytes 1
-
-        $result | Should -Be ([int64]1048576)
-    }
-
-    It "Returns 0 for zero megabytes" {
-        $result = Convert-MegabytesToBytes -megabytes 0
-
-        $result | Should -Be 0
-    }
-
-    It "Returns 0 for negative megabytes" {
-        $result = Convert-MegabytesToBytes -megabytes -100
-
-        $result | Should -Be 0
-    }
-
-    It "Handles large values correctly" {
-        $result = Convert-MegabytesToBytes -megabytes 1024
-
-        $result | Should -Be ([int64]1073741824)
     }
 }
 

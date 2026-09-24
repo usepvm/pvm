@@ -1,8 +1,4 @@
 ﻿
-function Test-OS64Bit {
-    return [System.Environment]::Is64BitOperatingSystem
-}
-
 function Get-AllEnvVarsCore {
     return [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Machine)
 }
@@ -96,36 +92,6 @@ function Get-OptimizedEnv {
     return $value
 }
 
-function ConvertTo-EnvEntries {
-    param ($value, [switch]$removeDuplicates)
-
-    if ($removeDuplicates) {
-        $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    }
-
-    $rebuiltValue = foreach ($item in $value -split ';') {
-        $trimmedItem = $item.Trim()
-        if ([string]::IsNullOrWhiteSpace($trimmedItem)) { continue }
-        if ($removeDuplicates -and -not $seen.Add($trimmedItem)) { continue }
-
-        $trimmedItem
-    }
-
-    return ($rebuiltValue -join ';')
-}
-
-function Format-EnvContent {
-    param ($value)
-
-   return ConvertTo-EnvEntries -value $value
-}
-
-function Remove-PathDuplicates {
-    param ($path)
-
-    return ConvertTo-EnvEntries -value $path -RemoveDuplicates
-}
-
 function Optimize-SystemPath {
     try {
         $path = Get-EnvVarByName -name 'Path' -optimized $true
@@ -176,18 +142,6 @@ function Invoke-PSCommand {
         -WindowStyle Hidden
 
     return $process.ExitCode
-}
-
-function Test-Admin {
-    $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
-    $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
-    return $isAdmin
-}
-
-function Test-NotAdmin {
-    return -not (Test-Admin)
 }
 
 function Resolve-PVMEngine {

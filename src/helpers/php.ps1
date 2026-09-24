@@ -29,26 +29,6 @@ function Get-PHPInstallInfo {
     }
 }
 
-function Get-BinaryArchitectureFromDLL {
-    param ($path)
-
-    if (Test-FileNotExists -path $path) {
-        return 'Unknown'
-    }
-
-    $bytes = [System.IO.File]::ReadAllBytes($path)
-
-    $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
-
-    $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
-
-    switch ($machine) {
-        0x8664 { 'x64' }
-        0x014c { 'x86' }
-        default { 'Unknown' }
-    }
-}
-
 function Test-TwoPHPVersionsEqual {
     param ($version1, $version2)
 

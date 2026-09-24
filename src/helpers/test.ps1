@@ -1,10 +1,4 @@
 
-function Test-IsNotQuiet {
-    param ($verbosity)
-
-    return ($verbosity -ne 'None')
-}
-
 function Show-Scripts {
     Write-Cyan -message "`nAvailable scripts:"
 

@@ -6,20 +6,6 @@ BeforeAll {
     $script:TEST_DRIVE_PATH = $Global:PVMConfig.paths.directories.testDrive
 }
 
-Describe "Test-IsNotQuiet" {
-    It "Returns false when verbosity is None" {
-        $result = Test-IsNotQuiet -verbosity 'None'
-
-        $result | Should -Be $false
-    }
-
-    It "Returns true when verbosity is not None" {
-        $result = Test-IsNotQuiet -verbosity 'Normal'
-
-        $result | Should -Be $true
-    }
-}
-
 Describe "Show-Scripts" {
     BeforeEach {
         Mock Write-Cyan { }

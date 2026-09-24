@@ -211,24 +211,6 @@ function Expand-Zip {
     }
 }
 
-function Test-YesResponse {
-    param ($response)
-
-    return ($response -eq 'y' -or $response -eq 'Y')
-}
-
-function Test-NoResponse {
-    param ($response)
-
-    return -not (Test-YesResponse -response $response)
-}
-
-function Get-BaseUrl {
-    param ($url)
-
-    return ([System.Uri]$url).Host
-}
-
 function Get-FreeDiskSpaceBytes {
     param ($path)
 
@@ -319,28 +301,6 @@ function Test-RemoteFileDiskSpaceInsufficient {
     param ($uri, $downloadPath)
 
     return -not (Test-RemoteFileDiskSpaceSufficient -uri $uri -downloadPath $downloadPath)
-}
-
-function Convert-BytesToMegabytes {
-    param ($bytes)
-
-    if ($bytes -le 0) {
-        return 0
-    }
-
-    return [math]::Round($bytes / 1MB, 2)
-}
-
-function Convert-MegabytesToBytes {
-    param ($megabytes)
-
-    $megabytes = [int]$megabytes
-
-    if ($megabytes -le 0) {
-        return 0
-    }
-
-    return [int64]($megabytes * 1MB)
 }
 
 function Test-ValidDrivePath {

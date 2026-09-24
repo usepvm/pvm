@@ -1433,6 +1433,19 @@ Describe "Invoke-Test" {
         Mock Initialize-Tests { return 0 }
     }
 
+    BeforeEach {
+        Mock Test-InvalidDrivePath { return $false }
+    }
+
+    It "Should return -1 when Test Drive is not defined" {
+        Mock Test-InvalidDrivePath { return $true }
+
+        $result = Invoke-Test -arguments @()
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -match 'Test drive is not valid' }
+    }
+
     It "Installs Pester module when not already installed" {
         Mock Get-Module -ParameterFilter { $ListAvailable -and $Name -eq 'Pester' } -MockWith { return $null }
         Mock Install-Module -ParameterFilter { $Name -eq 'Pester' } -MockWith { }

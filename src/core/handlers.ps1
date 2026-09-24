@@ -519,6 +519,11 @@ function Invoke-Update {
 function Invoke-Test {
     param ($arguments)
 
+    if (Test-InvalidDrivePath -path $Global:PVMConfig.paths.directories.testDrive) {
+        Show-Error -message "`nTest drive is not valid: $($Global:PVMConfig.paths.directories.testDrive)"
+        return -1
+    }
+
     $options = @{
         exclude   = $null
         verbosity = $Global:PVMConfig.test.verbosity.default

@@ -288,7 +288,7 @@ Describe "New-Directory" {
 Describe "New-File" {
     It "Creates a new file successfully" {
         Mock New-ItemWrapper { return @{ Name = 'new_file.txt' } }
-        $newFile = 'TestDrive:\new_file.txt'
+        $newFile = "$script:TEST_DRIVE\new_file.txt"
 
         $result = New-File -path $newFile
 
@@ -299,7 +299,7 @@ Describe "New-File" {
     }
 
     It "Returns 0 for existing file" {
-        $existingFile = 'TestDrive:\existing_file.txt'
+        $existingFile = "$script:TEST_DRIVE\existing_file.txt"
         Mock New-ItemWrapper { return @{ FullName = $existingFile } }
 
         $result = New-File -path $existingFile
@@ -315,7 +315,7 @@ Describe "New-File" {
 
     It "Returns -1 when creating file fails" {
         Mock New-ItemWrapper { return $null }
-        $newFile = 'TestDrive:\new_file.txt'
+        $newFile = "$script:TEST_DRIVE\new_file.txt"
 
         $result = New-File -path $newFile
 
@@ -326,7 +326,7 @@ Describe "New-File" {
         Mock Test-FileNotExists { return $true }
         Mock New-ItemWrapper { throw 'Error' }
 
-        $result = New-File -path 'TestDrive:\new_file.txt'
+        $result = New-File -path "$script:TEST_DRIVE\new_file.txt"
 
         $result | Should -Be -1
     }

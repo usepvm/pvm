@@ -19,7 +19,7 @@ Describe "Add-LogEntry" {
                 exception = @{
                     Exception = @{ Message = 'Test data' }
                     InvocationInfo = @{
-                        ScriptName = 'test.ps1'
+                        ScriptName = 'file.ps1'
                         ScriptLineNumber = 1
                         PositionMessage = 'Test position'
                     }

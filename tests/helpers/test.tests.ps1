@@ -313,8 +313,8 @@ Describe "Get-TestsFiles" {
     It "Returns all test files when no specific names provided" {
         Mock Get-ChildItemWrapper {
             return @(
-                @{ Name = 'test1.tests.ps1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
-                @{ Name = 'test2.tests.ps1'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
+                @{ Name = 'test1.tests.ps1'; FullName = "$script:TEST_DRIVE\tests\test1.tests.ps1" }
+                @{ Name = 'test2.tests.ps1'; FullName = "$script:TEST_DRIVE\tests\test2.tests.ps1" }
             )
         }
 
@@ -326,8 +326,8 @@ Describe "Get-TestsFiles" {
     It "Returns specific test files when names are provided" {
         Mock Get-ChildItemWrapper {
             return @(
-                @{ Name = 'test1.tests.ps1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
-                @{ Name = 'test2.tests.ps1'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
+                @{ Name = 'test1.tests.ps1'; FullName = "$script:TEST_DRIVE\tests\test1.tests.ps1" }
+                @{ Name = 'test2.tests.ps1'; FullName = "$script:TEST_DRIVE\tests\test2.tests.ps1" }
             )
         }
 
@@ -340,7 +340,7 @@ Describe "Get-TestsFiles" {
     It "Includes placeholder for missing test files" {
         Mock Get-ChildItemWrapper {
             return @(
-                @{ Name = 'test1.tests.ps1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
+                @{ Name = 'test1.tests.ps1'; FullName = "$script:TEST_DRIVE\tests\test1.tests.ps1" }
             )
         }
 
@@ -355,8 +355,8 @@ Describe "Get-AllTestNames" {
     It "Returns all test names without exclusions" {
         Mock Get-ChildItemWrapper {
             return @(
-                @{ BaseName = 'test1.tests'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
-                @{ BaseName = 'test2.tests'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
+                @{ BaseName = 'test1.tests'; FullName = "$script:TEST_DRIVE\tests\test1.tests.ps1" }
+                @{ BaseName = 'test2.tests'; FullName = "$script:TEST_DRIVE\tests\test2.tests.ps1" }
             )
         }
 
@@ -368,8 +368,8 @@ Describe "Get-AllTestNames" {
     It "Excludes specified test names" {
         Mock Get-ChildItemWrapper {
             return @(
-                @{ BaseName = 'test1.tests'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
-                @{ BaseName = 'test2.tests'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
+                @{ BaseName = 'test1.tests'; FullName = "$script:TEST_DRIVE\tests\test1.tests.ps1" }
+                @{ BaseName = 'test2.tests'; FullName = "$script:TEST_DRIVE\tests\test2.tests.ps1" }
             )
         }
 
@@ -383,22 +383,22 @@ Describe "Get-AllTestNames" {
 Describe "Get-CoveredSourceFile" {
     It "Returns the source file for a given test file" {
         $testsMap = @{
-            'TestDrive:\tests\test.tests.ps1' = @{ Name = 'test.ps1'; FullName = 'TestDrive:\src\test.ps1' }
+            "$script:TEST_DRIVE\tests\file.tests.ps1" = @{ Name = 'file.ps1'; FullName = "$script:TEST_DRIVE\src\file.ps1" }
         }
 
-        $testFile = @{ FullName = 'TestDrive:\tests\test.tests.ps1' }
+        $testFile = @{ FullName = "$script:TEST_DRIVE\tests\file.tests.ps1" }
 
         $result = Get-CoveredSourceFile -testFile $testFile -testsMap $testsMap
 
-        $result.FullName | Should -Be 'TestDrive:\src\test.ps1'
+        $result.FullName | Should -Be "$script:TEST_DRIVE\src\file.ps1"
     }
 }
 
 Describe "Get-TestsMap" {
     It "Creates a mapping from test files to source files" {
         New-Item -Path "$script:ROOT_PATH\src\helpers" -ItemType Directory -Force | Out-Null
-        New-Item -Path "$script:ROOT_PATH\src\helpers\test.ps1" -ItemType File -Force | Out-Null
         New-Item -Path "$script:ROOT_PATH\src\helpers\other.ps1" -ItemType File -Force | Out-Null
+        New-Item -Path "$script:ROOT_PATH\src\helpers\other2.ps1" -ItemType File -Force | Out-Null
 
         $result = Get-TestsMap
 
@@ -411,14 +411,14 @@ Describe "Get-TestsMap" {
 Describe "Set-CoverageConfig" {
     It "Sets coverage configuration with all parameters" {
         New-Item -Path "$script:ROOT_PATH\src\helpers" -ItemType Directory -Force | Out-Null
-        New-Item -Path "$script:ROOT_PATH\src\helpers\test.ps1" -ItemType File -Force | Out-Null
+        New-Item -Path "$script:ROOT_PATH\src\helpers\file.ps1" -ItemType File -Force | Out-Null
         New-Item -Path "$script:ROOT_PATH\storage\coverage\helpers" -ItemType Directory -Force | Out-Null
 
         $testsMap = @{
-            "$script:ROOT_PATH\tests\helpers\test.tests.ps1" = @{ Name = 'test.ps1'; FullName = "$script:ROOT_PATH\src\helpers\test.ps1" }
+            "$script:ROOT_PATH\tests\helpers\file.tests.ps1" = @{ Name = 'file.ps1'; FullName = "$script:ROOT_PATH\src\helpers\file.ps1" }
         }
 
-        $testFile = @{ FullName = "$script:ROOT_PATH\tests\helpers\test.tests.ps1" }
+        $testFile = @{ FullName = "$script:ROOT_PATH\tests\helpers\file.tests.ps1" }
 
         $config = @{
             CodeCoverage = @{
@@ -436,7 +436,7 @@ Describe "Set-CoverageConfig" {
 
         $result = Set-CoverageConfig -config $config -testFile $testFile -options $options -testsMap $testsMap
 
-        $result.covered.FullName | Should -Be "$script:ROOT_PATH\src\helpers\test.ps1"
+        $result.covered.FullName | Should -Be "$script:ROOT_PATH\src\helpers\file.ps1"
         $result.config.CodeCoverage.Enabled | Should -Be $true
         $result.config.CodeCoverage.CoveragePercentTarget | Should -Not -Be $null
     }
@@ -445,8 +445,8 @@ Describe "Set-CoverageConfig" {
 Describe "Get-SeparatorWidth" {
     It "Calculates separator width based on test names" {
         $tests = @(
-            @{ Name = 'test1'; FullName = 'TestDrive:\tests\test1.tests.ps1' }
-            @{ Name = 'test2'; FullName = 'TestDrive:\tests\test2.tests.ps1' }
+            @{ Name = 'test1'; FullName = "$script:TEST_DRIVE\tests\test1.tests.ps1" }
+            @{ Name = 'test2'; FullName = "$script:TEST_DRIVE\tests\test2.tests.ps1" }
         )
 
         $result = Get-SeparatorWidth -tests $tests
@@ -457,8 +457,8 @@ Describe "Get-SeparatorWidth" {
 
 Describe "Write-TestHeader" {
     It "Writes test header with covered file" {
-        $file = @{ Name = 'test.tests.ps1'; FullName = 'TestDrive:\tests\test.tests.ps1' }
-        $coveredFile = @{ Name = 'test.ps1'; FullName = 'TestDrive:\src\test.ps1' }
+        $file = @{ Name = 'file.tests.ps1'; FullName = "$script:TEST_DRIVE\tests\file.tests.ps1" }
+        $coveredFile = @{ Name = 'file.ps1'; FullName = "$script:TEST_DRIVE\src\file.ps1" }
         $separatorWidth = 80
 
         Write-TestHeader -file $file -coveredFile $coveredFile -separatorWidth $separatorWidth
@@ -467,7 +467,7 @@ Describe "Write-TestHeader" {
     }
 
     It "Writes test header without covered file" {
-        $file = @{ Name = 'test.tests.ps1'; FullName = 'TestDrive:\tests\test.tests.ps1' }
+        $file = @{ Name = 'file.tests.ps1'; FullName = "$script:TEST_DRIVE\tests\file.tests.ps1" }
         $separatorWidth = 80
 
         Write-TestHeader -file $file -coveredFile $null -separatorWidth $separatorWidth
@@ -574,7 +574,7 @@ Describe "Get-FolderGroupName" {
     }
 
     It "Returns '(root)' for root level file" {
-        $item = @{ Message = 'Test'; relativeFilePath = 'test.ps1' }
+        $item = @{ Message = 'Test'; relativeFilePath = 'file.ps1' }
 
         $result = Get-FolderGroupName -item $item
 
@@ -582,7 +582,7 @@ Describe "Get-FolderGroupName" {
     }
 
     It "Returns folder name for nested file" {
-        $item = @{ Message = 'Test'; relativeFilePath = 'helpers\test.ps1' }
+        $item = @{ Message = 'Test'; relativeFilePath = 'helpers\file.ps1' }
 
         $result = Get-FolderGroupName -item $item
 
@@ -590,7 +590,7 @@ Describe "Get-FolderGroupName" {
     }
 
     It "Normalizes backslashes to forward slashes" {
-        $item = @{ Message = 'Test'; relativeFilePath = 'src\helpers\test.ps1' }
+        $item = @{ Message = 'Test'; relativeFilePath = 'src\helpers\file.ps1' }
 
         $result = Get-FolderGroupName -item $item
 
@@ -664,7 +664,7 @@ Describe "Write-TestsSummary" {
             sortedName = 'test1'
             message   = @{ content = 'PASS'; color = 'Green' }
             testResultData = @{ duration = 1; coverageRaw = 80 }
-            relativeFilePath = 'helpers\test.ps1'
+            relativeFilePath = 'helpers\file.ps1'
         }
         $testItem | Add-Member -MemberType NoteProperty -Name 'Message' -Value 'Some message' -Force
 

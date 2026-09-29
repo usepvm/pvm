@@ -3,8 +3,8 @@ function Show-PHPExtensionInfo {
     param ($iniPath, $extName)
 
     try {
-        New-Line
         $searchId = ConvertTo-ExtensionId -name $extName
+        Show-Message -message "`nLoading available extensions..."
         $linksMatchingExtName = Get-ExtensionMatchingCategories -extName $searchId
         $availableMatch = Select-ExtensionFromMatches -linksMatchingExtName $linksMatchingExtName
 

@@ -26,7 +26,7 @@ function Get-LatestPHPVersion {
             $versionsList = $versionsList | Where-Object -FilterScript { $_.arch -eq $arch }
         }
         if ($buildType) {
-            $versionsList = $versionsList | Where-Object -FilterScript { $_.BuildType -eq $buildType }
+            $versionsList = $versionsList | Where-Object -FilterScript { $_.buildType -eq $buildType }
         }
 
         # Sort by version number (descending) and return the first one
@@ -60,7 +60,7 @@ function Get-LatestPHPVersionFromUrl {
                 href      = $_.href
                 version   = $version
                 fileName  = $fileName
-                BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
+                buildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
                 arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
             }
         }
@@ -95,21 +95,21 @@ function Get-PHPVersions {
 
         $fetchedVersionsGrouped.PSObject.Properties | ForEach-Object -Process {
             $searchResult = $_.Value | Where-Object -FilterScript {
-                $_.Version -like "$version*" -and
-                (($null -eq $arch) -or ($_.Arch -eq $arch)) -and
-                (($null -eq $buildType) -or ($_.BuildType -eq $buildType))
+                $_.version -like "$version*" -and
+                (($null -eq $arch) -or ($_.arch -eq $arch)) -and
+                (($null -eq $buildType) -or ($_.buildType -eq $buildType))
             }
 
             if ($searchResult -and $searchResult.Count -ne 0) {
                 $filteredVersions = @()
                 $searchResult | ForEach-Object -Process {
-                    if ($found.Add($_.Link)) {
+                    if ($found.Add($_.link)) {
                         $filteredVersions += @{
-                            href      = $_.Link
-                            version   = $_.Version
+                            href      = $_.link
+                            version   = $_.version
                             fileName  = $_.fileName
-                            BuildType = $_.BuildType
-                            arch      = $_.Arch
+                            buildType = $_.buildType
+                            arch      = $_.arch
                         }
                     }
                 }
@@ -145,7 +145,7 @@ function Get-PHP {
     try {
         $fileName = $versionObject.fileName
         $version = $versionObject.version
-        $buildType = $versionObject.BuildType
+        $buildType = $versionObject.buildType
         $arch = $versionObject.arch
 
         $destination = $Global:PVMConfig.paths.directories.php
@@ -275,7 +275,7 @@ function Select-Version {
             Show-Message -message "`n$key versions:`n"
             $versionsList | ForEach-Object -Process {
                 $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
-                Show-Message -message " [$index] $($_.version) $($_.arch) $($_.BuildType)"
+                Show-Message -message " [$index] $($_.version) $($_.arch) $($_.buildType)"
                 $index++
             }
         }
@@ -316,16 +316,16 @@ function Install-PHP {
                 $currentVersion = Get-CurrentPHPVersion
                 $familyVersion = $matches[0]
                 Show-Message -message "`nOther versions from the $familyVersion.x family are available:"
-                $maxNameLength = ($foundInstalledVersions.Version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+                $maxNameLength = ($foundInstalledVersions.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $foundInstalledVersions | ForEach-Object -Process {
-                    $versionNumber = $_.Version
+                    $versionNumber = $_.version
                     $isCurrent = ''
                     $metaData = ''
-                    if ($_.Arch) {
-                        $metaData += $_.Arch + ' '
+                    if ($_.arch) {
+                        $metaData += $_.arch + ' '
                     }
-                    if ($_.BuildType) {
-                        $metaData += $_.BuildType
+                    if ($_.buildType) {
+                        $metaData += $_.buildType
                     }
                     if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $_) {
                         $isCurrent = '(Current)'
@@ -377,7 +377,7 @@ function Install-PHP {
         }
 
         Show-Message -message "`nExtracting the downloaded zip ..."
-        $phpDirectoryName = "$($selectedVersionObject.version)_$($selectedVersionObject.BuildType)_$($selectedVersionObject.arch)"
+        $phpDirectoryName = "$($selectedVersionObject.version)_$($selectedVersionObject.buildType)_$($selectedVersionObject.arch)"
         $destination = Split-Path -Path $destination -Parent
         Expand-AndConfigurePHP -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$phpDirectoryName"
 

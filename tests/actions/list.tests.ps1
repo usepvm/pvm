@@ -185,12 +185,12 @@ Describe "Get-AvailablePHPVersions" {
     It "Should handle x86 architecture" {
         Mock Get-PHPListToInstall { return @{
             'Archives' = @(@{
-                Link = 'php-7.1.0-Win32-x64.zip'
-                BuildType = 'TS'; Arch = 'x64'; Version = '7.1.0';
+                link = 'php-7.1.0-Win32-x64.zip'
+                buildType = 'TS'; arch = 'x64'; version = '7.1.0';
             })
             'Releases' = @(@{
-                Link = 'php-7.1.0-Win32-x86.zip'
-                BuildType = 'TS'; Arch = 'x86'; Version = '7.1.0'
+                link = 'php-7.1.0-Win32-x86.zip'
+                buildType = 'TS'; arch = 'x86'; version = '7.1.0'
             })
         }}
 
@@ -202,12 +202,12 @@ Describe "Get-AvailablePHPVersions" {
     It "Should handle x64 architecture" {
         Mock Get-PHPListToInstall { return @{
             'Archives' = @(@{
-                Link = 'php-7.1.0-Win32-x64.zip'
-                BuildType = 'TS'; Arch = 'x64'; Version = '7.1.0';
+                link = 'php-7.1.0-Win32-x64.zip'
+                buildType = 'TS'; arch = 'x64'; version = '7.1.0';
             })
             'Releases' = @(@{
-                Link = 'php-7.1.0-Win32-x86.zip'
-                BuildType = 'TS'; Arch = 'x86'; Version = '7.1.0'
+                link = 'php-7.1.0-Win32-x86.zip'
+                buildType = 'TS'; arch = 'x86'; version = '7.1.0'
             })
         }}
 
@@ -219,12 +219,12 @@ Describe "Get-AvailablePHPVersions" {
     It "Should handle TS build type" {
         Mock Get-PHPListToInstall { return @{
             'Archives' = @(@{
-                Link = 'php-7.1.0-Win32-x64.zip'
-                BuildType = 'TS'; Arch = 'x64'; Version = '7.1.0';
+                link = 'php-7.1.0-Win32-x64.zip'
+                buildType = 'TS'; arch = 'x64'; version = '7.1.0';
             })
             'Releases' = @(@{
-                Link = 'php-7.1.0-Win32-nts-x64.zip'
-                BuildType = 'NTS'; Arch = 'x64'; Version = '7.1.0'
+                link = 'php-7.1.0-Win32-nts-x64.zip'
+                buildType = 'NTS'; arch = 'x64'; version = '7.1.0'
             })
         }}
 
@@ -236,12 +236,12 @@ Describe "Get-AvailablePHPVersions" {
     It "Should handle NTS build type" {
         Mock Get-PHPListToInstall { return @{
             'Archives' = @(@{
-                Link = 'php-7.1.0-Win32-x64.zip'
-                BuildType = 'TS'; Arch = 'x64'; Version = '7.1.0';
+                link = 'php-7.1.0-Win32-x64.zip'
+                buildType = 'TS'; arch = 'x64'; version = '7.1.0';
             })
             'Releases' = @(@{
-                Link = 'php-7.1.0-Win32-nts-x64.zip'
-                BuildType = 'NTS'; Arch = 'x64'; Version = '7.1.0'
+                link = 'php-7.1.0-Win32-nts-x64.zip'
+                buildType = 'NTS'; arch = 'x64'; version = '7.1.0'
             })
         }}
 
@@ -270,12 +270,12 @@ Describe "Get-AvailablePHPVersions" {
     It "Display available versions matching filter" {
         Mock Get-PHPListToInstall { return @{
             'Archives' = @(@{
-                Link = 'php-7.1.0-Win32-x64.zip'
-                BuildType = 'TS'; Arch = 'x64'; Version = '7.1.0'
+                link = 'php-7.1.0-Win32-x64.zip'
+                buildType = 'TS'; arch = 'x64'; version = '7.1.0'
             })
             'Releases' = @(@{
-                Link = 'php-7.2.0-Win32-x64.zip'
-                BuildType = 'TS'; Arch = 'x64'; Version = '7.2.0'
+                link = 'php-7.2.0-Win32-x64.zip'
+                buildType = 'TS'; arch = 'x64'; version = '7.2.0'
             })
         }}
         $code = Get-AvailablePHPVersions -term '7.1'
@@ -285,12 +285,12 @@ Describe "Get-AvailablePHPVersions" {
     It "Return -1 when no available versions matching filter" {
         Mock Get-PHPListToInstall { return @{
             'Archives' = @(@{
-                Link = 'php-7.1.0-Win32-x64.zip'
-                BuildType = 'TS'; Arch = 'x64'; Version = '7.1.0'
+                link = 'php-7.1.0-Win32-x64.zip'
+                buildType = 'TS'; arch = 'x64'; version = '7.1.0'
             })
             'Releases' = @(@{
-                Link = 'php-7.2.0-Win32-x64.zip'
-                BuildType = 'TS'; Arch = 'x64'; Version = '7.2.0'
+                link = 'php-7.2.0-Win32-x64.zip'
+                buildType = 'TS'; arch = 'x64'; version = '7.2.0'
             })
         }}
         $code = Get-AvailablePHPVersions -term '9.1'
@@ -343,16 +343,16 @@ Describe "Get-AvailablePHPVersions" {
         Mock Get-DataFromCache {
             return @{
                 'Archives' = @(@{
-                    BuildType = 'NTS';
-                    Version = '8.1.0';
-                    Link = 'php-8.1.0-Win32-x64.zip';
-                    Arch = 'x86'
+                    buildType = 'NTS';
+                    version = '8.1.0';
+                    link = 'php-8.1.0-Win32-x64.zip';
+                    arch = 'x86'
                 })
                 'Releases' = @(@{
-                    BuildType = 'NTS';
-                    Version = '8.2.0';
-                    Link = 'php-8.2.0-Win32-x64.zip';
-                    Arch = 'x64';
+                    buildType = 'NTS';
+                    version = '8.2.0';
+                    link = 'php-8.2.0-Win32-x64.zip';
+                    arch = 'x64';
                 })
             }
         }
@@ -410,9 +410,9 @@ Describe "Show-InstalledPHPVersions" {
             buildType = 'nts'
         }}
         Mock Get-InstalledPHPVersions { return @(
-            @{Version = '8.2.0'; Arch = 'x64'; BuildType = 'NTS'}
-            @{Version = '8.1.5'; Arch = 'x64'; BuildType = 'NTS'}
-            @{Version = '7.4.33'; Arch = 'x64'; BuildType = 'NTS'}
+            @{ version = '8.2.0'; arch = 'x64'; buildType = 'NTS' }
+            @{ version = '8.1.5'; arch = 'x64'; buildType = 'NTS' }
+            @{ version = '7.4.33'; arch = 'x64'; buildType = 'NTS' }
         )}
 
         $code = Show-InstalledPHPVersions
@@ -426,9 +426,9 @@ Describe "Show-InstalledPHPVersions" {
 
     It "Display installed versions matching filter" {
         Mock Get-InstalledPHPVersions { return @(
-            @{Version = '8.2.0'; Arch = 'x64'; BuildType = 'NTS'}
-            @{Version = '8.2.0'; Arch = 'x64'; BuildType = 'TS'}
-            @{Version = '8.1.5'; Arch = 'x64'; BuildType = 'NTS'}
+            @{ version = '8.2.0'; arch = 'x64'; buildType = 'NTS' }
+            @{ version = '8.2.0'; arch = 'x64'; buildType = 'TS' }
+            @{ version = '8.1.5'; arch = 'x64'; buildType = 'NTS' }
         )}
         $code = Show-InstalledPHPVersions -term '8.2'
         $code | Should -Be 0
@@ -436,9 +436,9 @@ Describe "Show-InstalledPHPVersions" {
 
     It "Return -1 when no installed versions matching filter" {
         Mock Get-InstalledPHPVersions { return @(
-            @{Version = '8.2.0'; Arch = 'x64'; BuildType = 'NTS'}
-            @{Version = '8.2.0'; Arch = 'x64'; BuildType = 'TS'}
-            @{Version = '8.1.5'; Arch = 'x64'; BuildType = 'NTS'}
+            @{ version = '8.2.0'; arch = 'x64'; buildType = 'NTS' }
+            @{ version = '8.2.0'; arch = 'x64'; buildType = 'TS' }
+            @{ version = '8.1.5'; arch = 'x64'; buildType = 'NTS' }
         )}
 
         $code = Show-InstalledPHPVersions -term '8.3'
@@ -463,9 +463,9 @@ Describe "Show-InstalledPHPVersions" {
             buildType = 'NTS'
         }}
         Mock Get-InstalledPHPVersions { return @(
-            @{Version = '8.2.0'; Arch = 'x64'; BuildType = 'NTS'}
-            @{Version = '8.2.0'; Arch = 'x64'; BuildType = 'NTS'}
-            @{Version = '8.1.5'; Arch = 'x64'; BuildType = 'NTS'}
+            @{ version = '8.2.0'; arch = 'x64'; buildType = 'NTS' }
+            @{ version = '8.2.0'; arch = 'x64'; buildType = 'NTS' }
+            @{ version = '8.1.5'; arch = 'x64'; buildType = 'NTS' }
         )}
 
         $null = Show-InstalledPHPVersions
@@ -477,8 +477,8 @@ Describe "Show-InstalledPHPVersions" {
     It "Should handle no current version set" {
         Mock Get-CurrentPHPVersion { return @{ version = '' } }
         Mock Get-InstalledPHPVersions { return @(
-            @{Version = '8.2.0'; Arch = 'x64'; BuildType = 'NTS'}
-            @{Version = '8.1.5'; Arch = 'x64'; BuildType = 'NTS'}
+            @{ version = '8.2.0'; arch = 'x64'; buildType = 'NTS' }
+            @{ version = '8.1.5'; arch = 'x64'; buildType = 'NTS' }
         )}
 
         $null = Show-InstalledPHPVersions

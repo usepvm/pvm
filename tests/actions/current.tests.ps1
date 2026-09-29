@@ -167,10 +167,10 @@ Describe "Get-CurrentPHPVersion" {
         It "Should return correct version information when symlink is valid" {
             # Act
             Mock Get-PHPInstallInfo {@{
-                Version = '8.2.0'
-                Arch = 'x64'
-                BuildType = 'ts'
-                InstallPath = 'C:\php\8.2.0'
+                version = '8.2.0'
+                arch = 'x64'
+                buildType = 'ts'
+                installPath = 'C:\php\8.2.0'
             }}
             Mock Test-DirectoryExists { return $true }
             $result = Get-CurrentPHPVersion

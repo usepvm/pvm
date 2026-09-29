@@ -120,7 +120,7 @@ Describe "Get-LatestPHPVersion" {
         $result | Should -Not -BeNullOrEmpty
         $result.version | Should -Be '8.2.1'
         $result.arch | Should -Be 'x64'
-        $result.BuildType | Should -Be 'TS'
+        $result.buildType | Should -Be 'TS'
     }
 
     It "Should filter by valid url" {
@@ -140,7 +140,7 @@ Describe "Get-LatestPHPVersion" {
         $result | Should -Not -BeNullOrEmpty
         $result.version | Should -Be '8.3.32'
         $result.arch | Should -Be 'x64'
-        $result.BuildType | Should -Be 'ts'
+        $result.buildType | Should -Be 'ts'
     }
 
     It "Should filter by architecture and build type" {
@@ -159,7 +159,7 @@ Describe "Get-LatestPHPVersion" {
         $result | Should -Not -BeNullOrEmpty
         $result.version | Should -Be '8.3.3'
         $result.arch | Should -Be 'x86'
-        $result.BuildType | Should -Be 'nts'
+        $result.buildType | Should -Be 'nts'
     }
 
     It "Should return null when no versions are available" {
@@ -194,7 +194,7 @@ Describe "Get-LatestPHPVersion" {
 
         $result.version | Should -Be '8.0'
         $result.arch | Should -Be 'x64'
-        $result.BuildType | Should -Be 'nts'
+        $result.buildType | Should -Be 'nts'
     }
 
     It "Should read from source if cache is empty" {
@@ -321,8 +321,8 @@ Describe "Get-PHPVersions" {
         Mock Get-PHPListToInstall {
             return [PSCustomObject]@{
                 Archives = @(
-                    [PSCustomObject]@{ Version = '8.1.0'; Arch = 'x64'; BuildType = 'TS'; Link = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' }
-                    [PSCustomObject]@{ Version = '8.1.0'; Arch = 'x86'; BuildType = 'TS'; Link = '/downloads/releases/php-8.1.0-Win32-vs16-x86.zip' }
+                    [PSCustomObject]@{ version = '8.1.0'; arch = 'x64'; buildType = 'TS'; link = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' }
+                    [PSCustomObject]@{ version = '8.1.0'; arch = 'x86'; buildType = 'TS'; link = '/downloads/releases/php-8.1.0-Win32-vs16-x86.zip' }
                 )
                 Releases = @()
             }
@@ -339,8 +339,8 @@ Describe "Get-PHPVersions" {
         Mock Get-PHPListToInstall {
             return [PSCustomObject]@{
                 Archives = @(
-                    [PSCustomObject]@{ Version = '8.1.0'; Arch = 'x64'; BuildType = 'NTS'; Link = '/downloads/releases/php-8.1.0-nts-Win32-vs16-x64.zip' }
-                    [PSCustomObject]@{ Version = '8.1.0'; Arch = 'x64'; BuildType = 'TS'; Link = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' }
+                    [PSCustomObject]@{ version = '8.1.0'; arch = 'x64'; buildType = 'NTS'; link = '/downloads/releases/php-8.1.0-nts-Win32-vs16-x64.zip' }
+                    [PSCustomObject]@{ version = '8.1.0'; arch = 'x64'; buildType = 'TS'; link = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' }
                 )
                 Releases = @()
             }
@@ -350,7 +350,7 @@ Describe "Get-PHPVersions" {
 
         $result.Count | Should -BeGreaterThan 0
         $result.Archives.Count | Should -BeGreaterThan 0
-        $result.Archives[0].BuildType | Should -Be 'NTS'
+        $result.Archives[0].buildType | Should -Be 'NTS'
     }
 
     It "Should handle exception gracefully" {
@@ -366,7 +366,7 @@ Describe "Get-PHPVersions" {
         Mock Get-PHPListToInstall {
             return [PSCustomObject]@{
                 Archives = @(
-                    [PSCustomObject]@{ Version = '8.2.0'; Arch = 'x64'; BuildType = 'TS'; Link = '/downloads/releases/php-8.2.0-Win32-vs16-x64.zip' }
+                    [PSCustomObject]@{ version = '8.2.0'; arch = 'x64'; buildType = 'TS'; link = '/downloads/releases/php-8.2.0-Win32-vs16-x64.zip' }
                 )
                 Releases = @()
             }
@@ -381,9 +381,9 @@ Describe "Get-PHPVersions" {
         Mock Get-PHPListToInstall {
             return [PSCustomObject]@{
                 Archives = @(
-                    [PSCustomObject]@{ Version = '8.1.0'; Arch = 'x64'; BuildType = 'TS'; Link = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' }
-                    [PSCustomObject]@{ Version = '8.1.1'; Arch = 'x64'; BuildType = 'TS'; Link = '/downloads/releases/php-8.1.1-Win32-vs16-x64.zip' }
-                    [PSCustomObject]@{ Version = '8.2.0'; Arch = 'x64'; BuildType = 'TS'; Link = '/downloads/releases/php-8.2.0-Win32-vs16-x64.zip' }
+                    [PSCustomObject]@{ version = '8.1.0'; arch = 'x64'; buildType = 'TS'; link = '/downloads/releases/php-8.1.0-Win32-vs16-x64.zip' }
+                    [PSCustomObject]@{ version = '8.1.1'; arch = 'x64'; buildType = 'TS'; link = '/downloads/releases/php-8.1.1-Win32-vs16-x64.zip' }
+                    [PSCustomObject]@{ version = '8.2.0'; arch = 'x64'; buildType = 'TS'; link = '/downloads/releases/php-8.2.0-Win32-vs16-x64.zip' }
                 )
                 Releases = @()
             }

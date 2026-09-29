@@ -24,10 +24,10 @@ function Get-FromSource {
 
                         $filteredLinks.Add(@{
                             fileName = $fileName
-                            Version   = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
-                            Arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
-                            BuildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
-                            Link      = $link
+                            version   = ($_.href -replace '/downloads/releases/archives/|/downloads/releases/|php-|-nts|-Win.*|\.zip', '')
+                            arch      = ($fileName -replace '.*\b(x64|x86)\b.*', '$1')
+                            buildType = if ($fileName -match 'nts') { 'NTS' } else { 'TS' }
+                            link      = $link
                         })
                     }
                     # Return the filtered links (PHP version names)
@@ -83,9 +83,9 @@ function Get-AvailablePHPVersions {
         $fetchedVersionsGroupedPartialList = @{}
         $fetchedVersionsGrouped.PSObject.Properties | ForEach-Object -Process {
             $searchResult = $_.Value | Where-Object -FilterScript {
-                (($null -eq $arch) -or ($_.Arch -eq $arch)) -and
-                (($null -eq $buildType) -or ($_.BuildType -eq $buildType)) -and
-                (($null -eq $term) -or ($_.Version -like "$term*"))
+                (($null -eq $arch) -or ($_.arch -eq $arch)) -and
+                (($null -eq $buildType) -or ($_.buildType -eq $buildType)) -and
+                (($null -eq $term) -or ($_.version -like "$term*"))
             }
 
             if ($searchResult -and $searchResult.Count -ne 0) {
@@ -110,10 +110,10 @@ function Get-AvailablePHPVersions {
                     return
                 }
                 Show-Message -message "`n$key`n"
-                $maxNameLength = ($fetchedVersionsGroupe.Version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+                $maxNameLength = ($fetchedVersionsGroupe.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $fetchedVersionsGroupe | ForEach-Object -Process {
-                    $versionNumber = "$($_.Version) ".PadRight($maxNameLength, '.')
-                    Show-Message -message "  $versionNumber $($_.Arch) $($_.BuildType)"
+                    $versionNumber = "$($_.version) ".PadRight($maxNameLength, '.')
+                    Show-Message -message "  $versionNumber $($_.arch) $($_.buildType)"
                 }
             }
 
@@ -141,7 +141,7 @@ function Show-InstalledPHPVersions {
         }
 
         if ($term) {
-            $installedPhp = $installedPhp | Where-Object -FilterScript { $_.Version -like "$term*" }
+            $installedPhp = $installedPhp | Where-Object -FilterScript { $_.version -like "$term*" }
             if ($installedPhp.Count -eq 0) {
                 Show-Error -message "`nNo PHP versions found matching '$term'"
                 return -1
@@ -151,19 +151,19 @@ function Show-InstalledPHPVersions {
         Show-Info -message "`nInstalled Versions"
         Write-Gray -message '------------------'
         $duplicates = @()
-        $maxNameLength = ($installedPhp.Version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+        $maxNameLength = ($installedPhp.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedPhp | ForEach-Object -Process {
-            $versionNumber = $_.Version
-            $versionID = "$($_.Version)_$($_.buildType)_$($_.Arch)"
+            $versionNumber = $_.version
+            $versionID = "$($_.version)_$($_.buildType)_$($_.arch)"
             if ($duplicates -notcontains $versionID) {
                 $duplicates += $versionID
                 $isCurrent = ''
                 $metaData = ''
-                if ($_.Arch) {
-                    $metaData += $_.Arch + ' '
+                if ($_.arch) {
+                    $metaData += $_.arch + ' '
                 }
-                if ($_.BuildType) {
-                    $metaData += $_.BuildType
+                if ($_.buildType) {
+                    $metaData += $_.buildType
                 }
                 if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $_) {
                     $isCurrent = '(Current)'

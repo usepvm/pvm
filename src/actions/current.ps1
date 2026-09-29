@@ -48,10 +48,10 @@ function Get-CurrentPHPVersion {
         $phpInfo = Get-PHPInstallInfo -path $currentPhpVersionPath
 
         return @{
-            version   = $phpInfo.Version
-            arch      = $phpInfo.Arch
-            buildType = $phpInfo.BuildType
-            path      = $phpInfo.InstallPath
+            version   = $phpInfo.version
+            arch      = $phpInfo.arch
+            buildType = $phpInfo.buildType
+            path      = $phpInfo.installPath
             link      = $currentPhpVersionLink.FullName
         }
     } catch {

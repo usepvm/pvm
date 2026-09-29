@@ -37,13 +37,13 @@ function Restore-TestEnvironment {
 
 function Get-PowerShellInfo {
     $psInfo = @{
-        Version = $PSVersionTable.PSVersion
-        Edition = $PSVersionTable.PSEdition
-        Platform = if ($PSVersionTable.Platform) { $PSVersionTable.Platform } else { 'Windows' }
-        Path = $PSHome
+        version = $PSVersionTable.PSVersion
+        edition = $PSVersionTable.PSEdition
+        platform = if ($PSVersionTable.Platform) { $PSVersionTable.Platform } else { 'Windows' }
+        path = $PSHome
     }
 
-    $psInfo.Name = if ($PSVersionTable.PSVersion.Major -ge 6) { 'PowerShell Core (pwsh)' } else { 'Windows PowerShell (powershell)' }
+    $psInfo.name = if ($PSVersionTable.PSVersion.Major -ge 6) { 'PowerShell Core (pwsh)' } else { 'Windows PowerShell (powershell)' }
 
     return $psInfo
 }
@@ -196,8 +196,8 @@ function Invoke-Tests {
 
         Show-Message -message "`n----------------------------------------------------------------"
         Show-Message -message "`n`nTests Settings:"
-        Show-Message -message " PowerShell Engine ..... $($psInfo.Name)"
-        Show-Message -message " PowerShell ............ $($psInfo.Version)"
+        Show-Message -message " PowerShell Engine ..... $($psInfo.name)"
+        Show-Message -message " PowerShell ............ $($psInfo.version)"
         Show-Message -message " Pester ................ $($pesterInfo.Version)"
         Show-Message -message " Coverage .............. $($options.target)%"
         Show-Message -message " Verbosity ............. $($options.verbosity)"

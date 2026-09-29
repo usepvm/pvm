@@ -103,17 +103,17 @@ function Show-PowerShellInfo {
     param ($psInfo)
 
     Show-Message -message "`nPowerShell Info:"
-    Show-Message -message "  Engine: $($psInfo.Name)"
-    Show-Message -message "  Version: $($psInfo.Version)"
-    Show-Message -message "  Edition: $($psInfo.Edition)"
-    Show-Message -message "  Platform: $($psInfo.Platform)"
-    Show-Message -message "  Path: $($psInfo.Path)"
+    Show-Message -message "  Engine: $($psInfo.name)"
+    Show-Message -message "  Version: $($psInfo.version)"
+    Show-Message -message "  Edition: $($psInfo.edition)"
+    Show-Message -message "  Platform: $($psInfo.platform)"
+    Show-Message -message "  Path: $($psInfo.path)"
 }
 
 function Show-PowerShellInfoShort {
     param ($psInfo)
 
-    Show-Message -message "PowerShell Version: $($psInfo.Version)"
+    Show-Message -message "PowerShell Version: $($psInfo.version)"
 }
 
 function Get-TestsFiles {

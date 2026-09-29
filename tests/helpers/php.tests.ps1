@@ -55,11 +55,11 @@ Describe "Get-PHPInstallInfo" {
             $result = Get-PHPInstallInfo -path $testPath
 
             $result | Should -Not -BeNullOrEmpty
-            $result.Version | Should -Be '8.3.0'
-            $result.Arch | Should -Be 'x64'
-            $result.BuildType | Should -Be 'NTS'
-            $result.Dll | Should -Be 'php8nts.dll'
-            $result.InstallPath | Should -Be $testPath
+            $result.version | Should -Be '8.3.0'
+            $result.arch | Should -Be 'x64'
+            $result.buildType | Should -Be 'NTS'
+            $result.dll | Should -Be 'php8nts.dll'
+            $result.installPath | Should -Be $testPath
         }
 
         It "Returns PHP install info with TS build type" {
@@ -78,9 +78,9 @@ Describe "Get-PHPInstallInfo" {
 
             $result = Get-PHPInstallInfo -path $testPath
 
-            $result.BuildType | Should -Be 'TS'
-            $result.Arch | Should -Be 'x86'
-            $result.Version | Should -Be '8.2.5'
+            $result.buildType | Should -Be 'TS'
+            $result.arch | Should -Be 'x86'
+            $result.version | Should -Be '8.2.5'
         }
 
         It "Returns first DLL when multiple match" {
@@ -342,8 +342,8 @@ Describe "Update-InstalledPHPVersionsCache" {
         It "Should return 0 on success" {
             Mock Get-InstalledPHPVersionsFromDisk {
                 return @(
-                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
+                    @{Version = '8.1'; arch = 'x64'; buildType = 'NTS'}
+                    @{Version = '8.2'; arch = 'x64'; buildType = 'NTS'}
                 )
             }
             Mock Save-CachedData { return 0 }
@@ -355,7 +355,7 @@ Describe "Update-InstalledPHPVersionsCache" {
         It "Should call Get-InstalledPHPVersionsFromDisk" {
             Mock Get-InstalledPHPVersionsFromDisk {
                 return @(
-                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                    @{Version = '8.1'; arch = 'x64'; buildType = 'NTS'}
                 )
             }
             Mock Save-CachedData { return 0 }
@@ -368,7 +368,7 @@ Describe "Update-InstalledPHPVersionsCache" {
         It "Should call Save-CachedData with installed_php_versions file and depth 1" {
             Mock Get-InstalledPHPVersionsFromDisk {
                 return @(
-                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                    @{Version = '8.1'; arch = 'x64'; buildType = 'NTS'}
                 )
             }
             Mock Save-CachedData { return 0 }
@@ -383,8 +383,8 @@ Describe "Update-InstalledPHPVersionsCache" {
 
         It "Should cache the results from Get-InstalledPHPVersionsFromDisk" {
             $mockVersions = @(
-                @{Version = '7.4'; Arch = 'x64'; BuildType = 'NTS'}
-                @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                @{ version = '7.4'; arch = 'x64'; buildType = 'NTS' }
+                @{ version = '8.1'; arch = 'x64'; buildType = 'NTS' }
             )
             Mock Get-InstalledPHPVersionsFromDisk { return $mockVersions }
             Mock Save-CachedData { return 0 }
@@ -392,7 +392,7 @@ Describe "Update-InstalledPHPVersionsCache" {
             $null = Update-InstalledPHPVersionsCache
 
             Should -Invoke Save-CachedData -Exactly 1 -ParameterFilter {
-                $data.Count -eq 2 -and $data[0].Version -eq '7.4'
+                $data.Count -eq 2 -and $data[0].version -eq '7.4'
             }
         }
     }
@@ -401,7 +401,7 @@ Describe "Update-InstalledPHPVersionsCache" {
         It "Should return -1 when Save-CachedData returns -1" {
             Mock Get-InstalledPHPVersionsFromDisk {
                 return @(
-                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                    @{Version = '8.1'; arch = 'x64'; buildType = 'NTS'}
                 )
             }
             Mock Save-CachedData { return -1 }
@@ -431,7 +431,7 @@ Describe "Update-InstalledPHPVersionsCache" {
 
         It "Should return -1 when Save-CachedData throws exception" {
             Mock Get-InstalledPHPVersionsFromDisk {
-                return @(@{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'})
+                return @(@{Version = '8.1'; arch = 'x64'; buildType = 'NTS'})
             }
             Mock Save-CachedData { throw 'Cache exception' }
             Mock Add-LogEntry { return 0 }
@@ -467,9 +467,9 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
             Mock Get-PHPInstallInfo {
                 param ($path)
                 if ($path -eq "$script:TEST_DRIVE\storage\php\8.1") {
-                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = "$script:TEST_DRIVE\storage\php\8.1"}
+                    return @{Version = '8.1'; arch = 'x64'; buildType = 'NTS'; InstallPath = "$script:TEST_DRIVE\storage\php\8.1"}
                 } else {
-                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'; InstallPath = "$script:TEST_DRIVE\storage\php\8.2"}
+                    return @{Version = '8.2'; arch = 'x64'; buildType = 'NTS'; InstallPath = "$script:TEST_DRIVE\storage\php\8.2"}
                 }
             }
 
@@ -492,9 +492,9 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
             Mock Get-PHPInstallInfo {
                 param ($path)
                 if ($path -eq "$script:TEST_DRIVE\storage\php\8.1") {
-                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                    return @{Version = '8.1'; arch = 'x64'; buildType = 'NTS'}
                 } elseif ($path -eq "$script:TEST_DRIVE\storage\php\8.2") {
-                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
+                    return @{Version = '8.2'; arch = 'x64'; buildType = 'NTS'}
                 }
             }
 
@@ -514,19 +514,19 @@ Describe "Get-InstalledPHPVersionsFromDisk" {
             Mock Get-PHPInstallInfo {
                 param ($path)
                 if ($path -eq "$script:TEST_DRIVE\storage\php\8.2") {
-                    return @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
+                    return @{Version = '8.2'; arch = 'x64'; buildType = 'NTS'}
                 } elseif ($path -eq "$script:TEST_DRIVE\storage\php\7.4") {
-                    return @{Version = '7.4'; Arch = 'x86'; BuildType = 'TS'}
+                    return @{Version = '7.4'; arch = 'x86'; buildType = 'TS'}
                 } else {
-                    return @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+                    return @{Version = '8.1'; arch = 'x64'; buildType = 'NTS'}
                 }
             }
 
             $result = Get-InstalledPHPVersionsFromDisk
             $result.Count | Should -Be 3
-            $result[0].Version | Should -Be '7.4'
-            $result[1].Version | Should -Be '8.1'
-            $result[2].Version | Should -Be '8.2'
+            $result[0].version | Should -Be '7.4'
+            $result[1].version | Should -Be '8.1'
+            $result[2].version | Should -Be '8.2'
         }
     }
 
@@ -675,7 +675,7 @@ Describe "Get-UserSelectedPHPVersion" {
     }
 
     It "Should return first version when only one is provided" {
-        $result = Get-UserSelectedPHPVersion -installedVersions @(@{ version = '8.1'; Arch = 'x64'; BuildType = 'ts'})
+        $result = Get-UserSelectedPHPVersion -installedVersions @(@{ version = '8.1'; arch = 'x64'; buildType = 'ts'})
         $result.version | Should -Be '8.1'
     }
 
@@ -683,9 +683,9 @@ Describe "Get-UserSelectedPHPVersion" {
         Mock Read-HostWrapper { return '' }
 
         $result = Get-UserSelectedPHPVersion -installedVersions @(
-            @{ version = '7.4'; Arch = 'x64'; BuildType = 'ts'}
-            @{ version = '8.0'; Arch = 'x64'; BuildType = 'ts'}
-            @{ version = '8.1'; Arch = 'x64'; BuildType = 'ts'}
+            @{ version = '7.4'; arch = 'x64'; buildType = 'ts'}
+            @{ version = '8.0'; arch = 'x64'; buildType = 'ts'}
+            @{ version = '8.1'; arch = 'x64'; buildType = 'ts'}
         )
         $result.code | Should -Be -1
     }
@@ -694,9 +694,9 @@ Describe "Get-UserSelectedPHPVersion" {
         Mock Read-HostWrapper { return '2' }
 
         $result = Get-UserSelectedPHPVersion -installedVersions @(
-            @{ version = '7.4'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\7.4'}
-            @{ version = '8.0'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\8.0'}
-            @{ version = '8.1'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\8.1'}
+            @{ version = '7.4'; arch = 'x64'; buildType = 'ts'; InstallPath = 'C:\php\7.4'}
+            @{ version = '8.0'; arch = 'x64'; buildType = 'ts'; InstallPath = 'C:\php\8.0'}
+            @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; InstallPath = 'C:\php\8.1'}
         )
         $result.version | Should -Be '8.1'
         $result.code | Should -Be 0
@@ -708,9 +708,9 @@ Describe "Get-UserSelectedPHPVersion" {
         Mock Get-CurrentPHPVersion { return @{ version = '8.0'; arch = 'x64'; buildType = 'ts'}}
 
         $list = @(
-            @{ version = '7.4'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\7.4'}
-            @{ version = '8.0'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\8.0'}
-            @{ version = '8.1'; Arch = 'x64'; BuildType = 'ts'; InstallPath = 'C:\php\8.1'}
+            @{ version = '7.4'; arch = 'x64'; buildType = 'ts'; InstallPath = 'C:\php\7.4'}
+            @{ version = '8.0'; arch = 'x64'; buildType = 'ts'; InstallPath = 'C:\php\8.0'}
+            @{ version = '8.1'; arch = 'x64'; buildType = 'ts'; InstallPath = 'C:\php\8.1'}
         )
         $null = Get-UserSelectedPHPVersion -installedVersions $list
 
@@ -724,10 +724,10 @@ Describe "Get-MatchingPHPVersions" {
     Context "When matching versions exist" {
         It "Should return matching versions for partial version number" {
             Mock Get-InstalledPHPVersions { return @(
-                @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
-                @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                @{Version = '8.0'; Arch = 'x64'; BuildType = 'NTS'}
-                @{Version = '7.4'; Arch = 'x64'; BuildType = 'NTS'}
+                @{Version = '8.2'; arch = 'x64'; buildType = 'NTS'}
+                @{Version = '8.1'; arch = 'x64'; buildType = 'NTS'}
+                @{Version = '8.0'; arch = 'x64'; buildType = 'NTS'}
+                @{Version = '7.4'; arch = 'x64'; buildType = 'NTS'}
             )}
 
             $result = Get-MatchingPHPVersions -version '8'
@@ -742,11 +742,11 @@ Describe "Get-MatchingPHPVersions" {
         It "Should return exact match for pattern version number" {
             Mock Get-InstalledPHPVersions {
                 return @(
-                    @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '8.1.9'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '8.0'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '7.4'; Arch = 'x64'; BuildType = 'NTS'}
+                    @{Version = '8.2'; arch = 'x64'; buildType = 'NTS'}
+                    @{Version = '8.1.9'; arch = 'x64'; buildType = 'NTS'}
+                    @{Version = '8.1'; arch = 'x64'; buildType = 'NTS'}
+                    @{Version = '8.0'; arch = 'x64'; buildType = 'NTS'}
+                    @{Version = '7.4'; arch = 'x64'; buildType = 'NTS'}
                 )
             }
 
@@ -758,11 +758,11 @@ Describe "Get-MatchingPHPVersions" {
         It "Should return exact match for full version number" {
             Mock Get-InstalledPHPVersions {
                 return @(
-                    @{Version = '7.4'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '8.0'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '8.1.9'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '8.2'; Arch = 'x64'; BuildType = 'NTS'}
+                    @{Version = '7.4'; arch = 'x64'; buildType = 'NTS'}
+                    @{Version = '8.0'; arch = 'x64'; buildType = 'NTS'}
+                    @{Version = '8.1'; arch = 'x64'; buildType = 'NTS'}
+                    @{Version = '8.1.9'; arch = 'x64'; buildType = 'NTS'}
+                    @{Version = '8.2'; arch = 'x64'; buildType = 'NTS'}
                 )
             }
 
@@ -803,13 +803,13 @@ Describe "Test-PHPVersionInstalled" {
             Mock Get-MatchingPHPVersions {
                 param ($version)
                 return @(
-                    @{Version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '8.1.1'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '8.1.2'; Arch = 'x64'; BuildType = 'NTS'}
+                    @{Version = '8.1'; arch = 'x64'; buildType = 'NTS'}
+                    @{Version = '8.1.1'; arch = 'x64'; buildType = 'NTS'}
+                    @{Version = '8.1.2'; arch = 'x64'; buildType = 'NTS'}
                 )
             }
 
-            $result = Test-PHPVersionInstalled -version @{version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+            $result = Test-PHPVersionInstalled -version @{version = '8.1'; arch = 'x64'; buildType = 'NTS'}
             $result | Should -Be $true
         }
 
@@ -817,12 +817,12 @@ Describe "Test-PHPVersionInstalled" {
             Mock Get-MatchingPHPVersions {
                 param ($version)
                 return @(
-                    @{Version = '8.1.1'; Arch = 'x64'; BuildType = 'NTS'}
-                    @{Version = '8.1.2'; Arch = 'x64'; BuildType = 'NTS'}
+                    @{Version = '8.1.1'; arch = 'x64'; buildType = 'NTS'}
+                    @{Version = '8.1.2'; arch = 'x64'; buildType = 'NTS'}
                 )
             }
 
-            $result = Test-PHPVersionInstalled -version @{version = '8.1'; Arch = 'x64'; BuildType = 'NTS'}
+            $result = Test-PHPVersionInstalled -version @{version = '8.1'; arch = 'x64'; buildType = 'NTS'}
             $result | Should -Be $null
         }
 

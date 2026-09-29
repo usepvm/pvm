@@ -21,11 +21,11 @@ function Get-PHPInstallInfo {
     }
 
     return @{
-        Version     = $dll.VersionInfo.ProductVersion
-        Arch        = Get-BinaryArchitectureFromDLL -path $dll.FullName
-        BuildType   = $buildType
-        Dll         = $dll.Name
-        InstallPath = $path
+        version     = $dll.VersionInfo.ProductVersion
+        arch        = Get-BinaryArchitectureFromDLL -path $dll.FullName
+        buildType   = $buildType
+        dll         = $dll.Name
+        installPath = $path
     }
 }
 
@@ -85,14 +85,12 @@ function Get-InstalledPHPVersionsFromDisk {
         $directories = Get-AllSubdirectories -path $Global:PVMConfig.paths.directories.php
         $installedVersions = $directories | ForEach-Object -Process {
             if (Test-FileExists -path "$($_.FullName)\php.exe") {
-                $phpInfo = Get-PHPInstallInfo -path $_.FullName
-
-                return $phpInfo
+                return (Get-PHPInstallInfo -path $_.FullName)
             }
             return $null
         }
 
-        $installedVersions = ($installedVersions | Sort-Object -Property { [version]$_.Version })
+        $installedVersions = ($installedVersions | Sort-Object -Property { [version]$_.version })
 
         return @{ pvmData = $installedVersions }
     } -rethrow $true
@@ -111,14 +109,14 @@ function Get-InstalledPHPVersions {
         }
 
         if ($arch) {
-            $installedVersions = $installedVersions | Where-Object -FilterScript { $_.Arch -eq $arch }
+            $installedVersions = $installedVersions | Where-Object -FilterScript { $_.arch -eq $arch }
         }
 
         if ($buildType) {
-            $installedVersions = $installedVersions | Where-Object -FilterScript { $_.BuildType -eq $buildType }
+            $installedVersions = $installedVersions | Where-Object -FilterScript { $_.buildType -eq $buildType }
         }
 
-        $installedVersions = $installedVersions | Sort-Object -Property { [version]$_.Version }
+        $installedVersions = $installedVersions | Sort-Object -Property { [version]$_.version }
 
         return $installedVersions
     } catch {
@@ -147,11 +145,11 @@ function Get-UserSelectedPHPVersion {
                 $isCurrent = '(Current)'
             }
             $metaData = ''
-            if ($_.Arch) {
-                $metaData += $_.Arch + ' '
+            if ($_.arch) {
+                $metaData += $_.arch + ' '
             }
-            if ($_.BuildType) {
-                $metaData += $_.BuildType
+            if ($_.buildType) {
+                $metaData += $_.buildType
             }
             $versionNumber = "$($_.version) ".PadRight($maxNameLength, '.')
             Show-Message -message " [$index] $versionNumber $metaData $isCurrent"
@@ -164,7 +162,7 @@ function Get-UserSelectedPHPVersion {
         $versionObj = $installedVersions | Where-Object -FilterScript { $_.index -eq $response }
     }
 
-    return @{ code = 0; version = $versionObj.version; arch = $versionObj.arch; buildType = $versionObj.BuildType; path = $versionObj.InstallPath }
+    return @{ code = 0; version = $versionObj.version; arch = $versionObj.arch; buildType = $versionObj.buildType; path = $versionObj.installPath }
 }
 
 function Get-MatchingPHPVersions {
@@ -173,7 +171,7 @@ function Get-MatchingPHPVersions {
     try {
         $installedVersions = Get-InstalledPHPVersions
 
-        $matchingVersions = $installedVersions | Where-Object -FilterScript { $_.Version -like "$version*" }
+        $matchingVersions = $installedVersions | Where-Object -FilterScript { $_.version -like "$version*" }
 
         return $matchingVersions
     } catch {
@@ -188,9 +186,9 @@ function Test-PHPVersionInstalled {
     try {
         $installedVersions = Get-MatchingPHPVersions -version $version.version
         return ($installedVersions | Where-Object -FilterScript {
-                $_.Version -eq $version.version -and
-                $_.Arch -eq $version.arch -and
-                $_.BuildType -eq $version.BuildType
+                $_.version -eq $version.version -and
+                $_.arch -eq $version.arch -and
+                $_.buildType -eq $version.buildType
             }
         )
     } catch {

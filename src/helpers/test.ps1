@@ -9,7 +9,7 @@ function Show-Scripts {
         Write-White -message "`n  $name"
         $commands | ForEach-Object -Process {
             $cmd = $_
-            Write-DarkGray -message "   - $cmd"
+            Write-DarkGray -message "    $cmd"
         }
     }
 }

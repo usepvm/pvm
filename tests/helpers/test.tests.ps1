@@ -34,7 +34,7 @@ Describe "Show-Scripts" {
             $message -in @("`n  build", "`n  lint")
         }
         Should -Invoke Write-DarkGray -Times 3 -Exactly -ParameterFilter {
-            $message -in @("   - test --filter build", "   - test --filter unit", "   - test --filter lint")
+            $message -in @("    test --filter build", "    test --filter unit", "    test --filter lint")
         }
     }
 

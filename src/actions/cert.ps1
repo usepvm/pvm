@@ -1,4 +1,4 @@
-
+﻿
 function Get-CertBundlePath {
     param ($includeLocalCertificates = $false)
 
@@ -325,7 +325,7 @@ function New-LocalPHPCertificate {
 
         $trustBundlePath = Get-CertBundlePath -includeLocalCertificates $true
         $localCertificates = Get-LocalCertificateFiles -localCertificateDirectory $localCertificateDirectory
-        
+
         $code = Write-PHPCertificateTrustBundle -baseBundlePath $baseBundlePath -trustBundlePath $trustBundlePath -localCertificateFiles $localCertificates
         if ($code -ne 0) {
             return -1

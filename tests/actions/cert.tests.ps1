@@ -112,7 +112,7 @@ Describe "Set-PHPCertificateBundle" {
         Remove-Item $script:phpIniPath -Force
 
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
-        
+
         $result | Should -Be -1
         Should -Invoke Show-Error -ParameterFilter { $message -like '*php.ini not found*' }
     }
@@ -121,7 +121,7 @@ Describe "Set-PHPCertificateBundle" {
         '' | Set-Content -LiteralPath $script:phpIniPath -NoNewline
 
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
-        
+
         $result | Should -Be -1
         Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to read php.ini*' }
     }
@@ -131,7 +131,7 @@ Describe "Set-PHPCertificateBundle" {
         $before = Get-ContentWrapper -path $script:phpIniPath
 
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
-        
+
         $result | Should -Be -1
         Get-ContentWrapper -path $script:phpIniPath | Should -Be $before
         Should -Invoke Show-Error -ParameterFilter { $message -like '*back up php.ini*' }
@@ -141,7 +141,7 @@ Describe "Set-PHPCertificateBundle" {
         Mock Get-ContentWrapper { throw 'boom' }
 
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
-        
+
         $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
         Should -Invoke Show-Error -ParameterFilter { $message -like '*boom*' }
@@ -151,7 +151,7 @@ Describe "Set-PHPCertificateBundle" {
         Mock Set-ContentWrapper { }
 
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
-        
+
         $result | Should -Be -1
         Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to configure curl.cainfo in php.ini*' }
     }
@@ -257,7 +257,7 @@ Describe "Set-ActivePHPTrustBundle" {
         Mock Set-PHPCertificateBundle { return 0 }
 
         $result = Set-ActivePHPTrustBundle -bundlePath $script:trustBundlePath
-        
+
         $result | Should -Be -1
         Should -Invoke Set-PHPCertificateBundle -Times 0
         Should -Invoke Show-Error -ParameterFilter { $message -like '*current PHP version*' }
@@ -268,7 +268,7 @@ Describe "Set-ActivePHPTrustBundle" {
         Mock Set-PHPCertificateBundle { return 0 }
 
         $result = Set-ActivePHPTrustBundle -bundlePath $script:trustBundlePath
-        
+
         $result | Should -Be -1
         Should -Invoke Set-PHPCertificateBundle -Times 0
     }
@@ -278,7 +278,7 @@ Describe "Set-ActivePHPTrustBundle" {
         Mock Set-PHPCertificateBundle { return 0 }
 
         $result = Set-ActivePHPTrustBundle -bundlePath $script:trustBundlePath
-        
+
         $result | Should -Be 0
         Should -Invoke Set-PHPCertificateBundle -Times 1 -ParameterFilter {
             $iniPath -eq "$script:phpDirectory\php.ini" -and $bundlePath -eq $script:trustBundlePath
@@ -290,7 +290,7 @@ Describe "Set-ActivePHPTrustBundle" {
         Mock Set-PHPCertificateBundle { return -1 }
 
         $result = Set-ActivePHPTrustBundle -bundlePath $script:trustBundlePath
-        
+
         $result | Should -Be -1
     }
 }
@@ -346,7 +346,7 @@ Describe "Update-PHPCertificateBundle" {
         Mock Get-CurrentPHPVersion { return $null }
 
         $result = Update-PHPCertificateBundle
-        
+
         $result | Should -Be -1
         Should -Invoke Invoke-WebRequestWrapper -Times 0
     }
@@ -355,7 +355,7 @@ Describe "Update-PHPCertificateBundle" {
         Mock New-Directory { return -1 }
 
         $result = Update-PHPCertificateBundle
-        
+
         $result | Should -Be -1
         Should -Invoke Invoke-WebRequestWrapper -Times 0
         Should -Invoke Show-Error -ParameterFilter { $message -like '*certificate directory*' }
@@ -368,7 +368,7 @@ Describe "Update-PHPCertificateBundle" {
         }
 
         $result = Update-PHPCertificateBundle
-        
+
         $result | Should -Be -1
         Test-Path -LiteralPath $script:baseBundlePath | Should -BeFalse
         @(Get-ChildItem -Path $script:certDirectory -Filter '*.tmp' -Force).Count | Should -Be 0
@@ -381,7 +381,7 @@ Describe "Update-PHPCertificateBundle" {
         }
 
         $result = Update-PHPCertificateBundle
-        
+
         $result | Should -Be -1
         Test-Path -LiteralPath $script:baseBundlePath | Should -BeFalse
     }
@@ -390,7 +390,7 @@ Describe "Update-PHPCertificateBundle" {
         Mock Invoke-WebRequestWrapper { throw 'network down' }
 
         $result = Update-PHPCertificateBundle
-        
+
         $result | Should -Be -1
         Test-Path -LiteralPath $script:baseBundlePath | Should -BeFalse
         Should -Invoke Add-LogEntry -Times 1
@@ -403,7 +403,7 @@ Describe "Update-PHPCertificateBundle" {
         Mock Write-PHPCertificateTrustBundle { return -1 }
 
         $result = Update-PHPCertificateBundle
-        
+
         $result | Should -Be -1
         Should -Invoke Show-Success -Times 0
     }
@@ -412,7 +412,7 @@ Describe "Update-PHPCertificateBundle" {
         Mock Set-PHPCertificateBundle { return -1 }
 
         $result = Update-PHPCertificateBundle
-        
+
         $result | Should -Be -1
         Should -Invoke Show-Success -Times 0
     }
@@ -508,7 +508,7 @@ Describe "New-LocalPHPCertificate" {
 
     It "Defaults to localhost when the hostname is empty" {
         $result = New-LocalPHPCertificate -hostName ''
-        
+
         $result | Should -Be 0
         Test-Path -LiteralPath "$script:localCertificateDirectory\localhost.crt.pem" | Should -BeTrue
         Should -Invoke Invoke-LocalCertificateGenerator -Times 1 -ParameterFilter {
@@ -518,7 +518,7 @@ Describe "New-LocalPHPCertificate" {
 
     It "Uses localhost and 127.0.0.1 as SANs for the localhost hostname" {
         $result = New-LocalPHPCertificate -hostName 'localhost'
-        
+
         $result | Should -Be 0
         Should -Invoke Invoke-LocalCertificateGenerator -Times 1 -ParameterFilter {
             $subjectAltName -eq 'DNS:localhost,IP:127.0.0.1'
@@ -527,7 +527,7 @@ Describe "New-LocalPHPCertificate" {
 
     It "Uses an IP SAN for IP address hosts" {
         $result = New-LocalPHPCertificate -hostName '192.168.1.10'
-        
+
         $result | Should -Be 0
         Test-Path -LiteralPath "$script:localCertificateDirectory\192.168.1.10.crt.pem" | Should -BeTrue
         Should -Invoke Invoke-LocalCertificateGenerator -Times 1 -ParameterFilter {
@@ -537,7 +537,7 @@ Describe "New-LocalPHPCertificate" {
 
     It "Rejects unsafe hostnames" {
         $result = New-LocalPHPCertificate -hostName '../unsafe'
-        
+
         $result | Should -Be -1
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
         Should -Invoke Show-Error -ParameterFilter { $message -like '*Invalid hostname*' }
@@ -545,7 +545,7 @@ Describe "New-LocalPHPCertificate" {
 
     It "Rejects hostnames with spaces" {
         $result = New-LocalPHPCertificate -hostName 'my app.test'
-        
+
         $result | Should -Be -1
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
     }
@@ -554,7 +554,7 @@ Describe "New-LocalPHPCertificate" {
         Mock Get-CurrentPHPVersion { return $null }
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
     }
@@ -563,7 +563,7 @@ Describe "New-LocalPHPCertificate" {
         Remove-Item $script:baseBundlePath -Force
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
         Should -Invoke Show-Error -ParameterFilter { $message -like "*pvm cert bundle*" }
@@ -573,7 +573,7 @@ Describe "New-LocalPHPCertificate" {
         Remove-Item "$script:phpDirectory\php.exe" -Force
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
         Should -Invoke Show-Error -ParameterFilter { $message -like '*PHP executable not found*' }
@@ -583,7 +583,7 @@ Describe "New-LocalPHPCertificate" {
         Mock New-Directory { return -1 }
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
     }
@@ -592,7 +592,7 @@ Describe "New-LocalPHPCertificate" {
         'existing' | Set-ContentWrapper -path "$script:localCertificateDirectory\myapp.test.crt.pem"
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
 
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
@@ -604,7 +604,7 @@ Describe "New-LocalPHPCertificate" {
         'existing' | Set-ContentWrapper -path "$script:localCertificateDirectory\myapp.test.key.pem"
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
     }
@@ -617,7 +617,7 @@ Describe "New-LocalPHPCertificate" {
         }
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Test-Path -LiteralPath "$script:localCertificateDirectory\myapp.test.crt.pem" | Should -BeFalse
         Test-Path -LiteralPath "$script:localCertificateDirectory\myapp.test.key.pem" | Should -BeFalse
@@ -632,7 +632,7 @@ Describe "New-LocalPHPCertificate" {
         }
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Test-Path -LiteralPath "$script:localCertificateDirectory\myapp.test.crt.pem" | Should -BeFalse
         Should -Invoke Show-Error -ParameterFilter { $message -like '*did not create both*' }
@@ -640,7 +640,7 @@ Describe "New-LocalPHPCertificate" {
 
     It "Cleans up the temporary directory after success" {
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be 0
         $script:capturedTempDir | Should -Not -BeNullOrEmpty
         Test-Path -LiteralPath $script:capturedTempDir | Should -BeFalse
@@ -654,7 +654,7 @@ Describe "New-LocalPHPCertificate" {
         }
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Test-Path -LiteralPath $script:capturedTempDir | Should -BeFalse
     }
@@ -672,7 +672,7 @@ Describe "New-LocalPHPCertificate" {
         Mock Set-ActivePHPTrustBundle { return -1 }
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Should -Invoke Show-Success -Times 0
     }
@@ -681,7 +681,7 @@ Describe "New-LocalPHPCertificate" {
         Mock Get-CurrentPHPVersion { throw 'boom' }
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
         Should -Invoke Show-Error -ParameterFilter { $message -like '*boom*' }
@@ -696,7 +696,7 @@ Describe "New-LocalPHPCertificate" {
         }
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Test-Path -LiteralPath "$script:localCertificateDirectory\myapp.test.crt.pem" | Should -BeFalse
         Test-Path -LiteralPath "$script:localCertificateDirectory\myapp.test.key.pem" | Should -BeFalse
@@ -710,7 +710,7 @@ Describe "New-LocalPHPCertificate" {
         }
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Test-Path -LiteralPath "$script:localCertificateDirectory\myapp.test.key.pem" | Should -BeFalse
         Should -Invoke Show-Error -ParameterFilter { $message -like '*did not create both*' }

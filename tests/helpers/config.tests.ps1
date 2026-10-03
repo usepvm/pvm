@@ -548,14 +548,28 @@ Describe "Get-Config" {
 
         It "Sets paths correctly" {
             $result = Get-Config -rootPath $testRoot
+
+            $result.rootPath | Should -Be $testRoot
+            $result.paths.directories.root | Should -Be $testRoot
             $result.paths.directories.storage | Should -Be "$testRoot\storage"
+            $result.paths.directories.testDrive | Should -Be "$testRoot\storage\tests"
             $result.paths.directories.php | Should -Be "$testRoot\storage\php"
             $result.paths.directories.data | Should -Be "$testRoot\storage\data"
             $result.paths.directories.templates | Should -Be "$testRoot\storage\data\templates"
             $result.paths.directories.cache | Should -Be "$testRoot\storage\data\cache"
             $result.paths.directories.profiles | Should -Be "$testRoot\storage\data\profiles"
             $result.paths.directories.log | Should -Be "$testRoot\storage\logs"
+            $result.paths.directories.state | Should -Be "$testRoot\storage\data\state"
+            $result.paths.directories.assets | Should -Be "$testRoot\assets"
+
+            $result.paths.files.profileExample | Should -Be "$testRoot\storage\data\profiles\profile-example.json"
+            $result.paths.files.profileTemplate | Should -Be "$testRoot\storage\data\templates\profile-template.json"
+            $result.paths.files.zendExtensionsList | Should -Be "$testRoot\storage\data\templates\zend_extensions.json"
+            $result.paths.files.aliasesList | Should -Be "$testRoot\storage\data\templates\aliases.json"
+            $result.paths.files.scriptsList | Should -Be "$testRoot\storage\data\templates\scripts.json"
             $result.paths.files.logError | Should -Be "$testRoot\storage\logs\error.log"
+            $result.paths.files.pathVarBackup | Should -Be "$testRoot\storage\data\state\path.bak.log"
+            $result.paths.files.lastUpdateCheck | Should -Be "$testRoot\storage\data\state\last_update_check.txt"
         }
 
         It "Sets env variables from .env file" {

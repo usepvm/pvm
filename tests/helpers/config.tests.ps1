@@ -555,6 +555,7 @@ Describe "Get-Config" {
             $result.paths.directories.cache | Should -Be "$testRoot\storage\data\cache"
             $result.paths.directories.profiles | Should -Be "$testRoot\storage\data\profiles"
             $result.paths.directories.log | Should -Be "$testRoot\storage\logs"
+            $result.paths.directories.cert | Should -Be "$testRoot\storage\cert"
             $result.paths.files.logError | Should -Be "$testRoot\storage\logs\error.log"
         }
 

@@ -973,6 +973,94 @@ Describe "Invoke-Profile" {
     }
 }
 
+Describe "Invoke-Cert" {
+    BeforeEach {
+        Mock Update-PHPCertificateBundle { return 0 }
+        Mock New-LocalPHPCertificate { return 0 }
+    }
+
+    It "Warns and returns -1 when no action is provided" {
+        $code = Invoke-Cert -arguments @()
+        $code | Should -Be -1
+
+        Should -Invoke Show-Warning -ParameterFilter { $message -like "*Please specify 'bundle' or 'local'*" }
+        Should -Invoke Update-PHPCertificateBundle -Times 0
+        Should -Invoke New-LocalPHPCertificate -Times 0
+    }
+
+    It "Dispatches the bundle action" {
+        $code = Invoke-Cert -arguments @('bundle')
+        $code | Should -Be 0
+
+        Should -Invoke Update-PHPCertificateBundle -Times 1
+        Should -Invoke New-LocalPHPCertificate -Times 0
+    }
+
+    It "Handles case-insensitive action names" {
+        $code = Invoke-Cert -arguments @('BUNDLE')
+        $code | Should -Be 0
+        $code = Invoke-Cert -arguments @('LOCAL')
+        $code | Should -Be 0
+
+        Should -Invoke Update-PHPCertificateBundle -Times 1
+        Should -Invoke New-LocalPHPCertificate -Times 1
+    }
+
+    It "Returns the result code of Update-PHPCertificateBundle" {
+        Mock Update-PHPCertificateBundle { return -1 }
+
+        $code = Invoke-Cert -arguments @('bundle')
+        $code | Should -Be -1
+    }
+
+    It "Rejects additional arguments for the bundle action" {
+        $code = Invoke-Cert -arguments @('bundle', 'extra')
+        $code | Should -Be -1
+
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*does not accept additional arguments*" }
+        Should -Invoke Update-PHPCertificateBundle -Times 0
+    }
+
+    It "Dispatches the local action with localhost by default" {
+        $code = Invoke-Cert -arguments @('local')
+        $code | Should -Be 0
+
+        Should -Invoke New-LocalPHPCertificate -Times 1 -ParameterFilter { $hostName -eq 'localhost' }
+        Should -Invoke Update-PHPCertificateBundle -Times 0
+    }
+
+    It "Dispatches the local action with the provided hostname" {
+        $code = Invoke-Cert -arguments @('local', 'myapp.test')
+        $code | Should -Be 0
+
+        Should -Invoke New-LocalPHPCertificate -Times 1 -ParameterFilter { $hostName -eq 'myapp.test' }
+    }
+
+    It "Returns the result code of New-LocalPHPCertificate" {
+        Mock New-LocalPHPCertificate { return -1 }
+
+        $code = Invoke-Cert -arguments @('local', 'myapp.test')
+        $code | Should -Be -1
+    }
+
+    It "Rejects too many arguments for the local action" {
+        $code = Invoke-Cert -arguments @('local', 'myapp.test', 'extra')
+        $code | Should -Be -1
+
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Usage: pvm cert local*" }
+        Should -Invoke New-LocalPHPCertificate -Times 0
+    }
+
+    It "Rejects unknown actions" {
+        $code = Invoke-Cert -arguments @('unknown')
+        $code | Should -Be -1
+
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Unknown certificate action 'unknown'*" }
+        Should -Invoke Update-PHPCertificateBundle -Times 0
+        Should -Invoke New-LocalPHPCertificate -Times 0
+    }
+}
+
 Describe "Invoke-Info" {
     BeforeEach {
         $Global:PVMConfig.version = '2.6'

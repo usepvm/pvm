@@ -15,6 +15,7 @@ PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that make
 - [Usage](#usage)
   - [Automatic Version Detection](#automatic-version-detection)
   - [Managing php.ini](#manage-phpini-settings-and-extensions)
+  - [Certificate Management](#certificate-management)
   - [Repair PVM Environment](#repair-pvm-environment)
   - [Check logs](#check-logs)
   - [Profiles](#manage-php-configuration-profiles)
@@ -38,6 +39,7 @@ PVM (PHP Version Manager) is a lightweight PowerShell tool for Windows that make
 - Install and manage multiple PHP versions
 - Automatic PHP version detection
 - Manage php.ini settings and extensions
+- PHP certificate management (CA bundle for HTTPS support, optional local certificates for development)
 - Create, save, and reuse PHP configuration profiles
 - Built-in cache management
 - Intelligent command suggestions
@@ -233,6 +235,12 @@ pvm ini get <setting> # It shows all matching settings
 # Example: pvm ini get memory_limit max_file_uploads
 # Example: pvm ini get memory
 
+# Download Mozilla's trusted CA bundle and configure the active PHP version (REQUIRED for HTTPS)
+pvm cert bundle
+# Generate a self-signed localhost certificate and add it to PHP's trust bundle (OPTIONAL for local dev)
+pvm cert local
+pvm cert local myapp.test
+
 # Install extensions from remote source
 pvm ini add <extension> [--yes|-y] # It shows all matching extensions then adds the selected one (handles duplicate extension names)
 # Example: pvm ini add opcache
@@ -277,6 +285,50 @@ pvm ini info settings
 pvm ini info --search=<term>
 # Example: pvm ini info --search=cache
 ```
+
+### Certificate Management
+
+PVM provides two distinct certificate features:
+
+#### 1. CA Bundle (REQUIRED for HTTPS)
+
+**Run once after installing PHP:**
+
+```sh
+pvm cert bundle
+```
+
+PHP requires a trusted CA bundle to verify TLS certificates for HTTPS requests. Without this, Composer, API calls, and package downloads may fail with SSL errors.
+
+This command:
+- Downloads Mozilla's trusted CA bundle from `https://curl.se/ca/cacert.pem`
+- Saves it under PVM storage
+- Configures `curl.cainfo` and `openssl.cafile` in the active PHP version's `php.ini`
+- Enables HTTPS support for Composer, APIs, and secure HTTP requests
+
+#### 2. Local Certificates (OPTIONAL for local development)
+
+**For testing HTTPS locally:**
+
+```sh
+pvm cert local              # Generate localhost certificate
+pvm cert local myapp.test   # Generate certificate for custom domain
+```
+
+This is an optional feature for developers who need to test HTTPS locally. It:
+- Requires the CA bundle to be installed first (`pvm cert bundle`)
+- Creates a self-signed certificate valid for 825 days
+- Generates both `.crt.pem` and `.key.pem` files under `storage/cert/local`
+- Includes the certificate in a separate PHP trust bundle
+- Allows you to configure your local web server to use these files
+
+**Important Notes:**
+- These certificates are for local development only — do not use them in production
+- The private key must not be shared
+- The certificate is trusted by PHP clients using this PHP configuration, but not automatically by Windows or browsers
+- Most users only need `pvm cert bundle` — `pvm cert local` is only for specific local HTTPS testing scenarios
+
+PVM leaves `openssl.capath` unchanged: OpenSSL expects that setting to point to a directory of individually hashed certificates, not to a PEM bundle file.
 
 ### Repair PVM Environment
 

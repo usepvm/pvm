@@ -301,8 +301,12 @@ function New-LocalPHPCertificate {
             return -1
         }
 
-        $temporaryDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "pvm-cert-$([guid]::NewGuid().ToString('N'))"
-        $null = [System.IO.Directory]::CreateDirectory($temporaryDirectory)
+        $temporaryDirectory = "$($Global:PVMConfig.paths.directories.cert)\pvm-cert-$([guid]::NewGuid().ToString('N'))"
+        $created = New-Directory -path $temporaryDirectory
+        if ($created -ne 0) {
+            Show-Error -message "`nFailed to create temporary directory: $temporaryDirectory"
+            return -1
+        }
 
         try {
             $code = Invoke-LocalCertificateGenerator -phpExecutable $phpExecutable -hostName $hostName -subjectAltName $subjectAltName -certificatePath $certificatePath -privateKeyPath $privateKeyPath -temporaryDirectory $temporaryDirectory

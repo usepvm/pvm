@@ -609,6 +609,17 @@ Describe "New-LocalPHPCertificate" {
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
     }
 
+    It "Fails when the temporary directory cannot be created" {
+        Mock New-Directory { return 0 } -ParameterFilter { $path -like '*\local*' }
+        Mock New-Directory { return -1 } -ParameterFilter { $path -like '*pvm-cert-*' }
+
+        $result = New-LocalPHPCertificate -hostName 'myapp.test'
+
+        $result | Should -Be -1
+        Should -Invoke Invoke-LocalCertificateGenerator -Times 0
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*temporary directory*' }
+    }
+
     It "Removes partial files when generation fails" {
         Mock Invoke-LocalCertificateGenerator {
             param ($phpExecutable, $hostName, $subjectAltName, $certificatePath, $privateKeyPath, $temporaryDirectory)

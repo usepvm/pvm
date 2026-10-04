@@ -550,23 +550,32 @@ Describe "Expand-Zip" {
     }
 
     It "Should extract zip without errors" {
-        { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' } | Should -Not -Throw
+        $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir'
+
+        $result | Should -Be 0
         Should -Invoke Expand-ZipCore -Times 1
     }
 
     It "Should delete zip after extraction" {
-        { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $true } | Should -Not -Throw
+        $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $true
+
+        $result | Should -Be 0
         Should -Invoke Remove-ItemWrapper -Times 1 -ParameterFilter { $path -eq 'test.zip' }
     }
 
     It "Should not delete zip if deleteZipAfter is false" {
-        { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $false } | Should -Not -Throw
+        $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $false
+
+        $result | Should -Be 0
         Should -Invoke Remove-ItemWrapper -Times 0
     }
 
     It "Should call Add-LogEntry on extraction failure" {
         Mock Expand-ZipCore { throw "Extraction failed" }
-        { Expand-Zip -zipPath 'bad.zip' -extractPath 'testdir' } | Should -Not -Throw
+
+        $result = Expand-Zip -zipPath 'bad.zip' -extractPath 'testdir'
+
+        $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
     }
 }

@@ -873,3 +873,33 @@ Describe "Test-InvalidDrivePath" {
         $result | Should -BeFalse
     }
 }
+
+Describe "Get-TemporaryDirectory" {
+    It "Returns null or empty for null root path" {
+        $result = Get-TemporaryDirectory -root '  '
+
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Returns null or empty for empty root path" {
+        $result = Get-TemporaryDirectory -root ''
+
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Returns null or empty for whitespace root path" {
+        $result = Get-TemporaryDirectory -root '   '
+
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Returns a valid temporary directory path for a valid root" {
+        $rootPath = "$script:TEST_DRIVE\temp"
+        New-Directory -path $rootPath | Out-Null
+
+        $result = Get-TemporaryDirectory -root $rootPath
+
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -Match ('^' + [regex]::Escape($rootPath) + '\\temp_[0-9a-fA-F]{32}$')
+    }
+}

@@ -332,3 +332,13 @@ function Test-InvalidDrivePath {
 
     return -not (Test-ValidDrivePath -path $path)
 }
+
+function Get-TemporaryDirectory {
+    param ($root)
+
+    if (Test-InvalidDrivePath -path $root) {
+        return $null
+    }
+
+    return "$root\temp_$([guid]::NewGuid().ToString('N'))"
+}

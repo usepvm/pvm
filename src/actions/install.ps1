@@ -148,48 +148,49 @@ function Get-PHP {
         $buildType = $versionObject.buildType
         $arch = $versionObject.arch
 
-        $destination = $Global:PVMConfig.paths.directories.php
-        $created = New-Directory -path $destination
+        $temporaryDirectory = Get-TemporaryDirectory -root $Global:PVMConfig.paths.directories.php
+        $created = New-Directory -path $temporaryDirectory
         if ($created -ne 0) {
-            Show-Error -message "`nFailed to create directory $destination"
-            return $null
+            Show-Error -message "`nFailed to create directory $temporaryDirectory"
+            return @{ temporaryDirectory = $temporaryDirectory; success = $false }
         }
 
         # Keep minimum space check as fallback for extraction space
         if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.php -minimumMegabytes $Global:PVMConfig.env.MIN_PHP_INSTALL_FREE_SPACE_MB) {
             Show-Error -message "`nInsufficient disk space for PHP installation. At least $($Global:PVMConfig.env.MIN_PHP_INSTALL_FREE_SPACE_MB) MB is required."
-            return $null
+            return @{ temporaryDirectory = $temporaryDirectory; success = $false }
         }
 
         # Get remote file size and check disk space
         $remoteFileSize = Get-RemoteFileSize -uri $versionObject.href
         if ($remoteFileSize -le 0) {
             Show-Error -message "`nFailed to get remote file size or invalid size. Cannot proceed with download."
-            return $null
+            return @{ temporaryDirectory = $temporaryDirectory; success = $false }
         }
 
         $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
 
-        if (Test-RemoteFileDiskSpaceInsufficient -uri $versionObject.href -downloadPath $destination) {
+        if (Test-RemoteFileDiskSpaceInsufficient -uri $versionObject.href -downloadPath $temporaryDirectory) {
             Show-Error -message "`nInsufficient disk space for PHP download. Required: $sizeMB MB"
-            return $null
+            return @{ temporaryDirectory = $temporaryDirectory; success = $false }
         }
 
         Show-Info -message "`nDownloading PHP $version ($buildType $arch)... ($sizeMB MB)"
 
-        return Show-SpinnerWhileJob -argumentList @($fileName, $destination, $versionObject) -scriptBlock {
-            param ($fileName, $destination, $versionObject)
+        $downloadPath = "$temporaryDirectory\$fileName"
+        return Show-SpinnerWhileJob -argumentList @($downloadPath, $temporaryDirectory, $versionObject) -scriptBlock {
+            param ($downloadPath, $temporaryDirectory, $versionObject)
 
-            $downloadedFilePath = Get-PHPFromUrl -url $versionObject.href -destination "$destination\$fileName"
-            if ($downloadedFilePath) {
-                return @{ pvmData = $downloadedFilePath }
+            $downloadPath = Get-PHPFromUrl -url $versionObject.href -destination $downloadPath
+            if ($downloadPath) {
+                return @{ pvmData = @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = $true } }
             }
-            return @{ pvmData = $null }
+            return @{ pvmData = @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = $false } }
         } -rethrow $true
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP version $($versionObject.version)"; exception = $_ }
     }
-    return $null
+    return @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = $false }
 }
 
 function Expand-AndConfigurePHP {
@@ -197,7 +198,12 @@ function Expand-AndConfigurePHP {
 
     try {
         Remove-ItemWrapper -path $fileNamePath
-        Expand-Zip -zipPath $path -extractPath $fileNamePath -deleteZipAfter $true
+
+        $code = Expand-Zip -zipPath $path -extractPath $fileNamePath -deleteZipAfter $true
+        if ($code -ne 0) {
+            return -1
+        }
+
         $iniCandidates = @(
             'php.ini-development',
             'php.ini-production',
@@ -210,8 +216,11 @@ function Expand-AndConfigurePHP {
                 break
             }
         }
+
+        return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to extract and configure PHP from $path"; exception = $_ }
+        return -1
     }
 }
 
@@ -369,23 +378,40 @@ function Install-PHP {
             return -1
         }
 
-        $destination = Get-PHP -versionObject $selectedVersionObject
-
-        if (-not $destination) {
-            Show-Error -message "`nFailed to download PHP version $version"
+        $downloadStatus = Get-PHP -versionObject $selectedVersionObject
+        if (-not $downloadStatus -or $downloadStatus.success -eq $false) {
+            Show-Error -message "`nFailed to download PHP version $($selectedVersionObject.version)"
+            if ($downloadStatus -and $downloadStatus.temporaryDirectory) {
+                Remove-ItemWrapper -path $downloadStatus.temporaryDirectory
+            }
             return -1
         }
 
+        $downloadPath = $downloadStatus.downloadPath
         Show-Message -message "`nExtracting the downloaded zip ..."
         $phpDirectoryName = "$($selectedVersionObject.version)_$($selectedVersionObject.buildType)_$($selectedVersionObject.arch)"
-        $destination = Split-Path -Path $destination -Parent
-        Expand-AndConfigurePHP -path "$destination\$($selectedVersionObject.fileName)" -fileNamePath "$destination\$phpDirectoryName"
+        $phpInstallPath = "$($Global:PVMConfig.paths.directories.php)\$phpDirectoryName"
+        $code = Expand-AndConfigurePHP -path $downloadPath -fileNamePath $phpInstallPath
 
-        $null = Set-Opcache -version $version -phpPath "$destination\$phpDirectoryName"
+        Remove-ItemWrapper -path $downloadStatus.temporaryDirectory
+
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to extract PHP version $($selectedVersionObject.version)"
+            Remove-ItemWrapper -path $phpInstallPath
+            return -1
+        }
+
+        if (Test-FileNotExists -path "$phpInstallPath\php.ini") {
+            Show-Error -message "`nFailed to find php.ini for PHP version $($selectedVersionObject.version)"
+            Remove-ItemWrapper -path $phpInstallPath
+            return -1
+        }
+
+        $null = Set-Opcache -version $version -phpPath $phpInstallPath
 
         $null = Update-InstalledPHPVersionsCache
 
-        $message = "`nPHP $($selectedVersionObject.version) installed successfully at: '$destination\$phpDirectoryName'"
+        $message = "`nPHP $($selectedVersionObject.version) installed successfully at: '$phpInstallPath'"
         $message += "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"
         Show-Success -message $message
 

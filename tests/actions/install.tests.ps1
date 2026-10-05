@@ -397,36 +397,9 @@ Describe "Get-PHPVersions" {
     }
 }
 
-Describe "Get-PHPFromUrl" {
-    BeforeEach {
-        Reset-MockState
-    }
-
-    It "Should download file successfully" {
-        $urls = Get-SourceUrls
-        $fileName = "php-8.1.0-Win32-vs16-x64.zip"
-        $href = "$($urls['Archives'])/$fileName"
-        Set-MockWebResponse -url $href -content 'Downloaded content'
-
-        $result = Get-PHPFromUrl -url $href -destination "$script:TEST_DRIVE\php\$fileName"
-
-        $result | Should -Be "$script:TEST_DRIVE\php\$fileName"
-        $script:MockFileSystem.Files.ContainsKey("$script:TEST_DRIVE\php\$fileName") | Should -Be $true
-    }
-
-    It "Should handle download failure" {
-        $script:MockFileSystem.DownloadFails = $true
-
-        $result = Get-PHPFromUrl -url 'https://test.com/php.zip' -destination "$script:TEST_DRIVE\php"
-
-        $result | Should -Be $null
-    }
-}
-
 Describe "Get-PHP" {
     BeforeAll {
         Mock New-Directory { return 0 }
-        Mock Get-PHPFromUrl { return "$script:TEST_DRIVE\php" }
     }
 
     BeforeEach {
@@ -476,11 +449,8 @@ Describe "Get-PHP" {
     }
 
     It "Returns null if download fails" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Get-PHPFromUrl { return $null }
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp\php"; sizeMB = 10 } }
+        Mock Get-RemoteFile { return $null }
 
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
 
@@ -719,7 +689,6 @@ Describe "Install-PHP" {
 
     It "Returns -1 when user selection is null" {
         Mock Get-MatchingPHPVersions { return $null }
-        Mock Get-PHPFromUrl { return "$script:TEST_DRIVE\php" }
         Mock Select-Version { return $null }
 
         $result = Install-PHP -version '8.1'
@@ -730,7 +699,6 @@ Describe "Install-PHP" {
 
     It "Returns -1 when user selection is already installed" {
         Mock Get-MatchingPHPVersions { return $null }
-        Mock Get-PHPFromUrl { return "$script:TEST_DRIVE\php" }
         Mock Select-Version { return @{ version = '8.1.15'; fileName = 'php-8.1.15-Win32-vs16-x64.zip' } }
         Mock Test-PHPVersionInstalled { return $true }
 
@@ -741,7 +709,6 @@ Describe "Install-PHP" {
     }
 
     It "Returns -1 when user selection cannot be installed" {
-        Mock Get-PHPFromUrl { return "$script:TEST_DRIVE\php" }
         Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
         Mock Read-HostWrapper {
             if ($prompt -match 'Would you like to install another version from') { return 'y' }

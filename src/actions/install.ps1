@@ -127,18 +127,6 @@ function Get-PHPVersions {
     }
 }
 
-function Get-PHPFromUrl {
-    param ($url, $destination)
-
-    try {
-        $null = Invoke-WebRequestWrapper -uri $url -outFile $destination
-        return $destination
-    } catch {
-        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP from $url"; exception = $_ }
-        return $null
-    }
-}
-
 function Get-PHP {
     param ($versionObject)
 

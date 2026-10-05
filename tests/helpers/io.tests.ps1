@@ -660,7 +660,100 @@ Describe "Test-FreeDiskSpaceInsufficient" {
     }
 }
 
+Describe "Test-DownloadPrerequisites" {
+    It "Returns error message when disk space is insufficient" {
+        Mock Test-FreeDiskSpaceInsufficient { return $true }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.message | Should -BeLike '*Insufficient disk space for installation. At least 100 MB is required*'
+    }
+
+    It "Returns error message when remote file size cannot be determined" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]0) }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.message | Should -BeLike '*Failed to get remote file size or invalid size. Cannot proceed with download*'
+    }
+
+    It "Returns error message when temporary directory cannot be created" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
+        Mock New-Directory { return -1 }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.message | Should -BeLike "*Failed to create temporary directory '$script:TEST_DRIVE\temp'*"
+    }
+
+    It "Returns error message when remote file size exceeds available disk space" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
+        Mock New-Directory { return 0 }
+        Mock Convert-BytesToMegabytes { return 200 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $true }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.message | Should -BeLike 'Insufficient disk space for download. Required: 200 MB'
+    }
+
+    It "Returns success when all prerequisites are met" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
+        Mock New-Directory { return 0 }
+        Mock Convert-BytesToMegabytes { return 200 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.temporaryDirectory | Should -Be "$script:TEST_DRIVE\temp"
+        $result.sizeMB | Should -Be 200
+    }
+}
+
+Describe "Get-RemoteFile" {
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
+
+    It "Returns destination path for valid URI and destination" {
+        $destinationPath = "$script:TEST_DRIVE\file.zip"
+        Mock Invoke-WebRequestWrapper { return $destinationPath }
+
+        $result = Get-RemoteFile -uri 'https://example.com/file.zip' -destinationPath $destinationPath
+
+        $result | Should -Be $destinationPath
+    }
+
+    It "Returns null when exception occurs during download" {
+        $destinationPath = "$script:TEST_DRIVE\file.zip"
+        Mock Invoke-WebRequestWrapper { throw 'Network error' }
+
+        $result = Get-RemoteFile -uri 'https://example.com/file.zip' -destinationPath $destinationPath
+
+        $result | Should -Be $null
+    }
+}
+
 Describe "Get-RemoteFileSize" {
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
+
     It "Returns file size for valid URI" {
         Mock Invoke-WebRequestWrapper {
             return @{

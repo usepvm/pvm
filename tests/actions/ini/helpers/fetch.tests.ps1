@@ -17,6 +17,7 @@ BeforeAll {
     Mock Show-Error { }
     Mock Show-Info { }
     Mock Write-Gray { }
+    Mock Write-Color { }
     Mock Show-Warning { }
 
     $script:MockFileSystem = @{
@@ -69,9 +70,9 @@ Describe "Get-ExtensionHandlers" {
             }
         }
 
-        It "Returns null when disk space is insufficient for extension installation" {
+        It "Returns null when prerequisites are not met" {
             Mock Get-XDebugFromUrl { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $true }
+            Mock Test-DownloadPrerequisites { return $null }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
@@ -81,45 +82,6 @@ Describe "Get-ExtensionHandlers" {
             $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true
 
             $result | Should -BeNullOrEmpty
-            Should -Invoke Show-Error -ParameterFilter { $message -match 'Insufficient disk space for extension installation' } -Exactly 1
-        }
-
-        It "Returns null when remote file size cannot be determined" {
-            Mock Get-XDebugFromUrl { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $false }
-            Mock Get-RemoteFileSize { return ([int64]0) }
-            $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
-
-            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
-            $handler = $sourceHandlers['xdebug.org']
-
-            $null = & $handler.GetPackages -version '8.5'
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true
-
-            $result | Should -BeNullOrEmpty
-            Should -Invoke Show-Error -ParameterFilter {
-                $message -match 'Failed to get remote file size or invalid size'
-            } -Exactly 1
-        }
-
-        It "Returns null when disk space is insufficient for extension download" {
-            Mock Get-XDebugFromUrl { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $false }
-            Mock Get-RemoteFileSize { return ([int64]10MB) }
-            Mock Convert-BytesToMegabytes { return 10 }
-            Mock Test-RemoteFileDiskSpaceInsufficient { return $true }
-            $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
-
-            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
-            $handler = $sourceHandlers['xdebug.org']
-
-            $null = & $handler.GetPackages -version '8.5'
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true
-
-            $result | Should -BeNullOrEmpty
-            Should -Invoke Show-Error -ParameterFilter {
-                $message -match 'Insufficient disk space for extension download'
-            } -Exactly 1
         }
 
         It "Returns data null when no handler found for xdebug" {
@@ -169,14 +131,36 @@ Describe "Get-ExtensionHandlers" {
             $result.data.Count | Should -Be 2
             $result.extName | Should -Be 'xdebug'
         }
+        
+        It "Returns null when download fails" {
+            Mock Get-XDebugFromUrl { return $null }
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp\php"; sizeMB = 10 } }
+            Mock Get-RemoteFile { return $null }
+            Mock Remove-ItemWrapper { }
+            
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['xdebug.org']
+
+            $handler | Should -Not -BeNullOrEmpty
+            $handler.GetPackages | Should -Not -BeNullOrEmpty
+            $handler.Download | Should -Not -BeNullOrEmpty
+            $handler.MoreInfoUrl | Should -Be $script:XDEBUG_HISTORICAL_URL
+
+            $null = & $handler.GetPackages -version '8.5'
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $false
+            
+            $result | Should -BeNullOrEmpty
+            Should -Invoke Get-XDebugFromUrl -Times 1
+            Should -Invoke Get-RemoteFile -Times 1
+            Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to download extension XDebug*' } -Times 1
+        }
 
         It "Returns null when user cancels" {
             Mock Get-XDebugFromUrl { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $false }
-            Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-            Mock Get-RemoteFileSize { return ([int64]10MB) }
-            Mock Convert-BytesToMegabytes { return 10 }
-            Mock Invoke-WebRequestWrapper { return $null }
+            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
             Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
@@ -195,18 +179,17 @@ Describe "Get-ExtensionHandlers" {
 
             $result | Should -BeNullOrEmpty
             Should -Invoke Get-XDebugFromUrl -Times 1
-            Should -Invoke Invoke-WebRequestWrapper -Times 1
+            Should -Invoke Get-RemoteFile -Times 1
             Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -like "*$($chosenItem.fileName)*" } -Times 1
             Should -Invoke Write-Gray -ParameterFilter { $message -like '*Installation cancelled*' }
         }
 
         It "Removes the existing file when ext id name matches" {
             Mock Get-XDebugFromUrl { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $false }
-            Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-            Mock Get-RemoteFileSize { return ([int64]10MB) }
-            Mock Convert-BytesToMegabytes { return 10 }
-            Mock Invoke-WebRequestWrapper { return $null }
+            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
             Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
@@ -226,20 +209,19 @@ Describe "Get-ExtensionHandlers" {
 
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be $chosenItem.fileName
-            $result.FullName | Should -Be "$script:PHP_DIR\$($chosenItem.fileName)"
+            $result.FullName | Should -Be "$temporaryDirectory\$fileName"
             Should -Invoke Get-XDebugFromUrl -Times 1
-            Should -Invoke Invoke-WebRequestWrapper -Times 1
+            Should -Invoke Get-RemoteFile -Times 1
             Should -Invoke Remove-ItemWrapper -ParameterFilter { $path.Name -eq 'php_xdebug.dll' } -Times 1
             Should -Invoke Move-ItemWrapper -Times 1
         }
 
         It "Returns downloaded file" {
             Mock Get-XDebugFromUrl { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $false }
-            Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-            Mock Get-RemoteFileSize { return ([int64]10MB) }
-            Mock Convert-BytesToMegabytes { return 10 }
-            Mock Invoke-WebRequestWrapper { return $null }
+            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }            
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Move-ItemWrapper { }
 
@@ -256,15 +238,15 @@ Describe "Get-ExtensionHandlers" {
 
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be $chosenItem.fileName
-            $result.FullName | Should -Be "$script:PHP_DIR\$($chosenItem.fileName)"
+            $result.FullName | Should -Be "$temporaryDirectory\$fileName"
             Should -Invoke Get-XDebugFromUrl -Times 1
-            Should -Invoke Invoke-WebRequestWrapper -Times 1
+            Should -Invoke Get-RemoteFile -Times 1
             Should -Invoke Move-ItemWrapper -Times 1
         }
 
         It "Handles exception gracefully" {
             Mock Get-XDebugFromUrl { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { throw 'Error' }
+            Mock Test-DownloadPrerequisites { throw 'Error' }
             Mock Add-LogEntry { return 0 }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
@@ -280,7 +262,7 @@ Describe "Get-ExtensionHandlers" {
 
             $result | Should -BeNullOrEmpty
             Should -Invoke Get-XDebugFromUrl -Times 1
-            Should -Invoke Test-FreeDiskSpaceInsufficient -Times 1
+            Should -Invoke Test-DownloadPrerequisites -Times 1
             Should -Invoke Add-LogEntry -Times 1
         }
     }
@@ -294,9 +276,9 @@ Describe "Get-ExtensionHandlers" {
             }
         }
 
-        It "Returns null when disk space is insufficient for extension installation" {
+        It "Returns null when prerequisites are not met" {
             Mock Get-PackagesFromSourceLinks { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $true }
+            Mock Test-DownloadPrerequisites { return $null }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
@@ -307,59 +289,15 @@ Describe "Get-ExtensionHandlers" {
             $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true -extName 'xdebug'
 
             $result | Should -BeNullOrEmpty
-            Should -Invoke Show-Error -ParameterFilter {
-                $message -match 'Insufficient disk space for extension installation'
-            } -Exactly 1
         }
 
-        It "Returns null when remote file size cannot be determined" {
+        It "Removes extracted folder and returns null when no matching dll file found in downloaded zip" -tag i {
             Mock Get-PackagesFromSourceLinks { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $false }
-            Mock Get-RemoteFileSize { return ([int64]0) }
-            $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
-
-            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
-            $handler = $sourceHandlers['pecl.php.net']
-
-            $links = @{ extName = 'xdebug'; source = 'pecl.php.net'; links = @( @{ href = "$script:PECL_BASE_URL/package/xdebug/3.4.0/windows" } ) }
-            $null = & $handler.GetPackages -version '8.5' -linksObj $links
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true -extName 'xdebug'
-
-            $result | Should -BeNullOrEmpty
-            Should -Invoke Show-Error -ParameterFilter {
-                $message -match 'Failed to get remote file size or invalid size'
-            } -Exactly 1
-        }
-
-        It "Returns null when disk space is insufficient for extension download" {
-            Mock Get-PackagesFromSourceLinks { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $false }
-            Mock Get-RemoteFileSize { return ([int64]10MB) }
-            Mock Convert-BytesToMegabytes { return 10 }
-            Mock Test-RemoteFileDiskSpaceInsufficient { return $true }
-            $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
-
-            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
-            $handler = $sourceHandlers['pecl.php.net']
-
-            $links = @{ extName = 'xdebug'; source = 'pecl.php.net'; links = @( @{ href = "$script:PECL_BASE_URL/package/xdebug/3.4.0/windows" } ) }
-            $null = & $handler.GetPackages -version '8.5' -linksObj $links
-            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true -extName 'xdebug'
-
-            $result | Should -BeNullOrEmpty
-            Should -Invoke Show-Error -ParameterFilter {
-                $message -match 'Insufficient disk space for extension download'
-            } -Exactly 1
-        }
-
-        It "Removes extracted folder and returns null when no matching dll found (disk checks passing)" {
-            Mock Get-PackagesFromSourceLinks { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $false }
-            Mock Get-RemoteFileSize { return ([int64]10MB) }
-            Mock Convert-BytesToMegabytes { return 10 }
-            Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-            Mock Invoke-WebRequestWrapper { return $null }
-            Mock Expand-Zip { }
+            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Expand-Zip { return 0 }
             Mock Get-ChildItemWrapper { return @() }
             Mock Remove-ItemWrapper { }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
@@ -372,7 +310,8 @@ Describe "Get-ExtensionHandlers" {
             $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true -extName 'xdebug'
 
             $result | Should -BeNullOrEmpty
-            Should -Invoke Remove-ItemWrapper -Exactly 1
+            Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -like "*$temporaryDirectory\$fileName*" }
+            Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -like "*$temporaryDirectory*" }
         }
 
         It "Resolves and returns extension links" {
@@ -403,7 +342,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Get-PackagesFromSourceLinks { return $null }
             Mock Invoke-WebRequestWrapper { return $null }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
-            Mock Expand-Zip { }
+            Mock Expand-Zip { return 0 }
             Mock Get-ChildItemWrapper { return @() }
             Mock Remove-ItemWrapper { }
 
@@ -450,15 +389,80 @@ Describe "Get-ExtensionHandlers" {
 
             $result | Should -BeNullOrEmpty
         }
+        
+        It "Returns null when download fails" {
+            Mock Get-PackagesFromSourceLinks { return $null }
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp\php"; sizeMB = 10 } }
+            Mock Get-RemoteFile { return $null }
+            Mock Remove-ItemWrapper { }
+            
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['pecl.php.net']
+
+            $handler | Should -Not -BeNullOrEmpty
+            $handler.GetPackages | Should -Not -BeNullOrEmpty
+            $handler.Download | Should -Not -BeNullOrEmpty
+            $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
+
+            $links = @{
+                extName = 'xdebug'
+                source = 'pecl.php.net'
+                links = @(
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.4.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.3.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.2.0/windows" }
+                )
+            }
+            $null = & $handler.GetPackages -version '8.5' -linksObj $links
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $false -extName 'xdebug'
+
+            $result | Should -BeNullOrEmpty
+            Should -Invoke Get-PackagesFromSourceLinks -Times 1
+            Should -Invoke Get-RemoteFile -Times 1
+            Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to download extension xdebug*' } -Times 1
+        }
+        
+        It "Returns null when extraction fails" {
+            Mock Get-PackagesFromSourceLinks { return $null }
+            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Expand-Zip { return -1 }
+            Mock Remove-ItemWrapper { }
+
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['pecl.php.net']
+
+            $handler | Should -Not -BeNullOrEmpty
+            $handler.GetPackages | Should -Not -BeNullOrEmpty
+            $handler.Download | Should -Not -BeNullOrEmpty
+            $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
+
+            $links = @{
+                extName = 'xdebug'
+                source = 'pecl.php.net'
+                links = @(
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.4.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.3.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.2.0/windows" }
+                )
+            }
+            $null = & $handler.GetPackages -version '8.5' -linksObj $links
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $false -extName 'xdebug'
+
+            $result | Should -BeNullOrEmpty
+            Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to extract extension xdebug*' } -Times 1
+            
+        }
 
         It "Returns null when user cancels" {
             Mock Get-PackagesFromSourceLinks { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $false }
-            Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-            Mock Get-RemoteFileSize { return ([int64]10MB) }
-            Mock Convert-BytesToMegabytes { return 10 }
-            Mock Invoke-WebRequestWrapper { return $null }
-            Mock Expand-Zip { }
+            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Expand-Zip { return 0 }
             $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Get-ChildItemWrapper { return @( $mockFile ) } -ParameterFilter { $path -like "*$($chosenItem.fileName)*" }
@@ -497,12 +501,11 @@ Describe "Get-ExtensionHandlers" {
 
         It "Removes the existing file when ext id name matches" {
             Mock Get-PackagesFromSourceLinks { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $false }
-            Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-            Mock Get-RemoteFileSize { return ([int64]10MB) }
-            Mock Convert-BytesToMegabytes { return 10 }
-            Mock Invoke-WebRequestWrapper { return $null }
-            Mock Expand-Zip { }
+            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Expand-Zip { return 0 }
             $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($mockFile.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
@@ -539,12 +542,11 @@ Describe "Get-ExtensionHandlers" {
 
         It "Returns downloaded file" {
             Mock Get-PackagesFromSourceLinks { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { return $false }
-            Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-            Mock Get-RemoteFileSize { return ([int64]10MB) }
-            Mock Convert-BytesToMegabytes { return 10 }
-            Mock Invoke-WebRequestWrapper { return $null }
-            Mock Expand-Zip { }
+            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Expand-Zip { return 0 }
             Mock Move-ItemWrapper { }
             Mock Remove-ItemWrapper { }
             $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
@@ -578,7 +580,7 @@ Describe "Get-ExtensionHandlers" {
 
         It "Handles exception gracefully" {
             Mock Get-PackagesFromSourceLinks { return $null }
-            Mock Test-FreeDiskSpaceInsufficient { throw 'Error' }
+            Mock Test-DownloadPrerequisites { throw 'Error' }
             Mock Add-LogEntry { return 0 }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
@@ -603,7 +605,7 @@ Describe "Get-ExtensionHandlers" {
 
             $result | Should -BeNullOrEmpty
             Should -Invoke Get-PackagesFromSourceLinks -Times 1
-            Should -Invoke Test-FreeDiskSpaceInsufficient -Times 1
+            Should -Invoke Test-DownloadPrerequisites -Times 1
             Should -Invoke Add-LogEntry -Times 1
         }
     }

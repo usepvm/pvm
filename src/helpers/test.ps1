@@ -381,6 +381,7 @@ function Set-TestDrive {
     $Global:PVMConfig.paths.directories.log = $fakeLogs
     $Global:PVMConfig.paths.directories.state = $fakeState
     $Global:PVMConfig.paths.directories.assets = "$path\assets"
+    $Global:PVMConfig.paths.directories.temp = "$fakeStorage\temp"
 
     $Global:PVMConfig.paths.files.profileExample = "$fakeProfiles\profile-example.json"
     $Global:PVMConfig.paths.files.profileTemplate = "$fakeTemplates\profile-template.json"

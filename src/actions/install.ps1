@@ -148,49 +148,22 @@ function Get-PHP {
         $buildType = $versionObject.buildType
         $arch = $versionObject.arch
 
-        $temporaryDirectory = Get-TemporaryDirectory -root $Global:PVMConfig.paths.directories.php
-        $created = New-Directory -path $temporaryDirectory
-        if ($created -ne 0) {
-            Show-Error -message "`nFailed to create directory $temporaryDirectory"
-            return @{ temporaryDirectory = $temporaryDirectory; success = $false }
+        $result = Test-DownloadPrerequisites -url $versionObject.href -minimumFreeSpaceMB $Global:PVMConfig.env.MIN_PHP_INSTALL_FREE_SPACE_MB
+        if (-not $result -or -not $result.temporaryDirectory) {
+            Write-Color -message "`n$($result.message)" -foreColor $result.color
+            return $null
         }
 
-        # Keep minimum space check as fallback for extraction space
-        if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.php -minimumMegabytes $Global:PVMConfig.env.MIN_PHP_INSTALL_FREE_SPACE_MB) {
-            Show-Error -message "`nInsufficient disk space for PHP installation. At least $($Global:PVMConfig.env.MIN_PHP_INSTALL_FREE_SPACE_MB) MB is required."
-            return @{ temporaryDirectory = $temporaryDirectory; success = $false }
-        }
+        Show-Info -message "`nDownloading PHP $version ($buildType $arch)... ($($result.sizeMB) MB)"
 
-        # Get remote file size and check disk space
-        $remoteFileSize = Get-RemoteFileSize -uri $versionObject.href
-        if ($remoteFileSize -le 0) {
-            Show-Error -message "`nFailed to get remote file size or invalid size. Cannot proceed with download."
-            return @{ temporaryDirectory = $temporaryDirectory; success = $false }
-        }
+        $temporaryDirectory = $result.temporaryDirectory
+        $downloadPath = Get-RemoteFile -url $versionObject.href -destinationPath "$temporaryDirectory\$fileName"
 
-        $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
-
-        if (Test-RemoteFileDiskSpaceInsufficient -uri $versionObject.href -downloadPath $temporaryDirectory) {
-            Show-Error -message "`nInsufficient disk space for PHP download. Required: $sizeMB MB"
-            return @{ temporaryDirectory = $temporaryDirectory; success = $false }
-        }
-
-        Show-Info -message "`nDownloading PHP $version ($buildType $arch)... ($sizeMB MB)"
-
-        $downloadPath = "$temporaryDirectory\$fileName"
-        return Show-SpinnerWhileJob -argumentList @($downloadPath, $temporaryDirectory, $versionObject) -scriptBlock {
-            param ($downloadPath, $temporaryDirectory, $versionObject)
-
-            $downloadPath = Get-PHPFromUrl -url $versionObject.href -destination $downloadPath
-            if ($downloadPath) {
-                return @{ pvmData = @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = $true } }
-            }
-            return @{ pvmData = @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = $false } }
-        } -rethrow $true
+        return @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = [bool]$downloadPath }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP version $($versionObject.version)"; exception = $_ }
+        return $null
     }
-    return @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = $false }
 }
 
 function Expand-AndConfigurePHP {
@@ -407,7 +380,7 @@ function Install-PHP {
             return -1
         }
 
-        $null = Set-Opcache -version $version -phpPath $phpInstallPath
+        $null = Set-Opcache -version $selectedVersionObject.version -phpPath $phpInstallPath
 
         $null = Update-InstalledPHPVersionsCache
 

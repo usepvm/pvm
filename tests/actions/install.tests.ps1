@@ -91,6 +91,7 @@ BeforeAll {
     Mock Show-Success { }
     Mock Show-Message { }
     Mock Write-Gray { }
+    Mock Write-Color { }
 }
 
 Describe "Get-LatestPHPVersion" {
@@ -437,77 +438,41 @@ Describe "Get-PHP" {
     }
 
     It "Should download PHP successfully" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
+        $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+        $fileName = 'php-8.1.0-Win32-vs16-x64.zip'
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
+        Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
 
-        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
+        $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
 
-        $result.downloadPath | Should -Be "$script:TEST_DRIVE\php"
-        $result.temporaryDirectory | Should -Not -BeNullOrEmpty
+        $result.downloadPath | Should -Be "$temporaryDirectory\$fileName"
+        $result.temporaryDirectory | Should -Be $temporaryDirectory
         $result.success | Should -BeTrue
     }
 
-    It "Returns null if directory creation fails" {
-        Mock New-Directory { return -1 }
+    It "Returns null when prerequisites are not met" {
+        Mock Test-DownloadPrerequisites { return $null }
 
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
 
-        $result.downloadPath | Should -BeNullOrEmpty
-        $result.temporaryDirectory | Should -Not -BeNullOrEmpty
-        $result.success | Should -BeFalse
+        $result | Should -BeNullOrEmpty
     }
 
-    It "Returns null when disk space is insufficient for PHP installation" {
-        Mock Test-FreeDiskSpaceInsufficient { return $true }
+    It "Returns null when prerequisites check fails" {
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $null; message = 'Error'; color = 'Red' } }
 
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
 
-        $result.downloadPath | Should -BeNullOrEmpty
-        $result.temporaryDirectory | Should -Not -BeNullOrEmpty
-        $result.success | Should -BeFalse
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Insufficient disk space for PHP installation*' }
-    }
-
-    It "Returns null when remote file size cannot be determined" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]0) }
-
-        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
-
-        $result.downloadPath | Should -BeNullOrEmpty
-        $result.temporaryDirectory | Should -Not -BeNullOrEmpty
-        $result.success | Should -BeFalse
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to get remote file size or invalid size*' }
-    }
-
-    It "Returns null when disk space is insufficient for PHP download" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $true }
-
-        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
-
-        $result.downloadPath | Should -BeNullOrEmpty
-        $result.temporaryDirectory | Should -Not -BeNullOrEmpty
-        $result.success | Should -BeFalse
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Insufficient disk space for PHP download*' }
+        $result | Should -BeNullOrEmpty
+        Should -Invoke Write-Color -ParameterFilter { $message -match 'Error' -and $foreColor -eq 'Red' }
     }
 
     It "Handles exception gracefully" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Show-SpinnerWhileJob { throw 'Test exception' }
+        Mock Test-DownloadPrerequisites { throw 'Test exception' }
 
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
 
-        $result.downloadPath | Should -Not -BeNullOrEmpty
-        $result.temporaryDirectory | Should -Not -BeNullOrEmpty
-        $result.success | Should -BeFalse
+        $result | Should -BeNullOrEmpty
     }
 
     It "Returns null if download fails" {

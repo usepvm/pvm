@@ -253,7 +253,7 @@ function Get-ExtensionHandlers {
             'default' = {
                 param ($iniPath, $fileName, $extVersion)
 
-                return (Add-MissingPHPExtensionToIni -iniPath $iniPath -extFileName $extFile.Name -enable $false)
+                return (Add-MissingPHPExtensionToIni -iniPath $iniPath -extFileName $fileName -enable $false)
             }
         }
     }

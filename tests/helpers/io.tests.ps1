@@ -550,23 +550,32 @@ Describe "Expand-Zip" {
     }
 
     It "Should extract zip without errors" {
-        { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' } | Should -Not -Throw
+        $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir'
+
+        $result | Should -Be 0
         Should -Invoke Expand-ZipCore -Times 1
     }
 
     It "Should delete zip after extraction" {
-        { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $true } | Should -Not -Throw
+        $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $true
+
+        $result | Should -Be 0
         Should -Invoke Remove-ItemWrapper -Times 1 -ParameterFilter { $path -eq 'test.zip' }
     }
 
     It "Should not delete zip if deleteZipAfter is false" {
-        { Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $false } | Should -Not -Throw
+        $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $false
+
+        $result | Should -Be 0
         Should -Invoke Remove-ItemWrapper -Times 0
     }
 
     It "Should call Add-LogEntry on extraction failure" {
         Mock Expand-ZipCore { throw "Extraction failed" }
-        { Expand-Zip -zipPath 'bad.zip' -extractPath 'testdir' } | Should -Not -Throw
+
+        $result = Expand-Zip -zipPath 'bad.zip' -extractPath 'testdir'
+
+        $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
     }
 }
@@ -651,7 +660,100 @@ Describe "Test-FreeDiskSpaceInsufficient" {
     }
 }
 
+Describe "Test-DownloadPrerequisites" {
+    It "Returns error message when disk space is insufficient" {
+        Mock Test-FreeDiskSpaceInsufficient { return $true }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.message | Should -BeLike '*Insufficient disk space for installation. At least 100 MB is required*'
+    }
+
+    It "Returns error message when remote file size cannot be determined" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]0) }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.message | Should -BeLike '*Failed to get remote file size or invalid size. Cannot proceed with download*'
+    }
+
+    It "Returns error message when temporary directory cannot be created" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
+        Mock New-Directory { return -1 }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.message | Should -BeLike "*Failed to create temporary directory '$script:TEST_DRIVE\temp'*"
+    }
+
+    It "Returns error message when remote file size exceeds available disk space" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
+        Mock New-Directory { return 0 }
+        Mock Convert-BytesToMegabytes { return 200 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $true }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.message | Should -BeLike 'Insufficient disk space for download. Required: 200 MB'
+    }
+
+    It "Returns success when all prerequisites are met" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
+        Mock New-Directory { return 0 }
+        Mock Convert-BytesToMegabytes { return 200 }
+        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.temporaryDirectory | Should -Be "$script:TEST_DRIVE\temp"
+        $result.sizeMB | Should -Be 200
+    }
+}
+
+Describe "Get-RemoteFile" {
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
+
+    It "Returns destination path for valid URI and destination" {
+        $destinationPath = "$script:TEST_DRIVE\file.zip"
+        Mock Invoke-WebRequestWrapper { return $destinationPath }
+
+        $result = Get-RemoteFile -uri 'https://example.com/file.zip' -destinationPath $destinationPath
+
+        $result | Should -Be $destinationPath
+    }
+
+    It "Returns null when exception occurs during download" {
+        $destinationPath = "$script:TEST_DRIVE\file.zip"
+        Mock Invoke-WebRequestWrapper { throw 'Network error' }
+
+        $result = Get-RemoteFile -uri 'https://example.com/file.zip' -destinationPath $destinationPath
+
+        $result | Should -Be $null
+    }
+}
+
 Describe "Get-RemoteFileSize" {
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
+
     It "Returns file size for valid URI" {
         Mock Invoke-WebRequestWrapper {
             return @{
@@ -862,5 +964,35 @@ Describe "Test-InvalidDrivePath" {
         $result = Test-InvalidDrivePath -path 'C:\some-path'
 
         $result | Should -BeFalse
+    }
+}
+
+Describe "Get-TemporaryDirectory" {
+    It "Returns null or empty for null root path" {
+        $result = Get-TemporaryDirectory -root '  '
+
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Returns null or empty for empty root path" {
+        $result = Get-TemporaryDirectory -root ''
+
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Returns null or empty for whitespace root path" {
+        $result = Get-TemporaryDirectory -root '   '
+
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Returns a valid temporary directory path for a valid root" {
+        $rootPath = "$script:TEST_DRIVE\temp"
+        New-Directory -path $rootPath | Out-Null
+
+        $result = Get-TemporaryDirectory -root $rootPath
+
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -Match ('^' + [regex]::Escape($rootPath) + '\\temp_[0-9a-fA-F]{32}$')
     }
 }

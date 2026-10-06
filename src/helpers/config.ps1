@@ -186,6 +186,7 @@ function Get-Config {
                 log                = $logs
                 state              = $state
                 assets             = "$rootPath\assets"
+                temp               = "$storage\temp"
             }
             files       = @{
                 profileExample     = "$profiles\profile-example.json"

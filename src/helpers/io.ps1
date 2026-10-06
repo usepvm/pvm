@@ -206,8 +206,11 @@ function Expand-Zip {
         if ($deleteZipAfter) {
             Remove-ItemWrapper -path $zipPath
         }
+
+        return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to expand zip file from $zipPath"; exception = $_ }
+        return -1
     }
 }
 
@@ -246,6 +249,51 @@ function Test-FreeDiskSpaceInsufficient {
     return -not (Test-FreeDiskSpaceSufficient -path $path -minimumMegabytes $minimumMegabytes)
 }
 
+function Test-DownloadPrerequisites {
+    param ($url, $minimumFreeSpaceMB)
+
+    # Keep minimum space check as fallback for extraction space
+    if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.php -minimumMegabytes $minimumFreeSpaceMB) {
+        return @{ temporaryDirectory = $null; message = "Insufficient disk space for installation. At least $minimumFreeSpaceMB MB is required."; color = 'DarkYellow' }
+    }
+
+    # Get remote file size and check disk space
+    $remoteFileSize = Get-RemoteFileSize -uri $url
+    if ($remoteFileSize -le 0) {
+        return @{ temporaryDirectory = $null; message = "Failed to get remote file size or invalid size. Cannot proceed with download."; color = 'DarkYellow' }
+    }
+
+    $temporaryDirectory = Get-TemporaryDirectory -root $Global:PVMConfig.paths.directories.temp
+    $created = New-Directory -path $temporaryDirectory
+    if ($created -ne 0) {
+        return @{ temporaryDirectory = $null; message = "Failed to create temporary directory '$temporaryDirectory'."; color = 'DarkYellow' }
+    }
+
+    $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
+
+    if (Test-RemoteFileDiskSpaceInsufficient -uri $url -downloadPath $temporaryDirectory) {
+        return @{ temporaryDirectory = $null; message = "Insufficient disk space for download. Required: $sizeMB MB"; color = 'DarkYellow' }
+    }
+
+    return @{ temporaryDirectory = $temporaryDirectory; sizeMB = $sizeMB }
+}
+
+function Get-RemoteFile {
+    param ($url, $destinationPath)
+
+    return Show-SpinnerWhileJob -argumentList @($url, $destinationPath) -scriptBlock {
+        param ($url, $destinationPath)
+
+        try {
+            $null = Invoke-WebRequestWrapper -uri $url -outFile $destinationPath
+            return @{ pvmData = $destinationPath }
+        } catch {
+            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP from $url"; exception = $_ }
+            return @{ pvmData = $null }
+        }
+    } -rethrow $true
+}
+
 function Get-RemoteFileSize {
     param ($uri)
 
@@ -255,7 +303,13 @@ function Get-RemoteFileSize {
         }
 
         $uri = $uri.Trim()
-        $response = Invoke-WebRequestWrapper -uri $uri -method 'Head'
+        $response = Show-SpinnerWhileJob -argumentList @($uri) -scriptBlock {
+            param ($uri)
+
+            $response = Invoke-WebRequestWrapper -uri $uri -method 'Head'
+
+            return @{ pvmData = $response }
+        } -rethrow $true
 
         if ($null -eq $response -or $null -eq $response.Headers) {
             return -1
@@ -328,4 +382,14 @@ function Test-InvalidDrivePath {
     param ($path)
 
     return -not (Test-ValidDrivePath -path $path)
+}
+
+function Get-TemporaryDirectory {
+    param ($root)
+
+    if (Test-InvalidDrivePath -path $root) {
+        return $null
+    }
+
+    return "$root\temp_$([guid]::NewGuid().ToString('N'))"
 }

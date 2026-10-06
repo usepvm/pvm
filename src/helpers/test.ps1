@@ -16,7 +16,7 @@ function Show-Scripts {
 
 function Clear-TestDrive {
     $testDrivePath = $Global:PVMConfig.paths.directories.testDrive
-    if ($testDrivePath -and (Test-ValidDrivePath -path $testDrivePath)) {
+    if (Test-ValidDrivePath -path $testDrivePath) {
         Remove-ItemWrapper -path "$testDrivePath\*"
     }
 }
@@ -381,6 +381,7 @@ function Set-TestDrive {
     $Global:PVMConfig.paths.directories.log = $fakeLogs
     $Global:PVMConfig.paths.directories.state = $fakeState
     $Global:PVMConfig.paths.directories.assets = "$path\assets"
+    $Global:PVMConfig.paths.directories.temp = "$fakeStorage\temp"
 
     $Global:PVMConfig.paths.files.profileExample = "$fakeProfiles\profile-example.json"
     $Global:PVMConfig.paths.files.profileTemplate = "$fakeTemplates\profile-template.json"

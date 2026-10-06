@@ -157,10 +157,10 @@ Describe "Get-ExtensionHandlers" {
 
         It "Returns null when user cancels" {
             Mock Get-XDebugFromUrl { return $null }
-            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $tempDirectory = "$script:TEST_DRIVE\temp\php"
             $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
-            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
-            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
@@ -186,10 +186,10 @@ Describe "Get-ExtensionHandlers" {
 
         It "Removes the existing file when ext id name matches" {
             Mock Get-XDebugFromUrl { return $null }
-            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $tempDirectory = "$script:TEST_DRIVE\temp\php"
             $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
-            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
-            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
@@ -209,7 +209,7 @@ Describe "Get-ExtensionHandlers" {
 
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be $chosenItem.fileName
-            $result.FullName | Should -Be "$temporaryDirectory\$fileName"
+            $result.FullName | Should -Be "$tempDirectory\$fileName"
             Should -Invoke Get-XDebugFromUrl -Times 1
             Should -Invoke Get-RemoteFile -Times 1
             Should -Invoke Remove-ItemWrapper -ParameterFilter { $path.Name -eq 'php_xdebug.dll' } -Times 1
@@ -218,10 +218,10 @@ Describe "Get-ExtensionHandlers" {
 
         It "Returns downloaded file" {
             Mock Get-XDebugFromUrl { return $null }
-            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $tempDirectory = "$script:TEST_DRIVE\temp\php"
             $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
-            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
-            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Move-ItemWrapper { }
 
@@ -238,7 +238,7 @@ Describe "Get-ExtensionHandlers" {
 
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be $chosenItem.fileName
-            $result.FullName | Should -Be "$temporaryDirectory\$fileName"
+            $result.FullName | Should -Be "$tempDirectory\$fileName"
             Should -Invoke Get-XDebugFromUrl -Times 1
             Should -Invoke Get-RemoteFile -Times 1
             Should -Invoke Move-ItemWrapper -Times 1
@@ -293,10 +293,10 @@ Describe "Get-ExtensionHandlers" {
 
         It "Removes extracted folder and returns null when no matching dll file found in downloaded zip" -tag i {
             Mock Get-PackagesFromSourceLinks { return $null }
-            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $tempDirectory = "$script:TEST_DRIVE\temp\php"
             $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
-            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
-            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             Mock Expand-Zip { return 0 }
             Mock Get-ChildItemWrapper { return @() }
             Mock Remove-ItemWrapper { }
@@ -310,8 +310,8 @@ Describe "Get-ExtensionHandlers" {
             $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true -extName 'xdebug'
 
             $result | Should -BeNullOrEmpty
-            Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -like "*$temporaryDirectory\$fileName*" }
-            Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -like "*$temporaryDirectory*" }
+            Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -like "*$tempDirectory\$fileName*" }
+            Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -like "*$tempDirectory*" }
         }
 
         It "Resolves and returns extension links" {
@@ -424,10 +424,10 @@ Describe "Get-ExtensionHandlers" {
 
         It "Returns null when extraction fails" {
             Mock Get-PackagesFromSourceLinks { return $null }
-            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $tempDirectory = "$script:TEST_DRIVE\temp\php"
             $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
-            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
-            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             Mock Expand-Zip { return -1 }
             Mock Remove-ItemWrapper { }
 
@@ -457,10 +457,10 @@ Describe "Get-ExtensionHandlers" {
 
         It "Returns null when user cancels" {
             Mock Get-PackagesFromSourceLinks { return $null }
-            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $tempDirectory = "$script:TEST_DRIVE\temp\php"
             $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
-            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
-            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             Mock Expand-Zip { return 0 }
             $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
@@ -500,10 +500,10 @@ Describe "Get-ExtensionHandlers" {
 
         It "Removes the existing file when ext id name matches" {
             Mock Get-PackagesFromSourceLinks { return $null }
-            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $tempDirectory = "$script:TEST_DRIVE\temp\php"
             $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
-            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
-            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             Mock Expand-Zip { return 0 }
             $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
@@ -541,10 +541,10 @@ Describe "Get-ExtensionHandlers" {
 
         It "Returns downloaded file" {
             Mock Get-PackagesFromSourceLinks { return $null }
-            $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+            $tempDirectory = "$script:TEST_DRIVE\temp\php"
             $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
-            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
-            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             Mock Expand-Zip { return 0 }
             Mock Move-ItemWrapper { }
             Mock Remove-ItemWrapper { }

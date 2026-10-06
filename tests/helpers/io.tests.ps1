@@ -1067,10 +1067,10 @@ Describe "Get-SHA256HashesFromRemote" {
     }
 
     It "Parses SHA256 sum format correctly" {
-        $mockContent = @"
-a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890 *php-8.2.0-Win32-vs16-x64.zip
-f6e5d4c3b2a19876fedcba9876543210fedcba9876543210fedcba9876543210 *php-8.2.0-nts-Win32-vs16-x64.zip
-"@
+        $mockContent = @(
+            'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890 *php-8.2.0-Win32-vs16-x64.zip'
+            'f6e5d4c3b2a19876fedcba9876543210fedcba9876543210fedcba9876543210 *php-8.2.0-nts-Win32-vs16-x64.zip'
+        ) -join "`n"
         $mockResponse = [PSCustomObject]@{ Content = $mockContent }
         Mock Invoke-WebRequestWrapper { return $mockResponse }
 
@@ -1081,11 +1081,11 @@ f6e5d4c3b2a19876fedcba9876543210fedcba9876543210fedcba9876543210 *php-8.2.0-nts-
     }
 
     It "Handles multiple lines with empty lines" {
-        $mockContent = @"
-6df2a5f59f10f08022bede47a26d61c3c16756c54d86aad58503dc8a9d3c25ad *php-8.2.34-Win32-vs16-x64.zip
-
-e37e7daf7ffe68df06bfccecf2950a6afc1a827e2b74cfaaa36ebe1574344cbd *php-8.2.34-Win32-vs16-x86.zip
-"@
+        $mockContent = @(
+            '6df2a5f59f10f08022bede47a26d61c3c16756c54d86aad58503dc8a9d3c25ad *php-8.2.34-Win32-vs16-x64.zip'
+            ''
+            'e37e7daf7ffe68df06bfccecf2950a6afc1a827e2b74cfaaa36ebe1574344cbd *php-8.2.34-Win32-vs16-x86.zip'
+        ) -join "`n"
         $mockResponse = [PSCustomObject]@{ Content = $mockContent }
         Mock Invoke-WebRequestWrapper { return $mockResponse }
 

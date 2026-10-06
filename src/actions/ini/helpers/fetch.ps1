@@ -39,6 +39,7 @@ function Get-ExtensionHandlers {
                 Download = {
                     param ($chosenItem, $phpPath, $skipConfirmation)
 
+                    $temporaryDirectory = $null
                     try {
                         $result = Test-DownloadPrerequisites -url $chosenItem.href -minimumFreeSpaceMB $Global:PVMConfig.env.MIN_EXTENSION_INSTALL_FREE_SPACE_MB
                         if (-not $result -or -not $result.temporaryDirectory) {
@@ -116,6 +117,7 @@ function Get-ExtensionHandlers {
                 Download = {
                     param ($chosenItem, $phpPath, $skipConfirmation, $extName)
 
+                    $temporaryDirectory = $null
                     try {
                         $result = Test-DownloadPrerequisites -url $chosenItem.href -minimumFreeSpaceMB $Global:PVMConfig.env.MIN_EXTENSION_INSTALL_FREE_SPACE_MB
                         if (-not $result -or -not $result.temporaryDirectory) {

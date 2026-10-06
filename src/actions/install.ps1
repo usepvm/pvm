@@ -147,7 +147,35 @@ function Get-PHP {
         $temporaryDirectory = $result.temporaryDirectory
         $downloadPath = Get-RemoteFile -url $versionObject.href -destinationPath "$temporaryDirectory\$fileName"
 
-        return @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = [bool]$downloadPath }
+        if (-not $downloadPath) {
+            return @{ downloadPath = $null; temporaryDirectory = $temporaryDirectory; success = $false }
+        }
+
+        Show-Message -message "`nVerifying SHA256 hash..."
+        $sha256Url = "$($Global:PVMConfig.links.phpWinReleases)/sha256sum.txt"
+        $sha256Hashes = Get-SHA256HashesFromRemote -url $sha256Url
+
+        if ($sha256Hashes.Count -eq 0) {
+            Show-Warning -message "Failed to download SHA256 hashes. Skipping verification."
+            return @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = $true }
+        }
+
+        $expectedHash = $sha256Hashes[$fileName]
+        if ([string]::IsNullOrWhiteSpace($expectedHash)) {
+            Show-Warning -message "SHA256 hash not found for '$fileName'. Skipping verification."
+            return @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = $true }
+        }
+
+        $hashValid = Test-SHA256HashValid -filePath $downloadPath -expectedHash $expectedHash
+        if (-not $hashValid) {
+            Show-Error -message "SHA256 hash verification failed for '$fileName'. The file may be corrupted or tampered with."
+            Remove-ItemWrapper -path $downloadPath
+            return $null
+        }
+
+        Show-Success -message "SHA256 hash verified successfully."
+
+        return @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = $true }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP version $($versionObject.version)"; exception = $_ }
         if ($temporaryDirectory) {

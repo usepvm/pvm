@@ -90,6 +90,7 @@ BeforeAll {
     Mock Show-Error { }
     Mock Show-Success { }
     Mock Show-Message { }
+    Mock Show-Warning { }
     Mock Write-Gray { }
     Mock Write-Color { }
 }
@@ -415,6 +416,9 @@ Describe "Get-PHP" {
         $fileName = 'php-8.1.0-Win32-vs16-x64.zip'
         Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
         Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
+        Mock Get-SHA256HashesFromRemote { return @{} }
+        Mock Get-SHA256HashFromFile { return 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890' }
+        Mock Test-SHA256HashValid { return $true }
 
         $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
 
@@ -460,6 +464,67 @@ Describe "Get-PHP" {
         $result.downloadPath | Should -BeNullOrEmpty
         $result.temporaryDirectory | Should -Not -BeNullOrEmpty
         $result.success | Should -BeFalse
+    }
+
+    It "Should verify SHA256 hash successfully" {
+        $tempDirectory = "$script:TEST_DRIVE\temp\php"
+        $fileName = 'php-8.1.0-Win32-vs16-x64.zip'
+        $downloadPath = "$tempDirectory\$fileName"
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+        Mock Get-RemoteFile { return $downloadPath }
+        Mock Get-SHA256HashesFromRemote { return @{ $fileName = 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890' } }
+        Mock Get-SHA256HashFromFile { return 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890' }
+        Mock Test-SHA256HashValid { return $true }
+
+        $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
+
+        $result.success | Should -BeTrue
+        Should -Invoke Get-SHA256HashesFromRemote -Times 1
+        Should -Invoke Test-SHA256HashValid -Times 1
+    }
+
+    It "Should skip verification when SHA256 hashes download fails" {
+        $tempDirectory = "$script:TEST_DRIVE\temp\php"
+        $fileName = 'php-8.1.0-Win32-vs16-x64.zip'
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+        Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
+        Mock Get-SHA256HashesFromRemote { return @{} }
+
+        $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
+
+        $result.success | Should -BeTrue
+        Should -Invoke Show-Warning -ParameterFilter { $message -match 'Failed to download SHA256 hashes' }
+    }
+
+    It "Should skip verification when hash not found for file" {
+        $tempDirectory = "$script:TEST_DRIVE\temp\php"
+        $fileName = 'php-8.1.0-Win32-vs16-x64.zip'
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+        Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
+        Mock Get-SHA256HashesFromRemote { return @{ 'other-file.zip' = 'a1b2c3d4...' } }
+
+        $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
+
+        $result.success | Should -BeTrue
+        Should -Invoke Show-Warning -ParameterFilter { $message -match 'SHA256 hash not found' }
+    }
+
+    It "Should return null when SHA256 verification fails" {
+        $tempDirectory = "$script:TEST_DRIVE\temp\php"
+        $fileName = 'php-8.1.0-Win32-vs16-x64.zip'
+        $downloadPath = "$tempDirectory\$fileName"
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+        Mock Get-RemoteFile { return $downloadPath }
+        Mock Get-SHA256HashesFromRemote { return @{ $fileName = 'correct-hash' } }
+        Mock Get-SHA256HashFromFile { return 'wrong-hash' }
+        Mock Test-SHA256HashValid { return $false }
+        Mock Remove-ItemWrapper { }
+
+        $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
+
+        $result | Should -BeNullOrEmpty
+        Should -Invoke Show-Error -ParameterFilter { $message -match 'SHA256 hash verification failed' }
+        Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -eq $downloadPath }
     }
 }
 

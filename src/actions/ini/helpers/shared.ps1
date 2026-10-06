@@ -28,9 +28,50 @@ function Backup-IniFile {
         if (Test-FileNotExists -path $backup) {
             Copy-ItemWrapper -path $iniPath -destination $backup
         }
+
+        $null = Clear-IniBackups -iniBackupPath $iniBackupPath
+
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to backup ini file"; exception = $_ }
+        return -1
+    }
+}
+
+function Clear-IniBackups {
+    param ($iniBackupPath)
+
+    try {
+        if (Test-DirectoryNotExists -path $iniBackupPath) {
+            return -1
+        }
+
+        $backupFiles = Get-ChildItemWrapper -path $iniBackupPath -filter 'php.ini_*.bak' -file
+
+        if (-not $backupFiles -or $backupFiles.Count -eq 0) {
+            return -1
+        }
+
+        $cutoffDate = (Get-Date).AddDays(-$Global:PVMConfig.env.INI_BACKUP_MAX_DAYS)
+
+        $sortedFiles = $backupFiles | Sort-Object -Property CreationTime -Descending
+        $filesToDelete = @()
+
+        for ($i = 0; $i -lt $sortedFiles.Count; $i++) {
+            $file = $sortedFiles[$i]
+
+            if ($i -ge $Global:PVMConfig.env.INI_BACKUP_KEEP_COUNT -and $file.CreationTime -lt $cutoffDate) {
+                $filesToDelete += $file
+            }
+        }
+
+        foreach ($file in $filesToDelete) {
+            Remove-ItemWrapper -path $file.FullName
+        }
+
+        return 0
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to cleanup ini backups"; exception = $_ }
         return -1
     }
 }

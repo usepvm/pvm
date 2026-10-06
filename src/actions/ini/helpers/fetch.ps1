@@ -194,6 +194,8 @@ function Get-ExtensionHandlers {
                 param ($iniPath, $fileName, $extVersion)
 
                 try {
+                    $null = Backup-IniFile -iniPath $iniPath
+
                     # Remove existing xdebug config using the config functions
                     $xdebugV2Config = Get-XdebugConfigV2 -dllPath $fileName
                     $xdebugV3Config = Get-XdebugConfigV3 -dllPath $fileName

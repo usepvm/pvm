@@ -17,6 +17,7 @@ BeforeAll {
     Mock Show-Info { }
     Mock Write-Color { }
     Mock New-Line { }
+    Mock Backup-IniFile { return 0 }
 
     function Reset-IniContent {
         @(
@@ -106,7 +107,7 @@ Describe "Set-IniSetting" {
     It "Creates backup before modifying" {
         Mock Read-HostWrapper { return '256M' }
         $null = Set-IniSetting -iniPath $script:testIniPath -keys @('memory_limit')
-        Test-Path $script:testBackupPath | Should -Be $true
+        Should -Invoke Backup-IniFile -ParameterFilter { $iniPath -like "*$script:testIniPath*" }
     }
 
     It "Fails for non-existent setting" {

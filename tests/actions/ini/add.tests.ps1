@@ -40,6 +40,7 @@ BeforeAll {
 
     Reset-IniContent
 
+    Mock Backup-IniFile { return 0 }
     Mock Add-LogEntry { return 0 }
     Mock Get-CurrentPHPVersion {
         return @{

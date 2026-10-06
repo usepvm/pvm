@@ -15,6 +15,7 @@ BeforeAll {
     Mock Show-Info { }
     Mock Show-Message { }
     Mock Write-Color { }
+    Mock Backup-IniFile { return 0 }
 
     function Reset-IniContent {
         @(
@@ -186,7 +187,7 @@ Describe "Enable-IniExtension" {
 
     It "Creates backup before modifying" {
         Enable-IniExtension -iniPath $script:testIniPath -extNames @('xdebug')
-        Test-Path $script:testBackupPath | Should -Be $true
+        Should -Invoke Backup-IniFile -ParameterFilter { $iniPath -like "*$script:testIniPath*" }
     }
 
     It "Returns -1 on error" {

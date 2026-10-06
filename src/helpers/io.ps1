@@ -393,3 +393,95 @@ function Get-TemporaryDirectory {
 
     return "$root\temp_$([guid]::NewGuid().ToString('N'))"
 }
+
+function Get-SHA256HashFromFile {
+    param ($filePath)
+
+    $stream = $null
+    $sha256 = $null
+    try {
+        if (Test-FileNotExists -path $filePath) {
+            return $null
+        }
+
+        $stream = [System.IO.File]::OpenRead($filePath)
+        $sha256 = [System.Security.Cryptography.SHA256]::Create()
+        $hashBytes = $sha256.ComputeHash($stream)
+
+        return [System.BitConverter]::ToString($hashBytes).Replace('-', '').ToLower()
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to compute SHA256 hash for '$filePath'"; exception = $_ }
+        return $null
+    } finally {
+        if ($stream) { $stream.Close() }
+        if ($sha256) { $sha256.Dispose() }
+    }
+}
+
+function Get-SHA256HashesFromRemote {
+    param ($url)
+
+    try {
+        if ([string]::IsNullOrWhiteSpace($url)) {
+            return @{}
+        }
+
+        $url = $url.Trim()
+        $response = Show-SpinnerWhileJob -argumentList @($url) -scriptBlock {
+            param ($url)
+
+            $response = Invoke-WebRequestWrapper -uri $url
+
+            return @{ pvmData = $response }
+        } -rethrow $true
+
+        if ($null -eq $response -or $null -eq $response.Content) {
+            return @{}
+        }
+
+        $hashes = @{}
+        $lines = $response.Content -split "`n"
+
+        foreach ($line in $lines) {
+            if ([string]::IsNullOrWhiteSpace($line)) {
+                continue
+            }
+
+            if ($line -match '^([a-fA-F0-9]{64})\s+\*(.+)$') {
+                $hash = $matches[1].ToLower()
+                $fileName = $matches[2]
+                $hashes[$fileName] = $hash
+            }
+        }
+
+        return $hashes
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get SHA256 hashes from '$url'"; exception = $_ }
+        return @{}
+    }
+}
+
+function Test-SHA256HashValid {
+    param ($filePath, $expectedHash)
+
+    try {
+        if (Test-FileNotExists -path $filePath) {
+            return $false
+        }
+
+        if ([string]::IsNullOrWhiteSpace($expectedHash)) {
+            return $false
+        }
+
+        $actualHash = Get-SHA256HashFromFile -filePath $filePath
+
+        if ($null -eq $actualHash) {
+            return $false
+        }
+
+        return ($actualHash -eq $expectedHash.ToLower())
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to verify SHA256 hash for '$filePath'"; exception = $_ }
+        return $false
+    }
+}

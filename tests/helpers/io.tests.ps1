@@ -996,3 +996,186 @@ Describe "Get-TemporaryDirectory" {
         $result | Should -Match ('^' + [regex]::Escape($rootPath) + '\\temp_[0-9a-fA-F]{32}$')
     }
 }
+
+Describe "Get-SHA256HashFromFile" {
+    It "Returns null for non-existent file" {
+        $result = Get-SHA256HashFromFile -filePath 'C:\nonexistent\file.txt'
+
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Returns null for null or empty file path" {
+        $result = Get-SHA256HashFromFile -filePath ''
+
+        $result | Should -BeNullOrEmpty
+    }
+
+    It "Returns correct SHA256 hash for a file" {
+        $testFile = "$script:TEST_DRIVE\test-sha256.txt"
+        $testContent = "test content"
+        Set-ContentWrapper -path $testFile -value $testContent
+
+        $result = Get-SHA256HashFromFile -filePath $testFile
+
+        $result | Should -Not -BeNullOrEmpty
+        $result.Length | Should -Be 64
+        $result | Should -Match '^[a-f0-9]{64}$'
+    }
+
+    It "Returns lowercase hash" {
+        $testFile = "$script:TEST_DRIVE\test-sha256-lower.txt"
+        Set-ContentWrapper -path $testFile -value "test"
+
+        $result = Get-SHA256HashFromFile -filePath $testFile
+
+        $result | Should -Be $result.ToLower()
+    }
+
+    It "Handle exception gracefully" {
+        Mock Test-FileNotExists { throw 'Error' }
+
+        $result = Get-SHA256HashFromFile -filePath 'C:\nonexistent\file.txt'
+
+        $result | Should -BeNullOrEmpty
+        Should -Invoke Add-LogEntry -Times 1
+    }
+}
+
+Describe "Get-SHA256HashesFromRemote" {
+    BeforeEach {
+        Mock Show-SpinnerWhileJob {
+            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
+            $result = & $scriptBlock @argumentList
+            return $result.pvmData
+        }
+    }
+
+    It "Returns empty hashtable for null or empty URL" {
+        $result = Get-SHA256HashesFromRemote -url ''
+
+        $result | Should -BeOfType [hashtable]
+        $result.Count | Should -Be 0
+    }
+
+    It "Returns empty hashtable when response is null" {
+        Mock Invoke-WebRequestWrapper { return $null }
+
+        $result = Get-SHA256HashesFromRemote -url 'https://example.com/sha256sum.txt'
+
+        $result | Should -BeOfType [hashtable]
+        $result.Count | Should -Be 0
+    }
+
+    It "Parses SHA256 sum format correctly" {
+        $mockContent = @"
+a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890 *php-8.2.0-Win32-vs16-x64.zip
+f6e5d4c3b2a19876fedcba9876543210fedcba9876543210fedcba9876543210 *php-8.2.0-nts-Win32-vs16-x64.zip
+"@
+        $mockResponse = [PSCustomObject]@{ Content = $mockContent }
+        Mock Invoke-WebRequestWrapper { return $mockResponse }
+
+        $result = Get-SHA256HashesFromRemote -url 'https://example.com/sha256sum.txt'
+
+        $result | Should -BeOfType [hashtable]
+        $result.Count | Should -Be 2
+    }
+
+    It "Handles multiple lines with empty lines" {
+        $mockContent = @"
+6df2a5f59f10f08022bede47a26d61c3c16756c54d86aad58503dc8a9d3c25ad *php-8.2.34-Win32-vs16-x64.zip
+
+e37e7daf7ffe68df06bfccecf2950a6afc1a827e2b74cfaaa36ebe1574344cbd *php-8.2.34-Win32-vs16-x86.zip
+"@
+        $mockResponse = [PSCustomObject]@{ Content = $mockContent }
+        Mock Invoke-WebRequestWrapper { return $mockResponse }
+
+        $result = Get-SHA256HashesFromRemote -url 'https://example.com/sha256sum.txt'
+
+        $result | Should -BeOfType [hashtable]
+        $result.Count | Should -Be 2
+    }
+
+    It "Converts hash to lowercase" {
+        $mockContent = "A1B2C3D4E5F67890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890 *test.zip"
+        $mockResponse = [PSCustomObject]@{ Content = $mockContent }
+        Mock Invoke-WebRequestWrapper { return $mockResponse }
+
+        $result = Get-SHA256HashesFromRemote -url 'https://example.com/sha256sum.txt'
+
+        $result['test.zip'] | Should -Be $result['test.zip'].ToLower()
+    }
+
+    It "Handle exception gracefully" {
+        Mock Show-SpinnerWhileJob { throw 'Error' }
+
+        $result = Get-SHA256HashesFromRemote -url 'https://example.com/sha256sum.txt'
+
+        $result | Should -BeOfType [hashtable]
+        $result.Count | Should -Be 0
+        Should -Invoke Add-LogEntry -Times 1
+    }
+}
+
+Describe "Test-SHA256HashValid" {
+    It "Returns false for non-existent file" {
+        Mock Test-FileNotExists { return $true }
+
+        $result = Test-SHA256HashValid -filePath 'C:\nonexistent\file.txt' -expectedHash 'a1b2c3d4'
+
+        $result | Should -Be $false
+    }
+
+    It "Returns false for null or empty expected hash" {
+        Mock Test-FileNotExists { return $false }
+
+        $result = Test-SHA256HashValid -filePath 'C:\some\file.txt' -expectedHash ''
+
+        $result | Should -Be $false
+    }
+
+    It "Returns true when hashes match" {
+        Mock Test-FileNotExists { return $false }
+        Mock Get-SHA256HashFromFile { return 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890' }
+
+        $result = Test-SHA256HashValid -filePath 'C:\some\file.txt' -expectedHash 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890'
+
+        $result | Should -Be $true
+    }
+
+    It "Returns false when hashes do not match" {
+        Mock Test-FileNotExists { return $false }
+        Mock Get-SHA256HashFromFile { return 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890' }
+
+        $result = Test-SHA256HashValid -filePath 'C:\some\file.txt' -expectedHash 'f6e5d4c3b2a19876fedcba9876543210fedcba9876543210fedcba9876543210'
+
+        $result | Should -Be $false
+    }
+
+    It "Performs case-insensitive comparison" {
+        Mock Test-FileNotExists { return $false }
+        Mock Get-SHA256HashFromFile { return 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890' }
+
+        $result = Test-SHA256HashValid -filePath 'C:\some\file.txt' -expectedHash 'A1B2C3D4E5F67890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890'
+
+        $result | Should -Be $true
+    }
+
+    It "Returns false when Get-SHA256HashFromFile returns null" {
+        Mock Test-FileNotExists { return $false }
+        Mock Get-SHA256HashFromFile { return $null }
+
+        $result = Test-SHA256HashValid -filePath 'C:\some\file.txt' -expectedHash 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890'
+
+        $result | Should -Be $false
+    }
+
+    It "Handles exception gracefully" {
+        Mock Test-FileNotExists { return $false }
+        Mock Get-SHA256HashFromFile { throw 'Error' }
+
+        $result = Test-SHA256HashValid -filePath 'C:\some\file.txt' -expectedHash 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890'
+
+        $result | Should -Be $false
+        Should -Invoke Add-LogEntry -Times 1
+    }
+}

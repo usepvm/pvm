@@ -411,15 +411,15 @@ Describe "Get-PHP" {
     }
 
     It "Should download PHP successfully" {
-        $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
+        $tempDirectory = "$script:TEST_DRIVE\temp\php"
         $fileName = 'php-8.1.0-Win32-vs16-x64.zip'
-        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
-        Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+        Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
 
         $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
 
-        $result.downloadPath | Should -Be "$temporaryDirectory\$fileName"
-        $result.temporaryDirectory | Should -Be $temporaryDirectory
+        $result.downloadPath | Should -Be "$tempDirectory\$fileName"
+        $result.temporaryDirectory | Should -Be $tempDirectory
         $result.success | Should -BeTrue
     }
 
@@ -441,11 +441,14 @@ Describe "Get-PHP" {
     }
 
     It "Handles exception gracefully" {
-        Mock Test-DownloadPrerequisites { throw 'Test exception' }
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp\php"; sizeMB = 10 } }
+        Mock Get-RemoteFile { throw 'Test exception' }
+        Mock Remove-ItemWrapper { }
 
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
 
         $result | Should -BeNullOrEmpty
+        Should -Invoke Remove-ItemWrapper -Times 1
     }
 
     It "Returns null if download fails" {

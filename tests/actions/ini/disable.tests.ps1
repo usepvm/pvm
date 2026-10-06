@@ -2,13 +2,13 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:phpVersionPath = "$script:TEST_DRIVE\php-8.2"
-    $script:testIniPath = "$script:phpVersionPath\php.ini"
-    $script:extDirectory = "$script:phpVersionPath\ext"
-    $script:testBackupPath = "$script:testIniPath.bak"
+    $script:phpPath = "$script:TEST_DRIVE\php"
+    $script:testIniPath = "$script:phpPath\php.ini"
+    $script:extDirectory = "$script:phpPath\ext"
+    $script:testBackupPath = "$script:phpPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
 
     $null = New-Directory -path $Global:PVMConfig.paths.directories.cache
-    $null = New-Directory -path $script:phpVersionPath
+    $null = New-Directory -path $script:phpPath
     $null = New-Directory -path $script:extDirectory
 
     Mock Show-Warning { }

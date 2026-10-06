@@ -232,6 +232,7 @@ function Get-Config {
 
         constants = [ordered]@{
             LOG_SEPARATOR = '=' * 100
+            INI_BACKUP_DIR_NAME = 'ini.backup'
         }
 
         defaults = @{

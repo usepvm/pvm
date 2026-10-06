@@ -248,17 +248,20 @@ function Start-PVM {
 
         $result = $(& $actions[$command].data.action -arguments $arguments)
 
-        # Check for updates after successful command execution (skip for update command itself)
-        if ($result -eq 0 -and $command -ne 'update') {
-            $null = (Test-CheckForUpdatesQuietly)
-        }
-
-        New-Line
-
         return $result
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during command '$command'"; exception = $_ }
         Show-Error -message "`nCommand canceled or failed to elevate privileges."
         return -1
+    } finally {
+        if (Test-ValidDrivePath -path $Global:PVMConfig.paths.directories.temp) {
+            Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.temp)\*"
+        }
+
+        if ($result -eq 0 -and $command -ne 'update') {
+            $null = (Test-CheckForUpdatesQuietly)
+        }
+
+        New-Line
     }
 }

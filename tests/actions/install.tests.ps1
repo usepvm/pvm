@@ -90,7 +90,9 @@ BeforeAll {
     Mock Show-Error { }
     Mock Show-Success { }
     Mock Show-Message { }
+    Mock Show-Warning { }
     Mock Write-Gray { }
+    Mock Write-Color { }
 }
 
 Describe "Get-LatestPHPVersion" {
@@ -396,36 +398,9 @@ Describe "Get-PHPVersions" {
     }
 }
 
-Describe "Get-PHPFromUrl" {
-    BeforeEach {
-        Reset-MockState
-    }
-
-    It "Should download file successfully" {
-        $urls = Get-SourceUrls
-        $fileName = "php-8.1.0-Win32-vs16-x64.zip"
-        $href = "$($urls['Archives'])/$fileName"
-        Set-MockWebResponse -url $href -content 'Downloaded content'
-
-        $result = Get-PHPFromUrl -url $href -destination "$script:TEST_DRIVE\php\$fileName"
-
-        $result | Should -Be "$script:TEST_DRIVE\php\$fileName"
-        $script:MockFileSystem.Files.ContainsKey("$script:TEST_DRIVE\php\$fileName") | Should -Be $true
-    }
-
-    It "Should handle download failure" {
-        $script:MockFileSystem.DownloadFails = $true
-
-        $result = Get-PHPFromUrl -url 'https://test.com/php.zip' -destination "$script:TEST_DRIVE\php"
-
-        $result | Should -Be $null
-    }
-}
-
 Describe "Get-PHP" {
     BeforeAll {
         Mock New-Directory { return 0 }
-        Mock Get-PHPFromUrl { return "$script:TEST_DRIVE\php" }
     }
 
     BeforeEach {
@@ -437,65 +412,119 @@ Describe "Get-PHP" {
     }
 
     It "Should download PHP successfully" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
-        $result | Should -Be "$script:TEST_DRIVE\php"
+        $tempDirectory = "$script:TEST_DRIVE\temp\php"
+        $fileName = 'php-8.1.0-Win32-vs16-x64.zip'
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+        Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
+        Mock Get-SHA256HashesFromRemote { return @{} }
+        Mock Get-SHA256HashFromFile { return 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890' }
+        Mock Test-SHA256HashValid { return $true }
+
+        $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
+
+        $result.downloadPath | Should -Be "$tempDirectory\$fileName"
+        $result.temporaryDirectory | Should -Be $tempDirectory
+        $result.success | Should -BeTrue
     }
 
-    It "Returns null if directory creation fails" {
-        Mock New-Directory { return -1 }
+    It "Returns null when prerequisites are not met" {
+        Mock Test-DownloadPrerequisites { return $null }
+
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
+
         $result | Should -BeNullOrEmpty
     }
 
-    It "Returns null when disk space is insufficient for PHP installation" {
-        Mock Test-FreeDiskSpaceInsufficient { return $true }
-        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
-        $result | Should -BeNullOrEmpty
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Insufficient disk space for PHP installation*' }
-    }
+    It "Returns null when prerequisites check fails" {
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $null; message = 'Error'; color = 'Red' } }
 
-    It "Returns null when remote file size cannot be determined" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]0) }
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
-        $result | Should -BeNullOrEmpty
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to get remote file size or invalid size*' }
-    }
 
-    It "Returns null when disk space is insufficient for extension download" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $true }
-        $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
         $result | Should -BeNullOrEmpty
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Insufficient disk space for PHP download*' }
+        Should -Invoke Write-Color -ParameterFilter { $message -match 'Error' -and $foreColor -eq 'Red' }
     }
 
     It "Handles exception gracefully" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Show-SpinnerWhileJob { throw 'Test exception' }
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp\php"; sizeMB = 10 } }
+        Mock Get-RemoteFile { throw 'Test exception' }
+        Mock Remove-ItemWrapper { }
+
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
+
         $result | Should -BeNullOrEmpty
+        Should -Invoke Remove-ItemWrapper -Times 1
     }
 
     It "Returns null if download fails" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Get-PHPFromUrl { return $null }
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp\php"; sizeMB = 10 } }
+        Mock Get-RemoteFile { return $null }
 
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
 
+        $result.downloadPath | Should -BeNullOrEmpty
+        $result.temporaryDirectory | Should -Not -BeNullOrEmpty
+        $result.success | Should -BeFalse
+    }
+
+    It "Should verify SHA256 hash successfully" {
+        $tempDirectory = "$script:TEST_DRIVE\temp\php"
+        $fileName = 'php-8.1.0-Win32-vs16-x64.zip'
+        $downloadPath = "$tempDirectory\$fileName"
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+        Mock Get-RemoteFile { return $downloadPath }
+        Mock Get-SHA256HashesFromRemote { return @{ $fileName = 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890' } }
+        Mock Get-SHA256HashFromFile { return 'a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890' }
+        Mock Test-SHA256HashValid { return $true }
+
+        $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
+
+        $result.success | Should -BeTrue
+        Should -Invoke Get-SHA256HashesFromRemote -Times 1
+        Should -Invoke Test-SHA256HashValid -Times 1
+    }
+
+    It "Should skip verification when SHA256 hashes download fails" {
+        $tempDirectory = "$script:TEST_DRIVE\temp\php"
+        $fileName = 'php-8.1.0-Win32-vs16-x64.zip'
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+        Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
+        Mock Get-SHA256HashesFromRemote { return @{} }
+
+        $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
+
+        $result.success | Should -BeTrue
+        Should -Invoke Show-Warning -ParameterFilter { $message -match 'Failed to download SHA256 hashes' }
+    }
+
+    It "Should skip verification when hash not found for file" {
+        $tempDirectory = "$script:TEST_DRIVE\temp\php"
+        $fileName = 'php-8.1.0-Win32-vs16-x64.zip'
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+        Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
+        Mock Get-SHA256HashesFromRemote { return @{ 'other-file.zip' = 'a1b2c3d4...' } }
+
+        $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
+
+        $result.success | Should -BeTrue
+        Should -Invoke Show-Warning -ParameterFilter { $message -match 'SHA256 hash not found' }
+    }
+
+    It "Should return null when SHA256 verification fails" {
+        $tempDirectory = "$script:TEST_DRIVE\temp\php"
+        $fileName = 'php-8.1.0-Win32-vs16-x64.zip'
+        $downloadPath = "$tempDirectory\$fileName"
+        Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+        Mock Get-RemoteFile { return $downloadPath }
+        Mock Get-SHA256HashesFromRemote { return @{ $fileName = 'correct-hash' } }
+        Mock Get-SHA256HashFromFile { return 'wrong-hash' }
+        Mock Test-SHA256HashValid { return $false }
+        Mock Remove-ItemWrapper { }
+
+        $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
+
         $result | Should -BeNullOrEmpty
+        Should -Invoke Show-Error -ParameterFilter { $message -match 'SHA256 hash verification failed' }
+        Should -Invoke Remove-ItemWrapper -ParameterFilter { $path -eq $downloadPath }
     }
 }
 
@@ -520,15 +549,28 @@ Describe "Expand-AndConfigurePHP" {
     }
 
     It "Should extract and configure PHP" {
-        Mock Expand-Zip { }
-        { Expand-AndConfigurePHP -path "$script:TEST_DRIVE\php.zip" -fileNamePath "$script:TEST_DRIVE\php" } | Should -Not -Throw
+        Mock Expand-Zip { return 0 }
+
+        $result = Expand-AndConfigurePHP -path "$script:TEST_DRIVE\php.zip" -fileNamePath "$script:TEST_DRIVE\php"
+
+        $result | Should -Be 0
         $script:MockFileSystem.Files.ContainsKey("$script:TEST_DRIVE\php\php.ini") | Should -Be $true
     }
 
     It "Should handle extraction failure" {
+        Mock Expand-Zip { return -1 }
+
+        $result = Expand-AndConfigurePHP -path "$script:TEST_DRIVE\php.zip" -fileNamePath "$script:TEST_DRIVE\php"
+
+        $result | Should -Be -1
+    }
+
+    It "Should handle cleanup failure" {
         Mock Remove-ItemWrapper { throw 'Test exception' }
 
-        { Expand-AndConfigurePHP -path "$script:TEST_DRIVE\php.zip" -fileNamePath "$script:TEST_DRIVE\php" } | Should -Not -Throw
+        $result = Expand-AndConfigurePHP -path "$script:TEST_DRIVE\php.zip" -fileNamePath "$script:TEST_DRIVE\php"
+
+        $result | Should -Be -1
     }
 }
 
@@ -663,8 +705,11 @@ Describe "Install-PHP" {
     It "Should install PHP successfully" {
         Mock Get-MatchingPHPVersions { return $null }
         $script:MockUserInput = '0'
-
-        Mock Get-PHP { return "$script:TEST_DRIVE\php" }
+        Mock Get-PHP { return @{ downloadPath = "$script:TEST_DRIVE\php"; success = $true } }
+        Mock Expand-AndConfigurePHP { return 0 }
+        Mock Remove-ItemWrapper { }
+        Mock Test-FileNotExists { return $false }
+        Mock Set-Opcache { return 0 }
 
         $result = Install-PHP -version '8.1'
 
@@ -694,12 +739,16 @@ Describe "Install-PHP" {
     }
 
     It "Installs PHP when user accepts family version install" {
-        Mock Get-PHP { return "$script:TEST_DRIVE\php" }
+        Mock Get-PHP { return @{ downloadPath = "$script:TEST_DRIVE\php"; success = $true } }
         Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
         Mock Read-HostWrapper {
             if ($prompt -match 'Would you like to install another version from') { return 'y' }
             if ($prompt -eq "`nEnter the [number] of your selection (or press Enter to cancel)") { return '0' }
         }
+        Mock Expand-AndConfigurePHP { return 0 }
+        Mock Remove-ItemWrapper { }
+        Mock Test-FileNotExists { return $false }
+        Mock Set-Opcache { return 0 }
 
         $result = Install-PHP -version '8'
 
@@ -708,7 +757,6 @@ Describe "Install-PHP" {
 
     It "Returns -1 when user selection is null" {
         Mock Get-MatchingPHPVersions { return $null }
-        Mock Get-PHPFromUrl { return "$script:TEST_DRIVE\php" }
         Mock Select-Version { return $null }
 
         $result = Install-PHP -version '8.1'
@@ -719,7 +767,6 @@ Describe "Install-PHP" {
 
     It "Returns -1 when user selection is already installed" {
         Mock Get-MatchingPHPVersions { return $null }
-        Mock Get-PHPFromUrl { return "$script:TEST_DRIVE\php" }
         Mock Select-Version { return @{ version = '8.1.15'; fileName = 'php-8.1.15-Win32-vs16-x64.zip' } }
         Mock Test-PHPVersionInstalled { return $true }
 
@@ -730,7 +777,6 @@ Describe "Install-PHP" {
     }
 
     It "Returns -1 when user selection cannot be installed" {
-        Mock Get-PHPFromUrl { return "$script:TEST_DRIVE\php" }
         Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
         Mock Read-HostWrapper {
             if ($prompt -match 'Would you like to install another version from') { return 'y' }
@@ -741,7 +787,7 @@ Describe "Install-PHP" {
         $result = Install-PHP -version '8'
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -eq "`nFailed to download PHP version 8" }
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like '*Failed to download PHP version 8.1.15*' }
     }
 
     It "Handles exception gracefully" {
@@ -765,7 +811,8 @@ Describe "Install-PHP" {
 
     It "Should handle download failure" {
         $script:MockFileSystem.DownloadFails = $true
-        Mock Get-PHP { return $null }
+        Mock Get-PHP { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp"; success = $false } }
+        Mock Remove-ItemWrapper { }
         Mock Get-PHPVersions {
             return @{
                 Releases = @{
@@ -779,6 +826,48 @@ Describe "Install-PHP" {
         $result = Install-PHP -version '8.1'
 
         $result | Should -Be -1
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like "*Failed to download PHP version 8.1*" }
+    }
+
+    It "Should handle extraction failure" {
+        Mock Get-PHP { return @{ downloadPath = "$script:TEST_DRIVE\php"; temporaryDirectory = "$script:TEST_DRIVE\temp"; success = $true } }
+        Mock Remove-ItemWrapper { }
+        Mock Expand-AndConfigurePHP { return -1 }
+        Mock Get-PHPVersions {
+            return @{
+                Releases = @{
+                    filename = 'php-8.1.33-Win32-vs16-x64.zip'
+                    href = '/downloads/releases/php-8.1.33-Win32-vs16-x64.zip'
+                    version = '8.1.33'
+                }
+            }
+        }
+
+        $result = Install-PHP -version '8.1'
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like "*Failed to extract PHP version 8.1*" }
+    }
+
+    It "Should handle missing php.ini" {
+        Mock Get-PHP { return @{ downloadPath = "$script:TEST_DRIVE\php"; temporaryDirectory = "$script:TEST_DRIVE\temp"; success = $true } }
+        Mock Remove-ItemWrapper { }
+        Mock Expand-AndConfigurePHP { return 0 }
+        Mock Test-FileNotExists { return $true }
+        Mock Get-PHPVersions {
+            return @{
+                Releases = @{
+                    filename = 'php-8.1.33-Win32-vs16-x64.zip'
+                    href = '/downloads/releases/php-8.1.33-Win32-vs16-x64.zip'
+                    version = '8.1.33'
+                }
+            }
+        }
+
+        $result = Install-PHP -version '8.1'
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like "*Failed to find php.ini for PHP version 8.1*" }
     }
 
     It "Should prompt for family version when other versions exist" {

@@ -144,7 +144,7 @@ function Install-Extension {
         $handler = Get-SourceHandler -sourceUrl $selectedSource
 
         if (-not $handler) {
-            Show-Error -message "`nNo handler found for source: $source"
+            Show-Error -message "`nNo handler found for source: $selectedSource"
             return -1
         }
 

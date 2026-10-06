@@ -561,6 +561,7 @@ Describe "Get-Config" {
             $result.paths.directories.log | Should -Be "$testRoot\storage\logs"
             $result.paths.directories.state | Should -Be "$testRoot\storage\data\state"
             $result.paths.directories.assets | Should -Be "$testRoot\assets"
+            $result.paths.directories.temp | Should -Be "$testRoot\storage\temp"
             $result.paths.directories.cert | Should -Be "$testRoot\storage\cert"
 
             $result.paths.files.profileExample | Should -Be "$testRoot\storage\data\profiles\profile-example.json"

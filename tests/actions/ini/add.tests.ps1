@@ -364,93 +364,83 @@ Describe "Add-MissingPHPExtensionToIni" {
 
 Describe "Install-Extension" {
     BeforeAll {
-        $script:MockFileSystem = @{
-            Directories   = @()
-            Files         = @{}
-            WebResponses  = @{}
-            DownloadFails = $false
+        function New-TestPackage {
+            param ($arch = 'x86', $buildType = 'ts', $extVersion = '1.4.0', $extName = 'curl')
+
+            $file = "php_$extName-$extVersion-8.2-$buildType-vs16-$arch.zip"
+            return @{
+                href       = "https://mock/$extName/$extVersion/$file"
+                arch       = $arch
+                buildType  = $buildType
+                version    = '8.2'
+                extVersion = $extVersion
+                fileName   = $file
+            }
+        }
+
+        function Set-TestPackages {
+            param ($Packages, $ExtName = 'curl', $Source = 'pecl.php.net')
+            $script:ResolveLinksResult = @{ extName = $ExtName; source = $Source; data = @($Packages) }
         }
 
         Mock Read-HostWrapper {
             param ($prompt)
-            if ($prompt -eq "`nEnter the [number] of your selection") {
-                return '0'
-            }
+            if ($prompt -eq "`nEnter the [number] of your selection") { return '0' }
         }
-        Mock Get-ChildItemWrapper {
-            if ($script:getRandomFile) {
-                return @( @{ Name = 'random_file' } )
-            }
-            return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\php_curl-1.4.0-7.4-ts-vc15-x86\php_curl.dll" } )
-        }
-        Mock Expand-Zip { }
-        Mock Remove-ItemWrapper { }
-        Mock Move-ItemWrapper { }
-        Mock Test-FileExists { return $true }
+        Mock Add-LogEntry { return 0 }
     }
 
     BeforeEach {
-        Mock Show-SpinnerWhileJob {
-            param ($scriptBlock, $message, $noClear, $argumentList, $rethrow)
-            $result = & $scriptBlock @argumentList
-            return $result.pvmData
+        # Controls for the mocked handlers
+        $script:ResolveLinksResult = $null
+        $script:DownloadResult     = @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" }
+        $script:DownloadArgs       = $null
+        $script:ConfigCode         = 0
+
+        Mock Get-CurrentPHPVersion {
+            return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = $null; buildType = $null }
         }
-        $script:getRandomFile = $false
-        $script:MockFileSystem.DownloadFails = $false
-        $script:MockFileSystem.WebResponses = @{
-            "$script:PECL_PACKAGE_ROOT_URL/nonexistent_ext"                                                 = @{
-                Content = 'Mocked PHP nonexistent_ext content'
-                Links   = @()
-            }
-            "$script:PECL_PACKAGE_ROOT_URL/pdo_mysql"                                                       = @{
-                Content = 'Mocked pdo_mysql content'
-                Links   = @(
-                    @{ href = '/package/pdo_mysql/1.4.0/windows' },
-                    @{ href = '/package/pdo_mysql/2.1.0/windows' }
-                )
-            }
-            "$script:PECL_PACKAGE_ROOT_URL/curl"                                                            = @{
-                Content = 'Mocked curl content'
-                Links   = @(
-                    @{ href = '/package/curl/1.4.0/windows' },
-                    @{ href = '/package/curl/2.1.0/windows' }
-                )
-            }
-            "$script:PECL_PACKAGE_ROOT_URL/curl/1.4.0/windows"                                              = @{
-                Content = 'Mocked PHP curl 1.4.0 content'
-                Links   = @(
-                    @{ href = 'other_link' },
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip" },
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip" }
-                )
-            }
-            "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"               = @{
-                Content = 'Mocked PHP curl 1.4.0 zip content'
-            }
-            "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86_64.zip"            = @{
-                Content = 'Mocked PHP curl 1.4.0 zip content'
-            }
-            "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-arm64.zip"             = @{
-                Content = 'Mocked PHP curl 1.4.0 zip content'
-            }
-            "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0/php_curl-1.5.0-8.2-ts-vs16-x64.zip"               = @{
-                Content = 'Mocked PHP curl 1.5.0 zip content'
-            }
-            "$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip" = @{
-                Content = 'Mocked PHP courierauth 1.4.0 zip content'
-            }
-            "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0alpha1/php_curl-1.5.0alpha1-8.2-ts-vs16-x64.zip"   = @{
-                Content = 'Mocked PHP curl 1.5.0alpha1 zip content'
-            }
-            "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0alpha2/php_curl-1.5.0alpha2-8.2-ts-vs16-x64.zip"   = @{
-                Content = 'Mocked PHP curl 1.5.0alpha2 zip content'
-            }
-            "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip"               = @{
-                Content = 'Mocked PHP curl 1.5.0alpha2 zip content'
-            }
-            "$script:PECL_PACKAGE_ROOT_URL/curl/2.1.0/windows"                                              = @{
-                Content = 'Mocked PHP curl 2.1.0 content'
-                Links   = @()
+
+        Mock Get-ExtensionHandlers {
+            return @{
+                SourceHandlers = @{
+                    'xdebug.org' = @{
+                        SupportedExtensions = @('xdebug')
+                        ResolveLinks        = { param ($extName) return $script:ResolveLinksResult }
+                        GetPackages         = {}
+                        Download            = {
+                            param ($chosenItem, $phpPath, $skipConfirmation, $extName)
+                            $script:DownloadArgs = @{
+                                chosenItem       = $chosenItem
+                                phpPath          = $phpPath
+                                skipConfirmation = $skipConfirmation
+                                extName          = $extName
+                            }
+                            return $script:DownloadResult
+                        }
+                        MoreInfoUrl         = 'https://mock/xdebug-historical'
+                    }
+                    'pecl.php.net' = @{
+                        SupportedExtensions = @('*')
+                        ResolveLinks        = { param ($extName) return $script:ResolveLinksResult }
+                        GetPackages         = {}
+                        Download            = {
+                            param ($chosenItem, $phpPath, $skipConfirmation, $extName)
+                            $script:DownloadArgs = @{
+                                chosenItem       = $chosenItem
+                                phpPath          = $phpPath
+                                skipConfirmation = $skipConfirmation
+                                extName          = $extName
+                            }
+                            return $script:DownloadResult
+                        }
+                        MoreInfoUrl         = { param ($extName) return "https://mock/pecl/$extName" }
+                    }
+                }
+                ExtensionConfigHandlers = @{
+                    'xdebug'  = { param ($iniPath, $fileName, $extVersion) return $script:ConfigCode }
+                    'default' = { param ($iniPath, $fileName, $extVersion) return $script:ConfigCode }
+                }
             }
         }
     }
@@ -492,567 +482,12 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when no handler is found for the selected source" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return 0 }
         Mock Get-SourceHandler { return $null }
 
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
         $code | Should -Be -1
         Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*No handler found for source*' }
-    }
-
-    It "Returns -1 when gets empty list from extension" {
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'nonexistent_ext'
-        $code | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*No packages found for nonexistent_ext*' }
-    }
-
-    It "Returns -1 when No package is found" {
-        Mock Get-ExtensionPackages { return $null }
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*No packages found for curl*' }
-    }
-
-    It "Returns -1 when user does not choose a zip extension version to install" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '' }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-    }
-
-    It "Returns -1 when user does choose a non valid zip extension version to install" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '5' }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-    }
-
-    It "Returns -1 when downloaded zip extension has no dll" {
-        $script:getRandomFile = $true
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*Failed to download curl*' }
-    }
-
-    It "Returns -1 when user answers no to replace existing extension" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
-            return 'n'
-        }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-    }
-
-    It "Returns -1 when user answers yes to replace existing extension" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
-            return 'y'
-        }
-        Mock Move-ItemWrapper { }
-        Mock Add-MissingPHPExtensionToIni { return -1 }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-    }
-
-    It "Returns -1 when no extension matching installed php version (arch & build type)" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = 'x64'; buildType = 'ts' } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
-                )
-            }
-        }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter {
-            $message -like "*No packages found for 'curl' matching current PHP architecture/build type*"
-        }
-    }
-
-    It "Installs extension successfully" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a href='$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip'>8.2 Thread Safe (TS) x86</a>" }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-nts-vs16-x86.zip'; outerHTML = "<a href='$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x86.zip'>8.2 Non Thread Safe (NTS) x86</a>" }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x64.zip'; outerHTML = "<a href='$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip'>8.2 Thread Safe (TS) x64</a>" }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-nts-vs16-x64.zip'; outerHTML = "<a href='$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip'>8.2 Non Thread Safe (NTS) x64</a>" }
-                )
-            }
-        }
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Add-MissingPHPExtensionToIni { return 0 }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $true
-        $code | Should -Be 0
-    }
-
-    Context "When extension has no direct link" {
-        BeforeEach {
-            Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$script:PECL_PACKAGE_ROOT_URL/nonexistent_ext" } -MockWith {
-                throw 'Network error'
-            }
-            Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq $script:PECL_PACKAGES_URL } -MockWith {
-                return @{
-                    Content = 'Mocked PHP extensions content'
-                    Links   = @(
-                        @{ href = $null }
-                        @{ href = 'random_link' }
-                        @{ href       = '/packages.php?catpid=1&amp;catname=Authentication';
-                            outerHTML = '<a href="/packages.php?catpid=1&amp;catname=Authentication">Authentication</a>'
-                        }
-                        @{ href       = '/packages.php?catpid=3&amp;catname=Caching';
-                            outerHTML = '<a href="/packages.php?catpid=3&amp;catname=Caching">Caching</a>'
-                        }
-                        @{ href       = '/packages.php?catpid=7&amp;catname=EmptyCat';
-                            outerHTML = '<a href="/packages.php?catpid=7&amp;catname=EmptyCat">EmptyCat</a>'
-                        }
-                    )
-                }
-            }
-            Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$($script:PECL_PACKAGES_URL)?catpid=1&amp;catname=Authentication" } -MockWith {
-                return @{
-                    Content = 'Mocked PHP extension Auth content'
-                    Links   = @(
-                        @{ href = $null }
-                        @{ href = '/package/courierauth' }
-                        @{ href = '/package/krb5' }
-                    )
-                }
-            }
-            Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$($script:PECL_PACKAGES_URL)?catpid=3&amp;catname=Caching" } -MockWith {
-                return @{
-                    Content = 'Mocked PHP extension Caching content'
-                    Links   = @(
-                        @{ href = '/package/APC' }
-                        @{ href = '/package/APCu' }
-                        @{ href = '/package/memcache' }
-                        @{ href = '/package/memcached' }
-                    )
-                }
-            }
-            Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$($script:PECL_PACKAGES_URL)?catpid=7&amp;catname=EmptyCat" } -MockWith {
-                return @{
-                    Content = 'Mocked PHP extension EmptyCat content'
-                    Links   = @()
-                }
-            }
-            Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$script:PECL_PACKAGE_ROOT_URL/courierauth" } -MockWith {
-                return @{
-                    Content = 'Mocked courierauth content'
-                    Links   = @(
-                        @{ href = '/package/courierauth/1.4.0/windows' },
-                        @{ href = '/package/courierauth/2.1.0/windows' }
-                    )
-                }
-            }
-            Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$script:PECL_PACKAGE_ROOT_URL/courierauth/1.4.0/windows" } -MockWith {
-                return @{
-                    Content = 'Mocked PHP courierauth 1.4.0 content'
-                    Links   = @(
-                        @{ href = 'other_link' },
-                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" },
-                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip" }
-                    )
-                }
-            }
-            Mock Invoke-WebRequestWrapper -ParameterFilter { $uri -eq "$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip" } -MockWith {
-                $script:MockFileSystem.Files[$outFile] = 'Downloaded content'
-                return
-            }
-            Mock Get-ChildItemWrapper {
-                return @( @{ Name = 'php_courierauth.dll'; FullName = "$script:TEST_DRIVE\php_courierauth-1.4.0-7.4-ts-vc15-x86\php_courierauth.dll" } )
-            }
-        }
-
-        It "Falls back to matching links if extension direct link is not found" {
-            Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = 'x64'; buildType = 'ts' } }
-            Mock Get-ExtensionPackages {
-                return @{
-                    extName = 'courierauth'
-                    source  = 'pecl.php.net'
-                    data    = @(
-                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-ts-vs16-x64.zip'; outerHTML = "<a href='$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip'>8.2 Thread Safe (TS) x64</a>" }
-                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-nts-vs16-x64.zip'; outerHTML = "<a href='$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x64.zip'>8.2 Non Thread Safe (NTS) x64</a>" }
-                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a href='$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip'>8.2 Thread Safe (TS) x86</a>" }
-                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-nts-vs16-x86.zip'; outerHTML = "<a href='$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x86.zip'>8.2 Non Thread Safe (NTS) x86</a>" }
-                    )
-                }
-            }
-            Mock Test-FreeDiskSpaceInsufficient { return $false }
-            Mock Get-RemoteFileSize { return ([int64]10MB) }
-            Mock Convert-BytesToMegabytes { return 10 }
-            Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith {
-                return 'y'
-            }
-            Mock Add-MissingPHPExtensionToIni { return 0 }
-
-            $code = Install-Extension -iniPath $script:testIniPath -extName 'cour' -skipConfirmation $true
-            $code | Should -Be 0
-        }
-
-        It "Returns -1 when no extension is found" {
-            $code = Install-Extension -iniPath $script:testIniPath -extName 'nonexistent_ext'
-            $code | Should -Be -1
-        }
-
-        It "Returns -1 when user does not choose a dll extension version to install" {
-            Mock Get-ExtensionPackages {
-                return @{
-                    extName = 'courierauth'
-                    data    = @(
-                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-ts-vs16-x64.zip'; outerHTML = "<a href='$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x64.zip'>8.2 Thread Safe (TS) x64</a>" }
-                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-nts-vs16-x64.zip'; outerHTML = "<a href='$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x64.zip'>8.2 Non Thread Safe (NTS) x64</a>" }
-                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a href='$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-ts-vs16-x86.zip'>8.2 Thread Safe (TS) x86</a>" }
-                        @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_courierauth-1.4.0-8.2-nts-vs16-x86.zip'; outerHTML = "<a href='$script:PECL_WIN_EXT_DOWNLOAD_URL/courierauth/1.4.0/php_courierauth-1.4.0-8.2-nts-vs16-x86.zip'>8.2 Non Thread Safe (NTS) x86</a>" }
-                    )
-                }
-            }
-            $script:callCount = 0
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith {
-                $script:callCount++
-                if ($script:callCount -eq 1) { return '0' }
-                return ''
-            }
-            $code = Install-Extension -iniPath $script:testIniPath -extName 'courierauth'
-            $code | Should -Be -1
-            Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*You chose the wrong index*' }
-        }
-    }
-
-    It "Handles thrown exception from download" {
-        $script:MockFileSystem.DownloadFails = $true
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-    }
-
-    It "Handles thrown exception from config" {
-        $script:MockFileSystem.DownloadFails = $false
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Add-MissingPHPExtensionToIni { return -1 }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $true
-        $code | Should -Be -1
-    }
-
-    It "Displays multiple extension versions with prerelease sorting" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = $null; buildType = $null } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0/php_curl-1.5.0-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.5.0'; compiler = 'vs16' }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0rc1/php_curl-1.5.0rc1-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.5.0rc1'; compiler = 'vs16' }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0beta1/php_curl-1.5.0beta1-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.5.0beta1'; compiler = 'vs16' }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.5.0alpha1/php_curl-1.5.0alpha1-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.5.0alpha1'; compiler = 'vs16' }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; compiler = 'vs16' }
-                )
-            }
-        }
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
-        Mock Add-MissingPHPExtensionToIni { return 0 }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $true
-        $code | Should -Be 0
-    }
-
-    It "Sorts extensions with x86_64 architecture correctly" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = $null; buildType = $null } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; compiler = 'vs16' }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86_64.zip"; arch = 'x86_64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; compiler = 'vs16' }
-                )
-            }
-        }
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
-        Mock Add-MissingPHPExtensionToIni { return 0 }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $true
-        $code | Should -Be 0
-    }
-
-    It "Sorts extensions with unknown architecture correctly" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = $null; buildType = $null } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-arm64.zip"; arch = 'arm64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; compiler = 'vs16' }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; compiler = 'vs16' }
-                )
-            }
-        }
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
-        Mock Add-MissingPHPExtensionToIni { return 0 }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $true
-        $code | Should -Be 0
-    }
-
-    It "Returns -1 when no dll file matches the pattern" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
-                )
-            }
-        }
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Get-ChildItemWrapper {
-            # Return a file that doesn't match the expected pattern
-            return @( @{ Name = 'random_file.dll'; FullName = "$script:TEST_DRIVE\extracted\random_file.dll" } )
-        }
-        Mock Test-FileExists { return $false }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-    }
-
-    It "Prompts user when file already exists and user cancels" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
-                )
-            }
-        }
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Get-ChildItemWrapper {
-            return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" } )
-        }
-        Mock Test-FileExists -ParameterFilter { $path -match '\.dll$' } { return $true }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { return 'n' }
-        Mock Remove-ItemWrapper { }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-    }
-
-    It "Prompts user when file already exists and user overwrites" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
-                )
-            }
-        }
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Get-ChildItemWrapper {
-            return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" } )
-        }
-        Mock Test-FileExists -ParameterFilter { $path -match '\.dll$' } { return $true }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nphp_curl.dll already exists. Would you like to overwrite it? (y/n)" } -MockWith { return 'Y' }
-        Mock Move-ItemWrapper { }
-        Mock Remove-ItemWrapper { }
-        Mock Add-MissingPHPExtensionToIni { return 0 }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be 0
-    }
-
-    It "Returns -1 when adding extension to ini fails" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
-                )
-            }
-        }
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Get-ChildItemWrapper {
-            return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" } )
-        }
-        Mock Test-FileExists { return $false }
-        Mock Move-ItemWrapper { }
-        Mock Remove-ItemWrapper { }
-        Mock Add-MissingPHPExtensionToIni { return -1 }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-    }
-
-    It "Skips overwrite prompt and installs when skipConfirmation is true and file exists" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts'; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
-                )
-            }
-        }
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Get-ChildItemWrapper {
-            return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" } )
-        }
-        Mock Test-FileExists { return $true }
-        Mock Move-ItemWrapper { }
-        Mock Remove-ItemWrapper { }
-        Mock Add-MissingPHPExtensionToIni { return 0 }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $true
-
-        $code | Should -Be 0
-        Should -Invoke Read-HostWrapper -Exactly 0 -ParameterFilter {
-            $prompt -like '*already exists*'
-        }
-    }
-
-    It "Prompts overwrite when skipConfirmation is false and file exists and user cancels" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts'; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
-                )
-            }
-        }
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Get-ChildItemWrapper {
-            return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" } )
-        }
-        Mock Test-FileExists { return $true }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -like '*already exists*' } -MockWith { return 'n' }
-        Mock Remove-ItemWrapper { }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $false
-
-        $code | Should -Be -1
-        Should -Invoke Read-HostWrapper -Exactly 1 -ParameterFilter {
-            $prompt -like '*already exists*'
-        }
-    }
-
-    It "Prompts overwrite when skipConfirmation is false and file exists and user confirms" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = 'x86'; buildType = 'ts' } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts'; version = '8.2'; extVersion = '1.4.0'; fileName = 'php_curl-1.4.0-8.2-ts-vs16-x86.zip'; outerHTML = "<a>test</a>" }
-                )
-            }
-        }
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]10MB) }
-        Mock Convert-BytesToMegabytes { return 10 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
-        Mock Get-ChildItemWrapper {
-            return @( @{ Name = 'php_curl.dll'; FullName = "$script:TEST_DRIVE\extracted\php_curl.dll" } )
-        }
-        Mock Test-FileExists { return $true }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -like '*already exists*' } -MockWith { return 'y' }
-        Mock Move-ItemWrapper { }
-        Mock Remove-ItemWrapper { }
-        Mock Add-MissingPHPExtensionToIni { return 0 }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $false
-
-        $code | Should -Be 0
-        Should -Invoke Read-HostWrapper -Exactly 1 -ParameterFilter {
-            $prompt -like '*already exists*'
-        }
-    }
-
-    It "Returns -1 when user does not choose a dll extension version to install" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0" } }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'curl'
-                source  = 'pecl.php.net'
-                data    = @(
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-ts-vs16-x86.zip"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.1/php_curl-1.4.1-8.2-nts-vs16-x86.zip"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
-                    @{ href = "$script:PECL_WIN_EXT_DOWNLOAD_URL/curl/1.4.0/php_curl-1.4.0-8.2-nts-vs16-x64.zip"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                )
-            }
-        }
-        Mock Read-HostWrapper { }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-        Should -Invoke Write-Gray -ParameterFilter { $message -like '*Installation cancelled*' }
-    }
-
-    It "Handles exception gracefully" {
-        Mock Get-CurrentPHPVersion { throw 'Error' }
-        Mock Add-LogEntry { return 0 }
-
-        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
-        $code | Should -Be -1
-        Should -Invoke Add-LogEntry
     }
 
     It "Returns -1 when no source supports the extension" {
@@ -1064,54 +499,180 @@ Describe "Install-Extension" {
         Should -Invoke Show-Error -ParameterFilter { $message -like "*Source 'xdebug.org' does not support extension 'curl'*" }
     }
 
+    It "Returns -1 when ResolveLinks returns null" {
+        $script:ResolveLinksResult = $null
+
+        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*No packages found for curl*' }
+    }
+
+    It "Returns -1 when ResolveLinks returns an empty list" {
+        $script:ResolveLinksResult = @{ extName = 'nonexistent_ext'; source = 'pecl.php.net'; data = @() }
+
+        $code = Install-Extension -iniPath $script:testIniPath -extName 'nonexistent_ext'
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*No packages found for nonexistent_ext*' }
+    }
+
+    It "Returns -1 when no package matches installed php arch & build type" {
+        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0"; arch = 'x64'; buildType = 'ts' } }
+        Set-TestPackages -Packages @(
+            (New-TestPackage -arch 'x86' -buildType 'ts'),
+            (New-TestPackage -arch 'x86' -buildType 'nts'),
+            (New-TestPackage -arch 'x64' -buildType 'nts')
+        )
+
+        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+            $message -like "*No packages found for 'curl' matching current PHP architecture/build type*"
+        }
+    }
+
+    It "Returns -1 when user does not choose a version (empty answer)" {
+        Mock Read-HostWrapper { }
+        Set-TestPackages -Packages @((New-TestPackage -arch 'x86'), (New-TestPackage -arch 'x64'))
+
+        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
+
+        $code | Should -Be -1
+        Should -Invoke Write-Gray -ParameterFilter { $message -like '*Installation cancelled*' }
+    }
+
+    It "Returns -1 when user picks an invalid package index" {
+        $script:callCount = 0
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith {
+            $script:callCount++
+            if ($script:callCount -eq 1) { return '0' }
+            return ''
+        }
+        Set-TestPackages -Packages @((New-TestPackage -arch 'x86'), (New-TestPackage -arch 'x64'))
+
+        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*You chose the wrong index*' }
+    }
+
+    It "Returns -1 when download handler returns nothing" {
+        Set-TestPackages -Packages @((New-TestPackage))
+        $script:DownloadResult = $null
+
+        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*Failed to download curl*' }
+    }
+
+    It "Returns -1 when config handler fails" {
+        Set-TestPackages -Packages @((New-TestPackage))
+        $script:ConfigCode = -1
+
+        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*Failed to apply configuration for curl*' }
+    }
+
+    It "Installs extension successfully" {
+        Set-TestPackages -Packages @((New-TestPackage))
+
+        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
+
+        $code | Should -Be 0
+        Should -Invoke Show-Success -Times 1 -ParameterFilter { $message -like '*curl installed successfully*' }
+    }
+
+    It "Passes extName to Download only for pecl.php.net" {
+        Set-TestPackages -Packages @((New-TestPackage))
+
+        $null = Install-Extension -iniPath $script:testIniPath -extName 'curl'
+
+        $script:DownloadArgs.extName | Should -Be 'curl'
+        $script:DownloadArgs.phpPath | Should -Be (Split-Path -Path $script:testIniPath -Parent)
+    }
+
+    It "Forwards skipConfirmation = true to Download" {
+        Set-TestPackages -Packages @((New-TestPackage))
+
+        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $true
+
+        $code | Should -Be 0
+        $script:DownloadArgs.skipConfirmation | Should -BeTrue
+    }
+
+    It "Forwards skipConfirmation = false to Download by default" {
+        Set-TestPackages -Packages @((New-TestPackage))
+
+        $null = Install-Extension -iniPath $script:testIniPath -extName 'curl'
+
+        $script:DownloadArgs.skipConfirmation | Should -BeFalse
+    }
+
+    It "Lists pre-release versions without failing" {
+        Set-TestPackages -Packages @(
+            (New-TestPackage -arch 'x64' -extVersion '1.5.0'),
+            (New-TestPackage -arch 'x64' -extVersion '1.5.0rc1'),
+            (New-TestPackage -arch 'x64' -extVersion '1.5.0beta1'),
+            (New-TestPackage -arch 'x64' -extVersion '1.5.0alpha1'),
+            (New-TestPackage -arch 'x64' -extVersion '1.4.0')
+        )
+
+        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $true
+
+        $code | Should -Be 0
+    }
+
+    It "Handles x86_64 and arm64 architectures" {
+        Set-TestPackages -Packages @(
+            (New-TestPackage -arch 'x86'),
+            (New-TestPackage -arch 'x86_64'),
+            (New-TestPackage -arch 'arm64')
+        )
+
+        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl' -skipConfirmation $true
+
+        $code | Should -Be 0
+    }
+
     It "Shows the more info url" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.2.0'; path = "$script:TEST_DRIVE\php\8.2.0" } }
-        Mock Get-SourceHandler {
-            param ($sourceUrl)
-            return @{
-                ResolveLinks = {
-                    return @{
-                        extName = 'xdebug'
-                        source = 'xdebug.org'
-                        data = @(
-                            @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-1.4.1-8.2-ts-vs16-x86.dll"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                            @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-1.4.1-8.2-nts-vs16-x86.dll"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
-                            @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-1.4.0-8.2-nts-vs16-x64.dll"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                        )
-                    }
-                }
-                GetPackages = {
-                    return @(
-                        @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-1.4.1-8.2-ts-vs16-x86.dll"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                        @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-1.4.1-8.2-nts-vs16-x86.dll"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
-                        @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-1.4.0-8.2-nts-vs16-x64.dll"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                    )
-                }
-                Download = { return @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" } }
-                MoreInfoUrl = $script:XDEBUG_HISTORICAL_URL
-            }
-        }
-        Mock Get-ExtensionConfigHandler {
-            param ($extName)
-            return { return 0 }
-        }
-        Mock Get-ExtensionPackages {
-            return @{
-                extName = 'xdebug'
-                source  = 'xdebug.org'
-                data    = @(
-                    @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-1.4.1-8.2-ts-vs16-x86.dll"; arch = 'x86'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                    @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-1.4.1-8.2-nts-vs16-x86.dll"; arch = 'x86'; buildType = 'nts' ; version = '8.2'; extVersion = '1.4.0' }
-                    @{ href = "$script:XDEBUG_BASE_URL/download/php_xdebug-1.4.0-8.2-nts-vs16-x64.dll"; arch = 'x64'; buildType = 'ts' ; version = '8.2'; extVersion = '1.4.0' }
-                )
-            }
-        }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '1' }
+        $script:DownloadResult = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
+        Set-TestPackages -ExtName 'xdebug' -Source 'xdebug.org' -Packages @(
+            (New-TestPackage -extName 'xdebug' -arch 'x86' -buildType 'ts'),
+            (New-TestPackage -extName 'xdebug' -arch 'x86' -buildType 'nts')
+        )
 
         $code = Install-Extension -iniPath $script:testIniPath -extName 'xdebug'
 
         $code | Should -Be 0
-        Should -Invoke Show-Info -ParameterFilter { $message -like "*This is a partial list. For a complete list, visit: $script:XDEBUG_HISTORICAL_URL*" } -Times 1
+        Should -Invoke Show-Info -Times 1 -ParameterFilter {
+            $message -like '*This is a partial list. For a complete list, visit: https://mock/xdebug-historical*'
+        }
+    }
+
+    It "Shows the scriptblock more info url for pecl" {
+        Set-TestPackages -Packages @((New-TestPackage -arch 'x86'), (New-TestPackage -arch 'x64'))
+
+        $null = Install-Extension -iniPath $script:testIniPath -extName 'curl'
+
+        Should -Invoke Show-Info -Times 1 -ParameterFilter {
+            $message -like '*visit: https://mock/pecl/curl*'
+        }
+    }
+
+    It "Handles exception gracefully" {
+        Set-TestPackages -Packages @((New-TestPackage))
+        Mock Get-CurrentPHPVersion { throw 'Error' }
+
+        $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
+
+        $code | Should -Be -1
+        Should -Invoke Add-LogEntry
     }
 }
 

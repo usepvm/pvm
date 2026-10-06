@@ -206,8 +206,11 @@ function Expand-Zip {
         if ($deleteZipAfter) {
             Remove-ItemWrapper -path $zipPath
         }
+
+        return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to expand zip file from $zipPath"; exception = $_ }
+        return -1
     }
 }
 
@@ -246,6 +249,51 @@ function Test-FreeDiskSpaceInsufficient {
     return -not (Test-FreeDiskSpaceSufficient -path $path -minimumMegabytes $minimumMegabytes)
 }
 
+function Test-DownloadPrerequisites {
+    param ($url, $minimumFreeSpaceMB)
+
+    # Keep minimum space check as fallback for extraction space
+    if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.php -minimumMegabytes $minimumFreeSpaceMB) {
+        return @{ temporaryDirectory = $null; message = "Insufficient disk space for installation. At least $minimumFreeSpaceMB MB is required."; color = 'DarkYellow' }
+    }
+
+    # Get remote file size and check disk space
+    $remoteFileSize = Get-RemoteFileSize -uri $url
+    if ($remoteFileSize -le 0) {
+        return @{ temporaryDirectory = $null; message = "Failed to get remote file size or invalid size. Cannot proceed with download."; color = 'DarkYellow' }
+    }
+
+    $temporaryDirectory = Get-TemporaryDirectory -root $Global:PVMConfig.paths.directories.temp
+    $created = New-Directory -path $temporaryDirectory
+    if ($created -ne 0) {
+        return @{ temporaryDirectory = $null; message = "Failed to create temporary directory '$temporaryDirectory'."; color = 'DarkYellow' }
+    }
+
+    $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
+
+    if (Test-RemoteFileDiskSpaceInsufficient -uri $url -downloadPath $temporaryDirectory) {
+        return @{ temporaryDirectory = $null; message = "Insufficient disk space for download. Required: $sizeMB MB"; color = 'DarkYellow' }
+    }
+
+    return @{ temporaryDirectory = $temporaryDirectory; sizeMB = $sizeMB }
+}
+
+function Get-RemoteFile {
+    param ($url, $destinationPath)
+
+    return Show-SpinnerWhileJob -argumentList @($url, $destinationPath) -scriptBlock {
+        param ($url, $destinationPath)
+
+        try {
+            $null = Invoke-WebRequestWrapper -uri $url -outFile $destinationPath
+            return @{ pvmData = $destinationPath }
+        } catch {
+            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP from $url"; exception = $_ }
+            return @{ pvmData = $null }
+        }
+    } -rethrow $true
+}
+
 function Get-RemoteFileSize {
     param ($uri)
 
@@ -255,7 +303,13 @@ function Get-RemoteFileSize {
         }
 
         $uri = $uri.Trim()
-        $response = Invoke-WebRequestWrapper -uri $uri -method 'Head'
+        $response = Show-SpinnerWhileJob -argumentList @($uri) -scriptBlock {
+            param ($uri)
+
+            $response = Invoke-WebRequestWrapper -uri $uri -method 'Head'
+
+            return @{ pvmData = $response }
+        } -rethrow $true
 
         if ($null -eq $response -or $null -eq $response.Headers) {
             return -1
@@ -328,4 +382,106 @@ function Test-InvalidDrivePath {
     param ($path)
 
     return -not (Test-ValidDrivePath -path $path)
+}
+
+function Get-TemporaryDirectory {
+    param ($root)
+
+    if (Test-InvalidDrivePath -path $root) {
+        return $null
+    }
+
+    return "$root\temp_$([guid]::NewGuid().ToString('N'))"
+}
+
+function Get-SHA256HashFromFile {
+    param ($filePath)
+
+    $stream = $null
+    $sha256 = $null
+    try {
+        if (Test-FileNotExists -path $filePath) {
+            return $null
+        }
+
+        $stream = [System.IO.File]::OpenRead($filePath)
+        $sha256 = [System.Security.Cryptography.SHA256]::Create()
+        $hashBytes = $sha256.ComputeHash($stream)
+
+        return [System.BitConverter]::ToString($hashBytes).Replace('-', '').ToLower()
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to compute SHA256 hash for '$filePath'"; exception = $_ }
+        return $null
+    } finally {
+        if ($stream) { $stream.Close() }
+        if ($sha256) { $sha256.Dispose() }
+    }
+}
+
+function Get-SHA256HashesFromRemote {
+    param ($url)
+
+    try {
+        if ([string]::IsNullOrWhiteSpace($url)) {
+            return @{}
+        }
+
+        $url = $url.Trim()
+        $response = Show-SpinnerWhileJob -argumentList @($url) -scriptBlock {
+            param ($url)
+
+            $response = Invoke-WebRequestWrapper -uri $url
+
+            return @{ pvmData = $response }
+        } -rethrow $true
+
+        if ($null -eq $response -or $null -eq $response.Content) {
+            return @{}
+        }
+
+        $hashes = @{}
+        $lines = $response.Content -split "`n"
+
+        foreach ($line in $lines) {
+            if ([string]::IsNullOrWhiteSpace($line)) {
+                continue
+            }
+
+            if ($line -match '^([a-fA-F0-9]{64})\s+\*(.+)$') {
+                $hash = $matches[1].ToLower()
+                $fileName = $matches[2]
+                $hashes[$fileName] = $hash
+            }
+        }
+
+        return $hashes
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get SHA256 hashes from '$url'"; exception = $_ }
+        return @{}
+    }
+}
+
+function Test-SHA256HashValid {
+    param ($filePath, $expectedHash)
+
+    try {
+        if (Test-FileNotExists -path $filePath) {
+            return $false
+        }
+
+        if ([string]::IsNullOrWhiteSpace($expectedHash)) {
+            return $false
+        }
+
+        $actualHash = Get-SHA256HashFromFile -filePath $filePath
+
+        if ($null -eq $actualHash) {
+            return $false
+        }
+
+        return ($actualHash -eq $expectedHash.ToLower())
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to verify SHA256 hash for '$filePath'"; exception = $_ }
+        return $false
+    }
 }

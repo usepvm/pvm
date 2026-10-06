@@ -131,13 +131,13 @@ Describe "Get-ExtensionHandlers" {
             $result.data.Count | Should -Be 2
             $result.extName | Should -Be 'xdebug'
         }
-        
+
         It "Returns null when download fails" {
             Mock Get-XDebugFromUrl { return $null }
             Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp\php"; sizeMB = 10 } }
             Mock Get-RemoteFile { return $null }
             Mock Remove-ItemWrapper { }
-            
+
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
             $handler = $sourceHandlers['xdebug.org']
 
@@ -148,7 +148,7 @@ Describe "Get-ExtensionHandlers" {
 
             $null = & $handler.GetPackages -version '8.5'
             $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $false
-            
+
             $result | Should -BeNullOrEmpty
             Should -Invoke Get-XDebugFromUrl -Times 1
             Should -Invoke Get-RemoteFile -Times 1
@@ -221,7 +221,7 @@ Describe "Get-ExtensionHandlers" {
             $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
             $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
             Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $temporaryDirectory; sizeMB = 10 } }
-            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }            
+            Mock Get-RemoteFile { return "$temporaryDirectory\$fileName" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Move-ItemWrapper { }
 
@@ -389,13 +389,13 @@ Describe "Get-ExtensionHandlers" {
 
             $result | Should -BeNullOrEmpty
         }
-        
+
         It "Returns null when download fails" {
             Mock Get-PackagesFromSourceLinks { return $null }
             Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp\php"; sizeMB = 10 } }
             Mock Get-RemoteFile { return $null }
             Mock Remove-ItemWrapper { }
-            
+
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
             $handler = $sourceHandlers['pecl.php.net']
 
@@ -421,7 +421,7 @@ Describe "Get-ExtensionHandlers" {
             Should -Invoke Get-RemoteFile -Times 1
             Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to download extension xdebug*' } -Times 1
         }
-        
+
         It "Returns null when extraction fails" {
             Mock Get-PackagesFromSourceLinks { return $null }
             $temporaryDirectory = "$script:TEST_DRIVE\temp\php"
@@ -453,7 +453,6 @@ Describe "Get-ExtensionHandlers" {
 
             $result | Should -BeNullOrEmpty
             Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to extract extension xdebug*' } -Times 1
-            
         }
 
         It "Returns null when user cancels" {

@@ -9,7 +9,7 @@ BeforeAll {
 
     $null = New-Directory -path $script:phpPath
     $null = New-Directory -path $script:extDirectory
-    
+
     function Reset-IniContent {
         @(
             'memory_limit = 128M'
@@ -98,29 +98,53 @@ Describe "ConvertTo-ExtensionId" {
 }
 
 Describe "Backup-IniFile" {
-    It "Creates a backup when none exists" {
+    BeforeEach {
+        Mock Clear-IniBackups { return 0 }
+        Reset-IniContent
         Remove-ItemWrapper -path $script:testBackupPath
+    }
+
+    It "Creates a backup when none exists" {
         $result = Backup-IniFile -iniPath $script:testIniPath
+
         $result | Should -Be 0
         Test-Path $script:testBackupPath | Should -Be $true
-        (Get-ContentWrapper -path $script:testBackupPath) | Should -Be (Get-ContentWrapper -path $script:testIniPath)
+        $backupFile = @(Get-ChildItemWrapper -path $script:testBackupPath -filter 'php.ini_*.bak' -file)
+        (Get-ContentWrapper -path $backupFile) | Should -Be (Get-ContentWrapper -path $script:testIniPath)
     }
 
     It "Does not overwrite existing backup" {
         $originalContent = Get-ContentWrapper -path $script:testIniPath
+
         $result = Backup-IniFile -iniPath $script:testIniPath
+
         $result | Should -Be 0
         $newContent = 'modified content'
         $newContent | Set-ContentWrapper -path $script:testIniPath
+
         $result = Backup-IniFile -iniPath $script:testIniPath
+
         $result | Should -Be 0
-        (Get-ContentWrapper -path $script:testBackupPath) | Should -Be $originalContent
+        $backupFile = @(Get-ChildItemWrapper -path $script:testBackupPath -filter 'php.ini_*.bak' -file)
+        (Get-ContentWrapper -path $backupFile) | Should -Be $originalContent
+    }
+
+    It "Returns -1 when backup directory creation fails" {
+        Mock New-Directory { return -1 }
+
+        $result = Backup-IniFile -iniPath $script:testIniPath
+
+        $result | Should -Be -1
     }
 
     It "Returns -1 on error" {
+        Mock Add-LogEntry { return 0 }
         Mock Copy-ItemWrapper { throw 'Access denied' }
+
         $result = Backup-IniFile -iniPath 'invalidpath'
+
         $result | Should -Be -1
+        Should -Invoke Add-LogEntry -Times 1
     }
 }
 

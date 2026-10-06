@@ -15,7 +15,16 @@ function Backup-IniFile {
     param ($iniPath)
 
     try {
-        $backup = "$iniPath.bak"
+        $phpDirectory = Split-Path -Path $iniPath -Parent
+        $iniBackupPath = "$phpDirectory\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
+
+        $created = New-Directory -path $iniBackupPath
+        if ($created -ne 0) {
+            return -1
+        }
+
+        $now = Get-Date -Format 'yyyy-MM-dd_HH-mm'
+        $backup = "$iniBackupPath\php.ini_$($now).bak"
         if (Test-FileNotExists -path $backup) {
             Copy-ItemWrapper -path $iniPath -destination $backup
         }

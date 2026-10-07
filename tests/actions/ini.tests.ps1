@@ -44,6 +44,23 @@ BeforeAll {
         }
     }
 
+    Mock Get-PHPInfo { return 0 }
+    Mock Get-IniSetting { return 0 }
+    Mock Set-IniSetting { return 0 }
+    Mock Enable-IniExtension { return 0 }
+    Mock Disable-IniExtension { return 0 }
+    Mock Get-IniExtensionStatus { return 0 }
+    Mock Restore-IniBackup { return 0 }
+    Mock Show-PHPExtensionInfo { return 0 }
+    Mock Show-PHPExtensions { return 0 }
+    Mock Invoke-PhpIniBackup { return 0 }
+    Mock Invoke-PhpIniBackupCleanup { return 0 }
+    Mock Install-IniExtension { return 0 }
+    Mock Uninstall-Extension { return 0 }
+    Mock Get-ChildItemWrapper { return @() }
+    Mock Read-HostWrapper { return '256M' }
+    Mock Resolve-Alias { param ($alias) return $alias }
+
     $script:MockFileSystem = @{
         Directories   = @()
         Files         = @{}
@@ -76,8 +93,7 @@ BeforeAll {
 
 Describe "Invoke-IniAction" {
     BeforeEach {
-        Reset-IniContent
-        Remove-ItemWrapper -path $script:testBackupPath
+        Mock Test-FileNotExists { return $false }
     }
 
     Context "info action" {
@@ -91,7 +107,6 @@ Describe "Invoke-IniAction" {
     Context "extension info action" {
         It "Executes extension info action successfully" {
             Mock Test-FileNotExists { return $false }
-            Mock Show-PHPExtensionInfo { return 0 }
 
             $result = Invoke-IniAction -action 'ext' -params @('info', 'xdebug')
 
@@ -132,15 +147,12 @@ Describe "Invoke-IniAction" {
     Context "set action" {
         It "Sets single setting" {
             Mock Test-FileNotExists { return $false }
-            Mock Read-HostWrapper { return '256M' }
             $result = Invoke-IniAction -action 'set' -params @('memory_limit')
             $result | Should -Be 0
         }
 
         It "Sets multiple settings" {
             Mock Test-FileNotExists { return $false }
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '512M' }
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'max_execution_time'" } -MockWith { return '60' }
 
             $result = Invoke-IniAction -action 'set' -params @('memory_limit', 'max_execution_time')
             $result | Should -Be 0
@@ -156,27 +168,13 @@ Describe "Invoke-IniAction" {
     Context "enable action" {
         It "Enables single extension" {
             Mock Test-FileNotExists { return $false }
-            Mock Get-ChildItemWrapper {
-                return @( @{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$script:extDirectory\php_xdebug.dll" } )
-            }
+
             $result = Invoke-IniAction -action 'enable' -params @('xdebug')
             $result | Should -Be 0
         }
 
         It "Enables multiple extensions" {
             Mock Test-FileNotExists { return $false }
-            @(
-                ';extension=php_xdebug.dll'
-                ';extension=php_gd.dll'
-                'extension=php_curl.dll'
-            ) -join "`n" | Set-ContentWrapper -path "$script:phpVersionPath\php.ini"
-
-            $script:callCount = 0
-            Mock Get-ChildItemWrapper {
-                $script:callCount++
-                if ($script:callCount -eq 1) { return @(@{ BaseName = 'php_xdebug'; Name = 'php_xdebug.dll'; FullName = "$script:extDirectory\php_xdebug.dll" }) }
-                if ($script:callCount -eq 2) { return @(@{ BaseName = 'php_gd'; Name = 'php_gd.dll'; FullName = "$script:extDirectory\php_gd.dll" }) }
-            }
 
             $result = Invoke-IniAction -action 'enable' -params @('xdebug', 'gd')
             $result | Should -Be 0
@@ -192,9 +190,7 @@ Describe "Invoke-IniAction" {
     Context "disable action" {
         It "Disables single extension" {
             Mock Test-FileNotExists { return $false }
-            Mock Get-ChildItemWrapper {
-                return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$script:extDirectory\php_curl.dll" } )
-            }
+
             $result = Invoke-IniAction -action 'disable' -params @('curl')
             $result | Should -Be 0
         }
@@ -209,9 +205,7 @@ Describe "Invoke-IniAction" {
     Context "status action" {
         It "Checks single extension status" {
             Mock Test-FileNotExists { return $false }
-            Mock Get-ChildItemWrapper {
-                return @( @{ BaseName = 'php_curl'; Name = 'php_curl.dll'; FullName = "$script:extDirectory\php_curl.dll" } )
-            }
+
             $result = Invoke-IniAction -action 'status' -params @('curl')
             $result | Should -Be 0
         }
@@ -225,18 +219,57 @@ Describe "Invoke-IniAction" {
 
     Context "restore action" {
         It "Restores from backup" {
-            Mock Test-FileNotExists { return $false } -ParameterFilter { $path -eq "$script:phpVersionPath\php.ini" }
-            $script:callCount = 0
-            Mock Test-FileNotExists {
-                $script:callCount++
-                if ($script:callCount -eq 1) { return $true }
-                else { return $false }
-            } -ParameterFilter { $path -eq "$script:phpVersionPath\php.ini.bak" }
-
-            $null = Backup-IniFile -iniPath "$script:phpVersionPath\php.ini"
+            Mock Test-FileNotExists { return $false }
 
             $result = Invoke-IniAction -action 'restore' -params @()
             $result | Should -Be 0
+            Should -Invoke Restore-IniBackup -Times 1 -ParameterFilter {
+                $iniPath -eq "$script:phpVersionPath\php.ini"
+            }
+        }
+    }
+
+    Context "backup action" {
+        It "Creates backup successfully" {
+            Mock Test-FileNotExists { return $false }
+            Mock Invoke-PhpIniBackup { return 0 }
+
+            $result = Invoke-IniAction -action 'backup' -params @()
+
+            $result | Should -Be 0
+            Should -Invoke Invoke-PhpIniBackup -Times 1 -ParameterFilter {
+                $iniPath -eq "$script:phpVersionPath\php.ini"
+            }
+        }
+
+        It "Cleans up old backups with --clean flag" {
+            Mock Test-FileNotExists { return $false }
+            Mock Invoke-PhpIniBackupCleanup { return 0 }
+
+            $result = Invoke-IniAction -action 'backup' -params @('--clean')
+
+            $result | Should -Be 0
+            Should -Invoke Invoke-PhpIniBackupCleanup -Times 1 -ParameterFilter {
+                $iniBackupPath -eq "$script:phpVersionPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
+            }
+        }
+
+        It "Returns -1 when backup fails" {
+            Mock Test-FileNotExists { return $false }
+            Mock Invoke-PhpIniBackup { return -1 }
+
+            $result = Invoke-IniAction -action 'backup' -params @()
+
+            $result | Should -Be -1
+        }
+
+        It "Returns -1 when cleanup fails" {
+            Mock Test-FileNotExists { return $false }
+            Mock Invoke-PhpIniBackupCleanup { return -1 }
+
+            $result = Invoke-IniAction -action 'backup' -params @('--clean')
+
+            $result | Should -Be -1
         }
     }
 
@@ -286,7 +319,6 @@ Describe "Invoke-IniAction" {
             Mock Expand-Zip { }
             Mock Remove-ItemWrapper { }
             Mock Move-ItemWrapper { }
-            Mock Install-IniExtension { return 0 }
         }
 
         It "Installs extension" {
@@ -331,7 +363,6 @@ Describe "Invoke-IniAction" {
     Context "remove action" {
         It "Uninstalls extension" {
             Mock Test-FileNotExists { return $false }
-            Mock Uninstall-Extension { return 0 }
 
             $result = Invoke-IniAction -action 'remove' -params @('curl', 'xdebug')
 
@@ -347,7 +378,6 @@ Describe "Invoke-IniAction" {
 
         It "Requires at least one parameter" {
             Mock Test-FileNotExists { return $false }
-            Mock Uninstall-Extension { return 0 }
 
             $result = Invoke-IniAction -action 'remove' -params @()
 
@@ -358,7 +388,6 @@ Describe "Invoke-IniAction" {
 
         It "Uninstalls extension with skip confirmation" {
             Mock Test-FileNotExists { return $false }
-            Mock Uninstall-Extension { return 0 }
 
             $result = Invoke-IniAction -action 'remove' -params @('xdebug', 'curl', '-y')
 
@@ -373,18 +402,7 @@ Describe "Invoke-IniAction" {
     Context "ext action" {
         It "Lists extensions" {
             Mock Test-FileNotExists { return $false }
-            Mock Get-MatchingPHPExtensionsStatus {
-                return @(@{
-                        fullPath   = "$script:extDirectory\pdo_mysql.dll"
-                        fileName   = 'pdo_mysql.dll'
-                        name       = 'pdo_mysql'
-                        source     = 'ext,ini'
-                        line       = 'extension=pdo_mysql.dll'
-                        lineNumber = 4
-                        status     = 'Disabled'
-                        color      = 'DarkYellow'
-                    })
-            }
+
             $result = Invoke-IniAction -action 'ext' -params @('--search=sql')
             $result | Should -Be 0
         }
@@ -477,7 +495,7 @@ Describe "Invoke-IniAction" {
         It "Handles invalid action" {
             Mock Test-FileNotExists { return $false }
             $result = Invoke-IniAction -action 'invalid' -params @()
-            $result | Should -Be 0
+            $result | Should -Be -1
         }
 
         It "Handles missing PHP current version" {
@@ -487,7 +505,7 @@ Describe "Invoke-IniAction" {
         }
 
         It "Handles missing php.ini file" {
-            Remove-ItemWrapper -path "$script:phpVersionPath\php.ini"
+            Mock Test-FileNotExists { return $true } -ParameterFilter { $path -eq "$script:phpVersionPath\php.ini" }
             $result = Invoke-IniAction -action 'info' -params @()
             $result | Should -Be -1
         }

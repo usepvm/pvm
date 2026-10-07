@@ -4,53 +4,170 @@ BeforeAll {
 
     $script:phpPath = "$script:TEST_DRIVE\php"
     $script:testIniPath = "$script:phpPath\php.ini"
-    $script:extDirectory = "$script:phpPath\ext"
     $script:testBackupPath = "$script:phpPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
 
     Mock Show-Error { }
     Mock Show-Success { }
-
-    function Reset-IniContent {
-        @(
-            'memory_limit = 128M'
-            ';extension=php_xdebug.dll'
-            'extension=php_curl.dll'
-            'zend_extension=php_opcache.dll'
-            'display_errors = On'
-            'max_execution_time = 30'
-            ';upload_max_filesize = 2M'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+    Mock Show-Warning { }
+    Mock Show-Info { }
+    Mock Show-Message { }
+    Mock Write-Gray { }
+    Mock Add-LogEntry { return 0 }
+    Mock Format-NiceTimestamp {
+        return @{
+            Date = '01 January'
+            Time = '12:00:00'
+            Relative = 'just now'
+            DateTime = Get-Date
+        }
     }
-
-    Reset-IniContent
 }
 
 Describe "Restore-IniBackup" {
-    It "Creates backup and restores successfully" {
-        Reset-IniContent
-        # Create backup first
-        $null = Backup-IniFile -iniPath $script:testIniPath
-
-        # Modify original
-        'modified content' | Set-ContentWrapper -path $script:testIniPath
-        $code = Restore-IniBackup -iniPath $script:testIniPath
-        $code | Should -Be 0
-        (Get-ContentWrapper -path $script:testIniPath) | Should -Not -Be 'modified content'
+    BeforeEach {
+        Mock Test-DirectoryNotExists { return $false }
+        Mock Get-ChildItemWrapper {
+            return @(
+                [PSCustomObject]@{
+                    Name = 'php.ini_2026-01-01_12-00.bak'
+                    FullName = "$script:testBackupPath\php.ini_2026-01-01_12-00.bak"
+                    CreationTime = Get-Date
+                    Length = 1024
+                }
+            )
+        }
+        Mock Read-HostWrapper { return '0' }
+        Mock Copy-ItemWrapper { }
     }
 
-    It "Fails when backup doesn't exist" {
-        Remove-ItemWrapper -path $script:testBackupPath
-        $code = Restore-IniBackup -iniPath $script:testIniPath
-        $code | Should -Be -1
+    It "Returns 0 when restore succeeds" {
+        $result = Restore-IniBackup -iniPath $script:testIniPath
+
+        $result | Should -Be 0
+        Should -Invoke Show-Info -Times 1
+        Should -Invoke Show-Message -Times 1
+        Should -Invoke Write-Gray -Times 1
+        Should -Invoke Copy-ItemWrapper -Times 1
+        Should -Invoke Show-Success -Times 1
     }
 
-    It "Returns -1 on error" {
-        Mock Add-LogEntry { return 0 }
-        Mock Test-FileNotExists { return $false }
+    It "Returns -1 when backup directory does not exist" {
+        Mock Test-DirectoryNotExists { return $true }
+
+        $result = Restore-IniBackup -iniPath $script:testIniPath
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Times 1
+        Should -Invoke Get-ChildItemWrapper -Times 0
+    }
+
+    It "Returns -1 when no backup files found" {
+        Mock Get-ChildItemWrapper { return @() }
+
+        $result = Restore-IniBackup -iniPath $script:testIniPath
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Times 1
+        Should -Invoke Copy-ItemWrapper -Times 0
+    }
+
+    It "Returns -1 when backup files is null" {
+        Mock Get-ChildItemWrapper { return $null }
+
+        $result = Restore-IniBackup -iniPath $script:testIniPath
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -Times 1
+    }
+
+    It "Returns -1 when user enters invalid number" {
+        Mock Read-HostWrapper { return 'invalid' }
+
+        $result = Restore-IniBackup -iniPath $script:testIniPath
+
+        $result | Should -Be -1
+        Should -Invoke Show-Warning -Times 1
+        Should -Invoke Copy-ItemWrapper -Times 0
+    }
+
+    It "Returns -1 when user enters number out of range" {
+        Mock Read-HostWrapper { return '99' }
+
+        $result = Restore-IniBackup -iniPath $script:testIniPath
+
+        $result | Should -Be -1
+        Should -Invoke Show-Warning -Times 1
+        Should -Invoke Copy-ItemWrapper -Times 0
+    }
+
+    It "Returns -1 when user enters negative number" {
+        Mock Read-HostWrapper { return '-1' }
+
+        $result = Restore-IniBackup -iniPath $script:testIniPath
+
+        $result | Should -Be -1
+        Should -Invoke Show-Warning -Times 1
+        Should -Invoke Copy-ItemWrapper -Times 0
+    }
+
+    It "Returns -1 when Copy-ItemWrapper throws" {
         Mock Copy-ItemWrapper { throw 'Access denied' }
-        $null = Backup-IniFile -iniPath $script:testIniPath
-        $code = Restore-IniBackup -iniPath $script:testIniPath
-        $code | Should -Be -1
+
+        $result = Restore-IniBackup -iniPath $script:testIniPath
+
+        $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
+        Should -Invoke Show-Error -Times 1
+    }
+
+    It "Handles multiple backup files" {
+        Mock Get-ChildItemWrapper {
+            return @(
+                [PSCustomObject]@{
+                    Name = 'php.ini_2026-01-01_12-00.bak'
+                    FullName = "$script:testBackupPath\php.ini_2026-01-01_12-00.bak"
+                    CreationTime = Get-Date
+                    Length = 1024
+                }
+                [PSCustomObject]@{
+                    Name = 'php.ini_2026-01-01_11-00.bak'
+                    FullName = "$script:testBackupPath\php.ini_2026-01-01_11-00.bak"
+                    CreationTime = (Get-Date).AddHours(-1)
+                    Length = 2048
+                }
+            )
+        }
+
+        $result = Restore-IniBackup -iniPath $script:testIniPath
+
+        $result | Should -Be 0
+        Should -Invoke Show-Message -Times 2
+    }
+
+    It "Selects correct backup based on user choice" {
+        Mock Get-ChildItemWrapper {
+            return @(
+                [PSCustomObject]@{
+                    Name = 'php.ini_2026-01-01_12-00.bak'
+                    FullName = "$script:testBackupPath\php.ini_2026-01-01_12-00.bak"
+                    CreationTime = Get-Date
+                    Length = 1024
+                }
+                [PSCustomObject]@{
+                    Name = 'php.ini_2026-01-01_11-00.bak'
+                    FullName = "$script:testBackupPath\php.ini_2026-01-01_11-00.bak"
+                    CreationTime = (Get-Date).AddHours(-1)
+                    Length = 2048
+                }
+            )
+        }
+        Mock Read-HostWrapper { return '1' }
+
+        $result = Restore-IniBackup -iniPath $script:testIniPath
+
+        $result | Should -Be 0
+        Should -Invoke Copy-ItemWrapper -ParameterFilter {
+            $path -eq "$script:testBackupPath\php.ini_2026-01-01_11-00.bak"
+        }
     }
 }

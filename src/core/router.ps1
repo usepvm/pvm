@@ -218,6 +218,7 @@ function Get-IniAction {
                 "pvm ini info --search=cache ................................. Lists php.ini settings and extensions with 'cache' in their name"
                 'pvm ini info extensions ..................................... Lists php.ini extensions only'
                 'pvm ini info settings ....................................... Lists php.ini settings only'
+                'pvm ini restore ............................................. Restores php.ini from backup (prompts to select which backup)'
                 'pvm ini add opcache ......................................... Installs the opcache extension'
                 "pvm ini add sql ............................................. Shows matching extensions for 'sql' then installs the chosen one"
                 'pvm ini remove xdebug ....................................... Removes the xdebug extension'

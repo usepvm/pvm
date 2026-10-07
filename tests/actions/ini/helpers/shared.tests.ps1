@@ -101,7 +101,9 @@ Describe "Backup-IniFile" {
     BeforeEach {
         Mock Clear-IniBackups { return 0 }
         Reset-IniContent
-        Remove-ItemWrapper -path $script:testBackupPath
+        if (Test-Path $script:testBackupPath) {
+            Remove-ItemWrapper -path $script:testBackupPath
+        }
     }
 
     It "Creates a backup when none exists" {
@@ -110,7 +112,7 @@ Describe "Backup-IniFile" {
         $result | Should -Be 0
         Test-Path $script:testBackupPath | Should -Be $true
         $backupFile = @(Get-ChildItemWrapper -path $script:testBackupPath -filter 'php.ini_*.bak' -file)
-        (Get-ContentWrapper -path $backupFile) | Should -Be (Get-ContentWrapper -path $script:testIniPath)
+        (Get-ContentWrapper -path $backupFile.FullName) | Should -Be (Get-ContentWrapper -path $script:testIniPath)
     }
 
     It "Does not overwrite existing backup" {
@@ -126,7 +128,7 @@ Describe "Backup-IniFile" {
 
         $result | Should -Be 0
         $backupFile = @(Get-ChildItemWrapper -path $script:testBackupPath -filter 'php.ini_*.bak' -file)
-        (Get-ContentWrapper -path $backupFile) | Should -Be $originalContent
+        (Get-ContentWrapper -path $backupFile.FullName) | Should -Be $originalContent
     }
 
     It "Returns -1 when backup directory creation fails" {

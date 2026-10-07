@@ -4,7 +4,7 @@ BeforeAll {
 
     $script:phpPath = "$script:TEST_DRIVE\php"
     $script:testIniPath = "$script:phpPath\php.ini"
-    
+
     $null = New-Directory -path $script:phpPath
 
     Mock Show-Error { }

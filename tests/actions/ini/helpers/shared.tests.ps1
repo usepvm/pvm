@@ -106,6 +106,14 @@ Describe "Backup-IniFile" {
         }
     }
 
+    It "Returns -1 when ini path is not valid" {
+        Mock Test-FileNotExists { return $true } -ParameterFilter { $path -eq 'invalidpath' }
+
+        $result = Backup-IniFile -iniPath 'invalidpath'
+
+        $result | Should -Be -1
+    }
+
     It "Creates a backup when none exists" {
         $result = Backup-IniFile -iniPath $script:testIniPath
 

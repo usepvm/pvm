@@ -15,6 +15,10 @@ function Backup-IniFile {
     param ($iniPath)
 
     try {
+        if (Test-FileNotExists -path $iniPath) {
+            return -1
+        }
+
         $phpDirectory = Split-Path -Path $iniPath -Parent
         $iniBackupPath = "$phpDirectory\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
 

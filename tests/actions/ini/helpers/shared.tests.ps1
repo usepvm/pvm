@@ -2,9 +2,13 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:testIniPath = "$script:TEST_DRIVE\php.ini"
-    $script:extDirectory = "$script:TEST_DRIVE\ext"
-    $script:testBackupPath = "$script:testIniPath.bak"
+    $script:phpPath = "$script:TEST_DRIVE\php"
+    $script:testIniPath = "$script:phpPath\php.ini"
+    $script:extDirectory = "$script:phpPath\ext"
+    $script:testBackupPath = "$script:phpPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
+
+    $null = New-Directory -path $script:phpPath
+    $null = New-Directory -path $script:extDirectory
 
     function Reset-IniContent {
         @(
@@ -94,28 +98,153 @@ Describe "ConvertTo-ExtensionId" {
 }
 
 Describe "Backup-IniFile" {
+    BeforeEach {
+        Mock Clear-IniBackups { return 0 }
+        Reset-IniContent
+        if (Test-Path $script:testBackupPath) {
+            Remove-ItemWrapper -path $script:testBackupPath
+        }
+    }
+
     It "Creates a backup when none exists" {
-        Remove-ItemWrapper -path $script:testBackupPath
         $result = Backup-IniFile -iniPath $script:testIniPath
+
         $result | Should -Be 0
         Test-Path $script:testBackupPath | Should -Be $true
-        (Get-ContentWrapper -path $script:testBackupPath) | Should -Be (Get-ContentWrapper -path $script:testIniPath)
+        $backupFile = @(Get-ChildItemWrapper -path $script:testBackupPath -filter 'php.ini_*.bak' -file)
+        (Get-ContentWrapper -path $backupFile.FullName) | Should -Be (Get-ContentWrapper -path $script:testIniPath)
     }
 
     It "Does not overwrite existing backup" {
         $originalContent = Get-ContentWrapper -path $script:testIniPath
+
         $result = Backup-IniFile -iniPath $script:testIniPath
+
         $result | Should -Be 0
         $newContent = 'modified content'
         $newContent | Set-ContentWrapper -path $script:testIniPath
+
         $result = Backup-IniFile -iniPath $script:testIniPath
+
         $result | Should -Be 0
-        (Get-ContentWrapper -path $script:testBackupPath) | Should -Be $originalContent
+        $backupFile = @(Get-ChildItemWrapper -path $script:testBackupPath -filter 'php.ini_*.bak' -file)
+        (Get-ContentWrapper -path $backupFile.FullName) | Should -Be $originalContent
+    }
+
+    It "Returns -1 when backup directory creation fails" {
+        Mock New-Directory { return -1 }
+
+        $result = Backup-IniFile -iniPath $script:testIniPath
+
+        $result | Should -Be -1
     }
 
     It "Returns -1 on error" {
+        Mock Add-LogEntry { return 0 }
         Mock Copy-ItemWrapper { throw 'Access denied' }
+
         $result = Backup-IniFile -iniPath 'invalidpath'
+
+        $result | Should -Be -1
+        Should -Invoke Add-LogEntry -Times 1
+    }
+}
+
+Describe "Clear-IniBackups" {
+    BeforeEach {
+        Mock Add-LogEntry { return 0 }
+    }
+
+    It "Returns -1 when backup directory does not exist" {
+        Mock Test-DirectoryNotExists { return $true }
+
+        $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
+
+        $result | Should -Be -1
+    }
+
+    It "Returns -1 when no backup files exist" {
+        Mock Test-DirectoryNotExists { return $false }
+        Mock Get-ChildItemWrapper { return @() }
+
+        $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
+
+        $result | Should -Be -1
+    }
+
+    It "Returns 0 when backups are within keep count and max days" {
+        Mock Test-DirectoryNotExists { return $false }
+        Mock Get-ChildItemWrapper {
+            $now = Get-Date
+            return @(
+                [PSCustomObject]@{ FullName = 'backup1.bak'; CreationTime = $now.AddMinutes(-5) }
+                [PSCustomObject]@{ FullName = 'backup2.bak'; CreationTime = $now.AddMinutes(-10) }
+            )
+        }
+        Mock Remove-ItemWrapper { }
+
+        $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
+
+        $result | Should -Be 0
+        Should -Invoke Remove-ItemWrapper -Times 0
+    }
+
+    It "Deletes backups older than max days beyond keep count" {
+        Mock Test-DirectoryNotExists { return $false }
+        $now = Get-Date
+        Mock Get-ChildItemWrapper {
+            return @(
+                [PSCustomObject]@{ FullName = 'backup1.bak'; CreationTime = $now.AddMinutes(-5) }
+                [PSCustomObject]@{ FullName = 'backup2.bak'; CreationTime = $now.AddMinutes(-10) }
+                [PSCustomObject]@{ FullName = 'backup3.bak'; CreationTime = $now.AddDays(-35) }
+                [PSCustomObject]@{ FullName = 'backup4.bak'; CreationTime = $now.AddDays(-38) }
+                [PSCustomObject]@{ FullName = 'backup5.bak'; CreationTime = $now.AddDays(-40) }
+                [PSCustomObject]@{ FullName = 'backup6.bak'; CreationTime = $now.AddDays(-45) }
+            )
+        }
+        Mock Remove-ItemWrapper { }
+
+        $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
+
+        $result | Should -Be 0
+        Should -Invoke Remove-ItemWrapper -Times 2
+    }
+
+    It "Keeps backups within keep count even if old" {
+        Mock Test-DirectoryNotExists { return $false }
+        $now = Get-Date
+        Mock Get-ChildItemWrapper {
+            return @(
+                [PSCustomObject]@{ FullName = 'backup1.bak'; CreationTime = $now.AddDays(-35) }
+                [PSCustomObject]@{ FullName = 'backup2.bak'; CreationTime = $now.AddDays(-40) }
+                [PSCustomObject]@{ FullName = 'backup3.bak'; CreationTime = $now.AddDays(-45) }
+                [PSCustomObject]@{ FullName = 'backup4.bak'; CreationTime = $now.AddDays(-50) }
+            )
+        }
+        Mock Remove-ItemWrapper { }
+
+        $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
+
+        $result | Should -Be 0
+        Should -Invoke Remove-ItemWrapper -Times 0
+    }
+
+    It "Returns -1 on error and logs exception" {
+        Mock Test-DirectoryNotExists { return $false }
+        Mock Get-ChildItemWrapper { throw 'Access denied' }
+
+        $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
+
+        $result | Should -Be -1
+        Should -Invoke Add-LogEntry -Times 1
+    }
+
+    It "Handles null backup files gracefully" {
+        Mock Test-DirectoryNotExists { return $false }
+        Mock Get-ChildItemWrapper { return $null }
+
+        $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
+
         $result | Should -Be -1
     }
 }

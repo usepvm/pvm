@@ -2,7 +2,10 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:testIniPath = "$script:TEST_DRIVE\php.ini"
+    $script:phpPath = "$script:TEST_DRIVE\php"
+    $script:testIniPath = "$script:phpPath\php.ini"
+
+    $null = New-Directory -path $script:phpPath
 
     Mock Show-Error { }
     Mock Show-Message { }

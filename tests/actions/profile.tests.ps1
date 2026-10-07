@@ -20,6 +20,7 @@ BeforeAll {
     Mock Show-Value { }
     Mock Write-Color { }
     Mock Write-Gray { }
+    Mock Backup-IniFile { return 0 }
     Mock Get-CurrentPHPVersion {
         return @{
             version = '8.2.0'

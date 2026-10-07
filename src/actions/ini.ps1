@@ -78,6 +78,14 @@ function Invoke-IniAction {
 
                 $exitCode = Get-IniExtensionStatus -iniPath $iniPath -extNames @($params)
             }
+            'backup' {
+                if ($params -contains '--clean') {
+                    $iniBackupPath = "$($currentPhpVersion.path)\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
+                    $exitCode = Invoke-PhpIniBackupCleanup -iniBackupPath $iniBackupPath
+                } else {
+                    $exitCode = Invoke-PhpIniBackup -iniPath $iniPath
+                }
+            }
             'restore' {
                 $exitCode = Restore-IniBackup -iniPath $iniPath
             }
@@ -121,7 +129,8 @@ function Invoke-IniAction {
                 }
             }
             default {
-                Show-Error -message "`nUnknown action '$action' use one of following: 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'ext' or 'restore'."
+                Show-Error -message "`nUnknown action '$action' use one of following: 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'ext', 'backup' or 'restore'."
+                $exitCode = -1
             }
         }
 

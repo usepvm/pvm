@@ -152,6 +152,8 @@ function Get-EnvDefaults {
         ENABLE_UPDATE_CHECK                 = $true
         UPDATE_CHECK_INTERVAL_HOURS         = 24
         SOUNDS_DISABLED                     = $false
+        INI_BACKUP_MAX_DAYS                = 30
+        INI_BACKUP_KEEP_COUNT              = 4
     }
 }
 
@@ -230,10 +232,13 @@ function Get-Config {
             ENABLE_UPDATE_CHECK         = Get-EnvBool -value $envConfig['ENABLE_UPDATE_CHECK'] -default $envDefaults.ENABLE_UPDATE_CHECK
             UPDATE_CHECK_INTERVAL_HOURS = Get-EnvInt -value $envConfig['UPDATE_CHECK_INTERVAL_HOURS'] -default $envDefaults.UPDATE_CHECK_INTERVAL_HOURS
             SOUNDS_DISABLED             = Get-EnvBool -value $envConfig['SOUNDS_DISABLED'] -default $envDefaults.SOUNDS_DISABLED
+            INI_BACKUP_MAX_DAYS        = Get-EnvInt -value $envConfig['INI_BACKUP_MAX_DAYS'] -default $envDefaults.INI_BACKUP_MAX_DAYS
+            INI_BACKUP_KEEP_COUNT      = Get-EnvInt -value $envConfig['INI_BACKUP_KEEP_COUNT'] -default $envDefaults.INI_BACKUP_KEEP_COUNT
         }
 
         constants = [ordered]@{
             LOG_SEPARATOR = '=' * 100
+            INI_BACKUP_DIR_NAME = 'ini.backup'
         }
 
         defaults = @{

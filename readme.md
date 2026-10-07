@@ -80,6 +80,8 @@ The `.env` file lets you customize how PVM behaves. Key configuration options in
 - `ENABLE_UPDATE_CHECK` - Enable automatic update checks (default: true)
 - `UPDATE_CHECK_INTERVAL_HOURS` - Update check interval in hours (default: 24)
 - `DEFAULT_LOG_PAGE_SIZE` - Default page size for log display (default: 5)
+- `INI_BACKUP_MAX_DAYS` - Maximum age of php.ini backups in days before cleanup (default: 30)
+- `INI_BACKUP_KEEP_COUNT` - Number of recent php.ini backups to always keep (default: 4)
 
 See `.env.example` for the complete list of configuration options.
 
@@ -269,8 +271,12 @@ pvm ini ext available --search=<extension>
 pvm ini ext info <extension>
 # Example: pvm ini ext info sql
 
+# Create backup of php.ini
+pvm ini backup # Creates a timestamped backup of php.ini
+pvm ini backup --clean # Cleans up old backups (keeps last 4, removes backups older than 30 days)
+
 # Restore backup
-pvm ini restore # PVM automatically creates php.ini backups before modifying settings or extensions.
+pvm ini restore # PVM automatically creates php.ini backups before modifying settings or extensions. Prompts to select which backup to restore.
 
 # Display information about the current PHP (version, path, extensions, settings)
 pvm ini info

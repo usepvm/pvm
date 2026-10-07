@@ -143,7 +143,7 @@ Describe "Backup-IniFile" {
         Mock Add-LogEntry { return 0 }
         Mock Copy-ItemWrapper { throw 'Access denied' }
 
-        $result = Backup-IniFile -iniPath 'invalidpath'
+        $result = Backup-IniFile -iniPath $script:testIniPath
 
         $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1

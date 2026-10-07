@@ -1,14 +1,16 @@
 ﻿BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
+
     $script:certDirectory = $Global:PVMConfig.paths.directories.cert
-    $script:phpDirectory = "$script:TEST_DRIVE\php"
-    $script:phpIniPath = "$script:phpDirectory\php.ini"
+    $script:phpPath = "$script:TEST_DRIVE\php"
+    $script:phpIniPath = "$script:phpPath\php.ini"
+    $script:testBackupPath = "$script:phpPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
     $script:baseBundlePath = "$script:certDirectory\cacert.pem"
     $script:localCertificateDirectory = "$script:certDirectory\local"
     $script:trustBundlePath = "$script:certDirectory\cacert-local.pem"
     $script:generatorDirectory = "$script:TEST_DRIVE\generator"
 
-    $null = New-Directory -path $script:phpDirectory
+    $null = New-Directory -path $script:phpPath
     $null = New-Directory -path $script:certDirectory
     $null = New-Directory -path $script:generatorDirectory
 
@@ -55,7 +57,8 @@ Describe "Set-PHPCertificateBundle" {
     }
 
     It "Enables curl.cainfo and openssl.cafile and keeps unrelated lines" {
-        $bundle = 'C:\Program Files\PVM\cert\cacert.pem'
+        Remove-ItemWrapper -path "$script:testBackupPath\*"
+        $bundle = "$script:TEST_DRIVE\pvm\cert\cacert.pem"
 
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $bundle
 
@@ -65,7 +68,8 @@ Describe "Set-PHPCertificateBundle" {
         $content | Should -Contain "openssl.cafile = '$bundle'"
         $content | Should -Contain ';openssl.capath ='
         $content | Should -Contain '[openssl]'
-        Test-Path "$script:phpIniPath.bak" | Should -BeTrue
+        $backupFile = @(Get-ChildItemWrapper -path $script:testBackupPath -filter 'php.ini_*.bak' -file)
+        $backupFile | Should -Not -BeNullOrEmpty
     }
 
     It "Appends CA settings when the ini does not contain them" {
@@ -274,19 +278,19 @@ Describe "Set-ActivePHPTrustBundle" {
     }
 
     It "Configures php.ini of the current PHP version" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.3.0'; path = $script:phpDirectory } }
+        Mock Get-CurrentPHPVersion { return @{ version = '8.3.0'; path = $script:phpPath } }
         Mock Set-PHPCertificateBundle { return 0 }
 
         $result = Set-ActivePHPTrustBundle -bundlePath $script:trustBundlePath
 
         $result | Should -Be 0
         Should -Invoke Set-PHPCertificateBundle -Times 1 -ParameterFilter {
-            $iniPath -eq "$script:phpDirectory\php.ini" -and $bundlePath -eq $script:trustBundlePath
+            $iniPath -eq "$script:phpPath\php.ini" -and $bundlePath -eq $script:trustBundlePath
         }
     }
 
     It "Propagates a failure from Set-PHPCertificateBundle" {
-        Mock Get-CurrentPHPVersion { return @{ version = '8.3.0'; path = $script:phpDirectory } }
+        Mock Get-CurrentPHPVersion { return @{ version = '8.3.0'; path = $script:phpPath } }
         Mock Set-PHPCertificateBundle { return -1 }
 
         $result = Set-ActivePHPTrustBundle -bundlePath $script:trustBundlePath
@@ -301,7 +305,7 @@ Describe "Update-PHPCertificateBundle" {
         & $script:resetIni
 
         Mock Get-CurrentPHPVersion {
-            return @{ version = '8.3.0'; path = $script:phpDirectory }
+            return @{ version = '8.3.0'; path = $script:phpPath }
         }
         Mock Invoke-WebRequestWrapper {
             param ($uri, $outFile)
@@ -472,12 +476,12 @@ Describe "New-LocalPHPCertificate" {
         & $script:resetCertDirectory
         & $script:resetIni
         $null = New-Directory -path $script:localCertificateDirectory
-        Set-ContentWrapper -path "$script:phpDirectory\php.exe" -value 'test executable'
+        Set-ContentWrapper -path "$script:phpPath\php.exe" -value 'test executable'
         (& $script:pem 'PUBLICCERT') | Set-ContentWrapper -path $script:baseBundlePath
         $script:capturedTempDir = $null
 
         Mock Get-CurrentPHPVersion {
-            return @{ version = '8.3.0'; path = $script:phpDirectory }
+            return @{ version = '8.3.0'; path = $script:phpPath }
         }
         Mock Invoke-LocalCertificateGenerator {
             param ($phpExecutable, $hostName, $subjectAltName, $certificatePath, $privateKeyPath, $temporaryDirectory)
@@ -500,7 +504,7 @@ Describe "New-LocalPHPCertificate" {
         Should -Invoke Invoke-LocalCertificateGenerator -Times 1 -ParameterFilter {
             $hostName -eq 'myapp.test' -and
             $subjectAltName -eq 'DNS:myapp.test,DNS:localhost,IP:127.0.0.1' -and
-            $phpExecutable -eq "$script:phpDirectory\php.exe"
+            $phpExecutable -eq "$script:phpPath\php.exe"
         }
         Should -Invoke Show-Success -Times 1
         Should -Invoke Show-Warning -Times 1
@@ -570,7 +574,7 @@ Describe "New-LocalPHPCertificate" {
     }
 
     It "Fails when php.exe is missing" {
-        Remove-Item "$script:phpDirectory\php.exe" -Force
+        Remove-Item "$script:phpPath\php.exe" -Force
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
 

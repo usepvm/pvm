@@ -137,7 +137,7 @@ Describe "Get-LogEntries" {
     }
 
     It "returns empty array if no entries found" {
-        '' | Set-ContentWrapper -path $script:LOG_ERROR_PATH
+        '' | Set-Content -Path $script:LOG_ERROR_PATH -Encoding UTF8
 
         $result = Get-LogEntries -path $script:LOG_ERROR_PATH
 
@@ -159,7 +159,7 @@ Describe "Get-LogEntries" {
             'Position: At D:\Code\Tools\pvm\file.ps1:10 char:9'
             '+         throw "Issue limit"'
             '+         ~~~~~~~~~~~~~~~~~~~~'
-        ) -join "`n" | Set-ContentWrapper -path $script:LOG_ERROR_PATH
+        ) -join "`n" | Set-Content -Path $script:LOG_ERROR_PATH -Encoding UTF8
 
         $result = Get-LogEntries -path $script:LOG_ERROR_PATH
 
@@ -185,7 +185,7 @@ Describe "Get-LogEntries" {
             'Position: At D:\Code\Tools\pvm\file.ps1:10 char:9'
             '+         throw "Issue limit"'
             '+         ~~~~~~~~~~~~~~~~~~~~'
-        ) -join "`n" | Set-ContentWrapper -path $script:LOG_ERROR_PATH
+        ) -join "`n" | Set-Content -Path $script:LOG_ERROR_PATH -Encoding UTF8
 
         $result = @(Get-LogEntries -path $script:LOG_ERROR_PATH -term 'entry 1')
 

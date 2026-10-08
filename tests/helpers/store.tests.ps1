@@ -5,7 +5,7 @@ BeforeAll {
     $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
     $script:CACHE_MAX_HOURS = $Global:PVMConfig.env.CACHE_MAX_HOURS
 
-    $null = New-Directory -path $script:CACHE_PATH
+    $null = New-Item -ItemType Directory -Path $script:CACHE_PATH -Force
 
     Mock Show-Error { }
 }
@@ -82,7 +82,7 @@ Describe "Test-CanUseCache" {
 
             # Create a cache file with recent timestamp
             New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            Set-Content -Path "$script:CACHE_PATH\$cacheFile" -Value '{"test": "data"}' -Encoding UTF8
 
             $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $true
@@ -94,7 +94,7 @@ Describe "Test-CanUseCache" {
 
             # Create a cache file with old timestamp (older than CACHE_MAX_HOURS)
             New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            Set-Content -Path "$script:CACHE_PATH\$cacheFile" -Value '{"test": "data"}' -Encoding UTF8
 
             # Set file modification time to be older than CACHE_MAX_HOURS (168 hours)
             $oldTime = (Get-Date).AddHours(-200)
@@ -110,7 +110,7 @@ Describe "Test-CanUseCache" {
 
             # Create a cache file
             New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            Set-Content -Path "$script:CACHE_PATH\$cacheFile" -Value '{"test": "data"}' -Encoding UTF8
 
             # Set file modification time to be exactly at CACHE_MAX_HOURS
             $boundaryTime = (Get-Date).AddHours(-$script:CACHE_MAX_HOURS)
@@ -157,7 +157,7 @@ Describe "Test-CanUseCache" {
             $cacheFile = "$cacheFileName.json"
 
             New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            Set-Content -Path "$script:CACHE_PATH\$cacheFile" -Value '{"test": "data"}' -Encoding UTF8
 
             $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $true
@@ -168,7 +168,7 @@ Describe "Test-CanUseCache" {
             $cacheFile = "$cacheFileName.json"
 
             New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            Set-Content -Path "$script:CACHE_PATH\$cacheFile" -Value '{"test": "data"}' -Encoding UTF8
 
             $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $true

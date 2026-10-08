@@ -4,8 +4,8 @@ BeforeAll {
 
     $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
 
-    $null = New-Directory -path "$script:STORAGE_PATH\php\8.1"
-    $null = New-Directory -path "$script:STORAGE_PATH\php\8.2"
+    $null = New-Item -ItemType Directory -Path "$script:STORAGE_PATH\php\8.1" -Force
+    $null = New-Item -ItemType Directory -Path "$script:STORAGE_PATH\php\8.2" -Force
 
     Mock Add-LogEntry { return 0 }
 }
@@ -99,7 +99,7 @@ Describe "Test-FileExists" {
             $result = Test-FileExists -path $filePath
             $result | Should -Be $true
 
-            Remove-ItemWrapper -path $filePath
+            Remove-Item -Path $filePath -Force -Recurse -ErrorAction SilentlyContinue
         }
 
         It "Returns false for non-existent file" {
@@ -408,7 +408,7 @@ Describe "New-SymbolicLink" {
             $result.color | Should -Be 'DarkYellow'
 
             # Cleanup
-            Remove-ItemWrapper -path $existingPath
+            Remove-Item -Path $existingPath -Force -Recurse -ErrorAction SilentlyContinue
         }
 
         It "Deletes existing symbolic link and creates new one" {
@@ -435,7 +435,7 @@ Describe "New-SymbolicLink" {
             } finally {
                 # Cleanup
                 if (Test-Path $testDir) {
-                    Remove-ItemWrapper -path $testDir
+                    Remove-Item -Path $testDir -Force -Recurse -ErrorAction SilentlyContinue
                 }
             }
         }
@@ -519,7 +519,7 @@ Describe "Expand-ZipCore" {
         try {
             # Create source directory and file
             New-Item -ItemType Directory -Path (Split-Path $testFile) -Force | Out-Null
-            'test content' | Set-ContentWrapper -path $testFile
+            'test content' | Set-Content -Path $testFile -Encoding UTF8
 
             # Create zip file using PowerShell's Compress-Archive
             Compress-Archive -Path $testFile -DestinationPath $zipPath -Force
@@ -537,7 +537,7 @@ Describe "Expand-ZipCore" {
         } finally {
             # Cleanup
             if (Test-Path $testDir) {
-                Remove-ItemWrapper -path $testDir
+                Remove-Item -Path $testDir -Force -Recurse -ErrorAction SilentlyContinue
             }
         }
     }
@@ -1328,7 +1328,7 @@ Describe "Get-SHA256HashFromFile" {
     It "Returns correct SHA256 hash for a file" {
         $testFile = "$script:TEST_DRIVE\test-sha256.txt"
         $testContent = "test content"
-        Set-ContentWrapper -path $testFile -value $testContent
+        Set-Content -Path $testFile -Value $testContent -Encoding UTF8
 
         $result = Get-SHA256HashFromFile -filePath $testFile
 
@@ -1339,7 +1339,7 @@ Describe "Get-SHA256HashFromFile" {
 
     It "Returns lowercase hash" {
         $testFile = "$script:TEST_DRIVE\test-sha256-lower.txt"
-        Set-ContentWrapper -path $testFile -value "test"
+        Set-Content -Path $testFile -Value "test" -Encoding UTF8
 
         $result = Get-SHA256HashFromFile -filePath $testFile
 

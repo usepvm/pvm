@@ -5,7 +5,7 @@ BeforeAll {
     $script:PHP_CURRENT_DIR = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
     $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
 
-    $null = New-Directory -path $script:PHP_CURRENT_DIR
+    $null = New-Item -ItemType Directory -Path $script:PHP_CURRENT_DIR -Force
 
     Mock Show-Error { }
 

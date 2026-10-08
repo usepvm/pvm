@@ -3,9 +3,9 @@ BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:testPhpPath = "$script:TEST_DRIVE\PHP"
-    $null = New-Directory -path "$script:testPhpPath\7.4"
-    $null = New-Directory -path "$script:testPhpPath\8.0"
-    $null = New-Directory -path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
+    $null = New-Item -ItemType Directory -Path "$script:testPhpPath\7.4" -Force
+    $null = New-Item -ItemType Directory -Path "$script:testPhpPath\8.0" -Force
+    $null = New-Item -ItemType Directory -Path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force
 
     Mock Add-LogEntry { return 0 }
 
@@ -272,6 +272,6 @@ Describe "Uninstall-PHP" {
     }
 
     AfterAll {
-        Remove-ItemWrapper -path $script:testPhpPath
+        Remove-Item -Path $script:testPhpPath -Force -Recurse -ErrorAction SilentlyContinue
     }
 }

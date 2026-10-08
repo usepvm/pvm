@@ -30,7 +30,7 @@ Describe "Get-FromSource" {
             return $result.pvmData
         }
         if (Test-Path "$script:TEST_DRIVE\data") {
-            Remove-ItemWrapper -path "$script:TEST_DRIVE\data"
+            Remove-Item -Path "$script:TEST_DRIVE\data" -Force -Recurse -ErrorAction SilentlyContinue
         }
 
         Mock Test-OS64Bit { return $true }

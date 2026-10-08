@@ -7,9 +7,9 @@ BeforeAll {
     $script:extDirectory = "$script:phpPath\ext"
     $script:testBackupPath = "$script:phpPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
 
-    $null = New-Directory -path $Global:PVMConfig.paths.directories.cache
-    $null = New-Directory -path $script:phpPath
-    $null = New-Directory -path $script:extDirectory
+    $null = New-Item -ItemType Directory -Path $Global:PVMConfig.paths.directories.cache -Force
+    $null = New-Item -ItemType Directory -Path $script:phpPath -Force
+    $null = New-Item -ItemType Directory -Path $script:extDirectory -Force
 
     Mock Show-Warning { }
     Mock Show-Info { }
@@ -26,7 +26,7 @@ BeforeAll {
         'display_errors = On'
         'max_execution_time = 30'
         ';upload_max_filesize = 2M'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
     }
 
     Reset-IniContent
@@ -36,7 +36,7 @@ Describe "Disable-IniExtension" {
     BeforeEach {
         Mock Test-DirectoryExists -ParameterFilter { $path -eq $script:extDirectory } -MockWith { return $true }
         Reset-IniContent
-        Remove-ItemWrapper -path $script:testBackupPath
+        Remove-Item -Path $script:testBackupPath -Force -Recurse -ErrorAction SilentlyContinue
     }
 
     It "Disables enabled extension" {
@@ -110,7 +110,7 @@ Describe "Disable-IniExtension" {
             'extension=pdo_sqlite'
             'extension=pgsql'
             ';extension=sqlite3'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
         Mock Get-ChildItemWrapper {
             param ($path)
             return @(
@@ -136,7 +136,7 @@ Describe "Disable-IniExtension" {
             'extension=pdo_sqlite'
             'extension=pgsql'
             ';extension=sqlite3'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         $script:callCount = 0
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {

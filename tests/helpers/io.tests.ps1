@@ -679,38 +679,37 @@ Describe "Test-DownloadPrerequisites" {
         $result.message | Should -BeLike '*Failed to get remote file size or invalid size. Cannot proceed with download*'
     }
 
+    It "Returns error message when remote file size exceeds available disk space" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Convert-BytesToMegabytes { return 200 }
+        Mock Get-FreeDiskSpaceBytes { return [int64]100MB }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.message | Should -BeLike 'Insufficient disk space for download. Required: 200 MB'
+        $result.temporaryDirectory | Should -BeNullOrEmpty
+    }
+
     It "Returns error message when temporary directory cannot be created" {
         Mock Test-FreeDiskSpaceInsufficient { return $false }
         Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Convert-BytesToMegabytes { return 200 }
         Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
         Mock New-Directory { return -1 }
 
         $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
 
         $result.message | Should -BeLike "*Failed to create temporary directory '$script:TEST_DRIVE\temp'*"
-    }
-
-    It "Returns error message when remote file size exceeds available disk space" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]200MB) }
-        Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
-        Mock New-Directory { return 0 }
-        Mock Convert-BytesToMegabytes { return 200 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $true }
-
-        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
-
-        $result.message | Should -BeLike 'Insufficient disk space for download. Required: 200 MB'
-        $result.temporaryDirectory | Should -Be "$script:TEST_DRIVE\temp"
+        $result.temporaryDirectory | Should -BeNullOrEmpty
     }
 
     It "Returns success when all prerequisites are met" {
         Mock Test-FreeDiskSpaceInsufficient { return $false }
         Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Convert-BytesToMegabytes { return 200 }
         Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
         Mock New-Directory { return 0 }
-        Mock Convert-BytesToMegabytes { return 200 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
 
         $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
 

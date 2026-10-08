@@ -263,16 +263,15 @@ function Test-DownloadPrerequisites {
         return @{ temporaryDirectory = $null; message = "Failed to get remote file size or invalid size. Cannot proceed with download."; color = 'DarkYellow' }
     }
 
+    $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
+    if ((Get-FreeDiskSpaceBytes -path $Global:PVMConfig.paths.directories.temp) -lt $remoteFileSize) {
+        return @{ temporaryDirectory = $null; message = "Insufficient disk space for download. Required: $sizeMB MB"; color = 'DarkYellow' }
+    }
+
     $temporaryDirectory = Get-TemporaryDirectory -root $Global:PVMConfig.paths.directories.temp
     $created = New-Directory -path $temporaryDirectory
     if ($created -ne 0) {
         return @{ temporaryDirectory = $null; message = "Failed to create temporary directory '$temporaryDirectory'."; color = 'DarkYellow' }
-    }
-
-    $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
-
-    if (Test-RemoteFileDiskSpaceInsufficient -uri $url -downloadPath $temporaryDirectory) {
-        return @{ temporaryDirectory = $temporaryDirectory; message = "Insufficient disk space for download. Required: $sizeMB MB"; color = 'DarkYellow' }
     }
 
     return @{ temporaryDirectory = $temporaryDirectory; sizeMB = $sizeMB }

@@ -55,7 +55,7 @@ function Set-ContentWrapper {
     } process {
         $values += $Value
     } end {
-        Set-Content -Path $Path -Value $values -Encoding UTF8
+        Set-Content -Path $path -Value $values -Encoding UTF8
     }
 }
 

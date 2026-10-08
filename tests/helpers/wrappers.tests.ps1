@@ -142,6 +142,20 @@ Describe "Add-ContentWrapper" {
         }
     }
 
+    It "Validates path when disallowOutsideRoot is passed" {
+        Mock Add-Content { }
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
+
+        $path = "$script:TEST_DRIVE\test.txt"
+        $content = "Test content"
+
+        Add-ContentWrapper -path $path -value $content -disallowOutsideRoot
+
+        Should -Invoke Add-Content -Times 0
+        Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 1
+        Should -Invoke Add-LogEntry -Times 1
+    }
+
     It "Throws when Add-Content throws" {
         Mock Add-Content { throw 'Test error' }
 

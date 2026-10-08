@@ -40,9 +40,14 @@ function Read-HostWrapper {
 }
 
 function Add-ContentWrapper {
-    param ($path, [Parameter(ValueFromPipeline)]$value)
+    param ($path, [Parameter(ValueFromPipeline)]$value, [switch]$disallowOutsideRoot)
 
     process {
+        if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
+            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$path'"; exception = "Path is invalid or not under project root" }
+            return
+        }
+
         Add-Content -Path $path -Value $value -Encoding UTF8
     }
 }

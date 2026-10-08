@@ -43,7 +43,13 @@ function Add-ContentWrapper {
     param ($path, [Parameter(ValueFromPipeline)]$value)
 
     process {
-        Add-Content -Path $path -Value $value -Encoding UTF8
+        try {
+            Add-Content -LiteralPath $path -Value $value -Encoding UTF8 -ErrorAction Stop
+            return 0
+        } catch {
+            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to add content to '$path'"; exception = $_ }
+            return -1
+        }
     }
 }
 
@@ -51,54 +57,94 @@ function Set-ContentWrapper {
     param ($path, [Parameter(ValueFromPipeline)]$value)
 
     begin {
-        $values = @()
+        $values = [System.Collections.Generic.List[object]]::new()
     } process {
-        $values += $Value
+        $values.Add($value)
     } end {
-        Set-Content -Path $Path -Value $values -Encoding UTF8
+        try {
+            Set-Content -LiteralPath $path -Value $values -Encoding UTF8 -ErrorAction Stop
+            return 0
+        } catch {
+            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set content to '$path'"; exception = $_ }
+            return -1
+        }
     }
 }
 
 function Invoke-WebRequestWrapper {
     param ($uri, $outFile = $null, $useBasicParsing = $true, $method = 'Default')
 
-    $uri = $uri.Trim()
+    try {
+        $uri = $uri.Trim()
 
-    $params = @{
-        Uri = $uri
-        UseBasicParsing = $useBasicParsing
-        Method = $method
+        $params = @{
+            Uri = $uri
+            UseBasicParsing = $useBasicParsing
+            Method = $method
+            ErrorAction = 'Stop'
+        }
+
+        if ($null -ne $outFile) {
+            $params.OutFile = $outFile
+        }
+
+        return Invoke-WebRequest @params
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to make request to $uri"; exception = $_ }
+        return $null
     }
-
-    if ($null -ne $outFile) {
-        $params.OutFile = $outFile
-    }
-
-    return Invoke-WebRequest @params
 }
 
 function Move-ItemWrapper {
     param ($path, $destination)
 
-    Move-Item -Path $path -Destination $destination -Force
+    try {
+        Move-Item -LiteralPath $path -Destination $destination -Force -ErrorAction Stop
+        return 0
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to move '$path' to '$destination'"; exception = $_ }
+        return -1
+    }
 }
 
 function Copy-ItemWrapper {
     param ($path, $destination)
 
-    Copy-Item -Path $path -Destination $destination -Force
+    try {
+        Copy-Item -LiteralPath $path -Destination $destination -Force -ErrorAction Stop
+        return 0
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to copy '$path' to '$destination'"; exception = $_ }
+        return -1
+    }
 }
 
 function Remove-ItemWrapper {
     param ($path)
 
-    Remove-Item -Path $path -Force -Recurse -ErrorAction SilentlyContinue
+    try {
+        if (Test-PathNotExists -path $path) {
+            return 0
+        }
+
+        Remove-Item -LiteralPath $path -Force -Recurse -ErrorAction Stop
+        return 0
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to remove '$path'"; exception = $_ }
+        return -1
+    }
 }
 
 function Clear-ContentWrapper {
     param ($path)
 
-    Clear-Content -Path $path
+    try {
+        Clear-Content -LiteralPath $path -ErrorAction Stop
+        return 0
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear content at '$path'"; exception = $_ }
+        return -1
+    }
 }
 
 function Get-ItemWrapper {
@@ -110,13 +156,26 @@ function Get-ItemWrapper {
 function Get-ChildItemWrapper {
     param ($path, [switch]$recurse, [switch]$force, $filter = $null, [switch]$file, [switch]$directory)
 
-    return Get-ChildItem -Path $path -Recurse:$recurse -Force:$force -Filter $filter -File:$file -Directory:$directory -ErrorAction SilentlyContinue
+    $params = @{
+        Path        = $path
+        Recurse     = $recurse
+        Force       = $force
+        File        = $file
+        Directory   = $directory
+        ErrorAction = 'SilentlyContinue'
+    }
+
+    if (-not [string]::IsNullOrEmpty($filter)) {
+        $params['Filter'] = $filter
+    }
+
+    return Get-ChildItem @params
 }
 
 function Get-ContentWrapper {
     param ($path, [switch]$raw)
 
-    return Get-Content -path $path -Raw:$raw -ErrorAction SilentlyContinue
+    return Get-Content -Path $path -Raw:$raw -ErrorAction SilentlyContinue
 }
 
 function New-ItemWrapper {
@@ -124,15 +183,21 @@ function New-ItemWrapper {
 
     $params = @{
         ItemType = $type
-        Path     = $path
-        Force    = $true
+        Path = $path
+        Force = $true
+        ErrorAction = 'Stop'
     }
 
     if ($null -ne $target) {
         $params['Target'] = $target
     }
 
-    return New-Item @params
+    try {
+        return New-Item @params
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create item '$path'"; exception = $_ }
+        return -1
+    }
 }
 
 function Test-PathWrapper {

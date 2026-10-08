@@ -272,7 +272,7 @@ function Test-DownloadPrerequisites {
     $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
 
     if (Test-RemoteFileDiskSpaceInsufficient -uri $url -downloadPath $temporaryDirectory) {
-        return @{ temporaryDirectory = $null; message = "Insufficient disk space for download. Required: $sizeMB MB"; color = 'DarkYellow' }
+        return @{ temporaryDirectory = $temporaryDirectory; message = "Insufficient disk space for download. Required: $sizeMB MB"; color = 'DarkYellow' }
     }
 
     return @{ temporaryDirectory = $temporaryDirectory; sizeMB = $sizeMB }

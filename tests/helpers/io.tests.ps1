@@ -701,6 +701,7 @@ Describe "Test-DownloadPrerequisites" {
         $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
 
         $result.message | Should -BeLike 'Insufficient disk space for download. Required: 200 MB'
+        $result.temporaryDirectory | Should -Be "$script:TEST_DRIVE\temp"
     }
 
     It "Returns success when all prerequisites are met" {

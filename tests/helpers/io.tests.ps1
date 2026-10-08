@@ -344,7 +344,7 @@ Describe "New-SymbolicLink" {
             $linkPath = "$script:TEST_DRIVE\test_link"
             $targetPath = "$script:STORAGE_PATH\php\8.1"
 
-            $result = New-SymbolicLink -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath -disallowOutsideRoot
 
             $result.code | Should -Be 0
             $result.message | Should -Match 'Created symbolic link'
@@ -352,7 +352,8 @@ Describe "New-SymbolicLink" {
             Should -Invoke New-ItemWrapper -ParameterFilter {
                 $type -eq 'SymbolicLink' -and
                 $path -eq $linkPath -and
-                $target -eq $targetPath
+                $target -eq $targetPath -and
+                $disallowOutsideRoot -eq $true
             }
         }
 

@@ -140,7 +140,7 @@ function New-File {
 }
 
 function New-SymbolicLink {
-    param ($link, $target)
+    param ($link, $target, [switch]$disallowOutsideRoot)
 
     try {
         if ([string]::IsNullOrWhiteSpace($link) -or [string]::IsNullOrWhiteSpace($target)) {
@@ -178,7 +178,7 @@ function New-SymbolicLink {
             return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = 'DarkGreen' }
         }
 
-        $created = New-ItemWrapper -type 'SymbolicLink' -path $link -target $target
+        $created = New-ItemWrapper -type 'SymbolicLink' -path $link -target $target -disallowOutsideRoot:$disallowOutsideRoot
         if (-not $created) {
             return @{ code = -1; message = "Failed to create symbolic link '$link' -> '$target'"; color = 'DarkYellow' }
         }

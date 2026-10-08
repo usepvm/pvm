@@ -29,7 +29,7 @@ function Restore-TestEnvironment {
     param ($environment)
 
     if (Test-ValidDrivePath -path $currentTestDrive) {
-        Remove-ItemWrapper -path $environment.TestDrive
+        $null = Remove-ItemWrapper -path $environment.TestDrive
     }
     $Global:PVMConfig   = $environment.PVMConfigBackup
     $Global:CurrentTestDrive = $null

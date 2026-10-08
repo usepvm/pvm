@@ -140,7 +140,7 @@ function New-File {
 }
 
 function New-SymbolicLink {
-    param ($link, $target)
+    param ($link, $target, [switch]$disallowOutsideRoot)
 
     try {
         if ([string]::IsNullOrWhiteSpace($link) -or [string]::IsNullOrWhiteSpace($target)) {
@@ -178,7 +178,7 @@ function New-SymbolicLink {
             return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = 'DarkGreen' }
         }
 
-        $created = New-ItemWrapper -type 'SymbolicLink' -path $link -target $target
+        $created = New-ItemWrapper -type 'SymbolicLink' -path $link -target $target -disallowOutsideRoot:$disallowOutsideRoot
         if (-not $created) {
             return @{ code = -1; message = "Failed to create symbolic link '$link' -> '$target'"; color = 'DarkYellow' }
         }
@@ -263,16 +263,15 @@ function Test-DownloadPrerequisites {
         return @{ temporaryDirectory = $null; message = "Failed to get remote file size or invalid size. Cannot proceed with download."; color = 'DarkYellow' }
     }
 
+    $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
+    if ((Get-FreeDiskSpaceBytes -path $Global:PVMConfig.paths.directories.temp) -lt $remoteFileSize) {
+        return @{ temporaryDirectory = $null; message = "Insufficient disk space for download. Required: $sizeMB MB"; color = 'DarkYellow' }
+    }
+
     $temporaryDirectory = Get-TemporaryDirectory -root $Global:PVMConfig.paths.directories.temp
     $created = New-Directory -path $temporaryDirectory
     if ($created -ne 0) {
         return @{ temporaryDirectory = $null; message = "Failed to create temporary directory '$temporaryDirectory'."; color = 'DarkYellow' }
-    }
-
-    $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize
-
-    if (Test-RemoteFileDiskSpaceInsufficient -uri $url -downloadPath $temporaryDirectory) {
-        return @{ temporaryDirectory = $null; message = "Insufficient disk space for download. Required: $sizeMB MB"; color = 'DarkYellow' }
     }
 
     return @{ temporaryDirectory = $temporaryDirectory; sizeMB = $sizeMB }
@@ -366,15 +365,11 @@ function Test-ValidDrivePath {
 
     $path = $path.Trim()
 
-    $isValidFormat = ($path -match '^[A-Za-z]:\\') -and ($path.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -eq -1)
-
-    if (-not $isValidFormat) {
+    if ($path -notmatch '^[A-Za-z]:\\' -or $path.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -ne -1) {
         return $false
     }
 
-    $driveLetter = $path.Substring(0, 2)
-
-    $driveInfo = [System.IO.DriveInfo]::new($driveLetter)
+    $driveInfo = [System.IO.DriveInfo]::new($path.Substring(0, 2))
     return $driveInfo.IsReady
 }
 
@@ -382,6 +377,58 @@ function Test-InvalidDrivePath {
     param ($path)
 
     return -not (Test-ValidDrivePath -path $path)
+}
+
+function Test-PathUnderRoot {
+    param ($path, $rootPath)
+
+    if ([string]::IsNullOrWhiteSpace($path) -or [string]::IsNullOrWhiteSpace($rootPath)) {
+        return $false
+    }
+
+    $path = [System.IO.Path]::GetFullPath($path.Trim()).TrimEnd('\')
+    $rootPath = [System.IO.Path]::GetFullPath($rootPath.Trim()).TrimEnd('\')
+
+    return $path.StartsWith("$rootPath\", [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function Test-PathNotUnderRoot {
+    param ($path, $rootPath)
+
+    return -not (Test-PathUnderRoot -path $path -rootPath $rootPath)
+}
+
+function Test-PathValidAndUnderRoot {
+    param ($path, $rootPath)
+
+    try {
+        return ((Test-ValidDrivePath -path $path) -and (Test-PathUnderRoot -path $path -rootPath $rootPath))
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to validate path '$path' under root '$rootPath'"; exception = $_ }
+        return $false
+    }
+}
+
+function Test-PathInvalidOrNotUnderRoot {
+    param ($path, $rootPath)
+
+    return -not (Test-PathValidAndUnderRoot -path $path -rootPath $rootPath)
+}
+
+function Test-PathValidUnderProjectRoot {
+    param ($path)
+
+    if ($null -eq $Global:PVMConfig -or $null -eq $Global:PVMConfig.rootPath) {
+        return $false
+    }
+
+    return Test-PathValidAndUnderRoot -path $path -rootPath $Global:PVMConfig.rootPath
+}
+
+function Test-PathInvalidOrNotUnderProjectRoot {
+    param ($path)
+
+    return -not (Test-PathValidUnderProjectRoot -path $path)
 }
 
 function Get-TemporaryDirectory {
@@ -475,11 +522,7 @@ function Test-SHA256HashValid {
 
         $actualHash = Get-SHA256HashFromFile -filePath $filePath
 
-        if ($null -eq $actualHash) {
-            return $false
-        }
-
-        return ($actualHash -eq $expectedHash.ToLower())
+        return (($null -ne $actualHash) -and ($actualHash -eq $expectedHash.ToLower()))
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to verify SHA256 hash for '$filePath'"; exception = $_ }
         return $false

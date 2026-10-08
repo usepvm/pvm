@@ -344,7 +344,7 @@ Describe "New-SymbolicLink" {
             $linkPath = "$script:TEST_DRIVE\test_link"
             $targetPath = "$script:STORAGE_PATH\php\8.1"
 
-            $result = New-SymbolicLink -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath -disallowOutsideRoot
 
             $result.code | Should -Be 0
             $result.message | Should -Match 'Created symbolic link'
@@ -352,7 +352,8 @@ Describe "New-SymbolicLink" {
             Should -Invoke New-ItemWrapper -ParameterFilter {
                 $type -eq 'SymbolicLink' -and
                 $path -eq $linkPath -and
-                $target -eq $targetPath
+                $target -eq $targetPath -and
+                $disallowOutsideRoot -eq $true
             }
         }
 
@@ -678,37 +679,37 @@ Describe "Test-DownloadPrerequisites" {
         $result.message | Should -BeLike '*Failed to get remote file size or invalid size. Cannot proceed with download*'
     }
 
+    It "Returns error message when remote file size exceeds available disk space" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Convert-BytesToMegabytes { return 200 }
+        Mock Get-FreeDiskSpaceBytes { return [int64]100MB }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.message | Should -BeLike 'Insufficient disk space for download. Required: 200 MB'
+        $result.temporaryDirectory | Should -BeNullOrEmpty
+    }
+
     It "Returns error message when temporary directory cannot be created" {
         Mock Test-FreeDiskSpaceInsufficient { return $false }
         Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Convert-BytesToMegabytes { return 200 }
         Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
         Mock New-Directory { return -1 }
 
         $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
 
         $result.message | Should -BeLike "*Failed to create temporary directory '$script:TEST_DRIVE\temp'*"
-    }
-
-    It "Returns error message when remote file size exceeds available disk space" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]200MB) }
-        Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
-        Mock New-Directory { return 0 }
-        Mock Convert-BytesToMegabytes { return 200 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $true }
-
-        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
-
-        $result.message | Should -BeLike 'Insufficient disk space for download. Required: 200 MB'
+        $result.temporaryDirectory | Should -BeNullOrEmpty
     }
 
     It "Returns success when all prerequisites are met" {
         Mock Test-FreeDiskSpaceInsufficient { return $false }
         Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Convert-BytesToMegabytes { return 200 }
         Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
         Mock New-Directory { return 0 }
-        Mock Convert-BytesToMegabytes { return 200 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
 
         $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
 
@@ -964,6 +965,320 @@ Describe "Test-InvalidDrivePath" {
         $result = Test-InvalidDrivePath -path 'C:\some-path'
 
         $result | Should -BeFalse
+    }
+}
+Describe "Test-PathUnderRoot" {
+    Context "When path is under root" {
+        It "Returns true for direct child" {
+            $result = Test-PathUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+            $result | Should -BeTrue
+        }
+
+        It "Returns true for nested child" {
+            $result = Test-PathUnderRoot -path 'C:\Root\A\B\C' -rootPath 'C:\Root'
+            $result | Should -BeTrue
+        }
+
+        It "Is case-insensitive" {
+            $result = Test-PathUnderRoot -path 'c:\root\child' -rootPath 'C:\ROOT'
+            $result | Should -BeTrue
+        }
+
+        It "Handles trailing backslashes on path and root" {
+            $result = Test-PathUnderRoot -path 'C:\Root\Child\' -rootPath 'C:\Root\'
+            $result | Should -BeTrue
+        }
+
+        It "Trims whitespace from path and root" {
+            $result = Test-PathUnderRoot -path '  C:\Root\Child  ' -rootPath '  C:\Root  '
+            $result | Should -BeTrue
+        }
+
+        It "Normalizes parent traversal that stays under root" {
+            $result = Test-PathUnderRoot -path 'C:\Root\A\..\B' -rootPath 'C:\Root'
+            $result | Should -BeTrue
+        }
+    }
+
+    Context "When path is not under root" {
+        It "Returns false when path equals root" {
+            $result = Test-PathUnderRoot -path 'C:\Root' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false when path equals root with trailing backslash" {
+            $result = Test-PathUnderRoot -path 'C:\Root\' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for sibling sharing the root prefix" {
+            $result = Test-PathUnderRoot -path 'C:\RootOther\Child' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for unrelated path" {
+            $result = Test-PathUnderRoot -path 'C:\Other\Child' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for parent of root" {
+            $result = Test-PathUnderRoot -path 'C:\' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for different drive" {
+            $result = Test-PathUnderRoot -path 'D:\Root\Child' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for parent traversal escaping root" {
+            $result = Test-PathUnderRoot -path 'C:\Root\..\Other' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+    }
+
+    Context "When inputs are invalid" {
+        It "Returns false for null path" {
+            $result = Test-PathUnderRoot -path $null -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for empty path" {
+            $result = Test-PathUnderRoot -path '' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for whitespace path" {
+            $result = Test-PathUnderRoot -path '   ' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for null root" {
+            $result = Test-PathUnderRoot -path 'C:\Root\Child' -rootPath $null
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for empty root" {
+            $result = Test-PathUnderRoot -path 'C:\Root\Child' -rootPath ''
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for whitespace root" {
+            $result = Test-PathUnderRoot -path 'C:\Root\Child' -rootPath '   '
+            $result | Should -BeFalse
+        }
+    }
+}
+
+Describe "Test-PathNotUnderRoot" {
+    It "Returns true when path is not under root" {
+        Mock Test-PathUnderRoot { return $false }
+
+        $result = Test-PathNotUnderRoot -path 'C:\Other' -rootPath 'C:\Root'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when path is under root" {
+        Mock Test-PathUnderRoot { return $true }
+
+        $result = Test-PathNotUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        $result | Should -BeFalse
+    }
+
+    It "Passes path and root to Test-PathUnderRoot" {
+        Mock Test-PathUnderRoot { return $true }
+
+        $null = Test-PathNotUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        Should -Invoke Test-PathUnderRoot -Times 1 -ParameterFilter {
+            $path -eq 'C:\Root\Child' -and $rootPath -eq 'C:\Root'
+        }
+    }
+}
+
+Describe "Test-PathValidAndUnderRoot" {
+    It "Returns true when path is valid and under root" {
+        Mock Test-ValidDrivePath { return $true }
+        Mock Test-PathUnderRoot { return $true }
+
+        $result = Test-PathValidAndUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when path is invalid" {
+        Mock Test-ValidDrivePath { return $false }
+        Mock Test-PathUnderRoot { return $true }
+
+        $result = Test-PathValidAndUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        $result | Should -BeFalse
+    }
+
+    It "Returns false when path is not under root" {
+        Mock Test-ValidDrivePath { return $true }
+        Mock Test-PathUnderRoot { return $false }
+
+        $result = Test-PathValidAndUnderRoot -path 'C:\Other' -rootPath 'C:\Root'
+
+        $result | Should -BeFalse
+    }
+
+    It "Does not check root containment when path is invalid" {
+        Mock Test-ValidDrivePath { return $false }
+        Mock Test-PathUnderRoot { return $true }
+
+        $null = Test-PathValidAndUnderRoot -path 'bad' -rootPath 'C:\Root'
+
+        Should -Invoke Test-PathUnderRoot -Times 0
+    }
+
+    It "Passes path and root to the underlying checks" {
+        Mock Test-ValidDrivePath { return $true }
+        Mock Test-PathUnderRoot { return $true }
+
+        $null = Test-PathValidAndUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        Should -Invoke Test-ValidDrivePath -Times 1 -ParameterFilter { $path -eq 'C:\Root\Child' }
+        Should -Invoke Test-PathUnderRoot -Times 1 -ParameterFilter {
+            $path -eq 'C:\Root\Child' -and $rootPath -eq 'C:\Root'
+        }
+    }
+
+    It "Returns false and logs when an exception occurs" {
+        Mock Test-ValidDrivePath { throw 'Error' }
+
+        $result = Test-PathValidAndUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        $result | Should -BeFalse
+        Should -Invoke Add-LogEntry -Times 1
+    }
+
+    It "Returns false and logs when Test-PathUnderRoot throws" {
+        Mock Test-ValidDrivePath { return $true }
+        Mock Test-PathUnderRoot { throw 'Error' }
+
+        $result = Test-PathValidAndUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        $result | Should -BeFalse
+        Should -Invoke Add-LogEntry -Times 1
+    }
+}
+
+Describe "Test-PathInvalidOrNotUnderRoot" {
+    It "Returns true when path is invalid or not under root" {
+        Mock Test-PathValidAndUnderRoot { return $false }
+
+        $result = Test-PathInvalidOrNotUnderRoot -path 'C:\Other' -rootPath 'C:\Root'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when path is valid and under root" {
+        Mock Test-PathValidAndUnderRoot { return $true }
+
+        $result = Test-PathInvalidOrNotUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        $result | Should -BeFalse
+    }
+
+    It "Passes path and root to Test-PathValidAndUnderRoot" {
+        Mock Test-PathValidAndUnderRoot { return $true }
+
+        $null = Test-PathInvalidOrNotUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        Should -Invoke Test-PathValidAndUnderRoot -Times 1 -ParameterFilter {
+            $path -eq 'C:\Root\Child' -and $rootPath -eq 'C:\Root'
+        }
+    }
+}
+
+Describe "Test-PathValidUnderProjectRoot" {
+    BeforeEach {
+        $script:ORIGINAL_PVM_CONFIG = $Global:PVMConfig
+    }
+
+    AfterEach {
+        $Global:PVMConfig = $script:ORIGINAL_PVM_CONFIG
+    }
+
+    It "Returns false when PVMConfig is null" {
+        $Global:PVMConfig = $null
+        Mock Test-PathValidAndUnderRoot { return $true }
+
+        $result = Test-PathValidUnderProjectRoot -path 'C:\Root\Child'
+
+        $result | Should -BeFalse
+        Should -Invoke Test-PathValidAndUnderRoot -Times 0
+    }
+
+    It "Returns false when rootPath is null" {
+        $Global:PVMConfig = @{ rootPath = $null }
+        Mock Test-PathValidAndUnderRoot { return $true }
+
+        $result = Test-PathValidUnderProjectRoot -path 'C:\Root\Child'
+
+        $result | Should -BeFalse
+        Should -Invoke Test-PathValidAndUnderRoot -Times 0
+    }
+
+    It "Returns true when path is valid and under project root" {
+        $Global:PVMConfig = @{ rootPath = 'C:\Root' }
+        Mock Test-PathValidAndUnderRoot { return $true }
+
+        $result = Test-PathValidUnderProjectRoot -path 'C:\Root\Child'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when path is not valid or not under project root" {
+        $Global:PVMConfig = @{ rootPath = 'C:\Root' }
+        Mock Test-PathValidAndUnderRoot { return $false }
+
+        $result = Test-PathValidUnderProjectRoot -path 'C:\Other'
+
+        $result | Should -BeFalse
+    }
+
+    It "Passes path and project root to Test-PathValidAndUnderRoot" {
+        $Global:PVMConfig = @{ rootPath = 'C:\Root' }
+        Mock Test-PathValidAndUnderRoot { return $true }
+
+        $null = Test-PathValidUnderProjectRoot -path 'C:\Root\Child'
+
+        Should -Invoke Test-PathValidAndUnderRoot -Times 1 -ParameterFilter {
+            $path -eq 'C:\Root\Child' -and $rootPath -eq 'C:\Root'
+        }
+    }
+}
+
+Describe "Test-PathInvalidOrNotUnderProjectRoot" {
+    It "Returns true when path is not valid under project root" {
+        Mock Test-PathValidUnderProjectRoot { return $false }
+
+        $result = Test-PathInvalidOrNotUnderProjectRoot -path 'C:\Other'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when path is valid under project root" {
+        Mock Test-PathValidUnderProjectRoot { return $true }
+
+        $result = Test-PathInvalidOrNotUnderProjectRoot -path 'C:\Root\Child'
+
+        $result | Should -BeFalse
+    }
+
+    It "Passes path to Test-PathValidUnderProjectRoot" {
+        Mock Test-PathValidUnderProjectRoot { return $true }
+
+        $null = Test-PathInvalidOrNotUnderProjectRoot -path 'C:\Root\Child'
+
+        Should -Invoke Test-PathValidUnderProjectRoot -Times 1 -ParameterFilter {
+            $path -eq 'C:\Root\Child'
+        }
     }
 }
 

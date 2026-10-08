@@ -380,6 +380,58 @@ function Test-InvalidDrivePath {
     return -not (Test-ValidDrivePath -path $path)
 }
 
+function Test-PathUnderRoot {
+    param ($path, $rootPath)
+
+    if ([string]::IsNullOrWhiteSpace($path) -or [string]::IsNullOrWhiteSpace($rootPath)) {
+        return $false
+    }
+
+    $path = [System.IO.Path]::GetFullPath($path.Trim()).TrimEnd('\')
+    $rootPath = [System.IO.Path]::GetFullPath($rootPath.Trim()).TrimEnd('\')
+
+    return $path.StartsWith("$rootPath\", [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function Test-PathNotUnderRoot {
+    param ($path, $rootPath)
+
+    return -not (Test-PathUnderRoot -path $path -rootPath $rootPath)
+}
+
+function Test-PathValidAndUnderRoot {
+    param ($path, $rootPath)
+
+    try {
+        return ((Test-ValidDrivePath -path $path) -and (Test-PathUnderRoot -path $path -rootPath $rootPath))
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to validate path '$path' under root '$rootPath'"; exception = $_ }
+        return $false
+    }
+}
+
+function Test-PathInvalidOrNotUnderRoot {
+    param ($path, $rootPath)
+
+    return -not (Test-PathValidAndUnderRoot -path $path -rootPath $rootPath)
+}
+
+function Test-PathValidUnderProjectRoot {
+    param ($path)
+
+    if ($null -eq $Global:PVMConfig -or $null -eq $Global:PVMConfig.rootPath) {
+        return $false
+    }
+
+    return Test-PathValidAndUnderRoot -path $path -rootPath $Global:PVMConfig.rootPath
+}
+
+function Test-PathInvalidOrNotUnderProjectRoot {
+    param ($path)
+
+    return -not (Test-PathValidUnderProjectRoot -path $path)
+}
+
 function Get-TemporaryDirectory {
     param ($root)
 

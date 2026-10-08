@@ -366,15 +366,11 @@ function Test-ValidDrivePath {
 
     $path = $path.Trim()
 
-    $isValidFormat = ($path -match '^[A-Za-z]:\\') -and ($path.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -eq -1)
-
-    if (-not $isValidFormat) {
+    if ($path -notmatch '^[A-Za-z]:\\' -or $path.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -ne -1) {
         return $false
     }
 
-    $driveLetter = $path.Substring(0, 2)
-
-    $driveInfo = [System.IO.DriveInfo]::new($driveLetter)
+    $driveInfo = [System.IO.DriveInfo]::new($path.Substring(0, 2))
     return $driveInfo.IsReady
 }
 
@@ -475,11 +471,7 @@ function Test-SHA256HashValid {
 
         $actualHash = Get-SHA256HashFromFile -filePath $filePath
 
-        if ($null -eq $actualHash) {
-            return $false
-        }
-
-        return ($actualHash -eq $expectedHash.ToLower())
+        return (($null -ne $actualHash) -and ($actualHash -eq $expectedHash.ToLower()))
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to verify SHA256 hash for '$filePath'"; exception = $_ }
         return $false

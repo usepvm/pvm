@@ -198,13 +198,18 @@ function Expand-ZipCore {
 }
 
 function Expand-Zip {
-    param ($zipPath, $extractPath, $deleteZipAfter = $false)
+    param ($zipPath, $extractPath, $deleteZipAfter = $false, [switch]$disallowOutsideRoot)
 
     try {
+        if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $extractPath)) {
+            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$extractPath'"; exception = "Path is invalid or not under project root" }
+            return -1
+        }
+
         Expand-ZipCore -zipPath $zipPath -extractPath $extractPath
 
         if ($deleteZipAfter) {
-            Remove-ItemWrapper -path $zipPath
+            Remove-ItemWrapper -path $zipPath -disallowOutsideRoot:$disallowOutsideRoot
         }
 
         return 0

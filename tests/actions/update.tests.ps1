@@ -150,7 +150,7 @@ Describe "Get-GitCommitDifference" {
 
     It "returns null when git throws" {
         Mock git { throw 'not a repository' }
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
 
         $difference = Get-GitCommitDifference -currentCommit 'local' -latestCommit 'remote'
 

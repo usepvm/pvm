@@ -2,7 +2,7 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    Mock Add-LogEntry { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Write-HostWrapper" {

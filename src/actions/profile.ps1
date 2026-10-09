@@ -593,12 +593,12 @@ function Export-PHPProfile {
             $exportPath = "$(Get-Location)\$profileName.json"
         }
 
-        $exportDirectory = Split-Path -Path $exportPath -Parent
-        if ([string]::IsNullOrWhiteSpace($exportDirectory)) {
-            $exportDirectory = (Get-Location)
+        if (Test-InvalidDrivePath -path $exportPath) {
+            Show-Error -message "`nPath '$exportPath' is not valid!"
+            return -1
         }
 
-        if (Test-FreeDiskSpaceInsufficient -path $exportDirectory -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
+        if (Test-FreeDiskSpaceInsufficient -path $exportPath -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
             Show-Error -message "`nInsufficient disk space for profile export. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
             return -1
         }

@@ -91,7 +91,7 @@ function Invoke-TestFile {
     try {
         $testEnvironment = Initialize-TestEnvironment -driveName ($file.BaseName -replace '\.tests$', '')
         if (-not $testEnvironment) {
-            throw 'Failed to create test drive!'
+            throw "Failed to create test drive for '$($file.BaseName)'!"
         }
 
         $config.Run.Path = $file.FullName

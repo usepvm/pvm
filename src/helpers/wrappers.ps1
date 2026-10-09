@@ -46,8 +46,7 @@ function Add-ContentWrapper {
     process {
         try {
             if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
-                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$path'"; exception = "Path is invalid or not under project root" }
-                return -1
+                throw "Path validation failed for '$path'!, Path is invalid or not under project root"
             }
 
             Add-Content -Path $path -Value $value -Encoding UTF8 -ErrorAction Stop
@@ -69,8 +68,7 @@ function Set-ContentWrapper {
     } end {
         try {
             if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
-                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$path'"; exception = "Path is invalid or not under project root" }
-                return -1
+                throw "Path validation failed for '$path'!, Path is invalid or not under project root"
             }
 
             Set-Content -Path $path -Value $values -Encoding UTF8 -ErrorAction Stop
@@ -97,8 +95,7 @@ function Invoke-WebRequestWrapper {
 
         if ($null -ne $outFile) {
             if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $outFile)) {
-                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$outFile'"; exception = "Path is invalid or not under project root" }
-                return $null
+                throw "Path validation failed for '$outFile'!, Path is invalid or not under project root"
             }
 
             $params.OutFile = $outFile
@@ -117,12 +114,10 @@ function Move-ItemWrapper {
     try {
         if ($disallowOutsideRoot) {
             if (Test-PathInvalidOrNotUnderProjectRoot -path $path) {
-                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$path'"; exception = "Path is invalid or not under project root" }
-                return -1
+                throw "Path validation failed for '$path'!, Path is invalid or not under project root"
             }
             if (Test-PathInvalidOrNotUnderProjectRoot -path $destination) {
-                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$destination'"; exception = "Path is invalid or not under project root" }
-                return -1
+                throw "Path validation failed for '$destination'!, Path is invalid or not under project root"
             }
         }
         Move-Item -Path $path -Destination $destination -Force -ErrorAction Stop
@@ -139,12 +134,10 @@ function Copy-ItemWrapper {
     try {
         if ($disallowOutsideRoot) {
             if (Test-PathInvalidOrNotUnderProjectRoot -path $path) {
-                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$path'"; exception = "Path is invalid or not under project root" }
-                return -1
+                throw "Path validation failed for '$path'!, Path is invalid or not under project root"
             }
             if (Test-PathInvalidOrNotUnderProjectRoot -path $destination) {
-                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$destination'"; exception = "Path is invalid or not under project root" }
-                return -1
+                throw "Path validation failed for '$destination'!, Path is invalid or not under project root"
             }
         }
 
@@ -161,8 +154,7 @@ function Remove-ItemWrapper {
 
     try {
         if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
-            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$path'"; exception = "Path is invalid or not under project root" }
-            return -1
+            throw "Path validation failed for '$path'!, Path is invalid or not under project root"
         }
 
         Remove-Item -Path $path -Force -Recurse -ErrorAction Stop
@@ -178,8 +170,7 @@ function Clear-ContentWrapper {
 
     try {
         if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
-            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$path'"; exception = "Path is invalid or not under project root" }
-            return -1
+            throw "Path validation failed for '$path'!, Path is invalid or not under project root"
         }
 
         Clear-Content -Path $path -ErrorAction Stop
@@ -242,12 +233,10 @@ function New-ItemWrapper {
     try {
         if ($disallowOutsideRoot) {
             if (Test-PathInvalidOrNotUnderProjectRoot -path $path) {
-                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$path'"; exception = "Path is invalid or not under project root" }
-                return $null
+                throw "Path validation failed for '$path'!, Path is invalid or not under project root"
             }
             if ($null -ne $target -and (Test-PathInvalidOrNotUnderProjectRoot -path $target)) {
-                $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$target'"; exception = "Path is invalid or not under project root" }
-                return $null
+                throw "Path validation failed for '$target'!, Path is invalid or not under project root"
             }
         }
 

@@ -60,7 +60,7 @@ Clone the repository, copy the environment file, run setup, and ensure the proje
 ```sh
 git clone https://github.com/usepvm/pvm
 cd pvm
-cp .env.example .env # edit .env to set your config values before running setup
+# Optional: copy and edit .env before setup. If you skip this, setup creates it from .env.example.
 
 # Run this command to setup pvm
 pvm setup

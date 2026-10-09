@@ -27,7 +27,7 @@ Describe "Show-PHPExtensionInfo" {
             )
         }
         Mock Show-Warning { }
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
         Mock Write-Color { }
     }
 

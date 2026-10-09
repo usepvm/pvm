@@ -66,7 +66,7 @@ Describe "Show-SpinnerWhileJob" {
         Mock Write-HostWrapper { }
         Mock Write-Color { }
         Mock Write-Yellow { }
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
 
         New-Item -Path "$script:ROOT_PATH\src" -ItemType Directory -Force | Out-Null
         Set-Content -Path "$script:ROOT_PATH\src\imports.ps1" -Value '# no-op for tests' -Encoding UTF8
@@ -289,7 +289,7 @@ Describe "Show-SpinnerWhileJob" {
 Describe "Show-SpinnerWhileProcess" {
     BeforeAll {
         Mock Write-Color { }
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
     }
 
     Context "When process succeeds" {
@@ -740,7 +740,7 @@ Describe "Sound Functions" {
             Mock New-Player { return $script:fakePlayer }
             Mock Get-Sound-TotalSeconds { return 3 }
             Mock Start-Sleep { }
-            Mock Add-LogEntry { }
+            Mock Add-LogEntry { return 0 }
         }
 
         It "opens the file, plays it, and sleeps for its duration when 'wait' is specified" {

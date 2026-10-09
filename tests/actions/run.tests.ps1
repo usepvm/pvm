@@ -43,7 +43,7 @@ Describe "Invoke-RunScripts" {
         Mock Invoke-PVMSubprocess { return @{ code = 0; output = '' } }
         Mock Get-Actions { return @{} }
         Mock Show-SubProcessOutput { }
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
         Mock Invoke-Sound { }
     }
 

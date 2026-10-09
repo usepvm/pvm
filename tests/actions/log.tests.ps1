@@ -387,7 +387,7 @@ Describe "Show-Log" {
     }
 
     It "Handles unexpected error reading log file and returns -1" {
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
         Mock Test-FileNotExists { return $false }
         Mock Get-LogEntries { throw 'Error' }
 

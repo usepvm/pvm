@@ -547,7 +547,7 @@ Describe "Expand-Zip" {
     BeforeEach {
         Mock Expand-ZipCore { }
         Mock Remove-ItemWrapper { }
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
     }
 
     It "Should extract zip without errors" {
@@ -569,6 +569,16 @@ Describe "Expand-Zip" {
 
         $result | Should -Be 0
         Should -Invoke Remove-ItemWrapper -Times 0
+    }
+
+    It "Validates path when disallowOutsideRoot is passed" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
+        Mock Add-LogEntry { return 0 }
+
+        $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -disallowOutsideRoot
+
+        $result | Should -Be -1
+        Should -Invoke Add-LogEntry -Times 1
     }
 
     It "Should call Add-LogEntry on extraction failure" {

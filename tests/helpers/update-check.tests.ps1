@@ -224,7 +224,7 @@ Describe "Test-CheckForUpdatesQuietly" {
             Mock Test-ShouldCheckForUpdates { return $true }
             Mock Update-PVM { throw 'Network error' }
             Mock Set-LastUpdateCheckTimestamp { }
-            Mock Add-LogEntry { }
+            Mock Add-LogEntry { return 0 }
 
             $result = Test-CheckForUpdatesQuietly
 

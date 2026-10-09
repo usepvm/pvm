@@ -23,7 +23,7 @@ function Set-IniSettingDirect {
             $lines += $newLine
         }
 
-        Set-ContentWrapper -path $iniPath -value $lines
+        $null = Set-ContentWrapper -path $iniPath -value $lines
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set setting in php.ini"; exception = $_ }
@@ -86,7 +86,7 @@ function Enable-IniExtensionDirect {
             $lines += $newLine
         }
 
-        Set-ContentWrapper -path $iniPath -value $lines
+        $null = Set-ContentWrapper -path $iniPath -value $lines
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable extension in php.ini"; exception = $_ }
@@ -145,7 +145,7 @@ function Disable-IniExtensionDirect {
             }
         }
 
-        Set-ContentWrapper -path $iniPath -value $lines
+        $null = Set-ContentWrapper -path $iniPath -value $lines
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to disable extension in php.ini"; exception = $_ }
@@ -257,7 +257,7 @@ function Save-PHPProfile {
 
         $profilePath = "$($Global:PVMConfig.paths.directories.profiles)\$profileName.json"
         $jsonContent = $userProfile | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $profilePath -value $jsonContent
+        $null = Set-ContentWrapper -path $profilePath -value $jsonContent
 
         Show-Success -message "`nProfile '$profileName' saved successfully."
         Show-Message -message "  Settings: $($userProfile.settings.Count) (popular/common only)"
@@ -536,7 +536,7 @@ function Remove-PHPProfile {
             }
         }
 
-        Remove-ItemWrapper -path $profilePath
+        $null = Remove-ItemWrapper -path $profilePath
         Show-Success -message "`nProfile '$profileName' deleted successfully."
 
         return 0
@@ -566,7 +566,7 @@ function Clear-PHPProfiles {
             }
         }
 
-        Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.profiles)\*"
+        $null = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.profiles)\*"
 
         Show-Success -message "`nAll profiles deleted successfully."
 
@@ -603,7 +603,7 @@ function Export-PHPProfile {
             return -1
         }
 
-        Copy-ItemWrapper -path $profilePath -destination $exportPath
+        $null = Copy-ItemWrapper -path $profilePath -destination $exportPath
         Show-Success -message "`nProfile '$profileName' exported to: $exportPath"
 
         return 0
@@ -656,9 +656,9 @@ function Import-PHPProfile {
         if ($finalName -ne $userProfile.name) {
             $userProfile.name = $finalName
             $jsonContent = $userProfile | ConvertTo-Json -Depth 10
-            Set-ContentWrapper -path $targetPath -value $jsonContent
+            $null = Set-ContentWrapper -path $targetPath -value $jsonContent
         } else {
-            Copy-ItemWrapper -path $importPath -destination $targetPath
+            $null = Copy-ItemWrapper -path $importPath -destination $targetPath
         }
 
         Show-Success -message "`nProfile imported successfully as '$finalName'."
@@ -717,7 +717,7 @@ function New-ProfileExample {
         }
 
         $jsonContent = $profileExample | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $Global:PVMConfig.paths.files.profileExample -value $jsonContent
+        $null = Set-ContentWrapper -path $Global:PVMConfig.paths.files.profileExample -value $jsonContent
 
         return 0
     } catch {
@@ -734,7 +734,7 @@ function New-ProfileTemplate {
         }
 
         $jsonContent = $profileTemplate | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $Global:PVMConfig.paths.files.profileTemplate -value $jsonContent
+        $null = Set-ContentWrapper -path $Global:PVMConfig.paths.files.profileTemplate -value $jsonContent
 
         return 0
     } catch {

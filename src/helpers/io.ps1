@@ -204,7 +204,7 @@ function Expand-Zip {
         Expand-ZipCore -zipPath $zipPath -extractPath $extractPath
 
         if ($deleteZipAfter) {
-            Remove-ItemWrapper -path $zipPath
+            $null = Remove-ItemWrapper -path $zipPath
         }
 
         return 0

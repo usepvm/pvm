@@ -142,7 +142,7 @@ function New-EnvFile {
                 return -1
             }
         }
-        Copy-ItemWrapper -path "$($Global:PVMConfig.rootPath)\.env.example" -destination "$($Global:PVMConfig.rootPath)\.env"
+        $null = Copy-ItemWrapper -path "$($Global:PVMConfig.rootPath)\.env.example" -destination "$($Global:PVMConfig.rootPath)\.env"
         Show-Success -message "`nCreated .env file."
 
         return 0

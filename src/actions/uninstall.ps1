@@ -33,7 +33,7 @@ function Uninstall-PHP {
             }
         }
 
-        Remove-ItemWrapper -path $pathVersionObject.path
+        $null = Remove-ItemWrapper -path $pathVersionObject.path
 
         $null = Update-InstalledPHPVersionsCache
 

@@ -17,7 +17,7 @@ function Remove-ExtensionFromIniFile {
             return -1
         }
 
-        Set-ContentWrapper -path $iniPath -value $newLines
+        $null = Set-ContentWrapper -path $iniPath -value $newLines
 
         return 0
     } catch {
@@ -40,7 +40,7 @@ function Remove-ExtensionFromExtDirectory {
             return -1
         }
 
-        Remove-ItemWrapper -path $extensionFullPath
+        $null = Remove-ItemWrapper -path $extensionFullPath
 
         return 0
     } catch {

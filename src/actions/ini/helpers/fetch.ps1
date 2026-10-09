@@ -68,7 +68,7 @@ function Get-ExtensionHandlers {
                             if ($existingFile) {
                                 $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
                                 if (Test-NoResponse -response $response) {
-                                    Remove-ItemWrapper -path $extFile.FullName
+                                    $null = Remove-ItemWrapper -path $extFile.FullName
                                     Write-Gray -message "`nInstallation cancelled"
                                     return $null
                                 }
@@ -76,16 +76,16 @@ function Get-ExtensionHandlers {
                         }
 
                         if ($existingFile) {
-                            Remove-ItemWrapper -path $existingFile
+                            $null = Remove-ItemWrapper -path $existingFile
                         }
-                        Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
+                        $null = Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
                         return $extFile
                     } catch {
                         $null = Add-LogEntry -data @{ header = "Xdebug.org Handler - Failed to download extension"; exception = $_ }
                         return $null
                     } finally {
                         if ($temporaryDirectory) {
-                            Remove-ItemWrapper -path $temporaryDirectory
+                            $null = Remove-ItemWrapper -path $temporaryDirectory
                         }
                     }
                 }
@@ -140,7 +140,7 @@ function Get-ExtensionHandlers {
 
                         if ($code -ne 0) {
                             Show-Error -message "`nFailed to extract extension $extName"
-                            Remove-ItemWrapper -path $extractPath
+                            $null = Remove-ItemWrapper -path $extractPath
                             return $null
                         }
 
@@ -150,7 +150,7 @@ function Get-ExtensionHandlers {
                         }
 
                         if (-not $extFile) {
-                            Remove-ItemWrapper -path $extractPath
+                            $null = Remove-ItemWrapper -path $extractPath
                             return $null
                         }
 
@@ -161,7 +161,7 @@ function Get-ExtensionHandlers {
                             if ($existingFile) {
                                 $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
                                 if (Test-NoResponse -response $response) {
-                                    Remove-ItemWrapper -path $extractPath
+                                    $null = Remove-ItemWrapper -path $extractPath
                                     Write-Gray -message "`nInstallation cancelled"
                                     return $null
                                 }
@@ -169,17 +169,17 @@ function Get-ExtensionHandlers {
                         }
 
                         if ($existingFile) {
-                            Remove-ItemWrapper -path $existingFile
+                            $null = Remove-ItemWrapper -path $existingFile
                         }
-                        Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
-                        Remove-ItemWrapper -path $extractPath
+                        $null = Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
+                        $null = Remove-ItemWrapper -path $extractPath
                         return $extFile
                     } catch {
                         $null = Add-LogEntry -data @{ header = "PECL Handler - Failed to download extension"; exception = $_ }
                         return $null
                     } finally {
                         if ($temporaryDirectory) {
-                            Remove-ItemWrapper -path $temporaryDirectory
+                            $null = Remove-ItemWrapper -path $temporaryDirectory
                         }
                     }
                 }
@@ -238,7 +238,7 @@ function Get-ExtensionHandlers {
                         }
                     }
 
-                    Set-ContentWrapper -path $iniPath -value $newLines
+                    $null = Set-ContentWrapper -path $iniPath -value $newLines
 
                     # Add new xdebug config
                     $xDebugConfig = Get-XdebugConfigV2 -dllPath $fileName
@@ -246,7 +246,7 @@ function Get-ExtensionHandlers {
                         $xDebugConfig = Get-XdebugConfigV3 -dllPath $fileName
                     }
                     $xDebugConfig = "`n$($xDebugConfig -join "`n")"
-                    Add-ContentWrapper -path $iniPath -value $xDebugConfig
+                    $null = Add-ContentWrapper -path $iniPath -value $xDebugConfig
 
                     return 0
                 } catch {

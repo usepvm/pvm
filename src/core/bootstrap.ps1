@@ -255,7 +255,7 @@ function Start-PVM {
         return -1
     } finally {
         if (Test-ValidDrivePath -path $Global:PVMConfig.paths.directories.temp) {
-            Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.temp)\*"
+            $null = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.temp)\*"
         }
 
         if ($result -eq 0 -and $command -ne 'update') {

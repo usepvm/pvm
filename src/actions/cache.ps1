@@ -93,7 +93,7 @@ function Remove-CacheFile {
             }
         }
 
-        Remove-ItemWrapper -path $cachePath
+        $null = Remove-ItemWrapper -path $cachePath
         Show-Success -message "`nCache file '$cacheName' deleted successfully."
 
         return 0
@@ -123,7 +123,7 @@ function Clear-CacheFiles {
             }
         }
 
-        Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.cache)\*"
+        $null = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.cache)\*"
 
         Show-Success -message "`nAll cache files deleted successfully."
 

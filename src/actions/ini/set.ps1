@@ -78,7 +78,7 @@ function Set-IniSetting {
 
             $lines = Get-ContentWrapper -path $iniPath
             $lines[$selected.lineNo] = $newLine
-            Set-ContentWrapper -path $iniPath -value $lines
+            $null = Set-ContentWrapper -path $iniPath -value $lines
 
             $status = if ($enable) { 'Enabled' } else { 'Disabled' }
             $color = if ($enable) { 'DarkGreen' } else { 'DarkYellow' }

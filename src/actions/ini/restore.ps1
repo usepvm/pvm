@@ -48,7 +48,7 @@ function Restore-IniBackup {
         }
 
         $selectedBackup = $backupList[$choice]
-        Copy-ItemWrapper -path $selectedBackup.file.FullName -destination $iniPath
+        $null = Copy-ItemWrapper -path $selectedBackup.file.FullName -destination $iniPath
         Show-Success -message "`nRestored php.ini from backup: $($selectedBackup.file.Name)"
 
         return 0

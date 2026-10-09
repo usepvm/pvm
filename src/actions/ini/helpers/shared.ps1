@@ -30,7 +30,7 @@ function Backup-IniFile {
         $now = Get-Date -Format 'yyyy-MM-dd_HH-mm'
         $backup = "$iniBackupPath\php.ini_$($now).bak"
         if (Test-FileNotExists -path $backup) {
-            Copy-ItemWrapper -path $iniPath -destination $backup
+            $null = Copy-ItemWrapper -path $iniPath -destination $backup
         }
 
         $null = Clear-IniBackups -iniBackupPath $iniBackupPath
@@ -70,7 +70,7 @@ function Clear-IniBackups {
         }
 
         foreach ($file in $filesToDelete) {
-            Remove-ItemWrapper -path $file.FullName
+            $null = Remove-ItemWrapper -path $file.FullName
         }
 
         return 0
@@ -189,7 +189,7 @@ function Get-AllPHPExtensionsStatus {
             if ($addToIniFileIfMissing) {
                 try {
                     $lines += $extensionLine
-                    Set-ContentWrapper -path $iniPath -value $lines
+                    $null = Set-ContentWrapper -path $iniPath -value $lines
                     $entry.color      = 'DarkYellow'
                     $entry.line       = $extensionLine
                     $entry.lineNumber = $lines.Count

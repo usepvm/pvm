@@ -77,7 +77,7 @@ function Disable-IniExtension {
             }
 
             $null = Backup-IniFile -iniPath $iniPath
-            Set-ContentWrapper -path $iniPath -value $updatedLines
+            $null = Set-ContentWrapper -path $iniPath -value $updatedLines
             $results += @{ name = $selected.name; status = 'Disabled'; color = 'DarkYellow' }
         }
 

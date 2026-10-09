@@ -428,7 +428,7 @@ function Invoke-Log {
             }
         }
 
-        Clear-ContentWrapper -path $Global:PVMConfig.paths.files.logError
+        $null = Clear-ContentWrapper -path $Global:PVMConfig.paths.files.logError
         Show-Success -message "`nLog Cleared Successfully"
         return 0
     }

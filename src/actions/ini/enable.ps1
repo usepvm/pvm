@@ -77,7 +77,7 @@ function Enable-IniExtension {
             }
 
             $null = Backup-IniFile -iniPath $iniPath
-            Set-ContentWrapper -path $iniPath -value $newLines
+            $null = Set-ContentWrapper -path $iniPath -value $newLines
 
             $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
         }

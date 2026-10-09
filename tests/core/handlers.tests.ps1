@@ -1448,7 +1448,6 @@ Describe "Invoke-Test" {
 
     It "Installs Pester module when not already installed" {
         Mock Get-Module -ParameterFilter { $ListAvailable -and $Name -eq 'Pester' } -MockWith { return $null }
-        Mock Install-Module -ParameterFilter { $Name -eq 'Pester' } -MockWith { }
 
         $result = Invoke-Test -arguments @()
         $result | Should -Be 0

@@ -206,7 +206,7 @@ Describe "Show-SpinnerWhileJob" {
                 return @{ pvmData = @{ result = 'success' } }
             }
 
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
 
             $scriptBlock = { return @{ result = 'success' } }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock
@@ -222,7 +222,7 @@ Describe "Show-SpinnerWhileJob" {
                 throw "Job failed"
             }
 
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
 
             $scriptBlock = { throw "Job failed" }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false

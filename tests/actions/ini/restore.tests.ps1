@@ -37,7 +37,7 @@ Describe "Restore-IniBackup" {
             )
         }
         Mock Read-HostWrapper { return '0' }
-        Mock Copy-ItemWrapper { }
+        Mock Copy-ItemWrapper { return 0 }
     }
 
     It "Returns 0 when restore succeeds" {

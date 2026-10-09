@@ -186,7 +186,7 @@ Describe "Save-CachedData" {
     It "Caches data successfully" {
         Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
         Mock New-Directory { return 0 }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
         $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be 0
     }
@@ -205,7 +205,7 @@ Describe "Save-CachedData" {
     It "Fails to creade cache directory" {
         Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
         Mock New-Directory { return -1 }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
         $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be -1
     }

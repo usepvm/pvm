@@ -189,7 +189,7 @@ Describe "Clear-IniBackups" {
                 [PSCustomObject]@{ FullName = 'backup2.bak'; CreationTime = $now.AddMinutes(-10) }
             )
         }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
 
         $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
 
@@ -210,7 +210,7 @@ Describe "Clear-IniBackups" {
                 [PSCustomObject]@{ FullName = 'backup6.bak'; CreationTime = $now.AddDays(-45) }
             )
         }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
 
         $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
 
@@ -229,7 +229,7 @@ Describe "Clear-IniBackups" {
                 [PSCustomObject]@{ FullName = 'backup4.bak'; CreationTime = $now.AddDays(-50) }
             )
         }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
 
         $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
 

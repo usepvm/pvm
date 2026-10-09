@@ -1109,7 +1109,7 @@ Describe "Invoke-Log" {
     }
 
     It "Should skip confirmation and clear log file" {
-        Mock Clear-ContentWrapper { }
+        Mock Clear-ContentWrapper { return 0 }
 
         $code = Invoke-Log -arguments @('--clear', '-y')
 
@@ -1132,7 +1132,7 @@ Describe "Invoke-Log" {
     }
 
     It "Should prompt for confirmation and proceed with log clearing when user responds with 'y'" {
-        Mock Clear-ContentWrapper { }
+        Mock Clear-ContentWrapper { return 0 }
         Mock Show-Success { }
         Mock Read-HostWrapper { return 'y' }
 

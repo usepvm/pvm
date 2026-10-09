@@ -275,7 +275,7 @@ Describe "Initialize-EnvironmentDirectoriesAndFiles" {
 
 Describe "New-EnvFile" {
     BeforeAll {
-        Mock Copy-ItemWrapper { }
+        Mock Copy-ItemWrapper { return 0 }
     }
 
     It "Returns -1 when the .env.example file is not found" {

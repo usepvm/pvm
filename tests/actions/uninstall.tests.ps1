@@ -28,7 +28,7 @@ Describe "Uninstall-PHP" {
         BeforeEach {
             Mock Get-MatchingPHPVersions { }
             Mock Get-UserSelectedPHPVersion { }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
             Mock Add-LogEntry { return 0 }
             Mock Get-CurrentPHPVersion { return @{ version = $null } }
         }
@@ -164,7 +164,7 @@ Describe "Uninstall-PHP" {
             Mock Get-UserSelectedPHPVersion {
                 return @{ code = 0; version = '8.0'; path = "$script:testPhpPath\8.0" }
             }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
             Mock Add-LogEntry { return 0 }
             Mock Get-CurrentPHPVersion { return @{ version = $null } }
         }
@@ -189,7 +189,7 @@ Describe "Uninstall-PHP" {
         BeforeEach {
             Mock Get-MatchingPHPVersions -ParameterFilter { $version -eq '5.6' } -MockWith { return @() }
             Mock Get-UserSelectedPHPVersion { }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
             Mock Add-LogEntry { return 0 }
         }
 
@@ -212,7 +212,7 @@ Describe "Uninstall-PHP" {
             Mock Get-UserSelectedPHPVersion {
                 return @{ code = -1; message = 'User cancelled the selection'; color = 'DarkYellow' }
             }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
             Mock Add-LogEntry { return 0 }
         }
 
@@ -232,7 +232,7 @@ Describe "Uninstall-PHP" {
         BeforeEach {
             Mock Get-MatchingPHPVersions { return $null }
             Mock Get-UserSelectedPHPVersion { return $null }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
             Mock Add-LogEntry { return 0 }
         }
 

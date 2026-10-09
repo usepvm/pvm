@@ -80,7 +80,7 @@ Describe "Remove-ExtensionFromIniFile" {
 Describe "Remove-ExtensionFromExtDirectory" {
     It "Removes the file and returns 0 when file exists and paths match" {
         Mock Test-FileNotExists { return $false }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         $extensionObject = @{
             fileName = 'php_curl.dll'
             fullPath = "$script:extDirectory\php_curl.dll"

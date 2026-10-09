@@ -137,7 +137,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Get-XDebugFromUrl { return $null }
             Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp\php"; sizeMB = 10 } }
             Mock Get-RemoteFile { return $null }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
             $handler = $sourceHandlers['xdebug.org']
@@ -165,7 +165,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
             $handler = $sourceHandlers['xdebug.org']
@@ -194,8 +194,8 @@ Describe "Get-ExtensionHandlers" {
             Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
-            Mock Remove-ItemWrapper { }
-            Mock Move-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
+            Mock Move-ItemWrapper { return 0 }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
             $handler = $sourceHandlers['xdebug.org']
@@ -224,7 +224,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
             Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
-            Mock Move-ItemWrapper { }
+            Mock Move-ItemWrapper { return 0 }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
             $handler = $sourceHandlers['xdebug.org']
@@ -300,7 +300,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             Mock Expand-Zip { return 0 }
             Mock Get-ChildItemWrapper { return @() }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
@@ -345,7 +345,7 @@ Describe "Get-ExtensionHandlers" {
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Expand-Zip { return 0 }
             Mock Get-ChildItemWrapper { return @() }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
             $handler = $sourceHandlers['pecl.php.net']
@@ -395,7 +395,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Get-PackagesFromSourceLinks { return $null }
             Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp\php"; sizeMB = 10 } }
             Mock Get-RemoteFile { return $null }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
             $handler = $sourceHandlers['pecl.php.net']
@@ -430,7 +430,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
             Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             Mock Expand-Zip { return -1 }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
             $handler = $sourceHandlers['pecl.php.net']
@@ -469,7 +469,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             Mock Test-FileExists { return $true }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($mockFile.Name) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
             $handler = $sourceHandlers['pecl.php.net']
@@ -509,8 +509,8 @@ Describe "Get-ExtensionHandlers" {
             $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
             Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($mockFile.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
-            Mock Move-ItemWrapper { }
-            Mock Remove-ItemWrapper { }
+            Mock Move-ItemWrapper { return 0 }
+            Mock Remove-ItemWrapper { return 0 }
             Mock Get-ChildItemWrapper { return @($mockFile) } -ParameterFilter { $path -like "*$($chosenItem.fileName)*" }
             Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
 
@@ -547,8 +547,8 @@ Describe "Get-ExtensionHandlers" {
             Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
             Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             Mock Expand-Zip { return 0 }
-            Mock Move-ItemWrapper { }
-            Mock Remove-ItemWrapper { }
+            Mock Move-ItemWrapper { return 0 }
+            Mock Remove-ItemWrapper { return 0 }
             $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
             Mock Get-ChildItemWrapper { return @( $mockFile ) }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
@@ -619,8 +619,8 @@ Describe "Get-ExtensionHandlers" {
                 'xdebug.mode=debug'
             )
             Mock Get-ContentWrapper { return $iniContent }
-            Mock Set-ContentWrapper { }
-            Mock Add-ContentWrapper { }
+            Mock Set-ContentWrapper { return 0 }
+            Mock Add-ContentWrapper { return 0 }
 
             $configHandlers = (Get-ExtensionHandlers).ExtensionConfigHandlers
             $configHandler = $configHandlers['xdebug']

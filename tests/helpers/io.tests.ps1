@@ -546,7 +546,7 @@ Describe "Expand-ZipCore" {
 Describe "Expand-Zip" {
     BeforeEach {
         Mock Expand-ZipCore { }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         Mock Add-LogEntry { return 0 }
     }
 

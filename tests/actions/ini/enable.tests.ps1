@@ -65,7 +65,7 @@ Describe "Enable-IniExtension" {
                 @{ name = 'php_curl'; status = 'Enabled'; color = 'DarkGreen'; line = 'extension=php_curl.dll'; lineNumber = 1 }
             )
         }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
 
         $code = Enable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
         $code | Should -Be 0

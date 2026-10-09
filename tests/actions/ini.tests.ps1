@@ -317,8 +317,8 @@ Describe "Invoke-IniAction" {
             }
 
             Mock Expand-Zip { }
-            Mock Remove-ItemWrapper { }
-            Mock Move-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
+            Mock Move-ItemWrapper { return 0 }
         }
 
         It "Installs extension" {

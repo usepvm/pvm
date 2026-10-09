@@ -1650,7 +1650,7 @@ Describe "Export-PHPProfile" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\testprofile.json" -Encoding UTF8
 
         Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Copy-ItemWrapper { }
+        Mock Copy-ItemWrapper { return 0 }
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath 'out.json'
         $result | Should -Be 0
@@ -1665,7 +1665,7 @@ Describe "Export-PHPProfile" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\testprofile.json" -Encoding UTF8
 
         Mock Test-FreeDiskSpaceInsufficient { return $true }
-        Mock Copy-ItemWrapper { }
+        Mock Copy-ItemWrapper { return 0 }
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath "$script:TEST_DRIVE\export\out.json"
         $result | Should -Be -1

@@ -79,7 +79,7 @@ Describe "Set-LastUpdateCheckTimestamp" {
         It "Returns -1 when New-Directory fails" {
             Mock Show-Error { }
             Mock New-Directory { return -1 }
-            Mock Set-ContentWrapper { }
+            Mock Set-ContentWrapper { return 0 }
 
             $result = Set-LastUpdateCheckTimestamp
 

@@ -60,7 +60,7 @@ Describe "Disable-IniExtension" {
                 @{ name = 'php_xdebug'; status = 'Disabled'; color = 'DarkYellow'; line = ';extension=php_xdebug.dll'; lineNumber = 1 }
             )
         }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
 
         $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('xdebug')
         $code | Should -Be 0
@@ -96,7 +96,7 @@ Describe "Disable-IniExtension" {
             )
         }
         Mock Get-ContentWrapper { return @('extension=php_curl.dll') }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
 
         $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
         $code | Should -Be 0

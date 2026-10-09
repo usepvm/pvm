@@ -822,6 +822,7 @@ Describe "Set-TestDrive" {
         $Global:PVMConfig.paths.directories.log | Should -Be "$fakeRoot\storage\logs"
         $Global:PVMConfig.paths.directories.assets | Should -Be "$fakeRoot\assets"
         $Global:PVMConfig.paths.directories.temp | Should -Be "$fakeRoot\storage\temp"
+        $Global:PVMConfig.paths.directories.cert | Should -Be "$fakeRoot\storage\cert"
 
         $Global:PVMConfig.paths.files.profileExample | Should -Be "$fakeRoot\storage\data\profiles\profile-example.json"
         $Global:PVMConfig.paths.files.profileTemplate | Should -Be "$fakeRoot\storage\data\templates\profile-template.json"

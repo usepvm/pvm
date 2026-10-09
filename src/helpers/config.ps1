@@ -193,6 +193,7 @@ function Get-Config {
                 state              = $state
                 assets             = "$rootPath\assets"
                 temp               = "$storage\temp"
+                cert               = "$storage\cert"
             }
             files       = @{
                 profileExample     = "$profiles\profile-example.json"
@@ -217,6 +218,7 @@ function Get-Config {
             peclPackageRoot    = 'https://pecl.php.net/package'
             peclPackages       = 'https://pecl.php.net/packages.php'
             peclWinExtDownload = 'https://downloads.php.net/~windows/pecl/releases'
+            curlCaBundle       = 'https://curl.se/ca/cacert.pem'
         }
 
         env      = [ordered]@{

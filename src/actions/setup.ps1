@@ -51,6 +51,7 @@ function Initialize-PVMDirectories {
         $Global:PVMConfig.paths.directories.log,
         $Global:PVMConfig.paths.directories.state
         $Global:PVMConfig.paths.directories.temp
+        $Global:PVMConfig.paths.directories.cert
     )
 
     Show-Message -message "`nPVM environment directories:"

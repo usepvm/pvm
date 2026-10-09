@@ -1646,19 +1646,16 @@ Describe "Export-PHPProfile" {
         $exportedContent.extensions.opcache.type | Should -Be 'zend_extension'
     }
 
-    It "Should fall back to current location for disk check when exportPath has no directory" {
+    It "Should return -1 when exportPath is not valid" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\testprofile.json" -Encoding UTF8
-
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Test-InvalidDrivePath { return $true }
         Mock Copy-ItemWrapper { return 0 }
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath 'out.json'
-        $result | Should -Be 0
 
-        Should -Invoke Get-Location -Exactly 1
-        Should -Invoke Test-FreeDiskSpaceInsufficient -ParameterFilter {
-            $path -eq "$script:TEST_DRIVE\export"
-        } -Exactly 1
+        $result | Should -Be -1
+        Should -Invoke Test-InvalidDrivePath -ParameterFilter { $path -eq 'out.json' } -Exactly 1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Path 'out.json' is not valid*" }
     }
 
     It "Should return -1 when disk space is insufficient for profile export" {

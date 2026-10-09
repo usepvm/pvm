@@ -7,8 +7,8 @@ BeforeAll {
     $script:extDirectory = "$script:phpPath\ext"
     $script:testBackupPath = "$script:phpPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
 
-    $null = New-Directory -path $script:phpPath
-    $null = New-Directory -path $script:extDirectory
+    $null = New-Item -ItemType Directory -Path $script:phpPath -Force
+    $null = New-Item -ItemType Directory -Path $script:extDirectory -Force
 
     Mock Show-Warning { }
     Mock Show-Error { }
@@ -25,7 +25,7 @@ BeforeAll {
             'extension=php_xdebug.dll'
             'zend_extension=php_opcache.dll'
             'display_errors = On'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
     }
 
     Reset-IniContent
@@ -152,7 +152,7 @@ Describe "Uninstall-Extension" {
     }
 
     AfterEach {
-        Remove-ItemWrapper -path "$script:extDirectory\*"
+        Remove-Item -Path "$script:extDirectory\*" -Force -Recurse -ErrorAction SilentlyContinue
     }
 
     It "Returns -1 immediately when extNames is empty" {

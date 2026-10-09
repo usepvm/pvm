@@ -7,9 +7,9 @@ BeforeAll {
     $script:extDirectory = "$script:phpPath\ext"
     $script:testBackupPath = "$script:phpPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
 
-    $null = New-Directory -path $Global:PVMConfig.paths.directories.cache
-    $null = New-Directory -path $script:phpPath
-    $null = New-Directory -path $script:extDirectory
+    $null = New-Item -ItemType Directory -Path $Global:PVMConfig.paths.directories.cache -Force
+    $null = New-Item -ItemType Directory -Path $script:phpPath -Force
+    $null = New-Item -ItemType Directory -Path $script:extDirectory -Force
 
     $script:XDEBUG_BASE_URL = $Global:PVMConfig.links.xdebugBase
     $script:PECL_PACKAGES_URL = $Global:PVMConfig.links.peclPackages
@@ -35,7 +35,7 @@ BeforeAll {
             'display_errors = On'
             'max_execution_time = 30'
             ';upload_max_filesize = 2M'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
     }
 
     Reset-IniContent
@@ -236,7 +236,7 @@ Describe "Get-PrereleaseSortKey" {
 Describe "Add-MissingPHPExtensionToIni" {
     BeforeEach {
         Reset-IniContent
-        Remove-ItemWrapper -path $script:testBackupPath
+        Remove-Item -Path $script:testBackupPath -Force -Recurse -ErrorAction SilentlyContinue
         Mock Get-ZendExtensionsList { return @('xdebug', 'opcache') }
     }
 
@@ -271,7 +271,7 @@ Describe "Add-MissingPHPExtensionToIni" {
         @(
             'zend_extension=php_opcache.dll'
             'extension=php_mbstring.dll'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         Mock Test-FileNotExists { return $false }
         Mock Test-DirectoryNotExists { return $false }
@@ -287,7 +287,7 @@ Describe "Add-MissingPHPExtensionToIni" {
         @(
             'zend_extension=php_opcache.dll'
             ';extension=php_mbstring.dll'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         Mock Test-FileNotExists { return $false }
         Mock Test-DirectoryNotExists { return $false }
@@ -300,7 +300,7 @@ Describe "Add-MissingPHPExtensionToIni" {
         @(
             'zend_extension=php_opcache.dll'
             'extension=php_mbstring.dll'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         Mock Test-FileNotExists { return $false }
         Mock Test-DirectoryNotExists { return $false }
@@ -311,7 +311,7 @@ Describe "Add-MissingPHPExtensionToIni" {
     }
 
     It "Adds zend_extensions correctly" {
-        'extension=php_mbstring.dll' | Set-ContentWrapper -path $script:testIniPath
+        'extension=php_mbstring.dll' | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         Mock Test-FileNotExists { return $false }
         Mock Test-DirectoryNotExists { return $false }

@@ -11,7 +11,7 @@ BeforeAll {
     $script:DEFAULT_ZEND_EXTENSIONS = $Global:PVMConfig.defaults.zendExtensions
     $script:MIN_PAD_RIGHT_LENGTH = $Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH
 
-    $null = New-Directory -path $script:testPhpPath
+    $null = New-Item -ItemType Directory -Path $script:testPhpPath -Force
 
     Mock Show-Message { }
     Mock Show-Error { }
@@ -27,7 +27,7 @@ BeforeAll {
             'display_errors = On'
             'max_execution_time = 30'
             ';upload_max_filesize = 2M'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
     }
 
     # Create initial ini content first
@@ -312,7 +312,7 @@ Describe "Get-ZendExtensionsList" {
     BeforeAll {
         New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $testContent = @('opcache', 'xdebug', 'swoole')
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $script:ZEND_EXTENSIONS_LIST_PATH
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $script:ZEND_EXTENSIONS_LIST_PATH -Encoding UTF8
     }
 
     It "Returns the zend_extensions.json content as a hashtable" {
@@ -324,7 +324,7 @@ Describe "Get-ZendExtensionsList" {
     }
 
     It "Falls back to DEFAULT_ZEND_EXTENSIONS value" {
-        Remove-ItemWrapper -path "$script:TEMPLATES_PATH\zend_extensions.json"
+        Remove-Item -Path "$script:TEMPLATES_PATH\zend_extensions.json" -Force -Recurse -ErrorAction SilentlyContinue
         $result = Get-ZendExtensionsList
         $result.Count | Should -Be $script:DEFAULT_ZEND_EXTENSIONS.Count
     }
@@ -885,7 +885,7 @@ Describe "Get-ZendExtensionsInfo" {
             'extension=php_curl.dll'
             'zend_extension=php_opcache.dll'
             ';upload_max_filesize = 2M'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
         New-Item -ItemType Directory -Force -Path $script:testExtPath | Out-Null
         New-Item -Path "$script:testExtPath\opcache.dll" -ItemType File -Force | Out-Null
         New-Item -Path "$script:testExtPath\php_xdebug.dll" -ItemType File -Force | Out-Null
@@ -951,7 +951,7 @@ Describe "Get-PHPData" {
     }
 
     It "Handles empty ini file" {
-        '' | Set-ContentWrapper -path $script:testIniPath
+        '' | Set-Content -Path $script:testIniPath -Encoding UTF8
         $extensions = (Get-PHPData -phpIniPath $script:testIniPath).extensions
         $extensions.Count | Should -Be 0
     }

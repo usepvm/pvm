@@ -15,7 +15,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
 
     AfterEach {
         if (Test-Path $script:TIMESTAMP_FILE) {
-            Remove-ItemWrapper -path $script:TIMESTAMP_FILE
+            Remove-Item -Path $script:TIMESTAMP_FILE -Force -Recurse -ErrorAction SilentlyContinue
         }
     }
 
@@ -29,7 +29,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
     Context "When the timestamp file exists" {
         It "Returns a DateTime parsed from the file content" {
             $date = Get-Date '2026-01-01 10:00:00'
-            $date | Set-ContentWrapper -path $script:TIMESTAMP_FILE
+            $date | Set-Content -Path $script:TIMESTAMP_FILE -Encoding UTF8
 
             $result = Get-LastUpdateCheckTimestamp
 
@@ -38,7 +38,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
         }
 
         It "Returns null when the file content cannot be parsed as a DateTime" {
-            'not-a-date' | Set-ContentWrapper -path $script:TIMESTAMP_FILE
+            'not-a-date' | Set-Content -Path $script:TIMESTAMP_FILE -Encoding UTF8
 
             $result = Get-LastUpdateCheckTimestamp
 

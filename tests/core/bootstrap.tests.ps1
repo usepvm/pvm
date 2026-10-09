@@ -264,6 +264,8 @@ Describe "Start-PVM" {
         Mock Show-Usage { }
         Mock Show-PVMVersion { }
         Mock Resolve-FlagCommand { return $null }
+        Mock Test-ValidDrivePath { return $true }
+        Mock Remove-ItemWrapper { }
         Mock Test-CheckForUpdatesQuietly { }
         Mock Get-Actions {
             return [ordered]@{

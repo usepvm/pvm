@@ -2,7 +2,7 @@
 BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $null = New-Directory -path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
+    $null = New-Item -ItemType Directory -Path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force
 
     Mock Write-Color { }
     Mock Show-Info { }

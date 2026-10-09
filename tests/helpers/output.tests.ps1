@@ -69,7 +69,7 @@ Describe "Show-SpinnerWhileJob" {
         Mock Add-LogEntry { }
 
         New-Item -Path "$script:ROOT_PATH\src" -ItemType Directory -Force | Out-Null
-        Set-ContentWrapper -path "$script:ROOT_PATH\src\imports.ps1" -value '# no-op for tests'
+        Set-Content -Path "$script:ROOT_PATH\src\imports.ps1" -Value '# no-op for tests' -Encoding UTF8
 
         $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
         $script:keepRunning = $true

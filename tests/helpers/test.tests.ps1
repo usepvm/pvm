@@ -792,7 +792,7 @@ Describe "Set-TestDrive" {
             'DEFAULT_PARTIAL_LIST_SIZE=10'
             'MIN_PAD_RIGHT_LENGTH=20'
             'MIN_LINE_LENGTH=50'
-        ) -join "`n" | Set-ContentWrapper -path "$testRoot\.env"
+        ) -join "`n" | Set-Content -Path "$testRoot\.env" -Encoding UTF8
     }
 
     BeforeEach {

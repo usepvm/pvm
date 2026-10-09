@@ -7,9 +7,9 @@ BeforeAll {
     $script:extDirectory = "$script:phpPath\ext"
     $script:testBackupPath = "$script:phpPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
 
-    $null = New-Directory -path $Global:PVMConfig.paths.directories.cache
-    $null = New-Directory -path $script:phpPath
-    $null = New-Directory -path $script:extDirectory
+    $null = New-Item -ItemType Directory -Path $Global:PVMConfig.paths.directories.cache -Force
+    $null = New-Item -ItemType Directory -Path $script:phpPath -Force
+    $null = New-Item -ItemType Directory -Path $script:extDirectory -Force
 
     Mock Show-Warning { }
     Mock Show-Message { }
@@ -28,7 +28,7 @@ BeforeAll {
             'display_errors = On'
             'max_execution_time = 30'
             ';upload_max_filesize = 2M'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
     }
 
     Reset-IniContent
@@ -37,7 +37,7 @@ BeforeAll {
 Describe "Set-IniSetting" {
     BeforeEach {
         Reset-IniContent
-        Remove-ItemWrapper -path $script:testBackupPath
+        Remove-Item -Path $script:testBackupPath -Force -Recurse -ErrorAction SilentlyContinue
     }
 
     It "Accepts key parameter without value" {
@@ -81,7 +81,7 @@ Describe "Set-IniSetting" {
         @(
             ';memory_limit=2G'
             'opcache.protect_memory=1'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '4G' }
@@ -95,7 +95,7 @@ Describe "Set-IniSetting" {
         @(
             ';memory_limit=2G'
             'opcache.protect_memory=1'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
 
@@ -119,7 +119,7 @@ Describe "Set-IniSetting" {
         @(
             ';memory_limit=2G'
             'opcache.protect_memory=1'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         $script:callCount = 0
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
@@ -137,7 +137,7 @@ Describe "Set-IniSetting" {
         @(
             'memory_limit='
             'memory_limit=2G'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '3G' }
@@ -172,7 +172,7 @@ Describe "Set-IniSetting" {
     }
 
     It "Returns -1 if no match is found for any setting" {
-        'memory_limit=2G' | Set-ContentWrapper -path $script:testIniPath
+        'memory_limit=2G' | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         $code = Set-IniSetting -iniPath $script:testIniPath -keys @('memory_limit=256M', 'unknown')
         $code | Should -Be -1

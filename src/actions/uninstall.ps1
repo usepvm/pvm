@@ -33,7 +33,11 @@ function Uninstall-PHP {
             }
         }
 
-        $null = Remove-ItemWrapper -path $pathVersionObject.path
+        $code = Remove-ItemWrapper -path $pathVersionObject.path
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to remove PHP version $($pathVersionObject.version)!"
+            return -1
+        }
 
         $null = Update-InstalledPHPVersionsCache
 

@@ -668,6 +668,15 @@ Describe "Start-PVM" {
             Should -Invoke Add-LogEntry -Times 1
             Should -Invoke Show-Error -Times 1
         }
+
+        It "Display error message when clearing temp directroy fails" {
+            Mock Remove-ItemWrapper { return -1 }
+
+            $result = Start-PVM -command 'install' -arguments @()
+
+            $result | Should -Be 0
+            Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to clean temp directory! Here is the path to do it manually, $($Global:PVMConfig.paths.directories.temp)*" }
+        }
     }
 
     Context "Edge Cases and Boundary Tests" {

@@ -255,7 +255,10 @@ function Start-PVM {
         return -1
     } finally {
         if (Test-ValidDrivePath -path $Global:PVMConfig.paths.directories.temp) {
-            $null = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.temp)\*"
+            $code = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.temp)\*"
+            if ($code -ne 0) {
+                Show-Error -message "`nFailed to clean temp directory! Here is the path to do it manually, $($Global:PVMConfig.paths.directories.temp)"
+            }
         }
 
         if ($result -eq 0 -and $command -ne 'update') {

@@ -587,6 +587,7 @@ Describe "Set-Opcache" {
         Mock Set-ContentWrapper {
             param ($path, $value, $encoding = $null)
             $script:MockFileSystem.Files[$path] = $value -join "`n"
+            return 0
         }
         Mock Get-ContentWrapper {
             param ($path)
@@ -623,6 +624,15 @@ Describe "Set-Opcache" {
 
         $code = Set-Opcache -version '8.1' -phpPath "$script:TEST_DRIVE\php"
         $code | Should -Be -1
+    }
+
+    It "Returns -1 when opcache configuration fails" {
+        Mock Set-ContentWrapper { return -1 }
+
+        $code = Set-Opcache -version '8.1' -phpPath "$script:TEST_DRIVE\php"
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to configured Opcache for PHP version 8.1*' }
     }
 
     It "Should handle exception gracefully" {

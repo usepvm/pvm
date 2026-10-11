@@ -235,9 +235,13 @@ function Set-Opcache {
                 -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `
                 -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
         }
-        $null = Set-ContentWrapper -path $phpIniPath -value $phpIniContent
-        Show-Success -message "`nOpcache configured successfully for PHP version $version"
+        $code = Set-ContentWrapper -path $phpIniPath -value $phpIniContent
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to configured Opcache for PHP version $version!"
+            return -1
+        }
 
+        Show-Success -message "`nOpcache configured successfully for PHP version $version"
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable opcache for PHP at $phpPath"; exception = $_ }
@@ -285,8 +289,8 @@ function Select-Version {
         $msg += "`n Releases : $($Global:PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($Global:PVMConfig.links.phpWinArchives)"
         Show-Info -message $msg
-        $selectedVersionInput = Read-HostWrapper -prompt "`nEnter the [number] of your selection (or press Enter to cancel)" -notifyUser
 
+        $selectedVersionInput = Read-HostWrapper -prompt "`nEnter the [number] of your selection (or press Enter to cancel)" -notifyUser
         if (-not $selectedVersionInput) {
             return $null
         }

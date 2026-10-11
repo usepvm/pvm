@@ -811,7 +811,7 @@ Describe "Test-PathWrapper" {
         Mock Test-Path { throw 'Test error' }
 
         $result = Test-PathWrapper -path "$script:TEST_DRIVE\path"
-        
+
         $result | Should -BeFalse
     }
 }

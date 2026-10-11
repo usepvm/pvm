@@ -1139,7 +1139,7 @@ Describe "Select-PHPVersionAutomatically" {
         $result.message | Should -Match "Invalid version format: 'abc'. Expected e.g. 8, 8.3 or 8.3.1"
     }
 
-    It "Should return valid version entered by user if no version can be detected" {
+    It "Should return valid version entered by user without saving if no version can be detected" {
         Mock Find-PHPVersionFromProject { return $null }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSave as project default in .php-version? (y/n)" } -MockWith { return 'n' }
@@ -1175,6 +1175,21 @@ Describe "Select-PHPVersionAutomatically" {
         $result.code | Should -Be 0
         $result.version | Should -Be '8.5'
         Should -Invoke Set-ContentWrapper -Exactly 1
+    }
+
+    It "Should return -1 when setting version to .php-version fails" {
+        Mock Find-PHPVersionFromProject { return $null }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSave as project default in .php-version? (y/n)" } -MockWith { return 'y' }
+        Mock Test-PHPVersionFormat { return $true }
+        Mock Test-YesResponse { return $true }
+        Mock Set-ContentWrapper { return -1 }
+
+        $result = Select-PHPVersionAutomatically
+
+        $result.code | Should -Be -1
+        $result.vresion | Should -BeNullOrEmpty
+        $result.message | Should -BeLike "*Failed to set 8.5 to '.php-version' file*"
     }
 
     It "Should return error when detected version is not installed" {

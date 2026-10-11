@@ -329,7 +329,10 @@ function Select-PHPVersionAutomatically {
 
         $response = Read-HostWrapper -prompt "`nSave as project default in .php-version? (y/n)"
         if (Test-YesResponse -response $response) {
-            $null = Set-ContentWrapper -path '.php-version' -value $version
+            $code = Set-ContentWrapper -path '.php-version' -value $version
+            if ($code -ne 0) {
+                return @{ code = -1; version = $null; message = "`nFailed to set $version to '.php-version' file!" }
+            }
         }
     }
 

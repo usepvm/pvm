@@ -155,6 +155,14 @@ Describe "Backup-IniFile" {
         $result | Should -Be -1
     }
 
+    It "Returns -1 when ini file copy fails" {
+        Mock Copy-ItemWrapper { return -1 }
+
+        $result = Backup-IniFile -iniPath $script:testIniPath
+
+        $result | Should -Be -1
+    }
+
     It "Returns -1 on error" {
         Mock Add-LogEntry { return 0 }
         Mock Copy-ItemWrapper { throw 'Access denied' }

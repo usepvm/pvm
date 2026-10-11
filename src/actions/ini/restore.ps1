@@ -1,4 +1,4 @@
-
+﻿
 function Restore-IniBackup {
     param ($iniPath)
 
@@ -48,7 +48,12 @@ function Restore-IniBackup {
         }
 
         $selectedBackup = $backupList[$choice]
-        $null = Copy-ItemWrapper -path $selectedBackup.file.FullName -destination $iniPath
+        $code = Copy-ItemWrapper -path $selectedBackup.file.FullName -destination $iniPath
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to restore php.ini from backup: $($selectedBackup.file.FullName)!"
+            return -1
+        }
+
         Show-Success -message "`nRestored php.ini from backup: $($selectedBackup.file.Name)"
 
         return 0

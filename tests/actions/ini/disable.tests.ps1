@@ -174,8 +174,23 @@ Describe "Disable-IniExtension" {
     }
 
     It "Creates backup before modifying" {
-        Disable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
+        $null = Disable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
         Should -Invoke Backup-IniFile -ParameterFilter { $iniPath -like "*$script:testIniPath*" }
+    }
+
+    It "Returns -1 when writing to ini file fails" {
+        Mock Get-MatchingPHPExtensionsStatus {
+            return @(
+                @{ name = 'php_curl'; status = 'Enabled'; color = 'DarkGreen'; line = 'extension=php_curl.dll'; lineNumber = 1 }
+            )
+        }
+        Mock Get-ContentWrapper { return @('extension=php_curl.dll') }
+        Mock Set-ContentWrapper { return -1 }
+
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
+
+        $code | Should -Be -1
+        Should -Invoke Write-Color -ParameterFilter { $message -like '*Failed*' -and $foreColor -eq 'DarkGray' }
     }
 
     It "Returns -1 on error" {

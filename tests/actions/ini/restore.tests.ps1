@@ -118,6 +118,15 @@ Describe "Restore-IniBackup" {
         Should -Invoke Copy-ItemWrapper -Times 0
     }
 
+    It "Returns -1 when fails to write new backup file" {
+        Mock Copy-ItemWrapper { return -1 }
+
+        $result = Restore-IniBackup -iniPath $script:testIniPath
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to restore php.ini from backup: $script:testBackupPath\php.ini_2026-01-01_12-00.bak*" }
+    }
+
     It "Returns -1 when Copy-ItemWrapper throws" {
         Mock Copy-ItemWrapper { throw 'Access denied' }
 

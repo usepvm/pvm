@@ -17,9 +17,7 @@ function Remove-ExtensionFromIniFile {
             return -1
         }
 
-        $null = Set-ContentWrapper -path $iniPath -value $newLines
-
-        return 0
+        return (Set-ContentWrapper -path $iniPath -value $newLines)
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to remove extension from php.ini"; exception = $_ }
         return -1
@@ -40,9 +38,7 @@ function Remove-ExtensionFromExtDirectory {
             return -1
         }
 
-        $null = Remove-ItemWrapper -path $extensionFullPath
-
-        return 0
+        return (Remove-ItemWrapper -path $extensionFullPath)
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to remove extension '$($extensionObject.name)' from ext directory"; exception = $_ }
         return -1

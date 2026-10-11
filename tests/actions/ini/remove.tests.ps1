@@ -73,6 +73,16 @@ Describe "Remove-ExtensionFromIniFile" {
         $content.Count | Should -Be 5
     }
 
+    It "Returns -1 when it fails to modify ini file" {
+        Mock Set-ContentWrapper { return -1 }
+        $extension = @{ line = 'extension=php_curl.dll'; lineNumber = 2 }
+
+        $result = Remove-ExtensionFromIniFile -iniPath $script:testIniPath -extensionObject $extension
+
+        $result | Should -Be -1
+        Should -Invoke Set-ContentWrapper -Times 1
+    }
+
     It "Returns -1 when Get-ContentWrapper throws" {
         $extension = @{ line = 'extension=php_curl.dll'; lineNumber = 2 }
 
@@ -127,6 +137,21 @@ Describe "Remove-ExtensionFromExtDirectory" {
         $result = Remove-ExtensionFromExtDirectory -extensionDirectory $script:extDirectory -extensionObject $extensionObject
 
         $result | Should -Be -1
+    }
+
+    It "Returns -1 when fails to remove extensions dll file" {
+        Mock Test-FileNotExists { return $false }
+        Mock Remove-ItemWrapper { return -1 }
+        $extensionObject = @{
+            fileName = 'php_curl.dll'
+            fullPath = "$script:extDirectory\php_curl.dll"
+            name     = 'curl'
+        }
+
+        $result = Remove-ExtensionFromExtDirectory -extensionDirectory $script:extDirectory -extensionObject $extensionObject
+
+        $result | Should -Be -1
+        Should -Invoke Remove-ItemWrapper -Times 1
     }
 
     It "Returns -1 and logs when Remove-ItemWrapper throws" {

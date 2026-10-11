@@ -30,7 +30,11 @@ function Backup-IniFile {
         $now = Get-Date -Format 'yyyy-MM-dd_HH-mm'
         $backup = "$iniBackupPath\php.ini_$($now).bak"
         if (Test-FileNotExists -path $backup) {
-            $null = Copy-ItemWrapper -path $iniPath -destination $backup
+            $code = Copy-ItemWrapper -path $iniPath -destination $backup
+            if ($code -ne 0) {
+                # Show-Error -message "`nFailde to backup ini file '$iniPath' to '$backup'!"
+                return -1
+            }
         }
 
         $null = Clear-IniBackups -iniBackupPath $iniBackupPath

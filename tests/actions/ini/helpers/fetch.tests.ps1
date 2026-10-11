@@ -253,6 +253,32 @@ Describe "Get-ExtensionHandlers" {
             Should -Invoke Move-ItemWrapper -Times 1
         }
 
+        It "Returns null when moving downloaded file fails" {
+            Mock Get-XDebugFromUrl { return $null }
+            $tempDirectory = "$script:TEST_DRIVE\temp\php"
+            $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
+            $chosenItem = @{ fileName = $fileName }
+            Mock Move-ItemWrapper { return -1 }
+            Mock Remove-ItemWrapper { return 0 }
+
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['xdebug.org']
+
+            $handler | Should -Not -BeNullOrEmpty
+            $handler.GetPackages | Should -Not -BeNullOrEmpty
+            $handler.Download | Should -Not -BeNullOrEmpty
+            $handler.MoreInfoUrl | Should -Be $script:XDEBUG_HISTORICAL_URL
+
+            $null = & $handler.GetPackages -version '8.5'
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true
+
+            $result | Should -BeNullOrEmpty
+            Should -Invoke Move-ItemWrapper -Times 1
+            Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to move '$tempDirectory\$fileName' to '$script:testPhpPath\ext'" }
+        }
+
         It "Handles exception gracefully" {
             Mock Get-XDebugFromUrl { return $null }
             Mock Test-DownloadPrerequisites { throw 'Error' }
@@ -300,7 +326,7 @@ Describe "Get-ExtensionHandlers" {
             $result | Should -BeNullOrEmpty
         }
 
-        It "Removes extracted folder and returns null when no matching dll file found in downloaded zip" -tag i {
+        It "Removes extracted folder and returns null when no matching dll file found in downloaded zip" {
             Mock Get-PackagesFromSourceLinks { return $null }
             $tempDirectory = "$script:TEST_DRIVE\temp\php"
             $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
@@ -586,6 +612,44 @@ Describe "Get-ExtensionHandlers" {
             Should -Invoke Get-PackagesFromSourceLinks -Times 1
         }
 
+        It "Returns null when moving downloaded file fails" {
+            Mock Get-PackagesFromSourceLinks { return $null }
+            $tempDirectory = "$script:TEST_DRIVE\temp\php"
+            $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
+            Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = $tempDirectory; sizeMB = 10 } }
+            Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
+            Mock Expand-Zip { return 0 }
+            Mock Move-ItemWrapper { return -1 }
+            Mock Remove-ItemWrapper { return 0 }
+            $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
+            Mock Get-ChildItemWrapper { return @( $mockFile ) }
+            $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
+
+            $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
+            $handler = $sourceHandlers['pecl.php.net']
+
+            $handler | Should -Not -BeNullOrEmpty
+            $handler.GetPackages | Should -Not -BeNullOrEmpty
+            $handler.Download | Should -Not -BeNullOrEmpty
+            $handler.MoreInfoUrl | Should -Not -BeNullOrEmpty
+
+            $links = @{
+                extName = 'xdebug'
+                source = 'pecl.php.net'
+                links = @(
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.4.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.3.0/windows" },
+                    @{ href = "$script:PECL_BASE_URL/package/xdebug/3.2.0/windows" }
+                )
+            }
+            $null = & $handler.GetPackages -version '8.5' -linksObj $links
+            $result = & $handler.Download -chosenItem $chosenItem -phpPath $script:testPhpPath -skipConfirmation $true -extName 'xdebug'
+
+            $result | Should -BeNullOrEmpty
+            Should -Invoke Move-ItemWrapper -Times 1
+            Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to move '$($mockFile.FullName)' to '$script:testPhpPath\ext'" }
+        }
+
         It "Handles exception gracefully" {
             Mock Get-PackagesFromSourceLinks { return $null }
             Mock Test-DownloadPrerequisites { throw 'Error' }
@@ -639,6 +703,27 @@ Describe "Get-ExtensionHandlers" {
             $result | Should -Be 0
             Should -Invoke Set-ContentWrapper -Times 1
             Should -Invoke Add-ContentWrapper -Times 1
+        }
+
+        It "Returns -1 when writing to ini file fails" {
+            $iniContent = @(
+                ';extension=php_sqlsrv.dll',
+                '',
+                '[xdebug]',
+                'zend_extension=php_xdebug.dll',
+                'xdebug.mode=debug'
+            )
+            Mock Get-ContentWrapper { return $iniContent }
+            Mock Set-ContentWrapper { return -1 }
+
+            $configHandlers = (Get-ExtensionHandlers).ExtensionConfigHandlers
+            $configHandler = $configHandlers['xdebug']
+
+            $result = & $configHandler -iniPath $script:testIniPath -fileName 'php_xdebug.dll' -extVersion '3.5'
+
+            $configHandler | Should -Not -BeNullOrEmpty
+            $result | Should -Be -1
+            Should -Invoke Set-ContentWrapper -Times 1
         }
 
         It "Handles exception gracefully" {

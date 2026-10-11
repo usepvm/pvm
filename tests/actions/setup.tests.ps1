@@ -338,6 +338,18 @@ Describe "New-EnvFile" {
         }
     }
 
+    It "Returns -1 when copy .env fails" {
+        Mock Test-FileNotExists -ParameterFilter { $path -eq "$script:ROOT_PATH\.env.example"} { return $false }
+        Mock Test-FileExists -ParameterFilter { $path -eq "$script:ROOT_PATH\.env"} { return $false }
+        Mock Copy-ItemWrapper { return -1 }
+
+        $result = New-EnvFile
+
+        $result | Should -Be -1
+        Should -Invoke Copy-ItemWrapper -Times 1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*Failed to create .env file*' }
+    }
+
     It "Returns -1 when the .env is not created" {
         Mock Test-FileNotExists -ParameterFilter { $path -eq "$script:ROOT_PATH\.env.example"} { return $false }
         Mock Test-FileExists -ParameterFilter { $path -eq "$script:ROOT_PATH\.env"} { return $false }

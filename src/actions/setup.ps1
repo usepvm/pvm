@@ -142,9 +142,13 @@ function New-EnvFile {
                 return -1
             }
         }
-        $null = Copy-ItemWrapper -path "$($Global:PVMConfig.rootPath)\.env.example" -destination "$($Global:PVMConfig.rootPath)\.env"
-        Show-Success -message "`nCreated .env file."
+        $code = Copy-ItemWrapper -path "$($Global:PVMConfig.rootPath)\.env.example" -destination "$($Global:PVMConfig.rootPath)\.env"
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to create .env file!"
+            return -1
+        }
 
+        Show-Success -message "`nCreated .env file."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create .env file"; exception = $_ }

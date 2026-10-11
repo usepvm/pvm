@@ -536,9 +536,13 @@ function Remove-PHPProfile {
             }
         }
 
-        $null = Remove-ItemWrapper -path $profilePath
-        Show-Success -message "`nProfile '$profileName' deleted successfully."
+        $code = Remove-ItemWrapper -path $profilePath
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to remove '$profileName' profile!"
+            return -1
+        }
 
+        Show-Success -message "`nProfile '$profileName' deleted successfully."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete profile '$profileName'"; exception = $_ }
@@ -566,10 +570,13 @@ function Clear-PHPProfiles {
             }
         }
 
-        $null = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.profiles)\*"
+        $code = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.profiles)\*"
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to remove all profiles!"
+            return -1
+        }
 
         Show-Success -message "`nAll profiles deleted successfully."
-
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear profiles"; exception = $_ }
@@ -603,9 +610,13 @@ function Export-PHPProfile {
             return -1
         }
 
-        $null = Copy-ItemWrapper -path $profilePath -destination $exportPath
-        Show-Success -message "`nProfile '$profileName' exported to: $exportPath"
+        $code = Copy-ItemWrapper -path $profilePath -destination $exportPath
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to export '$profileName' to '$exportPath'!"
+            return -1
+        }
 
+        Show-Success -message "`nProfile '$profileName' exported to: $exportPath"
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to export profile '$profileName'"; exception = $_ }

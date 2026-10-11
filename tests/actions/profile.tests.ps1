@@ -1221,6 +1221,16 @@ Describe "Remove-PHPProfile" {
         Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $false
     }
 
+    It "Should returns -1 when removing profile fails" {
+        Mock Test-FileNotExists { return $false }
+        Mock Remove-ItemWrapper { return -1 }
+
+        $result = Remove-PHPProfile -profileName 'example' -skipConfirmation $true
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to remove 'example' profile*" }
+    }
+
     It "Should return -1 and log error when Remove-ItemWrapper fails" {
         $testProfile = @{
             name = 'testprofile'
@@ -1431,6 +1441,21 @@ Describe "Clear-PHPProfiles" {
         Test-Path "$script:PROFILES_PATH\single.json" | Should -Be $false
     }
 
+    It "Should returns -1 when removing all profile files fails" {
+        Mock Get-ProfileFiles {
+            return @(
+                @{ Name = 'profile1.json'; FullName = "$script:PROFILES_PATH\profile1.json" }
+                @{ Name = 'profile2.json'; FullName = "$script:PROFILES_PATH\profile2.json" }
+            )
+        }
+        Mock Remove-ItemWrapper { return -1 }
+
+        $result = Clear-PHPProfiles -skipConfirmation $true
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to remove all profiles*' }
+    }
+
     It "Should return -1 and log error when an exception occurs during deletion" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example.json" -Encoding UTF8
 
@@ -1562,6 +1587,15 @@ Describe "Export-PHPProfile" {
         $exportedContent = Get-ContentWrapper -path $exportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
         $exportedContent.settings.memory_limit.value | Should -Be '256M'
+    }
+
+    It "Should return -1 and log error when export fails" {
+        Mock Copy-ItemWrapper { return -1 }
+
+        $result = Export-PHPProfile -profileName 'testprofile' -exportPath "$script:TEST_DRIVE\export.json"
+        $result | Should -Be -1
+
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to export 'testprofile' to '$script:TEST_DRIVE\export.json'*" }
     }
 
     It "Should return -1 and log error when Copy-ItemWrapper fails" {

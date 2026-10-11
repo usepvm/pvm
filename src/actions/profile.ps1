@@ -23,7 +23,7 @@ function Set-IniSettingDirect {
             $lines += $newLine
         }
 
-        Set-ContentWrapper -path $iniPath -value $lines
+        $null = Set-ContentWrapper -path $iniPath -value $lines
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set setting in php.ini"; exception = $_ }
@@ -86,7 +86,7 @@ function Enable-IniExtensionDirect {
             $lines += $newLine
         }
 
-        Set-ContentWrapper -path $iniPath -value $lines
+        $null = Set-ContentWrapper -path $iniPath -value $lines
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable extension in php.ini"; exception = $_ }
@@ -145,7 +145,7 @@ function Disable-IniExtensionDirect {
             }
         }
 
-        Set-ContentWrapper -path $iniPath -value $lines
+        $null = Set-ContentWrapper -path $iniPath -value $lines
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to disable extension in php.ini"; exception = $_ }
@@ -257,7 +257,7 @@ function Save-PHPProfile {
 
         $profilePath = "$($Global:PVMConfig.paths.directories.profiles)\$profileName.json"
         $jsonContent = $userProfile | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $profilePath -value $jsonContent
+        $null = Set-ContentWrapper -path $profilePath -value $jsonContent
 
         Show-Success -message "`nProfile '$profileName' saved successfully."
         Show-Message -message "  Settings: $($userProfile.settings.Count) (popular/common only)"
@@ -536,9 +536,13 @@ function Remove-PHPProfile {
             }
         }
 
-        Remove-ItemWrapper -path $profilePath
-        Show-Success -message "`nProfile '$profileName' deleted successfully."
+        $code = Remove-ItemWrapper -path $profilePath
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to remove '$profileName' profile!"
+            return -1
+        }
 
+        Show-Success -message "`nProfile '$profileName' deleted successfully."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete profile '$profileName'"; exception = $_ }
@@ -566,10 +570,13 @@ function Clear-PHPProfiles {
             }
         }
 
-        Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.profiles)\*"
+        $code = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.profiles)\*"
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to remove all profiles!"
+            return -1
+        }
 
         Show-Success -message "`nAll profiles deleted successfully."
-
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear profiles"; exception = $_ }
@@ -593,19 +600,23 @@ function Export-PHPProfile {
             $exportPath = "$(Get-Location)\$profileName.json"
         }
 
-        $exportDirectory = Split-Path -Path $exportPath -Parent
-        if ([string]::IsNullOrWhiteSpace($exportDirectory)) {
-            $exportDirectory = (Get-Location)
+        if (Test-InvalidDrivePath -path $exportPath) {
+            Show-Error -message "`nPath '$exportPath' is not valid!"
+            return -1
         }
 
-        if (Test-FreeDiskSpaceInsufficient -path $exportDirectory -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
+        if (Test-FreeDiskSpaceInsufficient -path $exportPath -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
             Show-Error -message "`nInsufficient disk space for profile export. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
             return -1
         }
 
-        Copy-ItemWrapper -path $profilePath -destination $exportPath
-        Show-Success -message "`nProfile '$profileName' exported to: $exportPath"
+        $code = Copy-ItemWrapper -path $profilePath -destination $exportPath
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to export '$profileName' to '$exportPath'!"
+            return -1
+        }
 
+        Show-Success -message "`nProfile '$profileName' exported to: $exportPath"
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to export profile '$profileName'"; exception = $_ }
@@ -656,9 +667,9 @@ function Import-PHPProfile {
         if ($finalName -ne $userProfile.name) {
             $userProfile.name = $finalName
             $jsonContent = $userProfile | ConvertTo-Json -Depth 10
-            Set-ContentWrapper -path $targetPath -value $jsonContent
+            $null = Set-ContentWrapper -path $targetPath -value $jsonContent
         } else {
-            Copy-ItemWrapper -path $importPath -destination $targetPath
+            $null = Copy-ItemWrapper -path $importPath -destination $targetPath
         }
 
         Show-Success -message "`nProfile imported successfully as '$finalName'."
@@ -717,7 +728,7 @@ function New-ProfileExample {
         }
 
         $jsonContent = $profileExample | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $Global:PVMConfig.paths.files.profileExample -value $jsonContent
+        $null = Set-ContentWrapper -path $Global:PVMConfig.paths.files.profileExample -value $jsonContent
 
         return 0
     } catch {
@@ -734,7 +745,7 @@ function New-ProfileTemplate {
         }
 
         $jsonContent = $profileTemplate | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $Global:PVMConfig.paths.files.profileTemplate -value $jsonContent
+        $null = Set-ContentWrapper -path $Global:PVMConfig.paths.files.profileTemplate -value $jsonContent
 
         return 0
     } catch {

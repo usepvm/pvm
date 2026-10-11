@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:ROOT_PATH = $Global:PVMConfig.rootPath
@@ -52,7 +60,7 @@ Describe "Show-Scripts" {
 Describe "Clear-TestDrive" {
     It "Clears the fake storage path if valid" {
         Mock Test-ValidDrivePath { return $true }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
 
         Clear-TestDrive
 
@@ -60,7 +68,7 @@ Describe "Clear-TestDrive" {
     }
 
     It "Does not attempt to clear when test drive path is null" {
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         $Global:PVMConfig.paths.directories.testDrive = $null
 
         Clear-TestDrive
@@ -70,7 +78,7 @@ Describe "Clear-TestDrive" {
 
     It "Does not attempt to clear when test drive path is invalid" {
         Mock Test-ValidDrivePath { return $false }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         $Global:PVMConfig.paths.directories.testDrive = "invalid\path\without\drive"
 
         Clear-TestDrive
@@ -80,7 +88,7 @@ Describe "Clear-TestDrive" {
 
     It "Does not attempt to clear when test drive path is empty" {
         Mock Test-ValidDrivePath { return $false }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         $Global:PVMConfig.paths.directories.testDrive = ""
 
         Clear-TestDrive

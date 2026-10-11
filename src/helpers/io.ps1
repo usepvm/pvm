@@ -209,7 +209,7 @@ function Expand-Zip {
         Expand-ZipCore -zipPath $zipPath -extractPath $extractPath
 
         if ($deleteZipAfter) {
-            Remove-ItemWrapper -path $zipPath -disallowOutsideRoot:$disallowOutsideRoot
+            $null = Remove-ItemWrapper -path $zipPath -disallowOutsideRoot:$disallowOutsideRoot
         }
 
         return 0

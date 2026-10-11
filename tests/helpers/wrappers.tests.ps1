@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     Mock Add-LogEntry { return 0 }
@@ -133,8 +141,9 @@ Describe "Add-ContentWrapper" {
         $path = "$script:TEST_DRIVE\test.txt"
         $content = "Test content"
 
-        Add-ContentWrapper -path $path -value $content
+        $result = Add-ContentWrapper -path $path -value $content
 
+        $result | Should -Be 0
         Should -Invoke Add-Content -Times 1 -ParameterFilter {
             $Path -eq $path -and
             $Value -eq $content -and
@@ -149,8 +158,9 @@ Describe "Add-ContentWrapper" {
         $path = "$script:TEST_DRIVE\test.txt"
         $content = "Test content"
 
-        Add-ContentWrapper -path $path -value $content -disallowOutsideRoot
+        $result = Add-ContentWrapper -path $path -value $content -disallowOutsideRoot
 
+        $result | Should -Be -1
         Should -Invoke Add-Content -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 1
         Should -Invoke Add-LogEntry -Times 1
@@ -162,7 +172,9 @@ Describe "Add-ContentWrapper" {
         $path = "$script:TEST_DRIVE\test.txt"
         $content = "Test content"
 
-        { Add-ContentWrapper -path $path -value $content } | Should -Throw 'Test error'
+        $result = Add-ContentWrapper -path $path -value $content
+
+        $result | Should -Be -1
     }
 }
 
@@ -173,8 +185,9 @@ Describe "Set-ContentWrapper" {
         $path = "$script:TEST_DRIVE\test.txt"
         $content = "Test content"
 
-        Set-ContentWrapper -path $path -value $content
+        $result = Set-ContentWrapper -path $path -value $content
 
+        $result | Should -Be 0
         Should -Invoke Set-Content -Times 1 -ParameterFilter {
             $Path -eq $path -and
             $Value -eq $content -and
@@ -189,8 +202,9 @@ Describe "Set-ContentWrapper" {
         $path = "$script:TEST_DRIVE\test.txt"
         $content = "Test content"
 
-        Set-ContentWrapper -path $path -value $content -disallowOutsideRoot
+        $result = Set-ContentWrapper -path $path -value $content -disallowOutsideRoot
 
+        $result | Should -Be -1
         Should -Invoke Set-Content -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 1
         Should -Invoke Add-LogEntry -Times 1
@@ -202,7 +216,9 @@ Describe "Set-ContentWrapper" {
         $path = "$script:TEST_DRIVE\test.txt"
         $content = "Test content"
 
-        { Set-ContentWrapper -path $path -value $content } | Should -Throw 'Test error'
+        $result = Set-ContentWrapper -path $path -value $content
+
+        $result | Should -Be -1
     }
 }
 
@@ -280,13 +296,17 @@ Describe "Invoke-WebRequestWrapper" {
         It "Throws when Invoke-WebRequest throws" {
             Mock Invoke-WebRequest { throw 'Network error' }
 
-            { Invoke-WebRequestWrapper -uri 'https://example.com' } | Should -Throw
+            $result = Invoke-WebRequestWrapper -uri 'https://example.com'
+
+            $result | Should -Be $null
         }
 
         It "Handles invalid URI format" {
             Mock Invoke-WebRequest { throw 'Invalid URI format' }
 
-            { Invoke-WebRequestWrapper -uri 'not-a-valid-uri' } | Should -Throw
+            $result = Invoke-WebRequestWrapper -uri 'not-a-valid-uri'
+
+            $result | Should -Be $null
         }
     }
 
@@ -307,7 +327,7 @@ Describe "Invoke-WebRequestWrapper" {
         It "Trims whitespace from URI" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            Invoke-WebRequestWrapper -uri '   https://example.com   '
+            $null = Invoke-WebRequestWrapper -uri '   https://example.com   '
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq 'https://example.com'
@@ -317,7 +337,7 @@ Describe "Invoke-WebRequestWrapper" {
         It "Passes trimmed empty string to Invoke-WebRequest" {
             Mock Invoke-WebRequest { return @{ StatusCode = 200 } }
 
-            Invoke-WebRequestWrapper -uri '   '
+            $null = Invoke-WebRequestWrapper -uri '   '
 
             Should -Invoke Invoke-WebRequest -Times 1 -ParameterFilter {
                 $Uri -eq ''
@@ -355,7 +375,7 @@ Describe "Move-ItemWrapper" {
         $source = "$script:TEST_DRIVE\source"
         $destination = "$script:TEST_DRIVE\destination"
 
-        Move-ItemWrapper -path $source -destination $destination
+        $null = Move-ItemWrapper -path $source -destination $destination
 
         Should -Invoke Move-Item -Times 1 -ParameterFilter {
             $Path -eq $source -and
@@ -370,7 +390,7 @@ Describe "Move-ItemWrapper" {
         $source = "$script:TEST_DRIVE\source"
         $destination = "$script:TEST_DRIVE\destination"
 
-        Move-ItemWrapper -path $source -destination $destination -disallowOutsideRoot
+        $null = Move-ItemWrapper -path $source -destination $destination -disallowOutsideRoot
 
         Should -Invoke Move-Item -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 1
@@ -384,7 +404,7 @@ Describe "Move-ItemWrapper" {
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true } -ParameterFilter { $path -eq $destination }
         Mock Move-Item { }
 
-        Move-ItemWrapper -path $source -destination $destination -disallowOutsideRoot
+        $null = Move-ItemWrapper -path $source -destination $destination -disallowOutsideRoot
 
         Should -Invoke Move-Item -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 2
@@ -397,7 +417,9 @@ Describe "Move-ItemWrapper" {
         $source = "$script:TEST_DRIVE\source"
         $destination = "$script:TEST_DRIVE\destination"
 
-        { Move-ItemWrapper -path $source -destination $destination } | Should -Throw
+        $result = Move-ItemWrapper -path $source -destination $destination
+
+        $result | Should -Be -1
     }
 }
 
@@ -408,7 +430,7 @@ Describe "Copy-ItemWrapper" {
         $source = "$script:TEST_DRIVE\source"
         $destination = "$script:TEST_DRIVE\destination"
 
-        Copy-ItemWrapper -path $source -destination $destination
+        $null = Copy-ItemWrapper -path $source -destination $destination
 
         Should -Invoke Copy-Item -Times 1 -ParameterFilter {
             $Path -eq $source -and
@@ -423,7 +445,7 @@ Describe "Copy-ItemWrapper" {
         $source = "$script:TEST_DRIVE\source"
         $destination = "$script:TEST_DRIVE\destination"
 
-        Copy-ItemWrapper -path $source -destination $destination -disallowOutsideRoot
+        $null = Copy-ItemWrapper -path $source -destination $destination -disallowOutsideRoot
 
         Should -Invoke Copy-Item -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 1
@@ -437,7 +459,7 @@ Describe "Copy-ItemWrapper" {
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true } -ParameterFilter { $path -eq $destination }
         Mock Copy-Item { }
 
-        Copy-ItemWrapper -path $source -destination $destination -disallowOutsideRoot
+        $null = Copy-ItemWrapper -path $source -destination $destination -disallowOutsideRoot
 
         Should -Invoke Copy-Item -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 2
@@ -450,17 +472,20 @@ Describe "Copy-ItemWrapper" {
         $source = "$script:TEST_DRIVE\source"
         $destination = "$script:TEST_DRIVE\destination"
 
-        { Copy-ItemWrapper -path $source -destination $destination } | Should -Throw
+        $result = Copy-ItemWrapper -path $source -destination $destination
+
+        $result | Should -Be -1
     }
 }
 
 Describe "Remove-ItemWrapper" {
     It "Calls Remove-Item with the correct parameters" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
         Mock Remove-Item { }
 
         $path = "$script:TEST_DRIVE\path"
 
-        Remove-ItemWrapper -path $path
+        $null = Remove-ItemWrapper -path $path
 
         Should -Invoke Remove-Item -Times 1 -ParameterFilter {
             $Path -eq $path
@@ -473,7 +498,7 @@ Describe "Remove-ItemWrapper" {
 
         $path = "$script:TEST_DRIVE\path"
 
-        Remove-ItemWrapper -path $path -disallowOutsideRoot
+        $null = Remove-ItemWrapper -path $path -disallowOutsideRoot
 
         Should -Invoke Remove-Item -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 1
@@ -481,11 +506,14 @@ Describe "Remove-ItemWrapper" {
     }
 
     It "Throws when Remove-Item throws" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
         Mock Remove-Item { throw 'Test error' }
 
         $path = "$script:TEST_DRIVE\path"
 
-        { Remove-ItemWrapper -path $path } | Should -Throw
+        $result = Remove-ItemWrapper -path $path
+
+        $result | Should -Be -1
     }
 }
 
@@ -495,7 +523,7 @@ Describe "Clear-ContentWrapper" {
 
         $path = "$script:TEST_DRIVE\path"
 
-        Clear-ContentWrapper -path $path
+        $null = Clear-ContentWrapper -path $path
 
         Should -Invoke Clear-Content -Times 1 -ParameterFilter {
             $Path -eq $path
@@ -508,7 +536,7 @@ Describe "Clear-ContentWrapper" {
 
         $path = "$script:TEST_DRIVE\path"
 
-        Clear-ContentWrapper -path $path -disallowOutsideRoot
+        $null = Clear-ContentWrapper -path $path -disallowOutsideRoot
 
         Should -Invoke Clear-Content -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 1
@@ -520,7 +548,9 @@ Describe "Clear-ContentWrapper" {
 
         $path = "$script:TEST_DRIVE\path"
 
-        { Clear-ContentWrapper -path $path } | Should -Throw
+        $result = Clear-ContentWrapper -path $path
+
+        $result | Should -Be -1
     }
 }
 
@@ -542,7 +572,9 @@ Describe "Get-ItemWrapper" {
 
         $path = "$script:TEST_DRIVE\path"
 
-        { Get-ItemWrapper -path $path } | Should -Throw
+        $result = Get-ItemWrapper -path $path
+
+        $result | Should -Be $null
     }
 }
 
@@ -617,7 +649,9 @@ Describe "Get-ChildItemWrapper" {
 
         $path = "$script:TEST_DRIVE\path"
 
-        { Get-ChildItemWrapper -path $path } | Should -Throw
+        $result = Get-ChildItemWrapper -path $path
+
+        $result | Should -Be $null
     }
 }
 
@@ -640,7 +674,9 @@ Describe "Get-ContentWrapper" {
 
         $path = "$script:TEST_DRIVE\path"
 
-        { Get-ContentWrapper -path $path } | Should -Throw
+        $result = Get-ContentWrapper -path $path
+
+        $result | Should -Be $null
     }
 }
 
@@ -722,7 +758,9 @@ Describe "New-ItemWrapper" {
 
         $path = "$script:TEST_DRIVE\path"
 
-        { New-ItemWrapper -path $path } | Should -Throw
+        $result = New-ItemWrapper -path $path
+
+        $result | Should -BeNullOrEmpty
     }
 }
 
@@ -734,7 +772,7 @@ Describe "Test-PathWrapper" {
 
         $result = Test-PathWrapper -path $expectedPath
 
-        $result | Should -Be $true
+        $result | Should -BeTrue
         Should -Invoke Test-Path -Times 1 -ParameterFilter {
             $Path -eq $expectedPath -and
             $PSBoundParameters.ContainsKey('PathType') -eq $false
@@ -748,7 +786,7 @@ Describe "Test-PathWrapper" {
 
         $result = Test-PathWrapper -path $expectedPath -pathType Container
 
-        $result | Should -Be $true
+        $result | Should -BeTrue
         Should -Invoke Test-Path -Times 1 -ParameterFilter {
             $Path -eq $expectedPath -and
             $PathType -eq 'Container'
@@ -762,7 +800,7 @@ Describe "Test-PathWrapper" {
 
         $result = Test-PathWrapper -path $expectedPath -pathType Leaf
 
-        $result | Should -Be $false
+        $result | Should -BeFalse
         Should -Invoke Test-Path -Times 1 -ParameterFilter {
             $Path -eq $expectedPath -and
             $PathType -eq 'Leaf'
@@ -772,6 +810,8 @@ Describe "Test-PathWrapper" {
     It "Throws when Test-Path throws" {
         Mock Test-Path { throw 'Test error' }
 
-        { Test-PathWrapper -path "$script:TEST_DRIVE\path" } | Should -Throw 'Test error'
+        $result = Test-PathWrapper -path "$script:TEST_DRIVE\path"
+
+        $result | Should -BeFalse
     }
 }

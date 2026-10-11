@@ -78,10 +78,14 @@ function Set-IniSetting {
 
             $lines = Get-ContentWrapper -path $iniPath
             $lines[$selected.lineNo] = $newLine
-            Set-ContentWrapper -path $iniPath -value $lines
-
+            $code = Set-ContentWrapper -path $iniPath -value $lines
             $status = if ($enable) { 'Enabled' } else { 'Disabled' }
             $color = if ($enable) { 'DarkGreen' } else { 'DarkYellow' }
+            if ($code -ne 0) {
+                $status = 'Failed!'
+                $color = 'DarkGray'
+                $overallCode = -1
+            }
 
             $updatedSettings[$selected.name] = @{ key = $selected.name; value = $inputValue; status = $status; color = $color }
         }

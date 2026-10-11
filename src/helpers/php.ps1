@@ -44,7 +44,7 @@ function Test-TwoPHPVersionsEqual {
 function Set-ZendExtensionsList {
     try {
         $jsonContent = $Global:PVMConfig.defaults.zendExtensions | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $Global:PVMConfig.paths.files.zendExtensionsList -value $jsonContent
+        $null = Set-ContentWrapper -path $Global:PVMConfig.paths.files.zendExtensionsList -value $jsonContent
 
         return 0
     } catch {
@@ -329,7 +329,10 @@ function Select-PHPVersionAutomatically {
 
         $response = Read-HostWrapper -prompt "`nSave as project default in .php-version? (y/n)"
         if (Test-YesResponse -response $response) {
-            Set-ContentWrapper -path '.php-version' -value $version
+            $code = Set-ContentWrapper -path '.php-version' -value $version
+            if ($code -ne 0) {
+                return @{ code = -1; version = $null; message = "`nFailed to set $version to '.php-version' file!" }
+            }
         }
     }
 

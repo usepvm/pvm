@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:ROOT_PATH = $Global:PVMConfig.rootPath
@@ -275,7 +283,7 @@ Describe "Initialize-EnvironmentDirectoriesAndFiles" {
 
 Describe "New-EnvFile" {
     BeforeAll {
-        Mock Copy-ItemWrapper { }
+        Mock Copy-ItemWrapper { return 0 }
     }
 
     It "Returns -1 when the .env.example file is not found" {
@@ -328,6 +336,18 @@ Describe "New-EnvFile" {
         Should -Invoke Show-Success -Times 1 -ParameterFilter {
             $message -like '*Created .env file.*'
         }
+    }
+
+    It "Returns -1 when copy .env fails" {
+        Mock Test-FileNotExists -ParameterFilter { $path -eq "$script:ROOT_PATH\.env.example"} { return $false }
+        Mock Test-FileExists -ParameterFilter { $path -eq "$script:ROOT_PATH\.env"} { return $false }
+        Mock Copy-ItemWrapper { return -1 }
+
+        $result = New-EnvFile
+
+        $result | Should -Be -1
+        Should -Invoke Copy-ItemWrapper -Times 1
+        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*Failed to create .env file*' }
     }
 
     It "Returns -1 when the .env is not created" {

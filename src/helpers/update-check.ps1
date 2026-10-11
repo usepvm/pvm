@@ -19,7 +19,7 @@ function Set-LastUpdateCheckTimestamp {
             Show-Error -message "`nFailed to create state directory."
             return -1
         }
-        Set-ContentWrapper -path $timestampFile -value (Get-Date)
+        $null = Set-ContentWrapper -path $timestampFile -value (Get-Date)
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set last update check timestamp"; exception = $_ }

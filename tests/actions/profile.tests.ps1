@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:PROFILES_PATH = $Global:PVMConfig.paths.directories.profiles
@@ -1213,6 +1221,16 @@ Describe "Remove-PHPProfile" {
         Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $false
     }
 
+    It "Should returns -1 when removing profile fails" {
+        Mock Test-FileNotExists { return $false }
+        Mock Remove-ItemWrapper { return -1 }
+
+        $result = Remove-PHPProfile -profileName 'example' -skipConfirmation $true
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to remove 'example' profile*" }
+    }
+
     It "Should return -1 and log error when Remove-ItemWrapper fails" {
         $testProfile = @{
             name = 'testprofile'
@@ -1423,6 +1441,21 @@ Describe "Clear-PHPProfiles" {
         Test-Path "$script:PROFILES_PATH\single.json" | Should -Be $false
     }
 
+    It "Should returns -1 when removing all profile files fails" {
+        Mock Get-ProfileFiles {
+            return @(
+                @{ Name = 'profile1.json'; FullName = "$script:PROFILES_PATH\profile1.json" }
+                @{ Name = 'profile2.json'; FullName = "$script:PROFILES_PATH\profile2.json" }
+            )
+        }
+        Mock Remove-ItemWrapper { return -1 }
+
+        $result = Clear-PHPProfiles -skipConfirmation $true
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to remove all profiles*' }
+    }
+
     It "Should return -1 and log error when an exception occurs during deletion" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example.json" -Encoding UTF8
 
@@ -1556,6 +1589,15 @@ Describe "Export-PHPProfile" {
         $exportedContent.settings.memory_limit.value | Should -Be '256M'
     }
 
+    It "Should return -1 and log error when export fails" {
+        Mock Copy-ItemWrapper { return -1 }
+
+        $result = Export-PHPProfile -profileName 'testprofile' -exportPath "$script:TEST_DRIVE\export.json"
+        $result | Should -Be -1
+
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to export 'testprofile' to '$script:TEST_DRIVE\export.json'*" }
+    }
+
     It "Should return -1 and log error when Copy-ItemWrapper fails" {
         $testProfile = @{
             name = 'testprofile'
@@ -1646,26 +1688,23 @@ Describe "Export-PHPProfile" {
         $exportedContent.extensions.opcache.type | Should -Be 'zend_extension'
     }
 
-    It "Should fall back to current location for disk check when exportPath has no directory" {
+    It "Should return -1 when exportPath is not valid" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\testprofile.json" -Encoding UTF8
-
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Copy-ItemWrapper { }
+        Mock Test-InvalidDrivePath { return $true }
+        Mock Copy-ItemWrapper { return 0 }
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath 'out.json'
-        $result | Should -Be 0
 
-        Should -Invoke Get-Location -Exactly 1
-        Should -Invoke Test-FreeDiskSpaceInsufficient -ParameterFilter {
-            $path -eq "$script:TEST_DRIVE\export"
-        } -Exactly 1
+        $result | Should -Be -1
+        Should -Invoke Test-InvalidDrivePath -ParameterFilter { $path -eq 'out.json' } -Exactly 1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Path 'out.json' is not valid*" }
     }
 
     It "Should return -1 when disk space is insufficient for profile export" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\testprofile.json" -Encoding UTF8
 
         Mock Test-FreeDiskSpaceInsufficient { return $true }
-        Mock Copy-ItemWrapper { }
+        Mock Copy-ItemWrapper { return 0 }
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath "$script:TEST_DRIVE\export\out.json"
         $result | Should -Be -1

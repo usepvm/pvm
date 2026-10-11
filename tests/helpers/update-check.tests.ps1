@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:STATE_PATH = $Global:PVMConfig.paths.directories.state
@@ -79,7 +87,7 @@ Describe "Set-LastUpdateCheckTimestamp" {
         It "Returns -1 when New-Directory fails" {
             Mock Show-Error { }
             Mock New-Directory { return -1 }
-            Mock Set-ContentWrapper { }
+            Mock Set-ContentWrapper { return 0 }
 
             $result = Set-LastUpdateCheckTimestamp
 

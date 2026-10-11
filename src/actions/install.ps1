@@ -169,7 +169,7 @@ function Get-PHP {
         $hashValid = Test-SHA256HashValid -filePath $downloadPath -expectedHash $expectedHash
         if (-not $hashValid) {
             Show-Error -message "SHA256 hash verification failed for '$fileName'. The file may be corrupted or tampered with."
-            Remove-ItemWrapper -path $downloadPath
+            $null = Remove-ItemWrapper -path $downloadPath
             return $null
         }
 
@@ -179,7 +179,7 @@ function Get-PHP {
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP version $($versionObject.version)"; exception = $_ }
         if ($temporaryDirectory) {
-            Remove-ItemWrapper -path $temporaryDirectory
+            $null = Remove-ItemWrapper -path $temporaryDirectory
         }
         return $null
     }
@@ -189,7 +189,7 @@ function Expand-AndConfigurePHP {
     param ($path, $fileNamePath)
 
     try {
-        Remove-ItemWrapper -path $fileNamePath
+        $null = Remove-ItemWrapper -path $fileNamePath
 
         $code = Expand-Zip -zipPath $path -extractPath $fileNamePath -deleteZipAfter $true
         if ($code -ne 0) {
@@ -204,7 +204,7 @@ function Expand-AndConfigurePHP {
         )
         foreach ($candidate in $iniCandidates) {
             if (Test-FileExists -path "$fileNamePath\$candidate") {
-                Copy-ItemWrapper -path "$fileNamePath\$candidate" -destination "$fileNamePath\php.ini"
+                $null = Copy-ItemWrapper -path "$fileNamePath\$candidate" -destination "$fileNamePath\php.ini"
                 break
             }
         }
@@ -235,9 +235,13 @@ function Set-Opcache {
                 -replace '^\s*;\s*(opcache\.enable\s*=\s*\d+)', '$1' `
                 -replace '^\s*;\s*(opcache\.enable_cli\s*=\s*\d+)', '$1'
         }
-        Set-ContentWrapper -path $phpIniPath -value $phpIniContent
-        Show-Success -message "`nOpcache configured successfully for PHP version $version"
+        $code = Set-ContentWrapper -path $phpIniPath -value $phpIniContent
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to configured Opcache for PHP version $version!"
+            return -1
+        }
 
+        Show-Success -message "`nOpcache configured successfully for PHP version $version"
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable opcache for PHP at $phpPath"; exception = $_ }
@@ -285,8 +289,8 @@ function Select-Version {
         $msg += "`n Releases : $($Global:PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($Global:PVMConfig.links.phpWinArchives)"
         Show-Info -message $msg
-        $selectedVersionInput = Read-HostWrapper -prompt "`nEnter the [number] of your selection (or press Enter to cancel)" -notifyUser
 
+        $selectedVersionInput = Read-HostWrapper -prompt "`nEnter the [number] of your selection (or press Enter to cancel)" -notifyUser
         if (-not $selectedVersionInput) {
             return $null
         }
@@ -412,10 +416,10 @@ function Install-PHP {
         return -1
     } finally {
         if ($temporaryDirectory) {
-            Remove-ItemWrapper -path $temporaryDirectory
+            $null = Remove-ItemWrapper -path $temporaryDirectory
         }
         if (-not $success -and $phpInstallPath) {
-            Remove-ItemWrapper -path $phpInstallPath
+            $null = Remove-ItemWrapper -path $phpInstallPath
         }
     }
 }

@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $Global:PVMConfig.version = '1.0.0'
@@ -265,7 +273,7 @@ Describe "Start-PVM" {
         Mock Show-PVMVersion { }
         Mock Resolve-FlagCommand { return $null }
         Mock Test-ValidDrivePath { return $true }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         Mock Test-CheckForUpdatesQuietly { }
         Mock Get-Actions {
             return [ordered]@{
@@ -659,6 +667,15 @@ Describe "Start-PVM" {
             $result | Should -Be -1
             Should -Invoke Add-LogEntry -Times 1
             Should -Invoke Show-Error -Times 1
+        }
+
+        It "Display error message when clearing temp directroy fails" {
+            Mock Remove-ItemWrapper { return -1 }
+
+            $result = Start-PVM -command 'install' -arguments @()
+
+            $result | Should -Be 0
+            Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to clean temp directory! Here is the path to do it manually, $($Global:PVMConfig.paths.directories.temp)*" }
         }
     }
 

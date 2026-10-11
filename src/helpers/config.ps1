@@ -2,7 +2,7 @@
 function Set-AliasesList {
     try {
         $jsonContent = $Global:PVMConfig.defaults.aliases | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $Global:PVMConfig.paths.files.aliasesList -value $jsonContent
+        $null = Set-ContentWrapper -path $Global:PVMConfig.paths.files.aliasesList -value $jsonContent
 
         return 0
     } catch {
@@ -35,7 +35,7 @@ function Get-FlagMap {
 function Set-ScriptsList {
     try {
         $jsonContent = $Global:PVMConfig.defaults.scripts | ConvertTo-Json -Depth 10
-        Set-ContentWrapper -path $Global:PVMConfig.paths.files.scriptsList -value $jsonContent
+        $null = Set-ContentWrapper -path $Global:PVMConfig.paths.files.scriptsList -value $jsonContent
 
         return 0
     } catch {
@@ -109,7 +109,7 @@ function Get-EnvConfig {
     $envFile = "$rootPath\.env"
 
     if (Test-FileNotExists -path $envFile) {
-        Copy-ItemWrapper -path "$rootPath\.env.example" -destination $envFile
+        $null = Copy-ItemWrapper -path "$rootPath\.env.example" -destination $envFile
     } else {
         Write-Verbose "Using .env from: $envFile"
     }

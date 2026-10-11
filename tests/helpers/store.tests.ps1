@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
@@ -186,7 +194,7 @@ Describe "Save-CachedData" {
     It "Caches data successfully" {
         Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
         Mock New-Directory { return 0 }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
         $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be 0
     }
@@ -205,7 +213,7 @@ Describe "Save-CachedData" {
     It "Fails to creade cache directory" {
         Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
         Mock New-Directory { return -1 }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
         $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be -1
     }
@@ -223,6 +231,18 @@ Describe "Save-CachedData" {
     It "Handles whitespace cache file name gracefully" {
         $code = Save-CachedData -cacheFileName '   ' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be -1
+    }
+
+    It "Returns -1 when it fails to save cache" {
+        Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
+        Mock New-Directory { return 0 }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Set-ContentWrapper { return -1 }
+
+        $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to save cache to '$script:CACHE_PATH\test.json'*" }
     }
 
     It "Handles null data gracefully" {

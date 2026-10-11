@@ -15,7 +15,7 @@ function Add-LogEntry {
             $content += "`nMessage: $($data.exception.Exception.Message)"
             $content += "`nPosition: $($data.exception.InvocationInfo.PositionMessage)"
         }
-        Add-ContentWrapper -path $logPath -value $content
+        $null = Add-ContentWrapper -path $logPath -value $content
         return 0
     } catch {
         return -1
@@ -50,12 +50,12 @@ function Show-SpinnerWhileJob {
         }
 
         $result = Receive-Job -Job $job -Wait -AutoRemoveJob -ErrorAction Stop
-        Remove-ItemWrapper -path Env:\PVM_ROOT_FOR_JOB
+        $null = Remove-ItemWrapper -path Env:\PVM_ROOT_FOR_JOB
 
         return $result.pvmData
     } catch {
         Write-HostWrapper -object "`r$(' ' * ($message.content.Length + 2))`r" -noNewline
-        Remove-ItemWrapper -path Env:\PVM_ROOT_FOR_JOB
+        $null = Remove-ItemWrapper -path Env:\PVM_ROOT_FOR_JOB
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show spinner while job"; exception = $_ }
 
         if ($rethrow) {

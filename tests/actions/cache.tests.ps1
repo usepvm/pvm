@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
@@ -323,6 +331,16 @@ Describe "Remove-CacheFile" {
         Test-Path "$($script:CACHE_PATH)\mydata.json" | Should -Be $false
     }
 
+    It "Should returns -1 when removing cache file fails" {
+        Mock Test-FileNotExists { return $false }
+        Mock Remove-ItemWrapper { return -1 }
+
+        $result = Remove-CacheFile -cacheName 'mydata' -skipConfirmation $true
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to remove 'mydata' file*" }
+    }
+
     It "Should return -1 and log error when Remove-ItemWrapper throws" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
 
@@ -486,6 +504,21 @@ Describe "Clear-CacheFiles" {
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 0
         Test-Path "$($script:CACHE_PATH)\mydata.json" | Should -Be $false
+    }
+
+    It "Should returns -1 when removing all cache files fails" {
+        Mock Get-CacheFiles {
+            return @(
+                @{ Name = 'cache1.json'; FullName = "$($script:CACHE_PATH)\cache1.json" }
+                @{ Name = 'cache2.json'; FullName = "$($script:CACHE_PATH)\cache2.json" }
+            )
+        }
+        Mock Remove-ItemWrapper { return -1 }
+
+        $result = Clear-CacheFiles -skipConfirmation $true
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to remove all cache files*' }
     }
 
     It "Should return -1 and log error when an exception occurs during deletion" {

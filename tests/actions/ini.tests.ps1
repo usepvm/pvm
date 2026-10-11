@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:phpVersionPath = "$script:TEST_DRIVE\php-8.2"
@@ -317,8 +325,8 @@ Describe "Invoke-IniAction" {
             }
 
             Mock Expand-Zip { }
-            Mock Remove-ItemWrapper { }
-            Mock Move-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
+            Mock Move-ItemWrapper { return 0 }
         }
 
         It "Installs extension" {

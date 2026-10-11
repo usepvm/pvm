@@ -93,9 +93,13 @@ function Remove-CacheFile {
             }
         }
 
-        Remove-ItemWrapper -path $cachePath
-        Show-Success -message "`nCache file '$cacheName' deleted successfully."
+        $code = Remove-ItemWrapper -path $cachePath
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to remove '$cacheName' file!"
+            return -1
+        }
 
+        Show-Success -message "`nCache file '$cacheName' deleted successfully."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete cache file '$cacheName'"; exception = $_ }
@@ -123,10 +127,13 @@ function Clear-CacheFiles {
             }
         }
 
-        Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.cache)\*"
+        $code = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.cache)\*"
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to remove all cache files!"
+            return -1
+        }
 
         Show-Success -message "`nAll cache files deleted successfully."
-
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear cache files"; exception = $_ }

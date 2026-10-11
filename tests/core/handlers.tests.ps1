@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     Import-Module -Name PowerShellGet -ErrorAction SilentlyContinue
@@ -1108,8 +1116,17 @@ Describe "Invoke-Log" {
         Mock Show-Log { return 0 }
     }
 
+    It "Should return -1 when clearing fails" {
+        Mock Clear-ContentWrapper { return -1 }
+
+        $code = Invoke-Log -arguments @('--clear', '-y')
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to clean log file! Here is the path to do it manually, $($Global:PVMConfig.paths.files.logError)*" }
+    }
+
     It "Should skip confirmation and clear log file" {
-        Mock Clear-ContentWrapper { }
+        Mock Clear-ContentWrapper { return 0 }
 
         $code = Invoke-Log -arguments @('--clear', '-y')
 
@@ -1132,7 +1149,7 @@ Describe "Invoke-Log" {
     }
 
     It "Should prompt for confirmation and proceed with log clearing when user responds with 'y'" {
-        Mock Clear-ContentWrapper { }
+        Mock Clear-ContentWrapper { return 0 }
         Mock Show-Success { }
         Mock Read-HostWrapper { return 'y' }
 

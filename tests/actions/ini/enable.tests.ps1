@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:phpPath = "$script:TEST_DRIVE\php"
@@ -65,7 +73,7 @@ Describe "Enable-IniExtension" {
                 @{ name = 'php_curl'; status = 'Enabled'; color = 'DarkGreen'; line = 'extension=php_curl.dll'; lineNumber = 1 }
             )
         }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
 
         $code = Enable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
         $code | Should -Be 0
@@ -186,8 +194,23 @@ Describe "Enable-IniExtension" {
     }
 
     It "Creates backup before modifying" {
-        Enable-IniExtension -iniPath $script:testIniPath -extNames @('xdebug')
+        $null = Enable-IniExtension -iniPath $script:testIniPath -extNames @('xdebug')
         Should -Invoke Backup-IniFile -ParameterFilter { $iniPath -like "*$script:testIniPath*" }
+    }
+
+    It "Returns -1 when writing to ini file fails" {
+        Mock Get-MatchingPHPExtensionsStatus {
+            return @(
+                @{ name = 'php_curl'; status = 'Disabled'; color = 'DarkYellow'; line = 'extension=php_curl.dll'; lineNumber = 1 }
+            )
+        }
+        Mock Get-ContentWrapper { return @('extension=php_curl.dll') }
+        Mock Set-ContentWrapper { return -1 }
+
+        $code = Enable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
+
+        $code | Should -Be -1
+        Should -Invoke Write-Color -ParameterFilter { $message -like '*Failed*' -and $foreColor -eq 'DarkGray' }
     }
 
     It "Returns -1 on error" {

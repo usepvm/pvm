@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:phpPath = "$script:TEST_DRIVE\php"
@@ -353,6 +361,19 @@ Describe "Add-MissingPHPExtensionToIni" {
         Should -Invoke Show-Error -Times 1 -ParameterFilter {
             $message -eq "`nExtension file not found: php_curl.dll"
         }
+    }
+
+    It "Returns -1 when adding new line to ini fails" {
+        Mock Test-FileNotExists { return $false }
+        Mock Backup-IniFile { return 0 }
+        Mock Test-DirectoryNotExists { return $false }
+        Mock Get-MatchingPHPExtensionsStatus { return @() }
+        Mock Set-ContentWrapper { return -1 }
+
+        $result = Add-MissingPHPExtensionToIni -iniPath $script:testIniPath -extFileName 'curl'
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to add 'curl' to ini file*" }
     }
 
     It "Handles exception gracefully" {

@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
@@ -546,7 +554,7 @@ Describe "Expand-ZipCore" {
 Describe "Expand-Zip" {
     BeforeEach {
         Mock Expand-ZipCore { }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         Mock Add-LogEntry { return 0 }
     }
 

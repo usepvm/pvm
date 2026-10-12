@@ -48,7 +48,11 @@ function Set-PHPCertificateBundle {
             return -1
         }
 
-        Set-ContentWrapper -path $iniPath -value $lines
+        $code = Set-ContentWrapper -path $iniPath -value $lines
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to write CA settings to php.ini."
+            return -1
+        }
 
         foreach ($setting in $settings) {
             $configured = @(Get-ContentWrapper -path $iniPath | Where-Object {
@@ -129,18 +133,36 @@ function Update-PHPCertificateBundle {
         }
 
         $baseBundlePath = Get-CertBundlePath
-        $downloadPath = "$baseBundlePath.$([guid]::NewGuid().ToString('N')).tmp"
+        $downloadUrl = $Global:PVMConfig.links.curlCaBundle
+        $result = Test-DownloadPrerequisites -url $downloadUrl -minimumFreeSpaceMB $Global:PVMConfig.env.MIN_CACHE_FREE_SPACE_MB
+        if (-not $result -or -not $result.temporaryDirectory) {
+            Write-Color -message "`n$($result.message)" -foreColor $result.color
+            return -1
+        }
+
+        $temporaryDirectory = $result.temporaryDirectory
+        $temporaryDownloadPath = "$temporaryDirectory\cacert.pem"
         try {
-            $null = Invoke-WebRequestWrapper -uri $Global:PVMConfig.links.curlCaBundle -outFile $downloadPath
+            $downloadPath = Get-RemoteFile -url $downloadUrl -destinationPath $temporaryDownloadPath
+            if (-not $downloadPath -or (Test-FileNotExists -path $downloadPath)) {
+                throw 'Failed to download the trusted CA bundle.'
+            }
+
             $content = [System.IO.File]::ReadAllText($downloadPath)
             if ($content -notmatch '-----BEGIN CERTIFICATE-----' -or $content -notmatch '-----END CERTIFICATE-----') {
                 throw 'The downloaded CA bundle does not contain PEM certificates.'
             }
 
-            Move-ItemWrapper -path $downloadPath -destination $baseBundlePath
+            $code = Move-ItemWrapper -path $downloadPath -destination $baseBundlePath
+            if ($code -ne 0) {
+                throw "Failed to move the downloaded CA bundle to '$baseBundlePath'."
+            }
         } finally {
-            if (Test-FileExists -path $downloadPath) {
-                Remove-ItemWrapper -path $downloadPath
+            if (Test-FileExists -path $temporaryDownloadPath) {
+                $null = Remove-ItemWrapper -path $temporaryDownloadPath
+            }
+            if (Test-DirectoryExists -path $temporaryDirectory) {
+                $null = Remove-ItemWrapper -path $temporaryDirectory
             }
         }
 
@@ -311,19 +333,19 @@ function New-LocalPHPCertificate {
         try {
             $code = Invoke-LocalCertificateGenerator -phpExecutable $phpExecutable -hostName $hostName -subjectAltName $subjectAltName -certificatePath $certificatePath -privateKeyPath $privateKeyPath -temporaryDirectory $temporaryDirectory
             if ($code -ne 0) {
-                if (Test-FileExists -path $certificatePath) { Remove-ItemWrapper -path $certificatePath }
-                if (Test-FileExists -path $privateKeyPath) { Remove-ItemWrapper -path $privateKeyPath }
+                if (Test-FileExists -path $certificatePath) { $null = Remove-ItemWrapper -path $certificatePath }
+                if (Test-FileExists -path $privateKeyPath) { $null = Remove-ItemWrapper -path $privateKeyPath }
                 return -1
             }
             if ((Test-FileNotExists -path $certificatePath) -or (Test-FileNotExists -path $privateKeyPath)) {
-                if (Test-FileExists -path $certificatePath) { Remove-ItemWrapper -path $certificatePath }
-                if (Test-FileExists -path $privateKeyPath) { Remove-ItemWrapper -path $privateKeyPath }
+                if (Test-FileExists -path $certificatePath) { $null = Remove-ItemWrapper -path $certificatePath }
+                if (Test-FileExists -path $privateKeyPath) { $null = Remove-ItemWrapper -path $privateKeyPath }
                 Show-Error -message "`nPHP did not create both the certificate and private key."
                 return -1
             }
         } finally {
             if (Test-DirectoryExists -path $temporaryDirectory) {
-                Remove-ItemWrapper -path $temporaryDirectory
+                $null = Remove-ItemWrapper -path $temporaryDirectory
             }
         }
 

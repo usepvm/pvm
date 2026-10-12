@@ -1,6 +1,15 @@
 ﻿BeforeAll {
-    $script:TEST_DRIVE = $Global:CurrentTestDrive
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
 
+    $script:TEST_DRIVE = $Global:CurrentTestDrive
+    
+    $script:STORAGE_PATH = "$script:TEST_DRIVE\storage"
     $script:certDirectory = $Global:PVMConfig.paths.directories.cert
     $script:phpPath = "$script:TEST_DRIVE\php"
     $script:phpIniPath = "$script:phpPath\php.ini"
@@ -9,6 +18,7 @@
     $script:localCertificateDirectory = "$script:certDirectory\local"
     $script:trustBundlePath = "$script:certDirectory\cacert-local.pem"
     $script:generatorDirectory = "$script:TEST_DRIVE\generator"
+    $script:downloadTempDirectory = "$script:STORAGE_PATH\temp"
 
     $null = New-Directory -path $script:phpPath
     $null = New-Directory -path $script:certDirectory
@@ -152,12 +162,21 @@ Describe "Set-PHPCertificateBundle" {
     }
 
     It "Fails when the written settings cannot be verified" {
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
 
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
 
         $result | Should -Be -1
         Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to configure curl.cainfo in php.ini*' }
+    }
+
+    It "Fails when Set-ContentWrapper reports a write failure" {
+        Mock Set-ContentWrapper { return -1 }
+
+        $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to write CA settings*' }
     }
 }
 
@@ -304,12 +323,18 @@ Describe "Update-PHPCertificateBundle" {
         & $script:resetCertDirectory
         & $script:resetIni
 
+        Mock Write-Color { }
         Mock Get-CurrentPHPVersion {
             return @{ version = '8.3.0'; path = $script:phpPath }
         }
-        Mock Invoke-WebRequestWrapper {
-            param ($uri, $outFile)
-            [System.IO.File]::WriteAllText($outFile, "-----BEGIN CERTIFICATE-----`nPUBLICCERT`n-----END CERTIFICATE-----")
+        Mock Test-DownloadPrerequisites {
+            return @{ temporaryDirectory = $script:downloadTempDirectory; sizeMB = 1 }
+        }
+        Mock Get-RemoteFile {
+            param ($url, $destinationPath)
+            $null = New-Directory -path $script:downloadTempDirectory
+            [System.IO.File]::WriteAllText($destinationPath, "-----BEGIN CERTIFICATE-----`nPUBLICCERT`n-----END CERTIFICATE-----")
+            return $destinationPath
         }
     }
 
@@ -320,8 +345,13 @@ Describe "Update-PHPCertificateBundle" {
         [System.IO.File]::ReadAllText($script:baseBundlePath) | Should -Match 'PUBLICCERT'
         (Get-ContentWrapper -path $script:phpIniPath) | Should -Contain "openssl.cafile = '$script:baseBundlePath'"
         (Get-ContentWrapper -path $script:phpIniPath) | Should -Contain "curl.cainfo = '$script:baseBundlePath'"
-        Should -Invoke Invoke-WebRequestWrapper -Times 1 -ParameterFilter {
-            $uri -eq $Global:PVMConfig.links.curlCaBundle
+        Should -Invoke Get-RemoteFile -Times 1 -ParameterFilter {
+            $url -eq $Global:PVMConfig.links.curlCaBundle -and
+            $destinationPath -eq "$script:downloadTempDirectory\cacert.pem"
+        }
+        Should -Invoke Test-DownloadPrerequisites -Times 1 -ParameterFilter {
+            $url -eq $Global:PVMConfig.links.curlCaBundle -and
+            $minimumFreeSpaceMB -eq $Global:PVMConfig.env.MIN_CACHE_FREE_SPACE_MB
         }
         Should -Invoke Show-Success -Times 1
     }
@@ -330,7 +360,7 @@ Describe "Update-PHPCertificateBundle" {
         $result = Update-PHPCertificateBundle
 
         $result | Should -Be 0
-        @(Get-ChildItem -Path $script:certDirectory -Filter '*.tmp' -Force).Count | Should -Be 0
+        Test-Path -LiteralPath $script:downloadTempDirectory | Should -BeFalse
     }
 
     It "Uses the trust bundle when local certificates exist" {
@@ -352,7 +382,8 @@ Describe "Update-PHPCertificateBundle" {
         $result = Update-PHPCertificateBundle
 
         $result | Should -Be -1
-        Should -Invoke Invoke-WebRequestWrapper -Times 0
+        Should -Invoke Get-RemoteFile -Times 0
+        Should -Invoke Test-DownloadPrerequisites -Times 0
     }
 
     It "Fails when the certificate directory cannot be created" {
@@ -361,44 +392,83 @@ Describe "Update-PHPCertificateBundle" {
         $result = Update-PHPCertificateBundle
 
         $result | Should -Be -1
-        Should -Invoke Invoke-WebRequestWrapper -Times 0
+        Should -Invoke Get-RemoteFile -Times 0
+        Should -Invoke Test-DownloadPrerequisites -Times 0
         Should -Invoke Show-Error -ParameterFilter { $message -like '*certificate directory*' }
     }
 
-    It "Rejects a download without PEM certificate markers" {
-        Mock Invoke-WebRequestWrapper {
-            param ($uri, $outFile)
-            [System.IO.File]::WriteAllText($outFile, 'not a PEM bundle')
+    It "Stops when the download prerequisites fail" {
+        Mock Test-DownloadPrerequisites {
+            return @{ temporaryDirectory = $null; message = 'Insufficient disk space'; color = 'DarkYellow' }
         }
+
+        $result = Update-PHPCertificateBundle
+
+        $result | Should -Be -1
+        Should -Invoke Get-RemoteFile -Times 0
+        Should -Invoke Write-Color -ParameterFilter { $message -like '*Insufficient disk space*' }
+    }
+
+    It "Rejects a download without PEM certificate markers" {
+        Mock Get-RemoteFile {
+            param ($url, $destinationPath)
+            $null = New-Directory -path $script:downloadTempDirectory
+            [System.IO.File]::WriteAllText($destinationPath, 'not a PEM bundle')
+            return $destinationPath
+        }
+
+        $result = Update-PHPCertificateBundle
+
+        $result | Should -Be -1
+        Test-Path -LiteralPath $script:baseBundlePath | Should -BeFalse
+        Test-Path -LiteralPath $script:downloadTempDirectory | Should -BeFalse
+    }
+
+    It "Rejects a download with only a BEGIN marker" {
+        Mock Get-RemoteFile {
+            param ($url, $destinationPath)
+            $null = New-Directory -path $script:downloadTempDirectory
+            [System.IO.File]::WriteAllText($destinationPath, '-----BEGIN CERTIFICATE-----')
+            return $destinationPath
+        }
+
+        $result = Update-PHPCertificateBundle
+
+        $result | Should -Be -1
+        Test-Path -LiteralPath $script:baseBundlePath | Should -BeFalse
+        Test-Path -LiteralPath $script:downloadTempDirectory | Should -BeFalse
+    }
+
+    It "Fails and cleans up when the download throws" {
+        Mock Get-RemoteFile { throw 'network down' }
+
+        $result = Update-PHPCertificateBundle
+
+        $result | Should -Be -1
+        Test-Path -LiteralPath $script:baseBundlePath | Should -BeFalse
+        Test-Path -LiteralPath $script:downloadTempDirectory | Should -BeFalse
+        Should -Invoke Add-LogEntry -Times 1
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*network down*' }
+    }
+
+    It "Fails when the download helper returns no file" {
+        Mock Get-RemoteFile { return $null }
+
+        $result = Update-PHPCertificateBundle
+
+        $result | Should -Be -1
+        Test-Path -LiteralPath $script:baseBundlePath | Should -BeFalse
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to download the trusted CA bundle*' }
+    }
+
+    It "Fails when the downloaded bundle cannot be moved into place" {
+        Mock Move-ItemWrapper { return -1 }
 
         $result = Update-PHPCertificateBundle
 
         $result | Should -Be -1
         Test-Path -LiteralPath $script:baseBundlePath | Should -BeFalse
         @(Get-ChildItem -Path $script:certDirectory -Filter '*.tmp' -Force).Count | Should -Be 0
-    }
-
-    It "Rejects a download with only a BEGIN marker" {
-        Mock Invoke-WebRequestWrapper {
-            param ($uri, $outFile)
-            [System.IO.File]::WriteAllText($outFile, '-----BEGIN CERTIFICATE-----')
-        }
-
-        $result = Update-PHPCertificateBundle
-
-        $result | Should -Be -1
-        Test-Path -LiteralPath $script:baseBundlePath | Should -BeFalse
-    }
-
-    It "Fails and cleans up when the download throws" {
-        Mock Invoke-WebRequestWrapper { throw 'network down' }
-
-        $result = Update-PHPCertificateBundle
-
-        $result | Should -Be -1
-        Test-Path -LiteralPath $script:baseBundlePath | Should -BeFalse
-        Should -Invoke Add-LogEntry -Times 1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*network down*' }
     }
 
     It "Fails when the trust bundle cannot be written" {

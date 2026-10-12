@@ -22,6 +22,10 @@
 
     $null = New-Item -ItemType Directory -Path $script:phpPath -Force
     $null = New-Item -ItemType Directory -Path $script:certDirectory -Force
+    $null = New-Item -ItemType Directory -Path $script:testBackupPath -Force
+    $null = New-Item -ItemType Directory -Path $script:baseBundlePath -Force
+    $null = New-Item -ItemType Directory -Path $script:localCertificateDirectory -Force
+    $null = New-Item -ItemType Directory -Path $script:trustBundlePath -Force
     $null = New-Item -ItemType Directory -Path $script:generatorDirectory -Force
 
     $script:pem = { param ($name) "-----BEGIN CERTIFICATE-----`n$name`n-----END CERTIFICATE-----" }

@@ -1,17 +1,26 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:phpPath = "$script:TEST_DRIVE\php"
     $script:testIniPath = "$script:phpPath\php.ini"
 
-    $null = New-Directory -path $script:phpPath
+    $null = New-Item -ItemType Directory -Path $script:phpPath -Force
 
     Mock Show-Error { }
     Mock Show-Message { }
     Mock Show-Info { }
     Mock Write-Gray { }
     Mock New-Line { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Show-PHPExtensionInfo" {
@@ -27,7 +36,7 @@ Describe "Show-PHPExtensionInfo" {
             )
         }
         Mock Show-Warning { }
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
         Mock Write-Color { }
     }
 

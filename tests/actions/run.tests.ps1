@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     Mock Write-Color { }
@@ -8,6 +16,7 @@ BeforeAll {
     Mock Write-Cyan { }
     Mock Write-Gray { }
     Mock New-Lines { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Show-SubProcessOutput" {
@@ -43,7 +52,7 @@ Describe "Invoke-RunScripts" {
         Mock Invoke-PVMSubprocess { return @{ code = 0; output = '' } }
         Mock Get-Actions { return @{} }
         Mock Show-SubProcessOutput { }
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
         Mock Invoke-Sound { }
     }
 

@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:phpPath = "$script:TEST_DRIVE\php"
@@ -37,7 +45,7 @@ Describe "Restore-IniBackup" {
             )
         }
         Mock Read-HostWrapper { return '0' }
-        Mock Copy-ItemWrapper { }
+        Mock Copy-ItemWrapper { return 0 }
     }
 
     It "Returns 0 when restore succeeds" {
@@ -108,6 +116,15 @@ Describe "Restore-IniBackup" {
         $result | Should -Be -1
         Should -Invoke Show-Warning -Times 1
         Should -Invoke Copy-ItemWrapper -Times 0
+    }
+
+    It "Returns -1 when fails to write new backup file" {
+        Mock Copy-ItemWrapper { return -1 }
+
+        $result = Restore-IniBackup -iniPath $script:testIniPath
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to restore php.ini from backup: $script:testBackupPath\php.ini_2026-01-01_12-00.bak*" }
     }
 
     It "Returns -1 when Copy-ItemWrapper throws" {

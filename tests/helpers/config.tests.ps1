@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:TEMPLATES_PATH = $Global:PVMConfig.paths.directories.templates
@@ -8,6 +16,8 @@ BeforeAll {
     $script:DEFAULT_ALIASES = $Global:PVMConfig.defaults.aliases
     $script:DEFAULT_SCRIPTS = $Global:PVMConfig.defaults.scripts
     $script:DEFAULT_FLAGS = $Global:PVMConfig.defaults.flags
+
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Set-AliasesList" {
@@ -34,7 +44,7 @@ Describe "Get-Aliases" {
     BeforeAll {
         New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $testContent = [ordered]@{'?' = 'help'; 'i' = 'install'; 'init' = 'setup'}
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $script:ALIASES_LIST_PATH
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $script:ALIASES_LIST_PATH -Encoding UTF8
     }
 
     It "Returns aliases from aliases.json or PVMConfig.defaults.aliases" {
@@ -46,7 +56,7 @@ Describe "Get-Aliases" {
     }
 
     It "Falls back to DEFAULT_ALIASES value" {
-        Remove-ItemWrapper -path "$script:TEMPLATES_PATH\aliases.json"
+        Remove-Item -Path "$script:TEMPLATES_PATH\aliases.json" -Force -Recurse -ErrorAction SilentlyContinue
         $result = Get-Aliases
         $result.Count | Should -Be $script:DEFAULT_ALIASES.Count
     }
@@ -90,7 +100,7 @@ Describe "Get-Scripts" {
     BeforeAll {
         New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $testContent = [ordered]@{'test:quiet' = 'test --verbosity=None'; 'test:cov' = 'test --coverage=75'}
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $script:SCRIPTS_LIST_PATH
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $script:SCRIPTS_LIST_PATH -Encoding UTF8
     }
 
     It "Returns scripts from scripts.json or PVMConfig.defaults.scripts" {
@@ -101,7 +111,7 @@ Describe "Get-Scripts" {
     }
 
     It "Falls back to DEFAULT_SCRIPTS value" {
-        Remove-ItemWrapper -path "$script:TEMPLATES_PATH\scripts.json"
+        Remove-Item -Path "$script:TEMPLATES_PATH\scripts.json" -Force -Recurse -ErrorAction SilentlyContinue
         $result = Get-Scripts
         $result.Count | Should -Be $script:DEFAULT_SCRIPTS.Count
     }
@@ -335,7 +345,7 @@ Describe "Get-EnvConfig" {
 
     Context "When .env file is missing" {
         It "Copies .env.example to .env" {
-            Set-ContentWrapper -path "$envRoot\.env.example" -value 'KEY=value'
+            Set-Content -Path "$envRoot\.env.example" -Value 'KEY=value' -Encoding UTF8
             Get-EnvConfig -rootPath $envRoot
 
             $result = Get-ContentWrapper -path "$envRoot\.env"
@@ -345,7 +355,7 @@ Describe "Get-EnvConfig" {
 
     Context "When .env file exists" {
         It "Writes a verbose message with the env file path" {
-            Set-ContentWrapper -path "$envRoot\.env" -value 'KEY=value'
+            Set-Content -Path "$envRoot\.env" -Value 'KEY=value' -Encoding UTF8
             Mock Write-Verbose { }
 
             Get-EnvConfig -rootPath $envRoot
@@ -360,7 +370,7 @@ Describe "Get-EnvConfig" {
                 'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
                 'CACHE_MAX_HOURS=168'
                 'DEFAULT_LOG_PAGE_SIZE=5'
-            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
+            ) -join "`n" | Set-Content -Path "$envRoot\.env" -Encoding UTF8
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -379,7 +389,7 @@ Describe "Get-EnvConfig" {
                 ''
                 'KEY=value'
                 ''
-            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
+            ) -join "`n" | Set-Content -Path "$envRoot\.env" -Encoding UTF8
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -388,7 +398,7 @@ Describe "Get-EnvConfig" {
         }
 
         It "Trims whitespace around keys and values" {
-            '  KEY  =  value  ' | Set-ContentWrapper -path "$envRoot\.env"
+            '  KEY  =  value  ' | Set-Content -Path "$envRoot\.env" -Encoding UTF8
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -396,7 +406,7 @@ Describe "Get-EnvConfig" {
         }
 
         It "Removes matching double quotes from values" {
-            'QUOTED="hello world"' | Set-ContentWrapper -path "$envRoot\.env"
+            'QUOTED="hello world"' | Set-Content -Path "$envRoot\.env" -Encoding UTF8
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -404,7 +414,7 @@ Describe "Get-EnvConfig" {
         }
 
         It "Removes matching single quotes from values" {
-            "QUOTED='hello world'" | Set-ContentWrapper -path "$envRoot\.env"
+            "QUOTED='hello world'" | Set-Content -Path "$envRoot\.env" -Encoding UTF8
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -412,7 +422,7 @@ Describe "Get-EnvConfig" {
         }
 
         It "Keeps unquoted values unchanged" {
-            'PLAIN=hello world' | Set-ContentWrapper -path "$envRoot\.env"
+            'PLAIN=hello world' | Set-Content -Path "$envRoot\.env" -Encoding UTF8
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -423,7 +433,7 @@ Describe "Get-EnvConfig" {
             @(
                 "MISMATCHED=`"value'"
                 'UNCLOSED="value'
-            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
+            ) -join "`n" | Set-Content -Path "$envRoot\.env" -Encoding UTF8
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -436,7 +446,7 @@ Describe "Get-EnvConfig" {
                 'NOT_A_PAIR'
                 'ALSO NOT VALID'
                 'VALID=yes'
-            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
+            ) -join "`n" | Set-Content -Path "$envRoot\.env" -Encoding UTF8
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -445,7 +455,7 @@ Describe "Get-EnvConfig" {
         }
 
         It "Parses empty values" {
-            'EMPTY=' | Set-ContentWrapper -path "$envRoot\.env"
+            'EMPTY=' | Set-Content -Path "$envRoot\.env" -Encoding UTF8
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -453,7 +463,7 @@ Describe "Get-EnvConfig" {
         }
 
         It "Preserves inline comments as part of the value" {
-            'CACHE_MAX_HOURS=168 # Cached available versions expiration in hours' | Set-ContentWrapper -path "$envRoot\.env"
+            'CACHE_MAX_HOURS=168 # Cached available versions expiration in hours' | Set-Content -Path "$envRoot\.env" -Encoding UTF8
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -464,7 +474,7 @@ Describe "Get-EnvConfig" {
             @(
                 '# comment only'
                 ''
-            ) -join "`n" | Set-ContentWrapper -path "$envRoot\.env"
+            ) -join "`n" | Set-Content -Path "$envRoot\.env" -Encoding UTF8
 
             $result = Get-EnvConfig -rootPath $envRoot
 
@@ -527,7 +537,7 @@ Describe "Get-Config" {
                 'DEFAULT_PARTIAL_LIST_SIZE=10'
                 'MIN_PAD_RIGHT_LENGTH=20'
                 'MIN_LINE_LENGTH=50'
-            ) -join "`n" | Set-ContentWrapper -path "$testRoot\.env"
+            ) -join "`n" | Set-Content -Path "$testRoot\.env" -Encoding UTF8
         }
 
         It "Returns a hashtable with all expected sections" {

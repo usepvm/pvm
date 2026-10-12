@@ -1,13 +1,22 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:CACHE_PATH = $Global:PVMConfig.paths.directories.cache
     $script:CACHE_MAX_HOURS = $Global:PVMConfig.env.CACHE_MAX_HOURS
 
-    $null = New-Directory -path $script:CACHE_PATH
+    $null = New-Item -ItemType Directory -Path $script:CACHE_PATH -Force
 
     Mock Show-Error { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Get-DataFromCache" {
@@ -82,7 +91,7 @@ Describe "Test-CanUseCache" {
 
             # Create a cache file with recent timestamp
             New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            Set-Content -Path "$script:CACHE_PATH\$cacheFile" -Value '{"test": "data"}' -Encoding UTF8
 
             $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $true
@@ -94,7 +103,7 @@ Describe "Test-CanUseCache" {
 
             # Create a cache file with old timestamp (older than CACHE_MAX_HOURS)
             New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            Set-Content -Path "$script:CACHE_PATH\$cacheFile" -Value '{"test": "data"}' -Encoding UTF8
 
             # Set file modification time to be older than CACHE_MAX_HOURS (168 hours)
             $oldTime = (Get-Date).AddHours(-200)
@@ -110,7 +119,7 @@ Describe "Test-CanUseCache" {
 
             # Create a cache file
             New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            Set-Content -Path "$script:CACHE_PATH\$cacheFile" -Value '{"test": "data"}' -Encoding UTF8
 
             # Set file modification time to be exactly at CACHE_MAX_HOURS
             $boundaryTime = (Get-Date).AddHours(-$script:CACHE_MAX_HOURS)
@@ -157,7 +166,7 @@ Describe "Test-CanUseCache" {
             $cacheFile = "$cacheFileName.json"
 
             New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            Set-Content -Path "$script:CACHE_PATH\$cacheFile" -Value '{"test": "data"}' -Encoding UTF8
 
             $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $true
@@ -168,7 +177,7 @@ Describe "Test-CanUseCache" {
             $cacheFile = "$cacheFileName.json"
 
             New-Item -Path "$script:CACHE_PATH\$cacheFile" -ItemType File -Force | Out-Null
-            Set-ContentWrapper -path "$script:CACHE_PATH\$cacheFile" -value '{"test": "data"}'
+            Set-Content -Path "$script:CACHE_PATH\$cacheFile" -Value '{"test": "data"}' -Encoding UTF8
 
             $result = Test-CanUseCache -cacheFileName $cacheFileName
             $result | Should -Be $true
@@ -186,7 +195,7 @@ Describe "Save-CachedData" {
     It "Caches data successfully" {
         Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
         Mock New-Directory { return 0 }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
         $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be 0
     }
@@ -205,7 +214,7 @@ Describe "Save-CachedData" {
     It "Fails to creade cache directory" {
         Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
         Mock New-Directory { return -1 }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
         $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be -1
     }
@@ -223,6 +232,18 @@ Describe "Save-CachedData" {
     It "Handles whitespace cache file name gracefully" {
         $code = Save-CachedData -cacheFileName '   ' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
         $code | Should -Be -1
+    }
+
+    It "Returns -1 when it fails to save cache" {
+        Mock ConvertTo-Json { return '{"Releases":["php-8.4.12.zip"],"Archives":["php-5.5.0.zip"]}' }
+        Mock New-Directory { return 0 }
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Set-ContentWrapper { return -1 }
+
+        $code = Save-CachedData -cacheFileName 'test' -data @{'Releases' = @('php-8.4.12.zip'); 'Archives' = @('php-5.5.0.zip')}
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to save cache to '$script:CACHE_PATH\test.json'*" }
     }
 
     It "Handles null data gracefully" {

@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:phpPath = "$script:TEST_DRIVE\php"
@@ -7,13 +15,14 @@ BeforeAll {
     $script:extDirectory = "$script:phpPath\ext"
     $script:testBackupPath = "$script:phpPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
 
-    $null = New-Directory -path $Global:PVMConfig.paths.directories.cache
-    $null = New-Directory -path $script:phpPath
-    $null = New-Directory -path $script:extDirectory
+    $null = New-Item -ItemType Directory -Path $Global:PVMConfig.paths.directories.cache -Force
+    $null = New-Item -ItemType Directory -Path $script:phpPath -Force
+    $null = New-Item -ItemType Directory -Path $script:extDirectory -Force
 
     Mock Show-Error { }
     Mock Show-Message { }
     Mock Write-Color { }
+    Mock Add-LogEntry { return 0 }
 
     function Reset-IniContent {
         @(
@@ -26,7 +35,7 @@ BeforeAll {
             'display_errors = On'
             'max_execution_time = 30'
             ';upload_max_filesize = 2M'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
     }
 
     Reset-IniContent

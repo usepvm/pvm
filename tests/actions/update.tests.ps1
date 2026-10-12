@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     Mock Show-Success { }
@@ -7,6 +15,7 @@ BeforeAll {
     Mock Show-Info { }
     Mock Show-Warning { }
     Mock Write-DarkYellow { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Test-GitAvailable" {
@@ -150,7 +159,7 @@ Describe "Get-GitCommitDifference" {
 
     It "returns null when git throws" {
         Mock git { throw 'not a repository' }
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
 
         $difference = Get-GitCommitDifference -currentCommit 'local' -latestCommit 'remote'
 

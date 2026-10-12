@@ -1,13 +1,21 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
     $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
     $script:PATH_VAR_BACKUP_PATH = $Global:PVMConfig.paths.files.pathVarBackup
 
-    $null = New-Directory -path "$script:STORAGE_PATH\php\8.1"
-    $null = New-Directory -path "$script:STORAGE_PATH\php\8.2"
+    $null = New-Item -ItemType Directory -Path "$script:STORAGE_PATH\php\8.1" -Force
+    $null = New-Item -ItemType Directory -Path "$script:STORAGE_PATH\php\8.2" -Force
 
     Mock Show-Message { }
     Mock Show-Error { }
@@ -60,6 +68,7 @@ Describe "Get-AllEnvVarsCore" {
 
 Describe "Get-AllEnvVars" {
     BeforeAll {
+        Mock Add-LogEntry { return 0 }
         Mock Get-AllEnvVarsCore {
             if ($script:MockRegistryThrowException) {
                 throw $script:MockRegistryException
@@ -103,6 +112,7 @@ Describe "Get-EnvVarByNameCore" {
 
 Describe "Get-EnvVarByName" {
     BeforeAll {
+        Mock Add-LogEntry { return 0 }
         Mock Test-NotAdmin { return $false }
         Mock Get-AllEnvVarsCore {
             if ($script:MockRegistryThrowException) {
@@ -168,6 +178,7 @@ Describe "Get-EnvVarByName" {
 
 Describe "Set-EnvVar" {
     BeforeAll {
+        Mock Add-LogEntry { return 0 }
         Mock Test-NotAdmin { return $false }
         Mock Get-EnvVarByNameCore {
             param ($name)

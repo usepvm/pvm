@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:phpPath = "$script:TEST_DRIVE\php"
@@ -7,9 +15,9 @@ BeforeAll {
     $script:extDirectory = "$script:phpPath\ext"
     $script:testBackupPath = "$script:phpPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
 
-    $null = New-Directory -path $Global:PVMConfig.paths.directories.cache
-    $null = New-Directory -path $script:phpPath
-    $null = New-Directory -path $script:extDirectory
+    $null = New-Item -ItemType Directory -Path $Global:PVMConfig.paths.directories.cache -Force
+    $null = New-Item -ItemType Directory -Path $script:phpPath -Force
+    $null = New-Item -ItemType Directory -Path $script:extDirectory -Force
 
     Mock Show-Warning { }
     Mock Show-Message { }
@@ -17,6 +25,7 @@ BeforeAll {
     Mock Show-Info { }
     Mock Write-Color { }
     Mock New-Line { }
+    Mock Add-LogEntry { return 0 }
     Mock Backup-IniFile { return 0 }
 
     function Reset-IniContent {
@@ -28,7 +37,7 @@ BeforeAll {
             'display_errors = On'
             'max_execution_time = 30'
             ';upload_max_filesize = 2M'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
     }
 
     Reset-IniContent
@@ -37,7 +46,7 @@ BeforeAll {
 Describe "Set-IniSetting" {
     BeforeEach {
         Reset-IniContent
-        Remove-ItemWrapper -path $script:testBackupPath
+        Remove-Item -Path $script:testBackupPath -Force -Recurse -ErrorAction SilentlyContinue
     }
 
     It "Accepts key parameter without value" {
@@ -81,7 +90,7 @@ Describe "Set-IniSetting" {
         @(
             ';memory_limit=2G'
             'opcache.protect_memory=1'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '4G' }
@@ -95,7 +104,7 @@ Describe "Set-IniSetting" {
         @(
             ';memory_limit=2G'
             'opcache.protect_memory=1'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
 
@@ -119,7 +128,7 @@ Describe "Set-IniSetting" {
         @(
             ';memory_limit=2G'
             'opcache.protect_memory=1'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         $script:callCount = 0
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
@@ -137,7 +146,7 @@ Describe "Set-IniSetting" {
         @(
             'memory_limit='
             'memory_limit=2G'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '3G' }
@@ -165,6 +174,15 @@ Describe "Set-IniSetting" {
         (Get-ContentWrapper -path $script:testIniPath) -match '^upload_max_filesize\s*=\s*10M' | Should -Be $true
     }
 
+    It "Returns -1 when writing to ini file fails" {
+        Mock Set-ContentWrapper { return -1 }
+
+        $code = Set-IniSetting -iniPath $script:testIniPath -keys @('memory_limit=256M')
+
+        $code | Should -Be -1
+        Should -Invoke Write-Color -ParameterFilter { $message -like '*Failed*' -and $foreColor -eq 'DarkGray' }
+    }
+
     It "Returns -1 on error" {
         Mock Get-ContentWrapper { throw 'Access denied' }
         $code = Set-IniSetting -iniPath $script:testIniPath -keys @('memory_limit=256M')
@@ -172,7 +190,7 @@ Describe "Set-IniSetting" {
     }
 
     It "Returns -1 if no match is found for any setting" {
-        'memory_limit=2G' | Set-ContentWrapper -path $script:testIniPath
+        'memory_limit=2G' | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         $code = Set-IniSetting -iniPath $script:testIniPath -keys @('memory_limit=256M', 'unknown')
         $code | Should -Be -1

@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:LOG_ERROR_PATH = $Global:PVMConfig.paths.files.logError
@@ -14,6 +22,7 @@ BeforeAll {
     Mock Show-Header { }
     Mock Clear-Host { }
     Mock Write-DarkGray { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Format-NiceTimestamp" {
@@ -137,7 +146,7 @@ Describe "Get-LogEntries" {
     }
 
     It "returns empty array if no entries found" {
-        '' | Set-ContentWrapper -path $script:LOG_ERROR_PATH
+        '' | Set-Content -Path $script:LOG_ERROR_PATH -Encoding UTF8
 
         $result = Get-LogEntries -path $script:LOG_ERROR_PATH
 
@@ -159,7 +168,7 @@ Describe "Get-LogEntries" {
             'Position: At D:\Code\Tools\pvm\file.ps1:10 char:9'
             '+         throw "Issue limit"'
             '+         ~~~~~~~~~~~~~~~~~~~~'
-        ) -join "`n" | Set-ContentWrapper -path $script:LOG_ERROR_PATH
+        ) -join "`n" | Set-Content -Path $script:LOG_ERROR_PATH -Encoding UTF8
 
         $result = Get-LogEntries -path $script:LOG_ERROR_PATH
 
@@ -185,7 +194,7 @@ Describe "Get-LogEntries" {
             'Position: At D:\Code\Tools\pvm\file.ps1:10 char:9'
             '+         throw "Issue limit"'
             '+         ~~~~~~~~~~~~~~~~~~~~'
-        ) -join "`n" | Set-ContentWrapper -path $script:LOG_ERROR_PATH
+        ) -join "`n" | Set-Content -Path $script:LOG_ERROR_PATH -Encoding UTF8
 
         $result = @(Get-LogEntries -path $script:LOG_ERROR_PATH -term 'entry 1')
 
@@ -387,7 +396,7 @@ Describe "Show-Log" {
     }
 
     It "Handles unexpected error reading log file and returns -1" {
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
         Mock Test-FileNotExists { return $false }
         Mock Get-LogEntries { throw 'Error' }
 

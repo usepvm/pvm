@@ -30,6 +30,7 @@ function Read-HostWrapper {
     if ($notifyUser) {
         Invoke-PromptSound
     }
+
     $response = Read-Host -Prompt $prompt
 
     if ([string]::IsNullOrWhiteSpace($response)) {
@@ -40,109 +41,236 @@ function Read-HostWrapper {
 }
 
 function Add-ContentWrapper {
-    param ($path, [Parameter(ValueFromPipeline)]$value)
+    param ($path, [Parameter(ValueFromPipeline)]$value, [switch]$allowOutsideRoot)
 
     process {
-        Add-Content -Path $path -Value $value -Encoding UTF8
+        try {
+            if (-not $allowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
+                throw "Path validation failed for '$path'!, Path is invalid or not under project root"
+            }
+
+            Add-Content -Path $path -Value $value -Encoding UTF8 -ErrorAction Stop
+            return 0
+        } catch {
+            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to add content to '$path'"; exception = $_ }
+            return -1
+        }
     }
 }
 
 function Set-ContentWrapper {
-    param ($path, [Parameter(ValueFromPipeline)]$value)
+    param ($path, [Parameter(ValueFromPipeline)]$value, [switch]$allowOutsideRoot)
 
     begin {
-        $values = @()
+        $values = [System.Collections.Generic.List[object]]::new()
     } process {
-        $values += $Value
+        $values.Add($value)
     } end {
-        Set-Content -Path $Path -Value $values -Encoding UTF8
+        try {
+            if (-not $allowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
+                throw "Path validation failed for '$path'!, Path is invalid or not under project root"
+            }
+
+            Set-Content -Path $path -Value $values -Encoding UTF8 -ErrorAction Stop
+            return 0
+        } catch {
+            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set content to '$path'"; exception = $_ }
+            return -1
+        }
     }
 }
 
 function Invoke-WebRequestWrapper {
-    param ($uri, $outFile = $null, $useBasicParsing = $true, $method = 'Default')
+    param ($uri, $outFile = $null, $useBasicParsing = $true, $method = 'Default', [switch]$allowOutsideRoot)
 
-    $uri = $uri.Trim()
+    try {
+        $uri = $uri.Trim()
 
-    $params = @{
-        Uri = $uri
-        UseBasicParsing = $useBasicParsing
-        Method = $method
+        $params = @{
+            Uri = $uri
+            UseBasicParsing = $useBasicParsing
+            Method = $method
+            ErrorAction = 'Stop'
+        }
+
+        if ($null -ne $outFile) {
+            if (-not $allowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $outFile)) {
+                throw "Path validation failed for '$outFile'!, Path is invalid or not under project root"
+            }
+
+            $params.OutFile = $outFile
+        }
+
+        return Invoke-WebRequest @params
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to make request to $uri"; exception = $_ }
+        return $null
     }
-
-    if ($null -ne $outFile) {
-        $params.OutFile = $outFile
-    }
-
-    return Invoke-WebRequest @params
 }
 
 function Move-ItemWrapper {
-    param ($path, $destination)
+    param ($path, $destination, [switch]$allowOutsideRoot)
 
-    Move-Item -Path $path -Destination $destination -Force
+    try {
+        if (-not $allowOutsideRoot) {
+            if (Test-PathInvalidOrNotUnderProjectRoot -path $path) {
+                throw "Path validation failed for '$path'!, Path is invalid or not under project root"
+            }
+            if (Test-PathInvalidOrNotUnderProjectRoot -path $destination) {
+                throw "Path validation failed for '$destination'!, Path is invalid or not under project root"
+            }
+        }
+        Move-Item -Path $path -Destination $destination -Force -ErrorAction Stop
+        return 0
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to move '$path' to '$destination'"; exception = $_ }
+        return -1
+    }
 }
 
 function Copy-ItemWrapper {
-    param ($path, $destination)
+    param ($path, $destination, [switch]$allowOutsideRoot)
 
-    Copy-Item -Path $path -Destination $destination -Force
+    try {
+        if (-not $allowOutsideRoot) {
+            if (Test-PathInvalidOrNotUnderProjectRoot -path $path) {
+                throw "Path validation failed for '$path'!, Path is invalid or not under project root"
+            }
+            if (Test-PathInvalidOrNotUnderProjectRoot -path $destination) {
+                throw "Path validation failed for '$destination'!, Path is invalid or not under project root"
+            }
+        }
+
+        Copy-Item -Path $path -Destination $destination -Force -ErrorAction Stop
+        return 0
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to copy '$path' to '$destination'"; exception = $_ }
+        return -1
+    }
 }
 
 function Remove-ItemWrapper {
-    param ($path)
+    param ($path, [switch]$allowOutsideRoot)
 
-    Remove-Item -Path $path -Force -Recurse -ErrorAction SilentlyContinue
+    try {
+        if (-not $allowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
+            throw "Path validation failed for '$path'!, Path is invalid or not under project root"
+        }
+
+        Remove-Item -Path $path -Force -Recurse -ErrorAction Stop
+        return 0
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to remove '$path'"; exception = $_ }
+        return -1
+    }
 }
 
 function Clear-ContentWrapper {
-    param ($path)
+    param ($path, [switch]$allowOutsideRoot)
 
-    Clear-Content -Path $path
+    try {
+        if (-not $allowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
+            throw "Path validation failed for '$path'!, Path is invalid or not under project root"
+        }
+
+        Clear-Content -Path $path -ErrorAction Stop
+        return 0
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear content at '$path'"; exception = $_ }
+        return -1
+    }
 }
 
 function Get-ItemWrapper {
     param ($path)
 
-    return Get-Item -Path $path -Force -ErrorAction SilentlyContinue
+    try {
+        return Get-Item -Path $path -Force -ErrorAction Stop
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get item for '$path'"; exception = $_ }
+        return $null
+    }
 }
 
 function Get-ChildItemWrapper {
     param ($path, [switch]$recurse, [switch]$force, $filter = $null, [switch]$file, [switch]$directory)
 
-    return Get-ChildItem -Path $path -Recurse:$recurse -Force:$force -Filter $filter -File:$file -Directory:$directory -ErrorAction SilentlyContinue
+    try {
+        $params = @{
+            Path        = $path
+            Recurse     = $recurse
+            Force       = $force
+            File        = $file
+            Directory   = $directory
+            ErrorAction = 'Stop'
+        }
+
+        if (-not [string]::IsNullOrEmpty($filter)) {
+            $params['Filter'] = $filter
+        }
+
+        return Get-ChildItem @params
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get items for '$path'"; exception = $_ }
+        return $null
+    }
 }
 
 function Get-ContentWrapper {
     param ($path, [switch]$raw)
 
-    return Get-Content -path $path -Raw:$raw -ErrorAction SilentlyContinue
+    try {
+        return Get-Content -Path $path -Raw:$raw -ErrorAction Stop
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get content for '$path'"; exception = $_ }
+        return $null
+    }
 }
 
 function New-ItemWrapper {
-    param ($type, $path, $target = $null)
+    param ($type, $path, $target = $null, [switch]$allowOutsideRoot)
 
-    $params = @{
-        ItemType = $type
-        Path     = $path
-        Force    = $true
+    try {
+        if (-not $allowOutsideRoot) {
+            if (Test-PathInvalidOrNotUnderProjectRoot -path $path) {
+                throw "Path validation failed for '$path'!, Path is invalid or not under project root"
+            }
+            if ($null -ne $target -and (Test-PathInvalidOrNotUnderProjectRoot -path $target)) {
+                throw "Path validation failed for '$target'!, Path is invalid or not under project root"
+            }
+        }
+
+        $params = @{
+            ItemType = $type
+            Path = $path
+            Force = $true
+            ErrorAction = 'Stop'
+        }
+
+        if ($null -ne $target) {
+            $params['Target'] = $target
+        }
+
+        return New-Item @params
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create item '$path'"; exception = $_ }
+        return $null
     }
-
-    if ($null -ne $target) {
-        $params['Target'] = $target
-    }
-
-    return New-Item @params
 }
 
 function Test-PathWrapper {
     param ($path, $pathType = $null)
 
-    $params = @{ Path = $path }
+    try {
+        $params = @{ Path = $path }
 
-    if ($null -ne $pathType) {
-        $params['PathType'] = $pathType
+        if ($null -ne $pathType) {
+            $params['PathType'] = $pathType
+        }
+
+        return (Test-Path @params)
+    } catch {
+        $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to test path for '$path'"; exception = $_ }
+        return $false
     }
-
-    return (Test-Path @params)
 }

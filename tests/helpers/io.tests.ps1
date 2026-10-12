@@ -1,11 +1,19 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:STORAGE_PATH = $Global:PVMConfig.paths.directories.storage
 
-    $null = New-Directory -path "$script:STORAGE_PATH\php\8.1"
-    $null = New-Directory -path "$script:STORAGE_PATH\php\8.2"
+    $null = New-Item -ItemType Directory -Path "$script:STORAGE_PATH\php\8.1" -Force
+    $null = New-Item -ItemType Directory -Path "$script:STORAGE_PATH\php\8.2" -Force
 
     Mock Add-LogEntry { return 0 }
 }
@@ -99,7 +107,7 @@ Describe "Test-FileExists" {
             $result = Test-FileExists -path $filePath
             $result | Should -Be $true
 
-            Remove-ItemWrapper -path $filePath
+            Remove-Item -Path $filePath -Force -Recurse -ErrorAction SilentlyContinue
         }
 
         It "Returns false for non-existent file" {
@@ -251,6 +259,18 @@ Describe "New-Directory" {
             }
         }
 
+        It "Passes allowOutsideRoot to New-ItemWrapper" {
+            Mock New-ItemWrapper { return @{ Name = 'test_link' } }
+            $newDir = "$script:TEST_DRIVE\new_dir"
+
+            $result = New-Directory -path $newDir -allowOutsideRoot
+
+            $result | Should -Be 0
+            Should -Invoke New-ItemWrapper -ParameterFilter {
+                $type -eq 'Directory' -and $path -eq $newDir -and $allowOutsideRoot
+            }
+        }
+
         It "Returns 0 for existing directory" {
             Mock New-ItemWrapper { return @{ FullName = $script:STORAGE_PATH } }
 
@@ -298,6 +318,18 @@ Describe "New-File" {
         }
     }
 
+    It "Passes allowOutsideRoot to New-ItemWrapper" {
+        Mock New-ItemWrapper { return @{ Name = 'new_file.txt' } }
+        $newFile = "$script:TEST_DRIVE\new_file.txt"
+
+        $result = New-File -path $newFile -allowOutsideRoot
+
+        $result | Should -Be 0
+        Should -Invoke New-ItemWrapper -ParameterFilter {
+            $type -eq 'File' -and $path -eq $newFile -and $allowOutsideRoot
+        }
+    }
+
     It "Returns 0 for existing file" {
         $existingFile = "$script:TEST_DRIVE\existing_file.txt"
         Mock New-ItemWrapper { return @{ FullName = $existingFile } }
@@ -335,7 +367,7 @@ Describe "New-File" {
 Describe "New-SymbolicLink" {
     Context "When creating symbolic links" {
         It "Creates a symbolic link successfully when running as admin" {
-            Mock Test-Admin { return $true }
+            Mock Test-NotAdmin { return $false }
             Mock New-ItemWrapper {
                 param ($type, $path, $target)
 
@@ -344,7 +376,7 @@ Describe "New-SymbolicLink" {
             $linkPath = "$script:TEST_DRIVE\test_link"
             $targetPath = "$script:STORAGE_PATH\php\8.1"
 
-            $result = New-SymbolicLink -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
 
             $result.code | Should -Be 0
             $result.message | Should -Match 'Created symbolic link'
@@ -352,7 +384,8 @@ Describe "New-SymbolicLink" {
             Should -Invoke New-ItemWrapper -ParameterFilter {
                 $type -eq 'SymbolicLink' -and
                 $path -eq $linkPath -and
-                $target -eq $targetPath
+                $target -eq $targetPath -and
+                $allowOutsideRoot -eq $true
             }
         }
 
@@ -362,7 +395,7 @@ Describe "New-SymbolicLink" {
             $linkPath = "$script:TEST_DRIVE\test_link_fail"
             $targetPath = "$script:STORAGE_PATH\php\8.1"
 
-            $result = New-SymbolicLink -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
 
             $result.code | Should -Be -1
             $result.message | Should -Be "Failed to create symbolic link '$linkPath' -> '$targetPath'"
@@ -388,10 +421,12 @@ Describe "New-SymbolicLink" {
         }
 
         It "Returns -1 if target directory does not exist" {
-            $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target "$script:TEST_DRIVE\Nonexistent\Target"
+            $link = "$script:TEST_DRIVE\link"
+            $target = "$script:TEST_DRIVE\Nonexistent\Target"
+            $result = New-SymbolicLink -link $link -target $target -allowOutsideRoot
 
             $result.code | Should -Be -1
-            $result.message | Should -Match "Target directory "$script:TEST_DRIVE\\Nonexistent\\Target" does not exist!"
+            $result.message | Should -BeLike "Target directory '$target' does not exist!"
             $result.color | Should -Be 'DarkYellow'
         }
 
@@ -400,14 +435,14 @@ Describe "New-SymbolicLink" {
             $existingPath = "$script:TEST_DRIVE\existing_file"
             New-Item -Path $existingPath -ItemType File -Force | Out-Null
 
-            $result = New-SymbolicLink -link $existingPath -target "$script:STORAGE_PATH\php\8.1"
+            $result = New-SymbolicLink -link $existingPath -target "$script:STORAGE_PATH\php\8.1" -allowOutsideRoot
 
             $result.code | Should -Be -1
             $result.message | Should -Be "Link '$existingPath' is not a symbolic link!"
             $result.color | Should -Be 'DarkYellow'
 
             # Cleanup
-            Remove-ItemWrapper -path $existingPath
+            Remove-Item -Path $existingPath -Force -Recurse -ErrorAction SilentlyContinue
         }
 
         It "Deletes existing symbolic link and creates new one" {
@@ -427,14 +462,14 @@ Describe "New-SymbolicLink" {
                 # Create a directory at the link path to simulate an existing item
                 New-Item -ItemType Directory -Path $linkPath -Force | Out-Null
 
-                $result = New-SymbolicLink -link $linkPath -target $targetPath
+                $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
 
                 $result.code | Should -Be 0
                 $result.message | Should -Match "Created symbolic link"
             } finally {
                 # Cleanup
                 if (Test-Path $testDir) {
-                    Remove-ItemWrapper -path $testDir
+                    Remove-Item -Path $testDir -Force -Recurse -ErrorAction SilentlyContinue
                 }
             }
         }
@@ -448,7 +483,7 @@ Describe "New-SymbolicLink" {
             $linkPath = "$script:STORAGE_PATH\test_link"
             $targetPath = "$script:STORAGE_PATH\php\8.1"
 
-            $result = New-SymbolicLink -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
 
             $result.code | Should -Be -1
         }
@@ -456,7 +491,7 @@ Describe "New-SymbolicLink" {
         It "Handles exceptions gracefully" {
             Mock Test-DirectoryExists { throw 'Simulated exception' }
 
-            $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target "$script:TEST_DRIVE\target"
+            $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target "$script:TEST_DRIVE\target" -allowOutsideRoot
 
             $result.code | Should -Be -1
         }
@@ -469,6 +504,25 @@ Describe "New-SymbolicLink" {
 
         It "Returns -1 for empty target path" {
             $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target ''
+
+            $result.code | Should -Be -1
+        }
+
+        It "Returns -1 when link validation fails" {
+            Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
+
+            $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target "$script:TEST_DRIVE\target"
+
+            $result.code | Should -Be -1
+        }
+
+        It "Returns -1 when target validation fails" {
+            $link = "$script:TEST_DRIVE\link"
+            $target = "$script:TEST_DRIVE\target"
+            Mock Test-PathInvalidOrNotUnderProjectRoot { return $false } -ParameterFilter { $path -eq $link }
+            Mock Test-PathInvalidOrNotUnderProjectRoot { return $true } -ParameterFilter { $path -eq $target }
+
+            $result = New-SymbolicLink -link $link -target $target
 
             $result.code | Should -Be -1
         }
@@ -491,7 +545,7 @@ Describe "New-SymbolicLink" {
                 return @{ FullName = $path }
             }
 
-            $result = New-SymbolicLink -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
             $result.code | Should -Be 0
         }
 
@@ -501,7 +555,7 @@ Describe "New-SymbolicLink" {
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq "$script:TEST_DRIVE\test_parent" } -MockWith { return $true }
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
             Mock New-Directory { return -1 }
-            $result = New-SymbolicLink -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
             $result.code | Should -Be -1
         }
     }
@@ -518,7 +572,7 @@ Describe "Expand-ZipCore" {
         try {
             # Create source directory and file
             New-Item -ItemType Directory -Path (Split-Path $testFile) -Force | Out-Null
-            'test content' | Set-ContentWrapper -path $testFile
+            'test content' | Set-Content -Path $testFile -Encoding UTF8
 
             # Create zip file using PowerShell's Compress-Archive
             Compress-Archive -Path $testFile -DestinationPath $zipPath -Force
@@ -536,7 +590,7 @@ Describe "Expand-ZipCore" {
         } finally {
             # Cleanup
             if (Test-Path $testDir) {
-                Remove-ItemWrapper -path $testDir
+                Remove-Item -Path $testDir -Force -Recurse -ErrorAction SilentlyContinue
             }
         }
     }
@@ -545,11 +599,13 @@ Describe "Expand-ZipCore" {
 Describe "Expand-Zip" {
     BeforeEach {
         Mock Expand-ZipCore { }
-        Mock Remove-ItemWrapper { }
-        Mock Add-LogEntry { }
+        Mock Remove-ItemWrapper { return 0 }
+        Mock Add-LogEntry { return 0 }
     }
 
     It "Should extract zip without errors" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
+
         $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir'
 
         $result | Should -Be 0
@@ -557,6 +613,8 @@ Describe "Expand-Zip" {
     }
 
     It "Should delete zip after extraction" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
+
         $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $true
 
         $result | Should -Be 0
@@ -564,13 +622,27 @@ Describe "Expand-Zip" {
     }
 
     It "Should not delete zip if deleteZipAfter is false" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
+
         $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $false
 
         $result | Should -Be 0
         Should -Invoke Remove-ItemWrapper -Times 0
     }
 
+    It "Validates path by default" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
+        Mock Add-LogEntry { return 0 }
+
+        $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir'
+
+        $result | Should -Be -1
+        Should -Invoke Add-LogEntry -Times 1
+    }
+
     It "Should call Add-LogEntry on extraction failure" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
+
         Mock Expand-ZipCore { throw "Extraction failed" }
 
         $result = Expand-Zip -zipPath 'bad.zip' -extractPath 'testdir'
@@ -678,37 +750,37 @@ Describe "Test-DownloadPrerequisites" {
         $result.message | Should -BeLike '*Failed to get remote file size or invalid size. Cannot proceed with download*'
     }
 
+    It "Returns error message when remote file size exceeds available disk space" {
+        Mock Test-FreeDiskSpaceInsufficient { return $false }
+        Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Convert-BytesToMegabytes { return 200 }
+        Mock Get-FreeDiskSpaceBytes { return [int64]100MB }
+
+        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
+
+        $result.message | Should -BeLike 'Insufficient disk space for download. Required: 200 MB'
+        $result.temporaryDirectory | Should -BeNullOrEmpty
+    }
+
     It "Returns error message when temporary directory cannot be created" {
         Mock Test-FreeDiskSpaceInsufficient { return $false }
         Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Convert-BytesToMegabytes { return 200 }
         Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
         Mock New-Directory { return -1 }
 
         $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
 
         $result.message | Should -BeLike "*Failed to create temporary directory '$script:TEST_DRIVE\temp'*"
-    }
-
-    It "Returns error message when remote file size exceeds available disk space" {
-        Mock Test-FreeDiskSpaceInsufficient { return $false }
-        Mock Get-RemoteFileSize { return ([int64]200MB) }
-        Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
-        Mock New-Directory { return 0 }
-        Mock Convert-BytesToMegabytes { return 200 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $true }
-
-        $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
-
-        $result.message | Should -BeLike 'Insufficient disk space for download. Required: 200 MB'
+        $result.temporaryDirectory | Should -BeNullOrEmpty
     }
 
     It "Returns success when all prerequisites are met" {
         Mock Test-FreeDiskSpaceInsufficient { return $false }
         Mock Get-RemoteFileSize { return ([int64]200MB) }
+        Mock Convert-BytesToMegabytes { return 200 }
         Mock Get-TemporaryDirectory { return "$script:TEST_DRIVE\temp" }
         Mock New-Directory { return 0 }
-        Mock Convert-BytesToMegabytes { return 200 }
-        Mock Test-RemoteFileDiskSpaceInsufficient { return $false }
 
         $result = Test-DownloadPrerequisites -uri 'https://example.com/file.zip' -minimumFreeSpaceMB 100
 
@@ -966,6 +1038,320 @@ Describe "Test-InvalidDrivePath" {
         $result | Should -BeFalse
     }
 }
+Describe "Test-PathUnderRoot" {
+    Context "When path is under root" {
+        It "Returns true for direct child" {
+            $result = Test-PathUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+            $result | Should -BeTrue
+        }
+
+        It "Returns true for nested child" {
+            $result = Test-PathUnderRoot -path 'C:\Root\A\B\C' -rootPath 'C:\Root'
+            $result | Should -BeTrue
+        }
+
+        It "Is case-insensitive" {
+            $result = Test-PathUnderRoot -path 'c:\root\child' -rootPath 'C:\ROOT'
+            $result | Should -BeTrue
+        }
+
+        It "Handles trailing backslashes on path and root" {
+            $result = Test-PathUnderRoot -path 'C:\Root\Child\' -rootPath 'C:\Root\'
+            $result | Should -BeTrue
+        }
+
+        It "Trims whitespace from path and root" {
+            $result = Test-PathUnderRoot -path '  C:\Root\Child  ' -rootPath '  C:\Root  '
+            $result | Should -BeTrue
+        }
+
+        It "Normalizes parent traversal that stays under root" {
+            $result = Test-PathUnderRoot -path 'C:\Root\A\..\B' -rootPath 'C:\Root'
+            $result | Should -BeTrue
+        }
+    }
+
+    Context "When path is not under root" {
+        It "Returns false when path equals root" {
+            $result = Test-PathUnderRoot -path 'C:\Root' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false when path equals root with trailing backslash" {
+            $result = Test-PathUnderRoot -path 'C:\Root\' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for sibling sharing the root prefix" {
+            $result = Test-PathUnderRoot -path 'C:\RootOther\Child' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for unrelated path" {
+            $result = Test-PathUnderRoot -path 'C:\Other\Child' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for parent of root" {
+            $result = Test-PathUnderRoot -path 'C:\' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for different drive" {
+            $result = Test-PathUnderRoot -path 'D:\Root\Child' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for parent traversal escaping root" {
+            $result = Test-PathUnderRoot -path 'C:\Root\..\Other' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+    }
+
+    Context "When inputs are invalid" {
+        It "Returns false for null path" {
+            $result = Test-PathUnderRoot -path $null -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for empty path" {
+            $result = Test-PathUnderRoot -path '' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for whitespace path" {
+            $result = Test-PathUnderRoot -path '   ' -rootPath 'C:\Root'
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for null root" {
+            $result = Test-PathUnderRoot -path 'C:\Root\Child' -rootPath $null
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for empty root" {
+            $result = Test-PathUnderRoot -path 'C:\Root\Child' -rootPath ''
+            $result | Should -BeFalse
+        }
+
+        It "Returns false for whitespace root" {
+            $result = Test-PathUnderRoot -path 'C:\Root\Child' -rootPath '   '
+            $result | Should -BeFalse
+        }
+    }
+}
+
+Describe "Test-PathNotUnderRoot" {
+    It "Returns true when path is not under root" {
+        Mock Test-PathUnderRoot { return $false }
+
+        $result = Test-PathNotUnderRoot -path 'C:\Other' -rootPath 'C:\Root'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when path is under root" {
+        Mock Test-PathUnderRoot { return $true }
+
+        $result = Test-PathNotUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        $result | Should -BeFalse
+    }
+
+    It "Passes path and root to Test-PathUnderRoot" {
+        Mock Test-PathUnderRoot { return $true }
+
+        $null = Test-PathNotUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        Should -Invoke Test-PathUnderRoot -Times 1 -ParameterFilter {
+            $path -eq 'C:\Root\Child' -and $rootPath -eq 'C:\Root'
+        }
+    }
+}
+
+Describe "Test-PathValidAndUnderRoot" {
+    It "Returns true when path is valid and under root" {
+        Mock Test-ValidDrivePath { return $true }
+        Mock Test-PathUnderRoot { return $true }
+
+        $result = Test-PathValidAndUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when path is invalid" {
+        Mock Test-ValidDrivePath { return $false }
+        Mock Test-PathUnderRoot { return $true }
+
+        $result = Test-PathValidAndUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        $result | Should -BeFalse
+    }
+
+    It "Returns false when path is not under root" {
+        Mock Test-ValidDrivePath { return $true }
+        Mock Test-PathUnderRoot { return $false }
+
+        $result = Test-PathValidAndUnderRoot -path 'C:\Other' -rootPath 'C:\Root'
+
+        $result | Should -BeFalse
+    }
+
+    It "Does not check root containment when path is invalid" {
+        Mock Test-ValidDrivePath { return $false }
+        Mock Test-PathUnderRoot { return $true }
+
+        $null = Test-PathValidAndUnderRoot -path 'bad' -rootPath 'C:\Root'
+
+        Should -Invoke Test-PathUnderRoot -Times 0
+    }
+
+    It "Passes path and root to the underlying checks" {
+        Mock Test-ValidDrivePath { return $true }
+        Mock Test-PathUnderRoot { return $true }
+
+        $null = Test-PathValidAndUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        Should -Invoke Test-ValidDrivePath -Times 1 -ParameterFilter { $path -eq 'C:\Root\Child' }
+        Should -Invoke Test-PathUnderRoot -Times 1 -ParameterFilter {
+            $path -eq 'C:\Root\Child' -and $rootPath -eq 'C:\Root'
+        }
+    }
+
+    It "Returns false and logs when an exception occurs" {
+        Mock Test-ValidDrivePath { throw 'Error' }
+
+        $result = Test-PathValidAndUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        $result | Should -BeFalse
+        Should -Invoke Add-LogEntry -Times 1
+    }
+
+    It "Returns false and logs when Test-PathUnderRoot throws" {
+        Mock Test-ValidDrivePath { return $true }
+        Mock Test-PathUnderRoot { throw 'Error' }
+
+        $result = Test-PathValidAndUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        $result | Should -BeFalse
+        Should -Invoke Add-LogEntry -Times 1
+    }
+}
+
+Describe "Test-PathInvalidOrNotUnderRoot" {
+    It "Returns true when path is invalid or not under root" {
+        Mock Test-PathValidAndUnderRoot { return $false }
+
+        $result = Test-PathInvalidOrNotUnderRoot -path 'C:\Other' -rootPath 'C:\Root'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when path is valid and under root" {
+        Mock Test-PathValidAndUnderRoot { return $true }
+
+        $result = Test-PathInvalidOrNotUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        $result | Should -BeFalse
+    }
+
+    It "Passes path and root to Test-PathValidAndUnderRoot" {
+        Mock Test-PathValidAndUnderRoot { return $true }
+
+        $null = Test-PathInvalidOrNotUnderRoot -path 'C:\Root\Child' -rootPath 'C:\Root'
+
+        Should -Invoke Test-PathValidAndUnderRoot -Times 1 -ParameterFilter {
+            $path -eq 'C:\Root\Child' -and $rootPath -eq 'C:\Root'
+        }
+    }
+}
+
+Describe "Test-PathValidUnderProjectRoot" {
+    BeforeEach {
+        $script:ORIGINAL_PVM_CONFIG = $Global:PVMConfig
+    }
+
+    AfterEach {
+        $Global:PVMConfig = $script:ORIGINAL_PVM_CONFIG
+    }
+
+    It "Returns false when PVMConfig is null" {
+        $Global:PVMConfig = $null
+        Mock Test-PathValidAndUnderRoot { return $true }
+
+        $result = Test-PathValidUnderProjectRoot -path 'C:\Root\Child'
+
+        $result | Should -BeFalse
+        Should -Invoke Test-PathValidAndUnderRoot -Times 0
+    }
+
+    It "Returns false when rootPath is null" {
+        $Global:PVMConfig = @{ rootPath = $null }
+        Mock Test-PathValidAndUnderRoot { return $true }
+
+        $result = Test-PathValidUnderProjectRoot -path 'C:\Root\Child'
+
+        $result | Should -BeFalse
+        Should -Invoke Test-PathValidAndUnderRoot -Times 0
+    }
+
+    It "Returns true when path is valid and under project root" {
+        $Global:PVMConfig = @{ rootPath = 'C:\Root' }
+        Mock Test-PathValidAndUnderRoot { return $true }
+
+        $result = Test-PathValidUnderProjectRoot -path 'C:\Root\Child'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when path is not valid or not under project root" {
+        $Global:PVMConfig = @{ rootPath = 'C:\Root' }
+        Mock Test-PathValidAndUnderRoot { return $false }
+
+        $result = Test-PathValidUnderProjectRoot -path 'C:\Other'
+
+        $result | Should -BeFalse
+    }
+
+    It "Passes path and project root to Test-PathValidAndUnderRoot" {
+        $Global:PVMConfig = @{ rootPath = 'C:\Root' }
+        Mock Test-PathValidAndUnderRoot { return $true }
+
+        $null = Test-PathValidUnderProjectRoot -path 'C:\Root\Child'
+
+        Should -Invoke Test-PathValidAndUnderRoot -Times 1 -ParameterFilter {
+            $path -eq 'C:\Root\Child' -and $rootPath -eq 'C:\Root'
+        }
+    }
+}
+
+Describe "Test-PathInvalidOrNotUnderProjectRoot" {
+    It "Returns true when path is not valid under project root" {
+        Mock Test-PathValidUnderProjectRoot { return $false }
+
+        $result = Test-PathInvalidOrNotUnderProjectRoot -path 'C:\Other'
+
+        $result | Should -BeTrue
+    }
+
+    It "Returns false when path is valid under project root" {
+        Mock Test-PathValidUnderProjectRoot { return $true }
+
+        $result = Test-PathInvalidOrNotUnderProjectRoot -path 'C:\Root\Child'
+
+        $result | Should -BeFalse
+    }
+
+    It "Passes path to Test-PathValidUnderProjectRoot" {
+        Mock Test-PathValidUnderProjectRoot { return $true }
+
+        $null = Test-PathInvalidOrNotUnderProjectRoot -path 'C:\Root\Child'
+
+        Should -Invoke Test-PathValidUnderProjectRoot -Times 1 -ParameterFilter {
+            $path -eq 'C:\Root\Child'
+        }
+    }
+}
 
 Describe "Get-TemporaryDirectory" {
     It "Returns null or empty for null root path" {
@@ -1013,7 +1399,7 @@ Describe "Get-SHA256HashFromFile" {
     It "Returns correct SHA256 hash for a file" {
         $testFile = "$script:TEST_DRIVE\test-sha256.txt"
         $testContent = "test content"
-        Set-ContentWrapper -path $testFile -value $testContent
+        Set-Content -Path $testFile -Value $testContent -Encoding UTF8
 
         $result = Get-SHA256HashFromFile -filePath $testFile
 
@@ -1024,7 +1410,7 @@ Describe "Get-SHA256HashFromFile" {
 
     It "Returns lowercase hash" {
         $testFile = "$script:TEST_DRIVE\test-sha256-lower.txt"
-        Set-ContentWrapper -path $testFile -value "test"
+        Set-Content -Path $testFile -Value "test" -Encoding UTF8
 
         $result = Get-SHA256HashFromFile -filePath $testFile
 

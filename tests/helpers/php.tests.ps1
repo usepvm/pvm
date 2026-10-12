@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
@@ -11,7 +19,7 @@ BeforeAll {
     $script:DEFAULT_ZEND_EXTENSIONS = $Global:PVMConfig.defaults.zendExtensions
     $script:MIN_PAD_RIGHT_LENGTH = $Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH
 
-    $null = New-Directory -path $script:testPhpPath
+    $null = New-Item -ItemType Directory -Path $script:testPhpPath -Force
 
     Mock Show-Message { }
     Mock Show-Error { }
@@ -27,7 +35,7 @@ BeforeAll {
             'display_errors = On'
             'max_execution_time = 30'
             ';upload_max_filesize = 2M'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
     }
 
     # Create initial ini content first
@@ -312,7 +320,7 @@ Describe "Get-ZendExtensionsList" {
     BeforeAll {
         New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $testContent = @('opcache', 'xdebug', 'swoole')
-        $testContent | ConvertTo-Json -Depth 10 | Set-ContentWrapper -path $script:ZEND_EXTENSIONS_LIST_PATH
+        $testContent | ConvertTo-Json -Depth 10 | Set-Content -Path $script:ZEND_EXTENSIONS_LIST_PATH -Encoding UTF8
     }
 
     It "Returns the zend_extensions.json content as a hashtable" {
@@ -324,7 +332,7 @@ Describe "Get-ZendExtensionsList" {
     }
 
     It "Falls back to DEFAULT_ZEND_EXTENSIONS value" {
-        Remove-ItemWrapper -path "$script:TEMPLATES_PATH\zend_extensions.json"
+        Remove-Item -Path "$script:TEMPLATES_PATH\zend_extensions.json" -Force -Recurse -ErrorAction SilentlyContinue
         $result = Get-ZendExtensionsList
         $result.Count | Should -Be $script:DEFAULT_ZEND_EXTENSIONS.Count
     }
@@ -885,7 +893,7 @@ Describe "Get-ZendExtensionsInfo" {
             'extension=php_curl.dll'
             'zend_extension=php_opcache.dll'
             ';upload_max_filesize = 2M'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
         New-Item -ItemType Directory -Force -Path $script:testExtPath | Out-Null
         New-Item -Path "$script:testExtPath\opcache.dll" -ItemType File -Force | Out-Null
         New-Item -Path "$script:testExtPath\php_xdebug.dll" -ItemType File -Force | Out-Null
@@ -951,7 +959,7 @@ Describe "Get-PHPData" {
     }
 
     It "Handles empty ini file" {
-        '' | Set-ContentWrapper -path $script:testIniPath
+        '' | Set-Content -Path $script:testIniPath -Encoding UTF8
         $extensions = (Get-PHPData -phpIniPath $script:testIniPath).extensions
         $extensions.Count | Should -Be 0
     }
@@ -1131,11 +1139,11 @@ Describe "Select-PHPVersionAutomatically" {
         $result.message | Should -Match "Invalid version format: 'abc'. Expected e.g. 8, 8.3 or 8.3.1"
     }
 
-    It "Should return valid version entered by user if no version can be detected" {
+    It "Should return valid version entered by user without saving if no version can be detected" {
         Mock Find-PHPVersionFromProject { return $null }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSave as project default in .php-version? (y/n)" } -MockWith { return 'n' }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
         Mock Get-MatchingPHPVersions {
             return @(
                 @{version='8.5.1'; path='C:\php\8.5.1'},
@@ -1154,7 +1162,7 @@ Describe "Select-PHPVersionAutomatically" {
         Mock Find-PHPVersionFromProject { return $null }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSave as project default in .php-version? (y/n)" } -MockWith { return 'y' }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
         Mock Get-MatchingPHPVersions {
             return @(
                 @{version='8.5.1'; path='C:\php\8.5.1'},
@@ -1167,6 +1175,21 @@ Describe "Select-PHPVersionAutomatically" {
         $result.code | Should -Be 0
         $result.version | Should -Be '8.5'
         Should -Invoke Set-ContentWrapper -Exactly 1
+    }
+
+    It "Should return -1 when setting version to .php-version fails" {
+        Mock Find-PHPVersionFromProject { return $null }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSave as project default in .php-version? (y/n)" } -MockWith { return 'y' }
+        Mock Test-PHPVersionFormat { return $true }
+        Mock Test-YesResponse { return $true }
+        Mock Set-ContentWrapper { return -1 }
+
+        $result = Select-PHPVersionAutomatically
+
+        $result.code | Should -Be -1
+        $result.vresion | Should -BeNullOrEmpty
+        $result.message | Should -BeLike "*Failed to set 8.5 to '.php-version' file*"
     }
 
     It "Should return error when detected version is not installed" {

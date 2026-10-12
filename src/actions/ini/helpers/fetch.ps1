@@ -68,7 +68,7 @@ function Get-ExtensionHandlers {
                             if ($existingFile) {
                                 $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
                                 if (Test-NoResponse -response $response) {
-                                    Remove-ItemWrapper -path $extFile.FullName
+                                    $null = Remove-ItemWrapper -path $extFile.FullName
                                     Write-Gray -message "`nInstallation cancelled"
                                     return $null
                                 }
@@ -76,16 +76,21 @@ function Get-ExtensionHandlers {
                         }
 
                         if ($existingFile) {
-                            Remove-ItemWrapper -path $existingFile
+                            $null = Remove-ItemWrapper -path $existingFile
                         }
-                        Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
+                        $code = Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
+                        if ($code -ne 0) {
+                            Show-Error -message "`nFailed to move '$($extFile.FullName)' to '$phpPath\ext'"
+                            return $null
+                        }
+
                         return $extFile
                     } catch {
                         $null = Add-LogEntry -data @{ header = "Xdebug.org Handler - Failed to download extension"; exception = $_ }
                         return $null
                     } finally {
                         if ($temporaryDirectory) {
-                            Remove-ItemWrapper -path $temporaryDirectory
+                            $null = Remove-ItemWrapper -path $temporaryDirectory
                         }
                     }
                 }
@@ -140,7 +145,7 @@ function Get-ExtensionHandlers {
 
                         if ($code -ne 0) {
                             Show-Error -message "`nFailed to extract extension $extName"
-                            Remove-ItemWrapper -path $extractPath
+                            $null = Remove-ItemWrapper -path $extractPath
                             return $null
                         }
 
@@ -150,7 +155,7 @@ function Get-ExtensionHandlers {
                         }
 
                         if (-not $extFile) {
-                            Remove-ItemWrapper -path $extractPath
+                            $null = Remove-ItemWrapper -path $extractPath
                             return $null
                         }
 
@@ -161,7 +166,7 @@ function Get-ExtensionHandlers {
                             if ($existingFile) {
                                 $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
                                 if (Test-NoResponse -response $response) {
-                                    Remove-ItemWrapper -path $extractPath
+                                    $null = Remove-ItemWrapper -path $extractPath
                                     Write-Gray -message "`nInstallation cancelled"
                                     return $null
                                 }
@@ -169,17 +174,22 @@ function Get-ExtensionHandlers {
                         }
 
                         if ($existingFile) {
-                            Remove-ItemWrapper -path $existingFile
+                            $null = Remove-ItemWrapper -path $existingFile
                         }
-                        Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
-                        Remove-ItemWrapper -path $extractPath
+                        $code = Move-ItemWrapper -path $extFile.FullName -destination "$phpPath\ext"
+                        $null = Remove-ItemWrapper -path $extractPath
+                        if ($code -ne 0) {
+                            Show-Error -message "`nFailed to move '$($extFile.FullName)' to '$phpPath\ext'"
+                            return $null
+                        }
+
                         return $extFile
                     } catch {
                         $null = Add-LogEntry -data @{ header = "PECL Handler - Failed to download extension"; exception = $_ }
                         return $null
                     } finally {
                         if ($temporaryDirectory) {
-                            Remove-ItemWrapper -path $temporaryDirectory
+                            $null = Remove-ItemWrapper -path $temporaryDirectory
                         }
                     }
                 }
@@ -200,15 +210,13 @@ function Get-ExtensionHandlers {
                     $xdebugV2Config = Get-XdebugConfigV2 -dllPath $fileName
                     $xdebugV3Config = Get-XdebugConfigV3 -dllPath $fileName
 
-                    $lines = Get-ContentWrapper -path $iniPath
-                    $newLines = @()
-
                     # Build patterns from the actual config functions
                     $xdebugPatterns = @(
                         '^\[xdebug\]',
                         '^;?zend_extension=.*xdebug'
                     )
 
+                    $lines = Get-ContentWrapper -path $iniPath
                     # Add patterns from v2 config
                     foreach ($line in $xdebugV2Config) {
                         if ($line -match '^xdebug\.\w+') {
@@ -225,6 +233,7 @@ function Get-ExtensionHandlers {
                         }
                     }
 
+                    $newLines = @()
                     foreach ($line in $lines) {
                         $isXdebugLine = $false
                         foreach ($pattern in $xdebugPatterns) {
@@ -238,7 +247,11 @@ function Get-ExtensionHandlers {
                         }
                     }
 
-                    Set-ContentWrapper -path $iniPath -value $newLines
+                    $code = Set-ContentWrapper -path $iniPath -value $newLines
+                    if ($code -ne 0) {
+                        Show-Error -message "`nFailed to write to '$iniPath'"
+                        return -1
+                    }
 
                     # Add new xdebug config
                     $xDebugConfig = Get-XdebugConfigV2 -dllPath $fileName
@@ -246,9 +259,8 @@ function Get-ExtensionHandlers {
                         $xDebugConfig = Get-XdebugConfigV3 -dllPath $fileName
                     }
                     $xDebugConfig = "`n$($xDebugConfig -join "`n")"
-                    Add-ContentWrapper -path $iniPath -value $xDebugConfig
 
-                    return 0
+                    return (Add-ContentWrapper -path $iniPath -value $xDebugConfig)
                 } catch {
                     $null = Add-LogEntry -data @{ header = "Xdebug Config Handler - Failed to apply configuration"; exception = $_ }
                     return -1

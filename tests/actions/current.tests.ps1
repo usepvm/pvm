@@ -1,11 +1,19 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:PHP_CURRENT_DIR = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
     $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
 
-    $null = New-Directory -path $script:PHP_CURRENT_DIR
+    $null = New-Item -ItemType Directory -Path $script:PHP_CURRENT_DIR -Force
 
     Mock Show-Error { }
 

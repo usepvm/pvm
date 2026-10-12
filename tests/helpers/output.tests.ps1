@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:ROOT_PATH = $Global:PVMConfig.rootPath
@@ -66,10 +74,10 @@ Describe "Show-SpinnerWhileJob" {
         Mock Write-HostWrapper { }
         Mock Write-Color { }
         Mock Write-Yellow { }
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
 
         New-Item -Path "$script:ROOT_PATH\src" -ItemType Directory -Force | Out-Null
-        Set-ContentWrapper -path "$script:ROOT_PATH\src\imports.ps1" -value '# no-op for tests'
+        Set-Content -Path "$script:ROOT_PATH\src\imports.ps1" -Value '# no-op for tests' -Encoding UTF8
 
         $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
         $script:keepRunning = $true
@@ -206,7 +214,7 @@ Describe "Show-SpinnerWhileJob" {
                 return @{ pvmData = @{ result = 'success' } }
             }
 
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
 
             $scriptBlock = { return @{ result = 'success' } }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock
@@ -222,7 +230,7 @@ Describe "Show-SpinnerWhileJob" {
                 throw "Job failed"
             }
 
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
 
             $scriptBlock = { throw "Job failed" }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
@@ -289,7 +297,7 @@ Describe "Show-SpinnerWhileJob" {
 Describe "Show-SpinnerWhileProcess" {
     BeforeAll {
         Mock Write-Color { }
-        Mock Add-LogEntry { }
+        Mock Add-LogEntry { return 0 }
     }
 
     Context "When process succeeds" {
@@ -740,7 +748,7 @@ Describe "Sound Functions" {
             Mock New-Player { return $script:fakePlayer }
             Mock Get-Sound-TotalSeconds { return 3 }
             Mock Start-Sleep { }
-            Mock Add-LogEntry { }
+            Mock Add-LogEntry { return 0 }
         }
 
         It "opens the file, plays it, and sleeps for its duration when 'wait' is specified" {

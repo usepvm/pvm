@@ -1,10 +1,20 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:ROOT_PATH = $Global:PVMConfig.rootPath = "$script:TEST_DRIVE\pvm"
     $script:PHP_CURRENT_VERSION_PATH = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
     $script:PVM_ENV_VAR_NAME = $Global:PVMConfig.env.PVM_ENV_VAR_NAME
+
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Test-PVMSetup" {

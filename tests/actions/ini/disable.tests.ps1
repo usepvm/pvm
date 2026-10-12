@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:phpPath = "$script:TEST_DRIVE\php"
@@ -7,14 +15,15 @@ BeforeAll {
     $script:extDirectory = "$script:phpPath\ext"
     $script:testBackupPath = "$script:phpPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
 
-    $null = New-Directory -path $Global:PVMConfig.paths.directories.cache
-    $null = New-Directory -path $script:phpPath
-    $null = New-Directory -path $script:extDirectory
+    $null = New-Item -ItemType Directory -Path $Global:PVMConfig.paths.directories.cache -Force
+    $null = New-Item -ItemType Directory -Path $script:phpPath -Force
+    $null = New-Item -ItemType Directory -Path $script:extDirectory -Force
 
     Mock Show-Warning { }
     Mock Show-Info { }
     Mock Show-Message { }
     Mock Write-Color { }
+    Mock Add-LogEntry { return 0 }
     Mock Backup-IniFile { return 0 }
 
     function Reset-IniContent {
@@ -26,7 +35,7 @@ BeforeAll {
         'display_errors = On'
         'max_execution_time = 30'
         ';upload_max_filesize = 2M'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
     }
 
     Reset-IniContent
@@ -36,7 +45,7 @@ Describe "Disable-IniExtension" {
     BeforeEach {
         Mock Test-DirectoryExists -ParameterFilter { $path -eq $script:extDirectory } -MockWith { return $true }
         Reset-IniContent
-        Remove-ItemWrapper -path $script:testBackupPath
+        Remove-Item -Path $script:testBackupPath -Force -Recurse -ErrorAction SilentlyContinue
     }
 
     It "Disables enabled extension" {
@@ -60,7 +69,7 @@ Describe "Disable-IniExtension" {
                 @{ name = 'php_xdebug'; status = 'Disabled'; color = 'DarkYellow'; line = ';extension=php_xdebug.dll'; lineNumber = 1 }
             )
         }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
 
         $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('xdebug')
         $code | Should -Be 0
@@ -96,7 +105,7 @@ Describe "Disable-IniExtension" {
             )
         }
         Mock Get-ContentWrapper { return @('extension=php_curl.dll') }
-        Mock Set-ContentWrapper { }
+        Mock Set-ContentWrapper { return 0 }
 
         $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
         $code | Should -Be 0
@@ -110,7 +119,7 @@ Describe "Disable-IniExtension" {
             'extension=pdo_sqlite'
             'extension=pgsql'
             ';extension=sqlite3'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
         Mock Get-ChildItemWrapper {
             param ($path)
             return @(
@@ -136,7 +145,7 @@ Describe "Disable-IniExtension" {
             'extension=pdo_sqlite'
             'extension=pgsql'
             ';extension=sqlite3'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         $script:callCount = 0
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
@@ -166,8 +175,23 @@ Describe "Disable-IniExtension" {
     }
 
     It "Creates backup before modifying" {
-        Disable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
+        $null = Disable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
         Should -Invoke Backup-IniFile -ParameterFilter { $iniPath -like "*$script:testIniPath*" }
+    }
+
+    It "Returns -1 when writing to ini file fails" {
+        Mock Get-MatchingPHPExtensionsStatus {
+            return @(
+                @{ name = 'php_curl'; status = 'Enabled'; color = 'DarkGreen'; line = 'extension=php_curl.dll'; lineNumber = 1 }
+            )
+        }
+        Mock Get-ContentWrapper { return @('extension=php_curl.dll') }
+        Mock Set-ContentWrapper { return -1 }
+
+        $code = Disable-IniExtension -iniPath $script:testIniPath -extNames @('curl')
+
+        $code | Should -Be -1
+        Should -Invoke Write-Color -ParameterFilter { $message -like '*Failed*' -and $foreColor -eq 'DarkGray' }
     }
 
     It "Returns -1 on error" {

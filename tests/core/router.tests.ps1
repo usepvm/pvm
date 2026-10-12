@@ -4,6 +4,7 @@ BeforeAll {
     Mock Show-Error { }
     Mock Write-Color { }
     Mock New-Line { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Get-HelpAction" {

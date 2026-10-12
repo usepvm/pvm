@@ -77,9 +77,15 @@ function Enable-IniExtension {
             }
 
             $null = Backup-IniFile -iniPath $iniPath
-            Set-ContentWrapper -path $iniPath -value $newLines
-
-            $results += @{ name = $selected.name; status = 'Enabled'; color = 'DarkGreen' }
+            $code = Set-ContentWrapper -path $iniPath -value $newLines
+            $status = 'Enabled'
+            $color = 'DarkGreen'
+            if ($code -ne 0) {
+                $status = 'Failed!'
+                $color = 'DarkGray'
+                $overallCode = -1
+            }
+            $results += @{ name = $selected.name; status = $status; color = $color }
         }
 
         $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)

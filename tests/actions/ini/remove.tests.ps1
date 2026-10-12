@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:phpPath = "$script:TEST_DRIVE\php"
@@ -7,8 +15,8 @@ BeforeAll {
     $script:extDirectory = "$script:phpPath\ext"
     $script:testBackupPath = "$script:phpPath\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
 
-    $null = New-Directory -path $script:phpPath
-    $null = New-Directory -path $script:extDirectory
+    $null = New-Item -ItemType Directory -Path $script:phpPath -Force
+    $null = New-Item -ItemType Directory -Path $script:extDirectory -Force
 
     Mock Show-Warning { }
     Mock Show-Error { }
@@ -25,7 +33,7 @@ BeforeAll {
             'extension=php_xdebug.dll'
             'zend_extension=php_opcache.dll'
             'display_errors = On'
-        ) -join "`n" | Set-ContentWrapper -path $script:testIniPath
+        ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
     }
 
     Reset-IniContent
@@ -65,6 +73,16 @@ Describe "Remove-ExtensionFromIniFile" {
         $content.Count | Should -Be 5
     }
 
+    It "Returns -1 when it fails to modify ini file" {
+        Mock Set-ContentWrapper { return -1 }
+        $extension = @{ line = 'extension=php_curl.dll'; lineNumber = 2 }
+
+        $result = Remove-ExtensionFromIniFile -iniPath $script:testIniPath -extensionObject $extension
+
+        $result | Should -Be -1
+        Should -Invoke Set-ContentWrapper -Times 1
+    }
+
     It "Returns -1 when Get-ContentWrapper throws" {
         $extension = @{ line = 'extension=php_curl.dll'; lineNumber = 2 }
 
@@ -80,7 +98,7 @@ Describe "Remove-ExtensionFromIniFile" {
 Describe "Remove-ExtensionFromExtDirectory" {
     It "Removes the file and returns 0 when file exists and paths match" {
         Mock Test-FileNotExists { return $false }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         $extensionObject = @{
             fileName = 'php_curl.dll'
             fullPath = "$script:extDirectory\php_curl.dll"
@@ -121,6 +139,21 @@ Describe "Remove-ExtensionFromExtDirectory" {
         $result | Should -Be -1
     }
 
+    It "Returns -1 when fails to remove extensions dll file" {
+        Mock Test-FileNotExists { return $false }
+        Mock Remove-ItemWrapper { return -1 }
+        $extensionObject = @{
+            fileName = 'php_curl.dll'
+            fullPath = "$script:extDirectory\php_curl.dll"
+            name     = 'curl'
+        }
+
+        $result = Remove-ExtensionFromExtDirectory -extensionDirectory $script:extDirectory -extensionObject $extensionObject
+
+        $result | Should -Be -1
+        Should -Invoke Remove-ItemWrapper -Times 1
+    }
+
     It "Returns -1 and logs when Remove-ItemWrapper throws" {
         Mock Test-FileNotExists { return $false }
         Mock Remove-ItemWrapper { throw 'Access denied' }
@@ -152,7 +185,7 @@ Describe "Uninstall-Extension" {
     }
 
     AfterEach {
-        Remove-ItemWrapper -path "$script:extDirectory\*"
+        Remove-Item -Path "$script:extDirectory\*" -Force -Recurse -ErrorAction SilentlyContinue
     }
 
     It "Returns -1 immediately when extNames is empty" {

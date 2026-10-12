@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:ROOT_PATH = $Global:PVMConfig.rootPath
@@ -14,6 +22,7 @@ BeforeAll {
     Mock Show-Error { }
     Mock Show-Message { }
     Mock Write-Gray { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Show-Scripts" {
@@ -52,7 +61,7 @@ Describe "Show-Scripts" {
 Describe "Clear-TestDrive" {
     It "Clears the fake storage path if valid" {
         Mock Test-ValidDrivePath { return $true }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
 
         Clear-TestDrive
 
@@ -60,7 +69,7 @@ Describe "Clear-TestDrive" {
     }
 
     It "Does not attempt to clear when test drive path is null" {
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         $Global:PVMConfig.paths.directories.testDrive = $null
 
         Clear-TestDrive
@@ -70,7 +79,7 @@ Describe "Clear-TestDrive" {
 
     It "Does not attempt to clear when test drive path is invalid" {
         Mock Test-ValidDrivePath { return $false }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         $Global:PVMConfig.paths.directories.testDrive = "invalid\path\without\drive"
 
         Clear-TestDrive
@@ -80,7 +89,7 @@ Describe "Clear-TestDrive" {
 
     It "Does not attempt to clear when test drive path is empty" {
         Mock Test-ValidDrivePath { return $false }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         $Global:PVMConfig.paths.directories.testDrive = ""
 
         Clear-TestDrive
@@ -792,7 +801,7 @@ Describe "Set-TestDrive" {
             'DEFAULT_PARTIAL_LIST_SIZE=10'
             'MIN_PAD_RIGHT_LENGTH=20'
             'MIN_LINE_LENGTH=50'
-        ) -join "`n" | Set-ContentWrapper -path "$testRoot\.env"
+        ) -join "`n" | Set-Content -Path "$testRoot\.env" -Encoding UTF8
     }
 
     BeforeEach {

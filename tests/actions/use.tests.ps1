@@ -1,14 +1,23 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $null = New-Directory -path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
+    $null = New-Item -ItemType Directory -Path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force
 
     Mock Write-Color { }
     Mock Show-Info { }
     Mock Show-Success { }
     Mock Show-Error { }
     Mock Show-Message { }
+    Mock Add-LogEntry { return 0 }
 
     Mock Get-MatchingPHPVersions {
         param ($version)
@@ -39,8 +48,6 @@ BeforeAll {
     }
 
     Mock New-SymbolicLink { return @{ code = 0 } }
-
-    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Update-PHPVersion" {

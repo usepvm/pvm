@@ -1,5 +1,13 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:PHP_WIN_ARCHIVES_URL = $Global:PVMConfig.links.phpWinArchives
@@ -9,9 +17,9 @@ BeforeAll {
     Mock Show-Error { }
     Mock Show-Info { }
     Mock Write-Gray { }
+    Mock Add-LogEntry { return 0 }
 
     Mock New-Directory { return 0 }
-    Mock Add-LogEntry { param ($logPath, $message, $data) return 0 }
     Mock Get-SourceUrls {
         return @{
             'releases' = $script:PHP_WIN_RELEASES_URL
@@ -30,7 +38,7 @@ Describe "Get-FromSource" {
             return $result.pvmData
         }
         if (Test-Path "$script:TEST_DRIVE\data") {
-            Remove-ItemWrapper -path "$script:TEST_DRIVE\data"
+            Remove-Item -Path "$script:TEST_DRIVE\data" -Force -Recurse -ErrorAction SilentlyContinue
         }
 
         Mock Test-OS64Bit { return $true }

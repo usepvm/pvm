@@ -1,10 +1,19 @@
 ﻿
 BeforeAll {
+    if (-not $Global:CurrentTestDrive) {
+        $currentFileName = Split-Path -Path $PSCommandPath -Leaf
+        $msg = "`nTest Drive is not set for '$currentFileName'"
+        $line = "`n$('=' * $msg.Length)"
+        $errorMessage = $line + $msg + $line
+        throw " `n$errorMessage"
+    }
+
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:STATE_PATH = $Global:PVMConfig.paths.directories.state
 
     Mock Show-Error { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Get-LastUpdateCheckTimestamp" {
@@ -15,7 +24,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
 
     AfterEach {
         if (Test-Path $script:TIMESTAMP_FILE) {
-            Remove-ItemWrapper -path $script:TIMESTAMP_FILE
+            Remove-Item -Path $script:TIMESTAMP_FILE -Force -Recurse -ErrorAction SilentlyContinue
         }
     }
 
@@ -29,7 +38,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
     Context "When the timestamp file exists" {
         It "Returns a DateTime parsed from the file content" {
             $date = Get-Date '2026-01-01 10:00:00'
-            $date | Set-ContentWrapper -path $script:TIMESTAMP_FILE
+            $date | Set-Content -Path $script:TIMESTAMP_FILE -Encoding UTF8
 
             $result = Get-LastUpdateCheckTimestamp
 
@@ -38,7 +47,7 @@ Describe "Get-LastUpdateCheckTimestamp" {
         }
 
         It "Returns null when the file content cannot be parsed as a DateTime" {
-            'not-a-date' | Set-ContentWrapper -path $script:TIMESTAMP_FILE
+            'not-a-date' | Set-Content -Path $script:TIMESTAMP_FILE -Encoding UTF8
 
             $result = Get-LastUpdateCheckTimestamp
 
@@ -79,7 +88,7 @@ Describe "Set-LastUpdateCheckTimestamp" {
         It "Returns -1 when New-Directory fails" {
             Mock Show-Error { }
             Mock New-Directory { return -1 }
-            Mock Set-ContentWrapper { }
+            Mock Set-ContentWrapper { return 0 }
 
             $result = Set-LastUpdateCheckTimestamp
 
@@ -224,7 +233,7 @@ Describe "Test-CheckForUpdatesQuietly" {
             Mock Test-ShouldCheckForUpdates { return $true }
             Mock Update-PVM { throw 'Network error' }
             Mock Set-LastUpdateCheckTimestamp { }
-            Mock Add-LogEntry { }
+            Mock Add-LogEntry { return 0 }
 
             $result = Test-CheckForUpdatesQuietly
 

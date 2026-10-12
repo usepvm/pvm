@@ -25,6 +25,7 @@ BeforeAll {
     Mock Show-Info { }
     Mock Write-Color { }
     Mock New-Line { }
+    Mock Add-LogEntry { return 0 }
     Mock Backup-IniFile { return 0 }
 
     function Reset-IniContent {
@@ -171,6 +172,15 @@ Describe "Set-IniSetting" {
         $code = Set-IniSetting -iniPath $script:testIniPath -keys @('upload_max_filesize')
         $code | Should -Be 0
         (Get-ContentWrapper -path $script:testIniPath) -match '^upload_max_filesize\s*=\s*10M' | Should -Be $true
+    }
+
+    It "Returns -1 when writing to ini file fails" {
+        Mock Set-ContentWrapper { return -1 }
+
+        $code = Set-IniSetting -iniPath $script:testIniPath -keys @('memory_limit=256M')
+
+        $code | Should -Be -1
+        Should -Invoke Write-Color -ParameterFilter { $message -like '*Failed*' -and $foreColor -eq 'DarkGray' }
     }
 
     It "Returns -1 on error" {

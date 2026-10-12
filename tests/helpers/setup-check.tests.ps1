@@ -13,6 +13,8 @@ BeforeAll {
     $script:ROOT_PATH = $Global:PVMConfig.rootPath = "$script:TEST_DRIVE\pvm"
     $script:PHP_CURRENT_VERSION_PATH = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
     $script:PVM_ENV_VAR_NAME = $Global:PVMConfig.env.PVM_ENV_VAR_NAME
+
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Test-PVMSetup" {

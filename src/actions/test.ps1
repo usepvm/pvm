@@ -28,11 +28,10 @@ function Initialize-TestEnvironment {
 function Restore-TestEnvironment {
     param ($environment)
 
-    if (Test-ValidDrivePath -path $currentTestDrive) {
-        Remove-ItemWrapper -path $environment.TestDrive
-    }
     $Global:PVMConfig   = $environment.PVMConfigBackup
     $Global:CurrentTestDrive = $null
+
+    $null = Remove-ItemWrapper -path $environment.TestDrive
 }
 
 function Get-PowerShellInfo {
@@ -91,7 +90,7 @@ function Invoke-TestFile {
     try {
         $testEnvironment = Initialize-TestEnvironment -driveName ($file.BaseName -replace '\.tests$', '')
         if (-not $testEnvironment) {
-            throw 'Failed to create test drive!'
+            throw "Failed to create test drive for '$($file.BaseName)'!"
         }
 
         $config.Run.Path = $file.FullName

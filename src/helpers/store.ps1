@@ -80,7 +80,11 @@ function Save-CachedData {
             Show-Error -message "`nInsufficient disk space for cache data. At least $($Global:PVMConfig.env.MIN_CACHE_FREE_SPACE_MB) MB is required."
             return -1
         }
-        Set-ContentWrapper -path $path -value $jsonString
+        $code = Set-ContentWrapper -path $path -value $jsonString
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to save cache to '$path'!"
+            return -1
+        }
 
         return 0
     } catch {

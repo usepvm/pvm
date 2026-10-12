@@ -455,7 +455,7 @@ Describe "Get-PHP" {
     It "Handles exception gracefully" {
         Mock Test-DownloadPrerequisites { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp\php"; sizeMB = 10 } }
         Mock Get-RemoteFile { throw 'Test exception' }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
 
         $result = Get-PHP -versionObject @{ fileName = 'php-8.1.0-Win32-vs16-x64.zip'; version = '8.1.0' }
 
@@ -526,7 +526,7 @@ Describe "Get-PHP" {
         Mock Get-SHA256HashesFromRemote { return @{ $fileName = 'correct-hash' } }
         Mock Get-SHA256HashFromFile { return 'wrong-hash' }
         Mock Test-SHA256HashValid { return $false }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
 
         $result = Get-PHP -versionObject @{ fileName = $fileName; version = '8.1.0' }
 
@@ -587,6 +587,7 @@ Describe "Set-Opcache" {
         Mock Set-ContentWrapper {
             param ($path, $value, $encoding = $null)
             $script:MockFileSystem.Files[$path] = $value -join "`n"
+            return 0
         }
         Mock Get-ContentWrapper {
             param ($path)
@@ -623,6 +624,15 @@ Describe "Set-Opcache" {
 
         $code = Set-Opcache -version '8.1' -phpPath "$script:TEST_DRIVE\php"
         $code | Should -Be -1
+    }
+
+    It "Returns -1 when opcache configuration fails" {
+        Mock Set-ContentWrapper { return -1 }
+
+        $code = Set-Opcache -version '8.1' -phpPath "$script:TEST_DRIVE\php"
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to configured Opcache for PHP version 8.1*' }
     }
 
     It "Should handle exception gracefully" {
@@ -715,7 +725,7 @@ Describe "Install-PHP" {
         $script:MockUserInput = '0'
         Mock Get-PHP { return @{ downloadPath = "$script:TEST_DRIVE\php"; success = $true } }
         Mock Expand-AndConfigurePHP { return 0 }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         Mock Test-FileNotExists { return $false }
         Mock Set-Opcache { return 0 }
 
@@ -754,7 +764,7 @@ Describe "Install-PHP" {
             if ($prompt -eq "`nEnter the [number] of your selection (or press Enter to cancel)") { return '0' }
         }
         Mock Expand-AndConfigurePHP { return 0 }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         Mock Test-FileNotExists { return $false }
         Mock Set-Opcache { return 0 }
 
@@ -820,7 +830,7 @@ Describe "Install-PHP" {
     It "Should handle download failure" {
         $script:MockFileSystem.DownloadFails = $true
         Mock Get-PHP { return @{ temporaryDirectory = "$script:TEST_DRIVE\temp"; success = $false } }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         Mock Get-PHPVersions {
             return @{
                 Releases = @{
@@ -839,7 +849,7 @@ Describe "Install-PHP" {
 
     It "Should handle extraction failure" {
         Mock Get-PHP { return @{ downloadPath = "$script:TEST_DRIVE\php"; temporaryDirectory = "$script:TEST_DRIVE\temp"; success = $true } }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         Mock Expand-AndConfigurePHP { return -1 }
         Mock Get-PHPVersions {
             return @{
@@ -859,7 +869,7 @@ Describe "Install-PHP" {
 
     It "Should handle missing php.ini" {
         Mock Get-PHP { return @{ downloadPath = "$script:TEST_DRIVE\php"; temporaryDirectory = "$script:TEST_DRIVE\temp"; success = $true } }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         Mock Expand-AndConfigurePHP { return 0 }
         Mock Test-FileNotExists { return $true }
         Mock Get-PHPVersions {

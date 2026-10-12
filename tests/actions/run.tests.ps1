@@ -16,6 +16,7 @@ BeforeAll {
     Mock Write-Cyan { }
     Mock Write-Gray { }
     Mock New-Lines { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Show-SubProcessOutput" {

@@ -94,7 +94,7 @@ function Test-SymlinkNotExists {
 }
 
 function New-Directory {
-    param ($path)
+    param ($path, [switch]$allowOutsideRoot)
 
     try {
         if ([string]::IsNullOrWhiteSpace($path)) {
@@ -103,7 +103,7 @@ function New-Directory {
 
         $path = $path.Trim()
         if (Test-DirectoryNotExists -path $path) {
-            $created = New-ItemWrapper -type 'Directory' -path $path
+            $created = New-ItemWrapper -type 'Directory' -path $path -allowOutsideRoot:$allowOutsideRoot
             if (-not $created) {
                 return -1
             }
@@ -117,7 +117,7 @@ function New-Directory {
 }
 
 function New-File {
-    param ($path)
+    param ($path, [switch]$allowOutsideRoot)
 
     try {
         if ([string]::IsNullOrWhiteSpace($path)) {
@@ -126,7 +126,7 @@ function New-File {
 
         $path = $path.Trim()
         if (Test-FileNotExists -path $path) {
-            $created = New-ItemWrapper -type 'File' -path $path
+            $created = New-ItemWrapper -type 'File' -path $path -allowOutsideRoot:$allowOutsideRoot
             if (-not $created) {
                 return -1
             }
@@ -140,7 +140,7 @@ function New-File {
 }
 
 function New-SymbolicLink {
-    param ($link, $target, [switch]$disallowOutsideRoot)
+    param ($link, $target, [switch]$allowOutsideRoot)
 
     try {
         if ([string]::IsNullOrWhiteSpace($link) -or [string]::IsNullOrWhiteSpace($target)) {
@@ -150,6 +150,15 @@ function New-SymbolicLink {
         $link = $link.Trim()
         $target = $target.Trim()
 
+        if (-not $allowOutsideRoot) {
+            if (Test-PathInvalidOrNotUnderProjectRoot -path $link) {
+                throw "Path validation failed for '$link'!, Path is invalid or not under project root"
+            }
+            if (Test-PathInvalidOrNotUnderProjectRoot -path $target) {
+                throw "Path validation failed for '$target'!, Path is invalid or not under project root"
+            }
+        }
+
         if (Test-DirectoryNotExists -path $target) {
             return @{ code = -1; message = "Target directory '$target' does not exist!"; color = 'DarkYellow' }
         }
@@ -157,7 +166,7 @@ function New-SymbolicLink {
         # Make sure parent directory exists
         $parent = Split-Path -Path $link -Parent
         if (Test-DirectoryNotExists -path $parent) {
-            $created = New-Directory -path $parent
+            $created = New-Directory -path $parent -allowOutsideRoot:$allowOutsideRoot
             if ($created -ne 0) {
                 return @{ code = -1; message = "Failed to create parent directory '$parent'"; color = 'DarkYellow' }
             }
@@ -178,7 +187,7 @@ function New-SymbolicLink {
             return @{ code = 0; message = "Created symbolic link '$link' -> '$target'"; color = 'DarkGreen' }
         }
 
-        $created = New-ItemWrapper -type 'SymbolicLink' -path $link -target $target -disallowOutsideRoot:$disallowOutsideRoot
+        $created = New-ItemWrapper -type 'SymbolicLink' -path $link -target $target -allowOutsideRoot:$allowOutsideRoot
         if (-not $created) {
             return @{ code = -1; message = "Failed to create symbolic link '$link' -> '$target'"; color = 'DarkYellow' }
         }
@@ -198,18 +207,17 @@ function Expand-ZipCore {
 }
 
 function Expand-Zip {
-    param ($zipPath, $extractPath, $deleteZipAfter = $false, [switch]$disallowOutsideRoot)
+    param ($zipPath, $extractPath, $deleteZipAfter = $false, [switch]$allowOutsideRoot)
 
     try {
-        if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $extractPath)) {
-            $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Path validation failed for '$extractPath'"; exception = "Path is invalid or not under project root" }
-            return -1
+        if (-not $allowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $extractPath)) {
+            throw "Path validation failed for '$extractPath'!, Path is invalid or not under project root"
         }
 
         Expand-ZipCore -zipPath $zipPath -extractPath $extractPath
 
         if ($deleteZipAfter) {
-            Remove-ItemWrapper -path $zipPath -disallowOutsideRoot:$disallowOutsideRoot
+            $null = Remove-ItemWrapper -path $zipPath -allowOutsideRoot:$allowOutsideRoot
         }
 
         return 0
@@ -391,7 +399,7 @@ function Test-PathUnderRoot {
         return $false
     }
 
-    $path = [System.IO.Path]::GetFullPath($path.Trim()).TrimEnd('\')
+    $path = [System.IO.Path]::GetFullPath($path.Trim().TrimEnd('\*')).TrimEnd('\')
     $rootPath = [System.IO.Path]::GetFullPath($rootPath.Trim()).TrimEnd('\')
 
     return $path.StartsWith("$rootPath\", [System.StringComparison]::OrdinalIgnoreCase)

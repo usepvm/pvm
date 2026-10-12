@@ -22,6 +22,7 @@ BeforeAll {
     Mock Show-Header { }
     Mock Clear-Host { }
     Mock Write-DarkGray { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Format-NiceTimestamp" {

@@ -363,6 +363,19 @@ Describe "Add-MissingPHPExtensionToIni" {
         }
     }
 
+    It "Returns -1 when adding new line to ini fails" {
+        Mock Test-FileNotExists { return $false }
+        Mock Backup-IniFile { return 0 }
+        Mock Test-DirectoryNotExists { return $false }
+        Mock Get-MatchingPHPExtensionsStatus { return @() }
+        Mock Set-ContentWrapper { return -1 }
+
+        $result = Add-MissingPHPExtensionToIni -iniPath $script:testIniPath -extFileName 'curl'
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to add 'curl' to ini file*" }
+    }
+
     It "Handles exception gracefully" {
         Mock Add-LogEntry { return 0 }
         Mock Backup-IniFile { throw 'Access denied' }

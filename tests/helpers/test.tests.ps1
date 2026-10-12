@@ -22,6 +22,7 @@ BeforeAll {
     Mock Show-Error { }
     Mock Show-Message { }
     Mock Write-Gray { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Show-Scripts" {
@@ -60,7 +61,7 @@ Describe "Show-Scripts" {
 Describe "Clear-TestDrive" {
     It "Clears the fake storage path if valid" {
         Mock Test-ValidDrivePath { return $true }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
 
         Clear-TestDrive
 
@@ -68,7 +69,7 @@ Describe "Clear-TestDrive" {
     }
 
     It "Does not attempt to clear when test drive path is null" {
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         $Global:PVMConfig.paths.directories.testDrive = $null
 
         Clear-TestDrive
@@ -78,7 +79,7 @@ Describe "Clear-TestDrive" {
 
     It "Does not attempt to clear when test drive path is invalid" {
         Mock Test-ValidDrivePath { return $false }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         $Global:PVMConfig.paths.directories.testDrive = "invalid\path\without\drive"
 
         Clear-TestDrive
@@ -88,7 +89,7 @@ Describe "Clear-TestDrive" {
 
     It "Does not attempt to clear when test drive path is empty" {
         Mock Test-ValidDrivePath { return $false }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         $Global:PVMConfig.paths.directories.testDrive = ""
 
         Clear-TestDrive

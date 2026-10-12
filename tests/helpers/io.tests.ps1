@@ -259,6 +259,18 @@ Describe "New-Directory" {
             }
         }
 
+        It "Passes allowOutsideRoot to New-ItemWrapper" {
+            Mock New-ItemWrapper { return @{ Name = 'test_link' } }
+            $newDir = "$script:TEST_DRIVE\new_dir"
+
+            $result = New-Directory -path $newDir -allowOutsideRoot
+
+            $result | Should -Be 0
+            Should -Invoke New-ItemWrapper -ParameterFilter {
+                $type -eq 'Directory' -and $path -eq $newDir -and $allowOutsideRoot
+            }
+        }
+
         It "Returns 0 for existing directory" {
             Mock New-ItemWrapper { return @{ FullName = $script:STORAGE_PATH } }
 
@@ -306,6 +318,18 @@ Describe "New-File" {
         }
     }
 
+    It "Passes allowOutsideRoot to New-ItemWrapper" {
+        Mock New-ItemWrapper { return @{ Name = 'new_file.txt' } }
+        $newFile = "$script:TEST_DRIVE\new_file.txt"
+
+        $result = New-File -path $newFile -allowOutsideRoot
+
+        $result | Should -Be 0
+        Should -Invoke New-ItemWrapper -ParameterFilter {
+            $type -eq 'File' -and $path -eq $newFile -and $allowOutsideRoot
+        }
+    }
+
     It "Returns 0 for existing file" {
         $existingFile = "$script:TEST_DRIVE\existing_file.txt"
         Mock New-ItemWrapper { return @{ FullName = $existingFile } }
@@ -343,7 +367,7 @@ Describe "New-File" {
 Describe "New-SymbolicLink" {
     Context "When creating symbolic links" {
         It "Creates a symbolic link successfully when running as admin" {
-            Mock Test-Admin { return $true }
+            Mock Test-NotAdmin { return $false }
             Mock New-ItemWrapper {
                 param ($type, $path, $target)
 
@@ -352,7 +376,7 @@ Describe "New-SymbolicLink" {
             $linkPath = "$script:TEST_DRIVE\test_link"
             $targetPath = "$script:STORAGE_PATH\php\8.1"
 
-            $result = New-SymbolicLink -link $linkPath -target $targetPath -disallowOutsideRoot
+            $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
 
             $result.code | Should -Be 0
             $result.message | Should -Match 'Created symbolic link'
@@ -361,7 +385,7 @@ Describe "New-SymbolicLink" {
                 $type -eq 'SymbolicLink' -and
                 $path -eq $linkPath -and
                 $target -eq $targetPath -and
-                $disallowOutsideRoot -eq $true
+                $allowOutsideRoot -eq $true
             }
         }
 
@@ -371,7 +395,7 @@ Describe "New-SymbolicLink" {
             $linkPath = "$script:TEST_DRIVE\test_link_fail"
             $targetPath = "$script:STORAGE_PATH\php\8.1"
 
-            $result = New-SymbolicLink -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
 
             $result.code | Should -Be -1
             $result.message | Should -Be "Failed to create symbolic link '$linkPath' -> '$targetPath'"
@@ -397,10 +421,12 @@ Describe "New-SymbolicLink" {
         }
 
         It "Returns -1 if target directory does not exist" {
-            $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target "$script:TEST_DRIVE\Nonexistent\Target"
+            $link = "$script:TEST_DRIVE\link"
+            $target = "$script:TEST_DRIVE\Nonexistent\Target"
+            $result = New-SymbolicLink -link $link -target $target -allowOutsideRoot
 
             $result.code | Should -Be -1
-            $result.message | Should -Match "Target directory "$script:TEST_DRIVE\\Nonexistent\\Target" does not exist!"
+            $result.message | Should -BeLike "Target directory '$target' does not exist!"
             $result.color | Should -Be 'DarkYellow'
         }
 
@@ -409,7 +435,7 @@ Describe "New-SymbolicLink" {
             $existingPath = "$script:TEST_DRIVE\existing_file"
             New-Item -Path $existingPath -ItemType File -Force | Out-Null
 
-            $result = New-SymbolicLink -link $existingPath -target "$script:STORAGE_PATH\php\8.1"
+            $result = New-SymbolicLink -link $existingPath -target "$script:STORAGE_PATH\php\8.1" -allowOutsideRoot
 
             $result.code | Should -Be -1
             $result.message | Should -Be "Link '$existingPath' is not a symbolic link!"
@@ -436,7 +462,7 @@ Describe "New-SymbolicLink" {
                 # Create a directory at the link path to simulate an existing item
                 New-Item -ItemType Directory -Path $linkPath -Force | Out-Null
 
-                $result = New-SymbolicLink -link $linkPath -target $targetPath
+                $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
 
                 $result.code | Should -Be 0
                 $result.message | Should -Match "Created symbolic link"
@@ -457,7 +483,7 @@ Describe "New-SymbolicLink" {
             $linkPath = "$script:STORAGE_PATH\test_link"
             $targetPath = "$script:STORAGE_PATH\php\8.1"
 
-            $result = New-SymbolicLink -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
 
             $result.code | Should -Be -1
         }
@@ -465,7 +491,7 @@ Describe "New-SymbolicLink" {
         It "Handles exceptions gracefully" {
             Mock Test-DirectoryExists { throw 'Simulated exception' }
 
-            $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target "$script:TEST_DRIVE\target"
+            $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target "$script:TEST_DRIVE\target" -allowOutsideRoot
 
             $result.code | Should -Be -1
         }
@@ -478,6 +504,25 @@ Describe "New-SymbolicLink" {
 
         It "Returns -1 for empty target path" {
             $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target ''
+
+            $result.code | Should -Be -1
+        }
+
+        It "Returns -1 when link validation fails" {
+            Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
+
+            $result = New-SymbolicLink -link "$script:TEST_DRIVE\link" -target "$script:TEST_DRIVE\target"
+
+            $result.code | Should -Be -1
+        }
+
+        It "Returns -1 when target validation fails" {
+            $link = "$script:TEST_DRIVE\link"
+            $target = "$script:TEST_DRIVE\target"
+            Mock Test-PathInvalidOrNotUnderProjectRoot { return $false } -ParameterFilter { $path -eq $link }
+            Mock Test-PathInvalidOrNotUnderProjectRoot { return $true } -ParameterFilter { $path -eq $target }
+
+            $result = New-SymbolicLink -link $link -target $target
 
             $result.code | Should -Be -1
         }
@@ -500,7 +545,7 @@ Describe "New-SymbolicLink" {
                 return @{ FullName = $path }
             }
 
-            $result = New-SymbolicLink -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
             $result.code | Should -Be 0
         }
 
@@ -510,7 +555,7 @@ Describe "New-SymbolicLink" {
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq "$script:TEST_DRIVE\test_parent" } -MockWith { return $true }
             Mock Test-DirectoryNotExists -ParameterFilter { $path -eq $targetPath } -MockWith { return $false }
             Mock New-Directory { return -1 }
-            $result = New-SymbolicLink -link $linkPath -target $targetPath
+            $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
             $result.code | Should -Be -1
         }
     }
@@ -554,11 +599,13 @@ Describe "Expand-ZipCore" {
 Describe "Expand-Zip" {
     BeforeEach {
         Mock Expand-ZipCore { }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
         Mock Add-LogEntry { return 0 }
     }
 
     It "Should extract zip without errors" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
+
         $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir'
 
         $result | Should -Be 0
@@ -566,6 +613,8 @@ Describe "Expand-Zip" {
     }
 
     It "Should delete zip after extraction" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
+
         $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $true
 
         $result | Should -Be 0
@@ -573,23 +622,27 @@ Describe "Expand-Zip" {
     }
 
     It "Should not delete zip if deleteZipAfter is false" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
+
         $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -deleteZipAfter $false
 
         $result | Should -Be 0
         Should -Invoke Remove-ItemWrapper -Times 0
     }
 
-    It "Validates path when disallowOutsideRoot is passed" {
+    It "Validates path by default" {
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
         Mock Add-LogEntry { return 0 }
 
-        $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir' -disallowOutsideRoot
+        $result = Expand-Zip -zipPath 'test.zip' -extractPath 'testdir'
 
         $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
     }
 
     It "Should call Add-LogEntry on extraction failure" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
+
         Mock Expand-ZipCore { throw "Extraction failed" }
 
         $result = Expand-Zip -zipPath 'bad.zip' -extractPath 'testdir'

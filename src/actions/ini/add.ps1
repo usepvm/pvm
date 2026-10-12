@@ -103,7 +103,12 @@ function Add-MissingPHPExtensionToIni {
         } else {
             $lines += "`n$commented" + "extension=$extFileName"
         }
-        Set-ContentWrapper -path $iniPath -value $lines
+        $code = Set-ContentWrapper -path $iniPath -value $lines
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to add '$extFileName' to ini file!"
+            return -1
+        }
+
         Show-Success -message "- '$extFileName' added successfully."
 
         return 0

@@ -11,16 +11,16 @@ BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:testPhpPath = "$script:TEST_DRIVE\PHP"
+    $null = New-Item -ItemType Directory -Path $script:testPhpPath -Force
     $null = New-Item -ItemType Directory -Path "$script:testPhpPath\7.4" -Force
     $null = New-Item -ItemType Directory -Path "$script:testPhpPath\8.0" -Force
     $null = New-Item -ItemType Directory -Path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force
-
-    Mock Add-LogEntry { return 0 }
 
     Mock Show-Success { }
     Mock Show-Error { }
     Mock Write-Gray { }
     Mock Write-Color { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Uninstall-PHP" {
@@ -36,7 +36,7 @@ Describe "Uninstall-PHP" {
         BeforeEach {
             Mock Get-MatchingPHPVersions { }
             Mock Get-UserSelectedPHPVersion { }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
             Mock Add-LogEntry { return 0 }
             Mock Get-CurrentPHPVersion { return @{ version = $null } }
         }
@@ -172,7 +172,7 @@ Describe "Uninstall-PHP" {
             Mock Get-UserSelectedPHPVersion {
                 return @{ code = 0; version = '8.0'; path = "$script:testPhpPath\8.0" }
             }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
             Mock Add-LogEntry { return 0 }
             Mock Get-CurrentPHPVersion { return @{ version = $null } }
         }
@@ -197,7 +197,7 @@ Describe "Uninstall-PHP" {
         BeforeEach {
             Mock Get-MatchingPHPVersions -ParameterFilter { $version -eq '5.6' } -MockWith { return @() }
             Mock Get-UserSelectedPHPVersion { }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
             Mock Add-LogEntry { return 0 }
         }
 
@@ -220,7 +220,7 @@ Describe "Uninstall-PHP" {
             Mock Get-UserSelectedPHPVersion {
                 return @{ code = -1; message = 'User cancelled the selection'; color = 'DarkYellow' }
             }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
             Mock Add-LogEntry { return 0 }
         }
 
@@ -240,7 +240,7 @@ Describe "Uninstall-PHP" {
         BeforeEach {
             Mock Get-MatchingPHPVersions { return $null }
             Mock Get-UserSelectedPHPVersion { return $null }
-            Mock Remove-ItemWrapper { }
+            Mock Remove-ItemWrapper { return 0 }
             Mock Add-LogEntry { return 0 }
         }
 
@@ -261,10 +261,22 @@ Describe "Uninstall-PHP" {
             Mock Get-CurrentPHPVersion { return @{ version = $null } }
             Mock Get-MatchingPHPVersions { }
             Mock Get-UserSelectedPHPVersion { }
-            Mock Remove-ItemWrapper { throw 'Access denied' }
+        }
+
+        It "Should return -1 when remove fails" {
+            Mock Remove-ItemWrapper { return -1 }
+            Mock Get-UserSelectedPHPVersion {
+                return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$script:testPhpPath\7.4" }
+            }
+
+            $result = Uninstall-PHP -version '7.4' -skipConfirmation $true
+
+            $result | Should -Be -1
+            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like '*Failed to remove PHP version 7.4*' }
         }
 
         It "Should catch the exception and return error message" {
+            Mock Remove-ItemWrapper { throw 'Access denied' }
             Mock Get-UserSelectedPHPVersion {
                 return @{ code = 0; version = '7.4'; arch = 'x64'; buildType = 'nts'; path = "$script:testPhpPath\7.4" }
             }

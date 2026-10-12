@@ -19,6 +19,7 @@ BeforeAll {
     Mock Write-Color { }
     Mock Show-Info { }
     Mock New-Line { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Invoke-Help" {
@@ -1116,8 +1117,17 @@ Describe "Invoke-Log" {
         Mock Show-Log { return 0 }
     }
 
+    It "Should return -1 when clearing fails" {
+        Mock Clear-ContentWrapper { return -1 }
+
+        $code = Invoke-Log -arguments @('--clear', '-y')
+
+        $code | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to clean log file! Here is the path to do it manually, $($Global:PVMConfig.paths.files.logError)*" }
+    }
+
     It "Should skip confirmation and clear log file" {
-        Mock Clear-ContentWrapper { }
+        Mock Clear-ContentWrapper { return 0 }
 
         $code = Invoke-Log -arguments @('--clear', '-y')
 
@@ -1140,7 +1150,7 @@ Describe "Invoke-Log" {
     }
 
     It "Should prompt for confirmation and proceed with log clearing when user responds with 'y'" {
-        Mock Clear-ContentWrapper { }
+        Mock Clear-ContentWrapper { return 0 }
         Mock Show-Success { }
         Mock Read-HostWrapper { return 'y' }
 

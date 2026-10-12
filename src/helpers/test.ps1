@@ -17,7 +17,7 @@ function Show-Scripts {
 function Clear-TestDrive {
     $testDrivePath = $Global:PVMConfig.paths.directories.testDrive
     if (Test-ValidDrivePath -path $testDrivePath) {
-        Remove-ItemWrapper -path "$testDrivePath\*"
+        $null = Remove-ItemWrapper -path "$testDrivePath\*"
     }
 }
 

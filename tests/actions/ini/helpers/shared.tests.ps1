@@ -18,6 +18,8 @@ BeforeAll {
     $null = New-Item -ItemType Directory -Path $script:phpPath -Force
     $null = New-Item -ItemType Directory -Path $script:extDirectory -Force
 
+    Mock Add-LogEntry { return 0 }
+
     function Reset-IniContent {
         @(
             'memory_limit = 128M'
@@ -155,6 +157,14 @@ Describe "Backup-IniFile" {
         $result | Should -Be -1
     }
 
+    It "Returns -1 when ini file copy fails" {
+        Mock Copy-ItemWrapper { return -1 }
+
+        $result = Backup-IniFile -iniPath $script:testIniPath
+
+        $result | Should -Be -1
+    }
+
     It "Returns -1 on error" {
         Mock Add-LogEntry { return 0 }
         Mock Copy-ItemWrapper { throw 'Access denied' }
@@ -197,7 +207,7 @@ Describe "Clear-IniBackups" {
                 [PSCustomObject]@{ FullName = 'backup2.bak'; CreationTime = $now.AddMinutes(-10) }
             )
         }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
 
         $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
 
@@ -218,7 +228,7 @@ Describe "Clear-IniBackups" {
                 [PSCustomObject]@{ FullName = 'backup6.bak'; CreationTime = $now.AddDays(-45) }
             )
         }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
 
         $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
 
@@ -237,7 +247,7 @@ Describe "Clear-IniBackups" {
                 [PSCustomObject]@{ FullName = 'backup4.bak'; CreationTime = $now.AddDays(-50) }
             )
         }
-        Mock Remove-ItemWrapper { }
+        Mock Remove-ItemWrapper { return 0 }
 
         $result = Clear-IniBackups -iniBackupPath $script:testBackupPath
 

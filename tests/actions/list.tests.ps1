@@ -17,9 +17,9 @@ BeforeAll {
     Mock Show-Error { }
     Mock Show-Info { }
     Mock Write-Gray { }
+    Mock Add-LogEntry { return 0 }
 
     Mock New-Directory { return 0 }
-    Mock Add-LogEntry { param ($logPath, $message, $data) return 0 }
     Mock Get-SourceUrls {
         return @{
             'releases' = $script:PHP_WIN_RELEASES_URL

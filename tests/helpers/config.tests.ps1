@@ -16,6 +16,8 @@ BeforeAll {
     $script:DEFAULT_ALIASES = $Global:PVMConfig.defaults.aliases
     $script:DEFAULT_SCRIPTS = $Global:PVMConfig.defaults.scripts
     $script:DEFAULT_FLAGS = $Global:PVMConfig.defaults.flags
+
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Set-AliasesList" {

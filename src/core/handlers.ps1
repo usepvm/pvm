@@ -428,7 +428,12 @@ function Invoke-Log {
             }
         }
 
-        Clear-ContentWrapper -path $Global:PVMConfig.paths.files.logError
+        $code = Clear-ContentWrapper -path $Global:PVMConfig.paths.files.logError
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to clean log file! Here is the path to do it manually, $($Global:PVMConfig.paths.files.logError)"
+            return -1
+        }
+
         Show-Success -message "`nLog Cleared Successfully"
         return 0
     }

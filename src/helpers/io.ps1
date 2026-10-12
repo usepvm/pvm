@@ -399,7 +399,7 @@ function Test-PathUnderRoot {
         return $false
     }
 
-    $path = [System.IO.Path]::GetFullPath($path.Trim()).TrimEnd('\')
+    $path = [System.IO.Path]::GetFullPath($path.Trim().TrimEnd('\*')).TrimEnd('\')
     $rootPath = [System.IO.Path]::GetFullPath($rootPath.Trim()).TrimEnd('\')
 
     return $path.StartsWith("$rootPath\", [System.StringComparison]::OrdinalIgnoreCase)

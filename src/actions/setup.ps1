@@ -7,7 +7,7 @@ function Initialize-PVM {
         $pathEntries = $path -split ';' | Where-Object -FilterScript { $_ -ne '' }
 
         $parent = Split-Path -Path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -Parent
-        $created = New-Directory -path $parent
+        $created = New-Directory -path $parent -allowOutsideRoot
         if ($created -ne 0) {
             Show-Error -message 'Failed to create directory for PHP version.'
             return -1

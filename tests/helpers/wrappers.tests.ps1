@@ -151,14 +151,14 @@ Describe "Add-ContentWrapper" {
         }
     }
 
-    It "Validates path when disallowOutsideRoot is passed" {
+    It "Validates path by default" {
         Mock Add-Content { }
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
 
         $path = "$script:TEST_DRIVE\test.txt"
         $content = "Test content"
 
-        $result = Add-ContentWrapper -path $path -value $content -disallowOutsideRoot
+        $result = Add-ContentWrapper -path $path -value $content
 
         $result | Should -Be -1
         Should -Invoke Add-Content -Times 0
@@ -195,14 +195,14 @@ Describe "Set-ContentWrapper" {
         }
     }
 
-    It "Validates path when disallowOutsideRoot is passed" {
+    It "Validates path by default" {
         Mock Set-Content { }
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
 
         $path = "$script:TEST_DRIVE\test.txt"
         $content = "Test content"
 
-        $result = Set-ContentWrapper -path $path -value $content -disallowOutsideRoot
+        $result = Set-ContentWrapper -path $path -value $content
 
         $result | Should -Be -1
         Should -Invoke Set-Content -Times 0
@@ -311,12 +311,12 @@ Describe "Invoke-WebRequestWrapper" {
     }
 
     Context "Parameter validation" {
-        It "Validates path when disallowOutsideRoot is passed" {
+        It "Validates path by default" {
             Mock Invoke-WebRequest { }
             Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
             $outFile = "$script:TEST_DRIVE\output.txt"
 
-            $result = Invoke-WebRequestWrapper -uri 'https://example.com' -outFile $outFile -disallowOutsideRoot
+            $result = Invoke-WebRequestWrapper -uri 'https://example.com' -outFile $outFile
 
             $result | Should -BeNullOrEmpty
             Should -Invoke Invoke-WebRequest -Times 0
@@ -383,28 +383,28 @@ Describe "Move-ItemWrapper" {
         }
     }
 
-    It "Validates path when disallowOutsideRoot is passed" {
+    It "Validates path by default" {
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
         Mock Move-Item { }
 
         $source = "$script:TEST_DRIVE\source"
         $destination = "$script:TEST_DRIVE\destination"
 
-        $null = Move-ItemWrapper -path $source -destination $destination -disallowOutsideRoot
+        $null = Move-ItemWrapper -path $source -destination $destination
 
         Should -Invoke Move-Item -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 1
         Should -Invoke Add-LogEntry -Times 1
     }
 
-    It "Validates destination when disallowOutsideRoot is passed" {
+    It "Validates destination by default" {
         $source = "$script:TEST_DRIVE\source"
         $destination = "$script:TEST_DRIVE\destination"
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $false } -ParameterFilter { $path -eq $path }
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true } -ParameterFilter { $path -eq $destination }
         Mock Move-Item { }
 
-        $null = Move-ItemWrapper -path $source -destination $destination -disallowOutsideRoot
+        $null = Move-ItemWrapper -path $source -destination $destination
 
         Should -Invoke Move-Item -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 2
@@ -438,28 +438,28 @@ Describe "Copy-ItemWrapper" {
         }
     }
 
-    It "Validates path when disallowOutsideRoot is passed" {
+    It "Validates path by default" {
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
         Mock Copy-Item { }
 
         $source = "$script:TEST_DRIVE\source"
         $destination = "$script:TEST_DRIVE\destination"
 
-        $null = Copy-ItemWrapper -path $source -destination $destination -disallowOutsideRoot
+        $null = Copy-ItemWrapper -path $source -destination $destination
 
         Should -Invoke Copy-Item -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 1
         Should -Invoke Add-LogEntry -Times 1
     }
 
-    It "Validates destination when disallowOutsideRoot is passed" {
+    It "Validates destination by default" {
         $source = "$script:TEST_DRIVE\source"
         $destination = "$script:TEST_DRIVE\destination"
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $false } -ParameterFilter { $path -eq $path }
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true } -ParameterFilter { $path -eq $destination }
         Mock Copy-Item { }
 
-        $null = Copy-ItemWrapper -path $source -destination $destination -disallowOutsideRoot
+        $null = Copy-ItemWrapper -path $source -destination $destination
 
         Should -Invoke Copy-Item -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 2
@@ -492,13 +492,13 @@ Describe "Remove-ItemWrapper" {
         }
     }
 
-    It "Validates path when disallowOutsideRoot is passed" {
+    It "Validates path by default" {
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
         Mock Remove-Item { }
 
         $path = "$script:TEST_DRIVE\path"
 
-        $null = Remove-ItemWrapper -path $path -disallowOutsideRoot
+        $null = Remove-ItemWrapper -path $path
 
         Should -Invoke Remove-Item -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 1
@@ -530,13 +530,13 @@ Describe "Clear-ContentWrapper" {
         }
     }
 
-    It "Validates path when disallowOutsideRoot is passed" {
+    It "Validates path by default" {
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
         Mock Clear-Content { }
 
         $path = "$script:TEST_DRIVE\path"
 
-        $null = Clear-ContentWrapper -path $path -disallowOutsideRoot
+        $null = Clear-ContentWrapper -path $path
 
         Should -Invoke Clear-Content -Times 0
         Should -Invoke Test-PathInvalidOrNotUnderProjectRoot -Times 1
@@ -723,12 +723,12 @@ Describe "New-ItemWrapper" {
         }
     }
 
-    It "Validates path when disallowOutsideRoot is passed" {
+    It "Validates path by default" {
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
         Mock New-Item { return @{ Name = 'file.txt' } }
         $path = "$script:TEST_DRIVE\path\file.txt"
 
-        $result = New-ItemWrapper -type 'File' -path $path -disallowOutsideRoot
+        $result = New-ItemWrapper -type 'File' -path $path
 
         $result | Should -BeNullOrEmpty
 
@@ -737,14 +737,14 @@ Describe "New-ItemWrapper" {
         Should -Invoke Add-LogEntry -Times 1
     }
 
-    It "Validates target when disallowOutsideRoot is passed" {
+    It "Validates target by default" {
         $path = "$script:TEST_DRIVE\path"
         $target = "$script:TEST_DRIVE\target"
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $false } -ParameterFilter { $path -eq $path }
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true } -ParameterFilter { $path -eq $target }
         Mock New-Item { return @{ Name = 'path' } }
 
-        $result = New-ItemWrapper -type 'SymbolicLink' -path $path -target $target -disallowOutsideRoot
+        $result = New-ItemWrapper -type 'SymbolicLink' -path $path -target $target
 
         $result | Should -BeNullOrEmpty
 

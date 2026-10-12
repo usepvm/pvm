@@ -88,7 +88,7 @@ function Get-EnvInt {
 }
 
 function Get-EnvPath {
-    param ($value, $default, [switch]$disallowOutsideRoot)
+    param ($value, $default)
 
     if ([string]::IsNullOrWhiteSpace($value)) {
         return $default
@@ -96,7 +96,7 @@ function Get-EnvPath {
 
     $value = $value.Trim()
 
-    if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $value) -or (Test-InvalidDrivePath -path $value)) {
+    if (Test-InvalidDrivePath -path $value) {
         return $default
     }
 

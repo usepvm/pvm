@@ -610,7 +610,7 @@ function Export-PHPProfile {
             return -1
         }
 
-        $code = Copy-ItemWrapper -path $profilePath -destination $exportPath
+        $code = Copy-ItemWrapper -path $profilePath -destination $exportPath -allowOutsideRoot
         if ($code -ne 0) {
             Show-Error -message "`nFailed to export '$profileName' to '$exportPath'!"
             return -1
@@ -669,7 +669,7 @@ function Import-PHPProfile {
             $jsonContent = $userProfile | ConvertTo-Json -Depth 10
             $null = Set-ContentWrapper -path $targetPath -value $jsonContent
         } else {
-            $null = Copy-ItemWrapper -path $importPath -destination $targetPath
+            $null = Copy-ItemWrapper -path $importPath -destination $targetPath -allowOutsideRoot
         }
 
         Show-Success -message "`nProfile imported successfully as '$finalName'."

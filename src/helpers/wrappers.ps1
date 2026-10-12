@@ -41,11 +41,11 @@ function Read-HostWrapper {
 }
 
 function Add-ContentWrapper {
-    param ($path, [Parameter(ValueFromPipeline)]$value, [switch]$disallowOutsideRoot)
+    param ($path, [Parameter(ValueFromPipeline)]$value, [switch]$allowOutsideRoot)
 
     process {
         try {
-            if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
+            if (-not $allowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
                 throw "Path validation failed for '$path'!, Path is invalid or not under project root"
             }
 
@@ -59,7 +59,7 @@ function Add-ContentWrapper {
 }
 
 function Set-ContentWrapper {
-    param ($path, [Parameter(ValueFromPipeline)]$value, [switch]$disallowOutsideRoot)
+    param ($path, [Parameter(ValueFromPipeline)]$value, [switch]$allowOutsideRoot)
 
     begin {
         $values = [System.Collections.Generic.List[object]]::new()
@@ -67,7 +67,7 @@ function Set-ContentWrapper {
         $values.Add($value)
     } end {
         try {
-            if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
+            if (-not $allowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
                 throw "Path validation failed for '$path'!, Path is invalid or not under project root"
             }
 
@@ -81,7 +81,7 @@ function Set-ContentWrapper {
 }
 
 function Invoke-WebRequestWrapper {
-    param ($uri, $outFile = $null, $useBasicParsing = $true, $method = 'Default', [switch]$disallowOutsideRoot)
+    param ($uri, $outFile = $null, $useBasicParsing = $true, $method = 'Default', [switch]$allowOutsideRoot)
 
     try {
         $uri = $uri.Trim()
@@ -94,7 +94,7 @@ function Invoke-WebRequestWrapper {
         }
 
         if ($null -ne $outFile) {
-            if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $outFile)) {
+            if (-not $allowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $outFile)) {
                 throw "Path validation failed for '$outFile'!, Path is invalid or not under project root"
             }
 
@@ -109,10 +109,10 @@ function Invoke-WebRequestWrapper {
 }
 
 function Move-ItemWrapper {
-    param ($path, $destination, [switch]$disallowOutsideRoot)
+    param ($path, $destination, [switch]$allowOutsideRoot)
 
     try {
-        if ($disallowOutsideRoot) {
+        if (-not $allowOutsideRoot) {
             if (Test-PathInvalidOrNotUnderProjectRoot -path $path) {
                 throw "Path validation failed for '$path'!, Path is invalid or not under project root"
             }
@@ -129,10 +129,10 @@ function Move-ItemWrapper {
 }
 
 function Copy-ItemWrapper {
-    param ($path, $destination, [switch]$disallowOutsideRoot)
+    param ($path, $destination, [switch]$allowOutsideRoot)
 
     try {
-        if ($disallowOutsideRoot) {
+        if (-not $allowOutsideRoot) {
             if (Test-PathInvalidOrNotUnderProjectRoot -path $path) {
                 throw "Path validation failed for '$path'!, Path is invalid or not under project root"
             }
@@ -150,10 +150,10 @@ function Copy-ItemWrapper {
 }
 
 function Remove-ItemWrapper {
-    param ($path, [switch]$disallowOutsideRoot)
+    param ($path, [switch]$allowOutsideRoot)
 
     try {
-        if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
+        if (-not $allowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
             throw "Path validation failed for '$path'!, Path is invalid or not under project root"
         }
 
@@ -166,10 +166,10 @@ function Remove-ItemWrapper {
 }
 
 function Clear-ContentWrapper {
-    param ($path, [switch]$disallowOutsideRoot)
+    param ($path, [switch]$allowOutsideRoot)
 
     try {
-        if ($disallowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
+        if (-not $allowOutsideRoot -and (Test-PathInvalidOrNotUnderProjectRoot -path $path)) {
             throw "Path validation failed for '$path'!, Path is invalid or not under project root"
         }
 
@@ -228,10 +228,10 @@ function Get-ContentWrapper {
 }
 
 function New-ItemWrapper {
-    param ($type, $path, $target = $null, [switch]$disallowOutsideRoot)
+    param ($type, $path, $target = $null, [switch]$allowOutsideRoot)
 
     try {
-        if ($disallowOutsideRoot) {
+        if (-not $allowOutsideRoot) {
             if (Test-PathInvalidOrNotUnderProjectRoot -path $path) {
                 throw "Path validation failed for '$path'!, Path is invalid or not under project root"
             }

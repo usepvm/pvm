@@ -367,7 +367,7 @@ Describe "New-File" {
 Describe "New-SymbolicLink" {
     Context "When creating symbolic links" {
         It "Creates a symbolic link successfully when running as admin" {
-            Mock Test-Admin { return $true }
+            Mock Test-NotAdmin { return $false }
             Mock New-ItemWrapper {
                 param ($type, $path, $target)
 

@@ -8,7 +8,7 @@
     }
 
     $script:TEST_DRIVE = $Global:CurrentTestDrive
-    
+
     $script:STORAGE_PATH = "$script:TEST_DRIVE\storage"
     $script:certDirectory = $Global:PVMConfig.paths.directories.cert
     $script:phpPath = "$script:TEST_DRIVE\php"
@@ -20,9 +20,9 @@
     $script:generatorDirectory = "$script:TEST_DRIVE\generator"
     $script:downloadTempDirectory = "$script:STORAGE_PATH\temp"
 
-    $null = New-Directory -path $script:phpPath
-    $null = New-Directory -path $script:certDirectory
-    $null = New-Directory -path $script:generatorDirectory
+    $null = New-Item -ItemType Directory -Path $script:phpPath -Force
+    $null = New-Item -ItemType Directory -Path $script:certDirectory -Force
+    $null = New-Item -ItemType Directory -Path $script:generatorDirectory -Force
 
     $script:pem = { param ($name) "-----BEGIN CERTIFICATE-----`n$name`n-----END CERTIFICATE-----" }
     $script:resetIni = {
@@ -31,12 +31,12 @@
             '[openssl]'
             ';openssl.cafile ='
             ';openssl.capath ='
-        ) | Set-ContentWrapper -path $script:phpIniPath
+        ) | Set-Content -Path $script:phpIniPath -Encoding UTF8
         Remove-Item "$script:phpIniPath.bak" -Force -ErrorAction SilentlyContinue
     }
     $script:resetCertDirectory = {
         Remove-Item "$script:certDirectory\*" -Recurse -Force -ErrorAction SilentlyContinue
-        $null = New-Directory -path $script:certDirectory
+        $null = New-Item -ItemType Directory -Path $script:certDirectory -Force
     }
 
     Mock Show-Error { }
@@ -67,7 +67,7 @@ Describe "Set-PHPCertificateBundle" {
     }
 
     It "Enables curl.cainfo and openssl.cafile and keeps unrelated lines" {
-        Remove-ItemWrapper -path "$script:testBackupPath\*"
+        Remove-Item -Path "$script:testBackupPath\*" -Force -Recurse
         $bundle = "$script:TEST_DRIVE\pvm\cert\cacert.pem"
 
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $bundle
@@ -83,7 +83,7 @@ Describe "Set-PHPCertificateBundle" {
     }
 
     It "Appends CA settings when the ini does not contain them" {
-        '[PHP]' | Set-ContentWrapper -path $script:phpIniPath
+        '[PHP]' | Set-Content -Path $script:phpIniPath -Encoding UTF8
 
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
 
@@ -97,7 +97,7 @@ Describe "Set-PHPCertificateBundle" {
         @(
             'curl.cainfo = "C:/old/cacert.pem"'
             'openssl.cafile = "C:/old/cacert.pem"'
-        ) | Set-ContentWrapper -path $script:phpIniPath
+        ) | Set-Content -Path $script:phpIniPath -Encoding UTF8
 
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
 
@@ -113,7 +113,7 @@ Describe "Set-PHPCertificateBundle" {
             ';curl.cainfo ='
             'curl.cainfo = "C:/old.pem"'
             ';openssl.cafile ='
-        ) | Set-ContentWrapper -path $script:phpIniPath
+        ) | Set-Content -Path $script:phpIniPath -Encoding UTF8
 
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
 
@@ -192,17 +192,17 @@ Describe "Get-LocalCertificateFiles" {
     }
 
     It "Returns an empty array when the directory has no certificates" {
-        $null = New-Directory -path $script:localCertificateDirectory
+        $null = New-Item -ItemType Directory -Path $script:localCertificateDirectory -Force
 
         @(Get-LocalCertificateFiles -localCertificateDirectory $script:localCertificateDirectory).Count | Should -Be 0
     }
 
     It "Returns only *.crt.pem files" {
-        $null = New-Directory -path $script:localCertificateDirectory
-        (& $script:pem 'A') | Set-ContentWrapper -path "$script:localCertificateDirectory\a.test.crt.pem"
-        (& $script:pem 'B') | Set-ContentWrapper -path "$script:localCertificateDirectory\b.test.crt.pem"
-        'KEY' | Set-ContentWrapper -path "$script:localCertificateDirectory\a.test.key.pem"
-        'TXT' | Set-ContentWrapper -path "$script:localCertificateDirectory\notes.txt"
+        $null = New-Item -ItemType Directory -Path $script:localCertificateDirectory -Force
+        (& $script:pem 'A') | Set-Content -Path "$script:localCertificateDirectory\a.test.crt.pem" -Encoding UTF8
+        (& $script:pem 'B') | Set-Content -Path "$script:localCertificateDirectory\b.test.crt.pem" -Encoding UTF8
+        'KEY' | Set-Content -Path "$script:localCertificateDirectory\a.test.key.pem" -Encoding UTF8
+        'TXT' | Set-Content -Path "$script:localCertificateDirectory\notes.txt" -Encoding UTF8
 
         $result = @(Get-LocalCertificateFiles -localCertificateDirectory $script:localCertificateDirectory)
 
@@ -214,9 +214,9 @@ Describe "Get-LocalCertificateFiles" {
 Describe "Write-PHPCertificateTrustBundle" {
     BeforeEach {
         & $script:resetCertDirectory
-        $null = New-Directory -path $script:localCertificateDirectory
-        (& $script:pem 'PUBLICCERT') | Set-ContentWrapper -path $script:baseBundlePath
-        (& $script:pem 'LOCALCERT') | Set-ContentWrapper -path "$script:localCertificateDirectory\localhost.crt.pem"
+        $null = New-Item -ItemType Directory -Path $script:localCertificateDirectory -Force
+        (& $script:pem 'PUBLICCERT') | Set-Content -Path $script:baseBundlePath -Encoding UTF8
+        (& $script:pem 'LOCALCERT') | Set-Content -Path "$script:localCertificateDirectory\localhost.crt.pem" -Encoding UTF8
     }
 
     It "Preserves public CAs and appends local certificates" {
@@ -232,7 +232,7 @@ Describe "Write-PHPCertificateTrustBundle" {
     }
 
     It "Appends multiple local certificates" {
-        (& $script:pem 'SECONDCERT') | Set-ContentWrapper -path "$script:localCertificateDirectory\second.crt.pem"
+        (& $script:pem 'SECONDCERT') | Set-Content -Path "$script:localCertificateDirectory\second.crt.pem" -Encoding UTF8
         $localFiles = Get-LocalCertificateFiles -localCertificateDirectory $script:localCertificateDirectory
 
         $result = Write-PHPCertificateTrustBundle -baseBundlePath $script:baseBundlePath -trustBundlePath $script:trustBundlePath -localCertificateFiles $localFiles
@@ -253,7 +253,7 @@ Describe "Write-PHPCertificateTrustBundle" {
     }
 
     It "Rejects a local certificate that is not PEM and writes no bundle" {
-        'not a certificate' | Set-ContentWrapper -path "$script:localCertificateDirectory\bad.crt.pem"
+        'not a certificate' | Set-Content -Path "$script:localCertificateDirectory\bad.crt.pem" -Encoding UTF8
         $localFiles = Get-LocalCertificateFiles -localCertificateDirectory $script:localCertificateDirectory
 
         $result = Write-PHPCertificateTrustBundle -baseBundlePath $script:baseBundlePath -trustBundlePath $script:trustBundlePath -localCertificateFiles $localFiles
@@ -332,7 +332,7 @@ Describe "Update-PHPCertificateBundle" {
         }
         Mock Get-RemoteFile {
             param ($url, $destinationPath)
-            $null = New-Directory -path $script:downloadTempDirectory
+            $null = New-Item -ItemType Directory -Path $script:downloadTempDirectory -Force
             [System.IO.File]::WriteAllText($destinationPath, "-----BEGIN CERTIFICATE-----`nPUBLICCERT`n-----END CERTIFICATE-----")
             return $destinationPath
         }
@@ -364,8 +364,8 @@ Describe "Update-PHPCertificateBundle" {
     }
 
     It "Uses the trust bundle when local certificates exist" {
-        $null = New-Directory -path $script:localCertificateDirectory
-        (& $script:pem 'LOCALCERT') | Set-ContentWrapper -path "$script:localCertificateDirectory\myapp.test.crt.pem"
+        $null = New-Item -ItemType Directory -Path $script:localCertificateDirectory -Force
+        (& $script:pem 'LOCALCERT') | Set-Content -Path "$script:localCertificateDirectory\myapp.test.crt.pem" -Encoding UTF8
 
         $result = Update-PHPCertificateBundle
 
@@ -412,7 +412,7 @@ Describe "Update-PHPCertificateBundle" {
     It "Rejects a download without PEM certificate markers" {
         Mock Get-RemoteFile {
             param ($url, $destinationPath)
-            $null = New-Directory -path $script:downloadTempDirectory
+            $null = New-Item -ItemType Directory -Path $script:downloadTempDirectory -Force
             [System.IO.File]::WriteAllText($destinationPath, 'not a PEM bundle')
             return $destinationPath
         }
@@ -427,7 +427,7 @@ Describe "Update-PHPCertificateBundle" {
     It "Rejects a download with only a BEGIN marker" {
         Mock Get-RemoteFile {
             param ($url, $destinationPath)
-            $null = New-Directory -path $script:downloadTempDirectory
+            $null = New-Item -ItemType Directory -Path $script:downloadTempDirectory -Force
             [System.IO.File]::WriteAllText($destinationPath, '-----BEGIN CERTIFICATE-----')
             return $destinationPath
         }
@@ -472,8 +472,8 @@ Describe "Update-PHPCertificateBundle" {
     }
 
     It "Fails when the trust bundle cannot be written" {
-        $null = New-Directory -path $script:localCertificateDirectory
-        (& $script:pem 'LOCALCERT') | Set-ContentWrapper -path "$script:localCertificateDirectory\myapp.test.crt.pem"
+        $null = New-Item -ItemType Directory -Path $script:localCertificateDirectory -Force
+        (& $script:pem 'LOCALCERT') | Set-Content -Path "$script:localCertificateDirectory\myapp.test.crt.pem" -Encoding UTF8
         Mock Write-PHPCertificateTrustBundle { return -1 }
 
         $result = Update-PHPCertificateBundle
@@ -496,7 +496,7 @@ Describe "Invoke-LocalCertificateGenerator" {
     BeforeEach {
         $script:genTemp = "$script:generatorDirectory\tmp"
         Remove-Item $script:genTemp -Recurse -Force -ErrorAction SilentlyContinue
-        $null = New-Directory -path $script:genTemp
+        $null = New-Item -ItemType Directory -Path $script:genTemp -Force
 
         $script:okPhp = "$script:generatorDirectory\php-ok.cmd"
         $script:failPhp = "$script:generatorDirectory\php-fail.cmd"
@@ -545,9 +545,9 @@ Describe "New-LocalPHPCertificate" {
     BeforeEach {
         & $script:resetCertDirectory
         & $script:resetIni
-        $null = New-Directory -path $script:localCertificateDirectory
-        Set-ContentWrapper -path "$script:phpPath\php.exe" -value 'test executable'
-        (& $script:pem 'PUBLICCERT') | Set-ContentWrapper -path $script:baseBundlePath
+        $null = New-Item -ItemType Directory -Path $script:localCertificateDirectory -Force
+        Set-Content -Path "$script:phpPath\php.exe" -Value 'test executable' -Encoding UTF8
+        (& $script:pem 'PUBLICCERT') | Set-Content -Path $script:baseBundlePath -Encoding UTF8
         $script:capturedTempDir = $null
 
         Mock Get-CurrentPHPVersion {
@@ -556,8 +556,8 @@ Describe "New-LocalPHPCertificate" {
         Mock Invoke-LocalCertificateGenerator {
             param ($phpExecutable, $hostName, $subjectAltName, $certificatePath, $privateKeyPath, $temporaryDirectory)
             $script:capturedTempDir = $temporaryDirectory
-            Set-ContentWrapper -path $certificatePath -value "-----BEGIN CERTIFICATE-----`nLOCALCERT`n-----END CERTIFICATE-----"
-            Set-ContentWrapper -path $privateKeyPath -value "-----BEGIN PRIVATE KEY-----`nLOCALKEY`n-----END PRIVATE KEY-----"
+            Set-Content -Path $certificatePath -Value "-----BEGIN CERTIFICATE-----`nLOCALCERT`n-----END CERTIFICATE-----" -Encoding UTF8
+            Set-Content -Path $privateKeyPath -Value "-----BEGIN PRIVATE KEY-----`nLOCALKEY`n-----END PRIVATE KEY-----" -Encoding UTF8
             return 0
         }
     }
@@ -663,7 +663,7 @@ Describe "New-LocalPHPCertificate" {
     }
 
     It "Refuses to overwrite an existing certificate" {
-        'existing' | Set-ContentWrapper -path "$script:localCertificateDirectory\myapp.test.crt.pem"
+        'existing' | Set-Content -Path "$script:localCertificateDirectory\myapp.test.crt.pem" -Encoding UTF8
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
 
@@ -675,7 +675,7 @@ Describe "New-LocalPHPCertificate" {
     }
 
     It "Refuses to overwrite an existing private key" {
-        'existing' | Set-ContentWrapper -path "$script:localCertificateDirectory\myapp.test.key.pem"
+        'existing' | Set-Content -Path "$script:localCertificateDirectory\myapp.test.key.pem" -Encoding UTF8
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
 
@@ -697,7 +697,7 @@ Describe "New-LocalPHPCertificate" {
     It "Removes partial files when generation fails" {
         Mock Invoke-LocalCertificateGenerator {
             param ($phpExecutable, $hostName, $subjectAltName, $certificatePath, $privateKeyPath, $temporaryDirectory)
-            Set-ContentWrapper -path $certificatePath -value 'partial'
+            Set-Content -Path $certificatePath -Value 'partial' -Encoding UTF8
             return -1
         }
 
@@ -712,7 +712,7 @@ Describe "New-LocalPHPCertificate" {
     It "Fails and removes files when PHP did not create both files" {
         Mock Invoke-LocalCertificateGenerator {
             param ($phpExecutable, $hostName, $subjectAltName, $certificatePath, $privateKeyPath, $temporaryDirectory)
-            Set-ContentWrapper -path $certificatePath -value 'only the certificate'
+            Set-Content -Path $certificatePath -Value 'only the certificate' -Encoding UTF8
             return 0
         }
 
@@ -775,8 +775,8 @@ Describe "New-LocalPHPCertificate" {
     It "Removes both files when generation fails after creating them" {
         Mock Invoke-LocalCertificateGenerator {
             param ($phpExecutable, $hostName, $subjectAltName, $certificatePath, $privateKeyPath, $temporaryDirectory)
-            Set-ContentWrapper -path $certificatePath -value 'partial cert'
-            Set-ContentWrapper -path $privateKeyPath -value 'partial key'
+            Set-Content -Path $certificatePath -Value 'partial cert' -Encoding UTF8
+            Set-Content -Path $privateKeyPath -Value 'partial key' -Encoding UTF8
             return -1
         }
 
@@ -790,7 +790,7 @@ Describe "New-LocalPHPCertificate" {
     It "Removes the private key when PHP created only the key" {
         Mock Invoke-LocalCertificateGenerator {
             param ($phpExecutable, $hostName, $subjectAltName, $certificatePath, $privateKeyPath, $temporaryDirectory)
-            Set-ContentWrapper -path $privateKeyPath -value 'only the key'
+            Set-Content -Path $privateKeyPath -Value 'only the key' -Encoding UTF8
             return 0
         }
 

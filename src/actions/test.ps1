@@ -28,11 +28,10 @@ function Initialize-TestEnvironment {
 function Restore-TestEnvironment {
     param ($environment)
 
-    if (Test-ValidDrivePath -path $currentTestDrive) {
-        $null = Remove-ItemWrapper -path $environment.TestDrive
-    }
     $Global:PVMConfig   = $environment.PVMConfigBackup
     $Global:CurrentTestDrive = $null
+
+    $null = Remove-ItemWrapper -path $environment.TestDrive
 }
 
 function Get-PowerShellInfo {

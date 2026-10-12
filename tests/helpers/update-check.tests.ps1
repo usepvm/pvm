@@ -13,6 +13,7 @@ BeforeAll {
     $script:STATE_PATH = $Global:PVMConfig.paths.directories.state
 
     Mock Show-Error { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Get-LastUpdateCheckTimestamp" {

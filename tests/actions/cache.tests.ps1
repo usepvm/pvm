@@ -18,6 +18,7 @@ BeforeAll {
     Mock Write-Gray { }
     Mock Show-Message { }
     Mock Show-Success { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Get-CacheFiles" {

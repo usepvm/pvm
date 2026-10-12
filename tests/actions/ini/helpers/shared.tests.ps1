@@ -18,6 +18,8 @@ BeforeAll {
     $null = New-Item -ItemType Directory -Path $script:phpPath -Force
     $null = New-Item -ItemType Directory -Path $script:extDirectory -Force
 
+    Mock Add-LogEntry { return 0 }
+
     function Reset-IniContent {
         @(
             'memory_limit = 128M'

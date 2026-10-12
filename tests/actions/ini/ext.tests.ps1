@@ -20,6 +20,7 @@ BeforeAll {
     Mock Show-Info { }
     Mock Write-Gray { }
     Mock New-Line { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Show-PHPExtensionInfo" {

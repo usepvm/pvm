@@ -15,6 +15,7 @@ BeforeAll {
     Mock Show-Info { }
     Mock Show-Warning { }
     Mock Write-DarkYellow { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Test-GitAvailable" {

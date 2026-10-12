@@ -1,4 +1,4 @@
-
+﻿
 BeforeAll {
     if (-not $Global:CurrentTestDrive) {
         $currentFileName = Split-Path -Path $PSCommandPath -Leaf
@@ -9,6 +9,8 @@ BeforeAll {
     }
 
     $script:TEST_DRIVE = $Global:CurrentTestDrive
+
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Test-OS64Bit" {

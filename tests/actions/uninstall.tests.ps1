@@ -16,12 +16,11 @@ BeforeAll {
     $null = New-Item -ItemType Directory -Path "$script:testPhpPath\8.0" -Force
     $null = New-Item -ItemType Directory -Path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force
 
-    Mock Add-LogEntry { return 0 }
-
     Mock Show-Success { }
     Mock Show-Error { }
     Mock Write-Gray { }
     Mock Write-Color { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Uninstall-PHP" {

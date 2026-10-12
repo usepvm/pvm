@@ -29,6 +29,9 @@ BeforeAll {
     Mock Write-Color { }
     Mock Write-Gray { }
     Mock Backup-IniFile { return 0 }
+    Mock Add-LogEntry { return 0 }
+
+    Mock New-Directory { return 0 }
     Mock Get-CurrentPHPVersion {
         return @{
             version = '8.2.0'
@@ -51,10 +54,6 @@ BeforeAll {
             )
         }
     }
-
-    Mock New-Directory { param ($path) return 0 }
-
-    Mock Add-LogEntry { param ($data) return $true }
 }
 
 Describe "Set-IniSettingDirect" {

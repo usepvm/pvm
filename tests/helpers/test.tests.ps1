@@ -22,6 +22,7 @@ BeforeAll {
     Mock Show-Error { }
     Mock Show-Message { }
     Mock Write-Gray { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Show-Scripts" {

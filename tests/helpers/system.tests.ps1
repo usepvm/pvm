@@ -68,6 +68,7 @@ Describe "Get-AllEnvVarsCore" {
 
 Describe "Get-AllEnvVars" {
     BeforeAll {
+        Mock Add-LogEntry { return 0 }
         Mock Get-AllEnvVarsCore {
             if ($script:MockRegistryThrowException) {
                 throw $script:MockRegistryException
@@ -111,6 +112,7 @@ Describe "Get-EnvVarByNameCore" {
 
 Describe "Get-EnvVarByName" {
     BeforeAll {
+        Mock Add-LogEntry { return 0 }
         Mock Test-NotAdmin { return $false }
         Mock Get-AllEnvVarsCore {
             if ($script:MockRegistryThrowException) {
@@ -176,6 +178,7 @@ Describe "Get-EnvVarByName" {
 
 Describe "Set-EnvVar" {
     BeforeAll {
+        Mock Add-LogEntry { return 0 }
         Mock Test-NotAdmin { return $false }
         Mock Get-EnvVarByNameCore {
             param ($name)

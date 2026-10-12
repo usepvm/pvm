@@ -16,6 +16,7 @@ BeforeAll {
     Mock Show-Info { }
     Mock Show-Message { }
     Mock Show-Error { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Show-Usage" {

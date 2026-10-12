@@ -16,6 +16,7 @@ BeforeAll {
     $null = New-Item -ItemType Directory -Path $script:CACHE_PATH -Force
 
     Mock Show-Error { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Get-DataFromCache" {

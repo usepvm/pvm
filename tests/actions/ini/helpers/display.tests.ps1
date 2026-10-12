@@ -3,6 +3,7 @@ BeforeAll {
     Mock Show-Message { }
     Mock Show-Error { }
     Mock Write-Color { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Show-ExtensionsStates" {

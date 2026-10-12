@@ -25,6 +25,7 @@ BeforeAll {
     Mock Show-Info { }
     Mock Write-Color { }
     Mock New-Line { }
+    Mock Add-LogEntry { return 0 }
     Mock Backup-IniFile { return 0 }
 
     function Reset-IniContent {

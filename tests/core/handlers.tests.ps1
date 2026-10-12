@@ -19,6 +19,7 @@ BeforeAll {
     Mock Write-Color { }
     Mock Show-Info { }
     Mock New-Line { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Invoke-Help" {

@@ -28,6 +28,7 @@ BeforeAll {
     Mock Write-Color { }
     Mock Show-Warning { }
     Mock Backup-IniFile { return 0 }
+    Mock Add-LogEntry { return 0 }
 
     $script:MockFileSystem = @{
         Directories   = @()

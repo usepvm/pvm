@@ -17,6 +17,7 @@ BeforeAll {
     Mock Show-Success { }
     Mock Show-Error { }
     Mock Show-Message { }
+    Mock Add-LogEntry { return 0 }
 
     Mock Get-MatchingPHPVersions {
         param ($version)
@@ -47,8 +48,6 @@ BeforeAll {
     }
 
     Mock New-SymbolicLink { return @{ code = 0 } }
-
-    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Update-PHPVersion" {

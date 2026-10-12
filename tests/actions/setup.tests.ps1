@@ -18,6 +18,7 @@ BeforeAll {
     Mock Show-Success { }
     Mock Show-Error { }
     Mock Show-Info { }
+    Mock Add-LogEntry { return 0 }
 }
 
 Describe "Initialize-PVM" {

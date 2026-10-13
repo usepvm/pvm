@@ -450,6 +450,12 @@ function Invoke-Log {
     $clearLog = $arguments -contains '--clear'
 
     if ($clearLog) {
+        $content = Get-ContentWrapper -path $Global:PVMConfig.paths.files.logError
+        if (-not $content) {
+            Show-Success -message "`nLog already cleared!"
+            return 0
+        }
+
         $skipConfirmation = [bool]($arguments | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
         if (-not $skipConfirmation) {
             $response = Read-HostWrapper -prompt "`nAre you sure you want to clear the log? (y/n)"
@@ -465,7 +471,7 @@ function Invoke-Log {
             return -1
         }
 
-        Show-Success -message "`nLog Cleared Successfully"
+        Show-Success -message "`nLog cleared Successfully"
         return 0
     }
 

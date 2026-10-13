@@ -1206,6 +1206,7 @@ Describe "Invoke-Log" {
     }
 
     It "Should return -1 when clearing fails" {
+        Mock Get-ContentWrapper { return 'some log content' }
         Mock Clear-ContentWrapper { return -1 }
 
         $code = Invoke-Log -arguments @('--clear', '-y')
@@ -1215,6 +1216,7 @@ Describe "Invoke-Log" {
     }
 
     It "Should skip confirmation and clear log file" {
+        Mock Get-ContentWrapper { return 'some log content' }
         Mock Clear-ContentWrapper { return 0 }
 
         $code = Invoke-Log -arguments @('--clear', '-y')
@@ -1226,6 +1228,7 @@ Describe "Invoke-Log" {
     }
 
     It "Should prompt for confirmation and cancel log clearing when user responds with 'n'" {
+        Mock Get-ContentWrapper { return 'some log content' }
         Mock Read-HostWrapper { return 'n' }
         Mock Write-Gray { }
 
@@ -1238,6 +1241,7 @@ Describe "Invoke-Log" {
     }
 
     It "Should prompt for confirmation and proceed with log clearing when user responds with 'y'" {
+        Mock Get-ContentWrapper { return 'some log content' }
         Mock Clear-ContentWrapper { return 0 }
         Mock Show-Success { }
         Mock Read-HostWrapper { return 'y' }
@@ -1247,6 +1251,17 @@ Describe "Invoke-Log" {
         $code | Should -Be 0
         Should -Invoke Clear-ContentWrapper -Exactly 1
         Should -Invoke Show-Success -Exactly 1
+    }
+
+    It "Should not clear log when it's empty" {
+        Mock Get-ContentWrapper { return $null }
+        Mock Clear-ContentWrapper { return 0 }
+
+        $code = Invoke-Log -arguments @('--clear')
+
+        $code | Should -Be 0
+        Should -Invoke Show-Success -ParameterFilter { $message -like '*Log already cleared*' }
+        Should -Invoke Clear-ContentWrapper -Exactly 0
     }
 
     It "Calls Show-Log with provided --pageSize argument" {

@@ -43,7 +43,7 @@ function Restore-IniBackup {
         }
 
         if ($choice -lt 0 -or $choice -gt $backupList.Count - 1) {
-            Show-Warning -message "Number must be between 0 and $($backupList.Count - 1)."
+            Show-Warning -message "`nNumber must be between 0 and $($backupList.Count - 1)."
             return -1
         }
 

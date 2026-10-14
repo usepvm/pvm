@@ -15,6 +15,7 @@ BeforeAll {
 
     Mock New-Line { }
     Mock Show-Info { }
+    Mock Show-Success { }
     Mock Write-Color { }
     Mock Write-Cyan { }
     Mock Write-White { }
@@ -23,6 +24,9 @@ BeforeAll {
     Mock Show-Message { }
     Mock Write-Gray { }
     Mock Add-LogEntry { return 0 }
+    Mock Invoke-SuccessSound { }
+    Mock Invoke-ErrorSound { }
+    Mock Invoke-NotifySound { }
 }
 
 Describe "Show-Scripts" {
@@ -55,6 +59,131 @@ Describe "Show-Scripts" {
         Should -Invoke Write-Cyan -Times 1 -Exactly
         Should -Not -Invoke Write-White
         Should -Not -Invoke Write-DarkGray
+    }
+}
+
+Describe "Show-TestsResult" {
+    BeforeEach {
+        $Global:PVMConfig.env.SHOW_TESTS_RESULT = $true
+        $Global:PVMConfig.subprocess.enabled = $false
+        $script:messages = [System.Collections.Generic.List[string]]::new()
+
+        Mock Show-Message { $script:messages.Add($message) }
+    }
+
+    It "Does not show a result when SHOW_TESTS_RESULT is false" {
+        $Global:PVMConfig.env.SHOW_TESTS_RESULT = $false
+
+        Show-TestsResult -label 'Unit' -code 0
+
+        Should -Not -Invoke Show-Message
+        Should -Not -Invoke Show-Success
+    }
+
+    It "Does not show a result in subprocess mode" {
+        $Global:PVMConfig.subprocess.enabled = $true
+
+        Show-TestsResult -label 'Unit' -code 0
+
+        Should -Not -Invoke Show-Message
+        Should -Not -Invoke Show-Success
+    }
+
+    It "Shows OK and plays success sound when code is 0" {
+        Show-TestsResult -label 'Unit' -code 0
+
+        Should -Invoke Show-Success -Times 1 -Exactly -ParameterFilter {
+            $message -eq 'OK' -and $noNewLine
+        }
+        Should -Invoke Invoke-SuccessSound -Times 1 -Exactly -ParameterFilter { $wait }
+        Should -Not -Invoke Show-Error
+        Should -Not -Invoke Invoke-ErrorSound
+        Should -Not -Invoke Invoke-NotifySound
+    }
+
+    It "Shows NOT OK and plays error sound when code is -1" {
+        Show-TestsResult -label 'Unit' -code -1
+
+        Should -Invoke Show-Error -Times 1 -Exactly -ParameterFilter {
+            $message -eq 'NOT OK' -and $noNewLine
+        }
+        Should -Invoke Invoke-ErrorSound -Times 1 -Exactly -ParameterFilter { $wait }
+        Should -Not -Invoke Show-Success
+        Should -Not -Invoke Invoke-SuccessSound
+        Should -Not -Invoke Invoke-NotifySound
+    }
+
+    It "Shows NOT OK and plays notify sound when code is -2" {
+        Show-TestsResult -label 'Unit' -code -2
+
+        Should -Invoke Show-Error -Times 1 -Exactly -ParameterFilter { $message -eq 'NOT OK' }
+        Should -Invoke Invoke-NotifySound -Times 1 -Exactly -ParameterFilter { $wait }
+        Should -Not -Invoke Show-Success
+        Should -Not -Invoke Invoke-SuccessSound
+        Should -Not -Invoke Invoke-ErrorSound
+    }
+
+    It "Shows NOT OK without any sound for other non-zero codes" {
+        Show-TestsResult -label 'Unit' -code 1
+
+        Should -Invoke Show-Error -Times 1 -Exactly -ParameterFilter { $message -eq 'NOT OK' }
+        Should -Not -Invoke Show-Success
+        Should -Not -Invoke Invoke-SuccessSound
+        Should -Not -Invoke Invoke-ErrorSound
+        Should -Not -Invoke Invoke-NotifySound
+    }
+
+    It "Writes the header and footer through Show-Message" {
+        Show-TestsResult -label 'Unit' -code 0
+
+        Should -Invoke Show-Message -Times 2 -Exactly
+        Should -Invoke Show-Message -Times 1 -Exactly -ParameterFilter { $noNewLine }
+        $script:messages[0] | Should -Match 'Unit : $'
+    }
+
+    It "Uses a minimum width of 80 for short labels" {
+        Show-TestsResult -label 'Unit' -code 0
+
+        $script:messages[0] | Should -Match '(?m)^={80}$'
+        $script:messages[0] | Should -Match '(?m)^\| {78}\|$'
+        $script:messages[1] | Should -Match '(?m)^={80}$'
+        $script:messages[1] | Should -Match '(?m)^\| {78}\|$'
+    }
+
+    It "Expands the width for long labels" {
+        $label = 'x' * 100   # width = 100 + 'OK'.Length + 5 = 107
+
+        Show-TestsResult -label $label -code 0
+
+        $script:messages[0] | Should -Match '(?m)^={107}$'
+        $script:messages[0] | Should -Not -Match '(?m)^={108}$'
+        $script:messages[0] | Should -Match '(?m)^\| {105}\|$'
+        $script:messages[1] | Should -Match '(?m)^={107}$'
+    }
+
+    It "Expands the width for long labels with NOT OK status" {
+        $label = 'x' * 100   # width = 100 + 'NOT OK'.Length + 5 = 111
+
+        Show-TestsResult -label $label -code 1
+
+        $script:messages[0] | Should -Match '(?m)^={111}$'
+        $script:messages[1] | Should -Match '(?m)^={111}$'
+    }
+
+    It "Centers the label and puts the extra space on the right" {
+        # width 80, inner 78, padding = 78 - 4 - 2 - 3 = 69 -> left 34, right 35
+        Show-TestsResult -label 'Unit' -code 0
+
+        $script:messages[0] | Should -Match '(?m)^\| {34}Unit : $'
+        $script:messages[1] | Should -Match '(?m)^ {35}\|$'
+    }
+
+    It "Splits even padding equally" {
+        # width 80, inner 78, padding = 78 - 5 - 2 - 3 = 68 -> left 34, right 34
+        Show-TestsResult -label 'Unit1' -code 0
+
+        $script:messages[0] | Should -Match '(?m)^\| {34}Unit1 : $'
+        $script:messages[1] | Should -Match '(?m)^ {34}\|$'
     }
 }
 

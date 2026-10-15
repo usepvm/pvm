@@ -403,6 +403,8 @@ function Set-TestDrive {
 
     $Global:PVMConfig.rootPath = $path
     $Global:PVMConfig.paths.directories.root = $path
+    $Global:PVMConfig.paths.directories.src = "$path\src"
+    $Global:PVMConfig.paths.directories.tests = "$path\tests"
     $Global:PVMConfig.paths.directories.storage = $fakeStorage
     $Global:PVMConfig.paths.directories.testDrive = $path
     $Global:PVMConfig.paths.directories.php = "$fakeStorage\php"

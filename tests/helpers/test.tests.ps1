@@ -948,6 +948,8 @@ Describe "Set-TestDrive" {
 
         $Global:PVMConfig.rootPath | Should -Be $fakeRoot
         $Global:PVMConfig.paths.directories.root | Should -Be $fakeRoot
+        $Global:PVMConfig.paths.directories.src | Should -Be "$fakeRoot\src"
+        $Global:PVMConfig.paths.directories.tests | Should -Be "$fakeRoot\tests"
         $Global:PVMConfig.paths.directories.storage | Should -Be "$fakeRoot\storage"
 
         $Global:PVMConfig.paths.directories.testDrive | Should -Be $fakeRoot

@@ -1467,11 +1467,11 @@ Describe "Invoke-Test" {
     }
 
     BeforeEach {
-        Mock Test-InvalidDrivePath { return $false }
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
     }
 
     It "Should return -1 when Test Drive is not defined" {
-        Mock Test-InvalidDrivePath { return $true }
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
 
         $result = Invoke-Test -arguments @()
 

@@ -4,7 +4,7 @@ function Initialize-TestEnvironment {
 
     $currentTestDrive = "$($Global:PVMConfig.paths.directories.testDrive)\$driveName-drive"
 
-    if (Test-InvalidDrivePath -path $currentTestDrive) {
+    if (Test-PathInvalidOrNotUnderProjectRoot -path $currentTestDrive) {
         return $null
     }
 

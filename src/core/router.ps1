@@ -282,6 +282,42 @@ function Get-ProfileAction {
     }
 }
 
+function Get-CertAction {
+    return @{
+        command     = 'pvm cert <bundle|local> [hostname]';
+        description = 'Manage PHP CA bundles (required for HTTPS) and local development certificates.';
+        usage       = [ordered]@{
+            USAGE       = 'pvm cert <bundle|local> [hostname]'
+            DESCRIPTION = @(
+                'Certificate management is split into two distinct features:',
+                '',
+                '1. CA Bundle (REQUIRED for HTTPS):',
+                '   PHP requires a trusted CA bundle to verify TLS certificates for HTTPS requests.',
+                '   Without this, Composer, API calls, and package downloads may fail with SSL errors.',
+                '   Run "pvm cert bundle" once after installing PHP to enable HTTPS support.',
+                '',
+                '2. Local Certificates (OPTIONAL for local development):',
+                '   Generate self-signed certificates for local development (localhost, custom domains).',
+                '   Useful when testing HTTPS locally or developing applications that require SSL.',
+                '   These certificates are NOT for production use.'
+            )
+            ARGUMENTS   = @(
+                'bundle .................................. Download and configure trusted CA bundle (RECOMMENDED)'
+                'local [hostname] ...................... Generate self-signed certificate for local development (OPTIONAL)'
+            )
+            EXAMPLES    = @(
+                'pvm cert bundle ...................... Download CA bundle and configure active PHP (run once)'
+                'pvm cert local ....................... Generate a localhost certificate and trust it in PHP'
+                'pvm cert local myapp.test ............ Generate and trust a certificate for myapp.test'
+            )
+        }
+        action      = {
+            param ($arguments)
+            return Invoke-Cert -arguments $arguments
+        }
+    }
+}
+
 function Get-InfoAction {
     return @{
         command     = 'pvm info [--verbose]';
@@ -533,6 +569,10 @@ function Get-Actions {
         'ini' = @{
             order = 2; itemOrder = 0; group = 'PHP Configuration';
             data = (Get-IniAction)
+        }
+        'cert' = @{
+            order = 2; itemOrder = 2; group = 'PHP Configuration';
+            data = (Get-CertAction)
         }
         'profile' = @{
             order = 2; itemOrder = 1; group = 'PHP Configuration';

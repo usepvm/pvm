@@ -220,7 +220,7 @@ Describe "Show-SpinnerWhileJob" {
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock
 
             Should -Invoke Remove-ItemWrapper -ParameterFilter {
-                $path -eq 'Env:\PVM_ROOT_FOR_JOB'
+                $path -eq 'Env:\PVM_SRC_FOR_JOB'
             }
         }
 
@@ -236,7 +236,7 @@ Describe "Show-SpinnerWhileJob" {
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
 
             Should -Invoke Remove-ItemWrapper -ParameterFilter {
-                $path -eq 'Env:\PVM_ROOT_FOR_JOB'
+                $path -eq 'Env:\PVM_SRC_FOR_JOB'
             }
         }
 

@@ -195,9 +195,8 @@ function Get-CoveredSourceFile {
 
 function Get-TestsMap {
     $testsMap = @{}
-    $srcPath = "$($Global:PVMConfig.rootPath)\src"
-    Get-ChildItemWrapper -path $srcPath -recurse -filter '*.ps1' | ForEach-Object -Process {
-        $testFile = $_.FullName -replace [regex]::Escape($srcPath), "$($Global:PVMConfig.rootPath)\tests"
+    Get-ChildItemWrapper -path $Global:PVMConfig.paths.directories.src -recurse -filter '*.ps1' | ForEach-Object -Process {
+        $testFile = $_.FullName -replace [regex]::Escape($Global:PVMConfig.paths.directories.src), $Global:PVMConfig.paths.directories.tests
         $testFile = $testFile -replace '.ps1', '.tests.ps1'
         $testsMap[$testFile] = $_
     }
@@ -212,8 +211,7 @@ function Set-CoverageConfig {
 
     $config.CodeCoverage.Enabled = $true
     $config.CodeCoverage.Path = $covered.FullName
-    $srcPath = "$($Global:PVMConfig.rootPath)\src"
-    $outputPath = $covered.FullName -replace [regex]::Escape($srcPath), ''
+    $outputPath = $covered.FullName -replace [regex]::Escape($Global:PVMConfig.paths.directories.src), ''
     $config.CodeCoverage.OutputPath = "$($Global:PVMConfig.rootPath)\storage\coverage\$outputPath.xml"
     $config.CodeCoverage.OutputFormat = 'JaCoCo'
     $config.CodeCoverage.OutputEncoding = 'UTF8'

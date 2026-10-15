@@ -183,6 +183,8 @@ function Get-Config {
         paths    = [ordered]@{
             directories = @{
                 root               = $rootPath
+                src                = "$rootPath\src"
+                tests              = "$rootPath\tests"
                 storage            = $storage
                 testDrive          = "$storage\tests"
                 php                = "$storage\php"

@@ -27,6 +27,7 @@ function Restore-IniBackup {
             })
         }
 
+        Show-Message -message "`nBackup path : $iniBackupPath"
         Show-Info -message "`nAvailable backups: ($($backupList.Count))"
         for ($i = 0; $i -lt $backupList.Count; $i++) {
             $backup = $backupList[$i]

@@ -8,7 +8,9 @@ function Invoke-PhpIniBackup {
         $result = Backup-IniFile -iniPath $iniPath
 
         if ($result -eq 0) {
-            Show-Success -message "`nBackup created successfully."
+            $phpDirectory = Split-Path -Path $iniPath -Parent
+            $iniBackupPath = "$phpDirectory\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
+            Show-Success -message "`nBackup created successfully at $iniBackupPath"
             return 0
         } else {
             Show-Error -message "`nFailed to create backup."

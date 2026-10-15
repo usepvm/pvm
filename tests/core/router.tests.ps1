@@ -89,6 +89,8 @@ Describe "Get-ListAction" {
 
         $listAction = Get-ListAction
 
+        $listAction.command | Should -Be 'pvm list [options]'
+        $listAction.usage.USAGE | Should -Match '\[--search=<term>\].*\[x86\|x64\] \[ts\|nts\]'
         $listAction | Should -BeOfType [hashtable]
         $listAction.Keys | Should -Contain 'command'
         $listAction.Keys | Should -Contain 'description'
@@ -108,6 +110,8 @@ Describe "Get-InstallAction" {
 
         $installAction = Get-InstallAction
 
+        $installAction.command | Should -Be 'pvm install <version> [options]'
+        $installAction.usage.USAGE | Should -Match '\[version\.\.\.\] \[x86\|x64\] \[ts\|nts\].*auto\|latest \[x86\|x64\] \[ts\|nts\]'
         $installAction | Should -BeOfType [hashtable]
         $installAction.Keys | Should -Contain 'command'
         $installAction.Keys | Should -Contain 'description'

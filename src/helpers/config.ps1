@@ -156,6 +156,7 @@ function Get-EnvDefaults {
         ENABLE_UPDATE_CHECK                 = $true
         UPDATE_CHECK_INTERVAL_HOURS         = 24
         SOUNDS_DISABLED                     = $false
+        SHOW_TESTS_RESULT                   = $true
         INI_BACKUP_MAX_DAYS                = 30
         INI_BACKUP_KEEP_COUNT              = 4
     }
@@ -175,13 +176,15 @@ function Get-Config {
     $state = "$data\state"
 
     return @{
-        version  = '2.7' # PVM version
+        version  = '2.8' # PVM version
 
         rootPath = $rootPath
 
         paths    = [ordered]@{
             directories = @{
                 root               = $rootPath
+                src                = "$rootPath\src"
+                tests              = "$rootPath\tests"
                 storage            = $storage
                 testDrive          = "$storage\tests"
                 php                = "$storage\php"
@@ -236,6 +239,7 @@ function Get-Config {
             ENABLE_UPDATE_CHECK         = Get-EnvBool -value $envConfig['ENABLE_UPDATE_CHECK'] -default $envDefaults.ENABLE_UPDATE_CHECK
             UPDATE_CHECK_INTERVAL_HOURS = Get-EnvInt -value $envConfig['UPDATE_CHECK_INTERVAL_HOURS'] -default $envDefaults.UPDATE_CHECK_INTERVAL_HOURS
             SOUNDS_DISABLED             = Get-EnvBool -value $envConfig['SOUNDS_DISABLED'] -default $envDefaults.SOUNDS_DISABLED
+            SHOW_TESTS_RESULT           = Get-EnvBool -value $envConfig['SHOW_TESTS_RESULT'] -default $envDefaults.SHOW_TESTS_RESULT
             INI_BACKUP_MAX_DAYS        = Get-EnvInt -value $envConfig['INI_BACKUP_MAX_DAYS'] -default $envDefaults.INI_BACKUP_MAX_DAYS
             INI_BACKUP_KEEP_COUNT      = Get-EnvInt -value $envConfig['INI_BACKUP_KEEP_COUNT'] -default $envDefaults.INI_BACKUP_KEEP_COUNT
         }

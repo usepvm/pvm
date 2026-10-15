@@ -1719,6 +1719,7 @@ Describe "Import-PHPProfile" {
     BeforeEach {
         Mock Add-LogEntry { return 0 }
         Mock New-Directory { return 0 }
+        Mock Test-InvalidDrivePath { return $false }
 
         New-Item -ItemType Directory -Force -Path $script:PROFILES_PATH | Out-Null
     }
@@ -1729,6 +1730,18 @@ Describe "Import-PHPProfile" {
 
         Should -Invoke Show-Error -ParameterFilter {
             $message -match 'File not found:'
+        } -Exactly 1
+    }
+
+    It "Should return -1 when importPath is not valid" {
+        Mock Test-FileNotExists { return $false }
+        Mock Test-InvalidDrivePath { return $true }
+
+        $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\profile.json"
+
+        $result | Should -Be -1
+        Should -Invoke Show-Error -ParameterFilter {
+            $message -like "*Path '$script:TEST_DRIVE\profile.json' is not valid*"
         } -Exactly 1
     }
 

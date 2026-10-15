@@ -47,13 +47,14 @@ Describe "Show-SubProcessOutput" {
 
 Describe "Invoke-RunScripts" {
     BeforeEach {
+        $Global:PVMConfig.env.SHOW_TESTS_RESULT = $true
         Mock Show-Scripts { }
         Mock Get-Scripts { return @{} }
         Mock Invoke-PVMSubprocess { return @{ code = 0; output = '' } }
         Mock Get-Actions { return @{} }
         Mock Show-SubProcessOutput { }
         Mock Add-LogEntry { return 0 }
-        Mock Invoke-Sound { }
+        Mock Show-TestsResult { }
     }
 
     It 'Returns -1 when scriptName is null or whitespace' {
@@ -122,6 +123,9 @@ Describe "Invoke-RunScripts" {
         $result | Should -Be 0
         Should -Invoke Invoke-PVMSubprocess -Times 2 -Exactly
         Should -Invoke Show-SubProcessOutput -Times 2 -Exactly
+        Should -Invoke Show-TestsResult -Times 1 -Exactly -ParameterFilter {
+            $label -eq 'ALL SCRIPTS' -and $code -eq 0
+        }
     }
 
     It 'Returns -1 when any subprocess command fails' {
@@ -131,6 +135,22 @@ Describe "Invoke-RunScripts" {
         $result = Invoke-RunScripts -scriptName 'testscript'
 
         $result | Should -Be -1
+        Should -Invoke Show-TestsResult -Times 1 -Exactly -ParameterFilter {
+            $label -eq 'ALL SCRIPTS' -and $code -eq -1
+        }
+    }
+
+    It 'Suppresses the aggregate result when SHOW_TESTS_RESULT is false' {
+        $Global:PVMConfig.env.SHOW_TESTS_RESULT = $false
+        Mock Get-Scripts { return @{'testscript' = @('arg1', 'arg2')} }
+        Mock Invoke-PVMSubprocess { return @{ code = 0; output = '' } }
+
+        $result = Invoke-RunScripts -scriptName 'testscript'
+
+        $result | Should -Be 0
+        Should -Invoke Show-TestsResult -Times 1 -Exactly -ParameterFilter {
+            $label -eq 'ALL SCRIPTS' -and $code -eq 0
+        }
     }
 
     It 'Returns -1 on exception' {

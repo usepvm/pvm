@@ -634,6 +634,11 @@ function Import-PHPProfile {
             return -1
         }
 
+        if (Test-InvalidDrivePath -path $importPath) {
+            Show-Error -message "`nPath '$importPath' is not valid!"
+            return -1
+        }
+
         # Validate JSON structure
         try {
             $userProfile = Get-ContentWrapper -path $importPath -raw | ConvertFrom-Json

@@ -14,9 +14,41 @@ function Show-Scripts {
     }
 }
 
+function Show-TestsResult {
+    param ([string]$label, [int]$code)
+
+    if (-not $Global:PVMConfig.env.SHOW_TESTS_RESULT -or $Global:PVMConfig.subprocess.enabled) {
+        return
+    }
+
+    $status = if ($code -eq 0) { 'OK' } else { 'NOT OK' }
+    $width = [Math]::Max(80, $label.Length + $status.Length + 5)
+    $innerWidth = $width - 2
+    $padding = $innerWidth - $label.Length - $status.Length - 3
+    $leftPadding = [Math]::Floor($padding / 2)
+    $rightPadding = $padding - $leftPadding
+
+    Show-Message -message "`n`n$('=' * $width)`n|$(' ' * $innerWidth)|`n|$(' ' * $leftPadding)$label : " -noNewLine
+
+    if ($code -eq 0) {
+        Show-Success -message $status -noNewLine
+        Invoke-SuccessSound -wait
+    }
+    else {
+        Show-Error -message $status -noNewLine
+
+        switch ($code) {
+            -1 { Invoke-ErrorSound -wait }
+            -2 { Invoke-NotifySound -wait }
+        }
+    }
+
+    Show-Message -message "$(' ' * $rightPadding)|`n|$(' ' * $innerWidth)|`n$('=' * $width)"
+}
+
 function Clear-TestDrive {
     $testDrivePath = $Global:PVMConfig.paths.directories.testDrive
-    if (Test-ValidDrivePath -path $testDrivePath) {
+    if (Test-PathValidUnderProjectRoot -path $testDrivePath) {
         $null = Remove-ItemWrapper -path "$testDrivePath\*"
     }
 }
@@ -163,8 +195,8 @@ function Get-CoveredSourceFile {
 
 function Get-TestsMap {
     $testsMap = @{}
-    Get-ChildItemWrapper -path "$($Global:PVMConfig.rootPath)\src" -recurse -filter '*.ps1' | ForEach-Object -Process {
-        $testFile = $_.FullName -replace [regex]::Escape("$($Global:PVMConfig.rootPath)\src"), "$($Global:PVMConfig.rootPath)\tests"
+    Get-ChildItemWrapper -path $Global:PVMConfig.paths.directories.src -recurse -filter '*.ps1' | ForEach-Object -Process {
+        $testFile = $_.FullName -replace [regex]::Escape($Global:PVMConfig.paths.directories.src), $Global:PVMConfig.paths.directories.tests
         $testFile = $testFile -replace '.ps1', '.tests.ps1'
         $testsMap[$testFile] = $_
     }
@@ -179,7 +211,7 @@ function Set-CoverageConfig {
 
     $config.CodeCoverage.Enabled = $true
     $config.CodeCoverage.Path = $covered.FullName
-    $outputPath = $covered.FullName -replace [regex]::Escape("$($Global:PVMConfig.rootPath)\src"), ''
+    $outputPath = $covered.FullName -replace [regex]::Escape($Global:PVMConfig.paths.directories.src), ''
     $config.CodeCoverage.OutputPath = "$($Global:PVMConfig.rootPath)\storage\coverage\$outputPath.xml"
     $config.CodeCoverage.OutputFormat = 'JaCoCo'
     $config.CodeCoverage.OutputEncoding = 'UTF8'
@@ -371,6 +403,8 @@ function Set-TestDrive {
 
     $Global:PVMConfig.rootPath = $path
     $Global:PVMConfig.paths.directories.root = $path
+    $Global:PVMConfig.paths.directories.src = "$path\src"
+    $Global:PVMConfig.paths.directories.tests = "$path\tests"
     $Global:PVMConfig.paths.directories.storage = $fakeStorage
     $Global:PVMConfig.paths.directories.testDrive = $path
     $Global:PVMConfig.paths.directories.php = "$fakeStorage\php"

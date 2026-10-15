@@ -61,7 +61,7 @@ function Get-CurrentAction {
 
 function Get-ListAction {
     return @{
-        command     = 'pvm list [available] [x86|x64] [ts|nts]';
+        command     = 'pvm list [options]';
         description = "List installed PHP versions, or use 'available' to show versions that can be installed.";
         usage       = [ordered]@{
             USAGE       = 'pvm list [available] [--search=<term>] [--update] [x86|x64] [ts|nts] (alias: ls for list)'
@@ -92,10 +92,10 @@ function Get-ListAction {
 
 function Get-InstallAction {
     return @{
-        command     = 'pvm install <version>|[auto]|[latest] [x86|x64] [ts|nts]';
+        command     = 'pvm install <version> [options]';
         description = "Install a specific PHP version (or multiple versions), 'latest', or use 'auto' to install the version from composer.json or .php-version.";
         usage       = [ordered]@{
-            USAGE       = 'pvm install <version> [version...] (alias: pvm i <version>) | pvm install auto | pvm install latest'
+            USAGE       = 'pvm install <version> [version...] [x86|x64] [ts|nts] (alias: pvm i <version>) | pvm install auto|latest [x86|x64] [ts|nts]'
             DESCRIPTION = @(
                 'Downloads and installs the PHP version(s).'
                 "Use 'auto' to automatically select the version based on project configuration files."

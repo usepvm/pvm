@@ -254,11 +254,9 @@ function Start-PVM {
         Show-Error -message "`nCommand canceled or failed to elevate privileges."
         return -1
     } finally {
-        if (Test-ValidDrivePath -path $Global:PVMConfig.paths.directories.temp) {
-            $code = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.temp)\*"
-            if ($code -ne 0) {
-                Show-Error -message "`nFailed to clean temp directory! Here is the path to do it manually, $($Global:PVMConfig.paths.directories.temp)"
-            }
+        $code = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.temp)\*"
+        if ($code -ne 0) {
+            Show-Error -message "`nFailed to clean temp directory! Here is the path to do it manually, $($Global:PVMConfig.paths.directories.temp)"
         }
 
         if ($result -eq 0 -and $command -ne 'update') {

@@ -501,6 +501,7 @@ Describe "Get-EnvDefaults" {
         $keys | Should -Contain 'ENABLE_UPDATE_CHECK'
         $keys | Should -Contain 'UPDATE_CHECK_INTERVAL_HOURS'
         $keys | Should -Contain 'SOUNDS_DISABLED'
+        $keys | Should -Contain 'SHOW_TESTS_RESULT'
     }
 
     It "has correct default values" {
@@ -514,6 +515,7 @@ Describe "Get-EnvDefaults" {
         $defaults.ENABLE_UPDATE_CHECK         | Should -Be $true
         $defaults.UPDATE_CHECK_INTERVAL_HOURS | Should -Be 24
         $defaults.SOUNDS_DISABLED             | Should -Be $false
+        $defaults.SHOW_TESTS_RESULT           | Should -Be $true
     }
 
     It "returns a fresh hashtable on each call (no shared mutable state)" {
@@ -553,7 +555,7 @@ Describe "Get-Config" {
 
         It "Sets the correct version" {
             $result = Get-Config -rootPath $testRoot
-            $result.version | Should -Be '2.7'
+            $result.version | Should -Be '2.8'
         }
 
         It "Sets paths correctly" {
@@ -590,6 +592,7 @@ Describe "Get-Config" {
             $result.env.PVM_ENV_VAR_NAME | Should -Be 'PVM'
             $result.env.CACHE_MAX_HOURS | Should -Be 168
             $result.env.DEFAULT_LOG_PAGE_SIZE | Should -Be 5
+            $result.env.SHOW_TESTS_RESULT | Should -BeTrue
         }
 
         It "Sets default zend extensions" {

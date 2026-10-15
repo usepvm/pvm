@@ -76,8 +76,8 @@ Describe "Show-SpinnerWhileJob" {
         Mock Write-Yellow { }
         Mock Add-LogEntry { return 0 }
 
-        New-Item -Path "$script:ROOT_PATH\src" -ItemType Directory -Force | Out-Null
-        Set-Content -Path "$script:ROOT_PATH\src\imports.ps1" -Value '# no-op for tests' -Encoding UTF8
+        New-Item -Path $Global:PVMConfig.paths.directories.src -ItemType Directory -Force | Out-Null
+        Set-Content -Path "$($Global:PVMConfig.paths.directories.src)\imports.ps1" -Value '# no-op for tests' -Encoding UTF8
 
         $RealStartJob = Get-Command Start-Job -CommandType Cmdlet
         $script:keepRunning = $true
@@ -220,7 +220,7 @@ Describe "Show-SpinnerWhileJob" {
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock
 
             Should -Invoke Remove-ItemWrapper -ParameterFilter {
-                $path -eq 'Env:\PVM_ROOT_FOR_JOB'
+                $path -eq 'Env:\PVM_SRC_FOR_JOB'
             }
         }
 
@@ -236,7 +236,7 @@ Describe "Show-SpinnerWhileJob" {
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
 
             Should -Invoke Remove-ItemWrapper -ParameterFilter {
-                $path -eq 'Env:\PVM_ROOT_FOR_JOB'
+                $path -eq 'Env:\PVM_SRC_FOR_JOB'
             }
         }
 

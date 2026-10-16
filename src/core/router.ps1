@@ -258,8 +258,8 @@ function Get-ProfileAction {
                 'show <name> .................................. Show detailed profile contents'
                 'delete <name> [--yes|-y] ..................... Delete a profile'
                 'clear [--yes|-y] ............................. Delete all profiles files'
-                'export <name> <path> ......................... Export profile to a JSON file'
-                'import <path> <name> ......................... Import profile from a JSON file'
+                'export <name> [path] .......................... Export profile to a JSON file (default path: current directory)'
+                'import <path> [name] .......................... Import a profile (default name: name in profile)'
             )
             EXAMPLES    = @(
                 "pvm profile save development ................. Saves current config as 'development' profile"
@@ -436,7 +436,7 @@ function Get-TestAction {
                 '--exclude=[files] ..................... Run all tests except selected files'
                 '--shell=<shell> ....................... Run tests with a specific shell (powershell, pwsh)'
                 '--pester=<version> .................... Run tests with a specific Pester version'
-                '--mute ................................ Force mute mode (SOUNDS_DISABLED = false)'
+                '--mute ................................ Disable sound notifications (SOUNDS_DISABLED = true)'
             )
             EXAMPLES    = @(
                 "pvm test .............................. Runs all tests with $($Global:PVMConfig.test.verbosity.default) (default) verbosity"
@@ -452,7 +452,7 @@ function Get-TestAction {
                 'pvm test --group=folder ............... Runs all tests and group results by folder'
                 'pvm test --shell=powershell ........... Runs all tests with Windows PowerShell (powershell.exe)'
                 'pvm test --pester=5.7.0 ............... Runs all tests with Pester 5.7.0'
-                'pvm test --mute ....................... Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
+                'pvm test --mute ....................... Runs tests with sound notifications disabled (SOUNDS_DISABLED = true)'
             )
         }
         action      = {
@@ -464,10 +464,10 @@ function Get-TestAction {
 
 function Get-RunAction {
     return @{
-        command     = 'pvm run <script-name>|[--list] [--mute]';
+        command     = 'pvm run <script-name>|[options]';
         description = 'Run a predefined script from the scripts configuration.';
         usage       = [ordered]@{
-            USAGE       = 'pvm run <script-name>|[--list] [--mute]'
+            USAGE       = 'pvm run <script-name> [files...] [--mute] | pvm run --list'
             DESCRIPTION = @(
                 'Runs a predefined script from the scripts configuration.',
                 'Scripts are shortcuts for common commands with predefined options.'
@@ -482,7 +482,8 @@ function Get-RunAction {
                 'pvm run test:shell ......................... Runs tests with Windows PowerShell and PowerShell Core'
                 'pvm run test:pester ........................ Runs tests with Pester 5.7.1 and 6.0.0'
                 'pvm run test:matrix ........................ Runs tests with all supported PowerShell versions and Pester versions'
-                'pvm run test:matrix --mute ................. Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
+                'pvm run test:matrix --mute ................. Runs tests with sound notifications disabled (SOUNDS_DISABLED = true)'
+                'pvm run test:matrix use install ............ Runs tests for use and install with all supported PowerShell versions and Pester versions'
             )
         }
         action      = {

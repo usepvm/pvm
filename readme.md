@@ -341,12 +341,12 @@ pvm profile clear [--yes|-y]
 # Example: pvm profile clear -y # Skip confirmation
 
 # Export profile to a JSON file
-pvm profile export <name> <path>
+pvm profile export <name> [path]
 # Example: pvm profile export development
 # Example: pvm profile export dev ./backup.json
 
 # Import profile from a JSON file
-pvm profile import <path> <name>
+pvm profile import <path> [name]
 # Example: pvm profile import ./my-profile.json
 # Example: pvm profile import ./profile.json custom-name
 ```
@@ -496,7 +496,7 @@ pvm cache:<subcommand>
 | Cache        | storage/data/cache/                  |
 | State        | storage/data/state/                  |
 | Logs         | storage/logs/                        |
-| Assets       | storage/assets/                      |
+| Assets       | assets/                              |
 
 **Note:** The `storage/data/templates/` directory contains `aliases.json` and `scripts.json` for customizing command aliases and test scripts. The `storage/data/state/` directory stores runtime state information.
 
@@ -545,7 +545,7 @@ pvm test --group=coverage # ............. Runs all tests and groups results by c
 pvm test --shell=powershell # ........... Forces Windows PowerShell (powershell.exe) instead of auto-detected pwsh.
 pvm test --shell=pwsh # ................. Forces PowerShell 7+ (pwsh.exe).
 pvm test --pester=5.7.0 # ............... Forces Pester 5.7.0.
-pvm test --mute #........................ Runs tests and forces mute mode (SOUNDS_DISABLED = false)
+pvm test --mute #........................ Runs tests with sound notifications disabled (SOUNDS_DISABLED = true)
 ```
 
 ### Test Scripts
@@ -556,7 +556,7 @@ The test runner provides visual feedback with spinner animations during executio
 
 ```sh
 # Run a specific script
-pvm run <script-name> [--mute] <files>
+pvm run <script-name> [files...] [--mute]
 
 # List all available predefined scripts
 pvm run --list
@@ -570,7 +570,7 @@ pvm run test:verbose # .............. Runs tests with coverage and detailed outp
 pvm run test:shell # ................ Runs tests with Windows PowerShell and PowerShell Core
 pvm run test:pester # ............... Runs tests with Pester 5.7.1 and 6.0.0
 pvm run test:matrix # ............... Runs tests with all supported PowerShell versions and Pester versions
-pvm run test:matrix --mute # ........ Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
+pvm run test:matrix --mute # ........ Runs tests with sound notifications disabled (SOUNDS_DISABLED = true)
 pvm run test:matrix use install # ... Runs only 'use.tests.ps1' and 'install.tests.ps1' with all supported PowerShell versions and Pester versions
 ```
 

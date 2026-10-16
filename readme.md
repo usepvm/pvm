@@ -421,11 +421,11 @@ pvm aliases
 
 ```sh
 # Using aliases instead of full commands
-pvm i 8.4              # Same as: pvm install 8.4
+pvm i 8.4               # Same as: pvm install 8.4
 pvm ls                  # Same as: pvm list
-pvm use 8.4             # Same as: pvm use 8.4
+pvm switch 8.4          # Same as: pvm use 8.4
 pvm cur                 # Same as: pvm current
-pvm u 8.4              # Same as: pvm uninstall 8.4
+pvm u 8.4               # Same as: pvm uninstall 8.4
 pvm ? setup             # Same as: pvm help setup
 pvm fix                 # Same as: pvm repair
 pvm upgrade             # Same as: pvm update

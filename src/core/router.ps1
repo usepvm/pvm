@@ -154,7 +154,7 @@ function Get-UninstallAction {
         command     = 'pvm uninstall <version>';
         description = 'Remove an installed PHP version (or multiple versions).';
         usage       = [ordered]@{
-            USAGE       = 'pvm uninstall <version> [version...] (alias: pvm rm <version>)'
+            USAGE       = 'pvm uninstall <version> [version...] (alias: pvm u <version>)'
             DESCRIPTION = @(
                 'Removes the specified PHP version(s) from your system.'
                 'The version must be a version number that is currently installed.'

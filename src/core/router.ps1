@@ -196,7 +196,7 @@ function Get-IniAction {
                 'disable <extension> ......................................... Disable a PHP extension'
                 'status <extension> .......................................... Check if extension is enabled'
                 'info [extensions] [settings] [--search=<term>] .............. Displays information about the environment and php.ini information summary'
-                'backup [--clean] ............................................ Create a backup of php.ini (use --clean to remove old backups)'
+                'backup [--clear] ............................................ Create a backup of php.ini (use --clear to remove old backups)'
                 'restore ..................................................... Restore original php.ini from backup'
                 'add <extension> [--yes|-y] .................................. Install a PHP extension (handles duplicate extension names)'
                 'remove <extension> [--yes|-y] ............................... Remove a PHP extension'
@@ -220,7 +220,7 @@ function Get-IniAction {
                 'pvm ini info extensions ..................................... Lists php.ini extensions only'
                 'pvm ini info settings ....................................... Lists php.ini settings only'
                 'pvm ini backup .............................................. Creates a backup of php.ini'
-                "pvm ini backup --clean ...................................... Cleans up old backups (keeps last $($Global:PVMConfig.env.INI_BACKUP_KEEP_COUNT), removes backups older than $($Global:PVMConfig.env.INI_BACKUP_MAX_DAYS) days)"
+                "pvm ini backup --clear ...................................... Cleans up old backups (keeps last $($Global:PVMConfig.env.INI_BACKUP_KEEP_COUNT), removes backups older than $($Global:PVMConfig.env.INI_BACKUP_MAX_DAYS) days)"
                 'pvm ini restore ............................................. Restores php.ini from backup (prompts to select which backup)'
                 'pvm ini add opcache ......................................... Installs the opcache extension'
                 "pvm ini add sql ............................................. Shows matching extensions for 'sql' then installs the chosen one"

@@ -265,7 +265,7 @@ pvm ini ext info <extension>
 
 # Create backup of php.ini
 pvm ini backup # Creates a timestamped backup of php.ini
-pvm ini backup --clean # Cleans up old backups (keeps last 4, removes backups older than 30 days)
+pvm ini backup --clear # Cleans up old backups (keeps last 4, removes backups older than 30 days)
 
 # Restore backup
 pvm ini restore # PVM automatically creates php.ini backups before modifying settings or extensions. Prompts to select which backup to restore.

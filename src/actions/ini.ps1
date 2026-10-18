@@ -79,7 +79,7 @@ function Invoke-IniAction {
                 $exitCode = Get-IniExtensionStatus -iniPath $iniPath -extNames @($params)
             }
             'backup' {
-                if ($params -contains '--clean') {
+                if ($params -contains '--clear') {
                     $iniBackupPath = "$($currentPhpVersion.path)\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
                     $exitCode = Invoke-PhpIniBackupCleanup -iniBackupPath $iniBackupPath
                 } else {

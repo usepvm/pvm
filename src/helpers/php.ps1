@@ -82,7 +82,7 @@ function Update-InstalledPHPVersionsCache {
 
 function Get-InstalledPHPVersionsFromDisk {
     return Show-SpinnerWhileJob -scriptBlock {
-        $directories = Get-AllSubdirectories -path $Global:PVMConfig.paths.directories.php
+        $directories = Get-AllSubdirectories -path $Global:PVMConfig.paths.directories.phpVersions
         $installedVersions = $directories | ForEach-Object -Process {
             if (Test-FileExists -path "$($_.FullName)\php.exe") {
                 return (Get-PHPInstallInfo -path $_.FullName)

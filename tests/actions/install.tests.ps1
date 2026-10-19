@@ -10,7 +10,7 @@ BeforeAll {
 
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
+    $script:PHP_DIR = $Global:PVMConfig.paths.directories.phpVersions
     $script:PHP_WIN_ARCHIVES_URL = $Global:PVMConfig.links.phpWinArchives
     $script:PHP_WIN_RELEASES_URL = $Global:PVMConfig.links.phpWinReleases
 

@@ -142,7 +142,6 @@ function Get-EnvConfig {
 
 function Get-EnvDefaults {
     return @{
-        PHP_CURRENT_VERSION_PATH            = 'C:\pvm\php'
         PVM_ENV_VAR_NAME                    = 'PVM'
         CACHE_MAX_HOURS                     = 168
         DEFAULT_LOG_PAGE_SIZE               = 5
@@ -170,6 +169,7 @@ function Get-Config {
 
     $storage = "$rootPath\storage"
     $data = "$storage\data"
+    $php = "$storage\php"
     $profiles = "$data\profiles"
     $templates = "$data\templates"
     $logs = "$storage\logs"
@@ -187,7 +187,8 @@ function Get-Config {
                 tests              = "$rootPath\tests"
                 storage            = $storage
                 testDrive          = "$storage\tests"
-                php                = "$storage\php"
+                phpVersions        = "$php\versions"
+                phpCurrent         = "$php\current"
                 data               = $data
                 templates          = $templates
                 cache              = "$data\cache"
@@ -223,7 +224,6 @@ function Get-Config {
         }
 
         env      = [ordered]@{
-            PHP_CURRENT_VERSION_PATH            = Get-EnvPath -value $envConfig['PHP_CURRENT_VERSION_PATH'] -default $envDefaults.PHP_CURRENT_VERSION_PATH
             PVM_ENV_VAR_NAME                    = $envConfig['PVM_ENV_VAR_NAME']
             CACHE_MAX_HOURS                     = Get-EnvInt -value $envConfig['CACHE_MAX_HOURS'] -default $envDefaults.CACHE_MAX_HOURS
             DEFAULT_LOG_PAGE_SIZE               = Get-EnvInt -value $envConfig['DEFAULT_LOG_PAGE_SIZE'] -default $envDefaults.DEFAULT_LOG_PAGE_SIZE

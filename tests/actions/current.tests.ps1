@@ -10,8 +10,8 @@ BeforeAll {
 
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:PHP_CURRENT_DIR = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
-    $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
+    $script:PHP_CURRENT_DIR = $Global:PVMConfig.paths.directories.phpCurrent
+    $script:PHP_DIR = $Global:PVMConfig.paths.directories.phpVersions
 
     $null = New-Item -ItemType Directory -Path $script:PHP_CURRENT_DIR -Force
 

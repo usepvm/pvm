@@ -11,7 +11,7 @@ BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:ROOT_PATH = $Global:PVMConfig.rootPath
-    $script:PHP_CURRENT_VERSION_PATH = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
+    $script:PHP_CURRENT_VERSION_PATH = $Global:PVMConfig.paths.directories.phpCurrent
     $script:PVM_ENV_VAR_NAME = $Global:PVMConfig.env.PVM_ENV_VAR_NAME
 
     Mock Show-Message { }

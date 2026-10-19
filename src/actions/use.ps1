@@ -26,7 +26,7 @@ function Update-PHPVersion {
 
         $linkCreated = New-SymbolicLink -link $Global:PVMConfig.paths.directories.phpCurrent -target $pathVersionObject.path -allowOutsideRoot
         if ($linkCreated.code -ne 0) {
-            Write-Color -message $linkCreated.message -foreColor $linkCreated.color
+            Write-Color -message "`n$($linkCreated.message)" -foreColor $linkCreated.color
             return -1
         }
         $text = ("Now using PHP $($pathVersionObject.version) $($pathVersionObject.buildType) $($pathVersionObject.arch)").Trim()

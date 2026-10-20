@@ -156,6 +156,7 @@ pvm install <version> # pvm i <version>
 pvm install <version> [version...] [x86|x64] [ts|nts] # pvm i  <version> [version...] [x86|x64] [ts|nts]
 # Example: pvm install 8.4 x64 nts # pvm i 8.4 x64 nts
 # Example: pvm install 8.3 8.4 x64 nts # pvm i 8.3 8.4 x64 nts
+# Architecture and build type choices are mutually exclusive (choose one x86/x64 and one ts/nts value). # pvm i 8.3 8.4 x64 nts
 
 # Install the latest available PHP version.
 pvm install latest # pvm i latest
@@ -499,6 +500,17 @@ pvm cache:<subcommand>
 | Assets       | assets/                              |
 
 **Note:** The `storage/data/templates/` directory contains `aliases.json` and `scripts.json` for customizing command aliases and test scripts. The `storage/data/state/` directory stores runtime state information.
+
+## Project Structure
+
+- `src/pvm.ps1` is the PowerShell entry point; `pvm.bat` selects the available PowerShell engine.
+- `src/core/router.ps1` defines command help and command metadata, including setup requirements and namespaced-command support.
+- `src/core/bootstrap.ps1` normalizes input, validates commands, dispatches actions, and handles command-level errors.
+- `src/core/handlers.ps1` connects top-level commands to the operations in `src/actions/`.
+- `src/helpers/args.ps1` resolves CLI tokens and reports conflicting architecture/build-type selections.
+- `src/helpers/config.ps1` assembles application and environment configuration; 
+- `src/actions/` contains feature operations and their specialized helpers.
+- `src/imports.ps1` loads helpers, core scripts, then actions, sorting scripts within each group for deterministic startup.
 
 ## Running Tests
 

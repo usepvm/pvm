@@ -1,6 +1,7 @@
 ![GitHub release](https://img.shields.io/github/v/release/usepvm/pvm)
 ![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-blue)
+[![CI](https://github.com/usepvm/pvm/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/usepvm/pvm/actions/workflows/ci.yml)
 
 # PHP Version Manager for Windows
 

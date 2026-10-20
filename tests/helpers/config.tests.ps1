@@ -550,7 +550,7 @@ Describe "Get-Config" {
 
         It "Sets the correct version" {
             $result = Get-Config -rootPath $testRoot
-            $result.version | Should -Be '2.8'
+            $result.version | Should -Be '2.9'
         }
 
         It "Sets paths correctly" {

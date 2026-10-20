@@ -2,10 +2,14 @@
 $ProgressPreference = 'SilentlyContinue'
 
 # Load functions scripts
-Get-ChildItem -Path "$PSScriptRoot\helpers\*.ps1" -Recurse -File | ForEach-Object -Process { . $_.FullName }
+$scriptGroups = @(
+    "$PSScriptRoot\helpers"
+    "$PSScriptRoot\core"
+    "$PSScriptRoot\actions"
+)
 
-# Load configuration
-Get-ChildItem -Path "$PSScriptRoot\core\*.ps1" -Recurse -File | ForEach-Object -Process { . $_.FullName }
-
-# Load actions scripts
-Get-ChildItem -Path "$PSScriptRoot\actions\*.ps1" -Recurse -File | ForEach-Object -Process { . $_.FullName }
+foreach ($scriptGroup in $scriptGroups) {
+    Get-ChildItem -Path $scriptGroup -Filter '*.ps1' -Recurse -File |
+        Sort-Object -Property FullName |
+        ForEach-Object -Process { . $_.FullName }
+}

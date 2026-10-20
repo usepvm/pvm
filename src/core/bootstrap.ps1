@@ -54,28 +54,55 @@ function Show-PVMVersion {
 }
 
 function Get-NestedCommands {
-    return @('ini', 'profile', 'cache', 'help')
+    param ($actions = $null)
+
+    if ($null -eq $actions) {
+        $actions = Get-Actions
+    }
+
+    return @($actions.Keys | Where-Object -FilterScript {
+        $metadata = $actions[$_]
+        $null -ne $metadata -and $metadata.Contains('supportsNamespace') -and $metadata.supportsNamespace
+    })
 }
 
 function Resolve-NestedCommand {
-    param ($command, $arguments)
+    param ($command, $arguments, $actions = $null)
 
     if ($command -notlike '*:*') {
         return $command, $arguments
     }
 
-    $splitted = $command.Split(':')
-    $nestedCommand = $splitted[0]
+    $separatorIndex = $command.IndexOf(':')
+    if ($separatorIndex -le 0) {
+        return $command, $arguments
+    }
 
-    if ($nestedCommand -in (Get-NestedCommands)) {
-        return $nestedCommand, (@($splitted[1]) + $arguments)
+    $nestedCommand = $command.Substring(0, $separatorIndex)
+
+    if ($null -eq $actions) {
+        $actions = Get-Actions
+    }
+
+    if ($nestedCommand -in (Get-NestedCommands -actions $actions)) {
+        $nestedArguments = @($command.Substring($separatorIndex + 1)) + @($arguments)
+        return $nestedCommand, $nestedArguments
     }
 
     return $command, $arguments
 }
 
 function Get-AllowedCommands {
-    return @('help', 'setup', 'repair', 'log', 'update')
+    param ($actions = $null)
+
+    if ($null -eq $actions) {
+        $actions = Get-Actions
+    }
+
+    return @($actions.Keys | Where-Object -FilterScript {
+        $metadata = $actions[$_]
+        $null -ne $metadata -and $metadata.Contains('requiresSetup') -and -not $metadata.requiresSetup
+    })
 }
 
 function Get-LevenshteinDistance {
@@ -213,10 +240,20 @@ function Start-PVM {
             if ($flagCommand) {
                 $command   = $flagCommand
                 $arguments = @($arguments | Where-Object -FilterScript { -not (Get-FlagMap).Contains($_) })
+            } elseif ($arguments.Count -gt 0) {
+                Show-Error -message "`n'$($arguments[0])' is not a valid command or option."
+                Show-Usage -arguments $arguments
+                return -1
             }
         }
 
-        $command, $arguments = Resolve-NestedCommand -command $command -arguments $arguments
+        if ([string]::IsNullOrWhiteSpace($command)) {
+            Show-Usage -arguments $arguments
+            return 0
+        }
+
+        $actions = Get-Actions
+        $command, $arguments = Resolve-NestedCommand -command $command -arguments $arguments -actions $actions
 
         $alias = $command
         $command = Resolve-Alias -alias $command
@@ -226,8 +263,6 @@ function Start-PVM {
             return 0
         }
 
-        $actions = Get-Actions
-
         if (-not $actions.Contains($command)) {
             $suggestion = Get-ClosestCommandSuggestion -command $command -actions $actions
             if ([string]::IsNullOrWhiteSpace($suggestion)) {
@@ -236,11 +271,10 @@ function Start-PVM {
                 Show-Error -message "`n'$command' is not a valid command. Did you mean '$suggestion'?"
             }
             Show-Usage -arguments $arguments
-            return 0
+            return -1
         }
 
-        $allowedCommands = Get-AllowedCommands
-
+        $allowedCommands = Get-AllowedCommands -actions $actions
         if (($allowedCommands -notcontains $command) -and (Test-PVMNotSetup)) {
             Show-Message -message "`nPVM is not setup. Please run 'pvm setup' first."
             return -1

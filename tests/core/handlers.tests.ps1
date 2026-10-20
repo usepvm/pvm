@@ -235,6 +235,22 @@ Describe "Invoke-List" {
         Should -Invoke Show-InstalledPHPVersions -Times 1
         Should -Invoke Get-AvailablePHPVersions -Times 0
     }
+
+    It "Should reject conflicting architecture options" {
+        $result = Invoke-List -arguments @('x86', 'x64')
+
+        $result | Should -Be -1
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Conflicting architecture options*' }
+        Should -Invoke Show-InstalledPHPVersions -Times 0
+        Should -Invoke Get-AvailablePHPVersions -Times 0
+    }
+
+    It "Should reject conflicting build type options" {
+        $result = Invoke-List -arguments @('ts', 'nts')
+
+        $result | Should -Be -1
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Conflicting build type options*' }
+    }
 }
 
 Describe "Invoke-Install" {
@@ -260,6 +276,22 @@ Describe "Invoke-Install" {
         Should -Invoke Install-PHP -Times 1 -ParameterFilter {
             $version -eq '8.2.0'
         }
+    }
+
+    It "Should reject conflicting architecture options without installing PHP" {
+        $result = Invoke-Install -arguments @('8.2.0', 'x86', 'x64')
+
+        $result | Should -Be -1
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Conflicting architecture options*' }
+        Should -Invoke Install-PHP -Times 0
+    }
+
+    It "Should reject conflicting build type options without installing PHP" {
+        $result = Invoke-Install -arguments @('8.2.0', 'ts', 'nts')
+
+        $result | Should -Be -1
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Conflicting build type options*' }
+        Should -Invoke Install-PHP -Times 0
     }
 
     It "Should install detected PHP version from the project" {

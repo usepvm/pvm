@@ -497,6 +497,7 @@ function Get-Actions {
     return [ordered]@{
         'help' = @{
             order = 0; itemOrder = 0; group = 'Getting Started';
+            supportsNamespace = $true; requiresSetup = $false;
             data = (Get-HelpAction)
         }
         'version' = @{
@@ -505,6 +506,7 @@ function Get-Actions {
         }
         'setup' = @{
             order = 0; itemOrder = 2; group = 'Getting Started';
+            requiresSetup = $false;
             data = (Get-SetupAction)
         }
         'current' = @{
@@ -533,14 +535,17 @@ function Get-Actions {
         }
         'ini' = @{
             order = 2; itemOrder = 0; group = 'PHP Configuration';
+            supportsNamespace = $true;
             data = (Get-IniAction)
         }
         'profile' = @{
             order = 2; itemOrder = 1; group = 'PHP Configuration';
+            supportsNamespace = $true;
             data = (Get-ProfileAction)
         }
         'cache' = @{
             order = 4; itemOrder = 1; group = 'Maintenance';
+            supportsNamespace = $true;
             data = (Get-CacheAction)
         }
         'aliases' = @{
@@ -549,6 +554,7 @@ function Get-Actions {
         }
         'repair' = @{
             order = 4; itemOrder = 0; group = 'Maintenance';
+            requiresSetup = $false;
             data = (Get-RepairAction)
         }
         'test' = @{
@@ -557,6 +563,7 @@ function Get-Actions {
         }
         'update' = @{
             order = 4; itemOrder = 2; group = 'Maintenance';
+            requiresSetup = $false;
             data = (Get-UpdateAction)
         }
         'run' = @{
@@ -565,6 +572,7 @@ function Get-Actions {
         }
         'log' = @{
             order = 3; itemOrder = 2; group = 'Info and Diagnostics';
+            requiresSetup = $false;
             data = (Get-LogAction)
         }
     }

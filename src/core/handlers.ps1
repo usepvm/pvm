@@ -108,6 +108,14 @@ function Invoke-List {
         return $code
     }
 
+    $conflicts = @(Get-ArgumentOptionConflicts -arguments $arguments)
+    if ($conflicts.Count -gt 0) {
+        foreach ($conflict in $conflicts) {
+            Show-Warning -message "`nConflicting $($conflict.name) options: $($conflict.values -join ', '). Specify only one."
+        }
+        return -1
+    }
+
     $arch = Resolve-Arch -arguments $arguments
     $buildType = Resolve-BuildType -arguments $arguments
 
@@ -119,6 +127,14 @@ function Invoke-List {
 
 function Invoke-Install {
     param ($arguments)
+
+    $conflicts = @(Get-ArgumentOptionConflicts -arguments $arguments)
+    if ($conflicts.Count -gt 0) {
+        foreach ($conflict in $conflicts) {
+            Show-Warning -message "`nConflicting $($conflict.name) options: $($conflict.values -join ', '). Specify only one."
+        }
+        return -1
+    }
 
     $arch = Resolve-Arch -arguments $arguments
     $buildType = Resolve-BuildType -arguments $arguments
@@ -228,7 +244,7 @@ function Invoke-Ini {
 
     $action = $arguments[0]
     if (-not $action) {
-        Show-Warning -message "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'list' or 'restore'."
+        Show-Warning -message "`nPlease specify an action for 'pvm ini'. Use 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'ext', 'backup' or 'restore'."
         return -1
     }
 

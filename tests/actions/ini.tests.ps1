@@ -250,11 +250,11 @@ Describe "Invoke-IniAction" {
             }
         }
 
-        It "Cleans up old backups with --clean flag" {
+        It "Cleans up old backups with --clear flag" {
             Mock Test-FileNotExists { return $false }
             Mock Invoke-PhpIniBackupCleanup { return 0 }
 
-            $result = Invoke-IniAction -action 'backup' -params @('--clean')
+            $result = Invoke-IniAction -action 'backup' -params @('--clear')
 
             $result | Should -Be 0
             Should -Invoke Invoke-PhpIniBackupCleanup -Times 1 -ParameterFilter {
@@ -275,7 +275,7 @@ Describe "Invoke-IniAction" {
             Mock Test-FileNotExists { return $false }
             Mock Invoke-PhpIniBackupCleanup { return -1 }
 
-            $result = Invoke-IniAction -action 'backup' -params @('--clean')
+            $result = Invoke-IniAction -action 'backup' -params @('--clear')
 
             $result | Should -Be -1
         }

@@ -93,7 +93,7 @@ Describe "Update-PHPVersion" {
         Mock New-SymbolicLink { return @{ code = -1; message = 'Failed to create link'; color = 'DarkYellow' } }
         $result = Update-PHPVersion -version '8.1'
         $result | Should -Be -1
-        Should -Invoke Write-Color -Exactly 1 -ParameterFilter { $message -eq 'Failed to create link' }
+        Should -Invoke Write-Color -Exactly 1 -ParameterFilter { $message -like '*Failed to create link*' }
     }
 
     It "Should handle exceptions gracefully" {

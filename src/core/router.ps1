@@ -154,7 +154,7 @@ function Get-UninstallAction {
         command     = 'pvm uninstall <version>';
         description = 'Remove an installed PHP version (or multiple versions).';
         usage       = [ordered]@{
-            USAGE       = 'pvm uninstall <version> [version...] (alias: pvm rm <version>)'
+            USAGE       = 'pvm uninstall <version> [version...] (alias: pvm u <version>)'
             DESCRIPTION = @(
                 'Removes the specified PHP version(s) from your system.'
                 'The version must be a version number that is currently installed.'
@@ -196,7 +196,7 @@ function Get-IniAction {
                 'disable <extension> ......................................... Disable a PHP extension'
                 'status <extension> .......................................... Check if extension is enabled'
                 'info [extensions] [settings] [--search=<term>] .............. Displays information about the environment and php.ini information summary'
-                'backup [--clean] ............................................ Create a backup of php.ini (use --clean to remove old backups)'
+                'backup [--clear] ............................................ Create a backup of php.ini (use --clear to remove old backups)'
                 'restore ..................................................... Restore original php.ini from backup'
                 'add <extension> [--yes|-y] .................................. Install a PHP extension (handles duplicate extension names)'
                 'remove <extension> [--yes|-y] ............................... Remove a PHP extension'
@@ -220,7 +220,7 @@ function Get-IniAction {
                 'pvm ini info extensions ..................................... Lists php.ini extensions only'
                 'pvm ini info settings ....................................... Lists php.ini settings only'
                 'pvm ini backup .............................................. Creates a backup of php.ini'
-                "pvm ini backup --clean ...................................... Cleans up old backups (keeps last $($Global:PVMConfig.env.INI_BACKUP_KEEP_COUNT), removes backups older than $($Global:PVMConfig.env.INI_BACKUP_MAX_DAYS) days)"
+                "pvm ini backup --clear ...................................... Cleans up old backups (keeps last $($Global:PVMConfig.env.INI_BACKUP_KEEP_COUNT), removes backups older than $($Global:PVMConfig.env.INI_BACKUP_MAX_DAYS) days)"
                 'pvm ini restore ............................................. Restores php.ini from backup (prompts to select which backup)'
                 'pvm ini add opcache ......................................... Installs the opcache extension'
                 "pvm ini add sql ............................................. Shows matching extensions for 'sql' then installs the chosen one"
@@ -258,8 +258,8 @@ function Get-ProfileAction {
                 'show <name> .................................. Show detailed profile contents'
                 'delete <name> [--yes|-y] ..................... Delete a profile'
                 'clear [--yes|-y] ............................. Delete all profiles files'
-                'export <name> <path> ......................... Export profile to a JSON file'
-                'import <path> <name> ......................... Import profile from a JSON file'
+                'export <name> [path] .......................... Export profile to a JSON file (default path: current directory)'
+                'import <path> [name] .......................... Import a profile (default name: name in profile)'
             )
             EXAMPLES    = @(
                 "pvm profile save development ................. Saves current config as 'development' profile"
@@ -472,7 +472,7 @@ function Get-TestAction {
                 '--exclude=[files] ..................... Run all tests except selected files'
                 '--shell=<shell> ....................... Run tests with a specific shell (powershell, pwsh)'
                 '--pester=<version> .................... Run tests with a specific Pester version'
-                '--mute ................................ Force mute mode (SOUNDS_DISABLED = false)'
+                '--mute ................................ Disable sound notifications (SOUNDS_DISABLED = true)'
             )
             EXAMPLES    = @(
                 "pvm test .............................. Runs all tests with $($Global:PVMConfig.test.verbosity.default) (default) verbosity"
@@ -488,7 +488,7 @@ function Get-TestAction {
                 'pvm test --group=folder ............... Runs all tests and group results by folder'
                 'pvm test --shell=powershell ........... Runs all tests with Windows PowerShell (powershell.exe)'
                 'pvm test --pester=5.7.0 ............... Runs all tests with Pester 5.7.0'
-                'pvm test --mute ....................... Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
+                'pvm test --mute ....................... Runs tests with sound notifications disabled (SOUNDS_DISABLED = true)'
             )
         }
         action      = {
@@ -500,10 +500,10 @@ function Get-TestAction {
 
 function Get-RunAction {
     return @{
-        command     = 'pvm run <script-name>|[--list] [--mute]';
+        command     = 'pvm run <script-name>|[options]';
         description = 'Run a predefined script from the scripts configuration.';
         usage       = [ordered]@{
-            USAGE       = 'pvm run <script-name>|[--list] [--mute]'
+            USAGE       = 'pvm run <script-name> [files...] [--mute] | pvm run --list'
             DESCRIPTION = @(
                 'Runs a predefined script from the scripts configuration.',
                 'Scripts are shortcuts for common commands with predefined options.'
@@ -518,7 +518,8 @@ function Get-RunAction {
                 'pvm run test:shell ......................... Runs tests with Windows PowerShell and PowerShell Core'
                 'pvm run test:pester ........................ Runs tests with Pester 5.7.1 and 6.0.0'
                 'pvm run test:matrix ........................ Runs tests with all supported PowerShell versions and Pester versions'
-                'pvm run test:matrix --mute ................. Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
+                'pvm run test:matrix --mute ................. Runs tests with sound notifications disabled (SOUNDS_DISABLED = true)'
+                'pvm run test:matrix use install ............ Runs tests for use and install with all supported PowerShell versions and Pester versions'
             )
         }
         action      = {
@@ -532,6 +533,7 @@ function Get-Actions {
     return [ordered]@{
         'help' = @{
             order = 0; itemOrder = 0; group = 'Getting Started';
+            supportsNamespace = $true; requiresSetup = $false;
             data = (Get-HelpAction)
         }
         'version' = @{
@@ -540,6 +542,7 @@ function Get-Actions {
         }
         'setup' = @{
             order = 0; itemOrder = 2; group = 'Getting Started';
+            requiresSetup = $false;
             data = (Get-SetupAction)
         }
         'current' = @{
@@ -568,6 +571,7 @@ function Get-Actions {
         }
         'ini' = @{
             order = 2; itemOrder = 0; group = 'PHP Configuration';
+            supportsNamespace = $true;
             data = (Get-IniAction)
         }
         'cert' = @{
@@ -576,10 +580,12 @@ function Get-Actions {
         }
         'profile' = @{
             order = 2; itemOrder = 1; group = 'PHP Configuration';
+            supportsNamespace = $true;
             data = (Get-ProfileAction)
         }
         'cache' = @{
             order = 4; itemOrder = 1; group = 'Maintenance';
+            supportsNamespace = $true;
             data = (Get-CacheAction)
         }
         'aliases' = @{
@@ -588,6 +594,7 @@ function Get-Actions {
         }
         'repair' = @{
             order = 4; itemOrder = 0; group = 'Maintenance';
+            requiresSetup = $false;
             data = (Get-RepairAction)
         }
         'test' = @{
@@ -596,6 +603,7 @@ function Get-Actions {
         }
         'update' = @{
             order = 4; itemOrder = 2; group = 'Maintenance';
+            requiresSetup = $false;
             data = (Get-UpdateAction)
         }
         'run' = @{
@@ -604,6 +612,7 @@ function Get-Actions {
         }
         'log' = @{
             order = 3; itemOrder = 2; group = 'Info and Diagnostics';
+            requiresSetup = $false;
             data = (Get-LogAction)
         }
     }

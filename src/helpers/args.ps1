@@ -34,17 +34,57 @@ function Resolve-FlagCommand {
     return $null
 }
 
+function Get-ArgumentOptionSelection {
+    param ($arguments, [string[]]$options)
+
+    $values = @(
+        @($arguments) |
+            Where-Object -FilterScript { $options -contains $_ } |
+            ForEach-Object -Process { $_.ToLowerInvariant() } |
+            Select-Object -Unique
+    )
+
+    return [pscustomobject]@{
+        value      = if ($values.Count -eq 1) { $values[0] } else { $null }
+        conflicts  = if ($values.Count -gt 1) { $values } else { @() }
+    }
+}
+
+function Get-ArgumentOptionConflicts {
+    param ($arguments)
+
+    $selections = @(
+        [pscustomobject]@{
+            name = 'architecture'
+            selection = Get-ArgumentOptionSelection -arguments $arguments -options @('x86', 'x64')
+        }
+        [pscustomobject]@{
+            name = 'build type'
+            selection = Get-ArgumentOptionSelection -arguments $arguments -options @('ts', 'nts')
+        }
+    )
+
+    return @(
+        $selections | Where-Object -FilterScript { $_.selection.conflicts.Count -gt 0 } |
+            ForEach-Object -Process {
+                [pscustomobject]@{
+                    name = $_.name
+                    values = $_.selection.conflicts
+                }
+            }
+    )
+}
+
 function Resolve-BuildType {
     param ($arguments, $choseDefault = $false)
 
-    $buildType = $arguments | Where-Object -FilterScript { @('ts', 'nts') -contains $_ } | Select-Object -First 1
+    $selection = Get-ArgumentOptionSelection -arguments $arguments -options @('ts', 'nts')
+    $buildType = $selection.value
 
     if ($null -eq $buildType -and $choseDefault) {
-        $buildType = 'ts';
-    }
-
-    if ($null -ne $buildType) {
-        $buildType = $buildType.ToLower()
+        if ($selection.conflicts.Count -eq 0) {
+            $buildType = 'ts'
+        }
     }
 
     return $buildType
@@ -53,14 +93,13 @@ function Resolve-BuildType {
 function Resolve-Arch {
     param ($arguments, $choseDefault = $false)
 
-    $arch = $arguments | Where-Object -FilterScript { @('x86', 'x64') -contains $_ } | Select-Object -First 1
+    $selection = Get-ArgumentOptionSelection -arguments $arguments -options @('x86', 'x64')
+    $arch = $selection.value
 
     if ($null -eq $arch -and $choseDefault) {
-        $arch = if (Test-OS64Bit) { 'x64' } else { 'x86' }
-    }
-
-    if ($null -ne $arch) {
-        $arch = $arch.ToLower()
+        if ($selection.conflicts.Count -eq 0) {
+            $arch = if (Test-OS64Bit) { 'x64' } else { 'x86' }
+        }
     }
 
     return $arch

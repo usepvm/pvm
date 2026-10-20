@@ -158,6 +158,7 @@ pvm install <version> # pvm i <version>
 pvm install <version> [version...] [x86|x64] [ts|nts] # pvm i  <version> [version...] [x86|x64] [ts|nts]
 # Example: pvm install 8.4 x64 nts # pvm i 8.4 x64 nts
 # Example: pvm install 8.3 8.4 x64 nts # pvm i 8.3 8.4 x64 nts
+# Architecture and build type choices are mutually exclusive (choose one x86/x64 and one ts/nts value). # pvm i 8.3 8.4 x64 nts
 
 # Install the latest available PHP version.
 pvm install latest # pvm i latest
@@ -273,7 +274,7 @@ pvm ini ext info <extension>
 
 # Create backup of php.ini
 pvm ini backup # Creates a timestamped backup of php.ini
-pvm ini backup --clean # Cleans up old backups (keeps last 4, removes backups older than 30 days)
+pvm ini backup --clear # Cleans up old backups (keeps last 4, removes backups older than 30 days)
 
 # Restore backup
 pvm ini restore # PVM automatically creates php.ini backups before modifying settings or extensions. Prompts to select which backup to restore.
@@ -393,12 +394,12 @@ pvm profile clear [--yes|-y]
 # Example: pvm profile clear -y # Skip confirmation
 
 # Export profile to a JSON file
-pvm profile export <name> <path>
+pvm profile export <name> [path]
 # Example: pvm profile export development
 # Example: pvm profile export dev ./backup.json
 
 # Import profile from a JSON file
-pvm profile import <path> <name>
+pvm profile import <path> [name]
 # Example: pvm profile import ./my-profile.json
 # Example: pvm profile import ./profile.json custom-name
 ```
@@ -473,11 +474,11 @@ pvm aliases
 
 ```sh
 # Using aliases instead of full commands
-pvm i 8.4              # Same as: pvm install 8.4
+pvm i 8.4               # Same as: pvm install 8.4
 pvm ls                  # Same as: pvm list
-pvm use 8.4             # Same as: pvm use 8.4
+pvm switch 8.4          # Same as: pvm use 8.4
 pvm cur                 # Same as: pvm current
-pvm u 8.4              # Same as: pvm uninstall 8.4
+pvm u 8.4               # Same as: pvm uninstall 8.4
 pvm ? setup             # Same as: pvm help setup
 pvm fix                 # Same as: pvm repair
 pvm upgrade             # Same as: pvm update
@@ -548,9 +549,20 @@ pvm cache:<subcommand>
 | Cache        | storage/data/cache/                  |
 | State        | storage/data/state/                  |
 | Logs         | storage/logs/                        |
-| Assets       | storage/assets/                      |
+| Assets       | assets/                              |
 
 **Note:** The `storage/data/templates/` directory contains `aliases.json` and `scripts.json` for customizing command aliases and test scripts. The `storage/data/state/` directory stores runtime state information.
+
+## Project Structure
+
+- `src/pvm.ps1` is the PowerShell entry point; `pvm.bat` selects the available PowerShell engine.
+- `src/core/router.ps1` defines command help and command metadata, including setup requirements and namespaced-command support.
+- `src/core/bootstrap.ps1` normalizes input, validates commands, dispatches actions, and handles command-level errors.
+- `src/core/handlers.ps1` connects top-level commands to the operations in `src/actions/`.
+- `src/helpers/args.ps1` resolves CLI tokens and reports conflicting architecture/build-type selections.
+- `src/helpers/config.ps1` assembles application and environment configuration; 
+- `src/actions/` contains feature operations and their specialized helpers.
+- `src/imports.ps1` loads helpers, core scripts, then actions, sorting scripts within each group for deterministic startup.
 
 ## Running Tests
 
@@ -597,7 +609,7 @@ pvm test --group=coverage # ............. Runs all tests and groups results by c
 pvm test --shell=powershell # ........... Forces Windows PowerShell (powershell.exe) instead of auto-detected pwsh.
 pvm test --shell=pwsh # ................. Forces PowerShell 7+ (pwsh.exe).
 pvm test --pester=5.7.0 # ............... Forces Pester 5.7.0.
-pvm test --mute #........................ Runs tests and forces mute mode (SOUNDS_DISABLED = false)
+pvm test --mute #........................ Runs tests with sound notifications disabled (SOUNDS_DISABLED = true)
 ```
 
 ### Test Scripts
@@ -608,7 +620,7 @@ The test runner provides visual feedback with spinner animations during executio
 
 ```sh
 # Run a specific script
-pvm run <script-name> [--mute] <files>
+pvm run <script-name> [files...] [--mute]
 
 # List all available predefined scripts
 pvm run --list
@@ -622,7 +634,7 @@ pvm run test:verbose # .............. Runs tests with coverage and detailed outp
 pvm run test:shell # ................ Runs tests with Windows PowerShell and PowerShell Core
 pvm run test:pester # ............... Runs tests with Pester 5.7.1 and 6.0.0
 pvm run test:matrix # ............... Runs tests with all supported PowerShell versions and Pester versions
-pvm run test:matrix --mute # ........ Runs tests and forces mute mode (SOUNDS_DISABLED = false)'
+pvm run test:matrix --mute # ........ Runs tests with sound notifications disabled (SOUNDS_DISABLED = true)
 pvm run test:matrix use install # ... Runs only 'use.tests.ps1' and 'install.tests.ps1' with all supported PowerShell versions and Pester versions
 ```
 

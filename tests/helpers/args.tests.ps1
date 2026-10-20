@@ -71,6 +71,65 @@ Describe "Resolve-FlagCommand" {
     }
 }
 
+Describe "Get-ArgumentOptionSelection" {
+    It "Returns the normalized value when exactly one option matches" {
+        $result = Get-ArgumentOptionSelection -arguments @('8.2', 'X64', 'other') -options @('x86', 'x64')
+
+        $result.value | Should -BeExactly 'x64'
+        $result.conflicts | Should -BeNullOrEmpty
+    }
+
+    It "Returns no value or conflicts when no option matches" {
+        $result = Get-ArgumentOptionSelection -arguments @('8.2', '--search=8') -options @('x86', 'x64')
+
+        $result.value | Should -BeNullOrEmpty
+        $result.conflicts | Should -BeNullOrEmpty
+    }
+
+    It "Deduplicates repeated options regardless of case" {
+        $result = Get-ArgumentOptionSelection -arguments @('X64', 'x64', 'X64') -options @('x86', 'x64')
+
+        $result.value | Should -BeExactly 'x64'
+        $result.conflicts | Should -BeNullOrEmpty
+    }
+
+    It "Returns distinct conflicting options in their original order" {
+        $result = Get-ArgumentOptionSelection -arguments @('nts', 'ts', 'NTS') -options @('ts', 'nts')
+
+        $result.value | Should -BeNullOrEmpty
+        $result.conflicts | Should -Be @('nts', 'ts')
+    }
+
+    It "Handles null arguments and empty option lists" {
+        $result = Get-ArgumentOptionSelection -arguments $null -options @('x86', 'x64')
+
+        $result.value | Should -BeNullOrEmpty
+        $result.conflicts | Should -BeNullOrEmpty
+
+        $result = Get-ArgumentOptionSelection -arguments @('x64') -options @()
+        $result.value | Should -BeNullOrEmpty
+        $result.conflicts | Should -BeNullOrEmpty
+    }
+}
+
+Describe "Get-ArgumentOptionConflicts" {
+    It "Returns conflicting architecture and build type values" {
+        $result = @(Get-ArgumentOptionConflicts -arguments @('x86', 'X64', 'ts', 'nts'))
+
+        $result.Count | Should -Be 2
+        $result[0].name | Should -Be 'architecture'
+        $result[0].values | Should -Be @('x86', 'x64')
+        $result[1].name | Should -Be 'build type'
+        $result[1].values | Should -Be @('ts', 'nts')
+    }
+
+    It "Ignores repeated identical options" {
+        $result = @(Get-ArgumentOptionConflicts -arguments @('x64', 'X64', 'nts', 'NTS'))
+
+        $result | Should -BeNullOrEmpty
+    }
+}
+
 Describe "Resolve-BuildType" {
     Context "When searching in arguments" {
         It "Returns nts when nts is in arguments" {
@@ -85,10 +144,10 @@ Describe "Resolve-BuildType" {
             $result | Should -Be 'ts'
         }
 
-        It "Returns first matching architecture when multiple are present" {
+        It "Returns null when conflicting build types are present" {
             $arguments = @('ts', 'nts', 'other')
             $result = Resolve-BuildType -arguments $arguments
-            $result | Should -Be 'ts'
+            $result | Should -BeNullOrEmpty
         }
 
         It "Returns null when no matching architecture in arguments" {
@@ -120,7 +179,14 @@ Describe "Resolve-BuildType" {
             $result | Should -Be 'ts'
         }
 
-        It "Returns argument arch even when choseDefault is true" {
+        It "Returns null when conflicting build types are present even when choseDefault is true" {
+            $arguments = @('ts', 'nts', 'some_arg')
+
+            $result = Resolve-BuildType -arguments $arguments -choseDefault $true
+            $result | Should -BeNullOrEmpty
+        }
+
+        It "Returns argument build type even when choseDefault is true" {
             $arguments = @('nts', 'some_arg')
 
             $result = Resolve-BuildType -arguments $arguments -choseDefault $true
@@ -163,10 +229,10 @@ Describe "Resolve-Arch" {
             $result | Should -Be 'x64'
         }
 
-        It "Returns first matching architecture when multiple are present" {
+        It "Returns null when conflicting architectures are present" {
             $arguments = @('x86', 'x64', 'other')
             $result = Resolve-Arch -arguments $arguments
-            $result | Should -Be 'x86'
+            $result | Should -BeNullOrEmpty
         }
 
         It "Returns null when no matching architecture in arguments" {
@@ -205,6 +271,13 @@ Describe "Resolve-Arch" {
 
             $result = Resolve-Arch -arguments $arguments -choseDefault $true
             $result | Should -Be 'x86'
+        }
+
+        It "Returns null when conflicting architectures are present even when choseDefault is true" {
+            $arguments = @('x86', 'x64', 'some_arg')
+
+            $result = Resolve-Arch -arguments $arguments -choseDefault $true
+            $result | Should -BeNullOrEmpty
         }
 
         It "Returns argument arch even when choseDefault is true" {

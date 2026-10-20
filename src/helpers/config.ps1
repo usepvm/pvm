@@ -225,23 +225,23 @@ function Get-Config {
         }
 
         env      = [ordered]@{
-            PHP_CURRENT_VERSION_PATH    = Get-EnvPath -value $envConfig['PHP_CURRENT_VERSION_PATH'] -default $envDefaults.PHP_CURRENT_VERSION_PATH
-            PVM_ENV_VAR_NAME            = $envConfig['PVM_ENV_VAR_NAME']
-            CACHE_MAX_HOURS             = Get-EnvInt -value $envConfig['CACHE_MAX_HOURS'] -default $envDefaults.CACHE_MAX_HOURS
-            DEFAULT_LOG_PAGE_SIZE       = Get-EnvInt -value $envConfig['DEFAULT_LOG_PAGE_SIZE'] -default $envDefaults.DEFAULT_LOG_PAGE_SIZE
-            DEFAULT_PARTIAL_LIST_SIZE   = Get-EnvInt -value $envConfig['DEFAULT_PARTIAL_LIST_SIZE'] -default $envDefaults.DEFAULT_PARTIAL_LIST_SIZE
-            MIN_PAD_RIGHT_LENGTH        = Get-EnvInt -value $envConfig['MIN_PAD_RIGHT_LENGTH'] -default $envDefaults.MIN_PAD_RIGHT_LENGTH
-            MIN_LINE_LENGTH             = Get-EnvInt -value $envConfig['MIN_LINE_LENGTH'] -default $envDefaults.MIN_LINE_LENGTH
-            MIN_PHP_INSTALL_FREE_SPACE_MB = Get-EnvInt -value $envConfig['MIN_PHP_INSTALL_FREE_SPACE_MB'] -default $envDefaults.MIN_PHP_INSTALL_FREE_SPACE_MB
+            PHP_CURRENT_VERSION_PATH            = Get-EnvPath -value $envConfig['PHP_CURRENT_VERSION_PATH'] -default $envDefaults.PHP_CURRENT_VERSION_PATH
+            PVM_ENV_VAR_NAME                    = $envConfig['PVM_ENV_VAR_NAME']
+            CACHE_MAX_HOURS                     = Get-EnvInt -value $envConfig['CACHE_MAX_HOURS'] -default $envDefaults.CACHE_MAX_HOURS
+            DEFAULT_LOG_PAGE_SIZE               = Get-EnvInt -value $envConfig['DEFAULT_LOG_PAGE_SIZE'] -default $envDefaults.DEFAULT_LOG_PAGE_SIZE
+            DEFAULT_PARTIAL_LIST_SIZE           = Get-EnvInt -value $envConfig['DEFAULT_PARTIAL_LIST_SIZE'] -default $envDefaults.DEFAULT_PARTIAL_LIST_SIZE
+            MIN_PAD_RIGHT_LENGTH                = Get-EnvInt -value $envConfig['MIN_PAD_RIGHT_LENGTH'] -default $envDefaults.MIN_PAD_RIGHT_LENGTH
+            MIN_LINE_LENGTH                     = Get-EnvInt -value $envConfig['MIN_LINE_LENGTH'] -default $envDefaults.MIN_LINE_LENGTH
+            MIN_PHP_INSTALL_FREE_SPACE_MB       = Get-EnvInt -value $envConfig['MIN_PHP_INSTALL_FREE_SPACE_MB'] -default $envDefaults.MIN_PHP_INSTALL_FREE_SPACE_MB
             MIN_EXTENSION_INSTALL_FREE_SPACE_MB = Get-EnvInt -value $envConfig['MIN_EXTENSION_INSTALL_FREE_SPACE_MB'] -default $envDefaults.MIN_EXTENSION_INSTALL_FREE_SPACE_MB
-            MIN_PROFILE_FREE_SPACE_MB = Get-EnvInt -value $envConfig['MIN_PROFILE_FREE_SPACE_MB'] -default $envDefaults.MIN_PROFILE_FREE_SPACE_MB
-            MIN_CACHE_FREE_SPACE_MB = Get-EnvInt -value $envConfig['MIN_CACHE_FREE_SPACE_MB'] -default $envDefaults.MIN_CACHE_FREE_SPACE_MB
-            ENABLE_UPDATE_CHECK         = Get-EnvBool -value $envConfig['ENABLE_UPDATE_CHECK'] -default $envDefaults.ENABLE_UPDATE_CHECK
-            UPDATE_CHECK_INTERVAL_HOURS = Get-EnvInt -value $envConfig['UPDATE_CHECK_INTERVAL_HOURS'] -default $envDefaults.UPDATE_CHECK_INTERVAL_HOURS
-            SOUNDS_DISABLED             = Get-EnvBool -value $envConfig['SOUNDS_DISABLED'] -default $envDefaults.SOUNDS_DISABLED
-            SHOW_TESTS_RESULT           = Get-EnvBool -value $envConfig['SHOW_TESTS_RESULT'] -default $envDefaults.SHOW_TESTS_RESULT
-            INI_BACKUP_MAX_DAYS        = Get-EnvInt -value $envConfig['INI_BACKUP_MAX_DAYS'] -default $envDefaults.INI_BACKUP_MAX_DAYS
-            INI_BACKUP_KEEP_COUNT      = Get-EnvInt -value $envConfig['INI_BACKUP_KEEP_COUNT'] -default $envDefaults.INI_BACKUP_KEEP_COUNT
+            MIN_PROFILE_FREE_SPACE_MB           = Get-EnvInt -value $envConfig['MIN_PROFILE_FREE_SPACE_MB'] -default $envDefaults.MIN_PROFILE_FREE_SPACE_MB
+            MIN_CACHE_FREE_SPACE_MB             = Get-EnvInt -value $envConfig['MIN_CACHE_FREE_SPACE_MB'] -default $envDefaults.MIN_CACHE_FREE_SPACE_MB
+            ENABLE_UPDATE_CHECK                 = Get-EnvBool -value $envConfig['ENABLE_UPDATE_CHECK'] -default $envDefaults.ENABLE_UPDATE_CHECK
+            UPDATE_CHECK_INTERVAL_HOURS         = Get-EnvInt -value $envConfig['UPDATE_CHECK_INTERVAL_HOURS'] -default $envDefaults.UPDATE_CHECK_INTERVAL_HOURS
+            SOUNDS_DISABLED                     = Get-EnvBool -value $envConfig['SOUNDS_DISABLED'] -default $envDefaults.SOUNDS_DISABLED
+            SHOW_TESTS_RESULT                   = Get-EnvBool -value $envConfig['SHOW_TESTS_RESULT'] -default $envDefaults.SHOW_TESTS_RESULT
+            INI_BACKUP_MAX_DAYS                 = Get-EnvInt -value $envConfig['INI_BACKUP_MAX_DAYS'] -default $envDefaults.INI_BACKUP_MAX_DAYS
+            INI_BACKUP_KEEP_COUNT               = Get-EnvInt -value $envConfig['INI_BACKUP_KEEP_COUNT'] -default $envDefaults.INI_BACKUP_KEEP_COUNT
         }
 
         constants = [ordered]@{

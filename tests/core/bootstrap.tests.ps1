@@ -155,10 +155,35 @@ Describe "Show-PVMVersion" {
 
 Describe "Get-NestedCommands" {
     It "Should return the expected nested commands" {
-        $expected = @('ini', 'profile', 'cache', 'help')
+        $actions = [ordered]@{
+            help = @{ supportsNamespace = $true }
+            install = @{}
+            ini = @{ supportsNamespace = $true }
+            profile = @{ supportsNamespace = $true }
+            cache = @{ supportsNamespace = $true }
+            malformed = $null
+        }
+        $expected = @('help', 'ini', 'profile', 'cache')
+        $result = Get-NestedCommands -actions $actions
+
+        $result.Count | Should -Be $expected.Count
+        foreach ($command in $expected) {
+            $result | Should -Contain $command
+        }
+    }
+
+    It "Gets actions when no action list is provided" {
+        Mock Get-Actions {
+            return [ordered]@{
+                ini = @{ supportsNamespace = $true }
+                install = @{}
+            }
+        }
+
         $result = Get-NestedCommands
 
-        $result | Should -BeExactly $expected
+        $result | Should -BeExactly @('ini')
+        Should -Invoke Get-Actions -Times 1
     }
 }
 
@@ -176,18 +201,59 @@ Describe "Resolve-NestedCommand" {
     It "Should resolve nested command and adjust arguments" {
         $command = 'ini:get'
         $arguments = @('someArg')
+        $actions = [ordered]@{
+            ini = @{ supportsNamespace = $true }
+            install = @{}
+        }
 
-        $result = Resolve-NestedCommand -command $command -arguments $arguments
+        $result = Resolve-NestedCommand -command $command -arguments $arguments -actions $actions
 
         $result[0] | Should -BeExactly 'ini'
         $result[1] | Should -BeExactly @('get', 'someArg')
     }
 
+    It "Should get actions when no action list is provided" {
+        Mock Get-Actions {
+            return [ordered]@{
+                ini = @{ supportsNamespace = $true }
+                install = @{}
+            }
+        }
+
+        $result = Resolve-NestedCommand -command 'ini:get' -arguments @('someArg')
+
+        $result[0] | Should -BeExactly 'ini'
+        $result[1] | Should -BeExactly @('get', 'someArg')
+        Should -Invoke Get-Actions -Times 1
+    }
+
+    It "Should preserve the full nested suffix when it contains another colon" {
+        $actions = [ordered]@{
+            ini = @{ supportsNamespace = $true }
+        }
+        $result = Resolve-NestedCommand -command 'ini:ext:info' -arguments @('zip') -actions $actions
+
+        $result[0] | Should -BeExactly 'ini'
+        $result[1] | Should -BeExactly @('ext:info', 'zip')
+    }
+
+    It "Should preserve a leading colon when no namespace is present" {
+        $command = ':ini'
+        $arguments = @('get')
+        $result = Resolve-NestedCommand -command $command -arguments $arguments
+
+        $result[0] | Should -BeExactly $command
+        $result[1] | Should -BeExactly $arguments
+    }
+
     It "Should return original command if nested command is not recognized" {
         $command = 'unknown:nested'
         $arguments = @('arg1')
+        $actions = [ordered]@{
+            ini = @{ supportsNamespace = $true }
+        }
 
-        $result = Resolve-NestedCommand -command $command -arguments $arguments
+        $result = Resolve-NestedCommand -command $command -arguments $arguments -actions $actions
 
         $result[0] | Should -BeExactly 'unknown:nested'
         $result[1] | Should -BeExactly @('arg1')
@@ -196,10 +262,48 @@ Describe "Resolve-NestedCommand" {
 
 Describe "Get-AllowedCommands" {
     It "Should return the expected allowed commands" {
+        $actions = [ordered]@{
+            help = @{ requiresSetup = $false }
+            setup = @{ requiresSetup = $false }
+            repair = @{ requiresSetup = $false }
+            log = @{ requiresSetup = $false }
+            update = @{ requiresSetup = $false }
+            install = @{}
+            malformed = $null
+        }
         $expected = @('help', 'setup', 'repair', 'log', 'update')
+        $result = Get-AllowedCommands -actions $actions
+
+        $result.Count | Should -Be $expected.Count
+        foreach ($command in $expected) {
+            $result | Should -Contain $command
+        }
+    }
+
+    It "Treats missing setup metadata as requiring setup" {
+        $actions = [ordered]@{
+            setup = @{ requiresSetup = $false }
+            command = @{}
+            malformed = $null
+        }
+
+        $result = Get-AllowedCommands -actions $actions
+
+        $result | Should -BeExactly @('setup')
+    }
+
+    It "Gets actions when no action list is provided" {
+        Mock Get-Actions {
+            return [ordered]@{
+                setup = @{ requiresSetup = $false }
+                install = @{}
+            }
+        }
+
         $result = Get-AllowedCommands
 
-        $result | Should -BeExactly $expected
+        $result | Should -BeExactly @('setup')
+        Should -Invoke Get-Actions -Times 1
     }
 }
 
@@ -278,7 +382,7 @@ Describe "Start-PVM" {
         Mock Get-Actions {
             return [ordered]@{
                 'version' = @{ data = @{ action = { return 0 } } }
-                'setup' = @{ data = @{ action = { return 0 } } }
+                'setup' = @{ requiresSetup = $false; data = @{ action = { return 0 } } }
                 'install' = @{ data = @{ action = { return 0 } } }
                 'use' = @{ data = @{ action = { return 0 } } }
                 'list' = @{ data = @{ action = { return 0 } } }
@@ -316,20 +420,42 @@ Describe "Start-PVM" {
             Should -Invoke Get-Actions -Times 1
         }
 
-        It "Should show usage and return 0 when unknown flag is present" {
+        It "Should show usage when flag resolution returns whitespace" {
+            Mock Resolve-FlagCommand { return '   ' }
+
+            $result = Start-PVM -command $null -arguments @('-v')
+
+            $result | Should -Be 0
+            Should -Invoke Show-Usage -Times 1
+            Should -Invoke Get-Actions -Times 0
+        }
+
+        It "Should show an error and return -1 when an unknown option is present" {
             Mock Resolve-FlagCommand { return $null }
 
             $result = Start-PVM -command $null -arguments @('--unknown')
 
-            $result | Should -Be 0
+            $result | Should -Be -1
             Should -Invoke Resolve-FlagCommand -Times 1
             Should -Invoke Show-Usage -Times 1
+            Should -Invoke Show-Error -Times 1 -ParameterFilter {
+                $message -eq "`n'--unknown' is not a valid command or option."
+            }
         }
     }
 
     Context "Command Validation Path Tests" {
         It "Should show usage and return 0 when command is null" {
             $result = Start-PVM -command $null -arguments @()
+
+            $result | Should -Be 0
+            Should -Invoke Show-Usage -Times 1
+        }
+
+        It "Should show usage and return 0 when alias resolution clears the command" {
+            Mock Resolve-Alias { return $null }
+
+            $result = Start-PVM -command 'install' -arguments @()
 
             $result | Should -Be 0
             Should -Invoke Show-Usage -Times 1
@@ -353,7 +479,7 @@ Describe "Start-PVM" {
         It "Should show usage and return 0 when command not in actions" {
             $result = Start-PVM -command 'invalid-command' -arguments @()
 
-            $result | Should -Be 0
+            $result | Should -Be -1
             Should -Invoke Show-Usage -Times 1
             Should -Invoke Get-Actions -Times 1
             Should -Invoke Resolve-Alias -Times 1
@@ -372,7 +498,7 @@ Describe "Start-PVM" {
 
             $result = Start-PVM -command 'cach' -arguments @()
 
-            $result | Should -Be 0
+            $result | Should -Be -1
             Should -Invoke Show-Error -ParameterFilter {
                 $message -eq "`n'cach' is not a valid command. Did you mean 'cache'?"
             }
@@ -388,7 +514,7 @@ Describe "Start-PVM" {
 
             $result = Start-PVM -command 'ali' -arguments @()
 
-            $result | Should -Be 0
+            $result | Should -Be -1
             Should -Invoke Show-Error -ParameterFilter {
                 $message -eq "`n'ali' is not a valid command. Did you mean 'aliases'?"
             }
@@ -405,7 +531,7 @@ Describe "Start-PVM" {
 
             $result = Start-PVM -command 'invalid-command' -arguments @()
 
-            $result | Should -Be 0
+            $result | Should -Be -1
             Should -Invoke Show-Error -ParameterFilter {
                 $message -eq "`n'invalid-command' is not a valid command."
             }
@@ -433,7 +559,7 @@ Describe "Start-PVM" {
 
             $result = Start-PVM -command 'install' -arguments @()
 
-            $result | Should -Be 0
+            $result | Should -Be -1
             Should -Invoke Show-Usage -Times 1
         }
     }
@@ -736,9 +862,9 @@ Describe "Start-PVM" {
             foreach ($case in $testCases) {
                 Mock Get-Actions {
                     return [ordered]@{
-                        'install' = @{ data = @{ action = { return 10 } } }
-                        'use' = @{ data = @{ action = { return 20 } } }
-                        'list' = @{ data = @{ action = { return 30 } } }
+                        'install' = @{ requiresSetup = $false; data = @{ action = { return 10 } } }
+                        'use' = @{ requiresSetup = $false; data = @{ action = { return 20 } } }
+                        'list' = @{ requiresSetup = $false; data = @{ action = { return 30 } } }
                     }
                 }
 
@@ -750,7 +876,7 @@ Describe "Start-PVM" {
                     $result | Should -BeGreaterThan 0
                     Should -Invoke Show-Usage -Times 0
                 } else {
-                    $result | Should -Be 0
+                    $result | Should -Be -1
                     Should -Invoke Show-Usage -Times 1
                 }
             }
@@ -774,8 +900,8 @@ Describe "Start-PVM" {
                 return [ordered]@{
                     'install' = @{ data = @{ action = { return Invoke-Install -arguments @() } } }
                     'list' = @{ data = @{ action = { return Invoke-List -arguments @() } } }
-                    'ini' = @{ data = @{ action = { return Invoke-Ini -arguments @() } } }
-                    'cache' = @{ data = @{ action = { return Invoke-Cache -arguments @() } } }
+                    'ini' = @{ supportsNamespace = $true; data = @{ action = { return Invoke-Ini -arguments @() } } }
+                    'cache' = @{ supportsNamespace = $true; data = @{ action = { return Invoke-Cache -arguments @() } } }
                 }
             }
         }
@@ -792,7 +918,7 @@ Describe "Start-PVM" {
             Mock Show-Usage { }
             $result = Start-PVM -command 'install:8.2.0' -arguments @()
 
-            $result | Should -Be 0
+            $result | Should -Be -1
             Should -Invoke Show-Usage -Times 1
         }
     }
@@ -820,7 +946,7 @@ Describe "Start-PVM" {
         It "Should handle complete setup workflow" {
             Mock Get-Actions {
                 return [ordered]@{
-                    'setup' = @{ data = @{ action = { return 0 } } }
+                    'setup' = @{ requiresSetup = $false; data = @{ action = { return 0 } } }
                 }
             }
             Mock Resolve-Alias { param ($alias) return $alias }

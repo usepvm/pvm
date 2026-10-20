@@ -176,7 +176,7 @@ function Get-Config {
     $state = "$data\state"
 
     return @{
-        version  = '2.8' # PVM version
+        version  = '2.9' # PVM version
 
         rootPath = $rootPath
 

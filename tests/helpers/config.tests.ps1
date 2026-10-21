@@ -361,7 +361,7 @@ Describe "Get-EnvConfig" {
             Get-EnvConfig -rootPath $envRoot
 
             Should -Invoke Write-Verbose -ParameterFilter {
-                $message -eq "Using .env from: $envRoot\.env"
+                $Message -eq "Using .env from: $envRoot\.env"
             } -Times 1 -Exactly
         }
 

@@ -111,7 +111,7 @@ function Get-EnvConfig {
     if (Test-FileNotExists -path $envFile) {
         $null = Copy-ItemWrapper -path "$rootPath\.env.example" -destination $envFile
     } else {
-        Write-Verbose "Using .env from: $envFile"
+        Write-Verbose -Message "Using .env from: $envFile"
     }
 
     $config = @{}

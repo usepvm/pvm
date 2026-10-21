@@ -1856,7 +1856,7 @@ Describe "Invoke-Run" {
     It "Should call Invoke-RunScripts and return 0" {
         Mock Invoke-RunScripts { return 0 }
 
-        $result = Invoke-Run -arguments @('script.ps1')
+        $result = Invoke-Run -arguments @('script')
 
         $result | Should -Be 0
         Should -Invoke Invoke-RunScripts -Times 1
@@ -1865,7 +1865,7 @@ Describe "Invoke-Run" {
     It "Should call Invoke-RunScripts and return -1" {
         Mock Invoke-RunScripts { return -1 }
 
-        $result = Invoke-Run -arguments @('script.ps1')
+        $result = Invoke-Run -arguments @('script')
 
         $result | Should -Be -1
         Should -Invoke Invoke-RunScripts -Times 1
@@ -1874,12 +1874,12 @@ Describe "Invoke-Run" {
     It "Should call Invoke-RunScripts with custom files" {
         Mock Invoke-RunScripts { return 0 }
 
-        $result = Invoke-Run -arguments @('script.ps1', 'file2.ps1')
+        $result = Invoke-Run -arguments @('script', 'file.ps1')
 
         $result | Should -Be 0
         Should -Invoke Invoke-RunScripts -Times 1 -ParameterFilter {
-            $scriptName -eq 'script.ps1' -and
-            $files -eq @('file2.ps1')
+            $scriptName -eq 'script' -and
+            $files -eq @('file.ps1')
         }
     }
 
@@ -1887,7 +1887,7 @@ Describe "Invoke-Run" {
         Mock Invoke-RunScripts { return 0 }
         $Global:PVMConfig.env.SOUNDS_DISABLED = $false
 
-        $null = Invoke-Run -arguments @('script.ps1', '--mute')
+        $null = Invoke-Run -arguments @('script', '--mute')
 
         $Global:PVMConfig.env.SOUNDS_DISABLED | Should -Be $true
     }
@@ -1896,7 +1896,7 @@ Describe "Invoke-Run" {
         Mock Invoke-RunScripts { return 0 }
         $Global:PVMConfig.env.SOUNDS_DISABLED = $false
 
-        $null = Invoke-Run -arguments @('script.ps1')
+        $null = Invoke-Run -arguments @('script')
 
         $Global:PVMConfig.env.SOUNDS_DISABLED | Should -Be $false
     }
@@ -1904,11 +1904,11 @@ Describe "Invoke-Run" {
     It "Filters out script name and unknown arguments from the list of files" {
         Mock Invoke-RunScripts { return 0 }
 
-        $null = Invoke-Run -arguments @('script', '--unknown', 'file.ps1', 'file2.ps1')
+        $null = Invoke-Run -arguments @('script', '--unknown', 'file1.ps1', 'file2.ps1')
 
         Should -Invoke Invoke-RunScripts -Times 1 -ParameterFilter {
             $scriptName -eq 'script' -and
-            $files -join ' | ' -eq 'file.ps1 | file2.ps1'
+            $files -join ' | ' -eq 'file1.ps1 | file2.ps1'
         }
     }
 }

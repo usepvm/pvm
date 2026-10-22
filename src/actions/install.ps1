@@ -269,21 +269,24 @@ function Select-Version {
         if ($null -ne $buildType) {
             $text += " $buildType"
         }
-        Show-Message -message $text
+        Show-Info -message $text
+        Write-Gray -message '--------------------------'
         $index = 0
-        $matchingVersionsPartialList.GetEnumerator() | ForEach-Object -Process {
-            $key = $_.Key
-            $versionsList = $_.Value
-            if ($versionsList.Length -eq 0) {
-                return
+        $matchingVersionsPartialList.GetEnumerator() |
+            Sort-Object -Property Key |
+            ForEach-Object -Process {
+                $key = $_.Key
+                $versionsList = $_.Value
+                if ($versionsList.Length -eq 0) {
+                    return
+                }
+                Show-Message -message "`n$key`n"
+                $versionsList | ForEach-Object -Process {
+                    $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
+                    Show-Message -message " [$index] $($_.version) $($_.arch) $($_.buildType)"
+                    $index++
+                }
             }
-            Show-Message -message "`n$key versions:`n"
-            $versionsList | ForEach-Object -Process {
-                $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
-                Show-Message -message " [$index] $($_.version) $($_.arch) $($_.buildType)"
-                $index++
-            }
-        }
 
         $msg = "`nThis is a partial list (latest matches only). For the complete list, visit:"
         $msg += "`n Releases : $($Global:PVMConfig.links.phpWinReleases)"

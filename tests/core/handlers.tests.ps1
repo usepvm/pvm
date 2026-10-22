@@ -1020,7 +1020,6 @@ Describe "Invoke-Info" {
         $Global:PVMConfig.env = @{
             CACHE_MAX_HOURS      = 168
             MIN_PAD_RIGHT_LENGTH = 2
-            PHP_CURRENT_VERSION_PATH = 'C:\pvm'
         }
         Mock Get-ProfileFiles {
             @('profile1.json', 'profile2.json')

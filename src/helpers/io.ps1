@@ -266,7 +266,7 @@ function Test-DownloadPrerequisites {
     param ($url, $minimumFreeSpaceMB)
 
     # Keep minimum space check as fallback for extraction space
-    if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.php -minimumMegabytes $minimumFreeSpaceMB) {
+    if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.phpVersions -minimumMegabytes $minimumFreeSpaceMB) {
         return @{ temporaryDirectory = $null; message = "Insufficient disk space for installation. At least $minimumFreeSpaceMB MB is required."; color = 'DarkYellow' }
     }
 

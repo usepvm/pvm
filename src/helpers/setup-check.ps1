@@ -8,7 +8,7 @@ function Test-PVMSetup {
         }
 
         $pvmEnvEntries = $pvmEnvVarContent -split ';' | Where-Object -FilterScript { $_ -ne '' }
-        if ($pvmEnvEntries -notcontains $Global:PVMConfig.rootPath -or $pvmEnvEntries -notcontains $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH) {
+        if ($pvmEnvEntries -notcontains $Global:PVMConfig.rootPath -or $pvmEnvEntries -notcontains $Global:PVMConfig.paths.directories.phpCurrent) {
             return $false
         }
 
@@ -17,7 +17,7 @@ function Test-PVMSetup {
             $path = ''
         }
 
-        $parent = Split-Path -Path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -Parent
+        $parent = Split-Path -Path $Global:PVMConfig.paths.directories.phpCurrent -Parent
         $pathEntries = $path -split ';' | Where-Object -FilterScript { $_ -ne '' }
         if (
             (

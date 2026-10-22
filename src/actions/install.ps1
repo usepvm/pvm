@@ -390,7 +390,7 @@ function Install-PHP {
         $downloadPath = $downloadStatus.downloadPath
         Show-Message -message "`nExtracting the downloaded zip ..."
         $phpDirectoryName = "$($selectedVersionObject.version)_$($selectedVersionObject.buildType)_$($selectedVersionObject.arch)"
-        $phpInstallPath = "$($Global:PVMConfig.paths.directories.php)\$phpDirectoryName"
+        $phpInstallPath = "$($Global:PVMConfig.paths.directories.phpVersions)\$phpDirectoryName"
         $code = Expand-AndConfigurePHP -path $downloadPath -fileNamePath $phpInstallPath
 
         if ($code -ne 0) {

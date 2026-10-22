@@ -10,7 +10,7 @@ BeforeAll {
 
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
+    $script:PHP_DIR = $Global:PVMConfig.paths.directories.phpVersions
     $script:testPhpPath = "$script:TEST_DRIVE\PHP"
     $script:testExtPath = "$script:testPhpPath\ext"
     $script:testIniPath = "$script:testPhpPath\php.ini"

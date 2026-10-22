@@ -367,7 +367,6 @@ Describe "Get-EnvConfig" {
 
         It "Returns a hashtable of parsed key=value pairs" {
             @(
-                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
                 'CACHE_MAX_HOURS=168'
                 'DEFAULT_LOG_PAGE_SIZE=5'
             ) -join "`n" | Set-Content -Path "$envRoot\.env" -Encoding UTF8
@@ -375,8 +374,7 @@ Describe "Get-EnvConfig" {
             $result = Get-EnvConfig -rootPath $envRoot
 
             $result | Should -BeOfType [hashtable]
-            $result.Count | Should -Be 3
-            $result['PHP_CURRENT_VERSION_PATH'] | Should -Be 'C:\pvm\php'
+            $result.Count | Should -Be 2
             $result['CACHE_MAX_HOURS'] | Should -Be '168'
             $result['DEFAULT_LOG_PAGE_SIZE'] | Should -Be '5'
         }
@@ -491,7 +489,6 @@ Describe "Get-EnvDefaults" {
 
     It "has the expected keys" {
         $keys = (Get-EnvDefaults).Keys
-        $keys | Should -Contain 'PHP_CURRENT_VERSION_PATH'
         $keys | Should -Contain 'PVM_ENV_VAR_NAME'
         $keys | Should -Contain 'CACHE_MAX_HOURS'
         $keys | Should -Contain 'DEFAULT_LOG_PAGE_SIZE'
@@ -506,7 +503,6 @@ Describe "Get-EnvDefaults" {
 
     It "has correct default values" {
         $defaults = Get-EnvDefaults
-        $defaults.PHP_CURRENT_VERSION_PATH    | Should -Be 'C:\pvm\php'
         $defaults.CACHE_MAX_HOURS             | Should -Be 168
         $defaults.DEFAULT_LOG_PAGE_SIZE       | Should -Be 5
         $defaults.DEFAULT_PARTIAL_LIST_SIZE   | Should -Be 10
@@ -532,7 +528,6 @@ Describe "Get-Config" {
             $script:testRoot = "$script:TEST_DRIVE\pvm"
             New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
             @(
-                'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
                 'PVM_ENV_VAR_NAME=PVM'
                 'CACHE_MAX_HOURS=168'
                 'DEFAULT_LOG_PAGE_SIZE=5'
@@ -565,7 +560,8 @@ Describe "Get-Config" {
             $result.paths.directories.root | Should -Be $testRoot
             $result.paths.directories.storage | Should -Be "$testRoot\storage"
             $result.paths.directories.testDrive | Should -Be "$testRoot\storage\tests"
-            $result.paths.directories.php | Should -Be "$testRoot\storage\php"
+            $result.paths.directories.phpVersions | Should -Be "$testRoot\storage\php\versions"
+            $result.paths.directories.phpCurrent | Should -Be "$testRoot\storage\php\current"
             $result.paths.directories.data | Should -Be "$testRoot\storage\data"
             $result.paths.directories.templates | Should -Be "$testRoot\storage\data\templates"
             $result.paths.directories.cache | Should -Be "$testRoot\storage\data\cache"
@@ -587,7 +583,7 @@ Describe "Get-Config" {
 
         It "Sets env variables from .env file" {
             $result = Get-Config -rootPath $testRoot
-            $result.env.PHP_CURRENT_VERSION_PATH | Should -Be 'C:\pvm\php'
+            $result.paths.directories.phpCurrent | Should -Be "$script:testRoot\storage\php\current"
             $result.env.PVM_ENV_VAR_NAME | Should -Be 'PVM'
             $result.env.CACHE_MAX_HOURS | Should -Be 168
             $result.env.DEFAULT_LOG_PAGE_SIZE | Should -Be 5

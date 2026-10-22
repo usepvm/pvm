@@ -6,7 +6,7 @@ function Initialize-PVM {
         $newPath = $path
         $pathEntries = $path -split ';' | Where-Object -FilterScript { $_ -ne '' }
 
-        $parent = Split-Path -Path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -Parent
+        $parent = Split-Path -Path $Global:PVMConfig.paths.directories.phpCurrent -Parent
         $created = New-Directory -path $parent -allowOutsideRoot
         if ($created -ne 0) {
             Show-Error -message 'Failed to create directory for PHP version.'
@@ -15,8 +15,8 @@ function Initialize-PVM {
 
         $pvmEnvVarContent = Get-EnvVarByName -name 'PVM'
 
-        if (($null -eq $pvmEnvVarContent) -or ($pvmEnvVarContent -ne "$($Global:PVMConfig.rootPath);$($Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH)")) {
-            $null = Set-EnvVar -name $Global:PVMConfig.env.PVM_ENV_VAR_NAME -value "$($Global:PVMConfig.rootPath);$($Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH)"
+        if (($null -eq $pvmEnvVarContent) -or ($pvmEnvVarContent -ne "$($Global:PVMConfig.rootPath);$($Global:PVMConfig.paths.directories.phpCurrent)")) {
+            $null = Set-EnvVar -name $Global:PVMConfig.env.PVM_ENV_VAR_NAME -value "$($Global:PVMConfig.rootPath);$($Global:PVMConfig.paths.directories.phpCurrent)"
         }
 
         if ($pathEntries -notcontains "%$($Global:PVMConfig.env.PVM_ENV_VAR_NAME)%") {
@@ -43,7 +43,7 @@ function Initialize-PVMDirectories {
     $dirs = @(
         $Global:PVMConfig.paths.directories.storage,
         $Global:PVMConfig.paths.directories.testDrive,
-        $Global:PVMConfig.paths.directories.php,
+        $Global:PVMConfig.paths.directories.phpVersions,
         $Global:PVMConfig.paths.directories.data,
         $Global:PVMConfig.paths.directories.templates,
         $Global:PVMConfig.paths.directories.cache,

@@ -604,41 +604,41 @@ Describe "Write-Host helpers" {
 
     Context "Show-* Tests" {
         It "Prints success message" {
-            Mock Write-DarkGreen { }
+            Mock Write-Color { }
 
             Show-Success -message 'Test message'
 
-            Should -Invoke Write-DarkGreen -ParameterFilter {
+            Should -Invoke Write-Color -ParameterFilter {
                 $message -match 'Test message'
             }
         }
 
         It "Prints error message" {
-            Mock Write-DarkYellow { }
+            Mock Write-Color { }
 
             Show-Error -message 'Test message'
 
-            Should -Invoke Write-DarkYellow -ParameterFilter {
+            Should -Invoke Write-Color -ParameterFilter {
                 $message -match 'Test message'
             }
         }
 
         It "Prints warning message" {
-            Mock Write-Yellow { }
+            Mock Write-Color { }
 
             Show-Warning -message 'Test message'
 
-            Should -Invoke Write-Yellow -ParameterFilter {
+            Should -Invoke Write-Color -ParameterFilter {
                 $message -match 'Test message'
             }
         }
 
         It "Prints info message" {
-            Mock Write-Cyan { }
+            Mock Write-Color { }
 
             Show-Info -message 'Test message'
 
-            Should -Invoke Write-Cyan -ParameterFilter {
+            Should -Invoke Write-Color -ParameterFilter {
                 $message -match 'Test message'
             }
         }

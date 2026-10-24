@@ -224,25 +224,29 @@ function Write-Gray {
 function Show-Success {
     param ($message, [switch]$noNewLine)
 
-    Write-DarkGreen -message $message -noNewLine:$noNewLine
+    $status = (Get-StatusTable)['success']
+    Write-Color -message $message -foreColor $status.color -noNewLine:$noNewLine
 }
 
 function Show-Error {
     param ($message, [switch]$noNewLine)
 
-    Write-DarkYellow -message $message -noNewLine:$noNewLine
+    $status = (Get-StatusTable)['error']
+    Write-Color -message $message -foreColor $status.color -noNewLine:$noNewLine
 }
 
 function Show-Warning {
     param ($message, [switch]$noNewLine)
 
-    Write-Yellow -message $message -noNewLine:$noNewLine
+    $status = (Get-StatusTable)['warning']
+    Write-Color -message $message -foreColor $status.color -noNewLine:$noNewLine
 }
 
 function Show-Info {
     param ($message, [switch]$noNewLine)
 
-    Write-Cyan -message $message -noNewLine:$noNewLine
+    $status = (Get-StatusTable)['info']
+    Write-Color -message $message -foreColor $status.color -noNewLine:$noNewLine
 }
 
 function Show-Header {

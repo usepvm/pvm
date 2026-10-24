@@ -51,12 +51,12 @@ function Set-IniSetting {
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                        Show-Warning -message 'Please enter a valid positive number.'
+                        Show-Warning -message "`nPlease enter a valid positive number."
                         continue
                     }
 
                     if ($choice -lt 0 -or $choice -gt $matchesList.Length - 1) {
-                        Show-Warning -message "Number must be between 0 and $($matchesList.Length - 1)."
+                        Show-Warning -message "`nNumber must be between 0 and $($matchesList.Length - 1)."
                         continue
                     }
 

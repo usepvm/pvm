@@ -29,7 +29,7 @@ function Show-CacheFiles {
         }
 
         Show-Info -message "`nAvailable Cache Files:"
-        Write-Gray -message '-------------------'
+        Write-Gray -message '----------------------'
 
         foreach ($cacheFile in $cacheFiles) {
             Show-Message -message "  $($cacheFile.BaseName)"

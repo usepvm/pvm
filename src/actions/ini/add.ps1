@@ -141,7 +141,7 @@ function Install-Extension {
             return -1
         }
         if ($choice -lt 0 -or $choice -gt $sourceHandlers.Count - 1) {
-            Show-Warning -message "Number must be between 0 and $($sourceHandlers.Count - 1)."
+            Show-Warning -message "`nNumber must be between 0 and $($sourceHandlers.Count - 1)."
             return -1
         }
 

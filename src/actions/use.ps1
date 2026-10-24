@@ -12,7 +12,7 @@ function Update-PHPVersion {
         }
 
         if ($pathVersionObject.code -ne 0) {
-            Write-Gray -message $pathVersionObject.message
+            Write-Gray -message "`n$($pathVersionObject.message)"
             return -1
         }
 

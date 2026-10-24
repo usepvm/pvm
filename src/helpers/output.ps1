@@ -266,6 +266,16 @@ function New-Line {
     New-Lines -count 1
 }
 
+function Write-Spaces {
+    param ($count = 1)
+
+    Write-HostWrapper -object (' ' * $count) -noNewLine
+}
+
+function Write-Space {
+    Write-Spaces -count 1
+}
+
 function New-Player {
     Add-Type -AssemblyName PresentationCore
     $MediaPlayer = New-Object -TypeName System.Windows.Media.MediaPlayer

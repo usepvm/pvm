@@ -679,7 +679,7 @@ Describe "Write-Host helpers" {
     }
 
     Context "New-Line* Test" {
-        It "Prints new lines" {
+        It "Prints multiple new lines" {
             Mock Write-HostWrapper { }
 
             New-Lines -count 5
@@ -689,12 +689,34 @@ Describe "Write-Host helpers" {
             }
         }
 
-        It "Prints new line" {
+        It "Prints 1 new line" {
             Mock New-Lines { }
 
             New-Line
 
             Should -Invoke New-Lines -ParameterFilter {
+                $count -eq 1
+            }
+        }
+    }
+
+    Context "Write-Space* Test" {
+        It "Prints multiple spaces" {
+            Mock Write-HostWrapper { }
+
+            Write-Spaces -count 5
+
+            Should -Invoke Write-HostWrapper -Exactly 1 -ParameterFilter {
+                $object -eq (' ' * 5) -and $noNewLine
+            }
+        }
+
+        It "Prints 1 space" {
+            Mock Write-Spaces { }
+
+            Write-Space
+
+            Should -Invoke Write-Spaces -ParameterFilter {
                 $count -eq 1
             }
         }

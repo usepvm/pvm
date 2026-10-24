@@ -285,6 +285,47 @@ function Show-Message {
     Write-White -message $message -noNewLine:$noNewLine
 }
 
+function Show-LabeledMessage {
+    param ($label, $message, $backColor, $foreColor, [switch]$noPreNewLine , [switch]$noNewLine)
+
+    if (-not $noPreNewLine) {
+        New-Line
+    }
+
+    Write-Spaces -count 3
+    Write-BgColor -message " $label " -backColor $backColor -foreColor $foreColor -noNewLine
+    Write-White -message " $message`n" -noNewLine:$noNewLine
+}
+
+function Show-LabeledSuccess {
+    param ($message, [switch]$noPreNewLine, [switch]$noNewLine)
+
+    $status = (Get-StatusTable)['success']
+
+    Show-LabeledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
+}
+
+function Show-LabeledError {
+    param ($message, [switch]$noPreNewLine, [switch]$noNewLine)
+
+    $status = (Get-StatusTable)['error']
+    Show-LabeledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
+}
+
+function Show-LabeledWarning {
+    param ($message, [switch]$noPreNewLine, [switch]$noNewLine)
+
+    $status = (Get-StatusTable)['warning']
+    Show-LabeledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
+}
+
+function Show-LabeledInfo {
+    param ($message, [switch]$noPreNewLine, [switch]$noNewLine)
+
+    $status = (Get-StatusTable)['info']
+    Show-LabeledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
+}
+
 function New-Lines {
     param ($count = 1)
 

@@ -704,6 +704,93 @@ Describe "Write-Host helpers" {
         }
     }
 
+    Context "Show-Labeled* Tests" {
+        BeforeAll {
+            Mock Get-StatusTable {
+                return [ordered]@{
+                    success = @{ label = 'Success'; color = 'Green'; contrastColor = 'Black' }
+                    error = @{ label = 'Error'; color = 'Red'; contrastColor = 'Black' }
+                    warning = @{ label = 'Warning'; color = 'Yellow'; contrastColor = 'Black' }
+                    info = @{ label = 'Info'; color = 'Blue'; contrastColor = 'Black' }
+                }
+            }
+        }
+
+        It "Prints labled message" {
+            Mock New-Line { }
+            Mock Write-Spaces { }
+            Mock Write-BgColor { }
+            Mock Write-White { }
+
+            Show-LabeledMessage -label 'Label' -message 'This is a message' -backColor 'White' -foreColor 'Black' -noNewLine
+
+            Should -Invoke New-Line -Times 1
+            Should -Invoke Write-Spaces -Times 1
+            Should -Invoke Write-BgColor -ParameterFilter {
+                $message -like '*Label*' -and
+                $backColor -like 'White' -and
+                $foreColor -like 'Black' -and
+                $noNewLine
+            }
+            Should -Invoke Write-White -ParameterFilter {
+                $message -like '*This is a message*' -and
+                $noNewLine
+            }
+        }
+
+        It "Prints labled success message" {
+            Mock Show-LabeledMessage { }
+
+            Show-LabeledSuccess -message 'Fetched successfully!'
+
+            Should -Invoke Show-LabeledMessage -ParameterFilter {
+                $label -eq 'Success' -and
+                $message -eq 'Fetched successfully!' -and
+                $backColor -eq 'Green' -and
+                $foreColor -eq 'Black'
+            }
+        }
+
+        It "Prints labled error message" {
+            Mock Show-LabeledMessage { }
+
+            Show-LabeledError -message 'Download failed!'
+
+            Should -Invoke Show-LabeledMessage -ParameterFilter {
+                $label -eq 'Error' -and
+                $message -eq 'Download failed!' -and
+                $backColor -eq 'Red' -and
+                $foreColor -eq 'Black'
+            }
+        }
+
+        It "Prints labled error message" {
+            Mock Show-LabeledMessage { }
+
+            Show-LabeledWarning -message 'Try again!'
+
+            Should -Invoke Show-LabeledMessage -ParameterFilter {
+                $label -eq 'Warning' -and
+                $message -eq 'Try again!' -and
+                $backColor -eq 'Yellow' -and
+                $foreColor -eq 'Black'
+            }
+        }
+
+        It "Prints labled error message" {
+            Mock Show-LabeledMessage { }
+
+            Show-LabeledInfo -message 'Download in progress!'
+
+            Should -Invoke Show-LabeledMessage -ParameterFilter {
+                $label -eq 'Info' -and
+                $message -eq 'Download in progress!' -and
+                $backColor -eq 'Blue' -and
+                $foreColor -eq 'Black'
+            }
+        }
+    }
+
     Context "New-Line* Test" {
         It "Prints multiple new lines" {
             Mock Write-HostWrapper { }

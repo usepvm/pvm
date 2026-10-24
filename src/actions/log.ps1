@@ -150,26 +150,26 @@ function Write-LogEntry {
 
     # Display structured error format
     Show-Message -message 'Header  : ' -noNewLine
-    Show-Value -message "$($entry.Header)"
+    Write-White -message "$($entry.Header)"
 
     Show-Message -message 'Message : ' -noNewLine
     # Handle multi-line error messages with proper indentation (23 spaces to align with "Message :")
     $errorLines = $entry.ErrorMessage -split "`n"
     foreach ($errorLine in $errorLines) {
         if ($errorLine.Trim() -ne '') {
-            Show-Value -message "$($errorLine)"
+            Write-White -message "$($errorLine)"
         }
     }
 
     # Display entry with nice formatting
     Show-Message -message 'When    : ' -noNewLine
-    Show-Value -message "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -noNewLine
-    Show-Debug -message "($($entry.NiceTime.Relative))"
+    Write-White -message "$($entry.NiceTime.Date) @ $($entry.NiceTime.Time) " -noNewLine
+    Write-DarkGray -message "($($entry.NiceTime.Relative))"
 
     Show-Message -message 'Where   : ' -noNewLine
-    Show-Value -message "$($entry.PositionDetail)"
+    Write-White -message "$($entry.PositionDetail)"
 
-    Show-Debug -message ('-' * 80)
+    Write-DarkGray -message ('-' * 80)
 }
 
 function Write-LogPage {

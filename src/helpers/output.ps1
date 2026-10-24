@@ -136,6 +136,12 @@ function Write-Color {
     Write-HostWrapper -object $message -foregroundColor $foreColor -noNewLine:$noNewLine
 }
 
+function Write-BgColor {
+    param ($message, $backColor, $foreColor, [switch]$noNewLine)
+
+    Write-HostWrapper -object $message -foregroundColor $foreColor -backgroundColor $backColor -noNewLine:$noNewLine
+}
+
 function Write-White {
     param ($message, [switch]$noNewLine)
 

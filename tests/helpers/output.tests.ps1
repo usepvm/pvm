@@ -483,6 +483,21 @@ Describe "Write-Host helpers" {
         }
     }
 
+    Context "Write-BgColor Tests" {
+        It "Prints message with specified color" {
+            Mock Write-HostWrapper { }
+
+            Write-BgColor -message 'Test message' -backColor 'DarkGreen' -foreColor 'White'
+
+            Should -Invoke Write-HostWrapper -ParameterFilter {
+                $object -match 'Test message' -and
+                $foregroundColor -eq 'White' -and
+                $backgroundColor -eq 'DarkGreen' -and
+                $noNewLine -eq $false
+            } -Exactly 1
+        }
+    }
+
     Context "Write-Color wrappers Tests" {
         BeforeEach {
             Mock Write-Color { }

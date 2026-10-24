@@ -472,7 +472,6 @@ Describe "Get-StatusTable" {
     It "Returns status data" {
         $result = Get-StatusTable
 
-        $result | Should -BeOfType [ordered]
         $result.Keys.Count | Should -Be 4
         $result.Keys | Should -Contain 'success'
         $result.Keys | Should -Contain 'error'

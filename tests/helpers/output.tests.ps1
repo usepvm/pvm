@@ -703,7 +703,7 @@ Describe "Write-Host helpers" {
         }
     }
 
-    Context "Show-Labeled* Tests" {
+    Context "Show-Labelled* Tests" {
         BeforeAll {
             Mock Get-StatusTable {
                 return [ordered]@{
@@ -721,7 +721,7 @@ Describe "Write-Host helpers" {
             Mock Write-BgColor { }
             Mock Write-White { }
 
-            Show-LabeledMessage -label 'Label' -message 'This is a message' -backColor 'White' -foreColor 'Black' -noNewLine
+            Show-LabelledMessage -label 'Label' -message 'This is a message' -backColor 'White' -foreColor 'Black' -noNewLine
 
             Should -Invoke New-Line -Times 1
             Should -Invoke Write-Spaces -Times 1
@@ -738,11 +738,11 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints labled success message" {
-            Mock Show-LabeledMessage { }
+            Mock Show-LabelledMessage { }
 
-            Show-LabeledSuccess -message 'Fetched successfully!'
+            Show-LabelledSuccess -message 'Fetched successfully!'
 
-            Should -Invoke Show-LabeledMessage -ParameterFilter {
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
                 $label -eq 'Success' -and
                 $message -eq 'Fetched successfully!' -and
                 $backColor -eq 'Green' -and
@@ -751,11 +751,11 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints labled error message" {
-            Mock Show-LabeledMessage { }
+            Mock Show-LabelledMessage { }
 
-            Show-LabeledError -message 'Download failed!'
+            Show-LabelledError -message 'Download failed!'
 
-            Should -Invoke Show-LabeledMessage -ParameterFilter {
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
                 $label -eq 'Error' -and
                 $message -eq 'Download failed!' -and
                 $backColor -eq 'Red' -and
@@ -764,11 +764,11 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints labled error message" {
-            Mock Show-LabeledMessage { }
+            Mock Show-LabelledMessage { }
 
-            Show-LabeledWarning -message 'Try again!'
+            Show-LabelledWarning -message 'Try again!'
 
-            Should -Invoke Show-LabeledMessage -ParameterFilter {
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
                 $label -eq 'Warning' -and
                 $message -eq 'Try again!' -and
                 $backColor -eq 'Yellow' -and
@@ -777,11 +777,11 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints labled error message" {
-            Mock Show-LabeledMessage { }
+            Mock Show-LabelledMessage { }
 
-            Show-LabeledInfo -message 'Download in progress!'
+            Show-LabelledInfo -message 'Download in progress!'
 
-            Should -Invoke Show-LabeledMessage -ParameterFilter {
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
                 $label -eq 'Info' -and
                 $message -eq 'Download in progress!' -and
                 $backColor -eq 'Blue' -and

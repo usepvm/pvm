@@ -285,7 +285,7 @@ function Show-Message {
     Write-White -message $message -noNewLine:$noNewLine
 }
 
-function Show-LabeledMessage {
+function Show-LabelledMessage {
     param ($label, $message, $backColor, $foreColor, [switch]$noPreNewLine , [switch]$noNewLine)
 
     if (-not $noPreNewLine) {
@@ -297,33 +297,33 @@ function Show-LabeledMessage {
     Write-White -message " $message`n" -noNewLine:$noNewLine
 }
 
-function Show-LabeledSuccess {
+function Show-LabelledSuccess {
     param ($message, [switch]$noPreNewLine, [switch]$noNewLine)
 
     $status = (Get-StatusTable)['success']
 
-    Show-LabeledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
+    Show-LabelledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
 }
 
-function Show-LabeledError {
+function Show-LabelledError {
     param ($message, [switch]$noPreNewLine, [switch]$noNewLine)
 
     $status = (Get-StatusTable)['error']
-    Show-LabeledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
+    Show-LabelledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
 }
 
-function Show-LabeledWarning {
+function Show-LabelledWarning {
     param ($message, [switch]$noPreNewLine, [switch]$noNewLine)
 
     $status = (Get-StatusTable)['warning']
-    Show-LabeledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
+    Show-LabelledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
 }
 
-function Show-LabeledInfo {
+function Show-LabelledInfo {
     param ($message, [switch]$noPreNewLine, [switch]$noNewLine)
 
     $status = (Get-StatusTable)['info']
-    Show-LabeledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
+    Show-LabelledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
 }
 
 function New-Lines {

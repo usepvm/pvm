@@ -130,6 +130,31 @@ function Show-SpinnerWhileProcess {
     }
 }
 
+function Get-StatusTable {
+    return [ordered]@{
+        success = @{
+            label          = 'Success'
+            color          = 'DarkGreen'
+            contrastColor  = 'Black'
+        }
+        error = @{
+            label          = 'Error'
+            color          = 'DarkYellow'
+            contrastColor  = 'Black'
+        }
+        warning = @{
+            label          = 'Warning'
+            color          = 'Yellow'
+            contrastColor  = 'Black'
+        }
+        info = @{
+            label          = 'Info'
+            color          = 'Cyan'
+            contrastColor  = 'Black'
+        }
+    }
+}
+
 function Write-Color {
     param ($message, $foreColor, [switch]$noNewLine)
 

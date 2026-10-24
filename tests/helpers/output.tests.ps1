@@ -468,6 +468,32 @@ Describe "Show-SpinnerWhileProcess" {
     }
 }
 
+Describe "Get-StatusTable" {
+    It "Returns status data" {
+        $result = Get-StatusTable
+
+        $result | Should -BeOfType [ordered]
+        $result.Keys.Count | Should -Be 4
+        $result.Keys | Should -Contain 'success'
+        $result.Keys | Should -Contain 'error'
+        $result.Keys | Should -Contain 'warning'
+        $result.Keys | Should -Contain 'info'
+
+        $result['success'].label           | Should -Be 'Success'
+        $result['success'].color           | Should -Be 'DarkGreen'
+        $result['success'].contrastColor   | Should -Be 'Black'
+        $result['error'].label           | Should -Be 'Error'
+        $result['error'].color           | Should -Be 'DarkYellow'
+        $result['error'].contrastColor   | Should -Be 'Black'
+        $result['warning'].label           | Should -Be 'Warning'
+        $result['warning'].color           | Should -Be 'Yellow'
+        $result['warning'].contrastColor   | Should -Be 'Black'
+        $result['info'].label           | Should -Be 'Info'
+        $result['info'].color           | Should -Be 'Cyan'
+        $result['info'].contrastColor   | Should -Be 'Black'
+    }
+}
+
 Describe "Write-Host helpers" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {

@@ -160,6 +160,9 @@ function Get-UserSelectedPHPVersion {
             return @{ code = -1; message = 'Operation cancelled.' }
         }
         $versionObj = $installedVersions | Where-Object -FilterScript { $_.index -eq $response }
+        if (-not $versionObj) {
+            return @{ code = -1; message = 'Your selection is invalid!' }
+        }
     }
 
     return @{ code = 0; version = $versionObj.version; arch = $versionObj.arch; buildType = $versionObj.buildType; path = $versionObj.installPath }

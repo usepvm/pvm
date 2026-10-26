@@ -288,16 +288,25 @@ function Show-Message {
     Write-Color -message $message -foreColor White -noNewLine:$noNewLine -underlined:$underlined
 }
 
-function Show-LabelledMessage {
-    param ($label, $message, $backColor, $foreColor, [switch]$noPreNewLine , [switch]$noNewLine)
+function Show-Label {
+    param ($label, $foreColor, $backColor = $null, [switch]$noPreNewLine , [switch]$noNewLine)
 
     if (-not $noPreNewLine) {
         New-Line
     }
 
-    Write-Spaces -count 3
-    Write-BgColor -message " $label " -backColor $backColor -foreColor $foreColor -noNewLine
-    Write-White -message " $message`n" -noNewLine:$noNewLine
+    Write-BgColor -message " $label " -backColor $backColor -foreColor $foreColor -noNewLine:$noNewLine
+}
+
+function Show-LabelledMessage {
+    param ($label, $message, $backColor, $foreColor, [switch]$noPreNewLine , [switch]$noNewLine)
+
+    Show-Label -label $label -foreColor $foreColor -backColor $backColor -noPreNewLine:$noPreNewLine -noNewLine
+
+    $lines = $message.Trim() -split "`n"
+    $spaces = ' ' * ($label.Length + 2)
+    $msg = $lines -join "`n$spaces "
+    Write-White -message " $msg`n" -noNewLine:$noNewLine
 }
 
 function Show-LabelledSuccess {

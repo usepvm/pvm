@@ -382,7 +382,7 @@ function Install-PHP {
             $temporaryDirectory = $downloadStatus.temporaryDirectory
         }
         if (-not $downloadStatus -or $downloadStatus.success -eq $false) {
-            Show-LabelledError -message "`nFailed to download PHP version $($selectedVersionObject.version)"
+            Show-LabelledError -message "Failed to download PHP version $($selectedVersionObject.version)"
             return -1
         }
 
@@ -393,12 +393,12 @@ function Install-PHP {
         $code = Expand-AndConfigurePHP -path $downloadPath -fileNamePath $phpInstallPath
 
         if ($code -ne 0) {
-            Show-LabelledError -message "`nFailed to extract PHP version $($selectedVersionObject.version)"
+            Show-LabelledError -message "Failed to extract PHP version $($selectedVersionObject.version)"
             return -1
         }
 
         if (Test-FileNotExists -path "$phpInstallPath\php.ini") {
-            Show-LabelledError -message "`nFailed to find php.ini for PHP version $($selectedVersionObject.version)"
+            Show-LabelledError -message "Failed to find php.ini for PHP version $($selectedVersionObject.version)"
             return -1
         }
 
@@ -414,7 +414,7 @@ function Install-PHP {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install PHP version $version"; exception = $_ }
-        Show-LabelledError -message "`nFailed to install PHP version $version"
+        Show-LabelledError -message "Failed to install PHP version $version"
         return -1
     } finally {
         if ($temporaryDirectory) {

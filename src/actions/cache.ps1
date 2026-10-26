@@ -17,14 +17,14 @@ function Get-CacheFiles {
 function Show-CacheFiles {
     try {
         if (Test-DirectoryNotExists -path $Global:PVMConfig.paths.directories.cache) {
-            Show-LabelledError -message "`nNo cache directory found."
+            Show-LabelledError -message "No cache directory found."
             return -1
         }
 
         $cacheFiles = Get-CacheFiles
 
         if ($cacheFiles.Count -eq 0) {
-            Show-LabelledError -message "`nNo cache files found."
+            Show-LabelledError -message "No cache files found."
             return -1
         }
 
@@ -57,7 +57,7 @@ function Show-CachedData {
         $cacheData = Get-DataFromCache -cacheFileName $cacheName
 
         if ($null -eq $cacheData -or $cacheData.Count -eq 0) {
-            Show-LabelledError -message "`nNo data found in cache file '$cacheName'."
+            Show-LabelledError -message "No data found in cache file '$cacheName'."
             return -1
         }
 
@@ -68,7 +68,7 @@ function Show-CachedData {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show cache data"; exception = $_ }
-        Show-LabelledError -message "`nFailed to show cache data."
+        Show-LabelledError -message "Failed to show cache data."
         return -1
     }
 }
@@ -95,15 +95,15 @@ function Remove-CacheFile {
 
         $code = Remove-ItemWrapper -path $cachePath
         if ($code -ne 0) {
-            Show-LabelledError -message "`nFailed to remove '$cacheName' file!"
+            Show-LabelledError -message "Failed to remove '$cacheName' file!"
             return -1
         }
 
-        Show-LabelledSuccess -message "`nCache file '$cacheName' deleted successfully."
+        Show-LabelledSuccess -message "Cache file '$cacheName' deleted successfully."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete cache file '$cacheName'"; exception = $_ }
-        Show-LabelledError -message "`nFailed to delete cache file: $($_.Exception.Message)"
+        Show-LabelledError -message "Failed to delete cache file: $($_.Exception.Message)"
         return -1
     }
 }
@@ -115,7 +115,7 @@ function Clear-CacheFiles {
         $cacheFiles = Get-CacheFiles
 
         if ($cacheFiles.Count -eq 0) {
-            Show-LabelledError -message "`nNo cache files found."
+            Show-LabelledError -message "No cache files found."
             return -1
         }
 
@@ -129,15 +129,15 @@ function Clear-CacheFiles {
 
         $code = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.cache)\*"
         if ($code -ne 0) {
-            Show-LabelledError -message "`nFailed to remove all cache files!"
+            Show-LabelledError -message "Failed to remove all cache files!"
             return -1
         }
 
-        Show-LabelledSuccess -message "`nAll cache files deleted successfully."
+        Show-LabelledSuccess -message "All cache files deleted successfully."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear cache files"; exception = $_ }
-        Show-LabelledError -message "`nFailed to clear cache files."
+        Show-LabelledError -message "Failed to clear cache files."
         return -1
     }
 }

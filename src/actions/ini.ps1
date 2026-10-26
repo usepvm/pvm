@@ -91,7 +91,7 @@ function Invoke-IniAction {
             }
             'add' {
                 if ($params.Count -eq 0) {
-                    Show-LabelledWarning -message "`nPlease specify at least one extension (pvm ini add xdebug)."
+                    Show-LabelledWarning -message "Please specify at least one extension (pvm ini add xdebug)."
                     return -1
                 }
 
@@ -104,7 +104,7 @@ function Invoke-IniAction {
             }
             'remove' {
                 if ($params.Count -eq 0) {
-                    Show-LabelledWarning -message "`nPlease specify at least one extension (pvm ini remove xdebug)."
+                    Show-LabelledWarning -message "Please specify at least one extension (pvm ini remove xdebug)."
                     return -1
                 }
 
@@ -118,7 +118,7 @@ function Invoke-IniAction {
             'ext' {
                 if ($params -contains 'info') {
                     if ($params.Count -ne 2) {
-                        Show-LabelledWarning -message "`nPlease specify one extension name ('pvm ini ext info sql')."
+                        Show-LabelledWarning -message "Please specify one extension name ('pvm ini ext info sql')."
                         return -1
                     }
 
@@ -129,7 +129,7 @@ function Invoke-IniAction {
                 }
             }
             default {
-                Show-LabelledWarning -message "`nUnknown action '$action' use one of following: 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'ext', 'backup' or 'restore'."
+                Show-LabelledWarning -message "Unknown action '$action' use one of following: 'info', 'set', 'get', 'status', 'enable', 'disable', 'add', 'remove', 'ext', 'backup' or 'restore'."
                 $exitCode = -1
             }
         }
@@ -137,7 +137,7 @@ function Invoke-IniAction {
         return $exitCode
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to invoke ini action '$action'"; exception = $_ }
-        Show-LabelledError -message "`nFailed to perform action '$action' on ini settings."
+        Show-LabelledError -message "Failed to perform action '$action' on ini settings."
         return -1
     }
 }

@@ -192,13 +192,13 @@ function Save-PHPProfile {
         $currentPhpVersion = Get-CurrentPHPVersion
 
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
-            Show-LabelledError -message "`nFailed to get current PHP version."
+            Show-LabelledError -message "Failed to get current PHP version."
             return -1
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
         if (Test-FileNotExists -path $iniPath) {
-            Show-LabelledError -message "`nphp.ini not found at: $($currentPhpVersion.path)"
+            Show-LabelledError -message "php.ini not found at: $($currentPhpVersion.path)"
             return -1
         }
 
@@ -246,12 +246,12 @@ function Save-PHPProfile {
         # Save to JSON file
         $created = New-Directory -path $Global:PVMConfig.paths.directories.profiles
         if ($created -ne 0) {
-            Show-LabelledError -message "`nFailed to create profiles directory."
+            Show-LabelledError -message "Failed to create profiles directory."
             return -1
         }
 
         if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.profiles -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
-            Show-LabelledError -message "`nInsufficient disk space for profile save. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
+            Show-LabelledError -message "Insufficient disk space for profile save. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
             return -1
         }
 
@@ -259,7 +259,7 @@ function Save-PHPProfile {
         $jsonContent = $userProfile | ConvertTo-Json -Depth 10
         $null = Set-ContentWrapper -path $profilePath -value $jsonContent
 
-        Show-LabelledSuccess -message "`nProfile '$profileName' saved successfully."
+        Show-LabelledSuccess -message "Profile '$profileName' saved successfully."
         Show-Message -message "  Settings: $($userProfile.settings.Count) (popular/common only)"
         Show-Message -message "  Extensions: $($userProfile.extensions.Count) (popular/common only)"
         Show-Message -message "  Location: $profilePath"
@@ -270,7 +270,7 @@ function Save-PHPProfile {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to save profile '$profileName'"; exception = $_ }
-        Show-LabelledError -message "`nFailed to save profile: $($_.Exception.Message)"
+        Show-LabelledError -message "Failed to save profile: $($_.Exception.Message)"
         return -1
     }
 }
@@ -282,13 +282,13 @@ function Use-PHPProfile {
         $currentPhpVersion = Get-CurrentPHPVersion
 
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
-            Show-LabelledError -message "`nFailed to get current PHP version."
+            Show-LabelledError -message "Failed to get current PHP version."
             return -1
         }
 
         $iniPath = "$($currentPhpVersion.path)\php.ini"
         if (Test-FileNotExists -path $iniPath) {
-            Show-LabelledError -message "`nphp.ini not found at: $($currentPhpVersion.path)"
+            Show-LabelledError -message "php.ini not found at: $($currentPhpVersion.path)"
             return -1
         }
 
@@ -353,7 +353,7 @@ function Use-PHPProfile {
             }
         }
 
-        Show-LabelledSuccess -message "`nProfile applied successfully"
+        Show-LabelledSuccess -message "Profile applied successfully"
         Show-Message -message "  Settings applied: $settingsApplied"
         if ($settingsSkipped -gt 0) {
             Show-Warning -message "  Settings skipped: $settingsSkipped"
@@ -373,7 +373,7 @@ function Use-PHPProfile {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to load profile '$profileName'"; exception = $_ }
-        Show-LabelledError -message "`nFailed to load profile: $($_.Exception.Message)"
+        Show-LabelledError -message "Failed to load profile: $($_.Exception.Message)"
         return -1
     }
 }
@@ -396,14 +396,14 @@ function Get-ProfileFiles {
 function Show-PHPProfiles {
     try {
         if (Test-DirectoryNotExists -path $Global:PVMConfig.paths.directories.profiles) {
-            Show-LabelledError -message "`nNo profiles directory found. Create a profile with 'pvm profile save <name>'."
+            Show-LabelledError -message "No profiles directory found. Create a profile with 'pvm profile save <name>'."
             return -1
         }
 
         $profileFiles = Get-ProfileFiles
 
         if ($profileFiles.Count -eq 0) {
-            Show-LabelledError -message "`nNo profiles found. Create a profile with 'pvm profile save <name>'."
+            Show-LabelledError -message "No profiles found. Create a profile with 'pvm profile save <name>'."
             return -1
         }
 
@@ -445,7 +445,7 @@ function Show-PHPProfiles {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list profiles"; exception = $_ }
-        Show-LabelledError -message "`nFailed to list profiles: $($_.Exception.Message)"
+        Show-LabelledError -message "Failed to list profiles: $($_.Exception.Message)"
         return -1
     }
 }
@@ -513,7 +513,7 @@ function Show-PHPProfile {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show profile '$profileName'"; exception = $_ }
-        Show-LabelledError -message "`nFailed to show profile: $($_.Exception.Message)"
+        Show-LabelledError -message "Failed to show profile: $($_.Exception.Message)"
         return -1
     }
 }
@@ -541,15 +541,15 @@ function Remove-PHPProfile {
 
         $code = Remove-ItemWrapper -path $profilePath
         if ($code -ne 0) {
-            Show-LabelledError -message "`nFailed to remove '$profileName' profile!"
+            Show-LabelledError -message "Failed to remove '$profileName' profile!"
             return -1
         }
 
-        Show-LabelledSuccess -message "`nProfile '$profileName' deleted successfully."
+        Show-LabelledSuccess -message "Profile '$profileName' deleted successfully."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete profile '$profileName'"; exception = $_ }
-        Show-LabelledError -message "`nFailed to delete profile: $($_.Exception.Message)"
+        Show-LabelledError -message "Failed to delete profile: $($_.Exception.Message)"
         return -1
     }
 }
@@ -561,7 +561,7 @@ function Clear-PHPProfiles {
         $profileFiles = Get-ProfileFiles
 
         if ($profileFiles.Count -eq 0) {
-            Show-LabelledError -message "`nNo profiles found. Create a profile with 'pvm profile save <name>'."
+            Show-LabelledError -message "No profiles found. Create a profile with 'pvm profile save <name>'."
             return -1
         }
 
@@ -575,15 +575,15 @@ function Clear-PHPProfiles {
 
         $code = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.profiles)\*"
         if ($code -ne 0) {
-            Show-LabelledError -message "`nFailed to remove all profiles!"
+            Show-LabelledError -message "Failed to remove all profiles!"
             return -1
         }
 
-        Show-LabelledSuccess -message "`nAll profiles deleted successfully."
+        Show-LabelledSuccess -message "All profiles deleted successfully."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear profiles"; exception = $_ }
-        Show-LabelledError -message "`nFailed to clear profiles."
+        Show-LabelledError -message "Failed to clear profiles."
         return -1
     }
 }
@@ -595,7 +595,7 @@ function Export-PHPProfile {
         $profilePath = "$($Global:PVMConfig.paths.directories.profiles)\$profileName.json"
 
         if (Test-FileNotExists -path $profilePath) {
-            Show-LabelledError -message "`nProfile '$profileName' not found."
+            Show-LabelledError -message "Profile '$profileName' not found."
             return -1
         }
 
@@ -604,26 +604,26 @@ function Export-PHPProfile {
         }
 
         if (Test-InvalidDrivePath -path $exportPath) {
-            Show-LabelledError -message "`nPath '$exportPath' is not valid!"
+            Show-LabelledError -message "Path '$exportPath' is not valid!"
             return -1
         }
 
         if (Test-FreeDiskSpaceInsufficient -path $exportPath -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
-            Show-LabelledError -message "`nInsufficient disk space for profile export. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
+            Show-LabelledError -message "Insufficient disk space for profile export. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
             return -1
         }
 
         $code = Copy-ItemWrapper -path $profilePath -destination $exportPath -allowOutsideRoot
         if ($code -ne 0) {
-            Show-LabelledError -message "`nFailed to export '$profileName' to '$exportPath'!"
+            Show-LabelledError -message "Failed to export '$profileName' to '$exportPath'!"
             return -1
         }
 
-        Show-LabelledSuccess -message "`nProfile '$profileName' exported to: $exportPath"
+        Show-LabelledSuccess -message "Profile '$profileName' exported to: $exportPath"
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to export profile '$profileName'"; exception = $_ }
-        Show-LabelledError -message "`nFailed to export profile: $($_.Exception.Message)"
+        Show-LabelledError -message "Failed to export profile: $($_.Exception.Message)"
         return -1
     }
 }
@@ -633,12 +633,12 @@ function Import-PHPProfile {
 
     try {
         if (Test-FileNotExists -path $importPath) {
-            Show-LabelledError -message "`nFile not found: $importPath"
+            Show-LabelledError -message "File not found: $importPath"
             return -1
         }
 
         if (Test-InvalidDrivePath -path $importPath) {
-            Show-LabelledError -message "`nPath '$importPath' is not valid!"
+            Show-LabelledError -message "Path '$importPath' is not valid!"
             return -1
         }
 
@@ -646,12 +646,12 @@ function Import-PHPProfile {
         try {
             $userProfile = Get-ContentWrapper -path $importPath -raw | ConvertFrom-Json
             if (-not $userProfile.name -or -not $userProfile.settings -or -not $userProfile.extensions) {
-                Show-LabelledError -message "`nInvalid profile format. Profile must contain 'name', 'settings', and 'extensions'."
+                Show-LabelledError -message "Invalid profile format. Profile must contain 'name', 'settings', and 'extensions'."
                 return -1
             }
         } catch {
             $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to import profile"; exception = $_ }
-            Show-LabelledError -message "`nInvalid JSON file: $($_.Exception.Message)"
+            Show-LabelledError -message "Invalid JSON file: $($_.Exception.Message)"
             return -1
         }
 
@@ -660,12 +660,12 @@ function Import-PHPProfile {
 
         $created = New-Directory -path $Global:PVMConfig.paths.directories.profiles
         if ($created -ne 0) {
-            Show-LabelledError -message "`nFailed to create profiles directory."
+            Show-LabelledError -message "Failed to create profiles directory."
             return -1
         }
 
         if (Test-FreeDiskSpaceInsufficient -path $Global:PVMConfig.paths.directories.profiles -minimumMegabytes $Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) {
-            Show-LabelledError -message "`nInsufficient disk space for profile import. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
+            Show-LabelledError -message "Insufficient disk space for profile import. At least $($Global:PVMConfig.env.MIN_PROFILE_FREE_SPACE_MB) MB is required."
             return -1
         }
 
@@ -687,7 +687,7 @@ function Import-PHPProfile {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to import profile from '$importPath'"; exception = $_ }
-        Show-LabelledError -message "`nFailed to import profile: $($_.Exception.Message)"
+        Show-LabelledError -message "Failed to import profile: $($_.Exception.Message)"
         return -1
     }
 }

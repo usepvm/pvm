@@ -10,15 +10,15 @@ function Invoke-PhpIniBackup {
         if ($result -eq 0) {
             $phpDirectory = Split-Path -Path $iniPath -Parent
             $iniBackupPath = "$phpDirectory\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
-            Show-LabelledSuccess -message "`nBackup created successfully at $iniBackupPath"
+            Show-LabelledSuccess -message "Backup created successfully at $iniBackupPath"
             return 0
         } else {
-            Show-LabelledError -message "`nFailed to create backup."
+            Show-LabelledError -message "Failed to create backup."
             return -1
         }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to invoke php.ini backup"; exception = $_ }
-        Show-LabelledError -message "`nFailed to create backup."
+        Show-LabelledError -message "Failed to create backup."
         return -1
     }
 }
@@ -40,7 +40,7 @@ function Invoke-PhpIniBackupCleanup {
         }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to invoke php.ini backup cleanup"; exception = $_ }
-        Show-LabelledError -message "`nFailed to cleanup backups."
+        Show-LabelledError -message "Failed to cleanup backups."
         return -1
     }
 }

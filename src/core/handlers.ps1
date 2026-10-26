@@ -271,7 +271,7 @@ function Invoke-Profile {
     switch ($action.ToLower()) {
         'save' {
             if ($remainingArgs.Count -eq 0) {
-                Show-LabelledWarning -message "`nPlease provide a profile name: pvm profile save <name> [description]"
+                Show-LabelledWarning -message "Please provide a profile name: pvm profile save <name> [description]"
                 return -1
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -280,7 +280,7 @@ function Invoke-Profile {
         }
         'load' {
             if ($remainingArgs.Count -eq 0) {
-                Show-LabelledWarning -message "`nPlease provide a profile name: pvm profile load <name>"
+                Show-LabelledWarning -message "Please provide a profile name: pvm profile load <name>"
                 return -1
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -291,7 +291,7 @@ function Invoke-Profile {
         }
         'show' {
             if ($remainingArgs.Count -eq 0) {
-                Show-LabelledWarning -message "`nPlease provide a profile name: pvm profile show <name>"
+                Show-LabelledWarning -message "Please provide a profile name: pvm profile show <name>"
                 return -1
             }
             $profileName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -300,7 +300,7 @@ function Invoke-Profile {
         }
         'delete' {
             if ($remainingArgs.Count -eq 0) {
-                Show-LabelledWarning -message "`nPlease provide a profile name: pvm profile delete <name>"
+                Show-LabelledWarning -message "Please provide a profile name: pvm profile delete <name>"
                 return -1
             }
 
@@ -314,7 +314,7 @@ function Invoke-Profile {
         }
         'export' {
             if ($remainingArgs.Count -eq 0) {
-                Show-LabelledWarning -message "`nPlease provide a profile name: pvm profile export <name> [path]"
+                Show-LabelledWarning -message "Please provide a profile name: pvm profile export <name> [path]"
                 return -1
             }
 
@@ -325,7 +325,7 @@ function Invoke-Profile {
         }
         'import' {
             if ($remainingArgs.Count -eq 0) {
-                Show-LabelledWarning -message "`nPlease provide a file path: pvm profile import <path> [name]"
+                Show-LabelledWarning -message "Please provide a file path: pvm profile import <path> [name]"
                 return -1
             }
             $importPath = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -334,7 +334,7 @@ function Invoke-Profile {
             return (Import-PHPProfile -importPath $importPath -profileName $profileName)
         }
         default {
-            Show-LabelledError -message "`nUnknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'."
+            Show-LabelledError -message "Unknown action '$action'. Use 'save', 'load', 'list', 'show', 'delete', 'clear', 'export', or 'import'."
             return -1
         }
     }
@@ -436,7 +436,7 @@ function Invoke-Log {
     if ($arguments -contains '--clear') {
         $content = Get-ContentWrapper -path $Global:PVMConfig.paths.files.logError
         if (-not $content) {
-            Show-LabelledSuccess -message "`nLog already cleared!"
+            Show-LabelledSuccess -message "Log already cleared!"
             return 0
         }
 
@@ -451,11 +451,11 @@ function Invoke-Log {
 
         $code = Clear-ContentWrapper -path $Global:PVMConfig.paths.files.logError
         if ($code -ne 0) {
-            Show-LabelledError -message "`nFailed to clean log file! Here is the path to do it manually, '$($Global:PVMConfig.paths.files.logError)'"
+            Show-LabelledError -message "Failed to clean log file! Here is the path to do it manually, '$($Global:PVMConfig.paths.files.logError)'"
             return -1
         }
 
-        Show-LabelledSuccess -message "`nLog cleared Successfully"
+        Show-LabelledSuccess -message "Log cleared Successfully"
         return 0
     }
 
@@ -489,7 +489,7 @@ function Invoke-Cache {
     $action = $arguments[0]
 
     if (-not $action) {
-        Show-LabelledWarning -message "`nPlease specify an action for 'pvm cache'. Use 'list', 'show', 'delete', 'clear'."
+        Show-LabelledWarning -message "Please specify an action for 'pvm cache'. Use 'list', 'show', 'delete', 'clear'."
         return -1
     }
 
@@ -503,7 +503,7 @@ function Invoke-Cache {
         }
         'show' {
             if ($remainingArgs.Count -eq 0) {
-                Show-LabelledWarning -message "`nPlease provide a cache name: pvm cache show <name>"
+                Show-LabelledWarning -message "Please provide a cache name: pvm cache show <name>"
                 return -1
             }
             $cacheName = if ($remainingArgs.Count -gt 1) { $remainingArgs[0] } else { $remainingArgs }
@@ -511,7 +511,7 @@ function Invoke-Cache {
         }
         'delete' {
             if ($remainingArgs.Count -eq 0) {
-                Show-LabelledWarning -message "`nPlease provide a cache name: pvm cache delete <name>"
+                Show-LabelledWarning -message "Please provide a cache name: pvm cache delete <name>"
                 return -1
             }
 
@@ -524,7 +524,7 @@ function Invoke-Cache {
             return (Clear-CacheFiles -skipConfirmation $skipConfirmation)
         }
         default {
-            Show-LabelledError -message "`nUnknown action '$action'. Use 'list', 'show', 'delete', or 'clear'."
+            Show-LabelledError -message "Unknown action '$action'. Use 'list', 'show', 'delete', or 'clear'."
             return -1
         }
     }
@@ -546,7 +546,7 @@ function Invoke-Test {
     param ($arguments)
 
     if (Test-PathInvalidOrNotUnderProjectRoot -path $Global:PVMConfig.paths.directories.testDrive) {
-        Show-LabelledError -message "`nTest drive is not valid: $($Global:PVMConfig.paths.directories.testDrive)"
+        Show-LabelledError -message "Test drive is not valid: $($Global:PVMConfig.paths.directories.testDrive)"
         return -1
     }
 
@@ -620,7 +620,7 @@ function Invoke-Run {
     }
 
     if (Test-PathInvalidOrNotUnderProjectRoot -path $Global:PVMConfig.paths.directories.testDrive) {
-        Show-LabelledError -message "`nTest drive is not valid: $($Global:PVMConfig.paths.directories.testDrive)"
+        Show-LabelledError -message "Test drive is not valid: $($Global:PVMConfig.paths.directories.testDrive)"
         return -1
     }
 

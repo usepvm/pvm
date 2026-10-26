@@ -619,6 +619,11 @@ function Invoke-Run {
         return 0
     }
 
+    if (Test-PathInvalidOrNotUnderProjectRoot -path $Global:PVMConfig.paths.directories.testDrive) {
+        Show-LabelledError -message "`nTest drive is not valid: $($Global:PVMConfig.paths.directories.testDrive)"
+        return -1
+    }
+
     $scriptName = $arguments[0]
 
     $files = $arguments | Where-Object -FilterScript {

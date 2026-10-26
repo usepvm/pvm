@@ -25,7 +25,7 @@ function Show-PHPExtensionInfo {
                 $choice = $null
 
                 if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Show-Warning -message 'Please enter a valid positive number.'
+                    Show-Warning -message "`nPlease enter a valid positive number."
                     continue
                 }
 
@@ -177,7 +177,7 @@ function Show-PHPExtensions {
             $msg = "`nThis is a partial list. For a complete list, visit:"
             $msg += "`n PHP Extensions : $($Global:PVMConfig.links.peclPackages)"
             $msg += "`n XDebug : $($Global:PVMConfig.links.xdebugHistorical)"
-            Show-Info -message $msg
+            Write-Gray -message $msg
         }
 
         return 0

@@ -663,7 +663,7 @@ function Select-ExtensionFromMatches {
     do {
         $choiceRaw = Read-HostWrapper -prompt "`nEnter the [number] of your selection" -notifyUser
         if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
-            Write-Gray -message "`nInstallation cancelled"
+            Write-Gray -message "`nOperation cancelled"
             return $null
         }
 

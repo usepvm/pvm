@@ -198,7 +198,7 @@ function Install-Extension {
             } else {
                 $handler.MoreInfoUrl
             }
-            Show-Info -message "`nThis is a partial list. For a complete list, visit: $moreInfoUrl"
+            Write-Gray -message "`nThis is a partial list. For a complete list, visit: $moreInfoUrl"
             $chosenItem = Select-ExtensionPackageLink -extName $extName -extensionLinks $extensionLinks
         }
 

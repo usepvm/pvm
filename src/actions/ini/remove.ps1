@@ -89,7 +89,7 @@ function Uninstall-Extension {
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                        Show-Warning -message 'Please enter a valid positive number.'
+                        Show-Warning -message "`nPlease enter a valid positive number."
                         continue
                     }
 

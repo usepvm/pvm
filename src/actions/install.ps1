@@ -290,7 +290,7 @@ function Select-Version {
         $msg = "`nThis is a partial list (latest matches only). For the complete list, visit:"
         $msg += "`n Releases : $($Global:PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($Global:PVMConfig.links.phpWinArchives)"
-        Show-Info -message $msg
+        Write-Gray -message $msg
 
         $selectedVersionInput = Read-HostWrapper -prompt "`nEnter the [number] of your selection (or press Enter to cancel)" -notifyUser
         if (-not $selectedVersionInput) {
@@ -345,7 +345,7 @@ function Install-PHP {
             }
             $response = Read-HostWrapper -prompt "`nWould you like to install another version from the $familyVersion.x ? (y/n)"
             if (Test-NoResponse -response $response) {
-                Write-Gray -message 'Installation cancelled'
+                Write-Gray -message "`nInstallation cancelled"
                 return -1
             }
             $version = $familyVersion
@@ -366,7 +366,7 @@ function Install-PHP {
 
         $selectedVersionObject = Select-Version -matchingVersions $matchingVersions -version $version -arch $arch -buildType $buildType
         if (-not $selectedVersionObject) {
-            Write-Gray -message 'Installation cancelled'
+            Write-Gray -message "`nInstallation cancelled"
             return -1
         }
 

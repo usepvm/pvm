@@ -60,10 +60,11 @@ function Initialize-PVMDirectories {
         $codes += $code = New-Directory -path $dir
 
         $dirName = "- $dir ".PadRight($maxNameLength, '.')
+        Write-White -message "$dirName " -noNewLine
         if ($code -eq 0) {
-            Show-Success -message "$dirName Created."
+            Show-Success -message "Created."
         } else {
-            Show-Error -message "$dirName Not created."
+            Show-Error -message "Not created."
         }
     }
 

@@ -44,7 +44,7 @@ function Invoke-Setup {
     }
     $optimized = Optimize-SystemPath
     if ($optimized -ne 0) {
-        Show-Error -message "`nFailed to optimize system path."
+        Show-Warning -message "`nFailed to optimize system path."
     }
 
     return $code
@@ -432,9 +432,7 @@ function Invoke-Aliases {
 function Invoke-Log {
     param ($arguments)
 
-    $clearLog = $arguments -contains '--clear'
-
-    if ($clearLog) {
+    if ($arguments -contains '--clear') {
         $content = Get-ContentWrapper -path $Global:PVMConfig.paths.files.logError
         if (-not $content) {
             Show-Success -message "`nLog already cleared!"

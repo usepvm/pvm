@@ -156,9 +156,12 @@ function Get-StatusTable {
 }
 
 function Write-Color {
-    param ($message, $foreColor, [switch]$noNewLine)
+    param ($message, $foreColor, [switch]$noNewLine, [switch]$underlined)
 
     Write-HostWrapper -object $message -foregroundColor $foreColor -noNewLine:$noNewLine
+    if (-not $noNewLine -and $underlined) {
+        Write-HostWrapper -object ('-' * ($message.Trim().Length)) -foregroundColor 'Gray'
+    }
 }
 
 function Write-BgColor {
@@ -168,85 +171,85 @@ function Write-BgColor {
 }
 
 function Write-White {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor White -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor White -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-DarkGreen {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor DarkGreen -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor DarkGreen -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-DarkYellow {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor DarkYellow -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor DarkYellow -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-Yellow {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor Yellow -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor Yellow -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-Cyan {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor Cyan -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor Cyan -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-Magenta {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor Magenta -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor Magenta -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-Blue {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor Blue -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor Blue -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-DarkGray {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor DarkGray -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor DarkGray -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-Gray {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor Gray -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor Gray -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Show-Success {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
     $status = (Get-StatusTable)['success']
-    Write-Color -message $message -foreColor $status.color -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor $status.color -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Show-Error {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
     $status = (Get-StatusTable)['error']
-    Write-Color -message $message -foreColor $status.color -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor $status.color -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Show-Warning {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
     $status = (Get-StatusTable)['warning']
-    Write-Color -message $message -foreColor $status.color -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor $status.color -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Show-Info {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
     $status = (Get-StatusTable)['info']
-    Write-Color -message $message -foreColor $status.color -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor $status.color -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Show-Header {
@@ -280,9 +283,9 @@ function Show-Value {
 }
 
 function Show-Message {
-    param ($message, [switch]$noNewLine)
+    param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-White -message $message -noNewLine:$noNewLine
+    Write-Color -message $message -foreColor White -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Show-LabelledMessage {

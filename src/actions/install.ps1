@@ -269,8 +269,7 @@ function Select-Version {
         if ($null -ne $buildType) {
             $text += " $buildType"
         }
-        Show-Info -message $text
-        Write-Gray -message '--------------------------'
+        Write-Cyan -message $text -underlined
         $index = 0
         $matchingVersionsPartialList.GetEnumerator() |
             Sort-Object -Property Key |
@@ -325,7 +324,7 @@ function Install-PHP {
         if ($foundInstalledVersions -and $version -match '^(\d+)(?:\.(\d+))?') {
             $familyVersion = $matches[0]
             $currentVersion = Get-CurrentPHPVersion
-            Show-Message -message "`nOther versions from the $familyVersion.x family are available:"
+            Write-Cyan -message "`nOther versions from the $familyVersion.x family are available:" -underlined
             $maxNameLength = ($foundInstalledVersions.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
             $foundInstalledVersions | ForEach-Object -Process {
                 $versionNumber = $_.version

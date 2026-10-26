@@ -98,8 +98,7 @@ function Get-AvailablePHPVersions {
             return -1
         }
 
-        Show-Info -message "`nAvailable Versions"
-        Write-Gray -message '------------------'
+        Write-Cyan -message "`nAvailable Versions:" -underlined
 
         $fetchedVersionsGroupedPartialList.GetEnumerator() |
             Sort-Object -Property Key |
@@ -148,8 +147,7 @@ function Show-InstalledPHPVersions {
             }
         }
 
-        Show-Info -message "`nInstalled Versions: ($($installedPhp.Count))"
-        Write-Gray -message '-------------------'
+        Write-Cyan -message "`nInstalled Versions: ($($installedPhp.Count))" -underlined
         $duplicates = @()
         $maxNameLength = ($installedPhp.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedPhp | ForEach-Object -Process {

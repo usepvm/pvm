@@ -34,7 +34,7 @@ function Set-IniSetting {
             }
 
             if ($matchesList.Length -gt 1) {
-                Show-Info -message "`nMultiple settings match '$searchKey':`n"
+                Write-Cyan -message "`nMultiple settings match '$searchKey':" -underlined
 
                 $maxLineLength = ($matchesList.name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0

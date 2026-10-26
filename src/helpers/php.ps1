@@ -136,7 +136,7 @@ function Get-UserSelectedPHPVersion {
     } else {
         $currentVersion = Get-CurrentPHPVersion
         $index = 0
-        Show-Message -message "`nInstalled versions :"
+        Write-Cyan -message "`nInstalled versions :" -underlined
         $maxNameLength = ($installedVersions.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedVersions | ForEach-Object -Process {
             $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force

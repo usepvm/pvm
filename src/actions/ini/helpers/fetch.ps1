@@ -647,7 +647,7 @@ function Select-ExtensionFromMatches {
         return $chosenItem
     }
 
-    Show-Info -message "`nMatching '$extName' extension:"
+    Write-Cyan -message "`nMatching '$extName' extension:" -underlined
     $index = 0
 
     $sorted = $linksMatchingExtName | Sort-Object -Property @{ Expression = { $_.source } }, @{ Expression = { $_.extName } }, @{ Expression = { $_.extCategory } }

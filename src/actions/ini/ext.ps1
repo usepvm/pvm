@@ -11,7 +11,7 @@ function Show-PHPExtensionInfo {
         $matchesListStatus = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $searchId -includeIniOnly $true
 
         if ($matchesListStatus.Length -gt 1) {
-            Show-Info -message "`nMultiple extensions match '$extName':`n"
+            Write-Cyan -message "`nMultiple extensions match '$extName': " -underlined
 
             $index = 0
             $matchesListStatus | ForEach-Object -Process {
@@ -140,8 +140,7 @@ function Show-PHPExtensions {
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
             $maxLineLength = [Math]::Max($Global:PVMConfig.env.MIN_LINE_LENGTH, $maxKeyLength + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3))
 
-            Show-Info -message "`nAvailable Extensions by Category:"
-            Write-Gray -message '--------------------------------'
+            Write-Cyan -message "`nAvailable Extensions by Category:" -underlined
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object -Property Key | ForEach-Object -Process {
                 $key = "$($_.Key) "
                 $vals = ($_.Value | ForEach-Object -Process { $_.extName }) -join ', '

@@ -194,7 +194,7 @@ function Invoke-Tests {
         $maxLineLength = ($testSummary.relativeFilePath | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3)
 
         Show-Message -message "`n----------------------------------------------------------------"
-        Show-Message -message "`n`nTests Settings:"
+        Show-Message -message "`n`nTests Settings:" -underlined
         Show-Message -message " PowerShell Engine ..... $($psInfo.name)"
         Show-Message -message " PowerShell ............ $($psInfo.version)"
         Show-Message -message " Pester ................ $($pesterInfo.Version)"
@@ -226,7 +226,7 @@ function Invoke-Tests {
 
         $totalDurationFormatted = Format-Seconds -totalSeconds $testData.totalDuration
 
-        Show-Message -message "Test Results Summary:"
+        Show-Message -message "Test Results Summary:" -underlined
         Show-Message -message " Files tested ........... $($testData.testSummary.Length)"
         Show-Message -message " Total tests ............ $($testData.totalTests)"
         Show-Message -message " Total passed ........... $($testData.totalPassedTests)"

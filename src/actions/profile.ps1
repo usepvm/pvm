@@ -405,8 +405,7 @@ function Show-PHPProfiles {
             return -1
         }
 
-        Show-Info -message "`nAvailable Profiles:"
-        Write-Gray -message '-------------------'
+        Write-Cyan -message "`nAvailable Profiles:" -underlined
 
         $profiles = @()
         foreach ($file in $profileFiles) {
@@ -466,8 +465,7 @@ function Show-PHPProfile {
         $utc = $dt.ToUniversalTime()
         $createdAtFormatted = $utc.ToString('dd/MM/yyyy HH:mm:ss')
 
-        Show-Info -message "`nProfile: $($userProfile.name)"
-        Show-Message -message '========================='
+        Write-Cyan -message "`nProfile: $($userProfile.name)" -underlined
         Write-White -message "Description: $($userProfile.description)"
         Write-White -message "Created: $createdAtFormatted"
         Write-White -message "PHP Version: $($userProfile.phpVersion)"

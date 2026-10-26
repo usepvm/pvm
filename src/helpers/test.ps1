@@ -1,6 +1,6 @@
 
 function Show-Scripts {
-    Write-Cyan -message "`nAvailable scripts:"
+    Write-Cyan -message "`nAvailable scripts:" -underlined
 
     $scripts = Get-Scripts
     $scripts.Keys | ForEach-Object -Process {
@@ -119,7 +119,7 @@ function Import-PesterVersion {
 function Show-PesterVersion {
     param ($pesterVersion)
 
-    Show-Message -message "`nPester Info:"
+    Show-Message -message "`nPester Info:" -underlined
     Show-Message -message "  Version: $($pesterVersion.Version)"
     Show-Message -message "  Path: $($pesterVersion.Path)"
 }
@@ -133,7 +133,7 @@ function Show-PesterVersionShort {
 function Show-PowerShellInfo {
     param ($psInfo)
 
-    Show-Message -message "`nPowerShell Info:"
+    Show-Message -message "`nPowerShell Info:" -underlined
     Show-Message -message "  Engine: $($psInfo.name)"
     Show-Message -message "  Version: $($psInfo.version)"
     Show-Message -message "  Edition: $($psInfo.edition)"

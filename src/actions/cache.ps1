@@ -28,8 +28,7 @@ function Show-CacheFiles {
             return -1
         }
 
-        Show-Info -message "`nAvailable Cache Files:"
-        Write-Gray -message '----------------------'
+        Write-Cyan -message "`nAvailable Cache Files:" -underlined
 
         foreach ($cacheFile in $cacheFiles) {
             Show-Message -message "  $($cacheFile.BaseName)"
@@ -61,8 +60,7 @@ function Show-CachedData {
             return -1
         }
 
-        Show-Info -message "`nCache Data for '$cacheName':"
-        Write-Gray -message '--------------------------------'
+        Write-Cyan -message "`nCache Data for '$cacheName':" -underlined
 
         Show-Message -message ($cacheData | ConvertTo-Json)
 

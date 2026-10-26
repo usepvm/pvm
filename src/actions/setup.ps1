@@ -76,43 +76,47 @@ function Initialize-PVMFiles {
 
     $codes += $code = New-ProfileExample
     if ($code -eq 0) {
-        Show-Success -message "`nExample profile created successfully at '$($Global:PVMConfig.paths.files.profileExample)'."
-        Show-Message -message "- Use 'pvm help profile' to learn more."
+        $msg = "`nExample profile created successfully at '$($Global:PVMConfig.paths.files.profileExample)'."
+        $msg += "`nUse 'pvm help profile' to learn more."
+        Show-LabelledSuccess -message $msg -noNewLine
     } else {
-        Show-Error -message "`nFailed to create example profile."
+        Show-LabelledError -message "`nFailed to create example profile." -noNewLine
     }
 
     $codes += $code = New-ProfileTemplate
     if ($code -eq 0) {
-        Show-Success -message "`nProfile template created successfully at '$($Global:PVMConfig.paths.files.profileTemplate)'."
-        Show-Message -message '- Feel free to modify it.'
+        $msg = "`nProfile template created successfully at '$($Global:PVMConfig.paths.files.profileTemplate)'."
+        $msg += "`nFeel free to modify it."
+        Show-LabelledSuccess -message $msg -noNewLine
     } else {
-        Show-Error -message "`nFailed to create profile template."
+        Show-LabelledError -message "`nFailed to create profile template." -noNewLine
     }
 
     $codes += $code = Set-ZendExtensionsList
     if ($code -eq 0) {
-        Show-Success -message "`nZend extensions list created successfully at '$($Global:PVMConfig.paths.files.zendExtensionsList)'."
+        Show-LabelledSuccess -message "`nZend extensions list created successfully at '$($Global:PVMConfig.paths.files.zendExtensionsList)'."-noNewLine
     } else {
-        Show-Error -message "`nFailed to create zend extensions list."
+        Show-LabelledError -message "`nFailed to create zend extensions list."-noNewLine
     }
 
     $codes += $code = Set-AliasesList
     if ($code -eq 0) {
-        Show-Success -message "`nAliases list created successfully at '$($Global:PVMConfig.paths.files.aliasesList)'."
-        Show-Message -message "- Use 'pvm aliases' to see available aliases."
-        Show-Message -message "- Feel free to modify it."
+        $msg = "`nAliases list created successfully at '$($Global:PVMConfig.paths.files.aliasesList)'."
+        $msg += "`nUse 'pvm aliases' to see available aliases."
+        $msg += "`nFeel free to modify it."
+        Show-LabelledSuccess -message $msg -noNewLine
     } else {
-        Show-Error -message "`nFailed to create aliases list."
+        Show-LabelledError -message "`nFailed to create aliases list." -noNewLine
     }
 
     $codes += $code = Set-ScriptsList
     if ($code -eq 0) {
-        Show-Success -message "`nScripts list created successfully at '$($Global:PVMConfig.paths.files.scriptsList)'."
-        Show-Message -message "- Use 'pvm run list' to see available scripts."
-        Show-Message -message "- Feel free to modify it."
+        $msg = "`nScripts list created successfully at '$($Global:PVMConfig.paths.files.scriptsList)'."
+        $msg += "`nUse 'pvm run list' to see available scripts."
+        $msg += "`nFeel free to modify it.";
+        Show-LabelledSuccess -message $msg -noNewLine
     } else {
-        Show-Error -message "`nFailed to create scripts list."
+        Show-LabelledError -message "`nFailed to create scripts list." -noNewLine
     }
 
     return $codes
@@ -133,7 +137,7 @@ function New-EnvFile {
 
     try {
         if (Test-FileNotExists -path "$($Global:PVMConfig.rootPath)\.env.example") {
-            Show-Error -message "`nFailed to find .env.example file."
+            Show-LabelledError -message "`nFailed to find .env.example file."
             return -1
         }
 
@@ -145,11 +149,11 @@ function New-EnvFile {
         }
         $code = Copy-ItemWrapper -path "$($Global:PVMConfig.rootPath)\.env.example" -destination "$($Global:PVMConfig.rootPath)\.env"
         if ($code -ne 0) {
-            Show-Error -message "`nFailed to create .env file!"
+            Show-LabelledError -message "`nFailed to create .env file!"
             return -1
         }
 
-        Show-Success -message "`nCreated .env file."
+        Show-LabelledSuccess -message "`nCreated .env file."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create .env file"; exception = $_ }

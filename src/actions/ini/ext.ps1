@@ -43,7 +43,7 @@ function Show-PHPExtensionInfo {
         }
 
         if (-not $availableMatch -and -not $localMatch) {
-            Show-Error -message "`nExtension '$extName' not found"
+            Show-LabelledError -message "`nExtension '$extName' not found"
             return -1
         }
 

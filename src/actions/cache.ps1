@@ -17,14 +17,14 @@ function Get-CacheFiles {
 function Show-CacheFiles {
     try {
         if (Test-DirectoryNotExists -path $Global:PVMConfig.paths.directories.cache) {
-            Show-Error -message "`nNo cache directory found."
+            Show-LabelledError -message "`nNo cache directory found."
             return -1
         }
 
         $cacheFiles = Get-CacheFiles
 
         if ($cacheFiles.Count -eq 0) {
-            Show-Error -message "`nNo cache files found."
+            Show-LabelledError -message "`nNo cache files found."
             return -1
         }
 
@@ -48,15 +48,16 @@ function Show-CachedData {
     try {
         $cachePath = Get-CacheFilePath -fileName $cacheName
         if (Test-FileNotExists -path $cachePath) {
-            Show-Error -message "`nCache file '$cacheName' not found."
-            Show-Message -message "  Use 'pvm cache list' to see available cache files."
+            $msg = "Cache file '$cacheName' not found."
+            $msg += "`nUse 'pvm cache list' to see available cache files."
+            Show-LabelledError -message $msg
             return -1
         }
 
         $cacheData = Get-DataFromCache -cacheFileName $cacheName
 
         if ($null -eq $cacheData -or $cacheData.Count -eq 0) {
-            Show-Error -message "`nNo data found in cache file '$cacheName'."
+            Show-LabelledError -message "`nNo data found in cache file '$cacheName'."
             return -1
         }
 
@@ -67,7 +68,7 @@ function Show-CachedData {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show cache data"; exception = $_ }
-        Show-Error -message "`nFailed to show cache data."
+        Show-LabelledError -message "`nFailed to show cache data."
         return -1
     }
 }
@@ -78,8 +79,9 @@ function Remove-CacheFile {
     try {
         $cachePath = Get-CacheFilePath -fileName $cacheName
         if (Test-FileNotExists -path $cachePath) {
-            Show-Error -message "`nCache file '$cacheName' not found."
-            Show-Message -message "  Use 'pvm cache list' to see available cache files."
+            $msg = "Cache file '$cacheName' not found."
+            $msg += "`nUse 'pvm cache list' to see available cache files."
+            Show-LabelledError -message $msg
             return -1
         }
 
@@ -93,15 +95,15 @@ function Remove-CacheFile {
 
         $code = Remove-ItemWrapper -path $cachePath
         if ($code -ne 0) {
-            Show-Error -message "`nFailed to remove '$cacheName' file!"
+            Show-LabelledError -message "`nFailed to remove '$cacheName' file!"
             return -1
         }
 
-        Show-Success -message "`nCache file '$cacheName' deleted successfully."
+        Show-LabelledSuccess -message "`nCache file '$cacheName' deleted successfully."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to delete cache file '$cacheName'"; exception = $_ }
-        Show-Error -message "`nFailed to delete cache file: $($_.Exception.Message)"
+        Show-LabelledError -message "`nFailed to delete cache file: $($_.Exception.Message)"
         return -1
     }
 }
@@ -113,7 +115,7 @@ function Clear-CacheFiles {
         $cacheFiles = Get-CacheFiles
 
         if ($cacheFiles.Count -eq 0) {
-            Show-Error -message "`nNo cache files found."
+            Show-LabelledError -message "`nNo cache files found."
             return -1
         }
 
@@ -127,15 +129,15 @@ function Clear-CacheFiles {
 
         $code = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.cache)\*"
         if ($code -ne 0) {
-            Show-Error -message "`nFailed to remove all cache files!"
+            Show-LabelledError -message "`nFailed to remove all cache files!"
             return -1
         }
 
-        Show-Success -message "`nAll cache files deleted successfully."
+        Show-LabelledSuccess -message "`nAll cache files deleted successfully."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear cache files"; exception = $_ }
-        Show-Error -message "`nFailed to clear cache files."
+        Show-LabelledError -message "`nFailed to clear cache files."
         return -1
     }
 }

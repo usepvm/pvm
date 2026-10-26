@@ -305,7 +305,7 @@ function Select-Version {
     }
 
     if (-not $selectedVersionObject) {
-        Show-Error -message "`nNo matching version found for '$selectedVersionInput'."
+        Show-LabelledError -message "No matching version found for '$selectedVersionInput'."
         return $null
     }
 
@@ -360,7 +360,7 @@ function Install-PHP {
             $msg += "`n- Use 'pvm list available' to see available versions."
             $msg += "`n- If you are trying to install a version that was announced recently, it may not be available for download yet."
 
-            Show-Error -message $msg
+            Show-LabelledError -message $msg
             return -1
         }
 
@@ -382,7 +382,7 @@ function Install-PHP {
             $temporaryDirectory = $downloadStatus.temporaryDirectory
         }
         if (-not $downloadStatus -or $downloadStatus.success -eq $false) {
-            Show-Error -message "`nFailed to download PHP version $($selectedVersionObject.version)"
+            Show-LabelledError -message "`nFailed to download PHP version $($selectedVersionObject.version)"
             return -1
         }
 
@@ -393,12 +393,12 @@ function Install-PHP {
         $code = Expand-AndConfigurePHP -path $downloadPath -fileNamePath $phpInstallPath
 
         if ($code -ne 0) {
-            Show-Error -message "`nFailed to extract PHP version $($selectedVersionObject.version)"
+            Show-LabelledError -message "`nFailed to extract PHP version $($selectedVersionObject.version)"
             return -1
         }
 
         if (Test-FileNotExists -path "$phpInstallPath\php.ini") {
-            Show-Error -message "`nFailed to find php.ini for PHP version $($selectedVersionObject.version)"
+            Show-LabelledError -message "`nFailed to find php.ini for PHP version $($selectedVersionObject.version)"
             return -1
         }
 
@@ -408,13 +408,13 @@ function Install-PHP {
 
         $message = "`nPHP $($selectedVersionObject.version) installed successfully at: '$phpInstallPath'"
         $message += "`nRun 'pvm use $($selectedVersionObject.version)' to use this version"
-        Show-Success -message $message
+        Show-LabelledSuccess -message $message
 
         $success = $true
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install PHP version $version"; exception = $_ }
-        Show-Error -message "`nFailed to install PHP version $version"
+        Show-LabelledError -message "`nFailed to install PHP version $version"
         return -1
     } finally {
         if ($temporaryDirectory) {

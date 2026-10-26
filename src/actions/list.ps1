@@ -71,12 +71,12 @@ function Get-AvailablePHPVersions {
         $fetchedVersionsGrouped = Get-PHPListToInstall
 
         if (Test-HasNoData -data $fetchedVersionsGrouped) {
-            Show-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
+            Show-LabelledError -message "No PHP versions found in the source. Please check your internet connection or the source URLs."
             return -1
         }
 
         if ((Test-HasNoData -data $fetchedVersionsGrouped.Archives) -and (Test-HasNoData -data $fetchedVersionsGrouped.Releases)) {
-            Show-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
+            Show-LabelledError -message "No PHP versions found in the source. Please check your internet connection or the source URLs."
             return -1
         }
 
@@ -94,7 +94,7 @@ function Get-AvailablePHPVersions {
         }
 
         if ($fetchedVersionsGroupedPartialList.Count -eq 0) {
-            Show-Error -message "`nNo PHP versions found matching '$term'"
+            Show-LabelledError -message "No PHP versions found matching '$term'"
             return -1
         }
 
@@ -135,14 +135,14 @@ function Show-InstalledPHPVersions {
         $installedPhp = Get-InstalledPHPVersions -arch $arch -buildType $buildType
 
         if ($installedPhp.Count -eq 0) {
-            Show-Error -message "`nNo PHP versions found"
+            Show-LabelledError -message "No PHP versions found!"
             return -1
         }
 
         if ($term) {
             $installedPhp = $installedPhp | Where-Object -FilterScript { $_.version -like "$term*" }
             if ($installedPhp.Count -eq 0) {
-                Show-Error -message "`nNo PHP versions found matching '$term'"
+                Show-LabelledError -message "No PHP versions found matching '$term'"
                 return -1
             }
         }

@@ -50,7 +50,7 @@ function Uninstall-Extension {
 
     try {
         if ($extNames.Count -eq 0) {
-            Show-Warning -message "`nPlease provide at least one extension name to uninstall"
+            Show-LabelledWarning -message "`nPlease provide at least one extension name to uninstall"
             return -1
         }
 
@@ -58,7 +58,7 @@ function Uninstall-Extension {
         $extDirectory = "$phpDirectory\ext"
 
         if (Test-DirectoryNotExists -path $extDirectory) {
-            Show-Error -message "`nExtensions directory not found: $extDirectory"
+            Show-LabelledError -message "`nExtensions directory not found: $extDirectory"
             return -1
         }
 

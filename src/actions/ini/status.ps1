@@ -4,7 +4,7 @@ function Get-IniExtensionStatus {
 
     try {
         if ($extNames -isnot [array] -or $extNames.Count -eq 0) {
-            Show-Warning -message "`nPlease provide at least one extension name to check status"
+            Show-LabelledWarning -message "`nPlease provide at least one extension name to check status"
             return -1
         }
 
@@ -29,7 +29,7 @@ function Get-IniExtensionStatus {
         }
 
         if ($allMatchesListStatus.Count -eq 0) {
-            Show-Error -message "`nNo extensions found matching the search term."
+            Show-LabelledError -message "No extensions found matching the search term."
             return -1
         }
 

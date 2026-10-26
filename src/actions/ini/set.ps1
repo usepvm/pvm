@@ -4,7 +4,7 @@ function Set-IniSetting {
 
     try {
         if ($keys -isnot [array] -or $keys.Count -eq 0) {
-            Show-Warning -message "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
+            Show-LabelledWarning -message "Please specify at least one 'key=value' (pvm ini set memory_limit=512M)."
             return -1
         }
 

@@ -203,7 +203,7 @@ function Install-Extension {
         }
 
         if (-not $chosenItem) {
-            Show-Error -message "`nYou chose the wrong index"
+            Show-Warning -message "`nYou chose the wrong index"
             return -1
         }
 

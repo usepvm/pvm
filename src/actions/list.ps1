@@ -108,7 +108,7 @@ function Get-AvailablePHPVersions {
                 if ($fetchedVersionsGroupe.Length -eq 0) {
                     return
                 }
-                Show-Message -message "`n$key`n"
+                Show-Message -message "`n $key`n"
                 $maxNameLength = ($fetchedVersionsGroupe.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $fetchedVersionsGroupe | ForEach-Object -Process {
                     $versionNumber = "$($_.version) ".PadRight($maxNameLength, '.')

@@ -137,7 +137,7 @@ function Install-Extension {
         }
         $choice = $null
         if (-not [int]::TryParse($selectedIndex, [ref]$choice)) {
-            Show-Warning -message "`nYou answer is invalid!"
+            Show-Warning -message "`nYour answer is invalid!"
             return -1
         }
         if ($choice -lt 0 -or $choice -gt $sourceHandlers.Count - 1) {

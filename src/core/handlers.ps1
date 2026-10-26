@@ -83,7 +83,8 @@ function Invoke-Current {
             $textInfo = "  $($ext.name) ".PadRight($maxNameLength, '.')
         }
 
-        Write-Color -message "$textInfo $statusText" -foreColor $ext.color
+        Write-White -message "$textInfo " -noNewLine
+        Write-Color -message $statusText -foreColor $ext.color
     }
 
     New-Line

@@ -17,7 +17,7 @@ function Uninstall-PHP {
         }
 
         if (-not $skipConfirmation) {
-            $response = Read-HostWrapper -prompt "`nAre you sure you want to delete PHP version '$($pathVersionObject.version)'? (y/n)" -notifyUser
+            $response = Read-HostWrapper -prompt "Are you sure you want to delete PHP version '$($pathVersionObject.version)'? (y/n)" -notifyUser
             if (Test-NoResponse -response $response) {
                 Write-Gray -message "`nUninstallation cancelled"
                 return -1
@@ -25,7 +25,7 @@ function Uninstall-PHP {
 
             $currentVersion = Get-CurrentPHPVersion
             if (Test-TwoPHPVersionsEqual -version1 $currentVersion -version2 $pathVersionObject) {
-                $response = Read-HostWrapper -prompt "`nYou are trying to uninstall the currently active PHP version ($($pathVersionObject.version)). Are you sure? (y/n)" -notifyUser
+                $response = Read-HostWrapper -prompt "You are trying to uninstall the currently active PHP version ($($pathVersionObject.version)). Are you sure? (y/n)" -notifyUser
                 if (Test-NoResponse -response $response) {
                     Write-Gray -message "`nUninstallation cancelled"
                     return -1

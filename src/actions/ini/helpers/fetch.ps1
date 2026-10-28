@@ -66,7 +66,7 @@ function Get-ExtensionHandlers {
                             $extIdName = ConvertTo-ExtensionId -name $extFile.Name
                             $existingFile = Get-ChildItemWrapper -path "$phpPath\ext" -Filter "*$extIdName*"
                             if ($existingFile) {
-                                $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
+                                $response = Read-HostWrapper -prompt "$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
                                 if (Test-NoResponse -response $response) {
                                     $null = Remove-ItemWrapper -path $extFile.FullName
                                     Write-Gray -message "`nInstallation cancelled"
@@ -164,7 +164,7 @@ function Get-ExtensionHandlers {
                             $extIdName = ConvertTo-ExtensionId -name $extFile.Name
                             $existingFile = Get-ChildItemWrapper -path "$phpPath\ext" -Filter "*$extIdName*"
                             if ($existingFile) {
-                                $response = Read-HostWrapper -prompt "`n$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
+                                $response = Read-HostWrapper -prompt "$($extFile.Name) already exists. Would you like to overwrite it? (y/n)" -notifyUser
                                 if (Test-NoResponse -response $response) {
                                     $null = Remove-ItemWrapper -path $extractPath
                                     Write-Gray -message "`nInstallation cancelled"
@@ -661,7 +661,7 @@ function Select-ExtensionFromMatches {
     }
 
     do {
-        $choiceRaw = Read-HostWrapper -prompt "`nEnter the [number] of your selection" -notifyUser
+        $choiceRaw = Read-HostWrapper -prompt "Enter the [number] of your selection" -notifyUser
         if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
             Write-Gray -message "`nOperation cancelled"
             return $null

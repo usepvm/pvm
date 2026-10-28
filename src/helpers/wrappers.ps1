@@ -35,7 +35,12 @@ function Read-HostWrapper {
         Invoke-PromptSound
     }
 
-    $response = Read-Host -Prompt $prompt
+    if ($null -eq $prompt) {
+        $response = Read-Host -Prompt $prompt
+    } else {
+        Show-Label -label 'Prompt' -foreColor 'Black' -backColor 'White' -noNewLine
+        $response = Read-Host -Prompt " $($prompt.Trim())"
+    }
 
     if ([string]::IsNullOrWhiteSpace($response)) {
         return $null

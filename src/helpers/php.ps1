@@ -155,7 +155,7 @@ function Get-UserSelectedPHPVersion {
             Show-Message -message " [$index] $versionNumber $metaData $isCurrent"
             $index++
         }
-        $response = Read-HostWrapper -prompt "`nEnter the [number] of your selection (or press Enter to cancel)" -notifyUser
+        $response = Read-HostWrapper -prompt "Enter the [number] of your selection (or press Enter to cancel)" -notifyUser
         if (-not $response) {
             return @{ code = -1; message = 'Operation cancelled.' }
         }
@@ -324,13 +324,13 @@ function Select-PHPVersionAutomatically {
     $version = Find-PHPVersionFromProject
 
     if (-not $version) {
-        $version = Read-HostWrapper -prompt "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" -notifyUser
+        $version = Read-HostWrapper -prompt "Could not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" -notifyUser
 
         if (-not (Test-PHPVersionFormat -version $version)) {
             return @{ code = -1; version = $null; message = "`nInvalid version format: '$version'. Expected e.g. 8, 8.3 or 8.3.1"; color = 'DarkYellow' }
         }
 
-        $response = Read-HostWrapper -prompt "`nSave as project default in .php-version? (y/n)"
+        $response = Read-HostWrapper -prompt "Save as project default in .php-version? (y/n)"
         if (Test-YesResponse -response $response) {
             $code = Set-ContentWrapper -path '.php-version' -value $version
             if ($code -ne 0) {

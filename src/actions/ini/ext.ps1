@@ -21,7 +21,7 @@ function Show-PHPExtensionInfo {
             }
 
             do {
-                $choiceRaw = Read-HostWrapper -prompt "`nSelect a number"
+                $choiceRaw = Read-HostWrapper -prompt "Select a number"
                 $choice = $null
 
                 if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {

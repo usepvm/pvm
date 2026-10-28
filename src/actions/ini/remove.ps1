@@ -85,7 +85,7 @@ function Uninstall-Extension {
                 }
 
                 do {
-                    $choiceRaw = Read-HostWrapper -prompt "`nSelect a number"
+                    $choiceRaw = Read-HostWrapper -prompt "Select a number"
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
@@ -107,7 +107,7 @@ function Uninstall-Extension {
             }
 
             if (-not $skipConfirmation) {
-                $response = Read-HostWrapper -prompt "`nAre you sure you want to uninstall '$($selected.name)'? (y/n)"
+                $response = Read-HostWrapper -prompt "Are you sure you want to uninstall '$($selected.name)'? (y/n)"
                 if (Test-NoResponse -response $response) {
                     $results += @{ name = $selected.name; status = 'Uninstallation cancelled'; color = 'Gray' }
                     $overallCode = -1

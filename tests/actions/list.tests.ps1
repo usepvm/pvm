@@ -14,8 +14,8 @@ BeforeAll {
     $script:PHP_WIN_RELEASES_URL = $Global:PVMConfig.links.phpWinReleases
 
     Mock Show-Message { }
-    Mock Show-Error { }
-    Mock Show-Info { }
+    Mock Show-LabelledError { }
+    Mock Write-Cyan { }
     Mock Write-Gray { }
     Mock Add-LogEntry { return 0 }
 
@@ -348,8 +348,8 @@ Describe "Get-AvailablePHPVersions" {
     }
 
     It "Should display versions in correct format" {
-        Mock Get-DataFromCache {
-            return @{
+        Mock Get-PHPListToInstall {
+            return [pscustomobject]@{
                 'Archives' = @(@{
                     buildType = 'NTS';
                     version = '8.1.0';
@@ -371,9 +371,9 @@ Describe "Get-AvailablePHPVersions" {
         $code = Get-AvailablePHPVersions
 
         $code | Should -Be 0
-        Should -Invoke Show-Info -ParameterFilter { $message -like '*Available Versions*' }
-        Should -Invoke Show-Info -ParameterFilter { $message -like '*Archives*' }
-        Should -Invoke Show-Info -ParameterFilter { $message -like '*Releases*' }
+        Should -Invoke Write-Cyan -ParameterFilter { $message -like '*Available Versions*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*Archives*' }
+        Should -Invoke Show-Message -ParameterFilter { $message -like '*Releases*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.1.0*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.2.0*' }
     }
@@ -384,7 +384,7 @@ Describe "Get-AvailablePHPVersions" {
         $result = Get-AvailablePHPVersions
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Exactly 1 -ParameterFilter {
+        Should -Invoke Show-LabelledError -Exactly 1 -ParameterFilter {
             $message -like '*No PHP versions found in the source. Please check your internet connection or the source URLs*'
         }
     }
@@ -395,7 +395,7 @@ Describe "Get-AvailablePHPVersions" {
         $result = Get-AvailablePHPVersions
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Exactly 1 -ParameterFilter {
+        Should -Invoke Show-LabelledError -Exactly 1 -ParameterFilter {
             $message -like '*No PHP versions found in the source. Please check your internet connection or the source URLs*'
         }
     }
@@ -426,7 +426,7 @@ Describe "Show-InstalledPHPVersions" {
         $code = Show-InstalledPHPVersions
 
         $code | Should -Be 0
-        Should -Invoke Show-Info -ParameterFilter { $message -like '*Installed Versions*' }
+        Should -Invoke Write-Cyan -ParameterFilter { $message -like '*Installed Versions*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.2.0*(Current)*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*8.1.5*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*7.4.33*' }
@@ -452,7 +452,7 @@ Describe "Show-InstalledPHPVersions" {
         $code = Show-InstalledPHPVersions -term '8.3'
 
         $code | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*No PHP versions found matching '8.3'*" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*No PHP versions found matching '8.3'*" }
     }
 
     It "Should handle no installed versions" {
@@ -461,7 +461,7 @@ Describe "Show-InstalledPHPVersions" {
 
         $null = Show-InstalledPHPVersions
 
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*No PHP versions found*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*No PHP versions found*' }
     }
 
     It "Should handle duplicate versions" {

@@ -95,8 +95,8 @@ function Show-PHPExtensionInfo {
 
         return 0
     } catch {
-        Show-Error -message "`nFailed to get information for extension '$extName'"
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get extension info for '$extName'"; exception = $_ }
+        Show-LabelledError -message "`nFailed to get information for extension '$extName'"
         return -1
     }
 }

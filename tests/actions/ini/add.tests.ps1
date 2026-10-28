@@ -32,6 +32,9 @@ BeforeAll {
     Mock Show-Error { }
     Mock Show-Success { }
     Mock Show-Info { }
+    Mock Show-LabelledSuccess { }
+    Mock Show-LabelledError { }
+    Mock Show-LabelledWarning { }
     Mock Write-Gray { }
 
     function Reset-IniContent {
@@ -257,22 +260,22 @@ Describe "Add-MissingPHPExtensionToIni" {
     It "Adds and configures xdebug in ini file" {
         Mock Get-MatchingPHPExtensionsStatus { return @( @{ name = 'xdebug'; status = 'Enabled'; enabled = $true; color = 'DarkGreen'; LineNumber = 0 } )}
         Mock Test-FileNotExists { return $false }
+
         $result = Add-MissingPHPExtensionToIni -iniPath $script:testIniPath -extFileName 'php_xdebug.dll'
+
         $result | Should -Be 0
-        Should -Invoke Show-Success -Times 1 -ParameterFilter {
-            $message -like "- 'php_xdebug.dll' added successfully."
-        }
+        Should -Invoke Show-Success -Times 1 -ParameterFilter { $message -like "*'php_xdebug.dll' added to ini file successfully*" }
     }
 
     It "Returns 0 and shows warning when extension already exists in ini file" {
         Mock Get-MatchingPHPExtensionsStatus { return @( @{ name = 'xdebug'; status = 'Enabled'; enabled = $true; color = 'DarkGreen'; LineNumber = 150 } )}
         Mock Test-FileNotExists { return $false }
         Mock Test-DirectoryNotExists { return $false }
+
         $result = Add-MissingPHPExtensionToIni -iniPath $script:testIniPath -extFileName 'php_xdebug.dll'
+
         $result | Should -Be 0
-        Should -Invoke Show-Warning -Times 1 -ParameterFilter {
-            $message -eq "- Extension 'php_xdebug.dll' already exists in php.ini"
-        }
+        Should -Invoke Show-Warning -Times 1 -ParameterFilter { $message -like "*Extension 'php_xdebug.dll' already exists in php.ini*" }
     }
 
     It "Adds any extension to ini file" {
@@ -283,12 +286,12 @@ Describe "Add-MissingPHPExtensionToIni" {
 
         Mock Test-FileNotExists { return $false }
         Mock Test-DirectoryNotExists { return $false }
+
         $result = Add-MissingPHPExtensionToIni -iniPath $script:testIniPath -extFileName 'php_curl.dll'
+
         $result | Should -Be 0
         (Get-ContentWrapper -path $script:testIniPath) -match 'extension=php_curl.dll' | Should -Be $true
-        Should -Invoke Show-Success -Times 1 -ParameterFilter {
-            $message -eq "- 'php_curl.dll' added successfully."
-        }
+        Should -Invoke Show-Success -Times 1 -ParameterFilter { $message -like "*'php_curl.dll' added to ini file successfully*" }
     }
 
     It "Adds any extension in disabled state to ini file" {
@@ -482,7 +485,7 @@ Describe "Install-Extension" {
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
         $code | Should -Be -1
-        Should -Invoke Show-Warning -Times 1 -ParameterFilter { $message -like '*You answer is invalid*' }
+        Should -Invoke Show-Warning -Times 1 -ParameterFilter { $message -like '*Your answer is invalid*' }
     }
 
     It "Returns -1 when user enters a negative selection" {
@@ -509,7 +512,7 @@ Describe "Install-Extension" {
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
         $code | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*No handler found for source*' }
+        Should -Invoke Show-LabelledError -Times 1 -ParameterFilter { $message -like '*No handler found for source*' }
     }
 
     It "Returns -1 when no source supports the extension" {
@@ -518,7 +521,7 @@ Describe "Install-Extension" {
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
         $code | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*Source 'xdebug.org' does not support extension 'curl'*" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*Source 'xdebug.org' does not support extension 'curl'*" }
     }
 
     It "Returns -1 when ResolveLinks returns null" {
@@ -527,7 +530,7 @@ Describe "Install-Extension" {
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
         $code | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*No packages found for curl*' }
+        Should -Invoke Show-LabelledError -Times 1 -ParameterFilter { $message -like '*No packages found for curl*' }
     }
 
     It "Returns -1 when ResolveLinks returns an empty list" {
@@ -536,7 +539,7 @@ Describe "Install-Extension" {
         $code = Install-Extension -iniPath $script:testIniPath -extName 'nonexistent_ext'
 
         $code | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*No packages found for nonexistent_ext*' }
+        Should -Invoke Show-LabelledError -Times 1 -ParameterFilter { $message -like '*No packages found for nonexistent_ext*' }
     }
 
     It "Returns -1 when no package matches installed php arch & build type" {
@@ -550,9 +553,7 @@ Describe "Install-Extension" {
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
         $code | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter {
-            $message -like "*No packages found for 'curl' matching current PHP architecture/build type*"
-        }
+        Should -Invoke Show-LabelledError -Times 1 -ParameterFilter { $message -like "*No packages found for 'curl' matching current PHP architecture/build type*" }
     }
 
     It "Returns -1 when user does not choose a version (empty answer)" {
@@ -577,7 +578,7 @@ Describe "Install-Extension" {
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
         $code | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*You chose the wrong index*' }
+        Should -Invoke Show-Warning -Times 1 -ParameterFilter { $message -like '*You chose the wrong index*' }
     }
 
     It "Returns -1 when download handler returns nothing" {
@@ -587,7 +588,7 @@ Describe "Install-Extension" {
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
         $code | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*Failed to download curl*' }
+        Should -Invoke Show-LabelledError -Times 1 -ParameterFilter { $message -like '*Failed to download curl*' }
     }
 
     It "Returns -1 when config handler fails" {
@@ -606,7 +607,7 @@ Describe "Install-Extension" {
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
         $code | Should -Be 0
-        Should -Invoke Show-Success -Times 1 -ParameterFilter { $message -like '*curl installed successfully*' }
+        Should -Invoke Show-LabelledSuccess -Times 1 -ParameterFilter { $message -like '*curl installed successfully*' }
     }
 
     It "Passes extName to Download only for pecl.php.net" {
@@ -672,7 +673,7 @@ Describe "Install-Extension" {
         $code = Install-Extension -iniPath $script:testIniPath -extName 'xdebug'
 
         $code | Should -Be 0
-        Should -Invoke Show-Info -Times 1 -ParameterFilter {
+        Should -Invoke Write-Gray -Times 1 -ParameterFilter {
             $message -like '*This is a partial list. For a complete list, visit: https://mock/xdebug-historical*'
         }
     }
@@ -682,9 +683,7 @@ Describe "Install-Extension" {
 
         $null = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
-        Should -Invoke Show-Info -Times 1 -ParameterFilter {
-            $message -like '*visit: https://mock/pecl/curl*'
-        }
+        Should -Invoke Write-Gray -Times 1 -ParameterFilter { $message -like '*visit: https://mock/pecl/curl*' }
     }
 
     It "Handles exception gracefully" {

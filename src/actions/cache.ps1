@@ -37,7 +37,7 @@ function Show-CacheFiles {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to list cache files"; exception = $_ }
-        Show-Error -message "`nFailed to list cache files."
+        Show-LabelledError -message "`nFailed to list cache files."
         return -1
     }
 }

@@ -141,7 +141,7 @@ Describe "Show-PHPExtensionInfo" {
         $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName 'xdebug'
 
         $code | Should -Be -1
-        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "`nFailed to get information for extension 'xdebug'" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "Failed to get information for extension 'xdebug'" }
         Should -Invoke Add-LogEntry -Exactly 1
     }
 

@@ -692,7 +692,7 @@ Describe "Start-PVM" {
             $result | Should -Be -1
             Should -Invoke Add-LogEntry -Times 1
             Should -Invoke Show-LabelledError -Times 1 -ParameterFilter {
-                $message -eq "`nCommand canceled or failed to elevate privileges."
+                $message -eq 'Command canceled or failed to elevate privileges.'
             }
         }
 

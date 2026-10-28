@@ -114,7 +114,7 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = 'Processing'; color = 'Cyan' }
 
             $result | Should -Not -Be -1
         }
@@ -126,7 +126,7 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Custom Message"; color = 'Cyan' }
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = 'Custom Message'; color = 'Cyan' }
 
             Should -Invoke Write-Color -Times 1
             Should -Invoke Write-HostWrapper -Times 1
@@ -153,7 +153,7 @@ Describe "Show-SpinnerWhileJob" {
             Mock Write-HostWrapper { }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' } -noClear
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = 'Processing'; color = 'Cyan' } -noClear
 
             Should -Invoke Write-Color -Times 1
             Should -Invoke Write-HostWrapper -Times 0
@@ -167,7 +167,7 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = 'Processing'; color = 'Cyan' }
 
             Should -Invoke Write-Color -Times 1
             Should -Invoke Write-HostWrapper -Times 1
@@ -176,10 +176,10 @@ Describe "Show-SpinnerWhileJob" {
         It "Returns -1 when job fails and rethrow is false" {
             $script:keepRunning = $false
             Mock Receive-Job {
-                throw "Job failed"
+                throw 'Job failed'
             }
 
-            $scriptBlock = { throw "Job failed" }
+            $scriptBlock = { throw 'Job failed' }
             $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
 
             $result | Should -Be -1
@@ -188,10 +188,10 @@ Describe "Show-SpinnerWhileJob" {
         It "Rethrows exception when job fails and rethrow is true" {
             $script:keepRunning = $false
             Mock Receive-Job {
-                throw "Job failed"
+                throw 'Job failed'
             }
 
-            $scriptBlock = { throw "Job failed" }
+            $scriptBlock = { throw 'Job failed' }
 
             { Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$true } | Should -Throw
         }
@@ -199,10 +199,10 @@ Describe "Show-SpinnerWhileJob" {
         It "Logs error when job fails" {
             $script:keepRunning = $false
             Mock Receive-Job {
-                throw "Job failed"
+                throw 'Job failed'
             }
 
-            $scriptBlock = { throw "Job failed" }
+            $scriptBlock = { throw 'Job failed' }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
 
             Should -Invoke Add-LogEntry -Exactly 1
@@ -227,12 +227,12 @@ Describe "Show-SpinnerWhileJob" {
         It "Cleans up environment variable after job failure" {
             $script:keepRunning = $false
             Mock Receive-Job {
-                throw "Job failed"
+                throw 'Job failed'
             }
 
             Mock Remove-ItemWrapper { return 0 }
 
-            $scriptBlock = { throw "Job failed" }
+            $scriptBlock = { throw 'Job failed' }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
 
             Should -Invoke Remove-ItemWrapper -ParameterFilter {
@@ -275,7 +275,7 @@ Describe "Show-SpinnerWhileJob" {
                 Start-Sleep -Milliseconds 200
                 return @{ result = 'success' }
             }
-            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = 'Processing'; color = 'Cyan' }
 
             Should -Invoke Start-Sleep
         }
@@ -453,7 +453,7 @@ Describe "Show-SpinnerWhileProcess" {
             Mock Start-Sleep { throw 'boom' }
 
             $script:fakeProc | Add-Member ScriptMethod Kill {
-                throw "boom"
+                throw 'boom'
             } -Force
 
             Show-SpinnerWhileProcess -fileName 'anything.exe'
@@ -873,17 +873,17 @@ Describe "Sound Functions" {
         }
 
         It "returns TotalSeconds when duration is greater than 1 second" {
-            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) return "0:00:05" } -Force
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) return '0:00:05' } -Force
 
-            $result = Get-Sound-TotalSeconds -path "C:\music\song.mp3"
+            $result = Get-Sound-TotalSeconds -path 'C:\music\song.mp3'
 
             $result | Should -Be 5
         }
 
         It "returns 1 when duration is 1 second or less" {
-            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) return "0:00:00" } -Force
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) return '0:00:00' } -Force
 
-            $result = Get-Sound-TotalSeconds -path "C:\music\song.mp3"
+            $result = Get-Sound-TotalSeconds -path 'C:\music\song.mp3'
 
             $result | Should -Be 1
         }
@@ -929,7 +929,7 @@ Describe "Sound Functions" {
             $Global:PVMConfig.subprocess.enabled = $false
             $Global:PVMConfig.env.SOUNDS_DISABLED = $false
 
-            Mock New-Player { throw "boom" }
+            Mock New-Player { throw 'boom' }
 
             { Invoke-Sound -filename "song.mp3" } | Should -Not -Throw
             Should -Invoke Add-LogEntry -Times 1 -Exactly
@@ -963,28 +963,28 @@ Describe "Sound Functions" {
         It "Invoke-SuccessSound plays success.mp3 from assets path" {
             Invoke-SuccessSound
             Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
-                $filename -eq "success.mp3"
+                $filename -eq 'success.mp3'
             }
         }
 
         It "Invoke-ErrorSound plays error.mp3 from assets path" {
             Invoke-ErrorSound
             Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
-                $filename -eq "error.mp3"
+                $filename -eq 'error.mp3'
             }
         }
 
         It "Invoke-NotifySound plays notify.mp3 from assets path" {
             Invoke-NotifySound
             Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
-                $filename -eq "notify.mp3"
+                $filename -eq 'notify.mp3'
             }
         }
 
         It "Invoke-PromptSound plays prompt.mp3 from assets path" {
             Invoke-PromptSound
             Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
-                $filename -eq "prompt.mp3"
+                $filename -eq 'prompt.mp3'
             }
         }
     }

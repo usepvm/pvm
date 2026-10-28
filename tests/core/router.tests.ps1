@@ -486,7 +486,7 @@ Describe "Get-Actions" {
         }
 
         It "Should execute test action with verbosity" {
-            $testArgs = @('TestFile.ps1', 'Detailed', "--tag=unit")
+            $testArgs = @('TestFile.ps1', 'Detailed', '--tag=unit')
             $actions = Get-Actions
             & $actions['test'].data.action -arguments $testArgs
 

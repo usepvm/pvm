@@ -20,12 +20,13 @@ BeforeAll {
 
     $null = New-Item -ItemType Directory -Path $script:PROFILES_PATH -Force
 
-    Mock Show-Success { }
-    Mock Show-Info { }
     Mock Show-Warning { }
     Mock Show-Message { }
-    Mock Show-Error { }
+    Mock Show-LabelledInfo { }
+    Mock Show-LabelledSuccess { }
+    Mock Show-LabelledError { }
     Mock Write-Color { }
+    Mock Write-Cyan { }
     Mock Write-White { }
     Mock Write-Gray { }
     Mock Backup-IniFile { return 0 }
@@ -357,7 +358,7 @@ Describe "Save-PHPProfile" {
         $result = Save-PHPProfile -profileName 'testprofile'
         $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
+        Should -Invoke Show-LabelledError -ParameterFilter {
             $message -match 'Insufficient disk space for profile save'
         } -Exactly 1
     }
@@ -458,18 +459,10 @@ Describe "Use-PHPProfile" {
         $result = Use-PHPProfile -profileName 'testprofile'
 
         $result | Should -Be 0
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -eq '  Settings ignored (not popular): 1'
-        } -Exactly 1
-        Should -Invoke Show-Warning -ParameterFilter {
-            $message -eq '  Settings skipped: 1'
-        } -Exactly 1
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -eq '  Extensions ignored (not popular): 1'
-        } -Exactly 1
-        Should -Invoke Show-Warning -ParameterFilter {
-            $message -eq '  Extensions skipped: 2'
-        } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -eq '  Settings ignored (not popular): 1' } -Exactly 1
+        Should -Invoke Show-Warning -ParameterFilter { $message -eq '  Settings skipped: 1' } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -eq '  Extensions ignored (not popular): 1' } -Exactly 1
+        Should -Invoke Show-Warning -ParameterFilter { $message -eq '  Extensions skipped: 2' } -Exactly 1
     }
 
     It "Should handle non-existent profile" {
@@ -630,27 +623,19 @@ Describe "Show-PHPProfile" {
 
     It "Should return -1 when profile file does not exist" {
         $result = Show-PHPProfile -profileName 'nonexistent'
+        
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match "Profile 'nonexistent' not found"
-        } -Exactly 1
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match "Use 'pvm profile list' to see available profiles"
-        } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match "Profile 'nonexistent' not found" } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match "Use 'pvm profile list' to see available profiles" } -Exactly 1
     }
 
     It "Should return -1 when JSON parsing fails" {
         'invalid json content {{{{ }' | Set-Content -Path "$script:PROFILES_PATH\invalid.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'invalid'
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Failed to show profile'
-        } -Exactly 1
-
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to show profile' } -Exactly 1
         Should -Invoke Add-LogEntry -Exactly 1
     }
 
@@ -666,23 +651,12 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\emptyprofile.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'emptyprofile'
+        
         $result | Should -Be 0
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Profile: emptyprofile'
-        } -Exactly 1
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Settings \(0\):'
-        } -Exactly 1
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Extensions \(0\):'
-        } -Exactly 1
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match '\(none\)'
-        } -Exactly 2
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Profile: emptyprofile' } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Settings \(0\):' } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Extensions \(0\):' } -Exactly 1
+        Should -Invoke Show-Message -ParameterFilter { $message -match '\(none\)' } -Exactly 2
     }
 
     It "Should display profile with settings but no extensions" {
@@ -700,27 +674,13 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\settingsonly.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'settingsonly'
+        
         $result | Should -Be 0
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Settings \(2\):'
-        } -Exactly 1
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Extensions \(0\):'
-        } -Exactly 1
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match 'memory_limit'
-        }
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match 'display_errors'
-        }
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match '\(none\)'
-        } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Settings \(2\):' } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Extensions \(0\):' } -Exactly 1
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'memory_limit' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'display_errors' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match '\(none\)' } -Exactly 1
     }
 
     It "Should display profile with extensions but no settings" {
@@ -738,27 +698,13 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\extensionsonly.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'extensionsonly'
+
         $result | Should -Be 0
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Settings \(0\):'
-        } -Exactly 1
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Extensions \(2\):'
-        } -Exactly 1
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match 'curl'
-        }
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match 'opcache'
-        }
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match '\(none\)'
-        } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Settings \(0\):' } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Extensions \(2\):' } -Exactly 1
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'curl' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'opcache' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match '\(none\)' } -Exactly 1
     }
 
     It "Should display profile with both settings and extensions" {
@@ -779,15 +725,10 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\fullprofile.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'fullprofile'
+        
         $result | Should -Be 0
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Settings \(2\):'
-        } -Exactly 1
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Extensions \(2\):'
-        } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Settings \(2\):' } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Extensions \(2\):' } -Exactly 1
     }
 
     It "Should display enabled settings with DarkGreen color and disabled with DarkYellow" {
@@ -881,11 +822,9 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\nullsettings.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'nullsettings'
-        $result | Should -Be 0
 
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Settings \(0\):'
-        } -Exactly 1
+        $result | Should -Be 0
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Settings \(0\):' } -Exactly 1
     }
 
     It "Should handle null extensions property" {
@@ -901,11 +840,9 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\nullextensions.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'nullextensions'
-        $result | Should -Be 0
 
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Extensions \(0\):'
-        } -Exactly 1
+        $result | Should -Be 0
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Extensions \(0\):' } -Exactly 1
     }
 
     It "Should display all required profile fields" {
@@ -920,27 +857,13 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\completeprofile.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'completeprofile'
+
         $result | Should -Be 0
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match "`nProfile: completeprofile"
-        } -Exactly 1
-
-        Should -Invoke Write-White -ParameterFilter {
-            $message -match 'Description: Complete profile description'
-        } -Exactly 1
-
-        Should -Invoke Write-White -ParameterFilter {
-            $message -match 'Created: 01/01/2023 12:30:45'
-        } -Exactly 1
-
-        Should -Invoke Write-White -ParameterFilter {
-            $message -match 'PHP Version: 8.2.0'
-        } -Exactly 1
-
-        Should -Invoke Write-White -ParameterFilter {
-            $message -match 'PATH:'
-        } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match "`nProfile: completeprofile" } -Exactly 1
+        Should -Invoke Write-White -ParameterFilter { $message -match 'Description: Complete profile description' } -Exactly 1
+        Should -Invoke Write-White -ParameterFilter { $message -match 'Created: 01/01/2023 12:30:45' } -Exactly 1
+        Should -Invoke Write-White -ParameterFilter { $message -match 'PHP Version: 8.2.0' } -Exactly 1
+        Should -Invoke Write-White -ParameterFilter { $message -match 'PATH:' } -Exactly 1
     }
 
     It "Should sort settings alphabetically" {
@@ -964,20 +887,12 @@ Describe "Show-PHPProfile" {
         }
 
         $result = Show-PHPProfile -profileName 'sortedsettings'
+
         $result | Should -Be 0
-
         # Verify settings are displayed (order is checked by the function using Sort-Object)
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match 'alpha'
-        }
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match 'beta'
-        }
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match 'zebra'
-        }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'alpha' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'beta' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'zebra' }
     }
 
     It "Should sort extensions alphabetically" {
@@ -996,20 +911,12 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\sortedextensions.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'sortedextensions'
+
         $result | Should -Be 0
-
         # Verify extensions are displayed (order is checked by the function using Sort-Object)
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match 'alpha_ext'
-        }
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match 'beta_ext'
-        }
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match 'zebra_ext'
-        }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'alpha_ext' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'beta_ext' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'zebra_ext' }
     }
 
     It "Should display setting values correctly" {
@@ -1027,15 +934,10 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\settingvalues.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'settingvalues'
+
         $result | Should -Be 0
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match 'memory_limit' -and $message -match '512M'
-        }
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match 'max_execution_time' -and $message -match '60'
-        }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'memory_limit' -and $message -match '512M' }
+        Should -Invoke Show-Message -ParameterFilter { $message -match 'max_execution_time' -and $message -match '60' }
     }
 
     It "Should handle profile with many settings and extensions" {
@@ -1061,15 +963,10 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\largeprofile.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'largeprofile'
+
         $result | Should -Be 0
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Settings \(10\):'
-        } -Exactly 1
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Extensions \(10\):'
-        } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Settings \(10\):' } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Extensions \(10\):' } -Exactly 1
     }
 }
 
@@ -1082,11 +979,9 @@ Describe "Remove-PHPProfile" {
 
     It "Should return -1 when profile file does not exist" {
         $result = Remove-PHPProfile -profileName 'nonexistent'
-        $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match "Profile 'nonexistent' not found"
-        } -Exactly 1
+        $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match "Profile 'nonexistent' not found" } -Exactly 1
     }
 
     It "Should return -1 when user cancels deletion with 'n'" {
@@ -1103,14 +998,10 @@ Describe "Remove-PHPProfile" {
         Mock Read-HostWrapper { return 'n' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
+
         $result | Should -Be -1
-
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
-
-        Should -Invoke Write-Gray -ParameterFilter {
-            $message -match 'Deletion cancelled'
-        } -Exactly 1
-
+        Should -Invoke Write-Gray -ParameterFilter { $message -match 'Deletion cancelled' } -Exactly 1
         Should -Invoke Read-HostWrapper -Exactly 1
     }
 
@@ -1128,13 +1019,10 @@ Describe "Remove-PHPProfile" {
         Mock Read-HostWrapper { return '' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
+
         $result | Should -Be -1
-
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
-
-        Should -Invoke Write-Gray -ParameterFilter {
-            $message -match 'Deletion cancelled'
-        } -Exactly 1
+        Should -Invoke Write-Gray -ParameterFilter { $message -match 'Deletion cancelled' } -Exactly 1
     }
 
     It "Should return -1 when user cancels deletion with 'no'" {
@@ -1151,13 +1039,10 @@ Describe "Remove-PHPProfile" {
         Mock Read-HostWrapper { return 'no' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
+        
         $result | Should -Be -1
-
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
-
-        Should -Invoke Write-Gray -ParameterFilter {
-            $message -match 'Deletion cancelled'
-        } -Exactly 1
+        Should -Invoke Write-Gray -ParameterFilter { $message -match 'Deletion cancelled' } -Exactly 1
     }
 
     It "Should successfully delete profile when user confirms with 'y'" {
@@ -1174,17 +1059,11 @@ Describe "Remove-PHPProfile" {
         Mock Read-HostWrapper { return 'y' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
+
         $result | Should -Be 0
-
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $false
-
-        Should -Invoke Show-Success -ParameterFilter {
-            $message -match "Profile 'testprofile' deleted successfully"
-        } -Exactly 1
-
-        Should -Invoke Read-HostWrapper -ParameterFilter {
-            $prompt -match "Are you sure you want to delete profile 'testprofile'"
-        } -Exactly 1
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match "Profile 'testprofile' deleted successfully" } -Exactly 1
+        Should -Invoke Read-HostWrapper -ParameterFilter { $prompt -match "Are you sure you want to delete profile 'testprofile'" } -Exactly 1
     }
 
     It "Should successfully delete profile when user confirms with 'Y'" {
@@ -1201,13 +1080,10 @@ Describe "Remove-PHPProfile" {
         Mock Read-HostWrapper { return 'Y' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
+
         $result | Should -Be 0
-
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $false
-
-        Should -Invoke Show-Success -ParameterFilter {
-            $message -match "Profile 'testprofile' deleted successfully"
-        } -Exactly 1
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match "Profile 'testprofile' deleted successfully" } -Exactly 1
     }
 
     It "Should not display the confirmation prompt when skipConfirmation is true" {
@@ -1215,6 +1091,7 @@ Describe "Remove-PHPProfile" {
         Mock Read-HostWrapper { }
 
         $result = Remove-PHPProfile -profileName 'example' -skipConfirmation $true
+        
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 0
         Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $false
@@ -1227,7 +1104,7 @@ Describe "Remove-PHPProfile" {
         $result = Remove-PHPProfile -profileName 'example' -skipConfirmation $true
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to remove 'example' profile*" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*Failed to remove 'example' profile*" }
     }
 
     It "Should return -1 and log error when Remove-ItemWrapper fails" {
@@ -1245,12 +1122,9 @@ Describe "Remove-PHPProfile" {
         Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Failed to delete profile'
-        } -Exactly 1
-
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to delete profile' } -Exactly 1
         Should -Invoke Add-LogEntry -Exactly 1
     }
 
@@ -1269,7 +1143,6 @@ Describe "Remove-PHPProfile" {
 
         $result = Remove-PHPProfile -profileName 'myprofile'
         $result | Should -Be 0
-
         Should -Invoke Read-HostWrapper -ParameterFilter {
             $prompt -match "Are you sure you want to delete profile 'myprofile'" -and
             $prompt -match '\(y/n\)'
@@ -1290,13 +1163,10 @@ Describe "Remove-PHPProfile" {
         Mock Read-HostWrapper { return 'y' }
 
         $result = Remove-PHPProfile -profileName 'test-profile_123'
+
         $result | Should -Be 0
-
         Test-Path "$script:PROFILES_PATH\test-profile_123.json" | Should -Be $false
-
-        Should -Invoke Show-Success -ParameterFilter {
-            $message -match "Profile 'test-profile_123' deleted successfully"
-        } -Exactly 1
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match "Profile 'test-profile_123' deleted successfully" } -Exactly 1
     }
 
     It "Should handle case-insensitive confirmation correctly" {
@@ -1313,20 +1183,16 @@ Describe "Remove-PHPProfile" {
         Mock Read-HostWrapper { return 'yes' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
+
         $result | Should -Be -1
-
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
-
-        Should -Invoke Write-Gray -ParameterFilter {
-            $message -match 'Deletion cancelled'
-        } -Exactly 1
+        Should -Invoke Write-Gray -ParameterFilter { $message -match 'Deletion cancelled' } -Exactly 1
     }
 }
 
 Describe "Clear-PHPProfiles" {
     BeforeEach {
         Remove-Item -Path "$script:PROFILES_PATH\*" -Force -Recurse -ErrorAction SilentlyContinue
-
         Mock Add-LogEntry { return 0 }
     }
 
@@ -1334,9 +1200,7 @@ Describe "Clear-PHPProfiles" {
         $result = Clear-PHPProfiles
         $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'No profiles found'
-        } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'No profiles found' } -Exactly 1
     }
 
     It "Should return -1 when user cancels with 'n'" {
@@ -1346,14 +1210,11 @@ Describe "Clear-PHPProfiles" {
         Mock Read-HostWrapper { return 'n' }
 
         $result = Clear-PHPProfiles
-        $result | Should -Be -1
 
+        $result | Should -Be -1
         Test-Path "$script:PROFILES_PATH\example1.json" | Should -Be $true
         Test-Path "$script:PROFILES_PATH\example2.json" | Should -Be $true
-
-        Should -Invoke Write-Gray -ParameterFilter {
-            $message -match 'Deletion cancelled'
-        } -Exactly 1
+        Should -Invoke Write-Gray -ParameterFilter { $message -match 'Deletion cancelled' } -Exactly 1
     }
 
     It "Should return -1 when user cancels with empty response" {
@@ -1362,8 +1223,8 @@ Describe "Clear-PHPProfiles" {
         Mock Read-HostWrapper { return '' }
 
         $result = Clear-PHPProfiles
-        $result | Should -Be -1
 
+        $result | Should -Be -1
         Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $true
     }
 
@@ -1373,8 +1234,8 @@ Describe "Clear-PHPProfiles" {
         Mock Read-HostWrapper { return 'no' }
 
         $result = Clear-PHPProfiles
-        $result | Should -Be -1
 
+        $result | Should -Be -1
         Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $true
     }
 
@@ -1384,8 +1245,8 @@ Describe "Clear-PHPProfiles" {
         Mock Read-HostWrapper { return 'yes' }
 
         $result = Clear-PHPProfiles
-        $result | Should -Be -1
 
+        $result | Should -Be -1
         Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $true
     }
 
@@ -1396,13 +1257,11 @@ Describe "Clear-PHPProfiles" {
         Mock Read-HostWrapper { return 'Y' }
 
         $result = Clear-PHPProfiles
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Test-Path "$script:PROFILES_PATH\example1.json" | Should -Be $false
         Test-Path "$script:PROFILES_PATH\example2.json" | Should -Be $false
-        Should -Invoke Show-Success -ParameterFilter {
-            $message -match 'All profiles deleted successfully'
-        } -Exactly 1
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match 'All profiles deleted successfully' } -Exactly 1
     }
 
     It "Should not display the confirmation prompt when skipConfirmation is true" {
@@ -1410,6 +1269,7 @@ Describe "Clear-PHPProfiles" {
         Mock Read-HostWrapper { }
 
         $result = Clear-PHPProfiles -skipConfirmation $true
+        
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 0
         Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $false
@@ -1421,8 +1281,8 @@ Describe "Clear-PHPProfiles" {
         Mock Read-HostWrapper { return 'y' }
 
         $result = Clear-PHPProfiles
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Should -Invoke Read-HostWrapper -ParameterFilter {
             $prompt -match 'Are you sure you want to delete all profiles' -and
             $prompt -match '\(y/n\)'
@@ -1435,8 +1295,8 @@ Describe "Clear-PHPProfiles" {
         Mock Read-HostWrapper { return 'y' }
 
         $result = Clear-PHPProfiles
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Test-Path "$script:PROFILES_PATH\single.json" | Should -Be $false
     }
 
@@ -1452,7 +1312,7 @@ Describe "Clear-PHPProfiles" {
         $result = Clear-PHPProfiles -skipConfirmation $true
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to remove all profiles*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*Failed to remove all profiles*' }
     }
 
     It "Should return -1 and log error when an exception occurs during deletion" {
@@ -1462,12 +1322,9 @@ Describe "Clear-PHPProfiles" {
         Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $result = Clear-PHPProfiles
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Failed to clear profiles'
-        } -Exactly 1
-
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to clear profiles' } -Exactly 1
         Should -Invoke Add-LogEntry -Exactly 1
     }
 
@@ -1475,12 +1332,9 @@ Describe "Clear-PHPProfiles" {
         Mock Get-ProfileFiles { throw 'Disk error' }
 
         $result = Clear-PHPProfiles
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Failed to clear profiles'
-        } -Exactly 1
-
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to clear profiles' } -Exactly 1
         Should -Invoke Add-LogEntry -Exactly 1
     }
 }
@@ -1500,11 +1354,9 @@ Describe "Export-PHPProfile" {
 
     It "Should return -1 when profile file does not exist" {
         $result = Export-PHPProfile -profileName 'nonexistent'
-        $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match "Profile 'nonexistent' not found"
-        } -Exactly 1
+        $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match "Profile 'nonexistent' not found" } -Exactly 1
     }
 
     It "Should export profile to default location when exportPath not provided" {
@@ -1529,11 +1381,7 @@ Describe "Export-PHPProfile" {
         $exportedContent = Get-ContentWrapper -path $exportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
         $exportedContent.settings.memory_limit.value | Should -Be '256M'
-
-        Should -Invoke Show-Success -ParameterFilter {
-            $message -match "Profile 'testprofile' exported to:"
-        } -Exactly 1
-
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match "Profile 'testprofile' exported to:" } -Exactly 1
         Should -Invoke Get-Location -Exactly 1
     }
 
@@ -1552,16 +1400,12 @@ Describe "Export-PHPProfile" {
         New-Item -ItemType Directory -Force -Path "$script:TEST_DRIVE\custom" | Out-Null
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath $customExportPath
+
         $result | Should -Be 0
-
         Test-Path $customExportPath | Should -Be $true
-
         $exportedContent = Get-ContentWrapper -path $customExportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
-
-        Should -Invoke Show-Success -ParameterFilter {
-            $message -match "Profile 'testprofile' exported to:" -and $message -match 'custom\\myprofile.json'
-        } -Exactly 1
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match "Profile 'testprofile' exported to:" -and $message -match 'custom\\myprofile.json' } -Exactly 1
     }
 
     It "Should overwrite existing file when exporting to existing path" {
@@ -1581,8 +1425,8 @@ Describe "Export-PHPProfile" {
         'old content' | Set-Content -Path $exportPath -Encoding UTF8
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath $exportPath
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         $exportedContent = Get-ContentWrapper -path $exportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'testprofile'
         $exportedContent.settings.memory_limit.value | Should -Be '256M'
@@ -1592,9 +1436,9 @@ Describe "Export-PHPProfile" {
         Mock Copy-ItemWrapper { return -1 }
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath "$script:TEST_DRIVE\export.json"
-        $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to export 'testprofile' to '$script:TEST_DRIVE\export.json'*" }
+        $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*Failed to export 'testprofile' to '$script:TEST_DRIVE\export.json'*" }
     }
 
     It "Should return -1 and log error when Copy-ItemWrapper fails" {
@@ -1611,12 +1455,9 @@ Describe "Export-PHPProfile" {
         Mock Copy-ItemWrapper { throw 'Access denied' }
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath "$script:TEST_DRIVE\export.json"
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Failed to export profile'
-        } -Exactly 1
-
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to export profile' } -Exactly 1
         Should -Invoke Add-LogEntry -Exactly 1
     }
 
@@ -1632,14 +1473,11 @@ Describe "Export-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\test-profile_123.json" -Encoding UTF8
 
         $result = Export-PHPProfile -profileName 'test-profile_123'
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         $expectedPath = "$script:TEST_DRIVE\export\test-profile_123.json"
         Test-Path $expectedPath | Should -Be $true
-
-        Should -Invoke Show-Success -ParameterFilter {
-            $message -match "Profile 'test-profile_123' exported to:"
-        } -Exactly 1
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match "Profile 'test-profile_123' exported to:" } -Exactly 1
     }
 
     It "Should export profile with all fields preserved" {
@@ -1661,8 +1499,8 @@ Describe "Export-PHPProfile" {
 
         $exportPath = "$script:TEST_DRIVE\fullprofile.json"
         $result = Export-PHPProfile -profileName 'fullprofile' -exportPath $exportPath
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         $exportedContent = Get-ContentWrapper -path $exportPath -Raw | ConvertFrom-Json
         $exportedContent.name | Should -Be 'fullprofile'
         $exportedContent.description | Should -Be 'Full profile description'
@@ -1696,7 +1534,7 @@ Describe "Export-PHPProfile" {
 
         $result | Should -Be -1
         Should -Invoke Test-InvalidDrivePath -ParameterFilter { $path -eq 'out.json' } -Exactly 1
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*Path 'out.json' is not valid*" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*Path 'out.json' is not valid*" }
     }
 
     It "Should return -1 when disk space is insufficient for profile export" {
@@ -1706,11 +1544,9 @@ Describe "Export-PHPProfile" {
         Mock Copy-ItemWrapper { return 0 }
 
         $result = Export-PHPProfile -profileName 'testprofile' -exportPath "$script:TEST_DRIVE\export\out.json"
-        $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Insufficient disk space for profile export'
-        } -Exactly 1
+        $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Insufficient disk space for profile export' } -Exactly 1
         Should -Invoke Copy-ItemWrapper -Exactly 0
     }
 }
@@ -1728,9 +1564,7 @@ Describe "Import-PHPProfile" {
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\nonexistent.json"
         $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'File not found:'
-        } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'File not found:' } -Exactly 1
     }
 
     It "Should return -1 when importPath is not valid" {
@@ -1740,20 +1574,16 @@ Describe "Import-PHPProfile" {
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\profile.json"
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -like "*Path '$script:TEST_DRIVE\profile.json' is not valid*"
-        } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*Path '$script:TEST_DRIVE\profile.json' is not valid*" } -Exactly 1
     }
 
     It "Should return -1 when JSON file is invalid" {
         'invalid json content {{{{ }' | Set-Content -Path "$script:TEST_DRIVE\invalid.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\invalid.json"
-        $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Invalid JSON file:'
-        } -Exactly 1
+        $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Invalid JSON file:' } -Exactly 1
     }
 
     It "Should return -1 when profile is missing 'name' field" {
@@ -1765,11 +1595,9 @@ Describe "Import-PHPProfile" {
         $invalidProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\missingname.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\missingname.json"
-        $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Invalid profile format' -and $message -match 'name'
-        } -Exactly 1
+        $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Invalid profile format' -and $message -match 'name' } -Exactly 1
     }
 
     It "Should return -1 when profile is missing 'settings' field" {
@@ -1780,11 +1608,9 @@ Describe "Import-PHPProfile" {
         $invalidProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\missingsettings.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\missingsettings.json"
+        
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Invalid profile format' -and $message -match 'settings'
-        } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Invalid profile format' -and $message -match 'settings' } -Exactly 1
     }
 
     It "Should return -1 when profile is missing 'extensions' field" {
@@ -1795,11 +1621,9 @@ Describe "Import-PHPProfile" {
         $invalidProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\missingextensions.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\missingextensions.json"
-        $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Invalid profile format' -and $message -match 'extensions'
-        } -Exactly 1
+        $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Invalid profile format' -and $message -match 'extensions' } -Exactly 1
     }
 
     It "Should import profile using name from profile when profileName not provided" {
@@ -1818,17 +1642,14 @@ Describe "Import-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\originalname.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\originalname.json"
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         $importedPath = "$script:PROFILES_PATH\originalname.json"
         Test-Path $importedPath | Should -Be $true
-
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'originalname'
 
-        Should -Invoke Show-Success -ParameterFilter {
-            $message -match "Profile imported successfully as 'originalname'"
-        } -Exactly 1
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match "Profile imported successfully as 'originalname'" } -Exactly 1
     }
 
     It "Should import profile with custom name when profileName provided" {
@@ -1843,17 +1664,13 @@ Describe "Import-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\originalname.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\originalname.json" -profileName 'customname'
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         $importedPath = "$script:PROFILES_PATH\customname.json"
         Test-Path $importedPath | Should -Be $true
-
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'customname'
-
-        Should -Invoke Show-Success -ParameterFilter {
-            $message -match "Profile imported successfully as 'customname'"
-        } -Exactly 1
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match "Profile imported successfully as 'customname'" } -Exactly 1
     }
 
     It "Should update profile name when custom name differs from original" {
@@ -1870,8 +1687,8 @@ Describe "Import-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\originalname.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\originalname.json" -profileName 'newname'
+        
         $result | Should -Be 0
-
         $importedPath = "$script:PROFILES_PATH\newname.json"
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'newname'
@@ -1890,8 +1707,8 @@ Describe "Import-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\samename.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\samename.json" -profileName 'samename'
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         $importedPath = "$script:PROFILES_PATH\samename.json"
         Test-Path $importedPath | Should -Be $true
     }
@@ -1910,11 +1727,9 @@ Describe "Import-PHPProfile" {
         Mock New-Directory { return -1 }
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\testprofile.json"
+        
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Failed to create profiles directory'
-        } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to create profiles directory' } -Exactly 1
     }
 
     It "Should import profile with all fields preserved" {
@@ -1935,8 +1750,8 @@ Describe "Import-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\fullprofile.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\fullprofile.json"
+        
         $result | Should -Be 0
-
         $importedPath = "$script:PROFILES_PATH\fullprofile.json"
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'fullprofile'
@@ -1972,11 +1787,9 @@ Describe "Import-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\testprofile.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\testprofile.json"
-        $result | Should -Be 0
 
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match "Use 'pvm profile load testprofile' to apply it"
-        } -Exactly 1
+        $result | Should -Be 0
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match "Use 'pvm profile load testprofile' to apply it" } -Exactly 1
     }
 
     It "Should return -1 and log error when import fails with exception" {
@@ -1993,12 +1806,9 @@ Describe "Import-PHPProfile" {
         Mock Copy-ItemWrapper { throw 'Disk full' }
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\testprofile.json"
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Failed to import profile'
-        } -Exactly 1
-
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to import profile' } -Exactly 1
         Should -Invoke Add-LogEntry -Exactly 1
     }
 
@@ -2036,11 +1846,10 @@ Describe "Import-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\complex.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\complex.json" -profileName 'new-complex_456'
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         $importedPath = "$script:PROFILES_PATH\new-complex_456.json"
         Test-Path $importedPath | Should -Be $true
-
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
         $importedContent.name | Should -Be 'new-complex_456'
     }
@@ -2059,11 +1868,9 @@ Describe "Import-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\testprofile.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\testprofile.json"
-        $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Insufficient disk space for profile import'
-        } -Exactly 1
+        $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Insufficient disk space for profile import' } -Exactly 1
     }
 
     It "Should succeed when disk space is sufficient for profile import" {
@@ -2080,8 +1887,8 @@ Describe "Import-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\testprofile.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\testprofile.json"
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         $importedPath = "$script:PROFILES_PATH\testprofile.json"
         Test-Path $importedPath | Should -Be $true
     }
@@ -2090,14 +1897,16 @@ Describe "Import-PHPProfile" {
 Describe "New-ProfileExample" {
     It "Should create an example profile" {
         $result = New-ProfileExample
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Test-Path $script:EXAMPLE_PROFILE_PATH | Should -Be $true
     }
 
     It "Returns -1 when exception is thrown" {
         Mock Set-ContentWrapper { throw 'Test exception' }
+        
         $result = New-ProfileExample
+        
         $result | Should -Be -1
     }
 }
@@ -2106,14 +1915,16 @@ Describe "New-ProfileTemplate" {
     It "Should create a profile template" {
         New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $result = New-ProfileTemplate
+        
         $result | Should -Be 0
-
         Test-Path $script:PROFILE_TEMPLATE_PATH | Should -Be $true
     }
 
     It "Returns -1 when exception is thrown" {
         Mock Set-ContentWrapper { throw 'Test exception' }
-        $result = New-ProfileTemplate
+        
+        $result = New-ProfileTemplate;
+        
         $result | Should -Be -1
     }
 }

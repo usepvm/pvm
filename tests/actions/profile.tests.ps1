@@ -623,7 +623,7 @@ Describe "Show-PHPProfile" {
 
     It "Should return -1 when profile file does not exist" {
         $result = Show-PHPProfile -profileName 'nonexistent'
-        
+
         $result | Should -Be -1
         Should -Invoke Show-LabelledError -ParameterFilter { $message -match "Profile 'nonexistent' not found" } -Exactly 1
         Should -Invoke Show-LabelledError -ParameterFilter { $message -match "Use 'pvm profile list' to see available profiles" } -Exactly 1
@@ -651,7 +651,7 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\emptyprofile.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'emptyprofile'
-        
+
         $result | Should -Be 0
         Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Profile: emptyprofile' } -Exactly 1
         Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Settings \(0\):' } -Exactly 1
@@ -674,7 +674,7 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\settingsonly.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'settingsonly'
-        
+
         $result | Should -Be 0
         Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Settings \(2\):' } -Exactly 1
         Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Extensions \(0\):' } -Exactly 1
@@ -725,7 +725,7 @@ Describe "Show-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\fullprofile.json" -Encoding UTF8
 
         $result = Show-PHPProfile -profileName 'fullprofile'
-        
+
         $result | Should -Be 0
         Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Settings \(2\):' } -Exactly 1
         Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Extensions \(2\):' } -Exactly 1
@@ -1039,7 +1039,7 @@ Describe "Remove-PHPProfile" {
         Mock Read-HostWrapper { return 'no' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
-        
+
         $result | Should -Be -1
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
         Should -Invoke Write-Gray -ParameterFilter { $message -match 'Deletion cancelled' } -Exactly 1
@@ -1091,7 +1091,7 @@ Describe "Remove-PHPProfile" {
         Mock Read-HostWrapper { }
 
         $result = Remove-PHPProfile -profileName 'example' -skipConfirmation $true
-        
+
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 0
         Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $false
@@ -1269,7 +1269,7 @@ Describe "Clear-PHPProfiles" {
         Mock Read-HostWrapper { }
 
         $result = Clear-PHPProfiles -skipConfirmation $true
-        
+
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 0
         Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $false
@@ -1608,7 +1608,7 @@ Describe "Import-PHPProfile" {
         $invalidProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\missingsettings.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\missingsettings.json"
-        
+
         $result | Should -Be -1
         Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Invalid profile format' -and $message -match 'settings' } -Exactly 1
     }
@@ -1687,7 +1687,7 @@ Describe "Import-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\originalname.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\originalname.json" -profileName 'newname'
-        
+
         $result | Should -Be 0
         $importedPath = "$script:PROFILES_PATH\newname.json"
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
@@ -1727,7 +1727,7 @@ Describe "Import-PHPProfile" {
         Mock New-Directory { return -1 }
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\testprofile.json"
-        
+
         $result | Should -Be -1
         Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to create profiles directory' } -Exactly 1
     }
@@ -1750,7 +1750,7 @@ Describe "Import-PHPProfile" {
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:TEST_DRIVE\fullprofile.json" -Encoding UTF8
 
         $result = Import-PHPProfile -importPath "$script:TEST_DRIVE\fullprofile.json"
-        
+
         $result | Should -Be 0
         $importedPath = "$script:PROFILES_PATH\fullprofile.json"
         $importedContent = Get-ContentWrapper -path $importedPath -Raw | ConvertFrom-Json
@@ -1904,9 +1904,9 @@ Describe "New-ProfileExample" {
 
     It "Returns -1 when exception is thrown" {
         Mock Set-ContentWrapper { throw 'Test exception' }
-        
+
         $result = New-ProfileExample
-        
+
         $result | Should -Be -1
     }
 }
@@ -1915,16 +1915,16 @@ Describe "New-ProfileTemplate" {
     It "Should create a profile template" {
         New-Item -ItemType Directory -Force -Path $script:TEMPLATES_PATH | Out-Null
         $result = New-ProfileTemplate
-        
+
         $result | Should -Be 0
         Test-Path $script:PROFILE_TEMPLATE_PATH | Should -Be $true
     }
 
     It "Returns -1 when exception is thrown" {
         Mock Set-ContentWrapper { throw 'Test exception' }
-        
+
         $result = New-ProfileTemplate;
-        
+
         $result | Should -Be -1
     }
 }

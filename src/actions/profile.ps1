@@ -192,7 +192,7 @@ function Save-PHPProfile {
         $currentPhpVersion = Get-CurrentPHPVersion
 
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
-            Show-LabelledError -message "Failed to get current PHP version."
+            Show-LabelledError -message 'Failed to get current PHP version.'
             return -1
         }
 
@@ -246,7 +246,7 @@ function Save-PHPProfile {
         # Save to JSON file
         $created = New-Directory -path $Global:PVMConfig.paths.directories.profiles
         if ($created -ne 0) {
-            Show-LabelledError -message "Failed to create profiles directory."
+            Show-LabelledError -message 'Failed to create profiles directory.'
             return -1
         }
 
@@ -263,7 +263,7 @@ function Save-PHPProfile {
         Show-Message -message "  Settings: $($userProfile.settings.Count) (popular/common only)"
         Show-Message -message "  Extensions: $($userProfile.extensions.Count) (popular/common only)"
         Show-Message -message "  Location: $profilePath"
-        $msg = "Note: Only popular/common settings and extensions are saved."
+        $msg = 'Note: Only popular/common settings and extensions are saved.'
         $msg += "`nYou can manually edit settings/extensions at '$($Global:PVMConfig.paths.files.profileTemplate)'."
         Show-LabelledInfo -message $msg
 
@@ -282,7 +282,7 @@ function Use-PHPProfile {
         $currentPhpVersion = Get-CurrentPHPVersion
 
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
-            Show-LabelledError -message "Failed to get current PHP version."
+            Show-LabelledError -message 'Failed to get current PHP version.'
             return -1
         }
 
@@ -353,7 +353,7 @@ function Use-PHPProfile {
             }
         }
 
-        Show-LabelledSuccess -message "Profile applied successfully"
+        Show-LabelledSuccess -message 'Profile applied successfully'
         Show-Message -message "  Settings applied: $settingsApplied"
         if ($settingsSkipped -gt 0) {
             Show-Warning -message "  Settings skipped: $settingsSkipped"
@@ -575,15 +575,15 @@ function Clear-PHPProfiles {
 
         $code = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.profiles)\*"
         if ($code -ne 0) {
-            Show-LabelledError -message "Failed to remove all profiles!"
+            Show-LabelledError -message 'Failed to remove all profiles!'
             return -1
         }
 
-        Show-LabelledSuccess -message "All profiles deleted successfully."
+        Show-LabelledSuccess -message 'All profiles deleted successfully.'
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to clear profiles"; exception = $_ }
-        Show-LabelledError -message "Failed to clear profiles."
+        Show-LabelledError -message 'Failed to clear profiles.'
         return -1
     }
 }
@@ -660,7 +660,7 @@ function Import-PHPProfile {
 
         $created = New-Directory -path $Global:PVMConfig.paths.directories.profiles
         if ($created -ne 0) {
-            Show-LabelledError -message "Failed to create profiles directory."
+            Show-LabelledError -message 'Failed to create profiles directory.'
             return -1
         }
 

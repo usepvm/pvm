@@ -465,7 +465,7 @@ Describe "New-SymbolicLink" {
                 $result = New-SymbolicLink -link $linkPath -target $targetPath -allowOutsideRoot
 
                 $result.code | Should -Be 0
-                $result.message | Should -Match "Created symbolic link"
+                $result.message | Should -Match 'Created symbolic link'
             } finally {
                 # Cleanup
                 if (Test-Path $testDir) {
@@ -643,7 +643,7 @@ Describe "Expand-Zip" {
     It "Should call Add-LogEntry on extraction failure" {
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
 
-        Mock Expand-ZipCore { throw "Extraction failed" }
+        Mock Expand-ZipCore { throw 'Extraction failed' }
 
         $result = Expand-Zip -zipPath 'bad.zip' -extractPath 'testdir'
 
@@ -1398,7 +1398,7 @@ Describe "Get-SHA256HashFromFile" {
 
     It "Returns correct SHA256 hash for a file" {
         $testFile = "$script:TEST_DRIVE\test-sha256.txt"
-        $testContent = "test content"
+        $testContent = 'test content'
         Set-Content -Path $testFile -Value $testContent -Encoding UTF8
 
         $result = Get-SHA256HashFromFile -filePath $testFile
@@ -1482,7 +1482,7 @@ Describe "Get-SHA256HashesFromRemote" {
     }
 
     It "Converts hash to lowercase" {
-        $mockContent = "A1B2C3D4E5F67890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890 *test.zip"
+        $mockContent = 'A1B2C3D4E5F67890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890 *test.zip'
         $mockResponse = [PSCustomObject]@{ Content = $mockContent }
         Mock Invoke-WebRequestWrapper { return $mockResponse }
 

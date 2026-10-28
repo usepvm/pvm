@@ -156,7 +156,7 @@ function Get-PHP {
         $sha256Hashes = Get-SHA256HashesFromRemote -url $sha256Url
 
         if ($sha256Hashes.Count -eq 0) {
-            Show-Warning -message "Failed to download SHA256 hashes. Skipping verification."
+            Show-Warning -message 'Failed to download SHA256 hashes. Skipping verification.'
             return @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = $true }
         }
 
@@ -173,7 +173,7 @@ function Get-PHP {
             return $null
         }
 
-        Show-Success -message "SHA256 hash verified successfully."
+        Show-Success -message 'SHA256 hash verified successfully.'
 
         return @{ downloadPath = $downloadPath; temporaryDirectory = $temporaryDirectory; success = $true }
     } catch {

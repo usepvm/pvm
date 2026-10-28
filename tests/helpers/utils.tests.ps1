@@ -247,26 +247,26 @@ Describe "Copy-ObjectDeep" {
 
     It "Deep copies ordered dictionary" {
         $original = [ordered]@{
-            key1 = "value1"
+            key1 = 'value1'
             key2 = 42
             key3 = $false
         }
 
         $copy = Copy-ObjectDeep -object $original
 
-        $copy.GetType().Name | Should -Be "OrderedDictionary"
-        $copy.key1 | Should -Be "value1"
+        $copy.GetType().Name | Should -Be 'OrderedDictionary'
+        $copy.key1 | Should -Be 'value1'
         $copy.key2 | Should -Be 42
         $copy.key3 | Should -Be $false
 
         # Verify it's a deep copy, not a reference
-        $copy.key1 = "modified"
-        $original.key1 | Should -Be "value1"
+        $copy.key1 = 'modified'
+        $original.key1 | Should -Be 'value1'
     }
 
     It "Deep copies hashtable" {
         $original = @{
-            name = "test"
+            name = 'test'
             count = 10
             active = $true
         }
@@ -279,12 +279,12 @@ Describe "Copy-ObjectDeep" {
         $copy.active | Should -Be $true
 
         # Verify it's a deep copy, not a reference
-        $copy.name = "modified"
+        $copy.name = 'modified'
         $original.name | Should -Be "test"
     }
 
     It "Deep copies array" {
-        $original = @(1, 2, 3, "four", $false)
+        $original = @(1, 2, 3, 'four', $false)
 
         $copy = Copy-ObjectDeep -object $original
 
@@ -292,7 +292,7 @@ Describe "Copy-ObjectDeep" {
         $copy[0] | Should -Be 1
         $copy[1] | Should -Be 2
         $copy[2] | Should -Be 3
-        $copy[3] | Should -Be "four"
+        $copy[3] | Should -Be 'four'
         $copy[4] | Should -Be $false
 
         # Verify it's a deep copy, not a reference
@@ -304,59 +304,59 @@ Describe "Copy-ObjectDeep" {
         $original = [ordered]@{
             level1 = [ordered]@{
                 level2 = [ordered]@{
-                    value = "deep"
+                    value = 'deep'
                 }
             }
         }
 
         $copy = Copy-ObjectDeep -object $original
 
-        $copy.level1.level2.value | Should -Be "deep"
+        $copy.level1.level2.value | Should -Be 'deep'
 
         # Verify it's a deep copy
-        $copy.level1.level2.value = "modified"
-        $original.level1.level2.value | Should -Be "deep"
+        $copy.level1.level2.value = 'modified'
+        $original.level1.level2.value | Should -Be 'deep'
     }
 
     It "Deep copies nested hashtable" {
         $original = @{
             outer = @{
                 inner = @{
-                    data = "nested"
+                    data = 'nested'
                 }
             }
         }
 
         $copy = Copy-ObjectDeep -object $original
 
-        $copy.outer.inner.data | Should -Be "nested"
+        $copy.outer.inner.data | Should -Be 'nested'
 
         # Verify it's a deep copy
-        $copy.outer.inner.data = "modified"
-        $original.outer.inner.data | Should -Be "nested"
+        $copy.outer.inner.data = 'modified'
+        $original.outer.inner.data | Should -Be 'nested'
     }
 
     It "Deep copies array of hashtables" {
         $original = @(
-            @{ name = "first"; value = 1 },
-            @{ name = "second"; value = 2 }
+            @{ name = 'first'; value = 1 },
+            @{ name = 'second'; value = 2 }
         )
 
         $copy = Copy-ObjectDeep -object $original
 
         $copy.Count | Should -Be 2
-        $copy[0].name | Should -Be "first"
+        $copy[0].name | Should -Be 'first'
         $copy[1].value | Should -Be 2
 
         # Verify it's a deep copy
-        $copy[0].name = "modified"
-        $original[0].name | Should -Be "first"
+        $copy[0].name = 'modified'
+        $original[0].name | Should -Be 'first'
     }
 
     It "Deep copies ordered dictionary containing arrays" {
         $original = [ordered]@{
             items = @(1, 2, 3)
-            names = @("alice", "bob")
+            names = @('alice', 'bob')
         }
 
         $copy = Copy-ObjectDeep -object $original
@@ -370,28 +370,28 @@ Describe "Copy-ObjectDeep" {
     }
 
     It "Recreates scriptblock as new instance" {
-        $original = { Write-Host "test" }
+        $original = { Write-Host 'test' }
 
         $copy = Copy-ObjectDeep -object $original
 
-        $copy.GetType().Name | Should -Be "ScriptBlock"
+        $copy.GetType().Name | Should -Be 'ScriptBlock'
         $copy.ToString() | Should -Be $original.ToString()
 
         # Verify it's a new instance
-        $copy = { Write-Host "modified" }
-        $original.ToString() | Should -Not -Be "modified"
+        $copy = { Write-Host 'modified' }
+        $original.ToString() | Should -Not -Be 'modified'
     }
 
     It "Handles complex nested structure" {
         $original = [ordered]@{
             data = @{
                 items = @(
-                    [ordered]@{ name = "item1"; values = @(1, 2, 3) },
-                    [ordered]@{ name = "item2"; values = @(4, 5, 6) }
+                    [ordered]@{ name = 'item1'; values = @(1, 2, 3) },
+                    [ordered]@{ name = 'item2'; values = @(4, 5, 6) }
                 )
                 config = [ordered]@{
                     enabled = $true
-                    options = @("opt1", "opt2")
+                    options = @("opt1", 'opt2')
                 }
             }
         }
@@ -399,10 +399,10 @@ Describe "Copy-ObjectDeep" {
         $copy = Copy-ObjectDeep -object $original
 
         $copy.data.items.Count | Should -Be 2
-        $copy.data.items[0].name | Should -Be "item1"
+        $copy.data.items[0].name | Should -Be 'item1'
         $copy.data.items[0].values[1] | Should -Be 2
         $copy.data.config.enabled | Should -Be $true
-        $copy.data.config.options[0] | Should -Be "opt1"
+        $copy.data.config.options[0] | Should -Be 'opt1'
 
         # Verify deep copy
         $copy.data.items[0].values[0] = 999
@@ -425,45 +425,45 @@ Describe "Copy-ObjectDeep" {
 
     It "Deep copies PSCustomObject" {
         $original = [PSCustomObject]@{
-            name  = "test"
+            name  = 'test'
             count = 10
             active = $true
         }
 
         $copy = Copy-ObjectDeep -object $original
 
-        $copy.GetType().Name | Should -Be "PSCustomObject"
-        $copy.name | Should -Be "test"
+        $copy.GetType().Name | Should -Be 'PSCustomObject'
+        $copy.name | Should -Be 'test'
         $copy.count | Should -Be 10
         $copy.active | Should -Be $true
 
         # Verify it's a deep copy, not a reference
-        $copy.name = "modified"
-        $original.name | Should -Be "test"
+        $copy.name = 'modified'
+        $original.name | Should -Be 'test'
     }
 
     It "Deep copies nested PSCustomObject" {
         $original = [PSCustomObject]@{
             level1 = [PSCustomObject]@{
                 level2 = [PSCustomObject]@{
-                    value = "deep"
+                    value = 'deep'
                 }
             }
         }
 
         $copy = Copy-ObjectDeep -object $original
 
-        $copy.level1.level2.value | Should -Be "deep"
+        $copy.level1.level2.value | Should -Be 'deep'
 
         # Verify it's a deep copy
-        $copy.level1.level2.value = "modified"
-        $original.level1.level2.value | Should -Be "deep"
+        $copy.level1.level2.value = 'modified'
+        $original.level1.level2.value | Should -Be 'deep'
     }
 
     It "Deep copies PSCustomObject containing arrays" {
         $original = [PSCustomObject]@{
             items = @(1, 2, 3)
-            names = @("alice", "bob")
+            names = @('alice', 'bob')
         }
 
         $copy = Copy-ObjectDeep -object $original
@@ -478,37 +478,37 @@ Describe "Copy-ObjectDeep" {
 
     It "Deep copies array of PSCustomObjects" {
         $original = @(
-            [PSCustomObject]@{ name = "first"; value = 1 },
-            [PSCustomObject]@{ name = "second"; value = 2 }
+            [PSCustomObject]@{ name = 'first'; value = 1 },
+            [PSCustomObject]@{ name = 'second'; value = 2 }
         )
 
         $copy = Copy-ObjectDeep -object $original
 
         $copy.Count | Should -Be 2
-        $copy[0].name | Should -Be "first"
+        $copy[0].name | Should -Be 'first'
         $copy[1].value | Should -Be 2
 
         # Verify it's a deep copy
-        $copy[0].name = "modified"
-        $original[0].name | Should -Be "first"
+        $copy[0].name = 'modified'
+        $original[0].name | Should -Be 'first'
     }
 
     It "Deep copies PSCustomObject containing hashtable" {
         $original = [PSCustomObject]@{
             config = @{
                 enabled = $true
-                nested  = @{ value = "inner" }
+                nested  = @{ value = 'inner' }
             }
         }
 
         $copy = Copy-ObjectDeep -object $original
 
         $copy.config.enabled | Should -Be $true
-        $copy.config.nested.value | Should -Be "inner"
+        $copy.config.nested.value | Should -Be 'inner'
 
         # Verify it's a deep copy
-        $copy.config.nested.value = "modified"
-        $original.config.nested.value | Should -Be "inner"
+        $copy.config.nested.value = 'modified'
+        $original.config.nested.value | Should -Be 'inner'
     }
 
     It "Handles empty PSCustomObject" {
@@ -516,7 +516,7 @@ Describe "Copy-ObjectDeep" {
 
         $copyObject = Copy-ObjectDeep -object $emptyObject
 
-        $copyObject.GetType().Name | Should -Be "PSCustomObject"
+        $copyObject.GetType().Name | Should -Be 'PSCustomObject'
         @($copyObject.PSObject.Properties).Count | Should -Be 0
     }
 }

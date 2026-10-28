@@ -86,7 +86,7 @@ function Get-ExtensionHandlers {
 
                         return $extFile
                     } catch {
-                        $null = Add-LogEntry -data @{ header = "Xdebug.org Handler - Failed to download extension"; exception = $_ }
+                        $null = Add-LogEntry -data @{ header = 'Xdebug.org Handler - Failed to download extension'; exception = $_ }
                         return $null
                     } finally {
                         if ($temporaryDirectory) {
@@ -185,7 +185,7 @@ function Get-ExtensionHandlers {
 
                         return $extFile
                     } catch {
-                        $null = Add-LogEntry -data @{ header = "PECL Handler - Failed to download extension"; exception = $_ }
+                        $null = Add-LogEntry -data @{ header = 'PECL Handler - Failed to download extension'; exception = $_ }
                         return $null
                     } finally {
                         if ($temporaryDirectory) {
@@ -269,7 +269,7 @@ function Get-ExtensionHandlers {
                     Show-Success -message "`n'XDebug' added to ini file successfully."
                     return 0
                 } catch {
-                    $null = Add-LogEntry -data @{ header = "Xdebug Config Handler - Failed to apply configuration"; exception = $_ }
+                    $null = Add-LogEntry -data @{ header = 'Xdebug Config Handler - Failed to apply configuration'; exception = $_ }
                     return -1
                 }
             }

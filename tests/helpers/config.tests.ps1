@@ -125,7 +125,7 @@ Describe "Get-Scripts" {
 }
 
 Describe "Get-EnvBool" {
-    It 'returns $true for "true" (any case)' {
+    It "returns $true for 'true' (any case)" {
         $code = Get-EnvBool -value 'true'
         $code | Should -BeTrue
 
@@ -136,7 +136,7 @@ Describe "Get-EnvBool" {
         $code | Should -BeTrue
     }
 
-    It 'returns $false for "false" (any case)' {
+    It "returns $false for 'false' (any case)" {
         $code = Get-EnvBool -value 'false'
         $code | Should -BeFalse
 
@@ -147,7 +147,7 @@ Describe "Get-EnvBool" {
         $code | Should -BeFalse
     }
 
-    It 'returns the default when value is $null' {
+    It "returns the default when value is $null" {
         $code = Get-EnvBool -value $null -default $true
         $code | Should -BeTrue
 
@@ -155,17 +155,17 @@ Describe "Get-EnvBool" {
         $code | Should -BeFalse
     }
 
-    It 'returns the default when value is empty string' {
+    It "returns the default when value is empty string" {
         $code = Get-EnvBool -value '' -default $true
         $code | Should -BeTrue
     }
 
-    It 'returns the default when value is whitespace only' {
+    It "returns the default when value is whitespace only" {
         $code = Get-EnvBool -value '   ' -default $true
         $code | Should -BeTrue
     }
 
-    It 'returns the default when value is unparsable garbage' {
+    It "returns the default when value is unparsable garbage" {
         $code = Get-EnvBool -value 'yes' -default $true
         $code | Should -BeTrue
 
@@ -176,17 +176,17 @@ Describe "Get-EnvBool" {
         $code | Should -BeTrue
     }
 
-    It 'defaults to $false when no default is supplied and value is invalid' {
+    It "defaults to $false when no default is supplied and value is invalid" {
         $code = Get-EnvBool -value 'garbage'
         $code | Should -BeFalse
     }
 
-    It 'trims surrounding whitespace around a valid value' {
+    It "trims surrounding whitespace around a valid value" {
         $code = Get-EnvBool -value '  true  '
         $code | Should -BeTrue
     }
 
-    It 'does not throw on any input' {
+    It "does not throw on any input" {
         { Get-EnvBool -value $null } | Should -Not -Throw
         { Get-EnvBool -value '' } | Should -Not -Throw
         { Get-EnvBool -value 'nonsense' } | Should -Not -Throw
@@ -194,63 +194,63 @@ Describe "Get-EnvBool" {
 }
 
 Describe "Get-EnvInt" {
-    It 'parses a valid positive integer' {
+    It "parses a valid positive integer" {
         $code = Get-EnvInt -value '42'
         $code | Should -Be 42
     }
 
-    It 'parses a valid negative integer' {
+    It "parses a valid negative integer" {
         $code = Get-EnvInt -value '-5'
         $code | Should -Be -5
     }
 
-    It 'parses zero' {
+    It "parses zero" {
         $code = Get-EnvInt -value '0'
         $code | Should -Be 0
     }
 
-    It 'returns the default when value is $null' {
+    It "returns the default when value is $null" {
         $code = Get-EnvInt -value $null -default 24
         $code | Should -Be 24
     }
 
-    It 'returns the default when value is empty string' {
+    It "returns the default when value is empty string" {
         $code = Get-EnvInt -value '' -default 24
         $code | Should -Be 24
     }
 
-    It 'returns the default when value is whitespace only' {
+    It "returns the default when value is whitespace only" {
         $code = Get-EnvInt -value '   ' -default 10
         $code | Should -Be 10
     }
 
-    It 'returns the default when value is non-numeric' {
+    It "returns the default when value is non-numeric" {
         $code = Get-EnvInt -value 'abc' -default 10
         $code | Should -Be 10
     }
 
-    It 'returns the default when value is a decimal (not a valid int)' {
+    It "returns the default when value is a decimal (not a valid int)" {
         $code = Get-EnvInt -value '3.14' -default 10
         $code | Should -Be 10
     }
 
-    It 'defaults to 0 when no default is supplied and value is invalid' {
+    It "defaults to 0 when no default is supplied and value is invalid" {
         $code = Get-EnvInt -value 'garbage'
         $code | Should -Be 0
     }
 
-    It 'trims surrounding whitespace around a valid value' {
+    It "trims surrounding whitespace around a valid value" {
         $code = Get-EnvInt -value '  42  '
         $code | Should -Be 42
     }
 
-    It 'does not throw on any input' {
+    It "does not throw on any input" {
         { Get-EnvInt -value $null } | Should -Not -Throw
         { Get-EnvInt -value '' } | Should -Not -Throw
         { Get-EnvInt -value 'nonsense' } | Should -Not -Throw
     }
 
-    It 'handles values exceeding Int32 range by falling back to default' {
+    It "handles values exceeding Int32 range by falling back to default" {
         $code = Get-EnvInt -value '99999999999999999999' -default 5
         $code | Should -Be 5
     }
@@ -262,12 +262,12 @@ Describe "Get-EnvPath" {
             Mock Test-InvalidDrivePath { return $false }
         }
 
-        It 'returns the value for a valid drive-rooted path' {
+        It "returns the value for a valid drive-rooted path" {
             $code = Get-EnvPath -value 'C:\storage\tests'
             $code | Should -Be 'C:\storage\tests'
         }
 
-        It 'accepts any drive letter' {
+        It "accepts any drive letter" {
             $code = Get-EnvPath -value 'D:\foo\bar'
             $code | Should -Be 'D:\foo\bar'
 
@@ -275,12 +275,12 @@ Describe "Get-EnvPath" {
             $code | Should -Be 'z:\foo\bar'
         }
 
-        It 'accepts a bare drive root' {
+        It "accepts a bare drive root" {
             $code = Get-EnvPath -value 'C:'
             $code | Should -Be 'C:'
         }
 
-        It 'trims surrounding whitespace around a valid value' {
+        It "trims surrounding whitespace around a valid value" {
             $code = Get-EnvPath -value '  C:\storage\tests  '
             $code | Should -Be 'C:\storage\tests'
         }
@@ -291,17 +291,17 @@ Describe "Get-EnvPath" {
             Mock Test-InvalidDrivePath { return $true }
         }
 
-        It 'returns the default when value is empty string' {
+        It "returns the default when value is empty string" {
             $code = Get-EnvPath -value '' -default 'C:\default'
             $code | Should -Be 'C:\default'
         }
 
-        It 'returns the default when value is whitespace only' {
+        It "returns the default when value is whitespace only" {
             $code = Get-EnvPath -value '   ' -default 'C:\default'
             $code | Should -Be 'C:\default'
         }
 
-        It 'returns the default when value has no drive prefix' {
+        It "returns the default when value has no drive prefix" {
             $code = Get-EnvPath -value 'storage\tests' -default 'C:\default'
             $code | Should -Be 'C:\default'
 
@@ -309,28 +309,28 @@ Describe "Get-EnvPath" {
             $code | Should -Be 'C:\default'
         }
 
-        It 'returns the default for a UNC path' {
+        It "returns the default for a UNC path" {
             $code = Get-EnvPath -value '\\server\share' -default 'C:\default'
             $code | Should -Be 'C:\default'
         }
 
-        It 'returns the default when value contains invalid path characters' {
+        It "returns the default when value contains invalid path characters" {
             $code = Get-EnvPath -value "C:\storage\test`0dir" -default 'C:\default'
             $code | Should -Be 'C:\default'
         }
 
-        It 'returns the default when value is $null' {
+        It "returns the default when value is $null" {
             $code = Get-EnvPath -value $null -default 'C:\default'
             $code | Should -Be 'C:\default'
         }
     }
 
-    It 'defaults to $null when no default is supplied and value is invalid' {
+    It "defaults to $null when no default is supplied and value is invalid" {
         $code = Get-EnvPath -value 'garbage'
         $code | Should -BeNullOrEmpty
     }
 
-    It 'does not throw on any input' {
+    It "does not throw on any input" {
         { Get-EnvPath -value $null } | Should -Not -Throw
         { Get-EnvPath -value '' } | Should -Not -Throw
         { Get-EnvPath -value 'nonsense' } | Should -Not -Throw

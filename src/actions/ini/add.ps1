@@ -245,7 +245,7 @@ function Install-IniExtension {
 
     try {
         if ($extNames.Count -eq 0) {
-            Show-LabelledWarning -message "Please provide at least one extension name to install"
+            Show-LabelledWarning -message 'Please provide at least one extension name to install'
             return -1
         }
 

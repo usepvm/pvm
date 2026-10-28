@@ -47,7 +47,7 @@ Describe "Show-Scripts" {
             $message -in @("`n  build", "`n  lint")
         }
         Should -Invoke Write-DarkGray -Times 3 -Exactly -ParameterFilter {
-            $message -in @("    test --filter build", "    test --filter unit", "    test --filter lint")
+            $message -in @('    test --filter build', '    test --filter unit', '    test --filter lint')
         }
     }
 
@@ -209,7 +209,7 @@ Describe "Clear-TestDrive" {
     It "Does not attempt to clear when test drive path is invalid" {
         Mock Test-PathValidUnderProjectRoot { return $false }
         Mock Remove-ItemWrapper { return 0 }
-        $Global:PVMConfig.paths.directories.testDrive = "invalid\path\without\drive"
+        $Global:PVMConfig.paths.directories.testDrive = 'invalid\path\without\drive'
 
         Clear-TestDrive
 

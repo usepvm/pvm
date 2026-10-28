@@ -26,9 +26,9 @@ Describe "Write-HostWrapper" {
         $Global:PVMConfig.subprocess.enabled = $false
         Mock Write-Host { }
 
-        $object = "Test message"
-        $foregroundColor = "Green"
-        $backgroundColor = "Red"
+        $object = 'Test message'
+        $foregroundColor = 'Green'
+        $backgroundColor = 'Red'
         $noNewLine = $false
 
         Write-HostWrapper -object $object -foregroundColor $foregroundColor -backgroundColor $backgroundColor -noNewLine:$noNewLine
@@ -76,7 +76,7 @@ Describe "Read-HostWrapper" {
     It "Calls Read-Host with the correct parameters" {
         Mock Read-Host { return 'Test response' }
 
-        $prompt = "Test prompt"
+        $prompt = 'Test prompt'
 
         $result = Read-HostWrapper -prompt $prompt
 
@@ -141,7 +141,7 @@ Describe "Add-ContentWrapper" {
         Mock Add-Content { }
 
         $path = "$script:TEST_DRIVE\test.txt"
-        $content = "Test content"
+        $content = 'Test content'
 
         $result = Add-ContentWrapper -path $path -value $content
 
@@ -158,7 +158,7 @@ Describe "Add-ContentWrapper" {
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
 
         $path = "$script:TEST_DRIVE\test.txt"
-        $content = "Test content"
+        $content = 'Test content'
 
         $result = Add-ContentWrapper -path $path -value $content
 
@@ -172,7 +172,7 @@ Describe "Add-ContentWrapper" {
         Mock Add-Content { throw 'Test error' }
 
         $path = "$script:TEST_DRIVE\test.txt"
-        $content = "Test content"
+        $content = 'Test content'
 
         $result = Add-ContentWrapper -path $path -value $content
 
@@ -185,7 +185,7 @@ Describe "Set-ContentWrapper" {
         Mock Set-Content { }
 
         $path = "$script:TEST_DRIVE\test.txt"
-        $content = "Test content"
+        $content = 'Test content'
 
         $result = Set-ContentWrapper -path $path -value $content
 
@@ -202,7 +202,7 @@ Describe "Set-ContentWrapper" {
         Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
 
         $path = "$script:TEST_DRIVE\test.txt"
-        $content = "Test content"
+        $content = 'Test content'
 
         $result = Set-ContentWrapper -path $path -value $content
 
@@ -216,7 +216,7 @@ Describe "Set-ContentWrapper" {
         Mock Set-Content { throw 'Test error' }
 
         $path = "$script:TEST_DRIVE\test.txt"
-        $content = "Test content"
+        $content = 'Test content'
 
         $result = Set-ContentWrapper -path $path -value $content
 

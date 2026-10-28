@@ -601,7 +601,8 @@ Describe "Write-TestHeader" {
 
         Write-TestHeader -file $file -coveredFile $coveredFile -separatorWidth $separatorWidth
 
-        Should -Invoke Show-Info -Times 4 -Exactly
+        Should -Invoke Show-Info -Times 2 -Exactly
+        Should -Invoke Write-White -Times 2 -Exactly
     }
 
     It "Writes test header without covered file" {
@@ -610,7 +611,8 @@ Describe "Write-TestHeader" {
 
         Write-TestHeader -file $file -coveredFile $null -separatorWidth $separatorWidth
 
-        Should -Invoke Show-Info -Times 3 -Exactly
+        Should -Invoke Show-Info -Times 1 -Exactly
+        Should -Invoke Write-White -Times 2 -Exactly
     }
 }
 

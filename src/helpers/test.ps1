@@ -230,12 +230,12 @@ function Get-SeparatorWidth {
 function Write-TestHeader {
     param ($file, $coveredFile, $separatorWidth)
 
-    Show-Info -message "`n`n$('-' * $separatorWidth)"
+    Write-White -message "`n`n$('-' * $separatorWidth)"
     Show-Info -message "- Running test: $($file.Name) | $($file.FullName)"
     if ($coveredFile) {
         Show-Info -message "- Covered file: $($coveredFile.Name) | $($coveredFile.FullName)"
     }
-    Show-Info -message ('-' * $separatorWidth)
+    Write-White -message ('-' * $separatorWidth)
 }
 
 function Format-TestResultMessage {

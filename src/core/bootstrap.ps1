@@ -285,7 +285,7 @@ function Start-PVM {
         return $result
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - An error occurred during command '$command'"; exception = $_ }
-        Show-Error -message "`nCommand canceled or failed to elevate privileges."
+        Show-LabelledError -message "`nCommand canceled or failed to elevate privileges."
         return -1
     } finally {
         $code = Remove-ItemWrapper -path "$($Global:PVMConfig.paths.directories.temp)\*"

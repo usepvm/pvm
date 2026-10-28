@@ -1756,9 +1756,7 @@ Describe "Get-ExtensionMatchingCategories" {
         $result = Get-ExtensionMatchingCategories -extName 'mem'
 
         $result.Count | Should -Be 0
-        Should -Invoke Show-Error -Exactly 1 -ParameterFilter {
-            $message -like "*No extensions found*"
-        }
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like "*No extensions found*" }
     }
 }
 
@@ -1805,9 +1803,7 @@ Describe "Select-ExtensionFromMatches" {
             $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
 
             $result | Should -Be $null
-            Should -Invoke Write-Gray -Times 1 -ParameterFilter {
-                $message -eq "`nInstallation cancelled"
-            }
+            Should -Invoke Write-Gray -Times 1 -ParameterFilter { $message -eq "`nOperation cancelled" }
         }
 
         It "Reprompts user when typing invalid choice" {
@@ -1863,9 +1859,7 @@ Describe "Resolve-ExtensionLinks" {
             $result = Resolve-ExtensionLinks -extName 'unknownext' -version '8.2'
 
             $result | Should -Be $null
-            Should -Invoke Show-Error -ParameterFilter {
-                $message -match "Extension 'unknownext' not found"
-            } -Exactly 1
+            Should -Invoke Show-Error -ParameterFilter { $message -match "Extension 'unknownext' not found" } -Exactly 1
         }
 
         It "Takes the only link found" {

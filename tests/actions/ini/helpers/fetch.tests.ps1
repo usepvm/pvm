@@ -22,6 +22,7 @@ BeforeAll {
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $Global:PVMConfig.links.peclWinExtDownload
 
     Mock Show-Message { }
+    Mock Show-Success { }
     Mock Show-Error { }
     Mock Show-Info { }
     Mock Write-Gray { }
@@ -194,7 +195,7 @@ Describe "Get-ExtensionHandlers" {
             Should -Invoke Write-Gray -ParameterFilter { $message -like '*Installation cancelled*' }
         }
 
-        It "Removes the existing file when ext id name matches" {
+        It "Removes the existing file when ext id name matches and user answer 'y'" {
             Mock Get-XDebugFromUrl { return $null }
             $tempDirectory = "$script:TEST_DRIVE\temp\php"
             $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
@@ -682,6 +683,7 @@ Describe "Get-ExtensionHandlers" {
             Should -Invoke Add-LogEntry -Times 1
         }
     }
+
     Context "When running config actions from selected config handler" {
         It "Configures xdebug in ini file" {
             $iniContent = @(
@@ -704,6 +706,31 @@ Describe "Get-ExtensionHandlers" {
             $result | Should -Be 0
             Should -Invoke Set-ContentWrapper -Times 1
             Should -Invoke Add-ContentWrapper -Times 1
+            Should -Invoke Show-Success -ParameterFilter { $message -match "'XDebug' added to ini file successfully" }
+        }
+
+        It "Return -1 when adding xdebug config to ini fails" {
+            $iniContent = @(
+                ';extension=php_sqlsrv.dll',
+                '',
+                '[xdebug]',
+                'zend_extension=php_xdebug.dll',
+                'xdebug.mode=debug'
+            )
+            Mock Get-ContentWrapper { return $iniContent }
+            Mock Set-ContentWrapper { return 0 }
+            Mock Add-ContentWrapper { return -1 }
+
+            $configHandlers = (Get-ExtensionHandlers).ExtensionConfigHandlers
+            $configHandler = $configHandlers['xdebug']
+
+            $result = & $configHandler -iniPath $script:testIniPath -fileName 'php_xdebug.dll' -extVersion '3.5'
+
+            $configHandler | Should -Not -BeNullOrEmpty
+            $result | Should -Be -1
+            Should -Invoke Set-ContentWrapper -Times 1
+            Should -Invoke Add-ContentWrapper -Times 1
+            Should -Invoke Show-Error -ParameterFilter { $message -match "Failed to add 'XDebug' to ini file" }
         }
 
         It "Returns -1 when writing to ini file fails" {

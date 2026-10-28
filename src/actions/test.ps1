@@ -226,7 +226,7 @@ function Invoke-Tests {
 
         $totalDurationFormatted = Format-Seconds -totalSeconds $testData.totalDuration
 
-        Show-Message -message "Test Results Summary:" -underlined
+        Show-Message -message 'Test Results Summary:' -underlined
         Show-Message -message " Files tested ........... $($testData.testSummary.Length)"
         Show-Message -message " Total tests ............ $($testData.totalTests)"
         Show-Message -message " Total passed ........... $($testData.totalPassedTests)"
@@ -247,7 +247,7 @@ function Invoke-Tests {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
-        Show-LabelledError -message "`nFailed to run tests, check log: $($Global:PVMConfig.paths.files.logError)"
+        Show-LabelledError -message "Failed to run tests, check log: $($Global:PVMConfig.paths.files.logError)"
         return -1
     }
 }

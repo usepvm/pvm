@@ -13,12 +13,12 @@ function Invoke-PhpIniBackup {
             Show-LabelledSuccess -message "Backup created successfully at $iniBackupPath"
             return 0
         } else {
-            Show-LabelledError -message "Failed to create backup."
+            Show-LabelledError -message 'Failed to create backup.'
             return -1
         }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to invoke php.ini backup"; exception = $_ }
-        Show-LabelledError -message "Failed to create backup."
+        Show-LabelledError -message 'Failed to create backup.'
         return -1
     }
 }
@@ -32,15 +32,15 @@ function Invoke-PhpIniBackupCleanup {
         $result = Clear-IniBackups -iniBackupPath $iniBackupPath
 
         if ($result -eq 0) {
-            Show-LabelledSuccess -message "Backup cleanup completed successfully."
+            Show-LabelledSuccess -message 'Backup cleanup completed successfully.'
             return 0
         } else {
-            Show-LabelledWarning -message "No backups found or cleanup not needed."
+            Show-LabelledWarning -message 'No backups found or cleanup not needed.'
             return 0
         }
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to invoke php.ini backup cleanup"; exception = $_ }
-        Show-LabelledError -message "Failed to cleanup backups."
+        Show-LabelledError -message 'Failed to cleanup backups.'
         return -1
     }
 }

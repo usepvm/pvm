@@ -8,7 +8,7 @@ function Invoke-IniAction {
         $currentPhpVersion = Get-CurrentPHPVersion
 
         if (-not $currentPhpVersion -or -not $currentPhpVersion.version -or -not $currentPhpVersion.path) {
-            Show-LabelledError -message "Failed to get current PHP version."
+            Show-LabelledError -message 'Failed to get current PHP version.'
             return -1
         }
 
@@ -28,7 +28,7 @@ function Invoke-IniAction {
             }
             'get' {
                 if ($params.Count -eq 0) {
-                    Show-LabelledWarning -message "Please specify at least one setting name ('pvm ini get memory_limit)."
+                    Show-LabelledWarning -message 'Please specify at least one setting name (pvm ini get memory_limit).'
                     return -1
                 }
 
@@ -50,7 +50,7 @@ function Invoke-IniAction {
             }
             'enable' {
                 if ($params.Count -eq 0) {
-                    Show-LabelledWarning -message "Please specify at least one extension (pvm ini enable curl)."
+                    Show-LabelledWarning -message 'Please specify at least one extension (pvm ini enable curl).'
                     return -1
                 }
 
@@ -60,7 +60,7 @@ function Invoke-IniAction {
             }
             'disable' {
                 if ($params.Count -eq 0) {
-                    Show-LabelledWarning -message "Please specify at least one extension (pvm ini disable xdebug)."
+                    Show-LabelledWarning -message 'Please specify at least one extension (pvm ini disable xdebug).'
                     return -1
                 }
 
@@ -70,7 +70,7 @@ function Invoke-IniAction {
             }
             'status' {
                 if ($params.Count -eq 0) {
-                    Show-LabelledWarning -message "Please specify at least one extension (pvm ini status opcache)."
+                    Show-LabelledWarning -message 'Please specify at least one extension (pvm ini status opcache).'
                     return -1
                 }
 
@@ -91,7 +91,7 @@ function Invoke-IniAction {
             }
             'add' {
                 if ($params.Count -eq 0) {
-                    Show-LabelledWarning -message "Please specify at least one extension (pvm ini add xdebug)."
+                    Show-LabelledWarning -message 'Please specify at least one extension (pvm ini add xdebug).'
                     return -1
                 }
 
@@ -104,7 +104,7 @@ function Invoke-IniAction {
             }
             'remove' {
                 if ($params.Count -eq 0) {
-                    Show-LabelledWarning -message "Please specify at least one extension (pvm ini remove xdebug)."
+                    Show-LabelledWarning -message 'Please specify at least one extension (pvm ini remove xdebug).'
                     return -1
                 }
 
@@ -118,7 +118,7 @@ function Invoke-IniAction {
             'ext' {
                 if ($params -contains 'info') {
                     if ($params.Count -ne 2) {
-                        Show-LabelledWarning -message "Please specify one extension name ('pvm ini ext info sql')."
+                        Show-LabelledWarning -message 'Please specify one extension name (pvm ini ext info sql).'
                         return -1
                     }
 

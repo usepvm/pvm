@@ -26,11 +26,11 @@ function Update-PHPVersion {
 
         $linkCreated = New-SymbolicLink -link $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -target $pathVersionObject.path -allowOutsideRoot
         if ($linkCreated.code -ne 0) {
-            Show-LabelledError -message "$($linkCreated.message)"
+            Show-LabelledError -message $linkCreated.message
             return -1
         }
         $text = ("Now using PHP $($pathVersionObject.version) $($pathVersionObject.buildType) $($pathVersionObject.arch)").Trim()
-        Show-LabelledSuccess -message "$text"
+        Show-LabelledSuccess -message $text
 
         return 0
     } catch {

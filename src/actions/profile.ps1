@@ -426,20 +426,20 @@ function Show-PHPProfiles {
                 }
             } catch {
                 $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to parse profile file '$($file.Name)'"; exception = $_ }
-                Show-LabelledError -message "  Warning: Failed to parse $($file.Name)"
+                Show-Error -message "`n Warning: Failed to parse $($file.Name)"
             }
         }
 
         $maxNameLength = ($profiles.Name | Measure-Object -Maximum Length).Maximum + $Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH
 
         foreach ($userProfile in $profiles) {
-            Show-Message -message (' Name '.PadRight($maxNameLength, '.') + " $($userProfile.Name)")
+            Show-Message -message ("`n Name ".PadRight($maxNameLength + 1, '.') + " $($userProfile.Name)")
             Show-Message -message ('   Description '.PadRight($maxNameLength, '.') + " $($userProfile.Description)")
             Show-Message -message ('   Created '.PadRight($maxNameLength, '.') + " $($userProfile.Created)")
             Show-Message -message ('   PHP '.PadRight($maxNameLength, '.') + " $($userProfile.PHPVersion)")
             Show-Message -message ('   Settings '.PadRight($maxNameLength, '.') + " $($userProfile.Settings)")
             Show-Message -message ('   Extensions '.PadRight($maxNameLength, '.') + " $($userProfile.Extensions)")
-            Show-Message -message ('   Path '.PadRight($maxNameLength, '.') + " $($Global:PVMConfig.paths.directories.profiles)\$($userProfile.File)`n")
+            Show-Message -message ('   Path '.PadRight($maxNameLength, '.') + " $($Global:PVMConfig.paths.directories.profiles)\$($userProfile.File)")
         }
 
         return 0

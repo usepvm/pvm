@@ -56,7 +56,6 @@ function Restore-IniBackup {
         }
 
         Show-LabelledSuccess -message "Restored php.ini from backup: $($selectedBackup.file.Name)"
-
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Restore-IniBackup: Failed to restore ini backup"; exception = $_ }

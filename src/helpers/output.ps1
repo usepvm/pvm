@@ -173,55 +173,55 @@ function Write-BgColor {
 function Write-White {
     param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor White -noNewLine:$noNewLine -underlined:$underlined
+    Write-Color -message $message -foreColor 'White' -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-DarkGreen {
     param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor DarkGreen -noNewLine:$noNewLine -underlined:$underlined
+    Write-Color -message $message -foreColor 'DarkGreen' -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-DarkYellow {
     param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor DarkYellow -noNewLine:$noNewLine -underlined:$underlined
+    Write-Color -message $message -foreColor 'DarkYellow' -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-Yellow {
     param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor Yellow -noNewLine:$noNewLine -underlined:$underlined
+    Write-Color -message $message -foreColor 'Yellow' -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-Cyan {
     param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor Cyan -noNewLine:$noNewLine -underlined:$underlined
+    Write-Color -message $message -foreColor 'Cyan' -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-Magenta {
     param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor Magenta -noNewLine:$noNewLine -underlined:$underlined
+    Write-Color -message $message -foreColor 'Magenta' -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-Blue {
     param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor Blue -noNewLine:$noNewLine -underlined:$underlined
+    Write-Color -message $message -foreColor 'Blue' -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-DarkGray {
     param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor DarkGray -noNewLine:$noNewLine -underlined:$underlined
+    Write-Color -message $message -foreColor 'DarkGray' -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Write-Gray {
     param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor Gray -noNewLine:$noNewLine -underlined:$underlined
+    Write-Color -message $message -foreColor 'Gray' -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Show-Success {
@@ -285,7 +285,7 @@ function Show-Value {
 function Show-Message {
     param ($message, [switch]$noNewLine, [switch]$underlined)
 
-    Write-Color -message $message -foreColor White -noNewLine:$noNewLine -underlined:$underlined
+    Write-Color -message $message -foreColor 'White' -noNewLine:$noNewLine -underlined:$underlined
 }
 
 function Show-Label {

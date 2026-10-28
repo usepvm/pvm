@@ -104,6 +104,7 @@ function Set-IniSetting {
         return $overallCode
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set ini setting '$($keys -join ', ')'"; exception = $_ }
+        Show-LabelledError -message 'Failed to set requested extensions'
         return -1
     }
 }

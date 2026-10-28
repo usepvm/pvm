@@ -13,6 +13,9 @@ BeforeAll {
     Mock Show-Message { }
     Mock Show-Success { }
     Mock Show-Error { }
+    Mock Show-LabelledSuccess { }
+    Mock Show-LabelledWarning { }
+    Mock Show-LabelledError { }
     Mock Add-LogEntry { return 0 }
     Mock Show-Warning { }
 }
@@ -25,8 +28,8 @@ Describe "Invoke-PhpIniBackup" {
 
         $result | Should -Be 0
         Should -Invoke Show-Message -Times 1
-        Should -Invoke Show-Success -Times 1
-        Should -Invoke Show-Error -Times 0
+        Should -Invoke Show-LabelledSuccess -Times 1
+        Should -Invoke Show-LabelledError -Times 0
     }
 
     It "Returns -1 and shows error when backup fails" {
@@ -36,8 +39,8 @@ Describe "Invoke-PhpIniBackup" {
 
         $result | Should -Be -1
         Should -Invoke Show-Message -Times 1
-        Should -Invoke Show-Error -Times 1
-        Should -Invoke Show-Success -Times 0
+        Should -Invoke Show-LabelledError -Times 1
+        Should -Invoke Show-LabelledSuccess -Times 0
     }
 
     It "Returns -1 and logs exception when backup throws" {
@@ -47,7 +50,7 @@ Describe "Invoke-PhpIniBackup" {
 
         $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
-        Should -Invoke Show-Error -Times 1
+        Should -Invoke Show-LabelledError -Times 1
     }
 }
 
@@ -59,9 +62,9 @@ Describe "Invoke-PhpIniBackupCleanup" {
 
         $result | Should -Be 0
         Should -Invoke Show-Message -Times 1
-        Should -Invoke Show-Success -Times 1
-        Should -Invoke Show-Warning -Times 0
-        Should -Invoke Show-Error -Times 0
+        Should -Invoke Show-LabelledSuccess -Times 1
+        Should -Invoke Show-LabelledWarning -Times 0
+        Should -Invoke Show-LabelledError -Times 0
     }
 
     It "Returns 0 and shows warning when cleanup fails" {
@@ -71,9 +74,9 @@ Describe "Invoke-PhpIniBackupCleanup" {
 
         $result | Should -Be 0
         Should -Invoke Show-Message -Times 1
-        Should -Invoke Show-Warning -Times 1
-        Should -Invoke Show-Success -Times 0
-        Should -Invoke Show-Error -Times 0
+        Should -Invoke Show-LabelledWarning -Times 1
+        Should -Invoke Show-LabelledSuccess -Times 0
+        Should -Invoke Show-LabelledError -Times 0
     }
 
     It "Returns -1 and logs exception when cleanup throws" {
@@ -83,6 +86,6 @@ Describe "Invoke-PhpIniBackupCleanup" {
 
         $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
-        Should -Invoke Show-Error -Times 1
+        Should -Invoke Show-LabelledError -Times 1
     }
 }

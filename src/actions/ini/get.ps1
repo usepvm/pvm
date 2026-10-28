@@ -50,6 +50,7 @@ function Get-IniSetting {
         return $overallCode
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get ini setting '$($keys -join ', ')'"; exception = $_ }
+        Show-LabelledError -message 'Failed to get requested extensions'
         return -1
     }
 }

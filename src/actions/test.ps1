@@ -247,7 +247,7 @@ function Invoke-Tests {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to run tests"; exception = $_ }
-        Show-Error -message "`nFailed to run tests, check log: $($Global:PVMConfig.paths.files.logError)"
+        Show-LabelledError -message "`nFailed to run tests, check log: $($Global:PVMConfig.paths.files.logError)"
         return -1
     }
 }

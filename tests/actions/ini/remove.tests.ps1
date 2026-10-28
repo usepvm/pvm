@@ -22,7 +22,11 @@ BeforeAll {
     Mock Show-Error { }
     Mock Show-Info { }
     Mock Show-Message { }
+    Mock Show-LabelledError { }
+    Mock Show-LabelledWarning { }
     Mock Write-Color { }
+    Mock Write-Cyan { }
+    Mock Write-White { }
 
     Mock Add-LogEntry { return 0 }
 
@@ -192,8 +196,8 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @()
 
         $result | Should -Be -1
-        Should -Invoke Show-Warning -Times 1 -ParameterFilter {
-            $message -eq "`nPlease provide at least one extension name to uninstall"
+        Should -Invoke Show-LabelledWarning -Times 1 -ParameterFilter {
+            $message -eq 'Please provide at least one extension name to uninstall'
         }
     }
 
@@ -203,7 +207,7 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('curl')
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+        Should -Invoke Show-LabelledError -Times 1 -ParameterFilter {
             $message -like "*Extensions directory not found*"
         }
     }
@@ -214,8 +218,11 @@ Describe "Uninstall-Extension" {
         $result = Uninstall-Extension -iniPath $script:testIniPath -extNames @('nonexistent')
 
         $result | Should -Be -1
-        Should -Invoke Show-Message -Times 1 -ParameterFilter {
+        Should -Invoke Write-White -Times 1 -ParameterFilter {
             $message -like "*nonexistent*"
+        }
+        Should -Invoke Write-Color -Times 1 -ParameterFilter {
+            $message -like "*Not Found*" -and $foreColor -eq 'DarkYellow'
         }
     }
 
@@ -430,7 +437,7 @@ Describe "Uninstall-Extension" {
         Should -Invoke Write-Color -Times 1 -ParameterFilter {
             $message -eq ' Uninstalled'
         }
-        Should -Invoke Show-Warning -ParameterFilter { $message -eq 'Please enter a valid positive number.'}
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Please enter a valid positive number*'}
         Should -Invoke Show-Warning -ParameterFilter { $message -like "*Number must be between 0 and $($matchingExtensions.Length - 1)*" }
     }
 

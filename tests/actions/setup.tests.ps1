@@ -14,10 +14,13 @@ BeforeAll {
     $script:PHP_CURRENT_VERSION_PATH = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
     $script:PVM_ENV_VAR_NAME = $Global:PVMConfig.env.PVM_ENV_VAR_NAME
 
-    Mock Show-Message { }
     Mock Show-Success { }
     Mock Show-Error { }
     Mock Show-Info { }
+    Mock Show-LabelledSuccess { }
+    Mock Show-LabelledError { }
+    Mock Write-White { }
+    Mock Write-Cyan { }
     Mock Add-LogEntry { return 0 }
 }
 
@@ -294,7 +297,7 @@ Describe "New-EnvFile" {
 
         $result | Should -Be -1
         Should -Invoke Copy-ItemWrapper -Times 0
-        Should -Invoke Show-Error -Times 1 -ParameterFilter {
+        Should -Invoke Show-LabelledError -Times 1 -ParameterFilter {
             $message -like '*Failed to find .env.example file.*'
         }
     }
@@ -319,7 +322,7 @@ Describe "New-EnvFile" {
 
         $result | Should -Be 0
         Should -Invoke Copy-ItemWrapper -Times 1
-        Should -Invoke Show-Success -Times 1 -ParameterFilter {
+        Should -Invoke Show-LabelledSuccess -Times 1 -ParameterFilter {
             $message -like '*Created .env file.*'
         }
     }
@@ -334,7 +337,7 @@ Describe "New-EnvFile" {
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Times 0
         Should -Invoke Copy-ItemWrapper -Times 1
-        Should -Invoke Show-Success -Times 1 -ParameterFilter {
+        Should -Invoke Show-LabelledSuccess -Times 1 -ParameterFilter {
             $message -like '*Created .env file.*'
         }
     }
@@ -348,7 +351,7 @@ Describe "New-EnvFile" {
 
         $result | Should -Be -1
         Should -Invoke Copy-ItemWrapper -Times 1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -like '*Failed to create .env file*' }
+        Should -Invoke Show-LabelledError -Times 1 -ParameterFilter { $message -like '*Failed to create .env file*' }
     }
 
     It "Returns -1 when the .env is not created" {

@@ -260,7 +260,14 @@ function Get-ExtensionHandlers {
                     }
                     $xDebugConfig = "`n$($xDebugConfig -join "`n")"
 
-                    return (Add-ContentWrapper -path $iniPath -value $xDebugConfig)
+                    $code = Add-ContentWrapper -path $iniPath -value $xDebugConfig
+                    if ($code -ne 0) {
+                        Show-Error -message "`nFailed to add 'XDebug' to ini file!"
+                        return -1
+                    }
+
+                    Show-Success -message "`n'XDebug' added to ini file successfully."
+                    return 0
                 } catch {
                     $null = Add-LogEntry -data @{ header = "Xdebug Config Handler - Failed to apply configuration"; exception = $_ }
                     return -1

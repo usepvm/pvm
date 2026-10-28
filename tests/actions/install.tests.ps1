@@ -99,6 +99,8 @@ BeforeAll {
     Mock Show-Success { }
     Mock Show-Message { }
     Mock Show-Warning { }
+    Mock Show-LabelledSuccess { }
+    Mock Show-LabelledError { }
     Mock Write-Gray { }
     Mock Write-Color { }
 }
@@ -753,7 +755,7 @@ Describe "Install-PHP" {
         $result = Install-PHP -version '8'
 
         $result | Should -Be -1
-        Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -eq 'Installation cancelled' }
+        Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -like '*Installation cancelled*' }
     }
 
     It "Installs PHP when user accepts family version install" {
@@ -780,7 +782,7 @@ Describe "Install-PHP" {
         $result = Install-PHP -version '8.1'
 
         $result | Should -Be -1
-        Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -eq 'Installation cancelled' }
+        Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -like '*Installation cancelled*' }
     }
 
     It "Returns -1 when user selection is already installed" {
@@ -805,7 +807,7 @@ Describe "Install-PHP" {
         $result = Install-PHP -version '8'
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like '*Failed to download PHP version 8.1.15*' }
+        Should -Invoke Show-LabelledError -Exactly 1 -ParameterFilter { $message -like '*Failed to download PHP version 8.1.15*' }
     }
 
     It "Handles exception gracefully" {
@@ -844,7 +846,7 @@ Describe "Install-PHP" {
         $result = Install-PHP -version '8.1'
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like "*Failed to download PHP version 8.1*" }
+        Should -Invoke Show-LabelledError -Exactly 1 -ParameterFilter { $message -like "*Failed to download PHP version 8.1*" }
     }
 
     It "Should handle extraction failure" {
@@ -864,7 +866,7 @@ Describe "Install-PHP" {
         $result = Install-PHP -version '8.1'
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like "*Failed to extract PHP version 8.1*" }
+        Should -Invoke Show-LabelledError -Exactly 1 -ParameterFilter { $message -like "*Failed to extract PHP version 8.1*" }
     }
 
     It "Should handle missing php.ini" {
@@ -885,7 +887,7 @@ Describe "Install-PHP" {
         $result = Install-PHP -version '8.1'
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like "*Failed to find php.ini for PHP version 8.1*" }
+        Should -Invoke Show-LabelledError -Exactly 1 -ParameterFilter { $message -like "*Failed to find php.ini for PHP version 8.1*" }
     }
 
     It "Should prompt for family version when other versions exist" {

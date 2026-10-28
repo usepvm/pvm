@@ -19,8 +19,11 @@ BeforeAll {
     Mock Show-Value { }
     Mock Show-Debug { }
     Mock Show-Info { }
+    Mock Show-LabelledError { }
+    Mock Show-LabelledWarning { }
     Mock Show-Header { }
     Mock Clear-Host { }
+    Mock Write-White { }
     Mock Write-DarkGray { }
     Mock Add-LogEntry { return 0 }
 }
@@ -110,27 +113,21 @@ Describe "Test-LogPageSize" {
         $result = Test-LogPageSize -pageSize 'abc'
 
         $result | Should -Be $false
-        Should -Invoke Show-Error -Times 1 -ParameterFilter {
-            $message -eq "`nInvalid page size: abc"
-        }
+        Should -Invoke Show-LabelledError -Times 1 -ParameterFilter { $message -eq 'Invalid page size: abc' }
     }
 
     It "returns -1 for invalid page size (zero)" {
         $result = Test-LogPageSize -pageSize 0
 
         $result | Should -Be $false
-        Should -Invoke Show-Error -Times 1 -ParameterFilter {
-            $message -eq "`nPage size must be a positive integer."
-        }
+        Should -Invoke Show-LabelledError -Times 1 -ParameterFilter { $message -eq 'Page size must be a positive integer.' }
     }
 
     It "returns -1 for invalid page size (negative number)" {
         $result = Test-LogPageSize -pageSize -5
 
         $result | Should -Be $false
-        Should -Invoke Show-Error -Times 1 -ParameterFilter {
-            $message -eq "`nPage size must be a positive integer."
-        }
+        Should -Invoke Show-LabelledError -Times 1 -ParameterFilter { $message -eq 'Page size must be a positive integer.' }
     }
 
     It "returns true for valid page size" {
@@ -341,7 +338,7 @@ Describe "Show-Log" {
         $result = Show-Log -pageSize 1
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Times 1
+        Should -Invoke Show-LabelledError -Times 1
     }
 
     It "returns -1 if log file is empty" {
@@ -351,7 +348,7 @@ Describe "Show-Log" {
         $result = Show-Log -pageSize 5
 
         $result | Should -Be -1
-        Should -Invoke Show-Warning -Times 1
+        Should -Invoke Show-LabelledWarning -Times 1
     }
 
     It "displays log entries" {
@@ -403,7 +400,7 @@ Describe "Show-Log" {
         $result = Show-Log -pageSize 1
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Times 1
+        Should -Invoke Show-LabelledError -Times 1
         Should -Invoke Add-LogEntry -Times 1
     }
 }

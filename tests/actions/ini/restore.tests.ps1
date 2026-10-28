@@ -17,8 +17,10 @@ BeforeAll {
     Mock Show-Error { }
     Mock Show-Success { }
     Mock Show-Warning { }
-    Mock Show-Info { }
     Mock Show-Message { }
+    Mock Show-LabelledError { }
+    Mock Show-LabelledSuccess { }
+    Mock Write-Cyan { }
     Mock Write-Gray { }
     Mock Add-LogEntry { return 0 }
     Mock Format-NiceTimestamp {
@@ -52,11 +54,11 @@ Describe "Restore-IniBackup" {
         $result = Restore-IniBackup -iniPath $script:testIniPath
 
         $result | Should -Be 0
-        Should -Invoke Show-Info -Times 1
+        Should -Invoke Write-Cyan -Times 1
         Should -Invoke Show-Message -Times 1
         Should -Invoke Write-Gray -Times 1
         Should -Invoke Copy-ItemWrapper -Times 1
-        Should -Invoke Show-Success -Times 1
+        Should -Invoke Show-LabelledSuccess -Times 1
     }
 
     It "Returns -1 when backup directory does not exist" {
@@ -65,7 +67,7 @@ Describe "Restore-IniBackup" {
         $result = Restore-IniBackup -iniPath $script:testIniPath
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Times 1
+        Should -Invoke Show-LabelledError -Times 1
         Should -Invoke Get-ChildItemWrapper -Times 0
     }
 
@@ -75,7 +77,7 @@ Describe "Restore-IniBackup" {
         $result = Restore-IniBackup -iniPath $script:testIniPath
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Times 1
+        Should -Invoke Show-LabelledError -Times 1
         Should -Invoke Copy-ItemWrapper -Times 0
     }
 
@@ -85,7 +87,7 @@ Describe "Restore-IniBackup" {
         $result = Restore-IniBackup -iniPath $script:testIniPath
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -Times 1
+        Should -Invoke Show-LabelledError -Times 1
     }
 
     It "Returns -1 when user enters invalid number" {
@@ -124,7 +126,7 @@ Describe "Restore-IniBackup" {
         $result = Restore-IniBackup -iniPath $script:testIniPath
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to restore php.ini from backup: $script:testBackupPath\php.ini_2026-01-01_12-00.bak*" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*Failed to restore php.ini from backup: '$script:testBackupPath\php.ini_2026-01-01_12-00.bak'*" }
     }
 
     It "Returns -1 when Copy-ItemWrapper throws" {
@@ -134,7 +136,7 @@ Describe "Restore-IniBackup" {
 
         $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
-        Should -Invoke Show-Error -Times 1
+        Should -Invoke Show-LabelledError -Times 1
     }
 
     It "Handles multiple backup files" {

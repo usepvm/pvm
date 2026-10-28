@@ -18,6 +18,8 @@ BeforeAll {
 
     Mock Show-Success { }
     Mock Show-Error { }
+    Mock Show-LabelledSuccess { }
+    Mock Show-LabelledError { }
     Mock Write-Gray { }
     Mock Write-Color { }
     Mock Add-LogEntry { return 0 }
@@ -50,7 +52,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $true
 
             $result | Should -Be 0
-            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -like '*PHP version 7.4 has been uninstalled successfully*' }
+            Should -Invoke Show-LabelledSuccess -Exactly 1 -ParameterFilter { $message -like '*PHP version 7.4 has been uninstalled successfully*' }
 
             Should -Invoke Remove-ItemWrapper -Exactly 1 -ParameterFilter {
                 $path -eq "$script:testPhpPath\7.4"
@@ -84,7 +86,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $false
 
             $result | Should -Be 0
-            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -like '*PHP version 7.4 has been uninstalled successfully*' }
+            Should -Invoke Show-LabelledSuccess -Exactly 1 -ParameterFilter { $message -like '*PHP version 7.4 has been uninstalled successfully*' }
 
             Should -Invoke Read-HostWrapper -Exactly 1
             Should -Invoke Remove-ItemWrapper -Exactly 1
@@ -183,7 +185,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version '8.*' -skipConfirmation $true
 
             $result | Should -Be 0
-            Should -Invoke Show-Success -Exactly 1 -ParameterFilter { $message -like '*PHP version 8.0 has been uninstalled successfully*' }
+            Should -Invoke Show-LabelledSuccess -Exactly 1 -ParameterFilter { $message -like '*PHP version 8.0 has been uninstalled successfully*' }
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
             Should -Invoke Get-UserSelectedPHPVersion -Exactly 1
@@ -195,19 +197,20 @@ Describe "Uninstall-PHP" {
 
     Context "When PHP version is not found at all" {
         BeforeEach {
-            Mock Get-MatchingPHPVersions -ParameterFilter { $version -eq '5.6' } -MockWith { return @() }
-            Mock Get-UserSelectedPHPVersion { }
+            Mock Get-MatchingPHPVersions { return $null }
+            Mock Get-UserSelectedPHPVersion { return $null }
             Mock Remove-ItemWrapper { return 0 }
             Mock Add-LogEntry { return 0 }
         }
 
         It "Should return version not found message" {
-            $result = Uninstall-PHP -version '5.6' -skipConfirmation $true
+            $result = Uninstall-PHP -version '8.2' -skipConfirmation $true
 
             $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like '*PHP version 5.6 was not found!*' }
+            Should -Invoke Show-LabelledError -Exactly 1 -ParameterFilter { $message -like '*PHP version 8.2 was not found!*' }
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
+            Should -Invoke Get-UserSelectedPHPVersion -Exactly 1
             Should -Invoke Remove-ItemWrapper -Exactly 0
         }
     }
@@ -228,27 +231,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version '8.*' -skipConfirmation $true
 
             $result | Should -Be -1
-            Should -Invoke Write-Color -Exactly 1 -ParameterFilter { $message -eq 'User cancelled the selection' }
-
-            Should -Invoke Get-MatchingPHPVersions -Exactly 1
-            Should -Invoke Get-UserSelectedPHPVersion -Exactly 1
-            Should -Invoke Remove-ItemWrapper -Exactly 0
-        }
-    }
-
-    Context "When user selection returns a version but no path" {
-        BeforeEach {
-            Mock Get-MatchingPHPVersions { return $null }
-            Mock Get-UserSelectedPHPVersion { return $null }
-            Mock Remove-ItemWrapper { return 0 }
-            Mock Add-LogEntry { return 0 }
-        }
-
-        It "Should return version not found message" {
-            $result = Uninstall-PHP -version '8.2' -skipConfirmation $true
-
-            $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like '*PHP version 8.2 was not found!*' }
+            Should -Invoke Show-LabelledError -Exactly 1 -ParameterFilter { $message -eq 'User cancelled the selection' }
 
             Should -Invoke Get-MatchingPHPVersions -Exactly 1
             Should -Invoke Get-UserSelectedPHPVersion -Exactly 1
@@ -272,7 +255,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $true
 
             $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like '*Failed to remove PHP version 7.4*' }
+            Should -Invoke Show-LabelledError -Exactly 1 -ParameterFilter { $message -like '*Failed to remove PHP version 7.4*' }
         }
 
         It "Should catch the exception and return error message" {
@@ -285,7 +268,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $true
 
             $result | Should -Be -1
-            Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like "*Failed to uninstall PHP version '7.4'*" }
+            Should -Invoke Show-LabelledError -Exactly 1 -ParameterFilter { $message -like "*Failed to uninstall PHP version '7.4'*" }
             Should -Invoke Remove-ItemWrapper -Exactly 1
             Should -Invoke Add-LogEntry -Exactly 1
         }

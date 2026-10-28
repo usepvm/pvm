@@ -16,6 +16,7 @@ BeforeAll {
     $null = New-Item -ItemType Directory -Path $script:PHP_CURRENT_DIR -Force
 
     Mock Show-Error { }
+    Mock Show-LabelledError { }
 
     Mock Add-LogEntry { return 0 }
 }

@@ -497,13 +497,18 @@ Describe "Write-Host helpers" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {
             Mock Write-HostWrapper { }
+            $msg = 'Test message'
 
-            Write-Color -message 'Test message' -foreColor 'Red'
+            Write-Color -message $msg -foreColor 'Red' -underlined
 
             Should -Invoke Write-HostWrapper -ParameterFilter {
-                $object -match 'Test message' -and
+                $object -match $msg -and
                 $foregroundColor -eq 'Red' -and
                 $noNewLine -eq $false
+            } -Exactly 1
+            Should -Invoke Write-HostWrapper -ParameterFilter {
+                $object -match ('-' * $msg.Length) -and
+                $foregroundColor -eq 'Gray'
             } -Exactly 1
         }
     }
@@ -693,12 +698,12 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints host message" {
-            Mock Write-White { }
+            Mock Write-Color { }
 
             Show-Message -message 'Test message'
 
-            Should -Invoke Write-White -ParameterFilter {
-                $message -match 'Test message'
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'White'
             }
         }
     }
@@ -717,14 +722,12 @@ Describe "Write-Host helpers" {
 
         It "Prints labled message" {
             Mock New-Line { }
-            Mock Write-Spaces { }
             Mock Write-BgColor { }
             Mock Write-White { }
 
             Show-LabelledMessage -label 'Label' -message 'This is a message' -backColor 'White' -foreColor 'Black' -noNewLine
 
             Should -Invoke New-Line -Times 1
-            Should -Invoke Write-Spaces -Times 1
             Should -Invoke Write-BgColor -ParameterFilter {
                 $message -like '*Label*' -and
                 $backColor -like 'White' -and

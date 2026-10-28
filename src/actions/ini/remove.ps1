@@ -50,7 +50,7 @@ function Uninstall-Extension {
 
     try {
         if ($extNames.Count -eq 0) {
-            Show-LabelledWarning -message "Please provide at least one extension name to uninstall"
+            Show-LabelledWarning -message 'Please provide at least one extension name to uninstall'
             return -1
         }
 
@@ -150,6 +150,7 @@ function Uninstall-Extension {
         return $overallCode
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install '$($extNames -join ', ')'"; exception = $_ }
+        Show-LabelledError -message 'Failed to remove requested extensions'
         return -1
     }
 }

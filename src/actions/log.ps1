@@ -66,12 +66,12 @@ function Test-LogPageSize {
     param ($pageSize)
 
     if ($pageSize -notmatch '^-?\d+$') {
-        Show-Error -message "`nInvalid page size: $pageSize"
+        Show-LabelledError -message "Invalid page size: $pageSize"
         return $false
     }
 
     if ([int]$pageSize -le 0) {
-        Show-Error -message "`nPage size must be a positive integer."
+        Show-LabelledError -message "Page size must be a positive integer."
         return $false
     }
 
@@ -234,14 +234,14 @@ function Show-Log {
 
         # Check if log file exists
         if (Test-FileNotExists -path $Global:PVMConfig.paths.files.logError) {
-            Show-Error -message "`nLog file not found: $($Global:PVMConfig.paths.files.logError)"
+            Show-LabelledError -message "Log file not found: $($Global:PVMConfig.paths.files.logError)"
             return -1
         }
 
         $entries = @(Get-LogEntries -path $Global:PVMConfig.paths.files.logError -term $term)
 
         if ($entries.Length -eq 0) {
-            Show-Warning -message "`nNo log entries found."
+            Show-LabelledWarning -message "`nNo log entries found."
             return -1
         }
 
@@ -264,8 +264,8 @@ function Show-Log {
         Clear-Host
         return 0
     } catch {
-        Show-Error -message "`nFailed to show log: $($Global:PVMConfig.paths.files.logError)"
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to show log"; exception = $_ }
+        Show-LabelledError -message "`nFailed to show log: $($Global:PVMConfig.paths.files.logError)"
         return -1
     }
 }

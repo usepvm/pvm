@@ -91,7 +91,7 @@ function Add-MissingPHPExtensionToIni {
 
         $matchesList = (Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $extFileName -includeIniOnly $true -addToIniFileIfMissing $false) | Select-Object -First 1
         if ($matchesList.Length -gt 0 -and $matchesList.LineNumber -gt 0) {
-            Show-Warning -message "- Extension '$extFileName' already exists in php.ini"
+            Show-Warning -message "`nExtension '$extFileName' already exists in php.ini"
             return 0
         }
 
@@ -109,8 +109,7 @@ function Add-MissingPHPExtensionToIni {
             return -1
         }
 
-        Show-Success -message "- '$extFileName' added successfully."
-
+        Show-Success -message "`n'$extFileName' added to ini file successfully."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to add extension '$extFileName'"; exception = $_ }

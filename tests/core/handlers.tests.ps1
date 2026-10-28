@@ -16,8 +16,16 @@ BeforeAll {
     Mock Show-Warning { }
     Mock Show-Message { }
     Mock Show-Success { }
-    Mock Write-Color { }
     Mock Show-Info { }
+    Mock Show-LabelledMessage { }
+    Mock Show-LabelledError { }
+    Mock Show-LabelledWarning { }
+    Mock Show-LabelledSuccess { }
+    Mock Show-LabelledInfo { }
+    Mock Write-Color { }
+    Mock Write-White { }
+    Mock Write-Gray { }
+    Mock Write-Cyan { }
     Mock New-Line { }
     Mock Add-LogEntry { return 0 }
 }
@@ -92,7 +100,7 @@ Describe "Invoke-Setup" {
         $result = Invoke-Setup
         $result | Should -Be 0
 
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to optimize system path*' }
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Failed to optimize system path*' }
     }
 
     It "Should pause for env edit after creating env file" {
@@ -137,8 +145,8 @@ Describe "Invoke-Current" {
         $result | Should -Be 0
         Should -Invoke Get-CurrentPHPVersion -Times 1
         Should -Invoke Show-Message -ParameterFilter { $message -like '*Running version: PHP 8.2.0*' }
-        Should -Invoke Write-Color -ParameterFilter { $message -like '*xdebug v3.2.0*' -and $foreColor -eq 'DarkGreen' }
-        Should -Invoke Write-Color -ParameterFilter { $message -like '*opcache v8.2.0*' -and $foreColor -eq 'DarkYellow' }
+        Should -Invoke Write-White -ParameterFilter { $message -like '*xdebug v3.2.0*' }
+        Should -Invoke Write-White -ParameterFilter { $message -like '*opcache v8.2.0*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*Path: C:\PHP\8.2.0*' }
     }
 
@@ -161,8 +169,8 @@ Describe "Invoke-Current" {
         $result | Should -Be 0
         Should -Invoke Get-CurrentPHPVersion -Times 1
         Should -Invoke Show-Message -ParameterFilter { $message -like '*Running version: PHP 8.2.0*' }
-        Should -Invoke Write-Color -ParameterFilter { $message -like '*xdebug*' -and $foreColor -eq 'DarkGray' }
-        Should -Invoke Write-Color -ParameterFilter { $message -like '*opcache*' -and $foreColor -eq 'DarkGray' }
+        Should -Invoke Write-White -ParameterFilter { $message -like '*xdebug*' }
+        Should -Invoke Write-White -ParameterFilter { $message -like '*opcache*' }
         Should -Invoke Show-Message -ParameterFilter { $message -like '*Path: C:\PHP\8.2.0*' }
     }
 
@@ -172,7 +180,7 @@ Describe "Invoke-Current" {
         $result = Invoke-Current
         $result | Should -Be -1
 
-        Should -Invoke Show-Warning -ParameterFilter { $message -like '*No PHP version is currently set*' }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like '*No PHP version is currently set*' }
     }
 
     It "Should handle missing status information" {
@@ -182,7 +190,7 @@ Describe "Invoke-Current" {
         $result = Invoke-Current
         $result | Should -Be -1
 
-        Should -Invoke Show-Warning -ParameterFilter { $message -like '*No status information available*' }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like '*No status information available*' }
     }
 }
 
@@ -198,7 +206,7 @@ Describe "Invoke-List" {
         $result = Invoke-List -arguments @('--update')
 
         $result | Should -Be 0
-        Should -Invoke Show-Success -ParameterFilter { $message -like '*Installed PHP versions cache updated successfully*' }
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -like '*Installed PHP versions cache updated successfully*' }
         Should -Invoke Update-InstalledPHPVersionsCache -Times 1
         Should -Invoke Get-AvailablePHPVersions -Times 0
         Should -Invoke Show-InstalledPHPVersions -Times 0
@@ -210,7 +218,7 @@ Describe "Invoke-List" {
         $result = Invoke-List -arguments @('--update')
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to update the installed PHP versions cache*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*Failed to update the installed PHP versions cache*' }
         Should -Invoke Update-InstalledPHPVersionsCache -Times 1
         Should -Invoke Get-AvailablePHPVersions -Times 0
         Should -Invoke Show-InstalledPHPVersions -Times 0
@@ -240,7 +248,7 @@ Describe "Invoke-List" {
         $result = Invoke-List -arguments @('x86', 'x64')
 
         $result | Should -Be -1
-        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Conflicting architecture options*' }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like '*Conflicting architecture options*' }
         Should -Invoke Show-InstalledPHPVersions -Times 0
         Should -Invoke Get-AvailablePHPVersions -Times 0
     }
@@ -249,7 +257,7 @@ Describe "Invoke-List" {
         $result = Invoke-List -arguments @('ts', 'nts')
 
         $result | Should -Be -1
-        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Conflicting build type options*' }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like '*Conflicting build type options*' }
     }
 }
 
@@ -264,7 +272,7 @@ Describe "Invoke-Install" {
         $result = Invoke-Install -arguments $arguments
         $result | Should -Be -1
 
-        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Please provide a PHP version to install*' }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like '*Please provide a PHP version to install*' }
     }
 
     It "Should install PHP with basic parameters" {
@@ -282,7 +290,7 @@ Describe "Invoke-Install" {
         $result = Invoke-Install -arguments @('8.2.0', 'x86', 'x64')
 
         $result | Should -Be -1
-        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Conflicting architecture options*' }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like '*Conflicting architecture options*' }
         Should -Invoke Install-PHP -Times 0
     }
 
@@ -290,7 +298,7 @@ Describe "Invoke-Install" {
         $result = Invoke-Install -arguments @('8.2.0', 'ts', 'nts')
 
         $result | Should -Be -1
-        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Conflicting build type options*' }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like '*Conflicting build type options*' }
         Should -Invoke Install-PHP -Times 0
     }
 
@@ -352,7 +360,7 @@ Describe "Invoke-Install" {
         $result = Invoke-Install -arguments $arguments
 
         $result | Should -Be -1
-        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Please provide a PHP version to install*' }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like '*Please provide a PHP version to install*' }
     }
 
     It "Should return -1 when detected PHP version is already installed" {
@@ -438,7 +446,7 @@ Describe "Invoke-Use" {
         $result = Invoke-Use -arguments $arguments
         $result | Should -Be -1
 
-        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Please provide a PHP version to use*' }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like '*Please provide a PHP version to use*' }
     }
 
     It "Should use specific PHP version" {
@@ -492,7 +500,7 @@ Describe "Invoke-Uninstall" {
         $result = Invoke-Uninstall -arguments @()
         $result | Should -Be -1
 
-        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Please provide a PHP version to uninstall*' }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like '*Please provide a PHP version to uninstall*' }
     }
 
     It "Should uninstall PHP version without skipConfirmation by default" {
@@ -633,7 +641,7 @@ Describe "Invoke-Ini" {
         $result = Invoke-Ini -arguments $arguments
         $result | Should -Be -1
 
-        Should -Invoke Show-Warning -ParameterFilter { $message -like "*Please specify an action for 'pvm ini'*" }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like "*Please specify an action for 'pvm ini'*" }
     }
 
     It "Should call Invoke-IniAction with correct parameters for single action" {
@@ -695,7 +703,7 @@ Describe "Invoke-Profile" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Show-Warning -ParameterFilter {
+            Should -Invoke Show-LabelledWarning -ParameterFilter {
                 $message -like "*Please specify an action for 'pvm profile'*"
             }
         }
@@ -708,7 +716,7 @@ Describe "Invoke-Profile" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Show-Warning -ParameterFilter {
+            Should -Invoke Show-LabelledWarning -ParameterFilter {
                 $message -like '*Please provide a profile name: pvm profile save*'
             }
         }
@@ -744,7 +752,7 @@ Describe "Invoke-Profile" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Show-Warning -ParameterFilter {
+            Should -Invoke Show-LabelledWarning -ParameterFilter {
                 $message -like '*Please provide a profile name: pvm profile load*'
             }
         }
@@ -790,7 +798,7 @@ Describe "Invoke-Profile" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Show-Warning -ParameterFilter {
+            Should -Invoke Show-LabelledWarning -ParameterFilter {
                 $message -like '*Please provide a profile name: pvm profile show*'
             }
         }
@@ -825,7 +833,7 @@ Describe "Invoke-Profile" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Show-Warning -ParameterFilter {
+            Should -Invoke Show-LabelledWarning -ParameterFilter {
                 $message -like '*Please provide a profile name: pvm profile delete*'
             }
         }
@@ -900,7 +908,7 @@ Describe "Invoke-Profile" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Show-Warning -ParameterFilter {
+            Should -Invoke Show-LabelledWarning -ParameterFilter {
                 $message -like '*Please provide a profile name: pvm profile export*'
             }
         }
@@ -936,7 +944,7 @@ Describe "Invoke-Profile" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Show-Warning -ParameterFilter {
+            Should -Invoke Show-LabelledWarning -ParameterFilter {
                 $message -like '*Please provide a file path: pvm profile import*'
             }
         }
@@ -972,7 +980,7 @@ Describe "Invoke-Profile" {
             $result = Invoke-Profile -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Show-Error -ParameterFilter {
+            Should -Invoke Show-LabelledError -ParameterFilter {
                 $message -like "*Unknown action 'unknown'*"
             }
         }
@@ -1130,7 +1138,7 @@ Describe "Invoke-Aliases" {
         $result = Invoke-Aliases
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*No aliases found.*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*No aliases found.*' }
     }
 
     It "Should return 0 when aliases are found" {
@@ -1156,7 +1164,7 @@ Describe "Invoke-Log" {
         $code = Invoke-Log -arguments @('--clear', '-y')
 
         $code | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to clean log file! Here is the path to do it manually, $($Global:PVMConfig.paths.files.logError)*" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*Failed to clean log file! Here is the path to do it manually, '$($Global:PVMConfig.paths.files.logError)'*" }
     }
 
     It "Should skip confirmation and clear log file" {
@@ -1168,13 +1176,12 @@ Describe "Invoke-Log" {
         $code | Should -Be 0
 
         Should -Invoke Clear-ContentWrapper -Exactly 1
-        Should -Invoke Show-Success -Exactly 1
+        Should -Invoke Show-LabelledSuccess -Exactly 1
     }
 
     It "Should prompt for confirmation and cancel log clearing when user responds with 'n'" {
         Mock Get-ContentWrapper { return 'some log content' }
         Mock Read-HostWrapper { return 'n' }
-        Mock Write-Gray { }
 
         $code = Invoke-Log -arguments @('--clear')
 
@@ -1187,14 +1194,13 @@ Describe "Invoke-Log" {
     It "Should prompt for confirmation and proceed with log clearing when user responds with 'y'" {
         Mock Get-ContentWrapper { return 'some log content' }
         Mock Clear-ContentWrapper { return 0 }
-        Mock Show-Success { }
         Mock Read-HostWrapper { return 'y' }
 
         $code = Invoke-Log -arguments @('--clear')
 
         $code | Should -Be 0
         Should -Invoke Clear-ContentWrapper -Exactly 1
-        Should -Invoke Show-Success -Exactly 1
+        Should -Invoke Show-LabelledSuccess -Exactly 1
     }
 
     It "Should not clear log when it's empty" {
@@ -1204,7 +1210,7 @@ Describe "Invoke-Log" {
         $code = Invoke-Log -arguments @('--clear')
 
         $code | Should -Be 0
-        Should -Invoke Show-Success -ParameterFilter { $message -like '*Log already cleared*' }
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -like '*Log already cleared*' }
         Should -Invoke Clear-ContentWrapper -Exactly 0
     }
 
@@ -1297,7 +1303,7 @@ Describe "Invoke-Cache" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Show-Warning -ParameterFilter {
+            Should -Invoke Show-LabelledWarning -ParameterFilter {
                 $message -like "*Please specify an action for 'pvm cache'*"
             }
         }
@@ -1321,7 +1327,7 @@ Describe "Invoke-Cache" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Show-Warning -ParameterFilter {
+            Should -Invoke Show-LabelledWarning -ParameterFilter {
                 $message -like '*Please provide a cache name: pvm cache show*'
             }
         }
@@ -1356,7 +1362,7 @@ Describe "Invoke-Cache" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Show-Warning -ParameterFilter {
+            Should -Invoke Show-LabelledWarning -ParameterFilter {
                 $message -like '*Please provide a cache name: pvm cache delete*'
             }
         }
@@ -1431,7 +1437,7 @@ Describe "Invoke-Cache" {
             $result = Invoke-Cache -arguments $arguments
             $result | Should -Be -1
 
-            Should -Invoke Show-Error -ParameterFilter {
+            Should -Invoke Show-LabelledError -ParameterFilter {
                 $message -like "*Unknown action 'unknown'*"
             }
         }
@@ -1508,7 +1514,7 @@ Describe "Invoke-Test" {
         $result = Invoke-Test -arguments @()
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -match 'Test drive is not valid' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Test drive is not valid' }
     }
 
     It "Installs Pester module when not already installed" {
@@ -1754,6 +1760,19 @@ Describe "Invoke-Test" {
 }
 
 Describe "Invoke-Run" {
+    BeforeEach {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $false }
+    }
+
+    It "Should return -1 when Test Drive is not defined" {
+        Mock Test-PathInvalidOrNotUnderProjectRoot { return $true }
+
+        $result = Invoke-Run -arguments @()
+
+        $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Test drive is not valid' }
+    }
+
     It "Should shows scripts when scriptName is list and return 0" {
         Mock Invoke-RunScripts { return 0 }
         Mock Show-Scripts { }

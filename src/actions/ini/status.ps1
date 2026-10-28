@@ -42,6 +42,7 @@ function Get-IniExtensionStatus {
         return $overallCode
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to check status for '$($extNames -join ', ')'"; exception = $_ }
+        Show-LabelledError -message 'Failed to show requested extensions status'
         return -1
     }
 }

@@ -98,6 +98,7 @@ function Enable-IniExtension {
         return $overallCode
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable extension '$($extNames -join ', ')'"; exception = $_ }
+        Show-LabelledError -message 'Failed to enable requested extensions'
         return -1
     }
 }

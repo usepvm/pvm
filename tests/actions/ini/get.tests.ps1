@@ -22,6 +22,8 @@ BeforeAll {
     Mock Show-Warning { }
     Mock Show-Info { }
     Mock Show-Message { }
+    Mock Show-LabelledError { }
+    Mock Show-LabelledWarning { }
     Mock Write-Color { }
     Mock Add-LogEntry { return 0 }
 

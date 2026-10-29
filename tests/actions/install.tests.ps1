@@ -763,7 +763,7 @@ Describe "Install-PHP" {
         Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
         Mock Read-HostWrapper {
             if ($prompt -match 'Would you like to install another version from') { return 'y' }
-            if ($prompt -eq "`nEnter the [number] of your selection (or press Enter to cancel)") { return '0' }
+            if ($prompt -eq "Enter the [number] of your selection (or press Enter to cancel)") { return '0' }
         }
         Mock Expand-AndConfigurePHP { return 0 }
         Mock Remove-ItemWrapper { return 0 }
@@ -800,7 +800,7 @@ Describe "Install-PHP" {
         Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
         Mock Read-HostWrapper {
             if ($prompt -match 'Would you like to install another version from') { return 'y' }
-            if ($prompt -eq "`nEnter the [number] of your selection (or press Enter to cancel)") { return '0' }
+            if ($prompt -eq "Enter the [number] of your selection (or press Enter to cancel)") { return '0' }
         }
         Mock Get-PHP { return $null }
 

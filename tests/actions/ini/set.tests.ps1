@@ -94,7 +94,7 @@ Describe "Set-IniSetting" {
             'opcache.protect_memory=1'
         ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Select a number" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '4G' }
 
         $code = Set-IniSetting -iniPath $script:testIniPath -keys @('memory')
@@ -108,7 +108,7 @@ Describe "Set-IniSetting" {
             'opcache.protect_memory=1'
         ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Select a number" } -MockWith { return '0' }
 
         $code = Set-IniSetting -iniPath $script:testIniPath -keys @('memory=2G')
         $code | Should -Be 0
@@ -133,7 +133,7 @@ Describe "Set-IniSetting" {
         ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
         $script:callCount = 0
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Select a number" } -MockWith {
             $script:callCount++
             if ($script:callCount -eq 1) { return 'A' }
             if ($script:callCount -eq 2) { return '-1' }
@@ -150,7 +150,7 @@ Describe "Set-IniSetting" {
             'memory_limit=2G'
         ) -join "`n" | Set-Content -Path $script:testIniPath -Encoding UTF8
 
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith { return '0' }
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Select a number" } -MockWith { return '0' }
         Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter new value for 'memory_limit'" } -MockWith { return '3G' }
 
         $code = Set-IniSetting -iniPath $script:testIniPath -keys @('memory')

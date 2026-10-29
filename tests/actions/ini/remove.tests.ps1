@@ -418,14 +418,14 @@ Describe "Uninstall-Extension" {
             return $matchingExtensions
         }
         $script:callCount = 0
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSelect a number" } -MockWith {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Select a number" } -MockWith {
             $script:callCount++
             if ($script:callCount -eq 1) { return 'A' }
             if ($script:callCount -eq 2) { return '-1' }
             else { return '1' }
         }
 
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nAre you sure you want to uninstall 'pdo_mysql'? (y/n)" } -MockWith {
+        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Are you sure you want to uninstall 'pdo_mysql'? (y/n)" } -MockWith {
             return 'y'
         }
         Mock Remove-ExtensionFromExtDirectory { return 0 }

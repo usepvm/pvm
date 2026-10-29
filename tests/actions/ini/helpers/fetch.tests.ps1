@@ -1817,7 +1817,7 @@ Describe "Select-ExtensionFromMatches" {
         }
 
         It "Prompts user to select link when multiple found and returns selected" {
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '0' }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return '0' }
 
             $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
 
@@ -1825,7 +1825,7 @@ Describe "Select-ExtensionFromMatches" {
         }
 
         It "Returns null when user skips selection" {
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith { return '' }
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return '' }
 
             $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
 
@@ -1835,7 +1835,7 @@ Describe "Select-ExtensionFromMatches" {
 
         It "Reprompts user when typing invalid choice" {
             $script:callCount = 0
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nEnter the [number] of your selection" } -MockWith {
+            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith {
                 $script:callCount++
                 if ($script:callCount -eq 1) { return 'A' }
                 if ($script:callCount -eq 2) { return '-1' }

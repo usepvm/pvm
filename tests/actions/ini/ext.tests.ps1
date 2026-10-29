@@ -321,6 +321,7 @@ Describe "Show-PHPExtensions" {
                 )
             }
         }
+        Mock Get-ConsoleWidth { return 80 }
         $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true
         $code | Should -Be 0
     }

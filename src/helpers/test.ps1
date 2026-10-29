@@ -24,17 +24,17 @@ function Show-TestsResult {
     $status = if ($code -eq 0) { 'OK' } else { 'NOT OK' }
     $width = [Math]::Max(80, $label.Length + $status.Length + 5)
     $innerWidth = $width - 2
-    $padding = $innerWidth - $label.Length - $status.Length - 3
-    $leftPadding = [Math]::Floor($padding / 2)
-    $rightPadding = $padding - $leftPadding
+    $padding = $innerWidth - $label.Length - $status.Length - 5 # 3 for " : " + 2 for spaces added by Show-*Label
+    $leftPadding = [Math]::Max(0, [Math]::Floor($padding / 2));
+    $rightPadding = [Math]::Max(0, ($padding - $leftPadding))
 
     Show-Message -message "`n`n$('=' * $width)`n|$(' ' * $innerWidth)|`n|$(' ' * $leftPadding)$label : " -noNewLine
 
     if ($code -eq 0) {
-        Show-Success -message $status -noNewLine
+        Show-SuccessLabel -label $status -noPreNewLine -noNewLine
         Invoke-SuccessSound -wait
     } else {
-        Show-Error -message $status -noNewLine
+        Show-ErrorLabel -label $status -noPreNewLine -noNewLine
 
         switch ($code) {
             -1 { Invoke-ErrorSound -wait }

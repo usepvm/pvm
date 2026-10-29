@@ -708,8 +708,84 @@ Describe "Write-Host helpers" {
         }
     }
 
+    Context "Show-Label Tests" {
+        It "Prints text with background color" {
+            Mock New-Line { }
+            Mock Write-BgColor { }
+
+            Show-Label -label 'Label' -foreColor 'White' -backColor 'Red' -noNewLine
+
+            Should -Invoke New-Line -Times 1
+            Should -Invoke Write-BgColor -ParameterFilter {
+                $message -eq ' Label ' -and
+                $backColor -eq 'Red' -and
+                $foreColor -eq  'White' -and
+                $noNewLine -eq $true
+            }
+        }
+    }
+
+    Context "Show-*Label Tests" {
+        BeforeAll {
+            Mock Show-Label { }
+            Mock Get-StatusTable {
+                return [ordered]@{
+                    success = @{ label = 'Success'; color = 'Green'; contrastColor = 'Black' }
+                    error = @{ label = 'Error'; color = 'Red'; contrastColor = 'Black' }
+                    warning = @{ label = 'Warning'; color = 'Yellow'; contrastColor = 'Black' }
+                    info = @{ label = 'Info'; color = 'Blue'; contrastColor = 'Black' }
+                }
+            }
+        }
+
+        It "Prints success label" {
+            Show-SuccessLabel -label 'OK' -noPreNewLine -noNewLine
+
+            Should -Invoke Show-Label -ParameterFilter {
+                $label -eq 'OK' -and
+                $foreColor -eq 'Black' -and
+                $backColor -eq 'Green' -and
+                $noPreNewLine -and $noNewLine
+            }
+        }
+
+        It "Prints error label" {
+            Show-ErrorLabel -label 'NOK' -noPreNewLine -noNewLine
+
+            Should -Invoke Show-Label -ParameterFilter {
+                $label -eq 'NOK' -and
+                $foreColor -eq 'Black' -and
+                $backColor -eq 'Red' -and
+                $noPreNewLine -and $noNewLine
+            }
+        }
+
+        It "Prints warning label" {
+            Show-WarningLabel -label 'Alert' -noPreNewLine -noNewLine
+
+            Should -Invoke Show-Label -ParameterFilter {
+                $label -eq 'Alert' -and
+                $foreColor -eq 'Black' -and
+                $backColor -eq 'Yellow' -and
+                $noPreNewLine -and $noNewLine
+            }
+        }
+
+        It "Prints info label" {
+            Show-InfoLabel -label 'Info' -noPreNewLine -noNewLine
+
+            Should -Invoke Show-Label -ParameterFilter {
+                $label -eq 'Info' -and
+                $foreColor -eq 'Black' -and
+                $backColor -eq 'Blue' -and
+                $noPreNewLine -and $noNewLine
+            }
+        }
+    }
+
     Context "Show-Labelled* Tests" {
         BeforeAll {
+            Mock Show-Label { }
             Mock Get-StatusTable {
                 return [ordered]@{
                     success = @{ label = 'Success'; color = 'Green'; contrastColor = 'Black' }
@@ -721,18 +797,16 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints labled message" {
-            Mock New-Line { }
-            Mock Write-BgColor { }
             Mock Write-White { }
 
             Show-LabelledMessage -label 'Label' -message 'This is a message' -backColor 'White' -foreColor 'Black' -noNewLine
 
-            Should -Invoke New-Line -Times 1
-            Should -Invoke Write-BgColor -ParameterFilter {
-                $message -like '*Label*' -and
-                $backColor -like 'White' -and
-                $foreColor -like 'Black' -and
-                $noNewLine
+            Should -Invoke Show-Label -ParameterFilter {
+                $label -eq 'Label' -and
+                $foreColor -eq 'Black' -and
+                $backColor -eq 'White' -and
+                $noPreNewLine -eq $false
+                $noNewLine -eq $true
             }
             Should -Invoke Write-White -ParameterFilter {
                 $message -like '*This is a message*' -and

@@ -289,13 +289,41 @@ function Show-Message {
 }
 
 function Show-Label {
-    param ($label, $foreColor, $backColor = $null, [switch]$noPreNewLine , [switch]$noNewLine)
+    param ($label, $foreColor, $backColor, [switch]$noPreNewLine , [switch]$noNewLine)
 
     if (-not $noPreNewLine) {
         New-Line
     }
 
-    Write-BgColor -message " $label " -backColor $backColor -foreColor $foreColor -noNewLine:$noNewLine
+    Write-BgColor -message " $($label.Trim()) " -backColor $backColor -foreColor $foreColor -noNewLine:$noNewLine
+}
+
+function Show-SuccessLabel {
+    param ($label, [switch]$noPreNewLine , [switch]$noNewLine)
+
+    $status = (Get-StatusTable)['success']
+    Show-Label -label $label -foreColor $status.contrastColor -backColor $status.color -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
+}
+
+function Show-ErrorLabel {
+    param ($label, [switch]$noPreNewLine , [switch]$noNewLine)
+
+    $status = (Get-StatusTable)['error']
+    Show-Label -label $label -foreColor $status.contrastColor -backColor $status.color -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
+}
+
+function Show-WarningLabel {
+    param ($label, [switch]$noPreNewLine , [switch]$noNewLine)
+
+    $status = (Get-StatusTable)['warning']
+    Show-Label -label $label -foreColor $status.contrastColor -backColor $status.color -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
+}
+
+function Show-InfoLabel {
+    param ($label, [switch]$noPreNewLine , [switch]$noNewLine)
+
+    $status = (Get-StatusTable)['info']
+    Show-Label -label $label -foreColor $status.contrastColor -backColor $status.color -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
 }
 
 function Show-LabelledMessage {
@@ -313,7 +341,6 @@ function Show-LabelledSuccess {
     param ($message, [switch]$noPreNewLine, [switch]$noNewLine)
 
     $status = (Get-StatusTable)['success']
-
     Show-LabelledMessage -label $status.label -message $message -backColor $status.color -foreColor $status.contrastColor -noPreNewLine:$noPreNewLine -noNewLine:$noNewLine
 }
 

@@ -268,6 +268,7 @@ function Invoke-Profile {
 
     $action = Resolve-Alias -alias $action
 
+    Write-White -message "`nPath : $($Global:PVMConfig.paths.directories.profiles)"
     switch ($action.ToLower()) {
         'save' {
             if ($remainingArgs.Count -eq 0) {

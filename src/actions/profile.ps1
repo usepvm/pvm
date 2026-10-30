@@ -413,6 +413,9 @@ function Show-PHPProfiles {
         foreach ($file in $profileFiles) {
             try {
                 $userProfile = Get-ContentWrapper -path $file.FullName -raw | ConvertFrom-Json
+                if ($userProfile.Length -eq 0) {
+                    throw 'Invalid profile format. Empty file!'
+                }
                 $settingsCount = if ($userProfile.settings) { ($userProfile.settings.PSObject.Properties | Measure-Object).Count } else { 0 }
                 $extensionsCount = if ($userProfile.extensions) { ($userProfile.extensions.PSObject.Properties | Measure-Object).Count } else { 0 }
                 $profiles += @{

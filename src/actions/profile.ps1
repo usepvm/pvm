@@ -407,7 +407,7 @@ function Show-PHPProfiles {
             return -1
         }
 
-        Write-Cyan -message "`nAvailable Profiles:" -underlined
+        Write-Cyan -message "`nAvailable Profiles: ($($profileFiles.Count))" -underlined
 
         $profiles = @()
         foreach ($file in $profileFiles) {

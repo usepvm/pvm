@@ -1,8 +1,9 @@
 
 function Show-Scripts {
-    Write-Cyan -message "`nAvailable scripts:" -underlined
-
     $scripts = Get-Scripts
+
+    Write-Cyan -message "`nAvailable scripts: ($($scripts.Count))" -underlined
+
     $scripts.Keys | ForEach-Object -Process {
         $name = $_
         $commands = $scripts[$_]

@@ -418,7 +418,7 @@ function Invoke-Aliases {
         return -1
     }
 
-    Write-Cyan -message "`n`nAvailable Aliases:" -underlined
+    Write-Cyan -message "`n`nAvailable Aliases: ($($aliases.Count))" -underlined
     $maxAliasLength = ($aliases.Keys | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     $aliases.Keys | ForEach-Object -Process {
         $alias = "$_ ".PadRight($maxAliasLength, '.')

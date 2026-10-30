@@ -546,22 +546,23 @@ function Get-AvailablePHPExtensions {
 function Get-FilteredPHPExtensionsByCategory {
     param ($availableExtensions, $term = $null)
 
-    $result = @{
-        availableExtensions = @{}
-        totalCategoriesCount = 0
-        totalExtensionsCount = 0
-        searchResults = @{}
-        totalSearchedCategories = 0
-        totalSearchedExtensions = 0
-    }
-    $availableExtensions.PSObject.Properties | ForEach-Object -Process {
-        $categoryExtensions = if ($_.Value.PSObject.Properties.Name -contains 'extensions') {
-            $_.Value.extensions
+    $allExtensions = @{}
+    $foundExtensions = @{}
+    $totalExtensionsCount = 0
+    $totalSearchedExtensions = 0
+
+    foreach ($category in $availableExtensions.PSObject.Properties) {
+        $categoryExtensions = if ($category.Value.PSObject.Properties.Name -contains 'extensions') {
+            $category.Value.extensions
         } else {
-            $_.Value
+            $category.Value
         }
         $categoryExtensions = @($categoryExtensions)
-        $categoryMatches = $_.Name -like "*$term*"
+
+        $allExtensions[$category.Name] = $categoryExtensions
+        $totalExtensionsCount += $categoryExtensions.Count
+
+        $categoryMatches = $category.Name -like "*$term*"
         if ($term -and -not $categoryMatches) {
             $searchResult = $categoryExtensions | Where-Object -FilterScript {
                 return ($_.extName -like "*$term*" -or $_.description -like "*$term*")
@@ -571,16 +572,19 @@ function Get-FilteredPHPExtensionsByCategory {
         }
         $searchResult = @($searchResult)
         if ($searchResult.Length -gt 0) {
-            $result.searchResults[$_.Name] = $searchResult
-            $result.totalSearchedExtensions += $searchResult.Count
+            $foundExtensions[$category.Name] = $searchResult
+            $totalSearchedExtensions += $searchResult.Count
         }
-        $result.availableExtensions[$_.Name] = $categoryExtensions
-        $result.totalExtensionsCount += $categoryExtensions.Count
     }
-    $result.totalSearchedCategories = $result.searchResults.Count
-    $result.totalCategoriesCount = $result.availableExtensions.Count
 
-    return $result
+    return @{
+        availableExtensions     = $allExtensions
+        totalCategoriesCount    = $allExtensions.Count
+        totalExtensionsCount    = $totalExtensionsCount
+        searchResults           = $foundExtensions
+        totalSearchedCategories = $foundExtensions.Count
+        totalSearchedExtensions = $totalSearchedExtensions
+    }
 }
 
 function Get-ExtensionAvailableReleasesLinks {

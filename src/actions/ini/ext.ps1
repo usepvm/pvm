@@ -126,7 +126,7 @@ function Show-PHPExtensions {
                 return -1
             }
 
-            $availableExtensionsPartialList = Get-FilteredPHPExtensionsByCategory -availableExtensions $availableExtensions -term $term
+            $availableExtensionsPartialList = (Get-FilteredPHPExtensionsByCategory -availableExtensions $availableExtensions -term $term).searchResults
 
             if ($availableExtensionsPartialList.Count -eq 0) {
                 $msg = "`nNo extensions found"

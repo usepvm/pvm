@@ -546,13 +546,21 @@ function Get-AvailablePHPExtensions {
 function Get-FilteredPHPExtensionsByCategory {
     param ($availableExtensions, $term = $null)
 
-    $result = @{}
+    $result = @{
+        availableExtensions = @{}
+        totalCategoriesCount = 0
+        totalExtensionsCount = 0
+        searchResults = @{}
+        totalSearchedCategories = 0
+        totalSearchedExtensions = 0
+    }
     $availableExtensions.PSObject.Properties | ForEach-Object -Process {
         $categoryExtensions = if ($_.Value.PSObject.Properties.Name -contains 'extensions') {
             $_.Value.extensions
         } else {
             $_.Value
         }
+        $categoryExtensions = @($categoryExtensions)
         $categoryMatches = $_.Name -like "*$term*"
         if ($term -and -not $categoryMatches) {
             $searchResult = $categoryExtensions | Where-Object -FilterScript {
@@ -563,9 +571,15 @@ function Get-FilteredPHPExtensionsByCategory {
         }
         $searchResult = @($searchResult)
         if ($searchResult.Length -gt 0) {
-            $result[$_.Name] = @($searchResult)
+            $result.searchResults[$_.Name] = $searchResult
+            $result.totalSearchedExtensions += $searchResult.Count
         }
+        $result.availableExtensions[$_.Name] = $categoryExtensions
+        $result.totalExtensionsCount += $categoryExtensions.Count
     }
+    $result.totalSearchedCategories = $result.searchResults.Count
+    $result.totalCategoriesCount = $result.availableExtensions.Count
+
     return $result
 }
 
@@ -635,7 +649,7 @@ function Get-ExtensionMatchingCategories {
     }
 
     $grouped = Get-FilteredPHPExtensionsByCategory -availableExtensions $availableExtensions -term $extName
-    $linksMatchingExtName = $grouped.Values | ForEach-Object -Process { $_ }
+    $linksMatchingExtName = $grouped.searchResults.Values | ForEach-Object -Process { $_ }
 
     return $linksMatchingExtName
 }

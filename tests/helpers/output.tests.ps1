@@ -840,7 +840,7 @@ Describe "Write-Host helpers" {
             }
         }
 
-        It "Prints labled error message" {
+        It "Prints labled warning message" {
             Mock Show-LabelledMessage { }
 
             Show-LabelledWarning -message 'Try again!'
@@ -853,7 +853,7 @@ Describe "Write-Host helpers" {
             }
         }
 
-        It "Prints labled error message" {
+        It "Prints labled info message" {
             Mock Show-LabelledMessage { }
 
             Show-LabelledInfo -message 'Download in progress!'

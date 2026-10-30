@@ -498,6 +498,7 @@ function Invoke-Cache {
 
     $action = Resolve-Alias -alias $action
 
+    Write-White -message "`nPath : $($Global:PVMConfig.paths.directories.cache)"
     switch ($action.ToLower()) {
         'list' {
             return (Show-CacheFiles)

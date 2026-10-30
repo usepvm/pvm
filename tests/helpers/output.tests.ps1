@@ -798,18 +798,38 @@ Describe "Write-Host helpers" {
 
         It "Prints labled message" {
             Mock Write-White { }
+            $label = 'Label'
 
-            Show-LabelledMessage -label 'Label' -message 'This is a message' -backColor 'White' -foreColor 'Black' -noNewLine
+            Show-LabelledMessage -label $label -message 'This is a message' -backColor 'White' -foreColor 'Black' -noNewLine
 
             Should -Invoke Show-Label -ParameterFilter {
-                $label -eq 'Label' -and
+                $label -eq $label -and
                 $foreColor -eq 'Black' -and
                 $backColor -eq 'White' -and
-                $noPreNewLine -eq $false
-                $noNewLine -eq $true
+                -not $noPreNewLine -and
+                $noNewLine
             }
             Should -Invoke Write-White -ParameterFilter {
                 $message -like '*This is a message*' -and
+                $noNewLine
+            }
+
+            Show-LabelledMessage -label "   $label  " -message "  This is a `n multi-line  `n   message" -backColor 'White' -foreColor 'Black' -noNewLine
+            Should -Invoke Show-Label -ParameterFilter {
+                $label -eq $label -and
+                $foreColor -eq 'Black' -and
+                $backColor -eq 'White' -and
+                -not $noPreNewLine -and
+                $noNewLine
+            }
+            $spaces = ' ' * ($label.Length + 2)
+            $composedMessage = @(
+                "This is a"
+                "$spaces multi-line"
+                "$spaces message"
+            ) -join "`n"
+            Should -Invoke Write-White -ParameterFilter {
+                $message -eq " $composedMessage`n" -and
                 $noNewLine
             }
         }

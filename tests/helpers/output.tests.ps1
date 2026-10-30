@@ -825,6 +825,15 @@ Describe "Write-Host helpers" {
                 $backColor -eq 'Green' -and
                 $foreColor -eq 'Black'
             }
+
+            Show-LabelledSuccess -message 'Fetched successfully!' -label 'OK'
+
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
+                $label -eq 'OK' -and
+                $message -eq 'Fetched successfully!' -and
+                $backColor -eq 'Green' -and
+                $foreColor -eq 'Black'
+            }
         }
 
         It "Prints labled error message" {
@@ -834,6 +843,15 @@ Describe "Write-Host helpers" {
 
             Should -Invoke Show-LabelledMessage -ParameterFilter {
                 $label -eq 'Error' -and
+                $message -eq 'Download failed!' -and
+                $backColor -eq 'Red' -and
+                $foreColor -eq 'Black'
+            }
+
+            Show-LabelledError -message 'Download failed!' -label 'NOK'
+
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
+                $label -eq 'NOK' -and
                 $message -eq 'Download failed!' -and
                 $backColor -eq 'Red' -and
                 $foreColor -eq 'Black'
@@ -851,6 +869,15 @@ Describe "Write-Host helpers" {
                 $backColor -eq 'Yellow' -and
                 $foreColor -eq 'Black'
             }
+
+            Show-LabelledWarning -message 'Try again!' -label 'Alert'
+
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
+                $label -eq 'Alert' -and
+                $message -eq 'Try again!' -and
+                $backColor -eq 'Yellow' -and
+                $foreColor -eq 'Black'
+            }
         }
 
         It "Prints labled info message" {
@@ -860,6 +887,15 @@ Describe "Write-Host helpers" {
 
             Should -Invoke Show-LabelledMessage -ParameterFilter {
                 $label -eq 'Info' -and
+                $message -eq 'Download in progress!' -and
+                $backColor -eq 'Blue' -and
+                $foreColor -eq 'Black'
+            }
+
+            Show-LabelledInfo -message 'Download in progress!' -label 'Notice'
+
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
+                $label -eq 'Notice' -and
                 $message -eq 'Download in progress!' -and
                 $backColor -eq 'Blue' -and
                 $foreColor -eq 'Black'

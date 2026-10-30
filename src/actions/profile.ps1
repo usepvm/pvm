@@ -425,7 +425,7 @@ function Show-PHPProfiles {
                     PHPVersion  = $userProfile.phpVersion
                     Settings    = $settingsCount
                     Extensions  = $extensionsCount
-                    File        = $file.Name
+                    File        = $file
                 }
             } catch {
                 $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to parse profile file '$($file.Name)'"; exception = $_ }
@@ -442,7 +442,7 @@ function Show-PHPProfiles {
             Show-Message -message ('   PHP '.PadRight($maxNameLength, '.') + " $($userProfile.PHPVersion)")
             Show-Message -message ('   Settings '.PadRight($maxNameLength, '.') + " $($userProfile.Settings)")
             Show-Message -message ('   Extensions '.PadRight($maxNameLength, '.') + " $($userProfile.Extensions)")
-            Show-Message -message ('   Path '.PadRight($maxNameLength, '.') + " $($Global:PVMConfig.paths.directories.profiles)\$($userProfile.File)")
+            Show-Message -message ('   File name '.PadRight($maxNameLength, '.') + " $($userProfile.File.Name)")
         }
 
         return 0

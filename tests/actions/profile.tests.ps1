@@ -22,6 +22,7 @@ BeforeAll {
 
     Mock Show-Warning { }
     Mock Show-Message { }
+    Mock Show-Error { }
     Mock Show-LabelledInfo { }
     Mock Show-LabelledSuccess { }
     Mock Show-LabelledError { }
@@ -558,13 +559,14 @@ Describe "Show-PHPProfiles" {
         Mock Test-DirectoryNotExists { return $true }
 
         $result = Show-PHPProfiles
+
         $result | Should -Be -1
     }
 
     It "Should list all available profiles" {
         $result = Show-PHPProfiles
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Should -Invoke Show-Message -ParameterFilter { $message -match 'profile1' }
         Should -Invoke Show-Message -ParameterFilter { $message -match 'profile2' }
     }
@@ -573,7 +575,9 @@ Describe "Show-PHPProfiles" {
         Remove-Item -Path "$script:PROFILES_PATH\*" -Force -Recurse -ErrorAction SilentlyContinue
 
         $result = Show-PHPProfiles
+
         $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*No profiles found. Create a profile with 'pvm profile save <name>'*" }
     }
 
     It "Should handle exceptions gracefully when profile content cannot be read" {
@@ -586,7 +590,9 @@ Describe "Show-PHPProfiles" {
         Mock Get-ContentWrapper { throw 'Error' }
 
         $result = Show-PHPProfiles
+        
         $result | Should -Be 0
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Warning: Failed to parse*' } -Exactly 2
     }
 
     It "Should fallback to count 0 when settings or extensions cannot be parsed" {
@@ -612,6 +618,15 @@ Describe "Show-PHPProfiles" {
 
         $result = Show-PHPProfiles
         $result | Should -Be -1
+    }
+
+    It "Should handle profiles with null settings and extensions" {
+        '' | Set-Content -Path "$script:PROFILES_PATH\empty_profile.json" -Encoding UTF8
+
+        $result = Show-PHPProfiles
+
+        $result | Should -Be 0
+        Should -Invoke Show-Error -ParameterFilter { $message -like '*Warning: Failed to parse*' } -Exactly 1
     }
 }
 

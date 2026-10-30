@@ -590,7 +590,7 @@ Describe "Show-PHPProfiles" {
         Mock Get-ContentWrapper { throw 'Error' }
 
         $result = Show-PHPProfiles
-        
+
         $result | Should -Be 0
         Should -Invoke Show-Error -ParameterFilter { $message -like '*Warning: Failed to parse*' } -Exactly 2
     }

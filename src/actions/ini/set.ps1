@@ -4,7 +4,7 @@ function Set-IniSetting {
 
     try {
         if ($keys -isnot [array] -or $keys.Count -eq 0) {
-            Show-Warning -message "`nPlease specify at least one 'key=value' (pvm ini set memory_limit=512M)."
+            Show-LabelledWarning -message "Please specify at least one 'key=value' (pvm ini set memory_limit=512M)."
             return -1
         }
 
@@ -34,7 +34,7 @@ function Set-IniSetting {
             }
 
             if ($matchesList.Length -gt 1) {
-                Show-Info -message "`nMultiple settings match '$searchKey':`n"
+                Write-Cyan -message "`nMultiple settings match '$searchKey':" -underlined
 
                 $maxLineLength = ($matchesList.name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0
@@ -104,6 +104,7 @@ function Set-IniSetting {
         return $overallCode
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set ini setting '$($keys -join ', ')'"; exception = $_ }
+        Show-LabelledError -message 'Failed to set requested extensions'
         return -1
     }
 }

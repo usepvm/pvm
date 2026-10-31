@@ -91,7 +91,7 @@ function Add-MissingPHPExtensionToIni {
 
         $matchesList = (Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $extFileName -includeIniOnly $true -addToIniFileIfMissing $false) | Select-Object -First 1
         if ($matchesList.Length -gt 0 -and $matchesList.LineNumber -gt 0) {
-            Show-Warning -message "- Extension '$extFileName' already exists in php.ini"
+            Show-Warning -message "`nExtension '$extFileName' already exists in php.ini"
             return 0
         }
 
@@ -109,8 +109,7 @@ function Add-MissingPHPExtensionToIni {
             return -1
         }
 
-        Show-Success -message "- '$extFileName' added successfully."
-
+        Show-Success -message "`n'$extFileName' added to ini file successfully."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to add extension '$extFileName'"; exception = $_ }
@@ -137,7 +136,7 @@ function Install-Extension {
         }
         $choice = $null
         if (-not [int]::TryParse($selectedIndex, [ref]$choice)) {
-            Show-Warning -message "`nYou answer is invalid!"
+            Show-Warning -message "`nYour answer is invalid!"
             return -1
         }
         if ($choice -lt 0 -or $choice -gt $sourceHandlers.Count - 1) {
@@ -149,14 +148,14 @@ function Install-Extension {
         $handler = Get-SourceHandler -sourceUrl $selectedSource
 
         if (-not $handler) {
-            Show-Error -message "`nNo handler found for source: $selectedSource"
+            Show-LabelledError -message "No handler found for source: $selectedSource"
             return -1
         }
 
         if ($handler.SupportedExtensions -and $handler.SupportedExtensions -notcontains '*') {
             $normalizedExtName = ConvertTo-ExtensionId -name $extName
             if ($handler.SupportedExtensions -notcontains $normalizedExtName) {
-                Show-Error -message "`nSource '$selectedSource' does not support extension '$extName'. Supported extensions: $($handler.SupportedExtensions -join ', ')"
+                Show-LabelledError -message "Source '$selectedSource' does not support extension '$extName'. Supported extensions: $($handler.SupportedExtensions -join ', ')"
                 return -1
             }
         }
@@ -165,7 +164,7 @@ function Install-Extension {
 
         if (($null -eq $extensionLinksObj) -or ($extensionLinksObj.Count -eq 0) -or ($null -eq $extensionLinksObj.data) -or ($extensionLinksObj.data.Count -eq 0)) {
             $extName = if ($extensionLinksObj) { $extensionLinksObj.extName } else { $extName }
-            Show-Error -message "`nNo packages found for $extName"
+            Show-LabelledError -message "No packages found for $extName"
             return -1
         }
 
@@ -183,7 +182,7 @@ function Install-Extension {
         }
 
         if ($null -eq $extensionLinks -or $extensionLinks.Count -eq 0) {
-            Show-Error -message "`nNo packages found for '$extName' matching current PHP architecture/build type"
+            Show-LabelledError -message "No packages found for '$extName' matching current PHP architecture/build type"
             return -1
         }
 
@@ -198,12 +197,12 @@ function Install-Extension {
             } else {
                 $handler.MoreInfoUrl
             }
-            Show-Info -message "`nThis is a partial list. For a complete list, visit: $moreInfoUrl"
+            Write-Gray -message "`nThis is a partial list. For a complete list, visit: $moreInfoUrl"
             $chosenItem = Select-ExtensionPackageLink -extName $extName -extensionLinks $extensionLinks
         }
 
         if (-not $chosenItem) {
-            Show-Error -message "`nYou chose the wrong index"
+            Show-Warning -message "`nYou chose the wrong index"
             return -1
         }
 
@@ -220,7 +219,7 @@ function Install-Extension {
 
         $extFile = & $handler.Download @downloadParams
         if (-not $extFile) {
-            Show-Error -message "`nFailed to download $extName"
+            Show-LabelledError -message "Failed to download $extName"
             return -1
         }
 
@@ -232,7 +231,7 @@ function Install-Extension {
             return -1
         }
 
-        Show-Success -message "`n$extName installed successfully"
+        Show-LabelledSuccess -message "$extName installed successfully"
 
         return 0
     } catch {
@@ -246,7 +245,7 @@ function Install-IniExtension {
 
     try {
         if ($extNames.Count -eq 0) {
-            Show-Warning -message "`nPlease provide at least one extension name to install"
+            Show-LabelledWarning -message 'Please provide at least one extension name to install'
             return -1
         }
 

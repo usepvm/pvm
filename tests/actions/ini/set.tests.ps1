@@ -23,6 +23,8 @@ BeforeAll {
     Mock Show-Message { }
     Mock Show-Error { }
     Mock Show-Info { }
+    Mock Show-LabelledError { }
+    Mock Show-LabelledWarning { }
     Mock Write-Color { }
     Mock New-Line { }
     Mock Add-LogEntry { return 0 }

@@ -16,6 +16,7 @@ BeforeAll {
     Mock Show-Info { }
     Mock Show-Message { }
     Mock Show-Error { }
+    Mock Show-LabelledError { }
     Mock Add-LogEntry { return 0 }
 }
 
@@ -690,8 +691,8 @@ Describe "Start-PVM" {
 
             $result | Should -Be -1
             Should -Invoke Add-LogEntry -Times 1
-            Should -Invoke Show-Error -Times 1 -ParameterFilter {
-                $message -eq "`nCommand canceled or failed to elevate privileges."
+            Should -Invoke Show-LabelledError -Times 1 -ParameterFilter {
+                $message -eq 'Command canceled or failed to elevate privileges.'
             }
         }
 
@@ -792,7 +793,7 @@ Describe "Start-PVM" {
 
             $result | Should -Be -1
             Should -Invoke Add-LogEntry -Times 1
-            Should -Invoke Show-Error -Times 1
+            Should -Invoke Show-LabelledError -Times 1
         }
 
         It "Display error message when clearing temp directroy fails" {
@@ -979,7 +980,7 @@ Describe "Start-PVM" {
             Should -Invoke Resolve-Alias -Times 1
             Should -Invoke Test-PVMSetup -Times 1
             Should -Invoke Add-LogEntry -Times 1
-            Should -Invoke Show-Error -Times 1
+            Should -Invoke Show-LabelledError -Times 1
         }
     }
 }

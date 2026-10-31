@@ -136,7 +136,7 @@ function Get-UserSelectedPHPVersion {
     } else {
         $currentVersion = Get-CurrentPHPVersion
         $index = 0
-        Show-Message -message "`nInstalled versions :"
+        Write-Cyan -message "`nInstalled versions :" -underlined
         $maxNameLength = ($installedVersions.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedVersions | ForEach-Object -Process {
             $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
@@ -160,6 +160,9 @@ function Get-UserSelectedPHPVersion {
             return @{ code = -1; message = 'Operation cancelled.' }
         }
         $versionObj = $installedVersions | Where-Object -FilterScript { $_.index -eq $response }
+        if (-not $versionObj) {
+            return @{ code = -1; message = 'Your selection is invalid!' }
+        }
     }
 
     return @{ code = 0; version = $versionObj.version; arch = $versionObj.arch; buildType = $versionObj.buildType; path = $versionObj.installPath }

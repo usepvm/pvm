@@ -7,14 +7,14 @@ function Restore-IniBackup {
         $iniBackupPath = "$phpDirectory\$($Global:PVMConfig.constants.INI_BACKUP_DIR_NAME)"
 
         if (Test-DirectoryNotExists -path $iniBackupPath) {
-            Show-Error -message "`nBackup directory not found: $iniBackupPath"
+            Show-LabelledError -message "Backup directory not found: $iniBackupPath"
             return -1
         }
 
         $backupFiles = @(Get-ChildItemWrapper -path $iniBackupPath -filter 'php.ini_*.bak' -file | Sort-Object -Property CreationTime -Descending)
 
         if (-not $backupFiles -or $backupFiles.Count -eq 0) {
-            Show-Error -message "`nNo backup files found in: $iniBackupPath"
+            Show-LabelledError -message "No backup files found in: '$iniBackupPath'"
             return -1
         }
 
@@ -28,8 +28,7 @@ function Restore-IniBackup {
         }
 
         Show-Message -message "`nBackup path : $iniBackupPath"
-        Show-Info -message "`nAvailable backups: ($($backupList.Count))"
-        Write-Gray -message '------------------'
+        Write-Cyan -message "`nAvailable backups: ($($backupList.Count))" -underlined
         for ($i = 0; $i -lt $backupList.Count; $i++) {
             $backup = $backupList[$i]
             Show-Message -message "  [$i] $($backup.file.Name)" -noNewLine
@@ -52,16 +51,15 @@ function Restore-IniBackup {
         $selectedBackup = $backupList[$choice]
         $code = Copy-ItemWrapper -path $selectedBackup.file.FullName -destination $iniPath
         if ($code -ne 0) {
-            Show-Error -message "`nFailed to restore php.ini from backup: $($selectedBackup.file.FullName)!"
+            Show-LabelledError -message "Failed to restore php.ini from backup: '$($selectedBackup.file.FullName)'!"
             return -1
         }
 
-        Show-Success -message "`nRestored php.ini from backup: $($selectedBackup.file.Name)"
-
+        Show-LabelledSuccess -message "Restored php.ini from backup: $($selectedBackup.file.Name)"
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Restore-IniBackup: Failed to restore ini backup"; exception = $_ }
-        Show-Error -message "`nFailed to restore backup: $($_.Exception.Message)"
+        Show-LabelledError -message "Failed to restore backup: $($_.Exception.Message)"
         return -1
     }
 }

@@ -118,7 +118,7 @@ function Update-PVM {
                 $_.Trim().Replace('  ', ' ')
             }
 
-            $gitStatusText = '- ' + ($gitStatusText -join "`n- ")
+            $gitStatusText = ' - ' + ($gitStatusText -join "`n - ")
 
             return @{ code = -1; message = "`nYou have uncommitted changes. Please commit or stash your changes before updating.`n`nGit status:`n$gitStatusText"; color = 'DarkYellow' }
         }

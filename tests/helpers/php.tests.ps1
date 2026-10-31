@@ -23,6 +23,7 @@ BeforeAll {
 
     Mock Show-Message { }
     Mock Show-Error { }
+    Mock Write-Cyan { }
 
     Mock Add-LogEntry { return 0 }
 
@@ -695,7 +696,22 @@ Describe "Get-UserSelectedPHPVersion" {
             @{ version = '8.0'; arch = 'x64'; buildType = 'ts'}
             @{ version = '8.1'; arch = 'x64'; buildType = 'ts'}
         )
+
         $result.code | Should -Be -1
+        $result.message | Should -Match 'Operation cancelled'
+    }
+
+    It "Should return null when user enters invalid value" {
+        Mock Read-HostWrapper { return '-1' }
+
+        $result = Get-UserSelectedPHPVersion -installedVersions @(
+            @{ version = '7.4'; arch = 'x64'; buildType = 'ts'}
+            @{ version = '8.0'; arch = 'x64'; buildType = 'ts'}
+            @{ version = '8.1'; arch = 'x64'; buildType = 'ts'}
+        )
+
+        $result.code | Should -Be -1
+        $result.message | Should -Match 'Your selection is invalid'
     }
 
     It "Should prompt user and return selected version when multiple are provided" {
@@ -711,7 +727,7 @@ Describe "Get-UserSelectedPHPVersion" {
         $result.path | Should -Be 'C:\php\8.1'
     }
 
-    It "Should print current next to active php version" {
+    It "Should print '(current)' next to active php version" {
         Mock Read-HostWrapper { return '2' }
         Mock Get-CurrentPHPVersion { return @{ version = '8.0'; arch = 'x64'; buildType = 'ts'}}
 

@@ -22,6 +22,7 @@ BeforeAll {
     $script:PECL_WIN_EXT_DOWNLOAD_URL = $Global:PVMConfig.links.peclWinExtDownload
 
     Mock Show-Message { }
+    Mock Show-Success { }
     Mock Show-Error { }
     Mock Show-Info { }
     Mock Write-Gray { }
@@ -194,7 +195,7 @@ Describe "Get-ExtensionHandlers" {
             Should -Invoke Write-Gray -ParameterFilter { $message -like '*Installation cancelled*' }
         }
 
-        It "Removes the existing file when ext id name matches" {
+        It "Removes the existing file when ext id name matches and user answer 'y'" {
             Mock Get-XDebugFromUrl { return $null }
             $tempDirectory = "$script:TEST_DRIVE\temp\php"
             $fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'
@@ -682,6 +683,7 @@ Describe "Get-ExtensionHandlers" {
             Should -Invoke Add-LogEntry -Times 1
         }
     }
+
     Context "When running config actions from selected config handler" {
         It "Configures xdebug in ini file" {
             $iniContent = @(
@@ -704,6 +706,31 @@ Describe "Get-ExtensionHandlers" {
             $result | Should -Be 0
             Should -Invoke Set-ContentWrapper -Times 1
             Should -Invoke Add-ContentWrapper -Times 1
+            Should -Invoke Show-Success -ParameterFilter { $message -match "'XDebug' added to ini file successfully" }
+        }
+
+        It "Return -1 when adding xdebug config to ini fails" {
+            $iniContent = @(
+                ';extension=php_sqlsrv.dll',
+                '',
+                '[xdebug]',
+                'zend_extension=php_xdebug.dll',
+                'xdebug.mode=debug'
+            )
+            Mock Get-ContentWrapper { return $iniContent }
+            Mock Set-ContentWrapper { return 0 }
+            Mock Add-ContentWrapper { return -1 }
+
+            $configHandlers = (Get-ExtensionHandlers).ExtensionConfigHandlers
+            $configHandler = $configHandlers['xdebug']
+
+            $result = & $configHandler -iniPath $script:testIniPath -fileName 'php_xdebug.dll' -extVersion '3.5'
+
+            $configHandler | Should -Not -BeNullOrEmpty
+            $result | Should -Be -1
+            Should -Invoke Set-ContentWrapper -Times 1
+            Should -Invoke Add-ContentWrapper -Times 1
+            Should -Invoke Show-Error -ParameterFilter { $message -match "Failed to add 'XDebug' to ini file" }
         }
 
         It "Returns -1 when writing to ini file fails" {
@@ -1503,59 +1530,66 @@ Describe "Get-FilteredPHPExtensionsByCategory" {
         $testExtensions = Get-ExtensionList
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions
 
-        $result.Count | Should -Be 2
-        $result.Authentication.Length | Should -Be 2
-        $result.Caching.Length | Should -Be 4
+        $result.Count | Should -Be 6
+        $result.searchResults.Authentication.Length | Should -Be 2
+        $result.searchResults.Caching.Length | Should -Be 4
     }
 
     It "Filters by category name when term matches category" {
         $testExtensions = Get-ExtensionList
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'Cach'
 
-        $result.Count | Should -Be 1
-        $result.Caching.Length | Should -Be 4
-        $result.Caching[0].extName | Should -Be 'APC'
+        $result.Count | Should -Be 6
+        $result.searchResults.Count | Should -Be 1
+        $result.searchResults.Caching.Length | Should -Be 4
+        $result.searchResults.Caching[0].extName | Should -Be 'APC'
     }
 
     It "Filters by extension name when term matches extName" {
         $testExtensions = Get-ExtensionList
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'mem'
 
-        $result.Count | Should -Be 1
-        $result.Caching.Length | Should -Be 2
-        $result.Caching[0].extName | Should -Be 'memcache'
-        $result.Caching[1].extName | Should -Be 'memcached'
+        $result.Count | Should -Be 6
+        $result.searchResults.Count | Should -Be 1
+        $result.searchResults.Caching.Length | Should -Be 2
+        $result.searchResults.Caching[0].extName | Should -Be 'memcache'
+        $result.searchResults.Caching[1].extName | Should -Be 'memcached'
     }
 
     It "Filters by description when term matches description" {
         $testExtensions = Get-ExtensionList
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'Kerberos'
 
-        $result.Count | Should -Be 1
-        $result.Authentication.Length | Should -Be 1
-        $result.Authentication[0].extName | Should -Be 'krb5'
+        $result.Count | Should -Be 6
+        $result.searchResults.Count | Should -Be 1
+        $result.searchResults.Authentication.Length | Should -Be 1
+        $result.searchResults.Authentication[0].extName | Should -Be 'krb5'
     }
 
     It "Returns empty result when no matches found" {
         $testExtensions = Get-ExtensionList
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'nonexistent'
 
-        $result.Count | Should -Be 0
+        $result.Count | Should -Be 6
+        $result.searchResults.Count | Should -Be 0
     }
 
     It "Returns empty hashtable when availableExtensions is empty" {
         $emptyExtensions = [pscustomobject]@{}
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $emptyExtensions
 
-        $result.Count | Should -Be 0
+        $result.Count | Should -Be 6
+        $result.searchResults.Count | Should -Be 0
+        $result.availableExtensions.Count | Should -Be 0
     }
 
     It "Case insensitive search works" {
         $testExtensions = Get-ExtensionList
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'CACH'
 
-        $result.Count | Should -Be 1
-        $result.Caching.Count | Should -Be 4
+        $result.Count | Should -Be 6
+        $result.searchResults.Count | Should -Be 1
+        $result.searchResults.Caching.Count | Should -Be 4
     }
 
     It "Filters extension containers with category metadata" {
@@ -1570,8 +1604,8 @@ Describe "Get-FilteredPHPExtensionsByCategory" {
 
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'OpenGL'
 
-        $result.Multimedia.Count | Should -Be 1
-        $result.Multimedia[0].extName | Should -Be 'opengl'
+        $result.searchResults.Multimedia.Count | Should -Be 1
+        $result.searchResults.Multimedia[0].extName | Should -Be 'opengl'
     }
 }
 
@@ -1756,9 +1790,7 @@ Describe "Get-ExtensionMatchingCategories" {
         $result = Get-ExtensionMatchingCategories -extName 'mem'
 
         $result.Count | Should -Be 0
-        Should -Invoke Show-Error -Exactly 1 -ParameterFilter {
-            $message -like "*No extensions found*"
-        }
+        Should -Invoke Show-Error -Exactly 1 -ParameterFilter { $message -like "*No extensions found*" }
     }
 }
 
@@ -1805,9 +1837,7 @@ Describe "Select-ExtensionFromMatches" {
             $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
 
             $result | Should -Be $null
-            Should -Invoke Write-Gray -Times 1 -ParameterFilter {
-                $message -eq "`nInstallation cancelled"
-            }
+            Should -Invoke Write-Gray -Times 1 -ParameterFilter { $message -eq "`nOperation cancelled" }
         }
 
         It "Reprompts user when typing invalid choice" {
@@ -1863,9 +1893,7 @@ Describe "Resolve-ExtensionLinks" {
             $result = Resolve-ExtensionLinks -extName 'unknownext' -version '8.2'
 
             $result | Should -Be $null
-            Should -Invoke Show-Error -ParameterFilter {
-                $message -match "Extension 'unknownext' not found"
-            } -Exactly 1
+            Should -Invoke Show-Error -ParameterFilter { $message -match "Extension 'unknownext' not found" } -Exactly 1
         }
 
         It "Takes the only link found" {

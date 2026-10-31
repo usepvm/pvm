@@ -4,7 +4,7 @@ function Enable-IniExtension {
 
     try {
         if ($extNames -isnot [array] -or $extNames.Count -eq 0) {
-            Show-Warning -message "`nPlease provide at least one extension name to enable"
+            Show-LabelledWarning -message 'Please provide at least one extension name to enable'
             return -1
         }
 
@@ -20,7 +20,7 @@ function Enable-IniExtension {
             }
 
             if ($matchesListStatus.Length -gt 1) {
-                Show-Info -message "`nMultiple extensions match '$extName':`n"
+                Write-Cyan -message "`nMultiple extensions match '$extName':" -underlined
 
                 $maxLineLength = ($matchesListStatus.name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0
@@ -89,7 +89,7 @@ function Enable-IniExtension {
         }
 
         $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        Show-Message -message "`nResults:"
+        Write-White -message "`nResults:" -underlined
         foreach ($item in $results) {
             Show-Message -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
             Write-Color -message " $($item.status)" -foreColor $item.color
@@ -98,6 +98,7 @@ function Enable-IniExtension {
         return $overallCode
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to enable extension '$($extNames -join ', ')'"; exception = $_ }
+        Show-LabelledError -message 'Failed to enable requested extensions'
         return -1
     }
 }

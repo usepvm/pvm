@@ -9,7 +9,7 @@ function Initialize-PVM {
         $parent = Split-Path -Path $Global:PVMConfig.paths.directories.phpCurrent -Parent
         $created = New-Directory -path $parent -allowOutsideRoot
         if ($created -ne 0) {
-            Show-Error -message 'Failed to create directory for PHP version.'
+            Show-LabelledError -message 'Failed to create directory for PHP version.' -noPreNewLine -noNewLine
             return -1
         }
 
@@ -26,12 +26,12 @@ function Initialize-PVM {
         if ($newPath -ne $path) {
             $code = Set-EnvVar -name 'Path' -value $newPath
             if ($code -ne 0) {
-                Show-Error -message 'Failed to set Path environment variable.'
+                Show-LabelledError -message 'Failed to set Path environment variable.' -noPreNewLine -noNewLine
                 return -1
             }
         }
 
-        Show-Success -message 'PVM environment has been set up.'
+        Show-LabelledSuccess -message 'PVM environment has been set up.' -noPreNewLine -noNewLine
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to set up PVM environment"; exception = $_ }
@@ -41,7 +41,8 @@ function Initialize-PVM {
 
 function Get-PVMDirectoryItems {
     $dirs        = $Global:PVMConfig.paths.directories
-    $rootPattern = [regex]::Escape("$($Global:PVMConfig.rootPath)\")
+    $rootPath = "$($Global:PVMConfig.rootPath)\"
+    $rootPattern = [regex]::Escape($rootPath)
 
     $items = @()
     foreach ($key in 'storage', 'testDrive', 'phpVersions', 'data', 'templates',
@@ -59,7 +60,8 @@ function Get-PVMDirectoryItems {
 
 function Get-PVMFileItems {
     $files = $Global:PVMConfig.paths.files
-    $rootPattern = [regex]::Escape("$($Global:PVMConfig.rootPath)\")
+    $rootPath = "$($Global:PVMConfig.rootPath)\"
+    $rootPattern = [regex]::Escape($rootPath)
 
     $creators = [ordered]@{
         profileExample     = 'New-ProfileExample'

@@ -46,7 +46,7 @@ function Get-PVMDirectoryItems {
 
     $items = @()
     foreach ($key in 'storage', 'testDrive', 'php', 'data', 'templates',
-                     'cache', 'profiles', 'log', 'state', 'temp') {
+                     'cache', 'profiles', 'log', 'state', 'temp', 'cert') {
         $path = $dirs.$key
         $items += @{
             Label  = $path -replace $rootPattern, ''

@@ -184,6 +184,17 @@ Describe "Get-IniAction" {
     }
 }
 
+Describe "Get-CertAction" {
+    It "Should return the certificate action" {
+        Mock Invoke-Cert { return 0 }
+
+        $certAction = Get-CertAction
+        $certAction.command | Should -Be 'pvm cert <bundle|local> [hostname]'
+        (& $certAction.action -arguments @('bundle')) | Should -Be 0
+        Should -Invoke Invoke-Cert -Times 1
+    }
+}
+
 Describe "Get-ProfileAction" {
     It "Should return the profile action" {
         Mock Invoke-Profile { return 0 }
@@ -368,6 +379,7 @@ Describe "Get-Actions" {
         Mock Invoke-Use { }
         Mock Invoke-Info { }
         Mock Invoke-Ini { }
+        Mock Invoke-Cert { }
         Mock Invoke-Log { }
         Mock Invoke-Test { }
         Mock Invoke-Profile { }
@@ -391,6 +403,7 @@ Describe "Get-Actions" {
         $actions.Keys | Should -Contain 'use'
         $actions.Keys | Should -Contain 'info'
         $actions.Keys | Should -Contain 'ini'
+        $actions.Keys | Should -Contain 'cert'
         $actions.Keys | Should -Contain 'profile'
         $actions.Keys | Should -Contain 'cache'
         $actions.Keys | Should -Contain 'test'
@@ -498,6 +511,13 @@ Describe "Get-Actions" {
             & $actions['profile'].data.action -arguments @('save')
 
             Should -Invoke Invoke-Profile -Times 1
+        }
+
+        It "Should execute cert action" {
+            $actions = Get-Actions
+            & $actions['cert'].data.action -arguments @('local')
+
+            Should -Invoke Invoke-Cert -Times 1
         }
 
         It "Should execute cache action" {

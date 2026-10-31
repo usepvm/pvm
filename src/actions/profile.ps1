@@ -407,12 +407,15 @@ function Show-PHPProfiles {
             return -1
         }
 
-        Write-Cyan -message "`nAvailable Profiles:" -underlined
+        Write-Cyan -message "`nAvailable Profiles: ($($profileFiles.Count))" -underlined
 
         $profiles = @()
         foreach ($file in $profileFiles) {
             try {
                 $userProfile = Get-ContentWrapper -path $file.FullName -raw | ConvertFrom-Json
+                if ($userProfile.Length -eq 0) {
+                    throw 'Invalid profile format. Empty file!'
+                }
                 $settingsCount = if ($userProfile.settings) { ($userProfile.settings.PSObject.Properties | Measure-Object).Count } else { 0 }
                 $extensionsCount = if ($userProfile.extensions) { ($userProfile.extensions.PSObject.Properties | Measure-Object).Count } else { 0 }
                 $profiles += @{
@@ -422,7 +425,7 @@ function Show-PHPProfiles {
                     PHPVersion  = $userProfile.phpVersion
                     Settings    = $settingsCount
                     Extensions  = $extensionsCount
-                    File        = $file.Name
+                    File        = $file
                 }
             } catch {
                 $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to parse profile file '$($file.Name)'"; exception = $_ }
@@ -439,7 +442,7 @@ function Show-PHPProfiles {
             Show-Message -message ('   PHP '.PadRight($maxNameLength, '.') + " $($userProfile.PHPVersion)")
             Show-Message -message ('   Settings '.PadRight($maxNameLength, '.') + " $($userProfile.Settings)")
             Show-Message -message ('   Extensions '.PadRight($maxNameLength, '.') + " $($userProfile.Extensions)")
-            Show-Message -message ('   Path '.PadRight($maxNameLength, '.') + " $($Global:PVMConfig.paths.directories.profiles)\$($userProfile.File)")
+            Show-Message -message ('   File name '.PadRight($maxNameLength, '.') + " $($userProfile.File.Name)")
         }
 
         return 0

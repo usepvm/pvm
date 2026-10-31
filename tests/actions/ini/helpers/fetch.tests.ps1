@@ -1530,59 +1530,66 @@ Describe "Get-FilteredPHPExtensionsByCategory" {
         $testExtensions = Get-ExtensionList
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions
 
-        $result.Count | Should -Be 2
-        $result.Authentication.Length | Should -Be 2
-        $result.Caching.Length | Should -Be 4
+        $result.Count | Should -Be 6
+        $result.searchResults.Authentication.Length | Should -Be 2
+        $result.searchResults.Caching.Length | Should -Be 4
     }
 
     It "Filters by category name when term matches category" {
         $testExtensions = Get-ExtensionList
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'Cach'
 
-        $result.Count | Should -Be 1
-        $result.Caching.Length | Should -Be 4
-        $result.Caching[0].extName | Should -Be 'APC'
+        $result.Count | Should -Be 6
+        $result.searchResults.Count | Should -Be 1
+        $result.searchResults.Caching.Length | Should -Be 4
+        $result.searchResults.Caching[0].extName | Should -Be 'APC'
     }
 
     It "Filters by extension name when term matches extName" {
         $testExtensions = Get-ExtensionList
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'mem'
 
-        $result.Count | Should -Be 1
-        $result.Caching.Length | Should -Be 2
-        $result.Caching[0].extName | Should -Be 'memcache'
-        $result.Caching[1].extName | Should -Be 'memcached'
+        $result.Count | Should -Be 6
+        $result.searchResults.Count | Should -Be 1
+        $result.searchResults.Caching.Length | Should -Be 2
+        $result.searchResults.Caching[0].extName | Should -Be 'memcache'
+        $result.searchResults.Caching[1].extName | Should -Be 'memcached'
     }
 
     It "Filters by description when term matches description" {
         $testExtensions = Get-ExtensionList
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'Kerberos'
 
-        $result.Count | Should -Be 1
-        $result.Authentication.Length | Should -Be 1
-        $result.Authentication[0].extName | Should -Be 'krb5'
+        $result.Count | Should -Be 6
+        $result.searchResults.Count | Should -Be 1
+        $result.searchResults.Authentication.Length | Should -Be 1
+        $result.searchResults.Authentication[0].extName | Should -Be 'krb5'
     }
 
     It "Returns empty result when no matches found" {
         $testExtensions = Get-ExtensionList
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'nonexistent'
 
-        $result.Count | Should -Be 0
+        $result.Count | Should -Be 6
+        $result.searchResults.Count | Should -Be 0
     }
 
     It "Returns empty hashtable when availableExtensions is empty" {
         $emptyExtensions = [pscustomobject]@{}
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $emptyExtensions
 
-        $result.Count | Should -Be 0
+        $result.Count | Should -Be 6
+        $result.searchResults.Count | Should -Be 0
+        $result.availableExtensions.Count | Should -Be 0
     }
 
     It "Case insensitive search works" {
         $testExtensions = Get-ExtensionList
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'CACH'
 
-        $result.Count | Should -Be 1
-        $result.Caching.Count | Should -Be 4
+        $result.Count | Should -Be 6
+        $result.searchResults.Count | Should -Be 1
+        $result.searchResults.Caching.Count | Should -Be 4
     }
 
     It "Filters extension containers with category metadata" {
@@ -1597,8 +1604,8 @@ Describe "Get-FilteredPHPExtensionsByCategory" {
 
         $result = Get-FilteredPHPExtensionsByCategory -availableExtensions $testExtensions -term 'OpenGL'
 
-        $result.Multimedia.Count | Should -Be 1
-        $result.Multimedia[0].extName | Should -Be 'opengl'
+        $result.searchResults.Multimedia.Count | Should -Be 1
+        $result.searchResults.Multimedia[0].extName | Should -Be 'opengl'
     }
 }
 

@@ -268,6 +268,7 @@ function Invoke-Profile {
 
     $action = Resolve-Alias -alias $action
 
+    Write-White -message "`nPath : $($Global:PVMConfig.paths.directories.profiles)"
     switch ($action.ToLower()) {
         'save' {
             if ($remainingArgs.Count -eq 0) {
@@ -418,7 +419,7 @@ function Invoke-Aliases {
         return -1
     }
 
-    Write-Cyan -message "`n`nAvailable Aliases:" -underlined
+    Write-Cyan -message "`n`nAvailable Aliases: ($($aliases.Count))" -underlined
     $maxAliasLength = ($aliases.Keys | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
     $aliases.Keys | ForEach-Object -Process {
         $alias = "$_ ".PadRight($maxAliasLength, '.')
@@ -497,6 +498,7 @@ function Invoke-Cache {
 
     $action = Resolve-Alias -alias $action
 
+    Write-White -message "`nPath : $($Global:PVMConfig.paths.directories.cache)"
     switch ($action.ToLower()) {
         'list' {
             return (Show-CacheFiles)

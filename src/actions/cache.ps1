@@ -28,10 +28,10 @@ function Show-CacheFiles {
             return -1
         }
 
-        Write-Cyan -message "`nAvailable Cache Files:" -underlined
+        Write-Cyan -message "`nAvailable Cache Files: ($($cacheFiles.Count))" -underlined
 
         foreach ($cacheFile in $cacheFiles) {
-            Show-Message -message "  $($cacheFile.BaseName)"
+            Show-Message -message "  $($cacheFile.Name)"
         }
 
         return 0

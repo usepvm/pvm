@@ -98,7 +98,10 @@ function Get-AvailablePHPVersions {
             return -1
         }
 
-        Write-Cyan -message "`nAvailable Versions:" -underlined
+        $totalAvailableVersionsGrouped = $fetchedVersionsGrouped.Archives.Count + $fetchedVersionsGrouped.Releases.Count
+        $totalFetchedVersionsCount = $fetchedVersionsGroupedPartialList.Archives.Count + $fetchedVersionsGroupedPartialList.Releases.Count
+
+        Write-Cyan -message "`nAvailable Versions: ($totalFetchedVersionsCount/$totalAvailableVersionsGrouped)" -underlined
 
         $fetchedVersionsGroupedPartialList.GetEnumerator() |
             Sort-Object -Property Key |

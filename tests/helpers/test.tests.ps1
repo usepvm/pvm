@@ -42,7 +42,7 @@ Describe "Show-Scripts" {
         Show-Scripts
 
         Should -Invoke Write-Cyan -Times 1 -Exactly -ParameterFilter {
-            $message -eq "`nAvailable scripts:"
+            $message -eq "`nAvailable scripts: (2)"
         }
         Should -Invoke Write-White -Times 2 -Exactly -ParameterFilter {
             $message -in @("`n  build", "`n  lint")

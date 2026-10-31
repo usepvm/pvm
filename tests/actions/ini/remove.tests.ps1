@@ -431,7 +431,7 @@ Describe "Uninstall-Extension" {
             $message -eq ' Uninstalled'
         }
         Should -Invoke Show-Warning -ParameterFilter { $message -eq 'Please enter a valid positive number.'}
-        Should -Invoke Show-Warning -ParameterFilter { $message -eq "Number must be between 0 and $($matchingExtensions.Length - 1)." }
+        Should -Invoke Show-Warning -ParameterFilter { $message -like "*Number must be between 0 and $($matchingExtensions.Length - 1)*" }
     }
 
     It "Skips confirmation prompt and uninstalls when skipConfirmation is true" {

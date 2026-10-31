@@ -25,8 +25,8 @@ BeforeAll {
     Mock Show-Warning { }
     Mock Show-Message { }
     Mock Show-Error { }
-    Mock Show-Value { }
     Mock Write-Color { }
+    Mock Write-White { }
     Mock Write-Gray { }
     Mock Backup-IniFile { return 0 }
     Mock Add-LogEntry { return 0 }
@@ -926,19 +926,19 @@ Describe "Show-PHPProfile" {
             $message -match "`nProfile: completeprofile"
         } -Exactly 1
 
-        Should -Invoke Show-Value -ParameterFilter {
+        Should -Invoke Write-White -ParameterFilter {
             $message -match 'Description: Complete profile description'
         } -Exactly 1
 
-        Should -Invoke Show-Value -ParameterFilter {
+        Should -Invoke Write-White -ParameterFilter {
             $message -match 'Created: 01/01/2023 12:30:45'
         } -Exactly 1
 
-        Should -Invoke Show-Value -ParameterFilter {
+        Should -Invoke Write-White -ParameterFilter {
             $message -match 'PHP Version: 8.2.0'
         } -Exactly 1
 
-        Should -Invoke Show-Value -ParameterFilter {
+        Should -Invoke Write-White -ParameterFilter {
             $message -match 'PATH:'
         } -Exactly 1
     }

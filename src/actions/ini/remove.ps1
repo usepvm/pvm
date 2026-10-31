@@ -94,7 +94,7 @@ function Uninstall-Extension {
                     }
 
                     if ($choice -lt 0 -or $choice -gt $matchingExtensions.Length - 1) {
-                        Show-Warning -message "Number must be between 0 and $($matchingExtensions.Length - 1)."
+                        Show-Warning -message "`nNumber must be between 0 and $($matchingExtensions.Length - 1)."
                         continue
                     }
 

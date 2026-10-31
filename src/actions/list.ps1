@@ -149,7 +149,7 @@ function Show-InstalledPHPVersions {
         }
 
         Show-Info -message "`nInstalled Versions: ($($installedPhp.Count))"
-        Write-Gray -message '------------------'
+        Write-Gray -message '-------------------'
         $duplicates = @()
         $maxNameLength = ($installedPhp.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedPhp | ForEach-Object -Process {

@@ -41,7 +41,8 @@ function Initialize-PVM {
 
 function Get-PVMDirectoryItems {
     $dirs        = $Global:PVMConfig.paths.directories
-    $rootPattern = [regex]::Escape("$($Global:PVMConfig.rootPath)\")
+    $rootPath = "$($Global:PVMConfig.rootPath)\"
+    $rootPattern = [regex]::Escape($rootPath)
 
     $items = @()
     foreach ($key in 'storage', 'testDrive', 'php', 'data', 'templates',
@@ -59,7 +60,8 @@ function Get-PVMDirectoryItems {
 
 function Get-PVMFileItems {
     $files = $Global:PVMConfig.paths.files
-    $rootPattern = [regex]::Escape("$($Global:PVMConfig.rootPath)\")
+    $rootPath = "$($Global:PVMConfig.rootPath)\"
+    $rootPattern = [regex]::Escape($rootPath)
 
     $creators = [ordered]@{
         profileExample     = 'New-ProfileExample'

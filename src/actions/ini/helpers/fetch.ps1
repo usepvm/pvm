@@ -86,7 +86,7 @@ function Get-ExtensionHandlers {
 
                         return $extFile
                     } catch {
-                        $null = Add-LogEntry -data @{ header = "Xdebug.org Handler - Failed to download extension"; exception = $_ }
+                        $null = Add-LogEntry -data @{ header = 'Xdebug.org Handler - Failed to download extension'; exception = $_ }
                         return $null
                     } finally {
                         if ($temporaryDirectory) {
@@ -185,7 +185,7 @@ function Get-ExtensionHandlers {
 
                         return $extFile
                     } catch {
-                        $null = Add-LogEntry -data @{ header = "PECL Handler - Failed to download extension"; exception = $_ }
+                        $null = Add-LogEntry -data @{ header = 'PECL Handler - Failed to download extension'; exception = $_ }
                         return $null
                     } finally {
                         if ($temporaryDirectory) {
@@ -260,9 +260,16 @@ function Get-ExtensionHandlers {
                     }
                     $xDebugConfig = "`n$($xDebugConfig -join "`n")"
 
-                    return (Add-ContentWrapper -path $iniPath -value $xDebugConfig)
+                    $code = Add-ContentWrapper -path $iniPath -value $xDebugConfig
+                    if ($code -ne 0) {
+                        Show-Error -message "`nFailed to add 'XDebug' to ini file!"
+                        return -1
+                    }
+
+                    Show-Success -message "`n'XDebug' added to ini file successfully."
+                    return 0
                 } catch {
-                    $null = Add-LogEntry -data @{ header = "Xdebug Config Handler - Failed to apply configuration"; exception = $_ }
+                    $null = Add-LogEntry -data @{ header = 'Xdebug Config Handler - Failed to apply configuration'; exception = $_ }
                     return -1
                 }
             }
@@ -539,14 +546,23 @@ function Get-AvailablePHPExtensions {
 function Get-FilteredPHPExtensionsByCategory {
     param ($availableExtensions, $term = $null)
 
-    $result = @{}
-    $availableExtensions.PSObject.Properties | ForEach-Object -Process {
-        $categoryExtensions = if ($_.Value.PSObject.Properties.Name -contains 'extensions') {
-            $_.Value.extensions
+    $allExtensions = @{}
+    $foundExtensions = @{}
+    $totalExtensionsCount = 0
+    $totalSearchedExtensions = 0
+
+    foreach ($category in $availableExtensions.PSObject.Properties) {
+        $categoryExtensions = if ($category.Value.PSObject.Properties.Name -contains 'extensions') {
+            $category.Value.extensions
         } else {
-            $_.Value
+            $category.Value
         }
-        $categoryMatches = $_.Name -like "*$term*"
+        $categoryExtensions = @($categoryExtensions)
+
+        $allExtensions[$category.Name] = $categoryExtensions
+        $totalExtensionsCount += $categoryExtensions.Count
+
+        $categoryMatches = $category.Name -like "*$term*"
         if ($term -and -not $categoryMatches) {
             $searchResult = $categoryExtensions | Where-Object -FilterScript {
                 return ($_.extName -like "*$term*" -or $_.description -like "*$term*")
@@ -556,10 +572,19 @@ function Get-FilteredPHPExtensionsByCategory {
         }
         $searchResult = @($searchResult)
         if ($searchResult.Length -gt 0) {
-            $result[$_.Name] = @($searchResult)
+            $foundExtensions[$category.Name] = $searchResult
+            $totalSearchedExtensions += $searchResult.Count
         }
     }
-    return $result
+
+    return @{
+        availableExtensions     = $allExtensions
+        totalCategoriesCount    = $allExtensions.Count
+        totalExtensionsCount    = $totalExtensionsCount
+        searchResults           = $foundExtensions
+        totalSearchedCategories = $foundExtensions.Count
+        totalSearchedExtensions = $totalSearchedExtensions
+    }
 }
 
 function Get-ExtensionAvailableReleasesLinks {
@@ -628,7 +653,7 @@ function Get-ExtensionMatchingCategories {
     }
 
     $grouped = Get-FilteredPHPExtensionsByCategory -availableExtensions $availableExtensions -term $extName
-    $linksMatchingExtName = $grouped.Values | ForEach-Object -Process { $_ }
+    $linksMatchingExtName = $grouped.searchResults.Values | ForEach-Object -Process { $_ }
 
     return $linksMatchingExtName
 }
@@ -647,7 +672,7 @@ function Select-ExtensionFromMatches {
         return $chosenItem
     }
 
-    Show-Info -message "`nMatching '$extName' extension:"
+    Write-Cyan -message "`nMatching '$extName' extension:" -underlined
     $index = 0
 
     $sorted = $linksMatchingExtName | Sort-Object -Property @{ Expression = { $_.source } }, @{ Expression = { $_.extName } }, @{ Expression = { $_.extCategory } }
@@ -663,7 +688,7 @@ function Select-ExtensionFromMatches {
     do {
         $choiceRaw = Read-HostWrapper -prompt "`nEnter the [number] of your selection" -notifyUser
         if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
-            Write-Gray -message "`nInstallation cancelled"
+            Write-Gray -message "`nOperation cancelled"
             return $null
         }
 

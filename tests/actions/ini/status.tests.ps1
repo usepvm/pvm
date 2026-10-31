@@ -23,6 +23,8 @@ BeforeAll {
     Mock Write-Color { }
     Mock Show-Error { }
     Mock Show-Message { }
+    Mock Show-LabelledError { }
+    Mock Show-LabelledWarning { }
     Mock Add-LogEntry { return 0 }
 
     function Reset-IniContent {

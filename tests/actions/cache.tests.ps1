@@ -15,9 +15,12 @@ BeforeAll {
 
     Mock Show-Error { }
     Mock Show-Info { }
-    Mock Write-Gray { }
     Mock Show-Message { }
     Mock Show-Success { }
+    Mock Show-LabelledSuccess { }
+    Mock Show-LabelledError { }
+    Mock Write-Cyan { }
+    Mock Write-Gray { }
     Mock Add-LogEntry { return 0 }
 }
 
@@ -62,9 +65,7 @@ Describe "Show-CacheFiles" {
         $result = Show-CacheFiles
         $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'No cache directory found'
-        } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'No cache directory found' } -Exactly 1
     }
 
     It "Should return -1 when cache directory is empty" {
@@ -72,9 +73,7 @@ Describe "Show-CacheFiles" {
         $result = Show-CacheFiles
         $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'No cache files found'
-        } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'No cache files found' } -Exactly 1
     }
 
     It "Should list all available cache files" {
@@ -82,8 +81,8 @@ Describe "Show-CacheFiles" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\versions.json" -Encoding UTF8
 
         $result = Show-CacheFiles
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Should -Invoke Show-Message -ParameterFilter { $message -match 'releases' }
         Should -Invoke Show-Message -ParameterFilter { $message -match 'versions' }
     }
@@ -92,11 +91,9 @@ Describe "Show-CacheFiles" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\data.json" -Encoding UTF8
 
         $result = Show-CacheFiles
-        $result | Should -Be 0
 
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match 'Available Cache Files'
-        } -Exactly 1
+        $result | Should -Be 0
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match 'Available Cache Files' } -Exactly 1
     }
 
     It "Should not list non-json files" {
@@ -104,8 +101,8 @@ Describe "Show-CacheFiles" {
         'text' | Set-Content -Path "$($script:CACHE_PATH)\readme.txt" -Encoding UTF8
 
         $result = Show-CacheFiles
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Should -Invoke Show-Info -ParameterFilter { $message -match 'readme' } -Exactly 0
     }
 
@@ -113,12 +110,9 @@ Describe "Show-CacheFiles" {
         Mock Get-CacheFiles { throw 'Access denied' }
 
         $result = Show-CacheFiles
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Failed to list cache files'
-        } -Exactly 1
-
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to list cache files' } -Exactly 1
         Should -Invoke Add-LogEntry -Exactly 1
     }
 }
@@ -132,15 +126,10 @@ Describe "Show-CachedData" {
 
     It "Should return -1 when cache file does not exist" {
         $result = Show-CachedData -cacheName 'nonexistent'
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match "Cache file 'nonexistent' not found"
-        } -Exactly 1
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match "Use 'pvm cache list' to see available cache files"
-        } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match "Cache file 'nonexistent' not found" } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match "Use 'pvm cache list' to see available cache files" } -Exactly 1
     }
 
     It "Should return -1 when cache file exists but contains no data" {
@@ -148,11 +137,9 @@ Describe "Show-CachedData" {
         Mock Test-FileNotExists { return $false }
 
         $result = Show-CachedData -cacheName 'empty'
-        $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match "No data found in cache file 'empty'"
-        } -Exactly 1
+        $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match "No data found in cache file 'empty'" } -Exactly 1
     }
 
     It "Should return -1 when cache data is an empty collection" {
@@ -160,39 +147,21 @@ Describe "Show-CachedData" {
         Mock Test-FileNotExists { return $false }
 
         $result = Show-CachedData -cacheName 'emptycol'
-        $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match "No data found in cache file 'emptycol'"
-        } -Exactly 1
+        $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match "No data found in cache file 'emptycol'" } -Exactly 1
     }
 
     It "Should return 0 and display data when cache file has content" {
         $cacheContent = @{ version = '8.2.0'; url = 'https://example.com' }
         $cacheContent | ConvertTo-Json -Depth 5 | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-
         Mock Get-DataFromCache { return $cacheContent }
         Mock Test-FileNotExists { return $false }
 
         $result = Show-CachedData -cacheName 'releases'
+
         $result | Should -Be 0
-
-        Should -Invoke Show-Info -ParameterFilter {
-            $message -match "Cache Data for 'releases'"
-        } -Exactly 1
-    }
-
-    It "Should display the separator line" {
-        $cacheContent = @{ key = 'value' }
-        Mock Get-DataFromCache { return $cacheContent }
-        Mock Test-FileNotExists { return $false }
-
-        $result = Show-CachedData -cacheName 'info'
-        $result | Should -Be 0
-
-        Should -Invoke Write-Gray -ParameterFilter {
-            $message -match '---'
-        } -Exactly 1
+        Should -Invoke Write-Cyan -ParameterFilter { $message -match "Cache Data for 'releases'" } -Exactly 1
     }
 
     It "Should return -1 and log error when an exception occurs" {
@@ -200,12 +169,9 @@ Describe "Show-CachedData" {
         Mock Get-DataFromCache { throw 'Unexpected error' }
 
         $result = Show-CachedData -cacheName 'broken'
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Failed to show cache data'
-        } -Exactly 1
-
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to show cache data' } -Exactly 1
         Should -Invoke Add-LogEntry -Exactly 1
     }
 }
@@ -219,103 +185,82 @@ Describe "Remove-CacheFile" {
 
     It "Should return -1 when cache file does not exist" {
         $result = Remove-CacheFile -cacheName 'nonexistent'
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match "Cache file 'nonexistent' not found"
-        } -Exactly 1
-
-        Should -Invoke Show-Message -ParameterFilter {
-            $message -match "Use 'pvm cache list' to see available cache files"
-        } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match "Cache file 'nonexistent' not found" } -Exactly 1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match "Use 'pvm cache list' to see available cache files" } -Exactly 1
     }
 
     It "Should return -1 when user cancels with 'n'" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-
         Mock Read-HostWrapper { return 'n' }
 
         $result = Remove-CacheFile -cacheName 'releases'
+
         $result | Should -Be -1
-
         Test-Path "$($script:CACHE_PATH)\releases.json" | Should -Be $true
-
-        Should -Invoke Write-Gray -ParameterFilter {
-            $message -match 'Deletion cancelled'
-        } -Exactly 1
+        Should -Invoke Write-Gray -ParameterFilter { $message -match 'Deletion cancelled' } -Exactly 1
     }
 
     It "Should return -1 when user cancels with empty response" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-
         Mock Read-HostWrapper { return '' }
 
         $result = Remove-CacheFile -cacheName 'releases'
+
         $result | Should -Be -1
-
         Test-Path "$($script:CACHE_PATH)\releases.json" | Should -Be $true
-
-        Should -Invoke Write-Gray -ParameterFilter {
-            $message -match 'Deletion cancelled'
-        } -Exactly 1
+        Should -Invoke Write-Gray -ParameterFilter { $message -match 'Deletion cancelled' } -Exactly 1
     }
 
     It "Should return -1 when user cancels with 'no'" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-
         Mock Read-HostWrapper { return 'no' }
 
         $result = Remove-CacheFile -cacheName 'releases'
-        $result | Should -Be -1
 
+        $result | Should -Be -1
         Test-Path "$($script:CACHE_PATH)\releases.json" | Should -Be $true
     }
 
     It "Should return -1 when user cancels with 'yes' (not just 'y')" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-
         Mock Read-HostWrapper { return 'yes' }
 
         $result = Remove-CacheFile -cacheName 'releases'
-        $result | Should -Be -1
 
+        $result | Should -Be -1
         Test-Path "$($script:CACHE_PATH)\releases.json" | Should -Be $true
     }
 
     It "Should successfully delete file when user confirms with 'y'" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-
         Mock Read-HostWrapper { return 'y' }
 
         $result = Remove-CacheFile -cacheName 'releases'
+
         $result | Should -Be 0
-
         Test-Path "$($script:CACHE_PATH)\releases.json" | Should -Be $false
-
-        Should -Invoke Show-Success -ParameterFilter {
-            $message -match "Cache file 'releases' deleted successfully"
-        } -Exactly 1
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match "Cache file 'releases' deleted successfully" } -Exactly 1
     }
 
     It "Should successfully delete file when user confirms with 'Y'" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-
         Mock Read-HostWrapper { return 'Y' }
 
         $result = Remove-CacheFile -cacheName 'releases'
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Test-Path "$($script:CACHE_PATH)\releases.json" | Should -Be $false
     }
 
     It "Should display the correct confirmation prompt including cache name" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\mydata.json" -Encoding UTF8
-
         Mock Read-HostWrapper { return 'y' }
 
         $result = Remove-CacheFile -cacheName 'mydata'
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Should -Invoke Read-HostWrapper -ParameterFilter {
             $prompt -match "Are you sure you want to delete cache file 'mydata'" -and
             $prompt -match '\(y/n\)'
@@ -327,6 +272,7 @@ Describe "Remove-CacheFile" {
         Mock Read-HostWrapper { }
 
         $result = Remove-CacheFile -cacheName 'mydata' -skipConfirmation $true
+
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 0
         Test-Path "$($script:CACHE_PATH)\mydata.json" | Should -Be $false
@@ -339,7 +285,7 @@ Describe "Remove-CacheFile" {
         $result = Remove-CacheFile -cacheName 'mydata' -skipConfirmation $true
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*Failed to remove 'mydata' file*" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*Failed to remove 'mydata' file*" }
     }
 
     It "Should return -1 and log error when Remove-ItemWrapper throws" {
@@ -349,12 +295,9 @@ Describe "Remove-CacheFile" {
         Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $result = Remove-CacheFile -cacheName 'releases'
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Failed to delete cache file'
-        } -Exactly 1
-
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to delete cache file' } -Exactly 1
         Should -Invoke Add-LogEntry -Exactly 1
     }
 
@@ -364,11 +307,10 @@ Describe "Remove-CacheFile" {
         Mock Read-HostWrapper { return 'y' }
 
         $result = Remove-CacheFile -cacheName 'php-releases_8x'
+
         $result | Should -Be 0
-
         Test-Path "$($script:CACHE_PATH)\php-releases_8x.json" | Should -Be $false
-
-        Should -Invoke Show-Success -ParameterFilter {
+        Should -Invoke Show-LabelledSuccess -ParameterFilter {
             $message -match "Cache file 'php-releases_8x' deleted successfully"
         } -Exactly 1
     }
@@ -383,11 +325,9 @@ Describe "Clear-CacheFiles" {
 
     It "Should return -1 when no cache files exist" {
         $result = Clear-CacheFiles
-        $result | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'No cache files found'
-        } -Exactly 1
+        $result | Should -Be -1
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'No cache files found' } -Exactly 1
     }
 
     It "Should return -1 when user cancels with 'n'" {
@@ -397,14 +337,11 @@ Describe "Clear-CacheFiles" {
         Mock Read-HostWrapper { return 'n' }
 
         $result = Clear-CacheFiles
-        $result | Should -Be -1
 
+        $result | Should -Be -1
         Test-Path "$($script:CACHE_PATH)\releases.json" | Should -Be $true
         Test-Path "$($script:CACHE_PATH)\versions.json" | Should -Be $true
-
-        Should -Invoke Write-Gray -ParameterFilter {
-            $message -match 'Deletion cancelled'
-        } -Exactly 1
+        Should -Invoke Write-Gray -ParameterFilter { $message -match 'Deletion cancelled' } -Exactly 1
     }
 
     It "Should return -1 when user cancels with empty response" {
@@ -413,8 +350,8 @@ Describe "Clear-CacheFiles" {
         Mock Read-HostWrapper { return '' }
 
         $result = Clear-CacheFiles
-        $result | Should -Be -1
 
+        $result | Should -Be -1
         Test-Path "$($script:CACHE_PATH)\releases.json" | Should -Be $true
     }
 
@@ -424,8 +361,8 @@ Describe "Clear-CacheFiles" {
         Mock Read-HostWrapper { return 'no' }
 
         $result = Clear-CacheFiles
-        $result | Should -Be -1
 
+        $result | Should -Be -1
         Test-Path "$($script:CACHE_PATH)\releases.json" | Should -Be $true
     }
 
@@ -435,8 +372,8 @@ Describe "Clear-CacheFiles" {
         Mock Read-HostWrapper { return 'yes' }
 
         $result = Clear-CacheFiles
-        $result | Should -Be -1
 
+        $result | Should -Be -1
         Test-Path "$($script:CACHE_PATH)\releases.json" | Should -Be $true
     }
 
@@ -448,15 +385,12 @@ Describe "Clear-CacheFiles" {
         Mock Read-HostWrapper { return 'y' }
 
         $result = Clear-CacheFiles
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Test-Path "$($script:CACHE_PATH)\releases.json"  | Should -Be $false
         Test-Path "$($script:CACHE_PATH)\versions.json"  | Should -Be $false
         Test-Path "$($script:CACHE_PATH)\metadata.json"  | Should -Be $false
-
-        Should -Invoke Show-Success -ParameterFilter {
-            $message -match 'All cache files deleted successfully'
-        } -Exactly 1
+        Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match 'All cache files deleted successfully' } -Exactly 1
     }
 
     It "Should delete all cache files when user confirms with 'Y'" {
@@ -466,8 +400,8 @@ Describe "Clear-CacheFiles" {
         Mock Read-HostWrapper { return 'Y' }
 
         $result = Clear-CacheFiles
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Test-Path "$($script:CACHE_PATH)\releases.json" | Should -Be $false
         Test-Path "$($script:CACHE_PATH)\versions.json" | Should -Be $false
     }
@@ -478,8 +412,8 @@ Describe "Clear-CacheFiles" {
         Mock Read-HostWrapper { return 'y' }
 
         $result = Clear-CacheFiles
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Should -Invoke Read-HostWrapper -ParameterFilter {
             $prompt -match 'Are you sure you want to delete all cache files' -and
             $prompt -match '\(y/n\)'
@@ -492,8 +426,8 @@ Describe "Clear-CacheFiles" {
         Mock Read-HostWrapper { return 'y' }
 
         $result = Clear-CacheFiles
-        $result | Should -Be 0
 
+        $result | Should -Be 0
         Test-Path "$($script:CACHE_PATH)\single.json" | Should -Be $false
     }
 
@@ -502,6 +436,7 @@ Describe "Clear-CacheFiles" {
         Mock Read-HostWrapper { }
 
         $result = Clear-CacheFiles -skipConfirmation $true
+
         $result | Should -Be 0
         Should -Invoke Read-HostWrapper -Exactly 0
         Test-Path "$($script:CACHE_PATH)\mydata.json" | Should -Be $false
@@ -519,7 +454,7 @@ Describe "Clear-CacheFiles" {
         $result = Clear-CacheFiles -skipConfirmation $true
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to remove all cache files*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*Failed to remove all cache files*' }
     }
 
     It "Should return -1 and log error when an exception occurs during deletion" {
@@ -529,12 +464,9 @@ Describe "Clear-CacheFiles" {
         Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $result = Clear-CacheFiles
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Failed to clear cache files'
-        } -Exactly 1
-
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to clear cache files' } -Exactly 1
         Should -Invoke Add-LogEntry -Exactly 1
     }
 
@@ -542,12 +474,9 @@ Describe "Clear-CacheFiles" {
         Mock Get-CacheFiles { throw 'Disk error' }
 
         $result = Clear-CacheFiles
+
         $result | Should -Be -1
-
-        Should -Invoke Show-Error -ParameterFilter {
-            $message -match 'Failed to clear cache files'
-        } -Exactly 1
-
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -match 'Failed to clear cache files' } -Exactly 1
         Should -Invoke Add-LogEntry -Exactly 1
     }
 }

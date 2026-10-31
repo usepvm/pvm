@@ -18,6 +18,8 @@ BeforeAll {
     Mock Show-Error { }
     Mock Show-Message { }
     Mock Show-Info { }
+    Mock Show-LabelledError { }
+    Mock Write-Cyan { }
     Mock Write-Gray { }
     Mock New-Line { }
     Mock Add-LogEntry { return 0 }
@@ -137,8 +139,9 @@ Describe "Show-PHPExtensionInfo" {
         Mock Get-ExtensionMatchingCategories { throw 'Cache unavailable' }
 
         $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName 'xdebug'
+
         $code | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like "`nFailed to get information for extension 'xdebug'" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "Failed to get information for extension 'xdebug'" }
         Should -Invoke Add-LogEntry -Exactly 1
     }
 
@@ -147,8 +150,9 @@ Describe "Show-PHPExtensionInfo" {
         Mock Get-MatchingPHPExtensionsStatus { return @() }
 
         $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName 'missing'
+
         $code | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -eq "`nExtension 'missing' not found" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -eq "Extension 'missing' not found" }
     }
 
     It "Returns -1 for an empty extension name" {
@@ -156,6 +160,7 @@ Describe "Show-PHPExtensionInfo" {
         Mock Get-MatchingPHPExtensionsStatus { return @() }
 
         $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName ''
+
         $code | Should -Be -1
     }
 }
@@ -232,6 +237,7 @@ Describe "Show-PHPExtensions" {
 
     It "Displays installed extensions" {
         $code = Show-PHPExtensions -iniPath $script:testIniPath
+
         $code | Should -Be 0
         Should -Invoke Get-AllPHPExtensionsStatus -Exactly 1
         Should -Invoke Get-MatchingPHPExtensionsStatus -Exactly 0
@@ -241,6 +247,7 @@ Describe "Show-PHPExtensions" {
 
     It "Displays local extensions matching the filter" {
         $code = Show-PHPExtensions -iniPath $script:testIniPath -term 'pc'
+
         $code | Should -Be 0
         Should -Invoke Get-AllPHPExtensionsStatus -Exactly 1
         Should -Invoke Get-MatchingPHPExtensionsStatus -Exactly 1
@@ -261,27 +268,34 @@ Describe "Show-PHPExtensions" {
 
     It "Returns -1 when no extensions are found" {
         Mock Get-AvailablePHPExtensions { return @{} }
+
         $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true
+
         $code | Should -Be -1
         Should -Invoke Get-AvailablePHPExtensions -Exactly 1
     }
 
     It "Displays available extensions matching the filter" {
         Mock Get-AvailablePHPExtensions { return Get-ExtensionList }
+
         $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true -term 'pc'
+
         $code | Should -Be 0
-        Should -Invoke Show-Info -Exactly 2
+        Should -Invoke Write-Cyan -Exactly 1
         Should -Invoke Write-Gray -Exactly 1
     }
 
     It "Returns -1 when no available extensions matchs the filter" {
         $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true -term 'nonexistent'
+
         $code | Should -Be -1
     }
 
     It "Handles thrown exception" {
         Mock Get-AvailablePHPExtensions { throw 'Error' }
+
         $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true
+
         $code | Should -Be -1
     }
 
@@ -291,9 +305,7 @@ Describe "Show-PHPExtensions" {
         $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true
 
         $code | Should -Be -1
-        Should -Invoke Show-Error -Times 1 -ParameterFilter {
-            $message -eq "`nNo extensions found"
-        }
+        Should -Invoke Show-Error -Times 1 -ParameterFilter { $message -eq "`nNo extensions found" }
     }
 
     It "Displays available extensions with long descriptions that require wrapping" {
@@ -309,7 +321,9 @@ Describe "Show-PHPExtensions" {
             }
         }
         Mock Get-ConsoleWidth { return 80 }
+
         $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true
+
         $code | Should -Be 0
     }
 
@@ -322,7 +336,9 @@ Describe "Show-PHPExtensions" {
             }
         }
         Mock Get-ConsoleWidth { return 80 }
+
         $code = Show-PHPExtensions -iniPath $script:testIniPath -available $true
+
         $code | Should -Be 0
     }
 }

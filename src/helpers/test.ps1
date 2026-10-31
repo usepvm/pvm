@@ -1,8 +1,9 @@
 
 function Show-Scripts {
-    Write-Cyan -message "`nAvailable scripts:"
-
     $scripts = Get-Scripts
+
+    Write-Cyan -message "`nAvailable scripts: ($($scripts.Count))" -underlined
+
     $scripts.Keys | ForEach-Object -Process {
         $name = $_
         $commands = $scripts[$_]
@@ -24,17 +25,17 @@ function Show-TestsResult {
     $status = if ($code -eq 0) { 'OK' } else { 'NOT OK' }
     $width = [Math]::Max(80, $label.Length + $status.Length + 5)
     $innerWidth = $width - 2
-    $padding = $innerWidth - $label.Length - $status.Length - 3
-    $leftPadding = [Math]::Floor($padding / 2)
-    $rightPadding = $padding - $leftPadding
+    $padding = $innerWidth - $label.Length - $status.Length - 5 # 3 for " : " + 2 for spaces added by Show-*Label
+    $leftPadding = [Math]::Max(0, [Math]::Floor($padding / 2));
+    $rightPadding = [Math]::Max(0, ($padding - $leftPadding))
 
     Show-Message -message "`n`n$('=' * $width)`n|$(' ' * $innerWidth)|`n|$(' ' * $leftPadding)$label : " -noNewLine
 
     if ($code -eq 0) {
-        Show-Success -message $status -noNewLine
+        Show-SuccessLabel -label $status -noPreNewLine -noNewLine
         Invoke-SuccessSound -wait
     } else {
-        Show-Error -message $status -noNewLine
+        Show-ErrorLabel -label $status -noPreNewLine -noNewLine
 
         switch ($code) {
             -1 { Invoke-ErrorSound -wait }
@@ -119,7 +120,7 @@ function Import-PesterVersion {
 function Show-PesterVersion {
     param ($pesterVersion)
 
-    Show-Message -message "`nPester Info:"
+    Show-Message -message "`nPester Info:" -underlined
     Show-Message -message "  Version: $($pesterVersion.Version)"
     Show-Message -message "  Path: $($pesterVersion.Path)"
 }
@@ -133,7 +134,7 @@ function Show-PesterVersionShort {
 function Show-PowerShellInfo {
     param ($psInfo)
 
-    Show-Message -message "`nPowerShell Info:"
+    Show-Message -message "`nPowerShell Info:" -underlined
     Show-Message -message "  Engine: $($psInfo.name)"
     Show-Message -message "  Version: $($psInfo.version)"
     Show-Message -message "  Edition: $($psInfo.edition)"
@@ -230,12 +231,12 @@ function Get-SeparatorWidth {
 function Write-TestHeader {
     param ($file, $coveredFile, $separatorWidth)
 
-    Show-Info -message "`n`n$('-' * $separatorWidth)"
+    Write-White -message "`n`n$('-' * $separatorWidth)"
     Show-Info -message "- Running test: $($file.Name) | $($file.FullName)"
     if ($coveredFile) {
         Show-Info -message "- Covered file: $($coveredFile.Name) | $($coveredFile.FullName)"
     }
-    Show-Info -message ('-' * $separatorWidth)
+    Write-White -message ('-' * $separatorWidth)
 }
 
 function Format-TestResultMessage {

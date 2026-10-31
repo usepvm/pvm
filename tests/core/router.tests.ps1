@@ -1,6 +1,8 @@
 ﻿
 BeforeAll {
+    Mock Show-LabelledInfo { }
     Mock Show-Message { }
+    Mock Show-Warning { }
     Mock Show-Error { }
     Mock Write-Color { }
     Mock New-Line { }
@@ -497,7 +499,7 @@ Describe "Get-Actions" {
         }
 
         It "Should execute test action with verbosity" {
-            $testArgs = @('TestFile.ps1', 'Detailed', "--tag=unit")
+            $testArgs = @('TestFile.ps1', 'Detailed', '--tag=unit')
             $actions = Get-Actions
             & $actions['test'].data.action -arguments $testArgs
 
@@ -604,7 +606,7 @@ Describe "Integration Tests" {
             $result | Should -Be -1
 
             Should -Invoke Initialize-PVM -Times 1
-            Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to optimize system path*' }
+            Should -Invoke Show-Warning -ParameterFilter { $message -like '*Failed to optimize system path*' }
         }
     }
 }

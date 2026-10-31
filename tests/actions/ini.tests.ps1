@@ -26,6 +26,8 @@ BeforeAll {
     Mock Show-Warning { }
     Mock Show-Message { }
     Mock Show-Info { }
+    Mock Show-LabelledWarning { }
+    Mock Show-LabelledError { }
     Mock Write-Color { }
     Mock New-Line { }
 

@@ -7,12 +7,12 @@ function Uninstall-PHP {
         $pathVersionObject = Get-UserSelectedPHPVersion -installedVersions $installedVersions
 
         if (-not $pathVersionObject) {
-            Show-Error -message "`nPHP version $version was not found!"
+            Show-LabelledError -message "PHP version $version was not found!"
             return -1
         }
 
         if ($pathVersionObject.code -ne 0) {
-            Write-Color -message $pathVersionObject.message -foreColor $pathVersionObject.color
+            Show-LabelledError -message $pathVersionObject.message
             return -1
         }
 
@@ -35,17 +35,17 @@ function Uninstall-PHP {
 
         $code = Remove-ItemWrapper -path $pathVersionObject.path
         if ($code -ne 0) {
-            Show-Error -message "`nFailed to remove PHP version $($pathVersionObject.version)!"
+            Show-LabelledError -message "Failed to remove PHP version $($pathVersionObject.version)!"
             return -1
         }
 
         $null = Update-InstalledPHPVersionsCache
 
-        Show-Success -message "`nPHP version $($pathVersionObject.version) has been uninstalled successfully"
+        Show-LabelledSuccess -message "PHP version $($pathVersionObject.version) has been uninstalled successfully"
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to uninstall PHP version '$version'"; exception = $_ }
-        Show-Error -message "`nFailed to uninstall PHP version '$version'"
+        Show-LabelledError -message "Failed to uninstall PHP version '$version'"
         return -1
     }
 }

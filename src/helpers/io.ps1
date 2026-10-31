@@ -273,7 +273,7 @@ function Test-DownloadPrerequisites {
     # Get remote file size and check disk space
     $remoteFileSize = Get-RemoteFileSize -uri $url
     if ($remoteFileSize -le 0) {
-        return @{ temporaryDirectory = $null; message = "Failed to get remote file size or invalid size. Cannot proceed with download."; color = 'DarkYellow' }
+        return @{ temporaryDirectory = $null; message = 'Failed to get remote file size or invalid size. Cannot proceed with download.'; color = 'DarkYellow' }
     }
 
     $sizeMB = Convert-BytesToMegabytes -bytes $remoteFileSize

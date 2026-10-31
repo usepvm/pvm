@@ -50,7 +50,7 @@ function Uninstall-Extension {
 
     try {
         if ($extNames.Count -eq 0) {
-            Show-Warning -message "`nPlease provide at least one extension name to uninstall"
+            Show-LabelledWarning -message 'Please provide at least one extension name to uninstall'
             return -1
         }
 
@@ -58,7 +58,7 @@ function Uninstall-Extension {
         $extDirectory = "$phpDirectory\ext"
 
         if (Test-DirectoryNotExists -path $extDirectory) {
-            Show-Error -message "`nExtensions directory not found: $extDirectory"
+            Show-LabelledError -message "Extensions directory not found: $extDirectory"
             return -1
         }
 
@@ -73,7 +73,7 @@ function Uninstall-Extension {
             }
 
             if ($matchingExtensions.Length -gt 1) {
-                Show-Info -message "`nMultiple extensions match '$extName':`n"
+                Write-Cyan -message "`nMultiple extensions match '$extName':" -underlined
 
                 $maxLineLength = ($matchingExtensions.name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $index = 0
@@ -89,7 +89,7 @@ function Uninstall-Extension {
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                        Show-Warning -message 'Please enter a valid positive number.'
+                        Show-Warning -message "`nPlease enter a valid positive number."
                         continue
                     }
 
@@ -141,15 +141,16 @@ function Uninstall-Extension {
         }
 
         $maxLineLength = ($results.name | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-        Show-Message -message "`nResults:"
+        Write-White -message "`nResults:" -underlined
         foreach ($item in $results) {
-            Show-Message -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
+            Write-White -message "- $($item.name) ".PadRight($maxLineLength, '.') -noNewLine
             Write-Color -message " $($item.status)" -foreColor $item.color
         }
 
         return $overallCode
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to install '$($extNames -join ', ')'"; exception = $_ }
+        Show-LabelledError -message 'Failed to remove requested extensions'
         return -1
     }
 }

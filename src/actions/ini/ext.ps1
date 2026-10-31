@@ -11,7 +11,7 @@ function Show-PHPExtensionInfo {
         $matchesListStatus = Get-MatchingPHPExtensionsStatus -iniPath $iniPath -extName $searchId -includeIniOnly $true
 
         if ($matchesListStatus.Length -gt 1) {
-            Show-Info -message "`nMultiple extensions match '$extName':`n"
+            Write-Cyan -message "`nMultiple extensions match '$extName': " -underlined
 
             $index = 0
             $matchesListStatus | ForEach-Object -Process {
@@ -25,7 +25,7 @@ function Show-PHPExtensionInfo {
                 $choice = $null
 
                 if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {
-                    Show-Warning -message 'Please enter a valid positive number.'
+                    Show-Warning -message "`nPlease enter a valid positive number."
                     continue
                 }
 
@@ -43,60 +43,60 @@ function Show-PHPExtensionInfo {
         }
 
         if (-not $availableMatch -and -not $localMatch) {
-            Show-Error -message "`nExtension '$extName' not found"
+            Show-LabelledError -message "Extension '$extName' not found"
             return -1
         }
 
         Show-Info -message "`nExtension information: $extName"
         if ($availableMatch) {
-            Show-Message -message "- Name ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message '- Name '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
             Show-Message -message " $($availableMatch.extName)"
-            Show-Message -message "- Description ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message '- Description '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
             Show-Message -message " $(if ($availableMatch.description) { $availableMatch.description } else { '(not available)' })"
-            Show-Message -message "- Category ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message '- Category '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
             Show-Message -message " $(if ($availableMatch.extCategory) { $availableMatch.extCategory } else { '(not available)' })"
-            Show-Message -message "- Link ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message '- Link '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
             Show-Message -message " $(if ($availableMatch.href) { $availableMatch.href } else { '(not available)' })"
         } else {
-            Show-Message -message "- Public metadata ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message '- Public metadata '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
             Show-Message -message ' Not found in available extensions cache'
         }
 
         Show-Info -message "`nLocal installation"
         if ($localMatch) {
-            Show-Message -message "- Name ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message '- Name '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
             Show-Message -message " $($localMatch.name)"
-            Show-Message -message "- DLL name ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message '- DLL name '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
             Show-Message -message " $(if ($localMatch.fileName) { $localMatch.fileName } else { '(not found)' })"
-            Show-Message -message "- Status ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message '- Status '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
             Write-Color -message " $($localMatch.status)" -foreColor $localMatch.color
-            Show-Message -message "- INI line ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message '- INI line '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
             Show-Message -message " $(if ($localMatch.lineNumber) { $localMatch.lineNumber } else { '(not configured)' })"
-            Show-Message -message "- INI entry ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message '- INI entry '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
             Show-Message -message " $(if ($localMatch.line) { $localMatch.line } else { '(not configured)' })"
-            Show-Message -message "- DLL path ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message '- DLL path '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
             Show-Message -message " $(if ($localMatch.fullPath) { $localMatch.fullPath } else { '(not found)' })"
             if ($localMatch.version) {
-                Show-Message -message "- DLL version ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+                Show-Message -message '- DLL version '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
                 Show-Message -message " $($localMatch.version)"
             }
             if ($localMatch.source) {
-                Show-Message -message "- Source ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+                Show-Message -message '- Source '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
                 Show-Message -message " $($localMatch.source)"
             }
             if ($localMatch.comment) {
-                Show-Message -message "- Note ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+                Show-Message -message '- Note '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
                 Show-Message -message " $($localMatch.comment)"
             }
         } else {
-            Show-Message -message "- Status ".PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
+            Show-Message -message '- Status '.PadRight($Global:PVMConfig.env.MIN_LINE_LENGTH, '.') -noNewLine
             Show-Message -message ' Not installed or configured locally'
         }
 
         return 0
     } catch {
-        Show-Error -message "`nFailed to get information for extension '$extName'"
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get extension info for '$extName'"; exception = $_ }
+        Show-LabelledError -message "Failed to get information for extension '$extName'"
         return -1
     }
 }
@@ -126,7 +126,7 @@ function Show-PHPExtensions {
                 return -1
             }
 
-            $availableExtensionsPartialList = Get-FilteredPHPExtensionsByCategory -availableExtensions $availableExtensions -term $term
+            $availableExtensionsPartialList = (Get-FilteredPHPExtensionsByCategory -availableExtensions $availableExtensions -term $term).searchResults
 
             if ($availableExtensionsPartialList.Count -eq 0) {
                 $msg = "`nNo extensions found"
@@ -140,8 +140,7 @@ function Show-PHPExtensions {
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
             $maxLineLength = [Math]::Max($Global:PVMConfig.env.MIN_LINE_LENGTH, $maxKeyLength + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3))
 
-            Show-Info -message "`nAvailable Extensions by Category:"
-            Write-Gray -message '--------------------------------'
+            Write-Cyan -message "`nAvailable Extensions by Category:" -underlined
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object -Property Key | ForEach-Object -Process {
                 $key = "$($_.Key) "
                 $vals = ($_.Value | ForEach-Object -Process { $_.extName }) -join ', '
@@ -178,7 +177,7 @@ function Show-PHPExtensions {
             $msg = "`nThis is a partial list. For a complete list, visit:"
             $msg += "`n PHP Extensions : $($Global:PVMConfig.links.peclPackages)"
             $msg += "`n XDebug : $($Global:PVMConfig.links.xdebugHistorical)"
-            Show-Info -message $msg
+            Write-Gray -message $msg
         }
 
         return 0

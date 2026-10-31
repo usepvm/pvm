@@ -71,12 +71,12 @@ function Get-AvailablePHPVersions {
         $fetchedVersionsGrouped = Get-PHPListToInstall
 
         if (Test-HasNoData -data $fetchedVersionsGrouped) {
-            Show-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
+            Show-LabelledError -message 'No PHP versions found in the source. Please check your internet connection or the source URLs.'
             return -1
         }
 
         if ((Test-HasNoData -data $fetchedVersionsGrouped.Archives) -and (Test-HasNoData -data $fetchedVersionsGrouped.Releases)) {
-            Show-Error -message "`nNo PHP versions found in the source. Please check your internet connection or the source URLs."
+            Show-LabelledError -message 'No PHP versions found in the source. Please check your internet connection or the source URLs.'
             return -1
         }
 
@@ -94,12 +94,14 @@ function Get-AvailablePHPVersions {
         }
 
         if ($fetchedVersionsGroupedPartialList.Count -eq 0) {
-            Show-Error -message "`nNo PHP versions found matching '$term'"
+            Show-LabelledError -message "No PHP versions found matching '$term'"
             return -1
         }
 
-        Show-Info -message "`nAvailable Versions"
-        Write-Gray -message '------------------'
+        $totalAvailableVersionsGrouped = $fetchedVersionsGrouped.Archives.Count + $fetchedVersionsGrouped.Releases.Count
+        $totalFetchedVersionsCount = $fetchedVersionsGroupedPartialList.Archives.Count + $fetchedVersionsGroupedPartialList.Releases.Count
+
+        Write-Cyan -message "`nAvailable Versions: ($totalFetchedVersionsCount/$totalAvailableVersionsGrouped)" -underlined
 
         $fetchedVersionsGroupedPartialList.GetEnumerator() |
             Sort-Object -Property Key |
@@ -109,7 +111,7 @@ function Get-AvailablePHPVersions {
                 if ($fetchedVersionsGroupe.Length -eq 0) {
                     return
                 }
-                Show-Message -message "`n$key`n"
+                Show-Message -message "`n $key`n"
                 $maxNameLength = ($fetchedVersionsGroupe.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
                 $fetchedVersionsGroupe | ForEach-Object -Process {
                     $versionNumber = "$($_.version) ".PadRight($maxNameLength, '.')
@@ -120,7 +122,7 @@ function Get-AvailablePHPVersions {
         $msg = "`nThis is a partial list. For a complete list, visit:"
         $msg += "`n Releases : $($Global:PVMConfig.links.phpWinReleases)"
         $msg += "`n Archives : $($Global:PVMConfig.links.phpWinArchives)"
-        Show-Info -message $msg
+        Write-Gray -message $msg
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get available PHP versions"; exception = $_ }
@@ -136,20 +138,19 @@ function Show-InstalledPHPVersions {
         $installedPhp = Get-InstalledPHPVersions -arch $arch -buildType $buildType
 
         if ($installedPhp.Count -eq 0) {
-            Show-Error -message "`nNo PHP versions found"
+            Show-LabelledError -message 'No PHP versions found!'
             return -1
         }
 
         if ($term) {
             $installedPhp = $installedPhp | Where-Object -FilterScript { $_.version -like "$term*" }
             if ($installedPhp.Count -eq 0) {
-                Show-Error -message "`nNo PHP versions found matching '$term'"
+                Show-LabelledError -message "No PHP versions found matching '$term'"
                 return -1
             }
         }
 
-        Show-Info -message "`nInstalled Versions: ($($installedPhp.Count))"
-        Write-Gray -message '-------------------'
+        Write-Cyan -message "`nInstalled Versions: ($($installedPhp.Count))" -underlined
         $duplicates = @()
         $maxNameLength = ($installedPhp.version | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         $installedPhp | ForEach-Object -Process {

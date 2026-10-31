@@ -4,7 +4,7 @@ function Get-IniSetting {
 
     try {
         if ($keys -isnot [array] -or $keys.Count -eq 0) {
-            Show-Warning -message "`nPlease specify at least one setting name ('pvm ini get memory_limit')."
+            Show-LabelledWarning -message "Please specify at least one setting name ('pvm ini get memory_limit')."
             return -1
         }
 
@@ -36,7 +36,7 @@ function Get-IniSetting {
 
         $maxLineLength = ($results.Values | ForEach-Object -Process { $_ } | ForEach-Object -Process { $_.extensionName } | Measure-Object -Maximum Length).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
         foreach ($key in $results.Keys) {
-            Show-Info -message "`nMatches for '$key'"
+            Write-Cyan -message "`nMatches for '$key':" -underlined
 
             foreach ($item in $results[$key]) {
                 $extensionName = "$($item.extensionName) ".PadRight($maxLineLength, '.')
@@ -50,6 +50,7 @@ function Get-IniSetting {
         return $overallCode
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to get ini setting '$($keys -join ', ')'"; exception = $_ }
+        Show-LabelledError -message 'Failed to get requested extensions'
         return -1
     }
 }

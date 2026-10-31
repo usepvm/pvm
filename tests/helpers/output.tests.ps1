@@ -114,7 +114,7 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
+            $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = 'Processing'; color = 'Cyan' }
 
             $result | Should -Not -Be -1
         }
@@ -126,7 +126,7 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Custom Message"; color = 'Cyan' }
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = 'Custom Message'; color = 'Cyan' }
 
             Should -Invoke Write-Color -Times 1
             Should -Invoke Write-HostWrapper -Times 1
@@ -153,7 +153,7 @@ Describe "Show-SpinnerWhileJob" {
             Mock Write-HostWrapper { }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' } -noClear
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = 'Processing'; color = 'Cyan' } -noClear
 
             Should -Invoke Write-Color -Times 1
             Should -Invoke Write-HostWrapper -Times 0
@@ -167,7 +167,7 @@ Describe "Show-SpinnerWhileJob" {
             }
 
             $scriptBlock = { return @{ result = 'success' } }
-            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = 'Processing'; color = 'Cyan' }
 
             Should -Invoke Write-Color -Times 1
             Should -Invoke Write-HostWrapper -Times 1
@@ -176,10 +176,10 @@ Describe "Show-SpinnerWhileJob" {
         It "Returns -1 when job fails and rethrow is false" {
             $script:keepRunning = $false
             Mock Receive-Job {
-                throw "Job failed"
+                throw 'Job failed'
             }
 
-            $scriptBlock = { throw "Job failed" }
+            $scriptBlock = { throw 'Job failed' }
             $result = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
 
             $result | Should -Be -1
@@ -188,10 +188,10 @@ Describe "Show-SpinnerWhileJob" {
         It "Rethrows exception when job fails and rethrow is true" {
             $script:keepRunning = $false
             Mock Receive-Job {
-                throw "Job failed"
+                throw 'Job failed'
             }
 
-            $scriptBlock = { throw "Job failed" }
+            $scriptBlock = { throw 'Job failed' }
 
             { Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$true } | Should -Throw
         }
@@ -199,10 +199,10 @@ Describe "Show-SpinnerWhileJob" {
         It "Logs error when job fails" {
             $script:keepRunning = $false
             Mock Receive-Job {
-                throw "Job failed"
+                throw 'Job failed'
             }
 
-            $scriptBlock = { throw "Job failed" }
+            $scriptBlock = { throw 'Job failed' }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
 
             Should -Invoke Add-LogEntry -Exactly 1
@@ -227,12 +227,12 @@ Describe "Show-SpinnerWhileJob" {
         It "Cleans up environment variable after job failure" {
             $script:keepRunning = $false
             Mock Receive-Job {
-                throw "Job failed"
+                throw 'Job failed'
             }
 
             Mock Remove-ItemWrapper { return 0 }
 
-            $scriptBlock = { throw "Job failed" }
+            $scriptBlock = { throw 'Job failed' }
             $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -rethrow:$false
 
             Should -Invoke Remove-ItemWrapper -ParameterFilter {
@@ -275,7 +275,7 @@ Describe "Show-SpinnerWhileJob" {
                 Start-Sleep -Milliseconds 200
                 return @{ result = 'success' }
             }
-            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = "Processing"; color = 'Cyan' }
+            $null = Show-SpinnerWhileJob -scriptBlock $scriptBlock -message @{ content = 'Processing'; color = 'Cyan' }
 
             Should -Invoke Start-Sleep
         }
@@ -453,7 +453,7 @@ Describe "Show-SpinnerWhileProcess" {
             Mock Start-Sleep { throw 'boom' }
 
             $script:fakeProc | Add-Member ScriptMethod Kill {
-                throw "boom"
+                throw 'boom'
             } -Force
 
             Show-SpinnerWhileProcess -fileName 'anything.exe'
@@ -468,16 +468,61 @@ Describe "Show-SpinnerWhileProcess" {
     }
 }
 
+Describe "Get-StatusTable" {
+    It "Returns status data" {
+        $result = Get-StatusTable
+
+        $result.Keys.Count | Should -Be 4
+        $result.Keys | Should -Contain 'success'
+        $result.Keys | Should -Contain 'error'
+        $result.Keys | Should -Contain 'warning'
+        $result.Keys | Should -Contain 'info'
+
+        $result['success'].label           | Should -Be 'Success'
+        $result['success'].color           | Should -Be 'DarkGreen'
+        $result['success'].contrastColor   | Should -Be 'Black'
+        $result['error'].label           | Should -Be 'Error'
+        $result['error'].color           | Should -Be 'DarkYellow'
+        $result['error'].contrastColor   | Should -Be 'Black'
+        $result['warning'].label           | Should -Be 'Warning'
+        $result['warning'].color           | Should -Be 'Yellow'
+        $result['warning'].contrastColor   | Should -Be 'Black'
+        $result['info'].label           | Should -Be 'Info'
+        $result['info'].color           | Should -Be 'Cyan'
+        $result['info'].contrastColor   | Should -Be 'Black'
+    }
+}
+
 Describe "Write-Host helpers" {
     Context "Write-Color Tests" {
         It "Prints message with specified color" {
             Mock Write-HostWrapper { }
+            $msg = 'Test message'
 
-            Write-Color -message 'Test message' -foreColor 'Red'
+            Write-Color -message $msg -foreColor 'Red' -underlined
+
+            Should -Invoke Write-HostWrapper -ParameterFilter {
+                $object -match $msg -and
+                $foregroundColor -eq 'Red' -and
+                $noNewLine -eq $false
+            } -Exactly 1
+            Should -Invoke Write-HostWrapper -ParameterFilter {
+                $object -match ('-' * $msg.Length) -and
+                $foregroundColor -eq 'Gray'
+            } -Exactly 1
+        }
+    }
+
+    Context "Write-BgColor Tests" {
+        It "Prints message with specified color" {
+            Mock Write-HostWrapper { }
+
+            Write-BgColor -message 'Test message' -backColor 'DarkGreen' -foreColor 'White'
 
             Should -Invoke Write-HostWrapper -ParameterFilter {
                 $object -match 'Test message' -and
-                $foregroundColor -eq 'Red' -and
+                $foregroundColor -eq 'White' -and
+                $backgroundColor -eq 'DarkGreen' -and
                 $noNewLine -eq $false
             } -Exactly 1
         }
@@ -563,41 +608,41 @@ Describe "Write-Host helpers" {
 
     Context "Show-* Tests" {
         It "Prints success message" {
-            Mock Write-DarkGreen { }
+            Mock Write-Color { }
 
             Show-Success -message 'Test message'
 
-            Should -Invoke Write-DarkGreen -ParameterFilter {
+            Should -Invoke Write-Color -ParameterFilter {
                 $message -match 'Test message'
             }
         }
 
         It "Prints error message" {
-            Mock Write-DarkYellow { }
+            Mock Write-Color { }
 
             Show-Error -message 'Test message'
 
-            Should -Invoke Write-DarkYellow -ParameterFilter {
+            Should -Invoke Write-Color -ParameterFilter {
                 $message -match 'Test message'
             }
         }
 
         It "Prints warning message" {
-            Mock Write-Yellow { }
+            Mock Write-Color { }
 
             Show-Warning -message 'Test message'
 
-            Should -Invoke Write-Yellow -ParameterFilter {
+            Should -Invoke Write-Color -ParameterFilter {
                 $message -match 'Test message'
             }
         }
 
         It "Prints info message" {
-            Mock Write-Cyan { }
+            Mock Write-Color { }
 
             Show-Info -message 'Test message'
 
-            Should -Invoke Write-Cyan -ParameterFilter {
+            Should -Invoke Write-Color -ParameterFilter {
                 $message -match 'Test message'
             }
         }
@@ -653,18 +698,233 @@ Describe "Write-Host helpers" {
         }
 
         It "Prints host message" {
-            Mock Write-White { }
+            Mock Write-Color { }
 
             Show-Message -message 'Test message'
 
+            Should -Invoke Write-Color -ParameterFilter {
+                $message -match 'Test message' -and $foreColor -eq 'White'
+            }
+        }
+    }
+
+    Context "Show-Label Tests" {
+        It "Prints text with background color" {
+            Mock New-Line { }
+            Mock Write-BgColor { }
+
+            Show-Label -label 'Label' -foreColor 'White' -backColor 'Red' -noNewLine
+
+            Should -Invoke New-Line -Times 1
+            Should -Invoke Write-BgColor -ParameterFilter {
+                $message -eq ' Label ' -and
+                $backColor -eq 'Red' -and
+                $foreColor -eq  'White' -and
+                $noNewLine -eq $true
+            }
+        }
+    }
+
+    Context "Show-*Label Tests" {
+        BeforeAll {
+            Mock Show-Label { }
+            Mock Get-StatusTable {
+                return [ordered]@{
+                    success = @{ label = 'Success'; color = 'Green'; contrastColor = 'Black' }
+                    error = @{ label = 'Error'; color = 'Red'; contrastColor = 'Black' }
+                    warning = @{ label = 'Warning'; color = 'Yellow'; contrastColor = 'Black' }
+                    info = @{ label = 'Info'; color = 'Blue'; contrastColor = 'Black' }
+                }
+            }
+        }
+
+        It "Prints success label" {
+            Show-SuccessLabel -label 'OK' -noPreNewLine -noNewLine
+
+            Should -Invoke Show-Label -ParameterFilter {
+                $label -eq 'OK' -and
+                $foreColor -eq 'Black' -and
+                $backColor -eq 'Green' -and
+                $noPreNewLine -and $noNewLine
+            }
+        }
+
+        It "Prints error label" {
+            Show-ErrorLabel -label 'NOK' -noPreNewLine -noNewLine
+
+            Should -Invoke Show-Label -ParameterFilter {
+                $label -eq 'NOK' -and
+                $foreColor -eq 'Black' -and
+                $backColor -eq 'Red' -and
+                $noPreNewLine -and $noNewLine
+            }
+        }
+
+        It "Prints warning label" {
+            Show-WarningLabel -label 'Alert' -noPreNewLine -noNewLine
+
+            Should -Invoke Show-Label -ParameterFilter {
+                $label -eq 'Alert' -and
+                $foreColor -eq 'Black' -and
+                $backColor -eq 'Yellow' -and
+                $noPreNewLine -and $noNewLine
+            }
+        }
+
+        It "Prints info label" {
+            Show-InfoLabel -label 'Info' -noPreNewLine -noNewLine
+
+            Should -Invoke Show-Label -ParameterFilter {
+                $label -eq 'Info' -and
+                $foreColor -eq 'Black' -and
+                $backColor -eq 'Blue' -and
+                $noPreNewLine -and $noNewLine
+            }
+        }
+    }
+
+    Context "Show-Labelled* Tests" {
+        BeforeAll {
+            Mock Show-Label { }
+            Mock Get-StatusTable {
+                return [ordered]@{
+                    success = @{ label = 'Success'; color = 'Green'; contrastColor = 'Black' }
+                    error = @{ label = 'Error'; color = 'Red'; contrastColor = 'Black' }
+                    warning = @{ label = 'Warning'; color = 'Yellow'; contrastColor = 'Black' }
+                    info = @{ label = 'Info'; color = 'Blue'; contrastColor = 'Black' }
+                }
+            }
+        }
+
+        It "Prints labled message" {
+            Mock Write-White { }
+            $label = 'Label'
+
+            Show-LabelledMessage -label $label -message 'This is a message' -backColor 'White' -foreColor 'Black' -noNewLine
+
+            Should -Invoke Show-Label -ParameterFilter {
+                $label -eq $label -and
+                $foreColor -eq 'Black' -and
+                $backColor -eq 'White' -and
+                -not $noPreNewLine -and
+                $noNewLine
+            }
             Should -Invoke Write-White -ParameterFilter {
-                $message -match 'Test message'
+                $message -like '*This is a message*' -and
+                $noNewLine
+            }
+
+            Show-LabelledMessage -label "   $label  " -message "  This is a `n multi-line  `n   message" -backColor 'White' -foreColor 'Black' -noNewLine
+            Should -Invoke Show-Label -ParameterFilter {
+                $label -eq $label -and
+                $foreColor -eq 'Black' -and
+                $backColor -eq 'White' -and
+                -not $noPreNewLine -and
+                $noNewLine
+            }
+            $spaces = ' ' * ($label.Length + 2)
+            $composedMessage = @(
+                "This is a"
+                "$spaces multi-line"
+                "$spaces message"
+            ) -join "`n"
+            Should -Invoke Write-White -ParameterFilter {
+                $message -eq " $composedMessage`n" -and
+                $noNewLine
+            }
+        }
+
+        It "Prints labled success message" {
+            Mock Show-LabelledMessage { }
+
+            Show-LabelledSuccess -message 'Fetched successfully!'
+
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
+                $label -eq 'Success' -and
+                $message -eq 'Fetched successfully!' -and
+                $backColor -eq 'Green' -and
+                $foreColor -eq 'Black'
+            }
+
+            Show-LabelledSuccess -message 'Fetched successfully!' -label 'OK'
+
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
+                $label -eq 'OK' -and
+                $message -eq 'Fetched successfully!' -and
+                $backColor -eq 'Green' -and
+                $foreColor -eq 'Black'
+            }
+        }
+
+        It "Prints labled error message" {
+            Mock Show-LabelledMessage { }
+
+            Show-LabelledError -message 'Download failed!'
+
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
+                $label -eq 'Error' -and
+                $message -eq 'Download failed!' -and
+                $backColor -eq 'Red' -and
+                $foreColor -eq 'Black'
+            }
+
+            Show-LabelledError -message 'Download failed!' -label 'NOK'
+
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
+                $label -eq 'NOK' -and
+                $message -eq 'Download failed!' -and
+                $backColor -eq 'Red' -and
+                $foreColor -eq 'Black'
+            }
+        }
+
+        It "Prints labled warning message" {
+            Mock Show-LabelledMessage { }
+
+            Show-LabelledWarning -message 'Try again!'
+
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
+                $label -eq 'Warning' -and
+                $message -eq 'Try again!' -and
+                $backColor -eq 'Yellow' -and
+                $foreColor -eq 'Black'
+            }
+
+            Show-LabelledWarning -message 'Try again!' -label 'Alert'
+
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
+                $label -eq 'Alert' -and
+                $message -eq 'Try again!' -and
+                $backColor -eq 'Yellow' -and
+                $foreColor -eq 'Black'
+            }
+        }
+
+        It "Prints labled info message" {
+            Mock Show-LabelledMessage { }
+
+            Show-LabelledInfo -message 'Download in progress!'
+
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
+                $label -eq 'Info' -and
+                $message -eq 'Download in progress!' -and
+                $backColor -eq 'Blue' -and
+                $foreColor -eq 'Black'
+            }
+
+            Show-LabelledInfo -message 'Download in progress!' -label 'Notice'
+
+            Should -Invoke Show-LabelledMessage -ParameterFilter {
+                $label -eq 'Notice' -and
+                $message -eq 'Download in progress!' -and
+                $backColor -eq 'Blue' -and
+                $foreColor -eq 'Black'
             }
         }
     }
 
     Context "New-Line* Test" {
-        It "Prints new lines" {
+        It "Prints multiple new lines" {
             Mock Write-HostWrapper { }
 
             New-Lines -count 5
@@ -674,12 +934,34 @@ Describe "Write-Host helpers" {
             }
         }
 
-        It "Prints new line" {
+        It "Prints 1 new line" {
             Mock New-Lines { }
 
             New-Line
 
             Should -Invoke New-Lines -ParameterFilter {
+                $count -eq 1
+            }
+        }
+    }
+
+    Context "Write-Space* Test" {
+        It "Prints multiple spaces" {
+            Mock Write-HostWrapper { }
+
+            Write-Spaces -count 5
+
+            Should -Invoke Write-HostWrapper -Exactly 1 -ParameterFilter {
+                $object -eq (' ' * 5) -and $noNewLine
+            }
+        }
+
+        It "Prints 1 space" {
+            Mock Write-Spaces { }
+
+            Write-Space
+
+            Should -Invoke Write-Spaces -ParameterFilter {
                 $count -eq 1
             }
         }
@@ -721,17 +1003,17 @@ Describe "Sound Functions" {
         }
 
         It "returns TotalSeconds when duration is greater than 1 second" {
-            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) return "0:00:05" } -Force
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) return '0:00:05' } -Force
 
-            $result = Get-Sound-TotalSeconds -path "C:\music\song.mp3"
+            $result = Get-Sound-TotalSeconds -path 'C:\music\song.mp3'
 
             $result | Should -Be 5
         }
 
         It "returns 1 when duration is 1 second or less" {
-            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) return "0:00:00" } -Force
+            $script:fakeShellFolder | Add-Member -MemberType ScriptMethod -Name GetDetailsOf -Value { param($f, $i) return '0:00:00' } -Force
 
-            $result = Get-Sound-TotalSeconds -path "C:\music\song.mp3"
+            $result = Get-Sound-TotalSeconds -path 'C:\music\song.mp3'
 
             $result | Should -Be 1
         }
@@ -777,7 +1059,7 @@ Describe "Sound Functions" {
             $Global:PVMConfig.subprocess.enabled = $false
             $Global:PVMConfig.env.SOUNDS_DISABLED = $false
 
-            Mock New-Player { throw "boom" }
+            Mock New-Player { throw 'boom' }
 
             { Invoke-Sound -filename "song.mp3" } | Should -Not -Throw
             Should -Invoke Add-LogEntry -Times 1 -Exactly
@@ -811,28 +1093,28 @@ Describe "Sound Functions" {
         It "Invoke-SuccessSound plays success.mp3 from assets path" {
             Invoke-SuccessSound
             Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
-                $filename -eq "success.mp3"
+                $filename -eq 'success.mp3'
             }
         }
 
         It "Invoke-ErrorSound plays error.mp3 from assets path" {
             Invoke-ErrorSound
             Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
-                $filename -eq "error.mp3"
+                $filename -eq 'error.mp3'
             }
         }
 
         It "Invoke-NotifySound plays notify.mp3 from assets path" {
             Invoke-NotifySound
             Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
-                $filename -eq "notify.mp3"
+                $filename -eq 'notify.mp3'
             }
         }
 
         It "Invoke-PromptSound plays prompt.mp3 from assets path" {
             Invoke-PromptSound
             Should -Invoke Invoke-Sound -Times 1 -Exactly -ParameterFilter {
-                $filename -eq "prompt.mp3"
+                $filename -eq 'prompt.mp3'
             }
         }
     }

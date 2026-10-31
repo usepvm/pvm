@@ -468,10 +468,10 @@ function Show-PHPProfile {
 
         Show-Info -message "`nProfile: $($userProfile.name)"
         Show-Message -message '========================='
-        Show-Value -message "Description: $($userProfile.description)"
-        Show-Value -message "Created: $createdAtFormatted"
-        Show-Value -message "PHP Version: $($userProfile.phpVersion)"
-        Show-Value -message "PATH: $profilePath"
+        Write-White -message "Description: $($userProfile.description)"
+        Write-White -message "Created: $createdAtFormatted"
+        Write-White -message "PHP Version: $($userProfile.phpVersion)"
+        Write-White -message "PATH: $profilePath"
 
         $settingsCount = if ($userProfile.settings) { ($userProfile.settings.PSObject.Properties | Measure-Object).Count } else { 0 }
         $maxNameLength = [Math]::Max(

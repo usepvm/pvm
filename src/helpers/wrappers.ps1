@@ -1,6 +1,6 @@
 ﻿
 function Write-HostWrapper {
-    param ([Parameter(ValueFromPipeline)]$object, $foregroundColor = $null, [switch]$noNewLine)
+    param ([Parameter(ValueFromPipeline)]$object, $foregroundColor = $null, $backgroundColor = $null, [switch]$noNewLine)
 
     process {
         if ($Global:PVMConfig.subprocess.enabled) {
@@ -17,6 +17,10 @@ function Write-HostWrapper {
 
             if ($null -ne $foregroundColor) {
                 $params['ForegroundColor'] = $foregroundColor
+            }
+
+            if ($null -ne $backgroundColor) {
+                $params['BackgroundColor'] = $backgroundColor
             }
 
             Write-Host @params

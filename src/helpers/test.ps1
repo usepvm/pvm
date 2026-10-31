@@ -33,8 +33,7 @@ function Show-TestsResult {
     if ($code -eq 0) {
         Show-Success -message $status -noNewLine
         Invoke-SuccessSound -wait
-    }
-    else {
+    } else {
         Show-Error -message $status -noNewLine
 
         switch ($code) {

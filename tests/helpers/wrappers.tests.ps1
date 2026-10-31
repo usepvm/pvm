@@ -28,13 +28,15 @@ Describe "Write-HostWrapper" {
 
         $object = "Test message"
         $foregroundColor = "Green"
+        $backgroundColor = "Red"
         $noNewLine = $false
 
-        Write-HostWrapper -object $object -foregroundColor $foregroundColor -noNewLine:$noNewLine
+        Write-HostWrapper -object $object -foregroundColor $foregroundColor -backgroundColor $backgroundColor -noNewLine:$noNewLine
 
         Should -Invoke Write-Host -Times 1 -ParameterFilter {
             $Object -eq $object -and
             $ForegroundColor -eq $foregroundColor -and
+            $BackgroundColor -eq $backgroundColor -and
             $NoNewline -eq $noNewLine
         }
     }

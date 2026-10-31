@@ -6,7 +6,7 @@ function Add-LogEntry {
         $logPath = if ($data.logPath) { $data.logPath } else { $Global:PVMConfig.paths.files.logError }
         $created = New-Directory -path (Split-Path -Path $logPath -Parent)
         if ($created -ne 0) {
-            Show-Error -message "Failed to create directory $(Split-Path -Path $logPath -Parent)"
+            Show-Error -message "`nFailed to create directory $(Split-Path -Path $logPath -Parent)"
             return -1
         }
         $content = "`n$($Global:PVMConfig.constants.LOG_SEPARATOR)"

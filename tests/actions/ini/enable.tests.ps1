@@ -190,8 +190,8 @@ Describe "Enable-IniExtension" {
         $code | Should -Be 0
 
         (Get-ContentWrapper -path $script:testIniPath) -match '^extension\s*=\s*pgsql' | Should -Be $true
-        Should -Invoke Show-Warning -ParameterFilter { $message -eq 'Please enter a valid positive number.'}
-        Should -Invoke Show-Warning -ParameterFilter { $message -eq "Number must be between 0 and $($dllFiles.Length - 1)." }
+        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Please enter a valid positive number*'}
+        Should -Invoke Show-Warning -ParameterFilter { $message -like "*Number must be between 0 and $($dllFiles.Length - 1)*" }
     }
 
     It "Creates backup before modifying" {

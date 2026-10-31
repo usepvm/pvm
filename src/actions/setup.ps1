@@ -39,94 +39,81 @@ function Initialize-PVM {
     }
 }
 
-function Initialize-PVMDirectories {
-    $dirs = @(
-        $Global:PVMConfig.paths.directories.storage,
-        $Global:PVMConfig.paths.directories.testDrive,
-        $Global:PVMConfig.paths.directories.php,
-        $Global:PVMConfig.paths.directories.data,
-        $Global:PVMConfig.paths.directories.templates,
-        $Global:PVMConfig.paths.directories.cache,
-        $Global:PVMConfig.paths.directories.profiles,
-        $Global:PVMConfig.paths.directories.log,
-        $Global:PVMConfig.paths.directories.state,
-        $Global:PVMConfig.paths.directories.temp
-    )
+function Get-PVMDirectoryItems {
+    $dirs        = $Global:PVMConfig.paths.directories
+    $rootPattern = [regex]::Escape("$($Global:PVMConfig.rootPath)\")
 
-    Write-Cyan -message "`nPVM environment directories:" -underlined
-    $codes = @()
-    $maxNameLength = ($dirs | ForEach-Object -Process { $_.Length } | Measure-Object -Maximum).Maximum + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
-    foreach ($dir in $dirs) {
-        $codes += $code = New-Directory -path $dir
-
-        $dirName = "- $dir ".PadRight($maxNameLength, '.')
-        Write-White -message "$dirName " -noNewLine
-        if ($code -eq 0) {
-            Show-Success -message 'Created.'
-        } else {
-            Show-Error -message 'Not created.'
+    $items = @()
+    foreach ($key in 'storage', 'testDrive', 'php', 'data', 'templates',
+                     'cache', 'profiles', 'log', 'state', 'temp') {
+        $path = $dirs.$key
+        $items += @{
+            Label  = $path -replace $rootPattern, ''
+            Action = 'New-Directory'
+            Args   = @{ path = $path }
         }
     }
 
-    return $codes
+    return $items
 }
 
-function Initialize-PVMFiles {
-    $codes = @()
+function Get-PVMFileItems {
+    $files = $Global:PVMConfig.paths.files
+    $rootPattern = [regex]::Escape("$($Global:PVMConfig.rootPath)\")
 
-    $codes += $code = New-ProfileExample
-    if ($code -eq 0) {
-        $msg = "`nExample profile created successfully at '$($Global:PVMConfig.paths.files.profileExample)'."
-        $msg += "`nUse 'pvm help profile' to learn more."
-        Show-LabelledSuccess -message $msg -noNewLine
-    } else {
-        Show-LabelledError -message 'Failed to create example profile.' -noNewLine
+    $creators = [ordered]@{
+        profileExample     = 'New-ProfileExample'
+        profileTemplate    = 'New-ProfileTemplate'
+        zendExtensionsList = 'Set-ZendExtensionsList'
+        aliasesList        = 'Set-AliasesList'
+        scriptsList        = 'Set-ScriptsList'
     }
 
-    $codes += $code = New-ProfileTemplate
-    if ($code -eq 0) {
-        $msg = "`nProfile template created successfully at '$($Global:PVMConfig.paths.files.profileTemplate)'."
-        $msg += "`nFeel free to modify it."
-        Show-LabelledSuccess -message $msg -noNewLine
-    } else {
-        Show-LabelledError -message 'Failed to create profile template.' -noNewLine
+    $items = @()
+    foreach ($entry in $creators.GetEnumerator()) {
+        $path = $files.($entry.Key)
+        $items += @{
+            Label  = $path -replace $rootPattern, '' #Split-Path -Path $files.($entry.Key) -Leaf
+            Action = $entry.Value
+            Args   = @{}
+        }
     }
 
-    $codes += $code = Set-ZendExtensionsList
-    if ($code -eq 0) {
-        Show-LabelledSuccess -message "Zend extensions list created successfully at '$($Global:PVMConfig.paths.files.zendExtensionsList)'."-noNewLine
-    } else {
-        Show-LabelledError -message 'Failed to create zend extensions list.' -noNewLine
-    }
+    return $items
+}
 
-    $codes += $code = Set-AliasesList
-    if ($code -eq 0) {
-        $msg = "`nAliases list created successfully at '$($Global:PVMConfig.paths.files.aliasesList)'."
-        $msg += "`nUse 'pvm aliases' to see available aliases."
-        $msg += "`nFeel free to modify it."
-        Show-LabelledSuccess -message $msg -noNewLine
-    } else {
-        Show-LabelledError -message 'Failed to create aliases list.' -noNewLine
-    }
+function Invoke-PVMSection {
+    param($title, $items, $width)
 
-    $codes += $code = Set-ScriptsList
-    if ($code -eq 0) {
-        $msg = "`nScripts list created successfully at '$($Global:PVMConfig.paths.files.scriptsList)'."
-        $msg += "`nUse 'pvm run list' to see available scripts."
-        $msg += "`nFeel free to modify it.";
-        Show-LabelledSuccess -message $msg -noNewLine
-    } else {
-        Show-LabelledError -message 'Failed to create scripts list.' -noNewLine
-    }
+    Write-Cyan -message $title -underlined
 
-    return $codes
+    foreach ($item in $items) {
+        $splat = $item.Args
+        $code = & $item.Action @splat
+
+        Write-White -message ("- $($item.Label) ".PadRight($width, '.') + ' ') -noNewLine
+    if ($code -eq 0) {
+            Show-Success -message 'Created'
+    } else {
+            Show-Error -message 'Not created'
+        }
+
+        $code
+    }
 }
 
 function Initialize-EnvironmentDirectoriesAndFiles {
-    $codes = @()
+    $dirs = @(Get-PVMDirectoryItems)
+    $files = @(Get-PVMFileItems)
 
-    $codes += Initialize-PVMDirectories
-    $codes += Initialize-PVMFiles
+    # Shared width so dots line up across both sections
+    $max   = (($dirs + $files).Label | ForEach-Object -Process { $_.Length } | Measure-Object -Maximum).Maximum
+    $width = $max + 3 + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2)
+
+    $codes  = @(Invoke-PVMSection -title "`nPVM environment directories:" -items $dirs -width $width)
+    $codes += @(Invoke-PVMSection -title "`nPVM environment files:" -items $files -width $width)
+
+    Show-LabelledInfo -message "`nPath: $($Global:PVMConfig.paths.directories.storage)" -label 'CHECK' -noNewLine
 
     if ($codes | Where-Object -FilterScript { $_ -ne 0 }) { return -1 }
     return 0

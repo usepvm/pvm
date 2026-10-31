@@ -19,6 +19,7 @@ BeforeAll {
     Mock Show-Info { }
     Mock Show-LabelledSuccess { }
     Mock Show-LabelledError { }
+    Mock Show-LabelledInfo {}
     Mock Write-White { }
     Mock Write-Cyan { }
     Mock Add-LogEntry { return 0 }
@@ -200,22 +201,40 @@ Describe "Initialize-PVM" {
     }
 }
 
-Describe "Initialize-PVMDirectories" {
-    It "Returns 0 when all directories and files are created" {
-        Mock New-Directory { return 0 }
-        $result = Initialize-PVMDirectories
-        $result | Should -Be @(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+Describe "Get-PVMDirectoryItems" {
+    BeforeEach {
+        $script:created = @()
+        Mock New-Directory { param ($path) $script:created += $path; return 0 }
     }
 
-    It "Returns -1 when a directory creation fails" {
-        Mock New-Directory { return -1 }
-        $result = Initialize-PVMDirectories
-        $result | Should -Be @(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1)
+    It "Returns one item per directory" {
+        @(Get-PVMDirectoryItems).Count | Should -Be 10
+    }
+
+    It "Uses the configured paths as labels" {
+        $dirs = $Global:PVMConfig.paths.directories
+        $root = [regex]::Escape("$($Global:PVMConfig.rootPath)\")
+
+        (Get-PVMDirectoryItems).Label | Should -Be @(
+            $dirs.storage, $dirs.testDrive, $dirs.php, $dirs.data, $dirs.templates,
+            $dirs.cache, $dirs.profiles, $dirs.log, $dirs.state, $dirs.temp
+        ).ForEach({ $_ -replace $root, '' })
+    }
+
+    It "Each action creates its own directory" {
+        foreach ($item in Get-PVMDirectoryItems) {
+            $splat = $item.Args
+            & $item.Action @splat
+        }
+
+        Should -Invoke New-Directory -Times 10 -Exactly
+        $script:created | Should -Contain $Global:PVMConfig.paths.directories.php
+        $script:created | Should -Be ((Get-PVMDirectoryItems) | ForEach-Object { $_.Args.path })
     }
 }
 
-Describe "Initialize-PVMFiles" {
-    BeforeAll {
+Describe "Get-PVMFileItems" {
+    BeforeEach {
         Mock New-ProfileExample { return 0 }
         Mock New-ProfileTemplate { return 0 }
         Mock Set-ZendExtensionsList { return 0 }
@@ -223,65 +242,116 @@ Describe "Initialize-PVMFiles" {
         Mock Set-ScriptsList { return 0 }
     }
 
-    It "Returns 0 when all files are created" {
-        $result = Initialize-PVMFiles
-        $result | Should -Be @(0, 0, 0, 0, 0)
+    It "Returns one item per file" {
+        @(Get-PVMFileItems).Count | Should -Be 5
     }
 
-    It "Returns -1 when the example profile creation fails" {
-        Mock New-ProfileExample { return -1 }
-        $result = Initialize-PVMFiles
-        $result | Should -Be @(-1, 0, 0, 0, 0)
+    It "Uses the configured paths as labels, in order" {
+        $files = $Global:PVMConfig.paths.files
+        $root  = [regex]::Escape("$($Global:PVMConfig.rootPath)\")
+
+        (Get-PVMFileItems).Label | Should -Be @(
+            $files.profileExample, $files.profileTemplate, $files.zendExtensionsList,
+            $files.aliasesList, $files.scriptsList
+        ).ForEach({ $_ -replace $root, '' })
     }
 
-    It "Returns -1 when the profile template file creation fails" {
-        Mock New-ProfileTemplate { return -1 }
-        $result = Initialize-PVMFiles
-        $result | Should -Be @(0, -1, 0, 0, 0)
+    It "Each action calls its creator once" {
+        foreach ($item in Get-PVMFileItems) {
+            $splat = $item.Args
+            & $item.Action @splat
+        }
+
+        Should -Invoke New-ProfileExample -Times 1 -Exactly
+        Should -Invoke New-ProfileTemplate -Times 1 -Exactly
+        Should -Invoke Set-ZendExtensionsList -Times 1 -Exactly
+        Should -Invoke Set-AliasesList -Times 1 -Exactly
+        Should -Invoke Set-ScriptsList -Times 1 -Exactly
+    }
+}
+
+Describe "Invoke-PVMSection" {
+    BeforeEach {
+        $script:items = @(
+            [pscustomobject]@{ Label = 'ok';     Action = { 0 } }
+            [pscustomobject]@{ Label = 'broken'; Action = { -1 } }
+        )
     }
 
-    It "Returns -1 when the zend extensions file creation fails" {
-        Mock Set-ZendExtensionsList { return -1 }
-        $result = Initialize-PVMFiles
-        $result | Should -Be @(0, 0, -1, 0, 0)
+    It "Writes the title" {
+        $null = Invoke-PVMSection -title 'Title' -items $items -width 20
+
+        Should -Invoke Write-Cyan -Times 1 -Exactly -ParameterFilter { $message -eq 'Title' }
     }
 
-    It "Returns -1 when the aliases file creation fails" {
-        Mock Set-AliasesList { return -1 }
-        $result = Initialize-PVMFiles
-        $result | Should -Be @(0, 0, 0, -1, 0)
+    It "Returns the codes of all actions" {
+        $result = @(Invoke-PVMSection -title 'Title' -items $items -width 20)
+
+        $result | Should -Be @(0, -1)
     }
 
-    It "Returns -1 when the scripts file creation fails" {
-        Mock Set-ScriptsList { return -1 }
-        $result = Initialize-PVMFiles
-        $result | Should -Be @(0, 0, 0, 0, -1)
+    It "Shows success for 0 and error otherwise" {
+        $null = Invoke-PVMSection -title 'Title' -items $items -width 20
+
+        Should -Invoke Show-Success -Times 1 -Exactly
+        Should -Invoke Show-Error -Times 1 -Exactly
+    }
+
+    It "Pads every line to the same width with dots" {
+        $null = Invoke-PVMSection -title 'Title' -items $items -width 20
+
+        Should -Invoke Write-White -Times 2 -Exactly -ParameterFilter { $message.Length -eq 21 }
+        Should -Invoke Write-White -Times 1 -Exactly -ParameterFilter {
+            $message -eq ('- ok ' + ('.' * 15) + ' ')
+        }
     }
 }
 
 Describe "Initialize-EnvironmentDirectoriesAndFiles" {
-    It "Returns 0 when all directories and files are created" {
-        Mock Initialize-PVMDirectories { return @(0, 0) }
-        Mock Initialize-PVMFiles { return @(0, 0) }
+    BeforeEach {
+        Mock Get-PVMDirectoryItems { [pscustomobject]@{ Label = 'dir'; Action = { 0 } } }
+        Mock Get-PVMFileItems { [pscustomobject]@{ Label = 'a-longer-file-label'; Action = { 0 } } }
+    }
 
-        $result = Initialize-EnvironmentDirectoriesAndFiles
-        $result | Should -Be 0
+    It "Returns 0 when all directories and files are created" {
+        Mock Invoke-PVMSection { return @(0, 0) }
+
+        Initialize-EnvironmentDirectoriesAndFiles | Should -Be 0
     }
 
     It "Returns -1 when a directory creation fails" {
-        Mock Initialize-PVMDirectories { return @(0, -1) }
-        Mock Initialize-PVMFiles { return @(0, 0) }
+        Mock Invoke-PVMSection { return @(0, -1) } -ParameterFilter { $title -like '*directories*' }
+        Mock Invoke-PVMSection { return @(0, 0) } -ParameterFilter { $title -like '*files*' }
 
-        $result = Initialize-EnvironmentDirectoriesAndFiles
-        $result | Should -Be -1
+        Initialize-EnvironmentDirectoriesAndFiles | Should -Be -1
     }
 
     It "Returns -1 when a file creation fails" {
-        Mock Initialize-PVMDirectories { return @(0, 0) }
-        Mock Initialize-PVMFiles { return @(0, -1) }
+        Mock Invoke-PVMSection { return @(0, 0) } -ParameterFilter { $title -like '*directories*' }
+        Mock Invoke-PVMSection { return @(0, -1) } -ParameterFilter { $title -like '*files*' }
 
-        $result = Initialize-EnvironmentDirectoriesAndFiles
-        $result | Should -Be -1
+        Initialize-EnvironmentDirectoriesAndFiles | Should -Be -1
+    }
+
+    It "Passes the same width, based on the longest label, to both sections" {
+        Mock Invoke-PVMSection { return @(0) }
+
+        $null = Initialize-EnvironmentDirectoriesAndFiles
+
+        # 'a-longer-file-label'.Length + 3 + (MIN_PAD_RIGHT_LENGTH * 2)
+        Should -Invoke Invoke-PVMSection -Times 2 -Exactly -ParameterFilter {
+            $width -eq ('a-longer-file-label'.Length + 3 + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 2))
+        }
+    }
+
+    It "Shows the storage path" {
+        Mock Invoke-PVMSection { return @(0) }
+
+        $null = Initialize-EnvironmentDirectoriesAndFiles
+
+        Should -Invoke Show-LabelledInfo -Times 1 -Exactly -ParameterFilter {
+            $message.Contains($Global:PVMConfig.paths.directories.storage)
+        }
     }
 }
 

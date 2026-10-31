@@ -369,7 +369,7 @@ function Invoke-Info {
         'Storage Path'     = $Global:PVMConfig.paths.directories.storage
         'Current PHP'      = $currentPhpVersion
         'Real PHP Path'    = $currentPhpPath
-        'Active PHP Path'  = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        'Active PHP Path'  = $Global:PVMConfig.paths.directories.phpCurrent
         'Installed PHPs'   = @($installedPHP).Count
         'Cache TTL'        = "$($Global:PVMConfig.env.CACHE_MAX_HOURS) hours"
         'Profiles'         = @(Get-ProfileFiles).Count
@@ -386,7 +386,7 @@ function Invoke-Info {
 
     if ($arguments -contains '--verbose') {
         $PVM_PATHS = [ordered]@{}
-        $PVM_PATHS['Current PHP Path'] = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
+        $PVM_PATHS['Current PHP Path'] = $Global:PVMConfig.paths.directories.phpCurrent
         foreach ($entry in $Global:PVMConfig.paths.directories.GetEnumerator()) {
             $PVM_PATHS[$entry.Key] = $entry.Value
         }

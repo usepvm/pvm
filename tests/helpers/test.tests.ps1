@@ -930,7 +930,6 @@ Describe "Set-TestDrive" {
         $script:testRoot = "$script:TEST_DRIVE\pvm"
         New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
         @(
-            'PHP_CURRENT_VERSION_PATH=C:\pvm\php'
             'PVM_ENV_VAR_NAME=PVM'
             'CACHE_MAX_HOURS=168'
             'DEFAULT_LOG_PAGE_SIZE=5'
@@ -961,7 +960,8 @@ Describe "Set-TestDrive" {
 
         $Global:PVMConfig.paths.directories.testDrive | Should -Be $fakeRoot
 
-        $Global:PVMConfig.paths.directories.php | Should -Be "$fakeRoot\storage\php"
+        $Global:PVMConfig.paths.directories.phpVersions | Should -Be "$fakeRoot\storage\php\versions"
+        $Global:PVMConfig.paths.directories.phpCurrent | Should -Be "$fakeRoot\storage\php\current"
         $Global:PVMConfig.paths.directories.data | Should -Be "$fakeRoot\storage\data"
         $Global:PVMConfig.paths.directories.cache | Should -Be "$fakeRoot\storage\data\cache"
         $Global:PVMConfig.paths.directories.templates | Should -Be "$fakeRoot\storage\data\templates"
@@ -980,12 +980,12 @@ Describe "Set-TestDrive" {
         $Global:PVMConfig.paths.files.lastUpdateCheck | Should -Be "$fakeRoot\storage\data\state\last_update_check.txt"
     }
 
-    It "Rewrites env.PHP_CURRENT_VERSION_PATH under the given root" {
+    It "Rewrites PHP_CURRENT_VERSION_PATH under the given root" {
         $fakeRoot = "$script:TEST_DRIVE\fake-root"
 
         Set-TestDrive -path $fakeRoot
 
-        $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH | Should -Be "$fakeRoot\pvm\php"
+        $Global:PVMConfig.paths.directories.phpCurrent | Should -Be "$fakeRoot\storage\php\current"
     }
 
     It "Does not touch unrelated config sections" {
@@ -1014,6 +1014,6 @@ Describe "Set-TestDrive" {
         $Global:PVMConfig.rootPath | Should -Be $secondRoot
         $Global:PVMConfig.paths.directories.root | Should -Be $secondRoot
         $Global:PVMConfig.paths.directories.storage | Should -Be "$secondRoot\storage"
-        $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH | Should -Be "$secondRoot\pvm\php"
+        $Global:PVMConfig.paths.directories.phpCurrent | Should -Be "$secondRoot\storage\php\current"
     }
 }

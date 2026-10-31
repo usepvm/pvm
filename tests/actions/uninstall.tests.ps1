@@ -14,7 +14,7 @@ BeforeAll {
     $null = New-Item -ItemType Directory -Path $script:testPhpPath -Force
     $null = New-Item -ItemType Directory -Path "$script:testPhpPath\7.4" -Force
     $null = New-Item -ItemType Directory -Path "$script:testPhpPath\8.0" -Force
-    $null = New-Item -ItemType Directory -Path $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH -Force
+    $null = New-Item -ItemType Directory -Path $Global:PVMConfig.paths.directories.phpCurrent -Force
 
     Mock Show-Success { }
     Mock Show-Error { }

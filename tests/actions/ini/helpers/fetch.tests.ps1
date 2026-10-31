@@ -12,7 +12,7 @@ BeforeAll {
 
     $script:testPhpPath = "$script:TEST_DRIVE\php"
     $script:testIniPath = "$script:testPhpPath\php.ini"
-    $script:PHP_DIR = $Global:PVMConfig.paths.directories.php
+    $script:PHP_DIR = $Global:PVMConfig.paths.directories.phpVersions
 
     $script:XDEBUG_BASE_URL = $Global:PVMConfig.links.xdebugBase
     $script:XDEBUG_HISTORICAL_URL = $Global:PVMConfig.links.xdebugHistorical

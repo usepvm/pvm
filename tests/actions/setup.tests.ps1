@@ -11,7 +11,7 @@ BeforeAll {
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
     $script:ROOT_PATH = $Global:PVMConfig.rootPath
-    $script:PHP_CURRENT_VERSION_PATH = $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH
+    $script:PHP_CURRENT_VERSION_PATH = $Global:PVMConfig.paths.directories.phpCurrent
     $script:PVM_ENV_VAR_NAME = $Global:PVMConfig.env.PVM_ENV_VAR_NAME
 
     Mock Show-Success { }
@@ -216,7 +216,7 @@ Describe "Get-PVMDirectoryItems" {
         $root = [regex]::Escape("$($Global:PVMConfig.rootPath)\")
 
         (Get-PVMDirectoryItems).Label | Should -Be @(
-            $dirs.storage, $dirs.testDrive, $dirs.php, $dirs.data, $dirs.templates,
+            $dirs.storage, $dirs.testDrive, $dirs.phpVersions, $dirs.data, $dirs.templates,
             $dirs.cache, $dirs.profiles, $dirs.log, $dirs.state, $dirs.temp
         ).ForEach({ $_ -replace $root, '' })
     }
@@ -228,7 +228,7 @@ Describe "Get-PVMDirectoryItems" {
         }
 
         Should -Invoke New-Directory -Times 10 -Exactly
-        $script:created | Should -Contain $Global:PVMConfig.paths.directories.php
+        $script:created | Should -Contain $Global:PVMConfig.paths.directories.phpVersions
         $script:created | Should -Be ((Get-PVMDirectoryItems) | ForEach-Object { $_.Args.path })
     }
 }

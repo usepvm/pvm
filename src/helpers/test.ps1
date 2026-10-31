@@ -396,6 +396,7 @@ function Set-TestDrive {
 
     $fakeStorage = "$path\storage"
     $fakeData = "$fakeStorage\data"
+    $fakePhp = "$fakeStorage\php"
     $fakeProfiles = "$fakeData\profiles"
     $fakeTemplates = "$fakeData\templates"
     $fakeLogs = "$fakeStorage\logs"
@@ -407,7 +408,8 @@ function Set-TestDrive {
     $Global:PVMConfig.paths.directories.tests = "$path\tests"
     $Global:PVMConfig.paths.directories.storage = $fakeStorage
     $Global:PVMConfig.paths.directories.testDrive = $path
-    $Global:PVMConfig.paths.directories.php = "$fakeStorage\php"
+    $Global:PVMConfig.paths.directories.phpVersions = "$fakePhp\versions"
+    $Global:PVMConfig.paths.directories.phpCurrent = "$fakePhp\current"
     $Global:PVMConfig.paths.directories.data = $fakeData
     $Global:PVMConfig.paths.directories.templates = $fakeTemplates
     $Global:PVMConfig.paths.directories.cache = "$fakeData\cache"
@@ -425,6 +427,4 @@ function Set-TestDrive {
     $Global:PVMConfig.paths.files.logError = "$fakeLogs\error.log"
     $Global:PVMConfig.paths.files.pathVarBackup = "$fakeState\path.bak.log"
     $Global:PVMConfig.paths.files.lastUpdateCheck = "$fakeState\last_update_check.txt"
-
-    $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$path\pvm\php"
 }

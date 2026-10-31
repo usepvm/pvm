@@ -140,7 +140,7 @@ function New-EnvFile {
             return -1
         }
 
-        Show-LabelledSuccess -message 'Created .env file.'
+        Show-LabelledSuccess -message 'Created .env file.' -noNewLine
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create .env file"; exception = $_ }
@@ -149,7 +149,7 @@ function New-EnvFile {
 }
 
 function Wait-ForEnvEdit {
-    Show-Info -message "`nEdit $($Global:PVMConfig.rootPath)\.env now if you want custom settings, then press Enter to continue..."
+    Show-LabelledWarning -label 'TODO' -message "Edit '$($Global:PVMConfig.rootPath)\.env' now if you want custom settings, then press Enter to continue..."
     Read-HostWrapper -notifyUser | Out-Null
     $Global:PVMConfig = Get-Config -rootPath $Global:PVMConfig.rootPath
 }

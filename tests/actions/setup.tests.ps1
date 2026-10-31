@@ -16,10 +16,10 @@ BeforeAll {
 
     Mock Show-Success { }
     Mock Show-Error { }
-    Mock Show-Info { }
     Mock Show-LabelledSuccess { }
     Mock Show-LabelledError { }
     Mock Show-LabelledInfo {}
+    Mock Show-LabelledWarning {}
     Mock Write-White { }
     Mock Write-Cyan { }
     Mock Add-LogEntry { return 0 }
@@ -446,8 +446,9 @@ Describe "Wait-ForEnvEdit" {
         Wait-ForEnvEdit
 
         Should -Invoke Read-HostWrapper -Times 1
-        Should -Invoke Show-Info -Times 1 -ParameterFilter {
-            $message -like "*Edit $script:ROOT_PATH\.env now if you want custom settings*"
+        Should -Invoke Show-LabelledWarning -Times 1 -ParameterFilter {
+            $label -eq 'TODO' -and
+            $message -like "*Edit '$script:ROOT_PATH\.env' now if you want custom settings*"
         }
     }
 }

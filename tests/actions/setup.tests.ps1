@@ -447,7 +447,7 @@ Describe "Wait-ForEnvEdit" {
 
         Should -Invoke Read-HostWrapper -Times 1
         Should -Invoke Show-LabelledWarning -Times 1 -ParameterFilter {
-            $label -eq 'TODO' -and
+            $label -eq 'Action' -and
             $message -like "*Edit '$script:ROOT_PATH\.env' now if you want custom settings*"
         }
     }

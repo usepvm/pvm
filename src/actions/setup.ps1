@@ -151,7 +151,7 @@ function New-EnvFile {
 }
 
 function Wait-ForEnvEdit {
-    Show-LabelledWarning -label 'TODO' -message "Edit '$($Global:PVMConfig.rootPath)\.env' now if you want custom settings, then press Enter to continue..."
+    Show-LabelledWarning -message "Edit '$($Global:PVMConfig.rootPath)\.env' now if you want custom settings, then press Enter to continue..." -label 'Action'
     Read-HostWrapper -notifyUser | Out-Null
     $Global:PVMConfig = Get-Config -rootPath $Global:PVMConfig.rootPath
 }

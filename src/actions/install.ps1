@@ -292,7 +292,7 @@ function Select-Version {
         $msg += "`n Archives : $($Global:PVMConfig.links.phpWinArchives)"
         Write-Gray -message $msg
 
-        $selectedVersionInput = Read-HostWrapper -prompt "Enter the [number] of your selection (or press Enter to cancel)" -notifyUser
+        $selectedVersionInput = Read-HostWrapper -prompt "Enter the [number] of your selection (or press Enter to cancel)" -label 'Options' -notifyUser
         if (-not $selectedVersionInput) {
             return $null
         }
@@ -343,7 +343,7 @@ function Install-PHP {
                 $versionNumber = "$versionNumber ".PadRight($maxNameLength, '.')
                 Show-Message -message " $versionNumber $metaData $isCurrent"
             }
-            $response = Read-HostWrapper -prompt "Would you like to install another version from the $familyVersion.x ? (y/n)"
+            $response = Read-HostWrapper -prompt "Would you like to install another version from the $familyVersion.x ? (y/n)" -label 'Question'
             if (Test-NoResponse -response $response) {
                 Write-Gray -message "`nInstallation cancelled"
                 return -1

@@ -131,7 +131,7 @@ function New-EnvFile {
         }
 
         if ((Test-FileExists -path "$($Global:PVMConfig.rootPath)\.env") -and ($overwrite -eq $false)) {
-            $response = Read-HostWrapper -prompt ".env file already exists. Overwrite? (y/n)" -notifyUser
+            $response = Read-HostWrapper -prompt ".env file already exists. Overwrite? (y/n)" -label 'Question' -notifyUser
             if (Test-NoResponse -response $response) {
                 return -1
             }

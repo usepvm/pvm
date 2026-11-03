@@ -46,7 +46,7 @@ Describe "Restore-IniBackup" {
                 }
             )
         }
-        Mock Read-HostWrapper { return '0' }
+        Mock Read-HostLabelled { return '0' }
         Mock Copy-ItemWrapper { return 0 }
     }
 
@@ -91,7 +91,7 @@ Describe "Restore-IniBackup" {
     }
 
     It "Returns -1 when user enters invalid number" {
-        Mock Read-HostWrapper { return 'invalid' }
+        Mock Read-HostLabelled { return 'invalid' }
 
         $result = Restore-IniBackup -iniPath $script:testIniPath
 
@@ -101,7 +101,7 @@ Describe "Restore-IniBackup" {
     }
 
     It "Returns -1 when user enters number out of range" {
-        Mock Read-HostWrapper { return '99' }
+        Mock Read-HostLabelled { return '99' }
 
         $result = Restore-IniBackup -iniPath $script:testIniPath
 
@@ -111,7 +111,7 @@ Describe "Restore-IniBackup" {
     }
 
     It "Returns -1 when user enters negative number" {
-        Mock Read-HostWrapper { return '-1' }
+        Mock Read-HostLabelled { return '-1' }
 
         $result = Restore-IniBackup -iniPath $script:testIniPath
 
@@ -180,7 +180,7 @@ Describe "Restore-IniBackup" {
                 }
             )
         }
-        Mock Read-HostWrapper { return '1' }
+        Mock Read-HostLabelled { return '1' }
 
         $result = Restore-IniBackup -iniPath $script:testIniPath
 

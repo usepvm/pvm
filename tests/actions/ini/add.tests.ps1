@@ -92,11 +92,11 @@ BeforeAll {
 
 Describe "Select-ExtensionPackageLink" {
     BeforeEach {
-        Mock Read-HostWrapper { return '0' }
+        Mock Read-HostLabelled { return '0' }
     }
 
     It "Returns null and shows cancellation when no package is selected" {
-        Mock Read-HostWrapper { return ' ' }
+        Mock Read-HostLabelled { return ' ' }
 
         $result = Select-ExtensionPackageLink -extName 'curl' -extensionLinks @(
             @{
@@ -173,7 +173,7 @@ Describe "Select-ExtensionPackageLink" {
                 fileName   = 'php_curl-0.9-arm64.zip'
             }
         )
-        Mock Read-HostWrapper { return '0' }
+        Mock Read-HostLabelled { return '0' }
 
         $result = Select-ExtensionPackageLink -extName 'curl' -extensionLinks $extensionLinks
 
@@ -192,7 +192,7 @@ Describe "Select-ExtensionPackageLink" {
     }
 
     It "Returns null when the selected index does not match a package" {
-        Mock Read-HostWrapper { return '9' }
+        Mock Read-HostLabelled { return '9' }
 
         $result = Select-ExtensionPackageLink -extName 'curl' -extensionLinks @(
             @{
@@ -408,7 +408,7 @@ Describe "Install-Extension" {
             $script:ResolveLinksResult = @{ extName = $ExtName; source = $Source; data = @($Packages) }
         }
 
-        Mock Read-HostWrapper {
+        Mock Read-HostLabelled {
             param ($prompt)
             if ($prompt -eq "Enter the [number] of your selection") { return '0' }
         }
@@ -471,7 +471,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when user cancels the extension installation" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return '' }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return '' }
 
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
@@ -480,7 +480,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when user enters an invalid selection" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return 'unknown' }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return 'unknown' }
 
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
@@ -489,7 +489,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when user enters a negative selection" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return -1 }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return -1 }
 
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
@@ -498,7 +498,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when user enters a selection outside the valid range" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return 5 }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return 5 }
 
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
@@ -516,7 +516,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when no source supports the extension" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return '1' }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return '1' }
 
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
 
@@ -557,7 +557,7 @@ Describe "Install-Extension" {
     }
 
     It "Returns -1 when user does not choose a version (empty answer)" {
-        Mock Read-HostWrapper { }
+        Mock Read-HostLabelled { }
         Set-TestPackages -Packages @((New-TestPackage -arch 'x86'), (New-TestPackage -arch 'x64'))
 
         $code = Install-Extension -iniPath $script:testIniPath -extName 'curl'
@@ -568,7 +568,7 @@ Describe "Install-Extension" {
 
     It "Returns -1 when user picks an invalid package index" {
         $script:callCount = 0
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith {
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith {
             $script:callCount++
             if ($script:callCount -eq 1) { return '0' }
             return ''
@@ -663,7 +663,7 @@ Describe "Install-Extension" {
     }
 
     It "Shows the more info url" {
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return '1' }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return '1' }
         $script:DownloadResult = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
         Set-TestPackages -ExtName 'xdebug' -Source 'xdebug.org' -Packages @(
             (New-TestPackage -extName 'xdebug' -arch 'x86' -buildType 'ts'),

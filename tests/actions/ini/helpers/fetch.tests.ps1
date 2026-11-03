@@ -174,7 +174,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
-            Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
+            Mock Read-HostLabelled -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
             Mock Remove-ItemWrapper { return 0 }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
@@ -203,7 +203,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Get-RemoteFile { return "$tempDirectory\$fileName" }
             Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
-            Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
+            Mock Read-HostLabelled -ParameterFilter { $prompt -like "*$($chosenItem.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
             Mock Remove-ItemWrapper { return 0 }
             Mock Move-ItemWrapper { return 0 }
 
@@ -504,7 +504,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Get-ChildItemWrapper { return @( $mockFile ) } -ParameterFilter { $path -like "*$($chosenItem.fileName)*" }
             Mock Get-ChildItemWrapper { return @{ Name = 'php_xdebug.dll' } } -ParameterFilter { $path -eq "$script:testPhpPath\ext" }
             Mock Test-FileExists { return $true }
-            Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($mockFile.Name) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
+            Mock Read-HostLabelled -ParameterFilter { $prompt -like "*$($mockFile.Name) already exists. Would you like to overwrite it?*" } -MockWith { return 'n' }
             Mock Remove-ItemWrapper { return 0 }
 
             $sourceHandlers = (Get-ExtensionHandlers).SourceHandlers
@@ -544,7 +544,7 @@ Describe "Get-ExtensionHandlers" {
             Mock Expand-Zip { return 0 }
             $mockFile = @{ Name = 'php_xdebug.dll'; FullName = "$script:TEST_DRIVE\extracted\php_xdebug.dll" }
             $chosenItem = @{ fileName = 'php_xdebug-3.5.3-8.3-ts-vs16-x86_64.dll'; }
-            Mock Read-HostWrapper -ParameterFilter { $prompt -like "*$($mockFile.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
+            Mock Read-HostLabelled -ParameterFilter { $prompt -like "*$($mockFile.fileName) already exists. Would you like to overwrite it?*" } -MockWith { return 'y' }
             Mock Move-ItemWrapper { return 0 }
             Mock Remove-ItemWrapper { return 0 }
             Mock Get-ChildItemWrapper { return @($mockFile) } -ParameterFilter { $path -like "*$($chosenItem.fileName)*" }
@@ -1824,7 +1824,7 @@ Describe "Select-ExtensionFromMatches" {
         }
 
         It "Prompts user to select link when multiple found and returns selected" {
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return '0' }
+            Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return '0' }
 
             $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
 
@@ -1832,7 +1832,7 @@ Describe "Select-ExtensionFromMatches" {
         }
 
         It "Returns null when user skips selection" {
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return '' }
+            Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith { return '' }
 
             $result = Select-ExtensionFromMatches -linksMatchingExtName (Get-ExtensionList)
 
@@ -1842,7 +1842,7 @@ Describe "Select-ExtensionFromMatches" {
 
         It "Reprompts user when typing invalid choice" {
             $script:callCount = 0
-            Mock Read-HostWrapper -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith {
+            Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Enter the [number] of your selection" } -MockWith {
                 $script:callCount++
                 if ($script:callCount -eq 1) { return 'A' }
                 if ($script:callCount -eq 2) { return '-1' }

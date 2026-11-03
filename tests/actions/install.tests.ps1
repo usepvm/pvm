@@ -89,7 +89,7 @@ BeforeAll {
         return $script:MockFileSystem.Directories -contains $path
     }
 
-    Mock Read-HostWrapper {
+    Mock Read-HostLabelled {
         param ($prompt)
         return $script:MockUserInput
     }
@@ -761,7 +761,7 @@ Describe "Install-PHP" {
     It "Installs PHP when user accepts family version install" {
         Mock Get-PHP { return @{ downloadPath = "$script:TEST_DRIVE\php"; success = $true } }
         Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
-        Mock Read-HostWrapper {
+        Mock Read-HostLabelled {
             if ($prompt -match 'Would you like to install another version from') { return 'y' }
             if ($prompt -eq "Enter the [number] of your selection (or press Enter to cancel)") { return '0' }
         }
@@ -798,7 +798,7 @@ Describe "Install-PHP" {
 
     It "Returns -1 when user selection cannot be installed" {
         Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
-        Mock Read-HostWrapper {
+        Mock Read-HostLabelled {
             if ($prompt -match 'Would you like to install another version from') { return 'y' }
             if ($prompt -eq "Enter the [number] of your selection (or press Enter to cancel)") { return '0' }
         }
@@ -813,7 +813,7 @@ Describe "Install-PHP" {
     It "Handles exception gracefully" {
         Mock Test-PHPVersionInstalled { return $false }
         Mock Get-MatchingPHPVersions { return @('7.4.9', '8.0.9', '8.1.9', '8.1.12') }
-        Mock Read-HostWrapper { throw 'Test exception' }
+        Mock Read-HostLabelled { throw 'Test exception' }
 
         $result = Install-PHP -version '8.1'
 

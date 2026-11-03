@@ -10,7 +10,6 @@ BeforeAll {
 
     $script:TEST_DRIVE = $Global:CurrentTestDrive
 
-    Mock Show-Label { }
     Mock Add-LogEntry { return 0 }
 }
 
@@ -79,27 +78,13 @@ Describe "Read-HostWrapper" {
 
         $prompt = 'Test prompt'
 
-        $result = Read-HostWrapper -prompt $prompt -label 'Input'
+        $result = Read-HostWrapper -prompt $prompt
 
         $result | Should -Be 'Test response'
-        Should -Invoke Show-Label -Times 1 -ParameterFilter {
-            $label -eq 'Input' -and
-            $foreColor -eq 'Black' -and
-            $backColor -eq 'White' -and
-            $noNewLine -eq $true
-        }
         Should -Invoke Read-Host -Times 1 -ParameterFilter {
             $Prompt -eq $prompt
         }
         Should -Invoke Invoke-PromptSound -Times 0 -Exactly
-
-        $result = Read-HostWrapper -prompt $prompt
-        Should -Invoke Show-Label -Times 1 -ParameterFilter {
-            $label -eq 'Prompt' -and
-            $foreColor -eq 'Black' -and
-            $backColor -eq 'White' -and
-            $noNewLine -eq $true
-        }
     }
 
     It "plays the prompt sound before waiting for input" {

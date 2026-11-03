@@ -29,19 +29,13 @@ function Write-HostWrapper {
 }
 
 function Read-HostWrapper {
-    param ($prompt = $null, $label = $null, [switch]$notifyUser)
+    param ($prompt = $null, [switch]$notifyUser)
 
     if ($notifyUser) {
         Invoke-PromptSound
     }
 
-    if ($null -eq $prompt) {
-        $response = Read-Host -Prompt $prompt
-    } else {
-        if (-not $label) { $label = 'Prompt' }
-        Show-Label -label $label -foreColor 'Black' -backColor 'White' -noNewLine
-        $response = Read-Host -Prompt " $($prompt.Trim())"
-    }
+    $response = Read-Host -Prompt $prompt
 
     if ([string]::IsNullOrWhiteSpace($response)) {
         return $null

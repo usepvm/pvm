@@ -686,7 +686,7 @@ function Select-ExtensionFromMatches {
     }
 
     do {
-        $choiceRaw = Read-HostLabelled -prompt "Enter the [number] of your selection" -label 'Options' -notifyUser
+        $choiceRaw = Read-HostLabelled -prompt 'Enter the [number] of your selection' -label 'Options' -notifyUser
         if ([string]::IsNullOrWhiteSpace($choiceRaw)) {
             Write-Gray -message "`nOperation cancelled"
             return $null

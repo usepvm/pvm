@@ -292,7 +292,7 @@ function Select-Version {
         $msg += "`n Archives : $($Global:PVMConfig.links.phpWinArchives)"
         Write-Gray -message $msg
 
-        $selectedVersionInput = Read-HostLabelled -prompt "Enter the [number] of your selection (or press Enter to cancel)" -label 'Options' -notifyUser
+        $selectedVersionInput = Read-HostLabelled -prompt 'Enter the [number] of your selection (or press Enter to cancel)' -label 'Options' -notifyUser
         if (-not $selectedVersionInput) {
             return $null
         }

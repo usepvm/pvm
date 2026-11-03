@@ -569,7 +569,7 @@ function Clear-PHPProfiles {
         }
 
         if (-not $skipConfirmation) {
-            $response = Read-HostLabelled -prompt "Are you sure you want to delete all profiles? (y/n)" -label 'Confirm'
+            $response = Read-HostLabelled -prompt 'Are you sure you want to delete all profiles? (y/n)' -label 'Confirm'
             if (Test-NoResponse -response $response) {
                 Write-Gray -message "`nDeletion cancelled."
                 return -1

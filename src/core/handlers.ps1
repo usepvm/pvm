@@ -443,7 +443,7 @@ function Invoke-Log {
 
         $skipConfirmation = [bool]($arguments | Where-Object -FilterScript { @('-y', '--yes') -contains $_ } | Select-Object -First 1)
         if (-not $skipConfirmation) {
-            $response = Read-HostLabelled -prompt "Are you sure you want to clear the log? (y/n)" -label 'Confirm'
+            $response = Read-HostLabelled -prompt 'Are you sure you want to clear the log? (y/n)' -label 'Confirm'
             if (Test-NoResponse -response $response) {
                 Write-Gray -message "`nLog clearing cancelled"
                 return -1

@@ -47,7 +47,7 @@ function Set-IniSetting {
                 }
 
                 do {
-                    $choiceRaw = Read-HostLabelled -prompt "Select a number" -label 'Options'
+                    $choiceRaw = Read-HostLabelled -prompt 'Select a number' -label 'Options'
                     $choice = $null
 
                     if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {

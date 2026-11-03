@@ -36,7 +36,7 @@ function Select-ExtensionPackageLink {
         }
     }
 
-    $packageIndex = Read-HostWrapper -prompt "Enter the [number] of your selection" -label 'Options' -notifyUser
+    $packageIndex = Read-HostLabelled -prompt "Enter the [number] of your selection" -label 'Options' -notifyUser
     if ([string]::IsNullOrWhiteSpace($packageIndex)) {
         Write-Gray -message "`nInstallation cancelled"
         return $null
@@ -129,7 +129,7 @@ function Install-Extension {
             Show-Message -message "[$index] $_"
             $index++
         }
-        $selectedIndex = Read-HostWrapper -prompt "Enter the [number] of your selection" -label 'Options'
+        $selectedIndex = Read-HostLabelled -prompt "Enter the [number] of your selection" -label 'Options'
         if ([string]::IsNullOrWhiteSpace($selectedIndex)) {
             Write-Gray -message "`nInstallation cancelled"
             return -1

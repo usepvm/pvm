@@ -131,7 +131,7 @@ function New-EnvFile {
         }
 
         if ((Test-FileExists -path "$($Global:PVMConfig.rootPath)\.env") -and ($overwrite -eq $false)) {
-            $response = Read-HostWrapper -prompt ".env file already exists. Overwrite? (y/n)" -label 'Question' -notifyUser
+            $response = Read-HostLabelled -prompt ".env file already exists. Overwrite? (y/n)" -label 'Question' -notifyUser
             if (Test-NoResponse -response $response) {
                 return -1
             }
@@ -151,7 +151,6 @@ function New-EnvFile {
 }
 
 function Wait-ForEnvEdit {
-    Show-LabelledWarning -message "Edit '$($Global:PVMConfig.rootPath)\.env' now if you want custom settings, then press Enter to continue..." -label 'Action'
-    Read-HostWrapper -notifyUser | Out-Null
+    Read-HostLabelled -prompt "Edit '$($Global:PVMConfig.rootPath)\.env' now if you want custom settings, then press Enter to continue..." -label 'Action' -notifyUser | Out-Null
     $Global:PVMConfig = Get-Config -rootPath $Global:PVMConfig.rootPath
 }

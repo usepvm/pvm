@@ -35,7 +35,7 @@ function Restore-IniBackup {
             Write-Gray " | ($($backup.niceTime.Relative)) ($($backup.size))"
         }
 
-        $choiceRaw = Read-HostWrapper -prompt "Select backup to restore (0-$($backupList.Count - 1))" -label 'Options'
+        $choiceRaw = Read-HostLabelled -prompt "Select backup to restore (0-$($backupList.Count - 1))" -label 'Options'
         $choice = $null
 
         if (-not [int]::TryParse($choiceRaw, [ref]$choice)) {

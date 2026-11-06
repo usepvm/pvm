@@ -968,6 +968,63 @@ Describe "Write-Host helpers" {
     }
 }
 
+Describe "Read-HostLabelled" {
+    BeforeEach {
+        Mock Show-Label { }
+    }
+
+    It "Calls Read-HostWrapper with the correct parameters when prompt is null" {
+        Mock Read-HostWrapper { return 'Test response' }
+
+        $result = Read-HostLabelled -prompt $null -label 'Input' -notifyUser
+
+        $result | Should -Be 'Test response'
+        Should -Invoke Read-HostWrapper -Times 1 -ParameterFilter {
+            $prompt -eq $null -and
+            $notifyUser.IsPresent
+        }
+    }
+
+    It "Calls Show-Label and Read-HostWrapper with the correct parameters when label is not provided" {
+        Mock Read-HostWrapper { return 'Test response' }
+
+        $result = Read-HostLabelled -prompt 'Test prompt'
+
+        $result | Should -Be 'Test response'
+        Should -Invoke Show-Label -Times 1 -ParameterFilter {
+            $label -eq 'Prompt' -and
+            $foreColor -eq 'Black' -and
+            $backColor -eq 'White' -and
+            $noNewLine.IsPresent
+        }
+        Should -Invoke Read-HostWrapper -Times 1 -ParameterFilter {
+            $prompt -eq " $($prompt.Trim())" -and
+            $notifyUser -eq $false
+        }
+    }
+
+    It "Calls Show-Label and Read-HostWrapper with the correct parameters when prompt is not null" {
+        Mock Read-HostWrapper { return 'Test response' }
+
+        $prompt = 'Test prompt'
+        $label = 'Input'
+
+        $result = Read-HostLabelled -prompt $prompt -label $label -notifyUser
+
+        $result | Should -Be 'Test response'
+        Should -Invoke Show-Label -Times 1 -ParameterFilter {
+            $label -eq $label -and
+            $foreColor -eq 'Black' -and
+            $backColor -eq 'White' -and
+            $noNewLine.IsPresent
+        }
+        Should -Invoke Read-HostWrapper -Times 1 -ParameterFilter {
+            $prompt -eq " $($prompt.Trim())" -and
+            $notifyUser.IsPresent
+        }
+    }
+}
+
 Describe "Sound Functions" {
     BeforeEach {
         $script:currentPVMSubprocess = @{ enabled = $Global:PVMConfig.subprocess.enabled; structuredOutput = $Global:PVMConfig.subprocess.structuredOutput }

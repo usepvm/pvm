@@ -389,6 +389,20 @@ function Write-Space {
     Write-Spaces -count 1
 }
 
+function Read-HostLabelled {
+    param ($prompt = $null, $label = $null, [switch]$notifyUser)
+
+    if ($null -eq $prompt) {
+        $response = Read-HostWrapper -prompt $prompt -notifyUser:$notifyUser
+    } else {
+        if (-not $label) { $label = 'Prompt' }
+        Show-Label -label $label -foreColor 'Black' -backColor 'White' -noNewLine
+        $response = Read-HostWrapper -prompt " $($prompt.Trim())" -notifyUser:$notifyUser
+    }
+
+    return $response
+}
+
 function New-Player {
     Add-Type -AssemblyName PresentationCore
     $MediaPlayer = New-Object -TypeName System.Windows.Media.MediaPlayer

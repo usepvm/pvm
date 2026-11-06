@@ -62,12 +62,12 @@ Describe "Show-PHPExtensionInfo" {
                 @{ name = 'xdebug-2'; id = 'xdebug'; status = 'Disabled'; color = 'DarkYellow'; lineNumber = 8; line = ';zend_extension=xdebug-2.dll' }
             )
         }
-        Mock Read-HostWrapper { return '1' }
+        Mock Read-HostLabelled { return '1' }
 
         $code = Show-PHPExtensionInfo -iniPath $script:testIniPath -extName 'xdebug'
 
         $code | Should -Be 0
-        Should -Invoke Read-HostWrapper -Exactly 1
+        Should -Invoke Read-HostLabelled -Exactly 1
         Should -Invoke Show-Message -ParameterFilter { $message -eq ' xdebug-2' }
         Should -Invoke Write-Color -ParameterFilter { $message -eq ' Disabled' -and $foreColor -eq 'DarkYellow' }
     }
@@ -79,7 +79,7 @@ Describe "Show-PHPExtensionInfo" {
                 @{ name = 'xdebug-2'; id = 'xdebug'; status = 'Disabled'; color = 'DarkYellow' }
             )
         }
-        Mock Read-HostWrapper {
+        Mock Read-HostLabelled {
             $script:selectionAttempts++
             if ($script:selectionAttempts -eq 1) {
                 return 'bad'
@@ -94,7 +94,7 @@ Describe "Show-PHPExtensionInfo" {
 
         $code | Should -Be 0
         Should -Invoke Show-Warning -Times 2
-        Should -Invoke Read-HostWrapper -Exactly 3
+        Should -Invoke Read-HostLabelled -Exactly 3
     }
 
     It "Displays missing metadata and unconfigured local details" {

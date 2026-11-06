@@ -1181,20 +1181,20 @@ Describe "Invoke-Log" {
 
     It "Should prompt for confirmation and cancel log clearing when user responds with 'n'" {
         Mock Get-ContentWrapper { return 'some log content' }
-        Mock Read-HostWrapper { return 'n' }
+        Mock Read-HostLabelled { return 'n' }
 
         $code = Invoke-Log -arguments @('--clear')
 
         $code | Should -Be -1
 
-        Should -Invoke Read-HostWrapper -ParameterFilter { $prompt -like '*Are you sure you want to clear the log?*' }
+        Should -Invoke Read-HostLabelled -ParameterFilter { $prompt -like '*Are you sure you want to clear the log?*' }
         Should -Invoke Write-Gray -ParameterFilter { $message -like '*Log clearing cancelled*' }
     }
 
     It "Should prompt for confirmation and proceed with log clearing when user responds with 'y'" {
         Mock Get-ContentWrapper { return 'some log content' }
         Mock Clear-ContentWrapper { return 0 }
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $code = Invoke-Log -arguments @('--clear')
 

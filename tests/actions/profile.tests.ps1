@@ -1010,14 +1010,14 @@ Describe "Remove-PHPProfile" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'n' }
+        Mock Read-HostLabelled { return 'n' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
 
         $result | Should -Be -1
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $true
         Should -Invoke Write-Gray -ParameterFilter { $message -match 'Deletion cancelled' } -Exactly 1
-        Should -Invoke Read-HostWrapper -Exactly 1
+        Should -Invoke Read-HostLabelled -Exactly 1
     }
 
     It "Should return -1 when user cancels deletion with empty response" {
@@ -1031,7 +1031,7 @@ Describe "Remove-PHPProfile" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return '' }
+        Mock Read-HostLabelled { return '' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
 
@@ -1051,7 +1051,7 @@ Describe "Remove-PHPProfile" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'no' }
+        Mock Read-HostLabelled { return 'no' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
 
@@ -1071,14 +1071,14 @@ Describe "Remove-PHPProfile" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
 
         $result | Should -Be 0
         Test-Path "$script:PROFILES_PATH\testprofile.json" | Should -Be $false
         Should -Invoke Show-LabelledSuccess -ParameterFilter { $message -match "Profile 'testprofile' deleted successfully" } -Exactly 1
-        Should -Invoke Read-HostWrapper -ParameterFilter { $prompt -match "Are you sure you want to delete profile 'testprofile'" } -Exactly 1
+        Should -Invoke Read-HostLabelled -ParameterFilter { $prompt -match "Are you sure you want to delete profile 'testprofile'" } -Exactly 1
     }
 
     It "Should successfully delete profile when user confirms with 'Y'" {
@@ -1092,7 +1092,7 @@ Describe "Remove-PHPProfile" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'Y' }
+        Mock Read-HostLabelled { return 'Y' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
 
@@ -1103,12 +1103,12 @@ Describe "Remove-PHPProfile" {
 
     It "Should not display the confirmation prompt when skipConfirmation is true" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example.json" -Encoding UTF8
-        Mock Read-HostWrapper { }
+        Mock Read-HostLabelled { }
 
         $result = Remove-PHPProfile -profileName 'example' -skipConfirmation $true
 
         $result | Should -Be 0
-        Should -Invoke Read-HostWrapper -Exactly 0
+        Should -Invoke Read-HostLabelled -Exactly 0
         Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $false
     }
 
@@ -1133,7 +1133,7 @@ Describe "Remove-PHPProfile" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
         Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
@@ -1154,11 +1154,11 @@ Describe "Remove-PHPProfile" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\myprofile.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $result = Remove-PHPProfile -profileName 'myprofile'
         $result | Should -Be 0
-        Should -Invoke Read-HostWrapper -ParameterFilter {
+        Should -Invoke Read-HostLabelled -ParameterFilter {
             $prompt -match "Are you sure you want to delete profile 'myprofile'" -and
             $prompt -match '\(y/n\)'
         } -Exactly 1
@@ -1175,7 +1175,7 @@ Describe "Remove-PHPProfile" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\test-profile_123.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $result = Remove-PHPProfile -profileName 'test-profile_123'
 
@@ -1195,7 +1195,7 @@ Describe "Remove-PHPProfile" {
         }
         $testProfile | ConvertTo-Json -Depth 10 | Set-Content -Path "$script:PROFILES_PATH\testprofile.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'yes' }
+        Mock Read-HostLabelled { return 'yes' }
 
         $result = Remove-PHPProfile -profileName 'testprofile'
 
@@ -1222,7 +1222,7 @@ Describe "Clear-PHPProfiles" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example1.json" -Encoding UTF8
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example2.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'n' }
+        Mock Read-HostLabelled { return 'n' }
 
         $result = Clear-PHPProfiles
 
@@ -1235,7 +1235,7 @@ Describe "Clear-PHPProfiles" {
     It "Should return -1 when user cancels with empty response" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return '' }
+        Mock Read-HostLabelled { return '' }
 
         $result = Clear-PHPProfiles
 
@@ -1246,7 +1246,7 @@ Describe "Clear-PHPProfiles" {
     It "Should return -1 when user cancels with 'no'" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'no' }
+        Mock Read-HostLabelled { return 'no' }
 
         $result = Clear-PHPProfiles
 
@@ -1257,7 +1257,7 @@ Describe "Clear-PHPProfiles" {
     It "Should return -1 when user cancels with 'yes' (not just 'y')" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'yes' }
+        Mock Read-HostLabelled { return 'yes' }
 
         $result = Clear-PHPProfiles
 
@@ -1269,7 +1269,7 @@ Describe "Clear-PHPProfiles" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example1.json" -Encoding UTF8
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example2.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'Y' }
+        Mock Read-HostLabelled { return 'Y' }
 
         $result = Clear-PHPProfiles
 
@@ -1281,24 +1281,24 @@ Describe "Clear-PHPProfiles" {
 
     It "Should not display the confirmation prompt when skipConfirmation is true" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example.json" -Encoding UTF8
-        Mock Read-HostWrapper { }
+        Mock Read-HostLabelled { }
 
         $result = Clear-PHPProfiles -skipConfirmation $true
 
         $result | Should -Be 0
-        Should -Invoke Read-HostWrapper -Exactly 0
+        Should -Invoke Read-HostLabelled -Exactly 0
         Test-Path "$script:PROFILES_PATH\example.json" | Should -Be $false
     }
 
     It "Should display correct confirmation prompt" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $result = Clear-PHPProfiles
 
         $result | Should -Be 0
-        Should -Invoke Read-HostWrapper -ParameterFilter {
+        Should -Invoke Read-HostLabelled -ParameterFilter {
             $prompt -match 'Are you sure you want to delete all profiles' -and
             $prompt -match '\(y/n\)'
         } -Exactly 1
@@ -1307,7 +1307,7 @@ Describe "Clear-PHPProfiles" {
     It "Should work correctly with a single profile" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\single.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $result = Clear-PHPProfiles
 
@@ -1333,7 +1333,7 @@ Describe "Clear-PHPProfiles" {
     It "Should return -1 and log error when an exception occurs during deletion" {
         '{}' | Set-Content -Path "$script:PROFILES_PATH\example.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
         Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $result = Clear-PHPProfiles

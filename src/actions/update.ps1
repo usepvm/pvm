@@ -166,7 +166,7 @@ function Update-PVM {
                     $msg += ": $currentVersion -> $latestVersion"
                 }
             }
-            return @{ code = 1; message = $msg; color = 'DarkYellow' }
+            return @{ code = 0; message = $msg; color = 'DarkYellow' }
         }
 
         Show-Warning -message "`nUpdate available. Pulling changes..."

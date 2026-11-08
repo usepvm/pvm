@@ -126,7 +126,8 @@ function Show-PHPExtensions {
                 return -1
             }
 
-            $availableExtensionsPartialList = (Get-FilteredPHPExtensionsByCategory -availableExtensions $availableExtensions -term $term).searchResults
+            $results = (Get-FilteredPHPExtensionsByCategory -availableExtensions $availableExtensions -term $term)
+            $availableExtensionsPartialList = $results.searchResults
 
             if ($availableExtensionsPartialList.Count -eq 0) {
                 $msg = "`nNo extensions found"
@@ -140,7 +141,7 @@ function Show-PHPExtensions {
             $maxKeyLength = ($availableExtensionsPartialList.Keys | Measure-Object -Maximum Length).Maximum
             $maxLineLength = [Math]::Max($Global:PVMConfig.env.MIN_LINE_LENGTH, $maxKeyLength + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH * 3))
 
-            Write-Cyan -message "`nAvailable Extensions by Category:" -underlined
+            Write-Cyan -message "`nAvailable Extensions by Category: ($($results.totalSearchedCategories)/$($results.totalCategoriesCount))" -underlined
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object -Property Key | ForEach-Object -Process {
                 $key = "$($_.Key)"
                 $vals = ($_.Value | ForEach-Object -Process { $_.extName }) -join ', '

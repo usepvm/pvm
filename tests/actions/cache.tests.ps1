@@ -193,7 +193,7 @@ Describe "Remove-CacheFile" {
 
     It "Should return -1 when user cancels with 'n'" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-        Mock Read-HostWrapper { return 'n' }
+        Mock Read-HostLabelled { return 'n' }
 
         $result = Remove-CacheFile -cacheName 'releases'
 
@@ -204,7 +204,7 @@ Describe "Remove-CacheFile" {
 
     It "Should return -1 when user cancels with empty response" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-        Mock Read-HostWrapper { return '' }
+        Mock Read-HostLabelled { return '' }
 
         $result = Remove-CacheFile -cacheName 'releases'
 
@@ -215,7 +215,7 @@ Describe "Remove-CacheFile" {
 
     It "Should return -1 when user cancels with 'no'" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-        Mock Read-HostWrapper { return 'no' }
+        Mock Read-HostLabelled { return 'no' }
 
         $result = Remove-CacheFile -cacheName 'releases'
 
@@ -225,7 +225,7 @@ Describe "Remove-CacheFile" {
 
     It "Should return -1 when user cancels with 'yes' (not just 'y')" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-        Mock Read-HostWrapper { return 'yes' }
+        Mock Read-HostLabelled { return 'yes' }
 
         $result = Remove-CacheFile -cacheName 'releases'
 
@@ -235,7 +235,7 @@ Describe "Remove-CacheFile" {
 
     It "Should successfully delete file when user confirms with 'y'" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $result = Remove-CacheFile -cacheName 'releases'
 
@@ -246,7 +246,7 @@ Describe "Remove-CacheFile" {
 
     It "Should successfully delete file when user confirms with 'Y'" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
-        Mock Read-HostWrapper { return 'Y' }
+        Mock Read-HostLabelled { return 'Y' }
 
         $result = Remove-CacheFile -cacheName 'releases'
 
@@ -256,12 +256,12 @@ Describe "Remove-CacheFile" {
 
     It "Should display the correct confirmation prompt including cache name" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\mydata.json" -Encoding UTF8
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $result = Remove-CacheFile -cacheName 'mydata'
 
         $result | Should -Be 0
-        Should -Invoke Read-HostWrapper -ParameterFilter {
+        Should -Invoke Read-HostLabelled -ParameterFilter {
             $prompt -match "Are you sure you want to delete cache file 'mydata'" -and
             $prompt -match '\(y/n\)'
         } -Exactly 1
@@ -269,12 +269,12 @@ Describe "Remove-CacheFile" {
 
     It "Should not display the confirmation prompt when skipConfirmation is true" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\mydata.json" -Encoding UTF8
-        Mock Read-HostWrapper { }
+        Mock Read-HostLabelled { }
 
         $result = Remove-CacheFile -cacheName 'mydata' -skipConfirmation $true
 
         $result | Should -Be 0
-        Should -Invoke Read-HostWrapper -Exactly 0
+        Should -Invoke Read-HostLabelled -Exactly 0
         Test-Path "$($script:CACHE_PATH)\mydata.json" | Should -Be $false
     }
 
@@ -291,7 +291,7 @@ Describe "Remove-CacheFile" {
     It "Should return -1 and log error when Remove-ItemWrapper throws" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
         Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $result = Remove-CacheFile -cacheName 'releases'
@@ -304,7 +304,7 @@ Describe "Remove-CacheFile" {
     It "Should handle cache file with complex name" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\php-releases_8x.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $result = Remove-CacheFile -cacheName 'php-releases_8x'
 
@@ -334,7 +334,7 @@ Describe "Clear-CacheFiles" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\versions.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'n' }
+        Mock Read-HostLabelled { return 'n' }
 
         $result = Clear-CacheFiles
 
@@ -347,7 +347,7 @@ Describe "Clear-CacheFiles" {
     It "Should return -1 when user cancels with empty response" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return '' }
+        Mock Read-HostLabelled { return '' }
 
         $result = Clear-CacheFiles
 
@@ -358,7 +358,7 @@ Describe "Clear-CacheFiles" {
     It "Should return -1 when user cancels with 'no'" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'no' }
+        Mock Read-HostLabelled { return 'no' }
 
         $result = Clear-CacheFiles
 
@@ -369,7 +369,7 @@ Describe "Clear-CacheFiles" {
     It "Should return -1 when user cancels with 'yes' (not just 'y')" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'yes' }
+        Mock Read-HostLabelled { return 'yes' }
 
         $result = Clear-CacheFiles
 
@@ -382,7 +382,7 @@ Describe "Clear-CacheFiles" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\versions.json" -Encoding UTF8
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\metadata.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $result = Clear-CacheFiles
 
@@ -397,7 +397,7 @@ Describe "Clear-CacheFiles" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\versions.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'Y' }
+        Mock Read-HostLabelled { return 'Y' }
 
         $result = Clear-CacheFiles
 
@@ -409,12 +409,12 @@ Describe "Clear-CacheFiles" {
     It "Should display correct confirmation prompt" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $result = Clear-CacheFiles
 
         $result | Should -Be 0
-        Should -Invoke Read-HostWrapper -ParameterFilter {
+        Should -Invoke Read-HostLabelled -ParameterFilter {
             $prompt -match 'Are you sure you want to delete all cache files' -and
             $prompt -match '\(y/n\)'
         } -Exactly 1
@@ -423,7 +423,7 @@ Describe "Clear-CacheFiles" {
     It "Should work correctly with a single cache file" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\single.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $result = Clear-CacheFiles
 
@@ -433,12 +433,12 @@ Describe "Clear-CacheFiles" {
 
     It "Should not display the confirmation prompt when skipConfirmation is true" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\mydata.json" -Encoding UTF8
-        Mock Read-HostWrapper { }
+        Mock Read-HostLabelled { }
 
         $result = Clear-CacheFiles -skipConfirmation $true
 
         $result | Should -Be 0
-        Should -Invoke Read-HostWrapper -Exactly 0
+        Should -Invoke Read-HostLabelled -Exactly 0
         Test-Path "$($script:CACHE_PATH)\mydata.json" | Should -Be $false
     }
 
@@ -460,7 +460,7 @@ Describe "Clear-CacheFiles" {
     It "Should return -1 and log error when an exception occurs during deletion" {
         '{}' | Set-Content -Path "$($script:CACHE_PATH)\releases.json" -Encoding UTF8
 
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
         Mock Remove-ItemWrapper { throw 'Access denied' }
 
         $result = Clear-CacheFiles

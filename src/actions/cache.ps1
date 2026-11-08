@@ -86,7 +86,7 @@ function Remove-CacheFile {
         }
 
         if (-not $skipConfirmation) {
-            $response = Read-HostWrapper -prompt "`nAre you sure you want to delete cache file '$cacheName'? (y/n)"
+            $response = Read-HostLabelled -prompt "Are you sure you want to delete cache file '$cacheName'? (y/n)" -label 'Confirm'
             if (Test-NoResponse -response $response) {
                 Write-Gray -message "`nDeletion cancelled."
                 return -1
@@ -120,7 +120,7 @@ function Clear-CacheFiles {
         }
 
         if (-not $skipConfirmation) {
-            $response = Read-HostWrapper -prompt "`nAre you sure you want to delete all cache files? (y/n)"
+            $response = Read-HostLabelled -prompt 'Are you sure you want to delete all cache files? (y/n)' -label 'Confirm'
             if (Test-NoResponse -response $response) {
                 Write-Gray -message "`nDeletion cancelled."
                 return -1

@@ -63,14 +63,14 @@ Describe "Uninstall-PHP" {
             Mock Get-UserSelectedPHPVersion {
                 return @{ code = 0; version = '7.4'; arch = 'x86'; buildType = 'nts'; path = "$script:testPhpPath\7.4" }
             }
-            Mock Read-HostWrapper { return 'n' }
+            Mock Read-HostLabelled { return 'n' }
 
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $false
 
             $result | Should -Be -1
             Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -like '*Uninstallation cancelled*' }
 
-            Should -Invoke Read-HostWrapper -Exactly 1 -ParameterFilter {
+            Should -Invoke Read-HostLabelled -Exactly 1 -ParameterFilter {
                 $prompt -like "*Are you sure you want to delete PHP version*"
             }
             Should -Invoke Remove-ItemWrapper -Exactly 0
@@ -80,7 +80,7 @@ Describe "Uninstall-PHP" {
             Mock Get-UserSelectedPHPVersion {
                 return @{ code = 0; version = '7.4'; arch = 'x86'; buildType = 'nts'; path = "$script:testPhpPath\7.4" }
             }
-            Mock Read-HostWrapper { return 'y' }
+            Mock Read-HostLabelled { return 'y' }
             Mock Update-InstalledPHPVersionsCache { return 0 }
 
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $false
@@ -88,7 +88,7 @@ Describe "Uninstall-PHP" {
             $result | Should -Be 0
             Should -Invoke Show-LabelledSuccess -Exactly 1 -ParameterFilter { $message -like '*PHP version 7.4 has been uninstalled successfully*' }
 
-            Should -Invoke Read-HostWrapper -Exactly 1
+            Should -Invoke Read-HostLabelled -Exactly 1
             Should -Invoke Remove-ItemWrapper -Exactly 1
         }
 
@@ -99,7 +99,7 @@ Describe "Uninstall-PHP" {
             Mock Get-CurrentPHPVersion { return @{ version = '7.4'; arch = 'x64'; buildType = 'nts' } }
             Mock Test-TwoPHPVersionsEqual { return $true }
             $script:readHostCalls = 0
-            Mock Read-HostWrapper {
+            Mock Read-HostLabelled {
                 $script:readHostCalls++
                 if ($script:readHostCalls -eq 1) { return 'y' }
                 return ''
@@ -108,7 +108,7 @@ Describe "Uninstall-PHP" {
             $result = Uninstall-PHP -version '7.4' -skipConfirmation $false
 
             $result | Should -Be -1
-            Should -Invoke Read-HostWrapper -Exactly 2
+            Should -Invoke Read-HostLabelled -Exactly 2
             Should -Invoke Remove-ItemWrapper -Exactly 0
         }
 
@@ -119,7 +119,7 @@ Describe "Uninstall-PHP" {
             Mock Get-CurrentPHPVersion { return @{ version = '7.4'; arch = 'x64'; buildType = 'nts' } }
             Mock Test-TwoPHPVersionsEqual { return $true }
             $script:readHostCalls = 0
-            Mock Read-HostWrapper {
+            Mock Read-HostLabelled {
                 $script:readHostCalls++
                 if ($script:readHostCalls -eq 1) { return 'y' }
                 return 'n'
@@ -130,7 +130,7 @@ Describe "Uninstall-PHP" {
             $result | Should -Be -1
             Should -Invoke Write-Gray -Exactly 1 -ParameterFilter { $message -like '*Uninstallation cancelled*' }
 
-            Should -Invoke Read-HostWrapper -Exactly 2
+            Should -Invoke Read-HostLabelled -Exactly 2
             Should -Invoke Remove-ItemWrapper -Exactly 0
         }
 
@@ -140,13 +140,13 @@ Describe "Uninstall-PHP" {
             }
             Mock Get-CurrentPHPVersion { return @{ version = '8.0'; arch = 'x64'; buildType = 'nts' } }
             Mock Test-TwoPHPVersionsEqual { return $true }
-            Mock Read-HostWrapper { return 'y' }
+            Mock Read-HostLabelled { return 'y' }
             Mock Update-InstalledPHPVersionsCache { return 0 }
 
             $result = Uninstall-PHP -version '8.0' -skipConfirmation $false
 
             $result | Should -Be 0
-            Should -Invoke Read-HostWrapper -Exactly 2
+            Should -Invoke Read-HostLabelled -Exactly 2
             Should -Invoke Remove-ItemWrapper -Exactly 1
         }
 
@@ -155,13 +155,13 @@ Describe "Uninstall-PHP" {
                 return @{ code = 0; version = '8.0'; arch = 'x64'; buildType = 'nts'; path = "$script:testPhpPath\8.0" }
             }
             Mock Get-CurrentPHPVersion { return @{ version = '8.0'; arch = 'x64'; buildType = 'nts' } }
-            Mock Read-HostWrapper { }
+            Mock Read-HostLabelled { }
             Mock Update-InstalledPHPVersionsCache { return 0 }
 
             $result = Uninstall-PHP -version '8.0' -skipConfirmation $true
 
             $result | Should -Be 0
-            Should -Invoke Read-HostWrapper -Exactly 0
+            Should -Invoke Read-HostLabelled -Exactly 0
             Should -Invoke Remove-ItemWrapper -Exactly 1
         }
     }

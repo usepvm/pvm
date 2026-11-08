@@ -689,7 +689,7 @@ Describe "Get-UserSelectedPHPVersion" {
     }
 
     It "Should return null when no version is selected" {
-        Mock Read-HostWrapper { return '' }
+        Mock Read-HostLabelled { return '' }
 
         $result = Get-UserSelectedPHPVersion -installedVersions @(
             @{ version = '7.4'; arch = 'x64'; buildType = 'ts'}
@@ -702,7 +702,7 @@ Describe "Get-UserSelectedPHPVersion" {
     }
 
     It "Should return null when user enters invalid value" {
-        Mock Read-HostWrapper { return '-1' }
+        Mock Read-HostLabelled { return '-1' }
 
         $result = Get-UserSelectedPHPVersion -installedVersions @(
             @{ version = '7.4'; arch = 'x64'; buildType = 'ts'}
@@ -715,7 +715,7 @@ Describe "Get-UserSelectedPHPVersion" {
     }
 
     It "Should prompt user and return selected version when multiple are provided" {
-        Mock Read-HostWrapper { return '2' }
+        Mock Read-HostLabelled { return '2' }
 
         $result = Get-UserSelectedPHPVersion -installedVersions @(
             @{ version = '7.4'; arch = 'x64'; buildType = 'ts'; InstallPath = 'C:\php\7.4'}
@@ -728,7 +728,7 @@ Describe "Get-UserSelectedPHPVersion" {
     }
 
     It "Should print '(current)' next to active php version" {
-        Mock Read-HostWrapper { return '2' }
+        Mock Read-HostLabelled { return '2' }
         Mock Get-CurrentPHPVersion { return @{ version = '8.0'; arch = 'x64'; buildType = 'ts'}}
 
         $list = @(
@@ -1147,7 +1147,7 @@ Describe "Select-PHPVersionAutomatically" {
 
     It "Should return error if no version can be detected and user enters invalid version format" {
         Mock Find-PHPVersionFromProject { return $null }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return 'abc' }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Could not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return 'abc' }
 
         $result = Select-PHPVersionAutomatically
 
@@ -1157,8 +1157,8 @@ Describe "Select-PHPVersionAutomatically" {
 
     It "Should return valid version entered by user without saving if no version can be detected" {
         Mock Find-PHPVersionFromProject { return $null }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSave as project default in .php-version? (y/n)" } -MockWith { return 'n' }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Could not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Save as project default in .php-version? (y/n)" } -MockWith { return 'n' }
         Mock Set-ContentWrapper { return 0 }
         Mock Get-MatchingPHPVersions {
             return @(
@@ -1176,8 +1176,8 @@ Describe "Select-PHPVersionAutomatically" {
 
     It "Should return valid version entered by user and save to .php-version if no version can be detected" {
         Mock Find-PHPVersionFromProject { return $null }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSave as project default in .php-version? (y/n)" } -MockWith { return 'y' }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Could not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Save as project default in .php-version? (y/n)" } -MockWith { return 'y' }
         Mock Set-ContentWrapper { return 0 }
         Mock Get-MatchingPHPVersions {
             return @(
@@ -1195,8 +1195,8 @@ Describe "Select-PHPVersionAutomatically" {
 
     It "Should return -1 when setting version to .php-version fails" {
         Mock Find-PHPVersionFromProject { return $null }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nCould not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
-        Mock Read-HostWrapper -ParameterFilter { $prompt -eq "`nSave as project default in .php-version? (y/n)" } -MockWith { return 'y' }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Could not detect PHP version. Enter a version to use (e.g. 8.3 or 8.3.1)" } -MockWith { return '8.5' }
+        Mock Read-HostLabelled -ParameterFilter { $prompt -eq "Save as project default in .php-version? (y/n)" } -MockWith { return 'y' }
         Mock Test-PHPVersionFormat { return $true }
         Mock Test-YesResponse { return $true }
         Mock Set-ContentWrapper { return -1 }

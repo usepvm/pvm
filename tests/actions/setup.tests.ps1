@@ -19,7 +19,6 @@ BeforeAll {
     Mock Show-LabelledSuccess { }
     Mock Show-LabelledError { }
     Mock Show-LabelledInfo {}
-    Mock Show-LabelledWarning {}
     Mock Write-White { }
     Mock Write-Cyan { }
     Mock Add-LogEntry { return 0 }
@@ -375,7 +374,7 @@ Describe "New-EnvFile" {
     It "Returns 0 when the user does not want to overwrite the .env file" {
         Mock Test-FileNotExists { return $false }
         New-Item -ItemType File -Path "$script:ROOT_PATH\.env" -Force | Out-Null
-        Mock Read-HostWrapper { return 'n' }
+        Mock Read-HostLabelled { return 'n' }
 
         $result = New-EnvFile
 
@@ -386,7 +385,7 @@ Describe "New-EnvFile" {
     It "Returns 0 when the user wants to overwrite the .env file" {
         Mock Test-FileNotExists { return $false }
         New-Item -ItemType File -Path "$script:ROOT_PATH\.env" -Force | Out-Null
-        Mock Read-HostWrapper { return 'y' }
+        Mock Read-HostLabelled { return 'y' }
 
         $result = New-EnvFile
 
@@ -400,12 +399,12 @@ Describe "New-EnvFile" {
     It "Returns 0 when the .env is created" {
         Mock Test-FileNotExists -ParameterFilter { $path -eq "$script:ROOT_PATH\.env.example"} { return $false }
         Mock Test-FileExists -ParameterFilter { $path -eq "$script:ROOT_PATH\.env"} { return $false }
-        Mock Read-HostWrapper { }
+        Mock Read-HostLabelled { }
 
         $result = New-EnvFile
 
         $result | Should -Be 0
-        Should -Invoke Read-HostWrapper -Times 0
+        Should -Invoke Read-HostLabelled -Times 0
         Should -Invoke Copy-ItemWrapper -Times 1
         Should -Invoke Show-LabelledSuccess -Times 1 -ParameterFilter {
             $message -like '*Created .env file.*'
@@ -427,28 +426,28 @@ Describe "New-EnvFile" {
     It "Returns -1 when the .env is not created" {
         Mock Test-FileNotExists -ParameterFilter { $path -eq "$script:ROOT_PATH\.env.example"} { return $false }
         Mock Test-FileExists -ParameterFilter { $path -eq "$script:ROOT_PATH\.env"} { return $false }
-        Mock Read-HostWrapper { }
+        Mock Read-HostLabelled { }
         Mock Copy-ItemWrapper { throw 'Access denied' }
 
         $result = New-EnvFile
 
         $result | Should -Be -1
-        Should -Invoke Read-HostWrapper -Times 0
+        Should -Invoke Read-HostLabelled -Times 0
         Should -Invoke Copy-ItemWrapper -Times 1
     }
 }
 
 Describe "Wait-ForEnvEdit" {
     It "Should prompt the user to edit the .env file" {
-        Mock Read-HostWrapper { return '' }
+        Mock Read-HostLabelled { return '' }
         Mock Get-Config { return @{} }
 
         Wait-ForEnvEdit
 
-        Should -Invoke Read-HostWrapper -Times 1
-        Should -Invoke Show-LabelledWarning -Times 1 -ParameterFilter {
-            $label -eq 'TODO' -and
-            $message -like "*Edit '$script:ROOT_PATH\.env' now if you want custom settings*"
+        Should -Invoke Read-HostLabelled -Times 1 -ParameterFilter {
+            $prompt -like "*Edit '$script:ROOT_PATH\.env' now if you want custom settings*"
+            $label -eq 'Action' -and
+            $notifyUser -eq $true
         }
     }
 }

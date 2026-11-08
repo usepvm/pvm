@@ -392,7 +392,7 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result.code | Should -Be 1
+            $result.code | Should -Be 0
             $result.message | Should -Match 'Update available'
         }
     }
@@ -410,7 +410,7 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result.code | Should -Be 1
+            $result.code | Should -Be 0
             $result.message | Should -Match 'Update available: v1.0.0 -> v1.1.0'
         }
 
@@ -420,7 +420,7 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result.code | Should -Be 1
+            $result.code | Should -Be 0
             $result.message | Should -Match 'Update available!'
         }
 
@@ -430,7 +430,7 @@ Describe "Update-PVM" {
 
             $result = Update-PVM -checkOnly
 
-            $result.code | Should -Be 1
+            $result.code | Should -Be 0
             Should -Invoke -CommandName git -ParameterFilter { $args -contains 'pull' } -Times 0
         }
     }

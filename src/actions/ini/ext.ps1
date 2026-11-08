@@ -142,10 +142,10 @@ function Show-PHPExtensions {
 
             Write-Cyan -message "`nAvailable Extensions by Category:" -underlined
             $availableExtensionsPartialList.GetEnumerator() | Sort-Object -Property Key | ForEach-Object -Process {
-                $key = "$($_.Key) "
+                $key = "$($_.Key)"
                 $vals = ($_.Value | ForEach-Object -Process { $_.extName }) -join ', '
 
-                $label = "  $key"
+                $label = "  $key ($($_.Value.Count)) "
 
                 $maxDescLength = (Get-ConsoleWidth) - ($maxLineLength + ($Global:PVMConfig.env.MIN_PAD_RIGHT_LENGTH) * 2)
                 if ($maxDescLength -lt 100) { $maxDescLength = 100 }

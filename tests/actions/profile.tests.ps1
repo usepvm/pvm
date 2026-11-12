@@ -12,7 +12,7 @@ BeforeAll {
 
     $script:PROFILES_PATH = $Global:PVMConfig.paths.directories.profiles
     $script:TEMPLATES_PATH = $Global:PVMConfig.paths.directories.templates
-    $script:PROFILE_TEMPLATE_PATH = $Global:PVMConfig.paths.files.profileTemplate
+    $script:PROFILE_TEMPLATE_PATH = $Global:PVMConfig.paths.files.profileConfig
     $script:EXAMPLE_PROFILE_PATH = $Global:PVMConfig.paths.files.profileExample
 
     $script:DEFAULT_SETTINGS = $Global:PVMConfig.defaults.settings

@@ -207,7 +207,7 @@ Describe "Get-PVMDirectoryItems" {
     }
 
     It "Returns one item per directory" {
-        @(Get-PVMDirectoryItems).Count | Should -Be 10
+        @(Get-PVMDirectoryItems).Count | Should -Be 11
     }
 
     It "Uses the configured paths as labels" {
@@ -216,7 +216,7 @@ Describe "Get-PVMDirectoryItems" {
 
         (Get-PVMDirectoryItems).Label | Should -Be @(
             $dirs.storage, $dirs.testDrive, $dirs.php, $dirs.data, $dirs.templates,
-            $dirs.cache, $dirs.profiles, $dirs.log, $dirs.state, $dirs.temp
+            $dirs.cache, $dirs.profiles, $dirs.log, $dirs.state, $dirs.temp, $dirs.cert
         ).ForEach({ $_ -replace $root, '' })
     }
 
@@ -226,7 +226,7 @@ Describe "Get-PVMDirectoryItems" {
             & $item.Action @splat
         }
 
-        Should -Invoke New-Directory -Times 10 -Exactly
+        Should -Invoke New-Directory -Times 11 -Exactly
         $script:created | Should -Contain $Global:PVMConfig.paths.directories.php
         $script:created | Should -Be ((Get-PVMDirectoryItems) | ForEach-Object { $_.Args.path })
     }

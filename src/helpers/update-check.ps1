@@ -50,7 +50,7 @@ function Test-CheckForUpdatesQuietly {
         $result = Update-PVM -checkOnly -quiet
         $null = Set-LastUpdateCheckTimestamp
 
-        if ($result.code -eq 1) {
+        if ($result.status -eq 'info') {
             Show-Info -message "`nUpdate available: Run 'pvm update' to update."
         }
 

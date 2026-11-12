@@ -341,6 +341,37 @@ function Invoke-Profile {
     }
 }
 
+function Invoke-Cert {
+    param ($arguments)
+
+    if ($arguments.Count -eq 0) {
+        Show-Warning -message "`nPlease specify 'bundle' or 'local' ('pvm cert bundle')."
+        return -1
+    }
+
+    switch ($arguments[0].ToLower()) {
+        'bundle' {
+            if ($arguments.Count -gt 1) {
+                Show-Error -message "`n'pvm cert bundle' does not accept additional arguments."
+                return -1
+            }
+            return Update-PHPCertificateBundle
+        }
+        'local' {
+            if ($arguments.Count -gt 2) {
+                Show-Error -message "`nUsage: pvm cert local [hostname]"
+                return -1
+            }
+            $hostName = if ($arguments.Count -eq 2) { $arguments[1] } else { 'localhost' }
+            return New-LocalPHPCertificate -hostName $hostName
+        }
+        default {
+            Show-Error -message "`nUnknown certificate action '$($arguments[0])'. Use 'bundle' or 'local'."
+            return -1
+        }
+    }
+}
+
 function Invoke-Info {
     param ($arguments)
 
@@ -539,8 +570,8 @@ function Invoke-Update {
 
     $result = Update-PVM -checkOnly:$checkOnly
 
-    $label = if ($result.code -eq -1) { 'Error' } else { 'Success' }
-    Show-LabelledMessage -label $label -message $result.message -backColor $result.color -foreColor 'Black'
+    $status = (Get-StatusTable)[$result.status]
+    Show-LabelledMessage -label $status.label -message $result.message -backColor $status.color -foreColor $status.contrastColor
 
     return $result.code
 }

@@ -961,7 +961,7 @@ Describe "Set-TestDrive" {
 
         $Global:PVMConfig.paths.directories.testDrive | Should -Be $fakeRoot
 
-        $Global:PVMConfig.paths.directories.php | Should -Be "$fakeRoot\storage\php"
+        $Global:PVMConfig.paths.directories.php | Should -Be "$fakeRoot\storage\data\php\versions"
         $Global:PVMConfig.paths.directories.data | Should -Be "$fakeRoot\storage\data"
         $Global:PVMConfig.paths.directories.cache | Should -Be "$fakeRoot\storage\data\cache"
         $Global:PVMConfig.paths.directories.templates | Should -Be "$fakeRoot\storage\data\templates"
@@ -971,12 +971,12 @@ Describe "Set-TestDrive" {
         $Global:PVMConfig.paths.directories.temp | Should -Be "$fakeRoot\storage\temp"
 
         $Global:PVMConfig.paths.files.profileExample | Should -Be "$fakeRoot\storage\data\profiles\profile-example.json"
-        $Global:PVMConfig.paths.files.profileTemplate | Should -Be "$fakeRoot\storage\data\templates\profile-template.json"
+        $Global:PVMConfig.paths.files.profileConfig | Should -Be "$fakeRoot\storage\data\templates\profile-config.json"
         $Global:PVMConfig.paths.files.zendExtensionsList | Should -Be "$fakeRoot\storage\data\templates\zend_extensions.json"
         $Global:PVMConfig.paths.files.aliasesList | Should -Be "$fakeRoot\storage\data\templates\aliases.json"
         $Global:PVMConfig.paths.files.scriptsList | Should -Be "$fakeRoot\storage\data\templates\scripts.json"
         $Global:PVMConfig.paths.files.logError | Should -Be "$fakeRoot\storage\logs\error.log"
-        $Global:PVMConfig.paths.files.pathVarBackup | Should -Be "$fakeRoot\storage\data\state\path.bak.log"
+        $Global:PVMConfig.paths.files.pathVarBackup | Should -Be "$fakeRoot\storage\logs\path-var.log"
         $Global:PVMConfig.paths.files.lastUpdateCheck | Should -Be "$fakeRoot\storage\data\state\last_update_check.txt"
     }
 

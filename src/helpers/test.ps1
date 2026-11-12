@@ -400,6 +400,7 @@ function Set-TestDrive {
     $fakeTemplates = "$fakeData\templates"
     $fakeLogs = "$fakeStorage\logs"
     $fakeState = "$fakeData\state"
+    $fakeTemp = "$fakeStorage\temp"
 
     $Global:PVMConfig.rootPath = $path
     $Global:PVMConfig.paths.directories.root = $path
@@ -407,7 +408,7 @@ function Set-TestDrive {
     $Global:PVMConfig.paths.directories.tests = "$path\tests"
     $Global:PVMConfig.paths.directories.storage = $fakeStorage
     $Global:PVMConfig.paths.directories.testDrive = $path
-    $Global:PVMConfig.paths.directories.php = "$fakeStorage\php"
+    $Global:PVMConfig.paths.directories.php = "$fakeData\php\versions"
     $Global:PVMConfig.paths.directories.data = $fakeData
     $Global:PVMConfig.paths.directories.templates = $fakeTemplates
     $Global:PVMConfig.paths.directories.cache = "$fakeData\cache"
@@ -415,16 +416,16 @@ function Set-TestDrive {
     $Global:PVMConfig.paths.directories.log = $fakeLogs
     $Global:PVMConfig.paths.directories.state = $fakeState
     $Global:PVMConfig.paths.directories.assets = "$path\assets"
-    $Global:PVMConfig.paths.directories.temp = "$fakeStorage\temp"
+    $Global:PVMConfig.paths.directories.temp = $fakeTemp
     $Global:PVMConfig.paths.directories.cert = "$fakeStorage\cert"
 
     $Global:PVMConfig.paths.files.profileExample = "$fakeProfiles\profile-example.json"
-    $Global:PVMConfig.paths.files.profileTemplate = "$fakeTemplates\profile-template.json"
+    $Global:PVMConfig.paths.files.profileConfig = "$fakeTemplates\profile-config.json"
     $Global:PVMConfig.paths.files.zendExtensionsList = "$fakeTemplates\zend_extensions.json"
     $Global:PVMConfig.paths.files.aliasesList = "$fakeTemplates\aliases.json"
     $Global:PVMConfig.paths.files.scriptsList = "$fakeTemplates\scripts.json"
     $Global:PVMConfig.paths.files.logError = "$fakeLogs\error.log"
-    $Global:PVMConfig.paths.files.pathVarBackup = "$fakeState\path.bak.log"
+    $Global:PVMConfig.paths.files.pathVarBackup = "$fakeLogs\path-var.log"
     $Global:PVMConfig.paths.files.lastUpdateCheck = "$fakeState\last_update_check.txt"
 
     $Global:PVMConfig.env.PHP_CURRENT_VERSION_PATH = "$path\pvm\php"

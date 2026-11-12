@@ -156,8 +156,8 @@ function Disable-IniExtensionDirect {
 function Get-PopularPHPSettings {
     try {
         # Return list of popular/common PHP settings that should be included in profiles
-        if (Test-FileExists -path $Global:PVMConfig.paths.files.profileTemplate) {
-            $data = (Get-ContentWrapper -path $Global:PVMConfig.paths.files.profileTemplate -raw | ConvertFrom-Json)
+        if (Test-FileExists -path $Global:PVMConfig.paths.files.profileConfig) {
+            $data = (Get-ContentWrapper -path $Global:PVMConfig.paths.files.profileConfig -raw | ConvertFrom-Json)
             if ($null -ne $data.settings -and $data.settings.Count -gt 0) {
                 return $data.settings
             }
@@ -172,8 +172,8 @@ function Get-PopularPHPSettings {
 function Get-PopularPHPExtensions {
     try {
         # Return list of popular/common PHP extensions that should be included in profiles
-        if (Test-FileExists -path $Global:PVMConfig.paths.files.profileTemplate) {
-            $data = (Get-ContentWrapper -path $Global:PVMConfig.paths.files.profileTemplate -raw | ConvertFrom-Json)
+        if (Test-FileExists -path $Global:PVMConfig.paths.files.profileConfig) {
+            $data = (Get-ContentWrapper -path $Global:PVMConfig.paths.files.profileConfig -raw | ConvertFrom-Json)
             if ($null -ne $data.extensions -and $data.extensions.Count -gt 0) {
                 return $data.extensions
             }
@@ -264,7 +264,7 @@ function Save-PHPProfile {
         Show-Message -message "  Extensions: $($userProfile.extensions.Count) (popular/common only)"
         Show-Message -message "  Location: $profilePath"
         $msg = 'Note: Only popular/common settings and extensions are saved.'
-        $msg += "`nYou can manually edit settings/extensions at '$($Global:PVMConfig.paths.files.profileTemplate)'."
+        $msg += "`nYou can manually edit settings/extensions at '$($Global:PVMConfig.paths.files.profileConfig)'."
         Show-LabelledInfo -message $msg
 
         return 0
@@ -757,7 +757,7 @@ function New-ProfileTemplate {
         }
 
         $jsonContent = $profileTemplate | ConvertTo-Json -Depth 10
-        $null = Set-ContentWrapper -path $Global:PVMConfig.paths.files.profileTemplate -value $jsonContent
+        $null = Set-ContentWrapper -path $Global:PVMConfig.paths.files.profileConfig -value $jsonContent
 
         return 0
     } catch {

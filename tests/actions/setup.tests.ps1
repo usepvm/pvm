@@ -250,7 +250,7 @@ Describe "Get-PVMFileItems" {
         $root  = [regex]::Escape("$($Global:PVMConfig.rootPath)\")
 
         (Get-PVMFileItems).Label | Should -Be @(
-            $files.profileExample, $files.profileTemplate, $files.zendExtensionsList,
+            $files.profileExample, $files.profileConfig, $files.zendExtensionsList,
             $files.aliasesList, $files.scriptsList
         ).ForEach({ $_ -replace $root, '' })
     }

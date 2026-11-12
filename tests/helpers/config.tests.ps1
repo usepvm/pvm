@@ -564,8 +564,8 @@ Describe "Get-Config" {
             $result.rootPath | Should -Be $testRoot
             $result.paths.directories.root | Should -Be $testRoot
             $result.paths.directories.storage | Should -Be "$testRoot\storage"
-            $result.paths.directories.testDrive | Should -Be "$testRoot\storage\tests"
-            $result.paths.directories.php | Should -Be "$testRoot\storage\php"
+            $result.paths.directories.testDrive | Should -Be "$testRoot\storage\temp\tests"
+            $result.paths.directories.php | Should -Be "$testRoot\storage\data\php\versions"
             $result.paths.directories.data | Should -Be "$testRoot\storage\data"
             $result.paths.directories.templates | Should -Be "$testRoot\storage\data\templates"
             $result.paths.directories.cache | Should -Be "$testRoot\storage\data\cache"
@@ -577,12 +577,12 @@ Describe "Get-Config" {
             $result.paths.directories.cert | Should -Be "$testRoot\storage\cert"
 
             $result.paths.files.profileExample | Should -Be "$testRoot\storage\data\profiles\profile-example.json"
-            $result.paths.files.profileTemplate | Should -Be "$testRoot\storage\data\templates\profile-template.json"
+            $result.paths.files.profileConfig | Should -Be "$testRoot\storage\data\templates\profile-config.json"
             $result.paths.files.zendExtensionsList | Should -Be "$testRoot\storage\data\templates\zend_extensions.json"
             $result.paths.files.aliasesList | Should -Be "$testRoot\storage\data\templates\aliases.json"
             $result.paths.files.scriptsList | Should -Be "$testRoot\storage\data\templates\scripts.json"
             $result.paths.files.logError | Should -Be "$testRoot\storage\logs\error.log"
-            $result.paths.files.pathVarBackup | Should -Be "$testRoot\storage\data\state\path.bak.log"
+            $result.paths.files.pathVarBackup | Should -Be "$testRoot\storage\logs\path-var.log"
             $result.paths.files.lastUpdateCheck | Should -Be "$testRoot\storage\data\state\last_update_check.txt"
         }
 

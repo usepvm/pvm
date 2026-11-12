@@ -1569,7 +1569,7 @@ Describe "Invoke-Cache" {
 
 Describe "Invoke-Update" {
     It "Should call Update-PVM and return 0" {
-        Mock Update-PVM { return @{ code = 0; message = 'Updated successfully'; color = 'DarkGreen' } }
+        Mock Update-PVM { return @{ code = 0; message = 'Updated successfully'; status = 'success' } }
 
         $result = Invoke-Update -arguments @()
 
@@ -1578,7 +1578,7 @@ Describe "Invoke-Update" {
     }
 
     It "Should call Update-PVM and return -1" {
-        Mock Update-PVM { return @{ code = -1; message = 'Update failed!'; color = 'DarkYellow' } }
+        Mock Update-PVM { return @{ code = -1; message = 'Update failed!'; status = 'error' } }
 
         $result = Invoke-Update -arguments @()
 

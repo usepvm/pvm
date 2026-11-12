@@ -570,8 +570,8 @@ function Invoke-Update {
 
     $result = Update-PVM -checkOnly:$checkOnly
 
-    $label = if ($result.code -eq -1) { 'Error' } else { 'Success' }
-    Show-LabelledMessage -label $label -message $result.message -backColor $result.color -foreColor 'Black'
+    $status = (Get-StatusTable)[$result.status]
+    Show-LabelledMessage -label $status.label -message $result.message -backColor $status.color -foreColor $status.contrastColor
 
     return $result.code
 }

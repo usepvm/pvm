@@ -196,12 +196,12 @@ Describe "Test-CheckForUpdatesQuietly" {
 
         It "Writes a message to the host when an update is available" {
             Mock Test-ShouldCheckForUpdates { return $true }
-            Mock Update-PVM { return @{ code = 1; message = 'Update available' } }
+            Mock Update-PVM { return @{ code = 0; message = 'Update available'; status = 'info' } }
             Mock Set-LastUpdateCheckTimestamp { }
 
             $result = Test-CheckForUpdatesQuietly
 
-            $result | Should -Be 1
+            $result | Should -Be 0
             Should -Invoke Show-Info -Times 1 -ParameterFilter {
                 $message -like "*Update available: Run 'pvm update' to update.*"
             }

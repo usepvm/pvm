@@ -174,6 +174,7 @@ function Get-Config {
     $templates = "$data\templates"
     $logs = "$storage\logs"
     $state = "$data\state"
+    $temp = "$storage\temp"
 
     return @{
         version  = '2.9' # PVM version
@@ -186,8 +187,8 @@ function Get-Config {
                 src                = "$rootPath\src"
                 tests              = "$rootPath\tests"
                 storage            = $storage
-                testDrive          = "$storage\tests"
-                php                = "$storage\php"
+                testDrive          = "$temp\tests"
+                php                = "$data\php\versions"
                 data               = $data
                 templates          = $templates
                 cache              = "$data\cache"
@@ -195,17 +196,17 @@ function Get-Config {
                 log                = $logs
                 state              = $state
                 assets             = "$rootPath\assets"
-                temp               = "$storage\temp"
+                temp               = $temp
                 cert               = "$storage\cert"
             }
             files       = @{
                 profileExample     = "$profiles\profile-example.json"
-                profileTemplate    = "$templates\profile-template.json"
+                profileConfig      = "$templates\profile-config.json"
                 zendExtensionsList = "$templates\zend_extensions.json"
                 aliasesList        = "$templates\aliases.json"
                 scriptsList        = "$templates\scripts.json"
                 logError           = "$logs\error.log"
-                pathVarBackup      = "$state\path.bak.log"
+                pathVarBackup      = "$logs\path-var.log"
                 lastUpdateCheck    = "$state\last_update_check.txt"
             }
         }

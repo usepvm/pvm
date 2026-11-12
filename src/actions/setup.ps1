@@ -65,7 +65,7 @@ function Get-PVMFileItems {
 
     $creators = [ordered]@{
         profileExample     = 'New-ProfileExample'
-        profileTemplate    = 'New-ProfileTemplate'
+        profileConfig      = 'New-ProfileTemplate'
         zendExtensionsList = 'Set-ZendExtensionsList'
         aliasesList        = 'Set-AliasesList'
         scriptsList        = 'Set-ScriptsList'

@@ -188,7 +188,7 @@ function Get-Config {
                 tests              = "$rootPath\tests"
                 storage            = $storage
                 testDrive          = "$temp\tests"
-                php                = "$data\php"
+                php                = "$data\php\versions"
                 data               = $data
                 templates          = $templates
                 cache              = "$data\cache"

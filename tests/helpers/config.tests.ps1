@@ -565,7 +565,7 @@ Describe "Get-Config" {
             $result.paths.directories.root | Should -Be $testRoot
             $result.paths.directories.storage | Should -Be "$testRoot\storage"
             $result.paths.directories.testDrive | Should -Be "$testRoot\storage\temp\tests"
-            $result.paths.directories.php | Should -Be "$testRoot\storage\data\php"
+            $result.paths.directories.php | Should -Be "$testRoot\storage\data\php\versions"
             $result.paths.directories.data | Should -Be "$testRoot\storage\data"
             $result.paths.directories.templates | Should -Be "$testRoot\storage\data\templates"
             $result.paths.directories.cache | Should -Be "$testRoot\storage\data\cache"

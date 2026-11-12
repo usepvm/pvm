@@ -408,7 +408,7 @@ function Set-TestDrive {
     $Global:PVMConfig.paths.directories.tests = "$path\tests"
     $Global:PVMConfig.paths.directories.storage = $fakeStorage
     $Global:PVMConfig.paths.directories.testDrive = $path
-    $Global:PVMConfig.paths.directories.php = "$fakeData\php"
+    $Global:PVMConfig.paths.directories.php = "$fakeData\php\versions"
     $Global:PVMConfig.paths.directories.data = $fakeData
     $Global:PVMConfig.paths.directories.templates = $fakeTemplates
     $Global:PVMConfig.paths.directories.cache = "$fakeData\cache"

@@ -961,7 +961,7 @@ Describe "Set-TestDrive" {
 
         $Global:PVMConfig.paths.directories.testDrive | Should -Be $fakeRoot
 
-        $Global:PVMConfig.paths.directories.php | Should -Be "$fakeRoot\storage\data\php"
+        $Global:PVMConfig.paths.directories.php | Should -Be "$fakeRoot\storage\data\php\versions"
         $Global:PVMConfig.paths.directories.data | Should -Be "$fakeRoot\storage\data"
         $Global:PVMConfig.paths.directories.cache | Should -Be "$fakeRoot\storage\data\cache"
         $Global:PVMConfig.paths.directories.templates | Should -Be "$fakeRoot\storage\data\templates"

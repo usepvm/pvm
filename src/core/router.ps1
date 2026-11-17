@@ -294,7 +294,7 @@ function Get-CertAction {
                 '1. CA Bundle (REQUIRED for HTTPS):',
                 '   PHP requires a trusted CA bundle to verify TLS certificates for HTTPS requests.',
                 '   Without this, Composer, API calls, and package downloads may fail with SSL errors.',
-                '   Run "pvm cert bundle" once after installing PHP to enable HTTPS support.',
+                "   Run 'pvm cert bundle' once after installing PHP to enable HTTPS support.",
                 '',
                 '2. Local Certificates (OPTIONAL for local development):',
                 '   Generate self-signed certificates for local development (localhost, custom domains).',

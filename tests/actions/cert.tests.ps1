@@ -667,8 +667,9 @@ Describe "New-LocalPHPCertificate" {
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
     }
 
-    It "Refuses to overwrite an existing certificate" {
+    It "Returns -1 when user chooses not to overwrite an existing certificate" {
         'existing' | Set-Content -Path "$script:localCertificateDirectory\myapp.test.crt.pem" -Encoding UTF8
+        Mock Read-HostLabelled -ParameterFilter { $prompt -like "*Certificate files already exist for 'myapp.test'. Would you like to overwrite it? (y/n)*" } -MockWith { return 'n' }
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
 
@@ -676,16 +677,29 @@ Describe "New-LocalPHPCertificate" {
 
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
         (Get-ContentWrapper -path "$script:localCertificateDirectory\myapp.test.crt.pem") | Should -Be 'existing'
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*refusing to overwrite*' }
+        Should -Invoke Write-Gray -ParameterFilter { $message -like '*Certificate creation cancelled.*' }
     }
 
-    It "Refuses to overwrite an existing private key" {
+    It "Returns -1 when user chooses not to overwrite an existing private key" {
         'existing' | Set-Content -Path "$script:localCertificateDirectory\myapp.test.key.pem" -Encoding UTF8
+        Mock Read-HostLabelled -ParameterFilter { $prompt -like "*Certificate files already exist for 'myapp.test'. Would you like to overwrite it? (y/n)*" } -MockWith { return 'n' }
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
 
         $result | Should -Be -1
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
+        Should -Invoke Write-Gray -ParameterFilter { $message -like '*Certificate creation cancelled.*' }
+    }
+    
+    It "Proceeds when user chooses to overwrite existing certificate and key" {
+        Mock New-Directory { return -1 }
+        'existing' | Set-Content -Path "$script:localCertificateDirectory\myapp.test.key.pem" -Encoding UTF8
+        Mock Read-HostLabelled -ParameterFilter { $prompt -like "*Certificate files already exist for 'myapp.test'. Would you like to overwrite it? (y/n)*" } -MockWith { return 'y' }
+
+        $result = New-LocalPHPCertificate -hostName 'myapp.test'
+        
+        $result | Should -Be -1
+        Should -Invoke New-Directory -Times 1
     }
 
     It "Fails when the temporary directory cannot be created" {

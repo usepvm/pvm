@@ -322,8 +322,11 @@ function New-LocalPHPCertificate {
         $certificatePath = "$localCertificateDirectory\$safeHostName.crt.pem"
         $privateKeyPath = "$localCertificateDirectory\$safeHostName.key.pem"
         if ((Test-FileExists -path $certificatePath) -or (Test-FileExists -path $privateKeyPath)) {
-            Show-Error -message "`nCertificate files already exist for '$hostName'; refusing to overwrite them."
-            return -1
+            $response = Read-HostLabelled -prompt "Certificate files already exist for '$hostName'. Would you like to overwrite it? (y/n)" -label 'Question'
+            if (Test-NoResponse -response $response) {
+                Write-Gray -message "`nCertificate creation cancelled."
+                return -1
+            }
         }
 
         $temporaryDirectory = "$($Global:PVMConfig.paths.directories.cert)\pvm-cert-$([guid]::NewGuid().ToString('N'))"

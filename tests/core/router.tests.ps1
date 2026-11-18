@@ -1,9 +1,8 @@
 ﻿
 BeforeAll {
     Mock Show-LabelledInfo { }
+    Mock Show-LabelledWarning { }
     Mock Show-Message { }
-    Mock Show-Warning { }
-    Mock Show-Error { }
     Mock Write-Color { }
     Mock New-Line { }
     Mock Add-LogEntry { return 0 }
@@ -606,7 +605,7 @@ Describe "Integration Tests" {
             $result | Should -Be -1
 
             Should -Invoke Initialize-PVM -Times 1
-            Should -Invoke Show-Warning -ParameterFilter { $message -like '*Failed to optimize system path*' }
+            Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like '*Failed to optimize system path*' }
         }
     }
 }

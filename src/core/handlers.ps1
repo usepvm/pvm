@@ -345,28 +345,28 @@ function Invoke-Cert {
     param ($arguments)
 
     if ($arguments.Count -eq 0) {
-        Show-Warning -message "`nPlease specify 'bundle' or 'local' ('pvm cert bundle')."
+        Show-LabelledWarning -message "`nPlease specify 'bundle' or 'local' ('pvm cert bundle')."
         return -1
     }
 
     switch ($arguments[0].ToLower()) {
         'bundle' {
             if ($arguments.Count -gt 1) {
-                Show-Error -message "`n'pvm cert bundle' does not accept additional arguments."
+                Show-LabelledError -message "`n'pvm cert bundle' does not accept additional arguments."
                 return -1
             }
             return Update-PHPCertificateBundle
         }
         'local' {
             if ($arguments.Count -gt 2) {
-                Show-Error -message "`nUsage: pvm cert local [hostname]"
+                Show-LabelledError -message "`nUsage: pvm cert local [hostname]"
                 return -1
             }
             $hostName = if ($arguments.Count -eq 2) { $arguments[1] } else { 'localhost' }
             return New-LocalPHPCertificate -hostName $hostName
         }
         default {
-            Show-Error -message "`nUnknown certificate action '$($arguments[0])'. Use 'bundle' or 'local'."
+            Show-LabelledError -message "`nUnknown certificate action '$($arguments[0])'. Use 'bundle' or 'local'."
             return -1
         }
     }

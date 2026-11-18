@@ -1032,7 +1032,7 @@ Describe "Invoke-Cert" {
         $code = Invoke-Cert -arguments @()
         $code | Should -Be -1
 
-        Should -Invoke Show-Warning -ParameterFilter { $message -like "*Please specify 'bundle' or 'local'*" }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like "*Please specify 'bundle' or 'local'*" }
         Should -Invoke Update-PHPCertificateBundle -Times 0
         Should -Invoke New-LocalPHPCertificate -Times 0
     }
@@ -1066,7 +1066,7 @@ Describe "Invoke-Cert" {
         $code = Invoke-Cert -arguments @('bundle', 'extra')
         $code | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*does not accept additional arguments*" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*does not accept additional arguments*" }
         Should -Invoke Update-PHPCertificateBundle -Times 0
     }
 
@@ -1096,7 +1096,7 @@ Describe "Invoke-Cert" {
         $code = Invoke-Cert -arguments @('local', 'myapp.test', 'extra')
         $code | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*Usage: pvm cert local*" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*Usage: pvm cert local*" }
         Should -Invoke New-LocalPHPCertificate -Times 0
     }
 
@@ -1104,7 +1104,7 @@ Describe "Invoke-Cert" {
         $code = Invoke-Cert -arguments @('unknown')
         $code | Should -Be -1
 
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*Unknown certificate action 'unknown'*" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*Unknown certificate action 'unknown'*" }
         Should -Invoke Update-PHPCertificateBundle -Times 0
         Should -Invoke New-LocalPHPCertificate -Times 0
     }

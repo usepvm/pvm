@@ -1085,6 +1085,17 @@ Describe "Find-PHPVersionFromProject" {
         $result | Should -Be '8.4'
     }
 
+    It "Should detect PHP major version from composer.json" {
+        Mock Test-FileExists {
+            param ($path)
+            if ($path -eq 'composer.json') { return $true }
+            return $false
+        }
+        Mock Get-ContentWrapper { return '{"require": {"php": "^8"}}' }
+        $result = Find-PHPVersionFromProject
+        $result | Should -Be '8'
+    }
+
     It "Handles parser exceptions gracefully" {
         Mock Test-FileExists {
             param ($path)

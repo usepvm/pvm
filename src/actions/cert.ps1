@@ -15,13 +15,13 @@ function Set-PHPCertificateBundle {
 
     try {
         if (Test-FileNotExists -path $iniPath) {
-            Show-Error -message "`nphp.ini not found at: $iniPath"
+            Show-LabelledError -message "`nphp.ini not found at: '$iniPath'"
             return -1
         }
 
         $lines = @(Get-ContentWrapper -path $iniPath)
         if ($lines.Count -eq 0) {
-            Show-Error -message "`nFailed to read php.ini at: $iniPath"
+            Show-LabelledError -message "`nFailed to read php.ini at: '$iniPath'"
             return -1
         }
 
@@ -43,14 +43,15 @@ function Set-PHPCertificateBundle {
             }
         }
 
-        if ((Backup-IniFile -iniPath $iniPath) -ne 0) {
-            Show-Error -message "`nFailed to back up php.ini before changing CA settings."
+        $code = Backup-IniFile -iniPath $iniPath
+        if ($code -ne 0) {
+            Show-LabelledError -message "`nFailed to back up php.ini before changing CA settings."
             return -1
         }
 
         $code = Set-ContentWrapper -path $iniPath -value $lines
         if ($code -ne 0) {
-            Show-Error -message "`nFailed to write CA settings to php.ini."
+            Show-LabelledError -message "`nFailed to write CA settings to php.ini."
             return -1
         }
 
@@ -59,7 +60,7 @@ function Set-PHPCertificateBundle {
                 $_ -match ('^\s*' + [regex]::Escape($setting) + "\s*=\s*'" + [regex]::Escape($bundlePath) + "'\s*$")
             })
             if ($configured.Count -eq 0) {
-                Show-Error -message "`nFailed to configure $setting in php.ini."
+                Show-LabelledError -message "`nFailed to configure $setting in php.ini."
                 return -1
             }
         }
@@ -67,7 +68,7 @@ function Set-PHPCertificateBundle {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to configure PHP CA bundle"; exception = $_ }
-        Show-Error -message "`nFailed to configure PHP CA bundle: $($_.Exception.Message)"
+        Show-LabelledError -message "`nFailed to configure PHP CA bundle: $($_.Exception.Message)"
         return -1
     }
 }
@@ -90,7 +91,7 @@ function Write-PHPCertificateTrustBundle {
         foreach ($certificateFile in $localCertificateFiles) {
             $certificate = [System.IO.File]::ReadAllText($certificateFile.FullName)
             if ($certificate -notmatch '-----BEGIN CERTIFICATE-----') {
-                throw "Local certificate is not valid PEM: $($certificateFile.FullName)"
+                throw "Local certificate is not valid PEM: '$($certificateFile.FullName)'"
             }
             $contents += "`r`n$certificate"
         }
@@ -99,7 +100,7 @@ function Write-PHPCertificateTrustBundle {
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create PHP CA trust bundle"; exception = $_ }
-        Show-Error -message "`nFailed to create PHP CA trust bundle: $($_.Exception.Message)"
+        Show-LabelledError -message "`nFailed to create PHP CA trust bundle: $($_.Exception.Message)"
         return -1
     }
 }
@@ -109,7 +110,7 @@ function Set-ActivePHPTrustBundle {
 
     $currentPhpVersion = Get-CurrentPHPVersion
     if (-not $currentPhpVersion -or -not $currentPhpVersion.path) {
-        Show-Error -message "`nFailed to get current PHP version."
+        Show-LabelledError -message 'Failed to get current PHP version.'
         return -1
     }
 
@@ -121,14 +122,14 @@ function Update-PHPCertificateBundle {
     try {
         $currentPhpVersion = Get-CurrentPHPVersion
         if (-not $currentPhpVersion -or -not $currentPhpVersion.path) {
-            Show-Error -message "`nFailed to get current PHP version."
+            Show-LabelledError -message 'Failed to get current PHP version.'
             return -1
         }
 
         $certDirectory = $Global:PVMConfig.paths.directories.cert
         $created = New-Directory -path $certDirectory
         if ($created -ne 0) {
-            Show-Error -message "`nFailed to create certificate directory: $certDirectory"
+            Show-LabelledError -message "`nFailed to create certificate directory: '$certDirectory'"
             return -1
         }
 
@@ -136,7 +137,7 @@ function Update-PHPCertificateBundle {
         $downloadUrl = $Global:PVMConfig.links.curlCaBundle
         $result = Test-DownloadPrerequisites -url $downloadUrl -minimumFreeSpaceMB $Global:PVMConfig.env.MIN_CACHE_FREE_SPACE_MB
         if (-not $result -or -not $result.temporaryDirectory) {
-            Write-Color -message "`n$($result.message)" -foreColor $result.color
+            Show-LabelledError -message "`n$($result.message)"
             return -1
         }
 
@@ -182,13 +183,15 @@ function Update-PHPCertificateBundle {
             return -1
         }
 
-        Show-Success -message "`nDownloaded the trusted CA bundle to: $bundlePath"
-        Show-Message -message "Configured curl.cainfo and openssl.cafile for PHP $($currentPhpVersion.version)."
-        Show-Info -message "This enables HTTPS support for Composer, API calls, and secure HTTP requests."
+        Show-LabelledSuccess -message "`nDownloaded the trusted CA bundle to: $bundlePath" -noNewLine
+        $msg = "Configured curl.cainfo and openssl.cafile for PHP $($currentPhpVersion.version)."
+        $msg += "`nThis enables HTTPS support for Composer, API calls, and secure HTTP requests."
+        Show-LabelledInfo -message $msg -noNewLine
+
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to download PHP CA bundle"; exception = $_ }
-        Show-Error -message "`nFailed to download or configure the PHP CA bundle: $($_.Exception.Message)"
+        Show-LabelledError -message "`nFailed to download or configure the PHP CA bundle: $($_.Exception.Message)"
         return -1
     }
 }
@@ -260,14 +263,14 @@ function Invoke-LocalCertificateGenerator {
         [System.IO.File]::WriteAllText($scriptPath, $script, [System.Text.Encoding]::ASCII)
         $output = & $phpExecutable $scriptPath $hostName $certificatePath $privateKeyPath $configPath 2>&1
         if ($LASTEXITCODE -ne 0) {
-            Show-Error -message "`nPHP certificate generation failed: $($output -join "`n")"
+            Show-LabelledError -message "`nPHP certificate generation failed: $($output -join "`n")"
             return -1
         }
 
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to invoke PHP OpenSSL"; exception = $_ }
-        Show-Error -message "`nFailed to invoke PHP OpenSSL: $($_.Exception.Message)"
+        Show-LabelledError -message "`nFailed to invoke PHP OpenSSL: $($_.Exception.Message)"
         return -1
     }
 }
@@ -286,32 +289,32 @@ function New-LocalPHPCertificate {
         } elseif ($hostName -match '^(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)(?:\.(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?))*$') {
             $subjectAltName = if ($hostName -eq 'localhost') { 'DNS:localhost,IP:127.0.0.1' } else { "DNS:$hostName,DNS:localhost,IP:127.0.0.1" }
         } else {
-            Show-Error -message "`nInvalid hostname. Use a DNS hostname or IP address."
+            Show-LabelledError -message 'Invalid hostname. Use a DNS hostname or IP address.'
             return -1
         }
 
         $currentPhpVersion = Get-CurrentPHPVersion
         if (-not $currentPhpVersion -or -not $currentPhpVersion.path) {
-            Show-Error -message "`nFailed to get current PHP version."
+            Show-LabelledError -message 'Failed to get current PHP version.'
             return -1
         }
 
         $baseBundlePath = Get-CertBundlePath
         if (Test-FileNotExists -path $baseBundlePath) {
-            Show-Error -message "`nRun 'pvm cert bundle' first to download the trusted public CA bundle."
+            Show-LabelledError -message "Run 'pvm cert bundle' first to download the trusted public CA bundle."
             return -1
         }
 
         $phpExecutable = "$($currentPhpVersion.path)\php.exe"
         if (Test-FileNotExists -path $phpExecutable) {
-            Show-Error -message "`nPHP executable not found: $phpExecutable"
+            Show-LabelledError -message "PHP executable not found: '$phpExecutable'"
             return -1
         }
 
         $localCertificateDirectory = "$($Global:PVMConfig.paths.directories.cert)\local"
         $created = New-Directory -path $localCertificateDirectory
         if ($created -ne 0) {
-            Show-Error -message "`nFailed to create local certificate directory: $localCertificateDirectory"
+            Show-LabelledError -message "Failed to create local certificate directory: '$localCertificateDirectory'"
             return -1
         }
 
@@ -326,7 +329,7 @@ function New-LocalPHPCertificate {
         $temporaryDirectory = "$($Global:PVMConfig.paths.directories.cert)\pvm-cert-$([guid]::NewGuid().ToString('N'))"
         $created = New-Directory -path $temporaryDirectory
         if ($created -ne 0) {
-            Show-Error -message "`nFailed to create temporary directory: $temporaryDirectory"
+            Show-LabelledError -message "Failed to create temporary directory: '$temporaryDirectory'"
             return -1
         }
 
@@ -340,7 +343,7 @@ function New-LocalPHPCertificate {
             if ((Test-FileNotExists -path $certificatePath) -or (Test-FileNotExists -path $privateKeyPath)) {
                 if (Test-FileExists -path $certificatePath) { $null = Remove-ItemWrapper -path $certificatePath }
                 if (Test-FileExists -path $privateKeyPath) { $null = Remove-ItemWrapper -path $privateKeyPath }
-                Show-Error -message "`nPHP did not create both the certificate and private key."
+                Show-LabelledError -message 'PHP did not create both the certificate and private key.'
                 return -1
             }
         } finally {
@@ -362,16 +365,16 @@ function New-LocalPHPCertificate {
             return -1
         }
 
-        Show-Success -message "`nCreated self-signed local certificate for '$hostName'."
+        Show-LabelledSuccess -message "`nCreated self-signed local certificate for '$hostName'." -noNewLine
+        Show-LabelledWarning -message 'This certificate is for local development only; do not use it in production.'
         Show-Message -message "- Certificate: $certificatePath"
         Show-Message -message "- Private key: $privateKeyPath"
         Show-Message -message "- Added to PHP trust bundle: $trustBundlePath"
-        Show-Warning -message 'This certificate is for local development only; do not use it in production.'
-        Show-Info -message "Note: This is an optional feature for local HTTPS testing. Most users only need 'pvm cert bundle'."
+        Show-LabelledInfo -label 'Note' -message "This is an optional feature for local HTTPS testing. Most users only need 'pvm cert bundle'."
         return 0
     } catch {
         $null = Add-LogEntry -data @{ header = "$($MyInvocation.MyCommand.Name) - Failed to create local PHP certificate"; exception = $_ }
-        Show-Error -message "`nFailed to create local certificate: $($_.Exception.Message)"
+        Show-LabelledError -message "`nFailed to create local certificate: $($_.Exception.Message)"
         return -1
     }
 }

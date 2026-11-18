@@ -43,11 +43,12 @@
         $null = New-Item -ItemType Directory -Path $script:certDirectory -Force
     }
 
-    Mock Show-Error { }
     Mock Show-Message { }
-    Mock Show-Success { }
-    Mock Show-Warning { }
-    Mock Show-Info { }
+    Mock Write-Gray { }
+    Mock Show-LabelledSuccess { }
+    Mock Show-LabelledError { }
+    Mock Show-LabelledWarning { }
+    Mock Show-LabelledInfo { }
     Mock Add-LogEntry { return 0 }
 }
 
@@ -132,7 +133,7 @@ Describe "Set-PHPCertificateBundle" {
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*php.ini not found*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*php.ini not found*' }
     }
 
     It "Fails when php.ini is empty" {
@@ -141,7 +142,7 @@ Describe "Set-PHPCertificateBundle" {
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to read php.ini*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*Failed to read php.ini*' }
     }
 
     It "Fails and leaves php.ini untouched when the backup fails" {
@@ -152,7 +153,7 @@ Describe "Set-PHPCertificateBundle" {
 
         $result | Should -Be -1
         Get-ContentWrapper -path $script:phpIniPath | Should -Be $before
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*back up php.ini*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*back up php.ini*' }
     }
 
     It "Logs and fails when an exception is thrown" {
@@ -162,7 +163,7 @@ Describe "Set-PHPCertificateBundle" {
 
         $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*boom*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*boom*' }
     }
 
     It "Fails when the written settings cannot be verified" {
@@ -171,7 +172,7 @@ Describe "Set-PHPCertificateBundle" {
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to configure curl.cainfo in php.ini*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*Failed to configure curl.cainfo in php.ini*' }
     }
 
     It "Fails when Set-ContentWrapper reports a write failure" {
@@ -180,7 +181,7 @@ Describe "Set-PHPCertificateBundle" {
         $result = Set-PHPCertificateBundle -iniPath $script:phpIniPath -bundlePath $script:baseBundlePath
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to write CA settings*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*Failed to write CA settings*' }
     }
 }
 
@@ -265,7 +266,7 @@ Describe "Write-PHPCertificateTrustBundle" {
         $result | Should -Be -1
         Test-Path -LiteralPath $script:trustBundlePath | Should -BeFalse
         Should -Invoke Add-LogEntry -Times 1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*not valid PEM*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*not valid PEM*' }
     }
 
     It "Fails when the base bundle does not exist" {
@@ -287,7 +288,7 @@ Describe "Set-ActivePHPTrustBundle" {
 
         $result | Should -Be -1
         Should -Invoke Set-PHPCertificateBundle -Times 0
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*current PHP version*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*current PHP version*' }
     }
 
     It "Fails when the current PHP version has no path" {
@@ -357,7 +358,7 @@ Describe "Update-PHPCertificateBundle" {
             $url -eq $Global:PVMConfig.links.curlCaBundle -and
             $minimumFreeSpaceMB -eq $Global:PVMConfig.env.MIN_CACHE_FREE_SPACE_MB
         }
-        Should -Invoke Show-Success -Times 1
+        Should -Invoke Show-LabelledSuccess -Times 1
     }
 
     It "Leaves no temporary download files behind" {
@@ -398,7 +399,7 @@ Describe "Update-PHPCertificateBundle" {
         $result | Should -Be -1
         Should -Invoke Get-RemoteFile -Times 0
         Should -Invoke Test-DownloadPrerequisites -Times 0
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*certificate directory*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*certificate directory*' }
     }
 
     It "Stops when the download prerequisites fail" {
@@ -410,7 +411,7 @@ Describe "Update-PHPCertificateBundle" {
 
         $result | Should -Be -1
         Should -Invoke Get-RemoteFile -Times 0
-        Should -Invoke Write-Color -ParameterFilter { $message -like '*Insufficient disk space*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*Insufficient disk space*' }
     }
 
     It "Rejects a download without PEM certificate markers" {
@@ -452,7 +453,7 @@ Describe "Update-PHPCertificateBundle" {
         Test-Path -LiteralPath $script:baseBundlePath | Should -BeFalse
         Test-Path -LiteralPath $script:downloadTempDirectory | Should -BeFalse
         Should -Invoke Add-LogEntry -Times 1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*network down*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*network down*' }
     }
 
     It "Fails when the download helper returns no file" {
@@ -462,7 +463,7 @@ Describe "Update-PHPCertificateBundle" {
 
         $result | Should -Be -1
         Test-Path -LiteralPath $script:baseBundlePath | Should -BeFalse
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Failed to download the trusted CA bundle*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*Failed to download the trusted CA bundle*' }
     }
 
     It "Fails when the downloaded bundle cannot be moved into place" {
@@ -483,7 +484,7 @@ Describe "Update-PHPCertificateBundle" {
         $result = Update-PHPCertificateBundle
 
         $result | Should -Be -1
-        Should -Invoke Show-Success -Times 0
+        Should -Invoke Show-LabelledSuccess -Times 0
     }
 
     It "Fails when php.ini cannot be configured" {
@@ -492,7 +493,7 @@ Describe "Update-PHPCertificateBundle" {
         $result = Update-PHPCertificateBundle
 
         $result | Should -Be -1
-        Should -Invoke Show-Success -Times 0
+        Should -Invoke Show-LabelledSuccess -Times 0
     }
 }
 
@@ -527,7 +528,7 @@ Describe "Invoke-LocalCertificateGenerator" {
         $result = Invoke-LocalCertificateGenerator -phpExecutable $script:failPhp -hostName 'myapp.test' -subjectAltName 'DNS:myapp.test' -certificatePath "$script:genTemp\c.pem" -privateKeyPath "$script:genTemp\k.pem" -temporaryDirectory $script:genTemp
 
         $result | Should -Be -1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*PHP certificate generation failed*boom*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*PHP certificate generation failed*boom*' }
     }
 
     It "Logs and fails when the PHP executable cannot be invoked" {
@@ -580,8 +581,8 @@ Describe "New-LocalPHPCertificate" {
             $subjectAltName -eq 'DNS:myapp.test,DNS:localhost,IP:127.0.0.1' -and
             $phpExecutable -eq "$script:phpPath\php.exe"
         }
-        Should -Invoke Show-Success -Times 1
-        Should -Invoke Show-Warning -Times 1
+        Should -Invoke Show-LabelledSuccess -Times 1
+        Should -Invoke Show-LabelledWarning -Times 1
     }
 
     It "Defaults to localhost when the hostname is empty" {
@@ -618,7 +619,7 @@ Describe "New-LocalPHPCertificate" {
 
         $result | Should -Be -1
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*Invalid hostname*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*Invalid hostname*' }
     }
 
     It "Rejects hostnames with spaces" {
@@ -644,7 +645,7 @@ Describe "New-LocalPHPCertificate" {
 
         $result | Should -Be -1
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
-        Should -Invoke Show-Error -ParameterFilter { $message -like "*pvm cert bundle*" }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like "*pvm cert bundle*" }
     }
 
     It "Fails when php.exe is missing" {
@@ -654,7 +655,7 @@ Describe "New-LocalPHPCertificate" {
 
         $result | Should -Be -1
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*PHP executable not found*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*PHP executable not found*' }
     }
 
     It "Fails when the local certificate directory cannot be created" {
@@ -695,7 +696,7 @@ Describe "New-LocalPHPCertificate" {
 
         $result | Should -Be -1
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*temporary directory*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*temporary directory*' }
     }
 
     It "Removes partial files when generation fails" {
@@ -724,7 +725,7 @@ Describe "New-LocalPHPCertificate" {
 
         $result | Should -Be -1
         Test-Path -LiteralPath "$script:localCertificateDirectory\myapp.test.crt.pem" | Should -BeFalse
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*did not create both*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*did not create both*' }
     }
 
     It "Cleans up the temporary directory after success" {
@@ -754,7 +755,7 @@ Describe "New-LocalPHPCertificate" {
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
 
         $result | Should -Be -1
-        Should -Invoke Show-Success -Times 0
+        Should -Invoke Show-LabelledSuccess -Times 0
     }
 
     It "Fails when the trust bundle cannot be activated" {
@@ -763,7 +764,7 @@ Describe "New-LocalPHPCertificate" {
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
 
         $result | Should -Be -1
-        Should -Invoke Show-Success -Times 0
+        Should -Invoke Show-LabelledSuccess -Times 0
     }
 
     It "Logs and fails when an unexpected exception is thrown" {
@@ -773,7 +774,7 @@ Describe "New-LocalPHPCertificate" {
 
         $result | Should -Be -1
         Should -Invoke Add-LogEntry -Times 1
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*boom*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*boom*' }
     }
 
     It "Removes both files when generation fails after creating them" {
@@ -802,6 +803,6 @@ Describe "New-LocalPHPCertificate" {
 
         $result | Should -Be -1
         Test-Path -LiteralPath "$script:localCertificateDirectory\myapp.test.key.pem" | Should -BeFalse
-        Should -Invoke Show-Error -ParameterFilter { $message -like '*did not create both*' }
+        Should -Invoke Show-LabelledError -ParameterFilter { $message -like '*did not create both*' }
     }
 }

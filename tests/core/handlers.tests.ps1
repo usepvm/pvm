@@ -100,7 +100,7 @@ Describe "Invoke-Setup" {
         $result = Invoke-Setup
         $result | Should -Be 0
 
-        Should -Invoke Show-Warning -ParameterFilter { $message -like '*Failed to optimize system path*' }
+        Should -Invoke Show-LabelledWarning -ParameterFilter { $message -like '*Failed to optimize system path*' }
     }
 
     It "Should pause for env edit after creating env file" {
@@ -1794,7 +1794,7 @@ Describe "Invoke-Test" {
 
             $result | Should -Be -1
 
-            Should -Invoke Show-Warning -ParameterFilter {
+            Should -Invoke Show-LabelledWarning -ParameterFilter {
                 $message -like '*Invalid coverage value*'
             }
         }
@@ -1804,7 +1804,7 @@ Describe "Invoke-Test" {
 
             $result | Should -Be -1
 
-            Should -Invoke Show-Warning -ParameterFilter {
+            Should -Invoke Show-LabelledWarning -ParameterFilter {
                 $message -like '*Invalid coverage value*'
             }
         }

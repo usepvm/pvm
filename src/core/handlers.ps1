@@ -7,7 +7,7 @@ function Invoke-Help {
         $actions = Get-Actions
         $usage = $actions[$command].data.usage
         if ($null -eq $usage) {
-            Show-Warning -message "`nNo usage information available for the '$command' command."
+            Show-LabelledWarning -message "`nNo usage information available for the '$command' command."
             return -1
         }
         foreach ($key in $usage.Keys) {
@@ -44,7 +44,7 @@ function Invoke-Setup {
     }
     $optimized = Optimize-SystemPath
     if ($optimized -ne 0) {
-        Show-Warning -message 'Failed to optimize system path.'
+        Show-LabelledWarning -message 'Failed to optimize system path.'
     }
 
     return $code
@@ -638,7 +638,7 @@ function Invoke-Test {
     }
 
     if ($options.target -lt 0 -or $options.target -gt 100) {
-        Show-Warning -message "`nInvalid coverage value : $($options.target) | Min: 0, Max: 100"
+        Show-LabelledWarning -message "`nInvalid coverage value : $($options.target) | Min: 0, Max: 100"
         return -1
     }
 

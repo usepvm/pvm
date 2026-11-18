@@ -304,7 +304,7 @@ function Find-PHPVersionFromProject {
         if (Test-FileExists -path 'composer.json') {
             try {
                 $json = Get-ContentWrapper -path 'composer.json' -raw | ConvertFrom-Json
-                if ($json.require.php -and $json.require.php.Trim() -match '(\d+(\.\d+(\.\d+)?)?)') {
+                if ($json.require.php -and $json.require.php.Trim() -match '(\d+(?:\.\d+)?)') {
                     return $matches[1]
                 }
             } catch {

@@ -690,14 +690,14 @@ Describe "New-LocalPHPCertificate" {
         Should -Invoke Invoke-LocalCertificateGenerator -Times 0
         Should -Invoke Write-Gray -ParameterFilter { $message -like '*Certificate creation cancelled.*' }
     }
-    
+
     It "Proceeds when user chooses to overwrite existing certificate and key" {
         Mock New-Directory { return -1 }
         'existing' | Set-Content -Path "$script:localCertificateDirectory\myapp.test.key.pem" -Encoding UTF8
         Mock Read-HostLabelled -ParameterFilter { $prompt -like "*Certificate files already exist for 'myapp.test'. Would you like to overwrite it? (y/n)*" } -MockWith { return 'y' }
 
         $result = New-LocalPHPCertificate -hostName 'myapp.test'
-        
+
         $result | Should -Be -1
         Should -Invoke New-Directory -Times 1
     }

@@ -9,7 +9,7 @@ function Get-PHPStatus {
             return $status
         }
 
-        if ($version -like '8.5*') {
+        if ([version]$version -ge [version]'8.5') {
             $status += @{ name = "Zend OPcache v$version"; enabled = $true; status = 'Enabled'; color = 'DarkGreen' }
         } else {
             $opcacheData = Get-MatchingPHPExtensionsStatus -iniPath $phpIniPath -extName 'opcache'

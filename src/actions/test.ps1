@@ -133,6 +133,11 @@ function Invoke-TestFile {
 function Initialize-Tests {
     param ($testsNames = $null, $options = $null, $exclude = $null, $pesterVersion = $null)
 
+    if ($null -ne $testsNames -and $null -ne $exclude) {
+        Show-LabelledError -message "`nCannot specify both 'testsNames' and 'exclude' parameters."
+        return -1
+    }
+
     if ($null -ne $exclude) {
         $testsNames = Get-AllTestNames -exclude $exclude
     }

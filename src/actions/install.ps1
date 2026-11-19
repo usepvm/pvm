@@ -262,7 +262,7 @@ function Select-Version {
     if ($matchingKeys.Count -eq 1) {
         $selectedVersionObject = $matchingKeys[0]
     } else {
-        $text = "`nMatching PHP versions: $version"
+        $text = "`nMatching PHP versions for $version"
         if ($null -ne $arch) {
             $text += " $arch"
         }
@@ -279,7 +279,7 @@ function Select-Version {
                 if ($versionsList.Length -eq 0) {
                     return
                 }
-                Show-Message -message "`n$key`n"
+                Show-Message -message "`n$key ($($versionsList.Count))" -underlined
                 $versionsList | ForEach-Object -Process {
                     $_ | Add-Member -NotePropertyName 'index' -NotePropertyValue $index -Force
                     Show-Message -message " [$index] $($_.version) $($_.arch) $($_.buildType)"

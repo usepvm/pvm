@@ -326,7 +326,7 @@ pvm cert local myapp.test   # Generate certificate for custom domain
 This is an optional feature for developers who need to test HTTPS locally. It:
 - Requires the CA bundle to be installed first (`pvm cert bundle`)
 - Creates a self-signed certificate valid for 825 days
-- Generates both `.crt.pem` and `.key.pem` files under `storage/cert/local`
+- Generates both `.crt.pem` and `.key.pem` files under `storage/data/php/cert/local`
 - Includes the certificate in a separate PHP trust bundle
 - Allows you to configure your local web server to use these files
 
@@ -544,7 +544,8 @@ pvm cache:<subcommand>
 
 | Item         | Location                             |
 | ------------ | ------------------------------------ |
-| PHP Versions | storage/php/                         |
+| PHP Versions | storage/data/php/versions            |
+| Certificates | storage/data/php/cert                |
 | Templates    | storage/data/templates               |
 | Profiles     | storage/data/profiles/               |
 | Cache        | storage/data/cache/                  |

@@ -154,7 +154,7 @@ function Invoke-Tests {
         $pesterInfo = if ($pesterVersion) { Use-PesterVersion -version $pesterVersion } else { Use-LatestPesterVersion }
 
         if (-not $pesterInfo) {
-            Show-Error -message "`nNo Pester module found. Please install Pester first."
+            Show-LabelledError -message 'No Pester module found. Please install Pester first.'
             return -1
         }
 
@@ -170,7 +170,7 @@ function Invoke-Tests {
 
         $verbosityOptions = $Global:PVMConfig.test.verbosity.options
         if ($verbosityOptions -notcontains $options.verbosity) {
-            Show-Error -message "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')"
+            Show-LabelledError -message "`nInvalid verbosity option. Allowed values are: $($verbosityOptions -join ', ')"
             return -1
         }
 
@@ -208,7 +208,7 @@ function Invoke-Tests {
         Show-Message -message " Test Drive............. $($Global:PVMConfig.paths.directories.testDrive)`n"
 
         if ($testSummary.Length -eq 0) {
-            Show-Error -message 'No tests found.'
+            Show-LabelledError -message 'No tests found.'
             return -1
         }
 

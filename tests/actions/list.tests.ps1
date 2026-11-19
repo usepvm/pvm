@@ -75,6 +75,31 @@ Describe "Get-FromSource" {
         $allVersions | Should -Not -Contain 'php-8.2.0-Win32-x86.zip'
     }
 
+    It "Should exclude archive entries with exact versions in releases" {
+        Mock Invoke-WebRequestWrapper {
+            param ($uri)
+            if ($uri -like '*archives') {
+                return @{ Links = @(
+                    @{ href = 'php-8.2.0-Win32-x64.zip' },
+                    @{ href = 'php-8.1.9-Win32-x64.zip' },
+                    @{ href = 'php-8.2.1-Win32-x64.zip' }
+                ) }
+            }
+
+            return @{ Links = @(
+                @{ href = 'php-8.2.0-Win32-x64.zip' },
+                @{ href = 'php-8.2.10-Win32-x64.zip' }
+            ) }
+        }
+
+        $result = Get-FromSource
+
+        $result.Releases.version | Should -Contain '8.2.0'
+        $result.Archives.version | Should -Not -Contain '8.2.0'
+        $result.Archives.version | Should -Contain '8.1.9'
+        $result.Archives.version | Should -Contain '8.2.1'
+    }
+
     It "Should return empty list" {
         Mock Invoke-WebRequestWrapper {
             return @{ Links = @() }

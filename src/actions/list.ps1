@@ -39,6 +39,13 @@ function Get-FromSource {
                 }
             }
 
+            if ($fetchedVersionsGrouped.ContainsKey('Releases') -and $fetchedVersionsGrouped.ContainsKey('Archives')) {
+                $releaseVersions = @($fetchedVersionsGrouped['Releases'] | ForEach-Object { $_.version } | Select-Object -Unique)
+                $fetchedVersionsGrouped['Archives'] = @(
+                    $fetchedVersionsGrouped['Archives'] | Where-Object { $releaseVersions -notcontains $_.version }
+                )
+            }
+
             return @{ pvmData = $fetchedVersionsGrouped }
         } -rethrow $true
 

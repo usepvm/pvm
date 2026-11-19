@@ -202,8 +202,8 @@ function Test-PHPVersionInstalled {
 
 function Get-SourceUrls {
     return [ordered]@{
-        'Archives' = $Global:PVMConfig.links.phpWinArchives
         'Releases' = $Global:PVMConfig.links.phpWinReleases
+        'Archives' = $Global:PVMConfig.links.phpWinArchives
     }
 }
 

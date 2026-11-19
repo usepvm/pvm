@@ -188,8 +188,9 @@ function Get-Config {
                 tests              = "$rootPath\tests"
                 storage            = $storage
                 testDrive          = "$temp\tests"
-                php                = "$data\php\versions"
                 data               = $data
+                php                = "$data\php\versions"
+                cert               = "$data\php\cert"
                 templates          = $templates
                 cache              = "$data\cache"
                 profiles           = $profiles
@@ -221,6 +222,7 @@ function Get-Config {
             peclPackageRoot    = 'https://pecl.php.net/package'
             peclPackages       = 'https://pecl.php.net/packages.php'
             peclWinExtDownload = 'https://downloads.php.net/~windows/pecl/releases'
+            curlCaBundle       = 'https://curl.se/ca/cacert.pem'
         }
 
         env      = [ordered]@{

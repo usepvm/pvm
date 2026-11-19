@@ -565,8 +565,9 @@ Describe "Get-Config" {
             $result.paths.directories.root | Should -Be $testRoot
             $result.paths.directories.storage | Should -Be "$testRoot\storage"
             $result.paths.directories.testDrive | Should -Be "$testRoot\storage\temp\tests"
-            $result.paths.directories.php | Should -Be "$testRoot\storage\data\php\versions"
             $result.paths.directories.data | Should -Be "$testRoot\storage\data"
+            $result.paths.directories.php | Should -Be "$testRoot\storage\data\php\versions"
+            $result.paths.directories.cert | Should -Be "$testRoot\storage\data\php\cert"
             $result.paths.directories.templates | Should -Be "$testRoot\storage\data\templates"
             $result.paths.directories.cache | Should -Be "$testRoot\storage\data\cache"
             $result.paths.directories.profiles | Should -Be "$testRoot\storage\data\profiles"
@@ -574,7 +575,6 @@ Describe "Get-Config" {
             $result.paths.directories.state | Should -Be "$testRoot\storage\data\state"
             $result.paths.directories.assets | Should -Be "$testRoot\assets"
             $result.paths.directories.temp | Should -Be "$testRoot\storage\temp"
-            $result.paths.directories.cert | Should -Be "$testRoot\storage\cert"
 
             $result.paths.files.profileExample | Should -Be "$testRoot\storage\data\profiles\profile-example.json"
             $result.paths.files.profileConfig | Should -Be "$testRoot\storage\data\templates\profile-config.json"

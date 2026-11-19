@@ -408,8 +408,9 @@ function Set-TestDrive {
     $Global:PVMConfig.paths.directories.tests = "$path\tests"
     $Global:PVMConfig.paths.directories.storage = $fakeStorage
     $Global:PVMConfig.paths.directories.testDrive = $path
-    $Global:PVMConfig.paths.directories.php = "$fakeData\php\versions"
     $Global:PVMConfig.paths.directories.data = $fakeData
+    $Global:PVMConfig.paths.directories.php = "$fakeData\php\versions"
+    $Global:PVMConfig.paths.directories.cert = "$fakeData\php\cert"
     $Global:PVMConfig.paths.directories.templates = $fakeTemplates
     $Global:PVMConfig.paths.directories.cache = "$fakeData\cache"
     $Global:PVMConfig.paths.directories.profiles = $fakeProfiles
@@ -417,7 +418,6 @@ function Set-TestDrive {
     $Global:PVMConfig.paths.directories.state = $fakeState
     $Global:PVMConfig.paths.directories.assets = "$path\assets"
     $Global:PVMConfig.paths.directories.temp = $fakeTemp
-    $Global:PVMConfig.paths.directories.cert = "$fakeStorage\cert"
 
     $Global:PVMConfig.paths.files.profileExample = "$fakeProfiles\profile-example.json"
     $Global:PVMConfig.paths.files.profileConfig = "$fakeTemplates\profile-config.json"

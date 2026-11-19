@@ -958,18 +958,16 @@ Describe "Set-TestDrive" {
         $Global:PVMConfig.paths.directories.src | Should -Be "$fakeRoot\src"
         $Global:PVMConfig.paths.directories.tests | Should -Be "$fakeRoot\tests"
         $Global:PVMConfig.paths.directories.storage | Should -Be "$fakeRoot\storage"
-
         $Global:PVMConfig.paths.directories.testDrive | Should -Be $fakeRoot
-
-        $Global:PVMConfig.paths.directories.php | Should -Be "$fakeRoot\storage\data\php\versions"
         $Global:PVMConfig.paths.directories.data | Should -Be "$fakeRoot\storage\data"
+        $Global:PVMConfig.paths.directories.php | Should -Be "$fakeRoot\storage\data\php\versions"
+        $Global:PVMConfig.paths.directories.cert | Should -Be "$fakeRoot\storage\data\php\cert"
         $Global:PVMConfig.paths.directories.cache | Should -Be "$fakeRoot\storage\data\cache"
         $Global:PVMConfig.paths.directories.templates | Should -Be "$fakeRoot\storage\data\templates"
         $Global:PVMConfig.paths.directories.profiles | Should -Be "$fakeRoot\storage\data\profiles"
         $Global:PVMConfig.paths.directories.log | Should -Be "$fakeRoot\storage\logs"
         $Global:PVMConfig.paths.directories.assets | Should -Be "$fakeRoot\assets"
         $Global:PVMConfig.paths.directories.temp | Should -Be "$fakeRoot\storage\temp"
-        $Global:PVMConfig.paths.directories.cert | Should -Be "$fakeRoot\storage\cert"
 
         $Global:PVMConfig.paths.files.profileExample | Should -Be "$fakeRoot\storage\data\profiles\profile-example.json"
         $Global:PVMConfig.paths.files.profileConfig | Should -Be "$fakeRoot\storage\data\templates\profile-config.json"

@@ -188,8 +188,9 @@ function Get-Config {
                 tests              = "$rootPath\tests"
                 storage            = $storage
                 testDrive          = "$temp\tests"
-                php                = "$data\php\versions"
                 data               = $data
+                php                = "$data\php\versions"
+                cert               = "$data\php\cert"
                 templates          = $templates
                 cache              = "$data\cache"
                 profiles           = $profiles
@@ -197,7 +198,6 @@ function Get-Config {
                 state              = $state
                 assets             = "$rootPath\assets"
                 temp               = $temp
-                cert               = "$storage\cert"
             }
             files       = @{
                 profileExample     = "$profiles\profile-example.json"
